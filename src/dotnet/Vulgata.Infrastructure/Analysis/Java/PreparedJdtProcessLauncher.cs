@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Infrastructure.Source;
@@ -10,6 +11,17 @@ namespace Vulgata.Infrastructure.Analysis.Java;
 internal sealed class PreparedJdtProcessLauncher : IPreparedJdtProcessLauncher
 {
     private static readonly ConcurrentDictionary<int, PreparedJdtOwnedProcess> _unsettledProcesses = new();
+    private readonly Func<ProcessStartInfo, Process?> _startProcess;
+
+    internal PreparedJdtProcessLauncher()
+        : this(static start => Process.Start(start))
+    {
+    }
+
+    internal PreparedJdtProcessLauncher(Func<ProcessStartInfo, Process?> startProcess)
+    {
+        _startProcess = startProcess ?? throw new ArgumentNullException(nameof(startProcess));
+    }
 
     public async Task<IJdtLsProcess> LaunchAsync(
         PreparedToolWorkspaceLease workspaceLease,
@@ -82,6 +94,8 @@ internal sealed class PreparedJdtProcessLauncher : IPreparedJdtProcessLauncher
             }
 
             var ownedState = new PreparedJdtOwnedStateDirectories(stateRoot);
+            bool startAttempted = false;
+            Process? startedProcess = null;
             try
             {
                 ownedState.Prepare(request.DataPath, request.ConfigurationPath,
@@ -141,8 +155,10 @@ internal sealed class PreparedJdtProcessLauncher : IPreparedJdtProcessLauncher
                     throw new InvalidOperationException("jdt_prelaunch_authority_unavailable");
                 }
 
-                Process process = Process.Start(start) ??
+                startAttempted = true;
+                Process process = _startProcess(start) ??
                     throw new InvalidOperationException("jdt_process_start_failed");
+                startedProcess = process;
                 var owned = new PreparedJdtOwnedProcess(process, ownedState);
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -165,10 +181,31 @@ internal sealed class PreparedJdtProcessLauncher : IPreparedJdtProcessLauncher
 
                 return owned;
             }
-            catch
+            catch (Exception failure)
             {
-                // No process was returned. Fresh state is retained when a start or settlement
-                // cannot be proved; the caller reports the failed opening.
+                if (startedProcess is null)
+                {
+                    bool noChildStarted = !startAttempted ||
+                        failure is Win32Exception { NativeErrorCode: 2 or 3 or 5 or 193 or 216 or 740 };
+                    if (!noChildStarted)
+                    {
+                        throw new PreparedJdtLsOpenFailureException(
+                            PreparedJavaNavigationOpenStatus.CleanupUnconfirmed,
+                            cleanupConfirmed: false);
+                    }
+
+                    try
+                    {
+                        ownedState.CleanupAfterConfirmedExit();
+                    }
+                    catch (Exception)
+                    {
+                        throw new PreparedJdtLsOpenFailureException(
+                            PreparedJavaNavigationOpenStatus.CleanupUnconfirmed,
+                            cleanupConfirmed: false);
+                    }
+                }
+
                 throw;
             }
         }

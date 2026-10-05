@@ -1,0 +1,12 @@
+{
+  "task": "T044/T045",
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-d89d9b55e7164c2e8bfa3325e3ef2483/results.trx",
+  "selected": 103,
+  "passed": 101,
+  "failed": 2,
+  "skipped": 0,
+  "finding": "Noncooperative deadline case and start cleanup cases GREEN; preserved responsive/late-return readiness tests regressed because shutdown settlement grace was omitted. Assertions retained; minimum bounded settlement correction assigned to retained production owner.",
+  "nativeJdtLaunched": false,
+  "oldWorkflowCounterChanged": false
+}

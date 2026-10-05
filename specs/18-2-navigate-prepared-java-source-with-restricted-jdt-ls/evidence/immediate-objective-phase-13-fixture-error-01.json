@@ -1,0 +1,11 @@
+{
+  "phase": "13",
+  "kind": "Controlled fixture setup failure; not valid cleanup RED",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-5f0d1f8ac1ef49ada88a1972a4dd6045",
+  "selected": 2,
+  "failed": 2,
+  "failure": "jdt_prelaunch_authority_unavailable before injected start callback",
+  "cause": "Fixture omitted preexisting application-owned external state root required by existing IsSeparateDisposableStateRoot contract",
+  "correction": "Precreate caller-owned state root/marker; verify separation/current root and callback reached; expect only launcher-created children removed on known no-child failure",
+  "preservation": "Production guard, source lease contract, failing attempt and old workflow counters preserved. Fresh valid RED required before cleanup implementation."
+}

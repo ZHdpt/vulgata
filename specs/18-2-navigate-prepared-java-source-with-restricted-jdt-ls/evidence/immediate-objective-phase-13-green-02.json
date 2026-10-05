@@ -1,0 +1,24 @@
+{
+  "tasks": [
+    "T044",
+    "T045"
+  ],
+  "suite": "LocalTools",
+  "selected": 104,
+  "passed": 104,
+  "failed": 0,
+  "skipped": 0,
+  "results": "TestResults/isolation-40df558dbfa04ff2a6fa50441c1bbc6d/results.trx",
+  "claims": [
+    "Known failed-start cleanup preserves caller state; ambiguous start retains state and reports uncertainty.",
+    "Noncooperative opening bounded; cooperative settlement grace preserves earlier DeadlineExceeded cases.",
+    "Unsettled returned session retained in quarantined slot; late completion does not reopen slot."
+  ],
+  "nativeJdtLaunched": false,
+  "sourceSha256": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs": "aac2bc45ab6ebded14ebf6a60717ffab4ca382a61b4273a4c75ed97ae55c2e6b",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs": "1250b6e66da6bca19235dae916f30b2325f8749b743a6f6bf3befca669ca9875",
+    "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs": "b48c4d7199f82785236b679993b31b702b7c45f491377047862021f9db54f792"
+  },
+  "limitations": "Controlled evidence only. Native server usefulness/shutdown and full basic regression remain T046/T047. Old workflow state and SKIP tasks unchanged."
+}

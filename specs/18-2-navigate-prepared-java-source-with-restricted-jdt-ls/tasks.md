@@ -245,8 +245,8 @@ withhold all outside/buffered payload on the dedicated path, including before di
 settle only owned resources and preserve unrelated processes/source. Unknown cleanup
 must quarantine rather than reopen a slot or appear as successful cancellation.
 
-- [ ] T044 [US3] Add only missing dedicated-runtime lifetime tests in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for readiness/request/queue/shutdown bounds, partial launch/initialize cancellation, late completion, bounded stderr, context disposal ordering and cleanup uncertainty. Preserve existing lifecycle evidence and demonstrate genuinely changed behavior before GREEN; controlled process probes do not prove native settlement.
-- [ ] T045 [US3] Implement matching bounded owned-session/process cleanup in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs`, `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs`, `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs` and `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs`. Reuse partial-open/session owners, slot quarantine and retained pending cleanup; support bounded protocol shutdown/exit where appropriate and terminate only the started process/owned tree when needed. Cleanup only known external state after settlement; preserve uncertain state and report CleanupUnconfirmed. Add no cross-process registry, restart/cache adoption or general cleanup manager.
+- [X] T044 [US3] Add only missing dedicated-runtime lifetime tests in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for readiness/request/queue/shutdown bounds, partial launch/initialize cancellation, late completion, bounded stderr, context disposal ordering and cleanup uncertainty. Preserve existing lifecycle evidence and demonstrate genuinely changed behavior before GREEN; controlled process probes do not prove native settlement.
+- [X] T045 [US3] Implement matching bounded owned-session/process cleanup in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs`, `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs`, `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs` and `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs`. Reuse partial-open/session owners, slot quarantine and retained pending cleanup; support bounded protocol shutdown/exit where appropriate and terminate only the started process/owned tree when needed. Cleanup only known external state after settlement; preserve uncertain state and report CleanupUnconfirmed. Add no cross-process registry, restart/cache adoption or general cleanup manager.
 
 ### Phase 14 — US1 real-server qualification (depends on US2/US3)
 
@@ -273,8 +273,8 @@ cache adoption, mixed-root concurrent tool use, generalized cleanup, customer Re
 follow-up and full18.3 integration. Their original obligations and partial work stay in
 [SKIP] items. Deferral is not evidence that those protections or integrations succeeded.
 
-**Execution status (2026-10-05):** T037–T043 completed under direct human implementation
-and JDT runtime authorization; T044–T047 remain unchecked. Real JDT qualification
+**Execution status (2026-10-05):** T037–T045 completed under direct human implementation
+and JDT runtime authorization; T046–T047 remain unchecked. Real JDT qualification
 is LocalTools and excluded from the basic SelfContained suite.
 The only prerequisite decisions are explicit new implementation-boundary/JDT exception
 and resource authority. This document does not manufacture acceptance by the old

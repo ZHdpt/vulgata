@@ -112,6 +112,12 @@ public sealed class PreparedJavaNavigationContextFactory
         internal bool Quarantined { get; set; }
 
         internal Task? PendingSessionDisposal { get; set; }
+
+        internal Task<IPreparedJdtLsSession>? PendingSessionOpen { get; set; }
+
+        internal IPreparedJdtLsSession? PendingLateSession { get; set; }
+
+        internal IPreparedJdtLsSession? RetainedSession;
     }
 
     private readonly PreparedJavaNavigationProfile _profile;
@@ -350,9 +356,52 @@ public sealed class PreparedJavaNavigationContextFactory
             }
 
             IPreparedJdtLsSession session;
+            Task<IPreparedJdtLsSession>? pendingOpen = null;
             try
             {
-                session = await _runtime.OpenAsync(workspaceLease, _profile, waitToken.Token);
+                pendingOpen = _runtime.OpenAsync(workspaceLease, _profile, waitToken.Token);
+                session = await pendingOpen.WaitAsync(waitToken.Token);
+            }
+            catch (OperationCanceledException) when (
+                waitToken.IsCancellationRequested && pendingOpen is { IsCompleted: false })
+            {
+                TimeSpan grace = TimeSpan.FromMilliseconds(Math.Min(
+                    200, _profile.ShutdownTimeout.TotalMilliseconds));
+                try
+                {
+                    session = await pendingOpen.WaitAsync(grace);
+                }
+                catch (TimeoutException)
+                {
+                    slot.Quarantined = true;
+                    slot.PendingSessionOpen = pendingOpen;
+                    sessionProbe?.MarkUnknown();
+                    _ = ObservePendingSessionOpenAsync(slot, pendingOpen, _profile.ShutdownTimeout);
+                    return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+                }
+                catch (PreparedJdtLsOpenFailureException failure)
+                {
+                    if (!failure.CleanupConfirmed)
+                    {
+                        slot.Quarantined = true;
+                        sessionProbe?.MarkUnknown();
+                        return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+                    }
+
+                    sessionProbe?.ConfirmSettled();
+                    if (sessionRegistration is not null)
+                    {
+                        await sessionRegistration.DisposeAsync();
+                    }
+
+                    return Failed(failure.Status);
+                }
+                catch (Exception)
+                {
+                    slot.Quarantined = true;
+                    sessionProbe?.MarkUnknown();
+                    return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+                }
             }
             catch (PreparedJdtLsOpenFailureException failure)
             {
@@ -410,6 +459,7 @@ public sealed class PreparedJavaNavigationContextFactory
                 catch (Exception)
                 {
                     slot.Quarantined = true;
+                    slot.RetainedSession = session;
                     sessionProbe?.MarkUnknown();
                     if (disposal is not null)
                     {
@@ -427,6 +477,7 @@ public sealed class PreparedJavaNavigationContextFactory
                 if (!cleanupConfirmed)
                 {
                     slot.Quarantined = true;
+                    slot.RetainedSession = session;
                 }
 
                 slot.Gate.Release();
@@ -467,6 +518,66 @@ public sealed class PreparedJavaNavigationContextFactory
             {
                 slot.PendingSessionDisposal = null;
             }
+        }
+    }
+
+    private static async Task ObservePendingSessionOpenAsync(
+        RepositorySlot slot,
+        Task<IPreparedJdtLsSession> pendingOpen,
+        TimeSpan shutdownTimeout)
+    {
+        try
+        {
+            IPreparedJdtLsSession? lateSession = await pendingOpen;
+            if (lateSession is not null)
+            {
+                slot.PendingLateSession = lateSession;
+                Task disposal = lateSession.DisposeAsync().AsTask();
+                slot.PendingSessionDisposal = disposal;
+                try
+                {
+                    await disposal.WaitAsync(shutdownTimeout);
+                    slot.PendingSessionDisposal = null;
+                    slot.PendingLateSession = null;
+                }
+                catch (TimeoutException)
+                {
+                    _ = ObservePendingLateSessionDisposalAsync(slot, lateSession, disposal);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // The opening result was already reported unknown; a late failure cannot revise it.
+        }
+        finally
+        {
+            if (ReferenceEquals(slot.PendingSessionOpen, pendingOpen))
+            {
+                slot.PendingSessionOpen = null;
+            }
+        }
+    }
+
+    private static async Task ObservePendingLateSessionDisposalAsync(
+        RepositorySlot slot, IPreparedJdtLsSession lateSession, Task disposal)
+    {
+        try
+        {
+            await disposal;
+            if (ReferenceEquals(slot.PendingLateSession, lateSession))
+            {
+                slot.PendingLateSession = null;
+            }
+
+            if (ReferenceEquals(slot.PendingSessionDisposal, disposal))
+            {
+                slot.PendingSessionDisposal = null;
+            }
+        }
+        catch (Exception)
+        {
+            // Retain the late session and unknown cleanup state for this repository slot.
         }
     }
 

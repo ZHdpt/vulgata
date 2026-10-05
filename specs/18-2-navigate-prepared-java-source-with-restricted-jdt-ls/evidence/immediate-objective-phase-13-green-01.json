@@ -1,0 +1,11 @@
+{
+  "task": "T044/T045",
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-bc6dd80c990a4cd8a74adc556019be99/results.trx",
+  "selected": 103,
+  "passed": 103,
+  "failed": 0,
+  "skipped": 0,
+  "qualification": "Controlled protocol/process seams only; native JDT not launched. Final-shape assessment identified failed returned-session ownership retention gap, requiring focused RED/GREEN before phase complete.",
+  "oldWorkflowCounterChanged": false
+}

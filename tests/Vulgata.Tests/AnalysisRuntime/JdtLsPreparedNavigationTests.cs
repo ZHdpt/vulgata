@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO.Pipelines;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
@@ -840,6 +843,327 @@ public sealed class JdtLsPreparedNavigationTests
 
             await lease.DisposeAsync();
         }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PreparedJdtProcessLauncher_WhenStartOutcomeIsKnownOrUnknown_SettlesOwnedState(
+        bool startOutcomeIsUnknown)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string commandRoot = Path.Combine(fixture.SiblingPath, "launcher-start-failure-commands");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "launcher-start-failure-runtime");
+        string runtimeBin = Path.Combine(runtimeRoot, "bin");
+        string runtimeConfig = Path.Combine(runtimeRoot, "config_win");
+        string runtimePlugins = Path.Combine(runtimeRoot, "plugins");
+        string stateRoot = Path.Combine(fixture.SiblingPath, "launcher-start-failure-state");
+        string sourceMarkerPath = Path.Combine(fixture.PreparedRootPath, "LauncherProtected.java");
+        string callerStateMarkerPath = Path.Combine(stateRoot, "caller-state-marker.txt");
+        const string sourceMarkerContents = "class LauncherProtected {}\n";
+        const string callerStateMarkerContents = "preserve caller-owned state root";
+        await File.WriteAllTextAsync(sourceMarkerPath, sourceMarkerContents);
+        Directory.CreateDirectory(stateRoot);
+        await File.WriteAllTextAsync(callerStateMarkerPath, callerStateMarkerContents);
+        Directory.CreateDirectory(commandRoot);
+        Directory.CreateDirectory(runtimeBin);
+        Directory.CreateDirectory(runtimeConfig);
+        Directory.CreateDirectory(runtimePlugins);
+
+        string jdtCommandPath = Path.Combine(commandRoot, "jdtls.bat");
+        string javaPath = Path.Combine(commandRoot, "java.exe");
+        string pythonPath = Path.Combine(commandRoot, "python.exe");
+        string cmdPath = Path.Combine(commandRoot, "cmd.exe");
+        string bootstrapPath = Path.Combine(runtimeBin, "jdtls");
+        string pythonModulePath = Path.Combine(runtimeBin, "jdtls.py");
+        string configurationInputPath = Path.Combine(runtimeConfig, "config.ini");
+        string launcherModulePath = Path.Combine(runtimePlugins, "org.eclipse.equinox.launcher_1.0.0.jar");
+        await File.WriteAllTextAsync(jdtCommandPath, $"@echo off\r\npython \"{bootstrapPath}\" %*\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled Java executable fixture\n");
+        await File.WriteAllTextAsync(pythonPath, "controlled Python executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        await File.WriteAllTextAsync(bootstrapPath, "controlled JDT bootstrap fixture\n");
+        await File.WriteAllTextAsync(pythonModulePath, "controlled Python module fixture\n");
+        await File.WriteAllTextAsync(configurationInputPath, "controlled Equinox configuration fixture\n");
+        await File.WriteAllTextAsync(launcherModulePath, "controlled launcher module fixture\n");
+
+        var commands = new PreparedJdtPinnedCommands(
+            await ObservePinnedFileAsync(jdtCommandPath, 0),
+            await ObservePinnedFileAsync(javaPath, 1),
+            await ObservePinnedFileAsync(cmdPath, null),
+            PythonCommand: await ObservePinnedFileAsync(pythonPath, 2),
+            BootstrapScript: await ObservePinnedFileAsync(bootstrapPath, null),
+            RuntimeInputs:
+            [
+                await ObservePinnedFileAsync(pythonModulePath, null),
+                await ObservePinnedFileAsync(configurationInputPath, null),
+                await ObservePinnedFileAsync(launcherModulePath, null),
+            ]);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [commandRoot],
+            [runtimeRoot],
+            cmdPath,
+            [commandRoot]);
+        string dataPath = Path.Combine(stateRoot, "data");
+        string configurationPath = Path.Combine(stateRoot, "configuration");
+        string tempPath = Path.Combine(stateRoot, "temp");
+        string profilePath = Path.Combine(stateRoot, "profile");
+        string? canonicalRoot = null;
+        PreparedToolDirectoryObjectIdentity? rootIdentity = null;
+        PreparedToolWorkspaceCheckStatus rootStatus = await lease.UseContainedRootAsync(
+            PreparedToolPurpose.JdtNavigation,
+            (scope, _) =>
+            {
+                canonicalRoot = scope.GetPhysicalRootPathForTrustedToolBinding();
+                rootIdentity = scope.ObserveRootObjectIdentity();
+                return ValueTask.CompletedTask;
+            });
+        Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, rootStatus);
+        Assert.NotNull(canonicalRoot);
+        Assert.NotNull(rootIdentity);
+        var launch = new PreparedJdtLaunchRequest(
+            canonicalRoot!,
+            rootIdentity!,
+            new Uri(Path.GetFullPath(canonicalRoot!).TrimEnd(Path.DirectorySeparatorChar) +
+                Path.DirectorySeparatorChar).AbsoluteUri,
+            dataPath,
+            configurationPath,
+            commands,
+            ["-data", dataPath, "-configuration", configurationPath],
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["PATH"] = commandRoot,
+                ["TEMP"] = tempPath,
+                ["TMP"] = tempPath,
+                ["USERPROFILE"] = profilePath,
+                ["APPDATA"] = profilePath,
+                ["PYTHONDONTWRITEBYTECODE"] = "1",
+            },
+            hostPolicy);
+
+        int startCallCount = 0;
+        ProcessStartInfo? attemptedStart = null;
+        var launcher = new PreparedJdtProcessLauncher(startInfo =>
+        {
+            startCallCount++;
+            attemptedStart = startInfo;
+            if (startOutcomeIsUnknown)
+            {
+                Directory.CreateDirectory(dataPath);
+                File.WriteAllText(Path.Combine(dataPath, "uncertain-start-marker.txt"),
+                    "preserve state when start outcome is unknown");
+                throw new InvalidOperationException("controlled ambiguous process start failure");
+            }
+
+            throw new Win32Exception(2, "controlled CreateProcess file not found");
+        });
+
+        try
+        {
+            if (startOutcomeIsUnknown)
+            {
+                PreparedJdtLsOpenFailureException failure = await Assert.ThrowsAsync<
+                    PreparedJdtLsOpenFailureException>(async () =>
+                        await launcher.LaunchAsync(lease, launch, CancellationToken.None));
+
+                Assert.Equal(1, startCallCount);
+                Assert.Equal(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed, failure.Status);
+                Assert.False(failure.CleanupConfirmed);
+                Assert.True(Directory.Exists(stateRoot));
+                Assert.Equal(callerStateMarkerContents, File.ReadAllText(callerStateMarkerPath));
+                Assert.Equal(
+                    "preserve state when start outcome is unknown",
+                    File.ReadAllText(Path.Combine(dataPath, "uncertain-start-marker.txt")));
+            }
+            else
+            {
+                Win32Exception failure = await Assert.ThrowsAsync<Win32Exception>(async () =>
+                    await launcher.LaunchAsync(lease, launch, CancellationToken.None));
+
+                Assert.Equal(1, startCallCount);
+                Assert.Equal(2, failure.NativeErrorCode);
+                Assert.True(Directory.Exists(stateRoot));
+                Assert.Equal(callerStateMarkerContents, File.ReadAllText(callerStateMarkerPath));
+                Assert.False(Directory.Exists(dataPath),
+                    "A confirmed CreateProcess failure removes the JDT data directory created by that launch.");
+                Assert.False(Directory.Exists(configurationPath));
+                Assert.False(Directory.Exists(tempPath));
+                Assert.False(Directory.Exists(profilePath));
+            }
+
+            Assert.Equal(1, startCallCount);
+            Assert.NotNull(attemptedStart);
+            Assert.Equal(sourceMarkerContents, await File.ReadAllTextAsync(sourceMarkerPath));
+        }
+        finally
+        {
+            if (Directory.Exists(stateRoot))
+            {
+                Directory.Delete(stateRoot, recursive: true);
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task OpenDedicatedAsync_WhenRuntimeIgnoresDeadline_ReturnsUnknownAndSettlesLateSession()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-noncooperative-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromMilliseconds(100),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new NonCooperativeOpenRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        Task<PreparedJavaNavigationOpenResult>? openTask = null;
+        PreparedJavaNavigationOpenResult? opened = null;
+
+        try
+        {
+            openTask = factory.OpenDedicatedAsync(lease);
+            await runtime.OpenStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Task completed = await Task.WhenAny(openTask, Task.Delay(TimeSpan.FromMilliseconds(500)));
+            Assert.True(ReferenceEquals(openTask, completed),
+                "The initialization deadline bounds waiting for a runtime that ignores cancellation.");
+
+            opened = await openTask.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed, opened.Status);
+            Assert.Null(opened.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+
+            PreparedJavaNavigationOpenResult retry = await factory.OpenDedicatedAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed, retry.Status);
+            Assert.Null(retry.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+        }
+        finally
+        {
+            runtime.ReturnSession();
+            if (openTask is not null)
+            {
+                opened ??= await openTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            await runtime.Session.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task DisposeAsync_WhenSessionSettlementExceedsBound_QuarantinesSlotAndRetainsExactSession()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-retained-session-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromMilliseconds(100),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new StalledDisposePreparedJdtLsRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        IPreparedJavaNavigationContext? context = null;
+
+        try
+        {
+            PreparedJavaNavigationOpenResult opened = await factory.OpenDedicatedAsync(lease)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+
+            await context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+            await runtime.Session.DisposeStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            Assert.False(runtime.Session.DisposeCompleted.Task.IsCompleted,
+                "The controlled session must remain unsettled when the shutdown bound expires.");
+
+            object slot = GetRepositorySlot(lease.RepositoryId);
+            PropertyInfo quarantined = Assert.IsAssignableFrom<PropertyInfo>(slot.GetType().GetProperty(
+                "Quarantined", BindingFlags.Instance | BindingFlags.NonPublic));
+            Assert.True(Assert.IsType<bool>(quarantined.GetValue(slot)),
+                "An unsettled owned JDT session must leave its Repository slot quarantined.");
+
+            bool slotRetainsExactSession = slot.GetType()
+                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .Any(field => typeof(IPreparedJdtLsSession).IsAssignableFrom(field.FieldType) &&
+                    ReferenceEquals(field.GetValue(slot), runtime.Session));
+            Assert.True(slotRetainsExactSession,
+                "The quarantined Repository slot must retain the exact unsettled session until settlement.");
+        }
+        finally
+        {
+            runtime.Session.ReleaseDispose();
+            await runtime.Session.DisposeCompleted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (context is not null)
+            {
+                await context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    private static object GetRepositorySlot(Guid repositoryId)
+    {
+        FieldInfo slotsField = Assert.IsAssignableFrom<FieldInfo>(typeof(PreparedJavaNavigationContextFactory)
+            .GetField("RepositorySlots", BindingFlags.Static | BindingFlags.NonPublic));
+        System.Collections.IDictionary slots = Assert.IsAssignableFrom<System.Collections.IDictionary>(
+            slotsField.GetValue(null));
+        Assert.True(slots.Contains(repositoryId), "Opening a context must reserve its Repository slot.");
+        return Assert.IsAssignableFrom<object>(slots[repositoryId]);
     }
 
     private static void SetSourceAuthorityLoss(
@@ -6555,6 +6879,31 @@ public sealed class JdtLsPreparedNavigationTests
         }
 
         public void ReturnSessionAfterDeadline() => _returnSession.TrySetResult(true);
+    }
+
+    private sealed class NonCooperativeOpenRuntime : IPreparedJdtLsRuntime
+    {
+        private readonly TaskCompletionSource<IPreparedJdtLsSession> _returnSession =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TrackedLatePreparedJdtLsSession Session { get; } = new();
+
+        public TaskCompletionSource<bool> OpenStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int OpenCallCount { get; private set; }
+
+        public Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            OpenCallCount++;
+            OpenStarted.TrySetResult(true);
+            return _returnSession.Task;
+        }
+
+        public void ReturnSession() => _returnSession.TrySetResult(Session);
     }
 
     private sealed class LateReturningBlockedDisposeRuntime : IPreparedJdtLsRuntime

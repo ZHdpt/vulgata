@@ -128,6 +128,7 @@ PATH Python bootstrap, pinned JDT/Java chain, owned dedicated Java fixture, exte
 state, function invocation and bounded shutdown. It grants no machine PATH/ACL edits
 or provider/database/CodeGraph/default-Web execution. Fresh pins and current lease
 checks remain required. Real native JDT qualification belongs in LocalTools, excluded
-from basic SelfContained; controlled zero-process protocol tests retain their
-SelfContained classification under testing.md. See the dated runtime authorization
+from basic SelfContained. The four dedicated JDT test files, including their controlled
+protocol cases, are classified LocalTools as whole units at the human's request;
+the shared fixture helper remains SelfContained and starts no native child. See the dated runtime authorization
 evidence. The old runner and skipped items remain frozen.

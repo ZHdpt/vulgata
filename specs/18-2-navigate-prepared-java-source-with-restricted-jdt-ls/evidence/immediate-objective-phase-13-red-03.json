@@ -1,0 +1,11 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-0b393d418ccf4ac8830aa0d7e7306180/results.trx",
+  "test": "DisposeAsync_WhenSessionSettlementExceedsBound_QuarantinesSlotAndRetainsExactSession",
+  "failure": "The quarantined Repository slot must retain the exact unsettled session until settlement.",
+  "classification": "Valid behavioral RED: exact unsettled returned session owner not retained in quarantined Repository slot.",
+  "correction": "Retain session reference when disposal cannot be confirmed; preserve quarantine and existing bounds.",
+  "nativeJdtLaunched": false
+}
