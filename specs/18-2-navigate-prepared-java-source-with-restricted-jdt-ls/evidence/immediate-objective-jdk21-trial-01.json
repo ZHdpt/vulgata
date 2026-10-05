@@ -1,0 +1,17 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-3cb93df90fac4d99bf44425fc4857aa1/results.trx",
+  "controlledCases": "110/110 passed in010cd3e5a98b4d85ac805bc3819ac68e",
+  "jdkDependency": "Caller-suppliedphysicalJavaBinDirectory; Java21.0.12; no producthardcodedpath orPATHedit.",
+  "nativeObserved": [
+    "Publicfactory initializedrealJDT1.58 with666pinnedinputs",
+    "ActualMAFdefinition returnedTarget.java3",
+    "ActualMAFreferences returnedCaller.java3"
+  ],
+  "qualification": "Incomplete: cleanupfailed; sourcepreservation/finalsessionlifecycle notqualified.",
+  "failure": "Fixture.Dispose IOException configuration/org.eclipse.core.runtime/.manager/.tmp74.instance fileinuse; originalcleanupassertionmaybemasked.",
+  "resourceObservation": "Subsequentread-only scopedCIMqueryfor exactfixturee904aed... matchednoJava/Pythonprocess; no processkilled orstate deletedbyroot.",
+  "next": "Boundedactualsuccessfulsessiondiagnostics beforeminimumcleanupcorrection; preserveunknownfixture, no weakenedassertions."
+}

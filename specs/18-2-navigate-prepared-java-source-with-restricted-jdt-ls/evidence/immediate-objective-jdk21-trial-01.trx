@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="26431cbc-05ba-4407-a19e-f15b95035feb" name="13728@ZHDPT-ASUS-5 2026-10-05 22:30:49" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T22:30:49.3931152+08:00" queuing="2026-10-05T22:30:49.3931154+08:00" start="2026-10-05T22:30:22.8922084+08:00" finish="2026-10-05T22:30:49.3961807+08:00" />
+  <TestSettings name="default" id="1ac707f6-2aff-4939-bfa6-840bb03241e6">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-05_22_30_49" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="8f5f42d0-a20b-44a8-acdf-de44b5869dcb" testId="f7cb0047-9490-02b4-ced4-2e712b968e3b" testName="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" computerName="ZHDPT-ASUS-5" duration="00:00:24.6821881" startTime="2026-10-05T22:30:24.6327242+08:00" endTime="2026-10-05T22:30:49.2945481+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8f5f42d0-a20b-44a8-acdf-de44b5869dcb">
+      <Output>
+        <StdOut>Read-only current-host resolver preflight: Pinned; pinned input count=666.&#xD;
+Real JDT-LS dedicated navigation qualified through the public host-policy factory.&#xD;
+Host PATH chain: JDT command C:\Users\13728\.local\bin\jdtls.bat; Python C:\Users\13728\.local\bin\python.exe; Java C:\Program Files\Java\jdk-21.0.12\bin\java.exe; runtime G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository.&#xD;
+Server bundle(s): org.eclipse.jdt.ls.core_1.58.0.202605150919.jar.&#xD;
+Settings contract: Maven/Gradle import, autobuild, build-configuration update, source downloads, snapshots and dependency restoration disabled; this is not OS network isolation.&#xD;
+Definition: src/main/java/fixture/Target.java:3; references: src/main/java/fixture/Caller.java:3.</StdOut>
+        <ErrorInfo>
+          <Message>System.IO.IOException : The process cannot access the file 'C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-e904aedf9bb54276b5f009d53c227fa8\outside\dedicated-jdt-state\configuration\org.eclipse.core.runtime\.manager\.tmp74.instance' because it is being used by another process.</Message>
+          <StackTrace>   at System.IO.FileSystem.DeleteFile(String fullPath)&#xD;
+   at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath) in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs:line 277&#xD;
+   at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath) in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs:line 269&#xD;
+   at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath) in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs:line 269&#xD;
+   at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath) in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs:line 269&#xD;
+   at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath) in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs:line 269&#xD;
+   at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath) in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs:line 269&#xD;
+   at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DisposeAsync() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs:line 247&#xD;
+   at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs:line 293&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f7cb0047-9490-02b4-ced4-2e712b968e3b">
+      <Execution id="8f5f42d0-a20b-44a8-acdf-de44b5869dcb" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests" name="OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f7cb0047-9490-02b4-ced4-2e712b968e3b" executionId="8f5f42d0-a20b-44a8-acdf-de44b5869dcb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.16]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.23]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.25]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:25.96]       System.IO.IOException : The process cannot access the file 'C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-e904aedf9bb54276b5f009d53c227fa8\outside\dedicated-jdt-state\configuration\org.eclipse.core.runtime\.manager\.tmp74.instance' because it is being used by another process.&#xD;
+[xUnit.net 00:00:25.96]       Stack Trace:&#xD;
+[xUnit.net 00:00:25.96]            at System.IO.FileSystem.DeleteFile(String fullPath)&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs(277,0): at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath)&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs(269,0): at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath)&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs(269,0): at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath)&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs(269,0): at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath)&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs(269,0): at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath)&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs(269,0): at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DeleteOwnedTreeWithoutFollowingLinks(String directoryPath)&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\PreparedSource\PreparedSourceFixture.cs(247,0): at Vulgata.Tests.PreparedSource.PreparedSourceFixture.DisposeAsync()&#xD;
+[xUnit.net 00:00:25.96]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs(293,0): at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess()&#xD;
+[xUnit.net 00:00:25.96]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:25.96]       Output:&#xD;
+[xUnit.net 00:00:25.96]         Read-only current-host resolver preflight: Pinned; pinned input count=666.&#xD;
+[xUnit.net 00:00:25.96]         Real JDT-LS dedicated navigation qualified through the public host-policy factory.&#xD;
+[xUnit.net 00:00:25.96]         Host PATH chain: JDT command C:\Users\13728\.local\bin\jdtls.bat; Python C:\Users\13728\.local\bin\python.exe; Java C:\Program Files\Java\jdk-21.0.12\bin\java.exe; runtime G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository.&#xD;
+[xUnit.net 00:00:25.96]         Server bundle(s): org.eclipse.jdt.ls.core_1.58.0.202605150919.jar.&#xD;
+[xUnit.net 00:00:25.96]         Settings contract: Maven/Gradle import, autobuild, build-configuration update, source downloads, snapshots and dependency restoration disabled; this is not OS network isolation.&#xD;
+[xUnit.net 00:00:25.96]         Definition: src/main/java/fixture/Target.java:3; references: src/main/java/fixture/Caller.java:3.&#xD;
+[xUnit.net 00:00:25.97]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-05T22:30:49.2965343+08:00">
+        <Text>[xUnit.net 00:00:25.96]     Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-05T22:30:49.3612936+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

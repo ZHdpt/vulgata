@@ -1,0 +1,14 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "passed": 0,
+  "failed": 1,
+  "skipped": 0,
+  "results": "TestResults/isolation-79bdf70b5787453884e4827dedfcc1ec/results.trx",
+  "initialize": "Succeeded in 2942 ms under injected physical JDK21 bin.",
+  "observation": "Python parent PID12836 exited after KillTree. Exact owned-fixture Java PID32620 remained alive before bounded wait; stderr pump incomplete.",
+  "failure": "TimeoutException jdt_cleanup_unconfirmed; fixture preserved.",
+  "fixture": "vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8",
+  "limitations": "CIM snapshots consume some of the diagnostic 15-second disposal budget. Parent/child snapshots establish child survival before waiting; timeout duration alone is not a clean timing measure.",
+  "correction": "Reuse bounded protocol shutdown/exit before disposing RPC, with existing termination fallback and uncertainty quarantine; no generalized ownership platform."
+}
