@@ -22,6 +22,8 @@ Through Vulgata's Agent-tool integration on an explicitly authorized dedicated w
 
 ## Immediate returned-descriptor qualification (2026-10-02 correction)
 
+The [process-exit correction](evidence/process-exit-correction-01.json) supplements the original returned-descriptor evidence with exact SDK-reported child completion after disposal and controlled active-call/init cancellation tests. Its stated limits still apply.
+
 This is the new slice before the older full production smoke above. Use only an explicitly owned, dedicated prepared fixture and separately authorized process execution; no 18.2 producer is required for this fixture proof. Reuse the recorded T015 pinned 1.5.0 startup and local-footprint observations rather than repeating unrelated matrices.
 
 1. Trusted application code selects the fixture's absolute directory and configured pinned CodeGraph installation. Assert preflight rejects unsafe pre-existing `.codegraph`; capture source/config/hook state and the declared tool-state entry before preparation.

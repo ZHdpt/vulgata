@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using Vulgata.Core.DomainServices;
@@ -93,6 +94,42 @@ public sealed class NativeCodeGraphSessionOutcomeTests
             }
 
             Assert.False(Directory.Exists(fixture), "The connection-timeout fixture must be removable after session disposal.");
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task NativeSession_CallerCancellationDuringInitialization_ExitsOwnedProcess()
+    {
+        string fixture = Path.Combine(Path.GetTempPath(),
+            "vulgata-story183-cancelled-initialize-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(fixture);
+        Directory.CreateDirectory(Path.Combine(fixture, ".codegraph"));
+        string serverPath = Path.Combine(fixture, "slow-connection-server.ps1");
+        await File.WriteAllTextAsync(serverPath, SlowConnectionMcpServerScript, new UTF8Encoding(false));
+        string initializeStartedPath = Path.Combine(fixture, "initialize-started.txt");
+
+        try
+        {
+            await using ICodeGraphWorkerToolSession session = new NativeCodeGraphMcpClient(
+                RepositoryId, serverPath, fixture);
+            using var cancellation = new CancellationTokenSource();
+            Task<CodeGraphToolReadiness> pending = session.DiscoverAsync(cancellation.Token);
+            bool started = await WaitForFileAsync(initializeStartedPath, TimeSpan.FromSeconds(3));
+            Assert.True(started, "The owned MCP server must receive initialize before cancellation.");
+            int processId = int.Parse(await File.ReadAllTextAsync(Path.Combine(fixture, "process-id.txt")));
+            using Process ownedProcess = Process.GetProcessById(processId);
+            Assert.False(ownedProcess.HasExited);
+            cancellation.Cancel();
+
+            CodeGraphToolReadiness readiness = await pending.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Equal(CodeGraphToolReadinessStatus.Cancelled, readiness.Status);
+            await ownedProcess.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.True(ownedProcess.HasExited);
+        }
+        finally
+        {
+            Directory.Delete(fixture, recursive: true);
         }
     }
 
@@ -336,6 +373,7 @@ public sealed class NativeCodeGraphSessionOutcomeTests
         string serverPath = Path.Combine(fixture, "slow-server.ps1");
         await File.WriteAllTextAsync(serverPath, SlowMcpServerScript, new UTF8Encoding(false));
         string callStartedPath = Path.Combine(fixture, "call-started.txt");
+        string processIdPath = Path.Combine(fixture, "process-id.txt");
 
         try
         {
@@ -357,6 +395,9 @@ public sealed class NativeCodeGraphSessionOutcomeTests
 
             bool callStarted = await WaitForFileAsync(callStartedPath, TimeSpan.FromSeconds(3));
             Assert.True(callStarted, "The controlled native server must receive tools/call before caller cancellation.");
+            int processId = int.Parse(await File.ReadAllTextAsync(processIdPath));
+            using Process ownedProcess = Process.GetProcessById(processId);
+            Assert.False(ownedProcess.HasExited);
             cancellation.Cancel();
 
             CodeGraphToolInvocationResult cancelled = await pendingCall.WaitAsync(TimeSpan.FromSeconds(3));
@@ -367,6 +408,10 @@ public sealed class NativeCodeGraphSessionOutcomeTests
             Assert.Null(cancelled.Text);
             Assert.Empty(cancelled.Excerpts);
             Assert.Empty(cancelled.Locations);
+            await ownedProcess.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.True(ownedProcess.HasExited, "Caller cancellation must settle the owned MCP server process.");
+            Assert.False(File.Exists(Path.Combine(fixture, "call-finished.txt")),
+                "The cancelled server must not finish its delayed tool call.");
         }
         finally
         {
@@ -618,6 +663,7 @@ public sealed class NativeCodeGraphSessionOutcomeTests
         [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
         $callStartedPath = Join-Path $PSScriptRoot 'call-started.txt'
         $callFinishedPath = Join-Path $PSScriptRoot 'call-finished.txt'
+        [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot 'process-id.txt'), [string]$PID, [System.Text.Encoding]::ASCII)
         $source = 'public static class Story183QuotaProbe { public static int Value() => 184; }'
 
         while ($null -ne ($line = [Console]::In.ReadLine())) {
@@ -733,6 +779,7 @@ public sealed class NativeCodeGraphSessionOutcomeTests
         [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
         [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
         $initializeStartedPath = Join-Path $PSScriptRoot 'initialize-started.txt'
+        [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot 'process-id.txt'), [string]$PID, [System.Text.Encoding]::ASCII)
 
         while ($null -ne ($line = [Console]::In.ReadLine())) {
             $request = $line | ConvertFrom-Json

@@ -36,6 +36,8 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
     private bool _timedOut;
     private bool _disposed;
 
+    internal Task<ClientCompletionDetails>? Completion => _client?.Completion;
+
     internal NativeCodeGraphMcpClient(Guid repositoryId, string commandPath, string projectPath)
         : this(repositoryId, commandPath, projectPath, TimeProvider.System)
     {
@@ -307,6 +309,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
                     cancellationToken: operationCancellation.Token);
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    await CancelAsync();
                     return Outcome(CodeGraphToolInvocationStatus.Cancelled,
                         CodeGraphToolIssueCode.Cancelled);
                 }
@@ -336,6 +339,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
+                await CancelAsync();
                 return Outcome(CodeGraphToolInvocationStatus.Cancelled,
                     CodeGraphToolIssueCode.Cancelled);
             }
@@ -411,6 +415,17 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
         }
     }
 
+    private async Task CancelAsync()
+    {
+        _readiness = Failure(CodeGraphToolReadinessStatus.Cancelled,
+            CodeGraphToolStage.Invocation, CodeGraphToolIssueCode.Cancelled);
+        if (_client is not null)
+        {
+            await _client.DisposeAsync();
+            _client = null;
+        }
+    }
+
     private StdioClientTransport CreateTransport()
     {
         return new StdioClientTransport(CreateTransportOptions());
@@ -428,6 +443,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
                 WorkingDirectory = _connection.WorkingDirectory,
                 InheritEnvironmentVariables = false,
                 EnvironmentVariables = new Dictionary<string, string>(_connection.Environment),
+                ShutdownTimeout = TimeSpan.FromSeconds(1),
             };
         }
 
@@ -452,6 +468,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
             WorkingDirectory = _projectPath,
             InheritEnvironmentVariables = false,
             EnvironmentVariables = environment,
+            ShutdownTimeout = TimeSpan.FromSeconds(1),
         };
     }
 

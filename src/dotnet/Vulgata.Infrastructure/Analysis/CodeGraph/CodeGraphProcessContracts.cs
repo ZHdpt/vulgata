@@ -193,42 +193,39 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
             throw new InvalidOperationException("codegraph process failed to start");
         }
 
-        if (request.CloseStandardInput)
-        {
-            process.StandardInput.Close();
-        }
-
-        Task<byte[]> stdout = ReadBoundedAsync(
-            process.StandardOutput.BaseStream,
-            request.StandardOutputByteLimit,
-            cancellationToken);
-        Task<byte[]> stderr = ReadBoundedAsync(
-            process.StandardError.BaseStream,
-            request.StandardErrorByteLimit,
-            cancellationToken);
         using CancellationTokenSource timeout = new(request.Timeout);
         using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             timeout.Token);
-
+        Task<byte[]> stderr = Task.FromResult(Array.Empty<byte>());
         try
         {
+            if (request.CloseStandardInput)
+            {
+                process.StandardInput.Close();
+            }
+
+            Task<byte[]> stdout = ReadBoundedAsync(
+                process.StandardOutput.BaseStream,
+                request.StandardOutputByteLimit,
+                cancellationToken);
+            stderr = ReadBoundedAsync(
+                process.StandardError.BaseStream,
+                request.StandardErrorByteLimit,
+                cancellationToken);
+
             await process.WaitForExitAsync(linked.Token);
-            return new CodeGraphProcessResult(
-                process.ExitCode,
-                await stdout,
-                await stderr,
-                TimedOut: false);
+            return new CodeGraphProcessResult(process.ExitCode,
+                await stdout, await stderr, TimedOut: false);
         }
         catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
-            KillProcessTree(process);
-            await process.WaitForExitAsync(CancellationToken.None);
+            await KillAndWaitForExitAsync(process);
             return new CodeGraphProcessResult(-1, [], await IgnoreReadFailureAsync(stderr), TimedOut: true);
         }
         catch
         {
-            KillProcessTree(process);
+            await KillAndWaitForExitAsync(process);
             throw;
         }
     }
@@ -310,11 +307,13 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
         }
     }
 
-    private static void KillProcessTree(Process process)
+    private static async Task KillAndWaitForExitAsync(Process process)
     {
         if (!process.HasExited)
         {
             process.Kill(entireProcessTree: true);
         }
+
+        await process.WaitForExitAsync(CancellationToken.None);
     }
 }
