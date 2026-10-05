@@ -1,0 +1,41 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "checkpoint_id": "bmad-18-4-implement-20261005T113559Z-aef821",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "expected_parent": "4864f19921ef599736fd756b676e6bfe03b074bc",
+  "summary": "User-authorized test-only slimming: eight ordinary-Web starts consolidated into one preserving six legacy settings, ordinary login/anonymous authorization and all four former route absence assertions. Controlled37/37; runtime and remaining delivery gates remain paused/pending.",
+  "user_instruction": "Slim the tests as much as possible. Leave only necessary tests to close the story as fast as possible",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs",
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceApprovalApiTests.cs",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-21.json"
+  ],
+  "coverage_mapping": {
+    "six_legacy_setting_rows": "FormerWebAuthorityConfiguration_LeavesOrdinaryHostAvailableWithoutFormerRoutes supplies all six obsolete keys simultaneously and checks login/anonymous redirect.",
+    "two_route_only_tests": "Same consolidated test asserts both batch-activation and both prepared-source-approval routes absent.",
+    "distinct_accepted_obligations": "Current capture/reload, generator diagnostics, authority/source approval/revocation/cancellation, context/provider and database isolation tests remain unchanged. Known positive separate Identity and real provider-admin runtime gaps remain under T020/T029."
+  },
+  "test_hashes": {
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs": "1dd0e21767c07e09183888f30c8e693b47006fb82bf4e8d918b1f2105b81886b",
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceApprovalApiTests.cs": "7207f154199589997c2a40d1f595d378658edfa6d4ad703091feb8bc9d8c8442"
+  },
+  "run": "TestResults/isolation-6c691a6b3879456483b5f2d8b494c7b0",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~LlmProviderConfigTests|FullyQualifiedName~SystemLlmProviderOverrideTests|FullyQualifiedName~RoleSeedingAndAuthorizationTests|FullyQualifiedName~LoginLogoutTests'",
+  "build": { "errors": 0, "warnings": 8063, "qualification_limit": "Analyzer AD0001 warnings present; successful build is not clean-analyzer proof." },
+  "discovery": { "before": 3076, "after": 3069, "removed_duplicate_cases": 7 },
+  "counts": { "passed": 37, "failed": 0, "skipped": 0, "web_starts_before": 8, "web_starts_after": 1 },
+  "trx_sha256": "5a03c4c12d37453392c1de2f4845ba7d1f54bf9d140fbbabfd98ce0178b899c9",
+  "build_log_sha256": "68cd660f02c181d569c536efb1b4f998a7fdc57c34c746775a84ff99cf1aedc7",
+  "excluded_unrelated": [
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "unchanged": "Definition hashes, approved production, suite inventory, task markers23/30, recovery6/7, retained definition profile and historical evidence.",
+  "qualification": "Controlled SelfContained only; no PostgreSQL/E2E resources, no runtime qualification, no completion or gate waiver.",
+  "no_merge_push_rewrite": true
+}

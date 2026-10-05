@@ -103,7 +103,7 @@
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-4-implement-20261002T110709Z-e2dd51",
+    "checkpoint_id": "bmad-18-4-implement-20261005T113559Z-aef821",
     "commit_sha": null,
     "stage": "implement"
   },
@@ -159,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "9ec2a6fe17947a4cec9445f79255823ba6dfc1f1",
-    "git_identity_sha256": "6133fa52d897066f33ab92a81f3ba91647f4f95981c8b1888f3fb18ab0ac5d81",
-    "status_sha256": "6b785bf6cd93bd2124fbd76a4587b1315c6ae463503f9436ad44bc560e89f949",
-    "observed_at": "2026-10-02T11:10:57.2546480Z"
+    "head": "4864f19921ef599736fd756b676e6bfe03b074bc",
+    "git_identity_sha256": "c96bce6f3a2a59e6b230baaeab12b7ec374e5cb7ff37c88b9345efe00315575a",
+    "status_sha256": "1f1a729ef6e82974e167e4a1ee5f49067d09b0a61f456cb89ff361c00f6d1114",
+    "observed_at": "2026-10-05T11:31:50.2214293Z"
   },
   "recovery": {
     "action": "proceed",
@@ -187,8 +187,8 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "User requested pause at next safe checkpoint. Cleanup43/43 and compiled runtime tests saved in pending checkpoint20; all workers idle. No further dispatch/resources until explicit resume. Recovery6/7 and tasks23/30 unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/user-pause-safe-checkpoint-01.json"
+    "reason": "User-authorized test slimming complete: eight redundant Web starts consolidated to one; controlled37/37. Normal delivery/runtime remain paused at checkpoint21. Accepted scope/approvals, recovery6/7 and tasks23/30 unchanged.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/checkpoint-implementation-21.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
@@ -196,5 +196,5 @@
     "path": "specs/017-october-batch-setup/evidence/transitions/transition-0122-ordinary-web-definition-review-accepted.json",
     "sha256": "d337ee0e137eb25a642239d4e969f4e26b87511992ddd6adf134427dae024e15"
   },
-  "updated_at": "2026-10-02T11:10:57.2546480Z"
+  "updated_at": "2026-10-05T11:35:59.000Z"
 }

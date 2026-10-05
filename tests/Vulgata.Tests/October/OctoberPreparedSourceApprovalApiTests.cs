@@ -1,20 +1,25 @@
-using Vulgata.Tests;
-using Vulgata.Tests.TestInfrastructure;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Vulgata.Tests.October;
 
-public sealed class OctoberPreparedSourceApprovalApiTests
+internal static class OctoberLegacyAuthorityRoutes
 {
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task OrdinaryProgram_DoesNotExposeFormerPreparedSourceApprovalRoutes()
-    {
-        using LoginLogoutTests.CustomWebApplicationFactory factory = new();
-        using HttpClient client = factory.CreateClient();
+    public const string BatchActivationIssue = "/api/october-batch-activation-grants";
+    public const string BatchActivationValidation = "/api/october-batch-activation-grants/validations";
+    public const string PreparedSourceApprovalIssue = "/api/october-prepared-source-approvals";
+    public const string PreparedSourceApprovalVerification =
+        "/api/october-prepared-source-approvals/verifications";
 
-        OctoberLegacyAuthorityRoutes.AssertAbsent(
-            factory.Services,
-            OctoberLegacyAuthorityRoutes.PreparedSourceApprovalIssue,
-            OctoberLegacyAuthorityRoutes.PreparedSourceApprovalVerification);
+    public static void AssertAbsent(IServiceProvider services, params string[] paths)
+    {
+        string[] mappedRoutes = services.GetRequiredService<EndpointDataSource>()
+            .Endpoints
+            .OfType<RouteEndpoint>()
+            .Select(endpoint => endpoint.RoutePattern.RawText ?? string.Empty)
+            .ToArray();
+
+        foreach (string path in paths)
+            Assert.DoesNotContain(path, mappedRoutes);
     }
 }

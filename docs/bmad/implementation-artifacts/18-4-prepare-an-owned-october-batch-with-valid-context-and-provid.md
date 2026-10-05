@@ -47,6 +47,43 @@ administration coverage gaps under T020/T029, then qualify and finish all gates.
 Recovery6/7,23/30 task markers, current owners/approvals and historical evidence are
 unchanged. The user pause is not a workflow failure, waiver or completion.
 
+## Scoped test slimming (2026-10-05)
+
+The human requested: "Slim the tests as much as possible. Leave only necessary
+tests to close the story as fast as possible". This authorizes bounded test-only
+consolidation, not a waiver of accepted behavior or review/verification gates.
+Normal delivery, PostgreSQL/E2E resource acquisition and production changes remain
+paused. The unavailable retained test session is replaced in the same Luna/high
+test-owner role from current raw definition, accepted reviews and historical test
+evidence. Only October tests and necessary suite inventory edits are assigned;
+unrelated dirty files, definition/production artifacts and task markers are protected.
+The implement dispatch guard passed against checkpoint20 before this assignment.
+Recovery remains6/7 and approvals/definition ownership remain unchanged. Extra
+Build-time capture is still the current accepted plan: this request does not itself
+authorize deleting its production code or dropping its coverage. Consolidation must
+preserve source authority, context/provider provenance, exact selection, cancellation,
+ordinary Web and persistence isolation; real-runtime qualification remains pending.
+
+The test owner combined the six legacy-setting cases and two route-only startup
+cases into one ordinary-host test: eight Web starts become one. All six legacy
+keys, login availability, anonymous login redirect and all four retired route
+absence assertions remain. The existing route helper moved to the formerly
+route-only source file, whose suite inventory entry remains valid; no empty stub
+or deletion workaround remains. The accepted final-Build, setup-service absence,
+generator/current-authority/source/revocation/cancellation/context/provider and
+database isolation tests are unchanged. Further generator diagnostic cuts were
+rejected because the executable parser/credential/authority entrypoints protect
+distinct accepted behavior rather than duplicate controlled coverage.
+One current-source focused/surrounding SelfContained launcher run passed37/37,
+failed0/skipped0, execution11seconds, with policy/guard checks and successful build:
+`TestResults/isolation-6c691a6b3879456483b5f2d8b494c7b0`. TRX SHA256
+`5a03c4c12d37453392c1de2f4845ba7d1f54bf9d140fbbabfd98ce0178b899c9`;
+build-log SHA256 `68cd660f02c181d569c536efb1b4f998a7fdc57c34c746775a84ff99cf1aedc7`.
+Final assessment: coverage-preserving test consolidation; no production refactor,
+fabricated RED, scope change or qualification claim. This is not final verification
+or story closure. Normal delivery/runtime remain user-paused after checkpoint21;
+all required independent gates and pending T020/T029 qualification remain.
+
 ## Historical pre-correction boundary (2026-10-01)
 
 The later user authorization supersedes the historical plan-only restrictions below.
