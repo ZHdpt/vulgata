@@ -2,15 +2,15 @@
   "kind": "october-2-immediate-slice-process-exit-correction",
   "story": "18-3-use-native-codegraph-mcp-against-prepared-source",
   "scope": "T018-T023 only; earlier SKIP-current-slice tasks remain excluded",
-  "verified_at_utc": "2026-10-05T12:21:23Z",
+  "verified_at_utc": "2026-10-05T12:30:43Z",
   "changes": [
     "The preparation process runner now kills its owned process tree and waits for the launched process to exit on caller cancellation, deadline, and post-start failure.",
     "Cancellation of an active native codegraph_explore call now disposes the owned MCP client before returning Cancelled. The pinned SDK stdio transport has a one-second graceful shutdown bound before its forced termination path.",
     "The public returned-descriptor qualification now awaits the MCP SDK's exact stdio completion and requires a process ID and exit code after owner disposal."
   ],
   "verification": {
-    "local_tools": "Suite=LocalTools selected 4, passed 4, failed 0, skipped 0. This includes a real returned-descriptor CodeGraph initialize/list/call/disposal, controlled active-call and initialization cancellation with exact owned PID exit, and a cancelled init process whose exit is awaited.",
-    "local_tools_trx_sha256": "f5600848dd395747cd32d2143c8a548d254e50aae688a209913bfb630a6e1cd4",
+    "local_tools": "Suite=LocalTools selected 5, passed 5, failed 0, skipped 0. This includes real returned-descriptor CodeGraph initialize/list/call/disposal, a controlled active call through a factory-returned descriptor with exact owned PID exit on cancellation, independent active-call and initialization cancellation with exact owned PID exit, and a cancelled init process whose exit is awaited.",
+    "local_tools_trx_sha256": "2689bfec18dab460c2a05ae96135d9543e63d174c239a5d28cd56a0870d32ef5",
     "surrounding_native_sessions": "Suite=LocalTools selected 15, passed 15, failed 0, skipped 0 for NativeCodeGraphSessionOutcomeTests and NativeCodeGraphMcpClientTests.",
     "surrounding_native_sessions_trx_sha256": "2cda4fb240435fceedd4c31cd0b192151ffe7df66a35245e0a6fa5efb4165c66",
     "focused_self_contained": "Suite=SelfContained selected 44, passed 44, failed 0, skipped 0.",
@@ -20,7 +20,7 @@
     "web_build": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore exited 0 with 0 errors and 14 warnings."
   },
   "limits": [
-    "The controlled active-call, MCP initialization and init cancellation tests use test-owned PowerShell children; the returned-descriptor CodeGraph qualification exercises successful disposal and SDK-reported process completion, not cancellation during an actual CodeGraph call.",
+    "The active-call cancellation through a factory-returned descriptor and the independent MCP/init cancellation tests use controlled test-owned PowerShell children. The pinned CodeGraph returned-descriptor qualification exercises successful disposal and SDK-reported process completion, not cancellation during an actual CodeGraph call.",
     "The SDK completion identifies the launched stdio process. It is not a complete descendant-process or external filesystem/network effect trace.",
     "No general production Repository authority, Story 18.2 capability, ordinary-reader filtering, provider call, or full Story 18.3 completion is claimed."
   ]

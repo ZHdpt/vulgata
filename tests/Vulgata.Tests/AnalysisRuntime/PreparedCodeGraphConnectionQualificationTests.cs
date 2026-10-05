@@ -61,6 +61,58 @@ public sealed class PreparedCodeGraphConnectionQualificationTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task PreparedConnection_CancelledReturnedDescriptorCall_ExitsOwnedProcess()
+    {
+        string fixture = Path.Combine(Path.GetTempPath(),
+            "vulgata-story183-returned-cancellation-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(fixture);
+        string serverPath = Path.Combine(fixture, "controlled-codegraph.ps1");
+        await File.WriteAllTextAsync(serverPath, SlowReturnedDescriptorServerScript);
+        string callStartedPath = Path.Combine(fixture, "call-started.txt");
+
+        try
+        {
+            var factory = new PreparedCodeGraphConnectionFactory(serverPath,
+                new SeedOwnedIndexRunner(), static (_, _) => Task.CompletedTask);
+            await using PreparedCodeGraphConnection connection = await factory.PrepareAsync(
+                RepositoryId, fixture, CancellationToken.None);
+            ICodeGraphWorkerToolSession session = connection.OpenSession();
+            CodeGraphToolRegistration registration = await new CodeGraphFunctions(session)
+                .CreateAsync(CancellationToken.None);
+            Assert.True(registration.Readiness.IsReady);
+            AIFunction tool = Assert.Single(registration.Functions);
+            using var cancellation = new CancellationTokenSource();
+            Task<object?> pending = tool.InvokeAsync(new AIFunctionArguments(
+                new Dictionary<string, object?> { ["query"] = "owned cancellation" }),
+                cancellation.Token).AsTask();
+
+            for (int attempt = 0; attempt < 60 && !File.Exists(callStartedPath); attempt++)
+            {
+                await Task.Delay(50);
+            }
+
+            Assert.True(File.Exists(callStartedPath), "The returned-descriptor process must receive the native call.");
+            int processId = int.Parse(await File.ReadAllTextAsync(Path.Combine(fixture, "process-id.txt")));
+            using Process ownedProcess = Process.GetProcessById(processId);
+            Assert.False(ownedProcess.HasExited);
+            cancellation.Cancel();
+
+            CodeGraphToolInvocationResult cancelled = Assert.IsType<CodeGraphToolInvocationResult>(
+                await pending.WaitAsync(TimeSpan.FromSeconds(3)));
+            Assert.Equal(CodeGraphToolInvocationStatus.Cancelled, cancelled.Status);
+            Assert.Empty(cancelled.Excerpts);
+            await ownedProcess.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.True(ownedProcess.HasExited);
+            Assert.False(File.Exists(Path.Combine(fixture, "call-finished.txt")));
+        }
+        finally
+        {
+            Directory.Delete(fixture, recursive: true);
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedConnection_ReturnedDescriptor_InitializesDiscoversAndInvokesNativeTool()
     {
         Assert.True(File.Exists(CodeGraphCommandPath),
@@ -135,4 +187,68 @@ public sealed class PreparedCodeGraphConnectionQualificationTests
             Directory.Delete(fixture, recursive: true);
         }
     }
+
+    private sealed class SeedOwnedIndexRunner : ICodeGraphProcessRunner
+    {
+        public Task<CodeGraphProcessResult> RunAsync(
+            CodeGraphProcessRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            File.WriteAllText(Path.Combine(request.WorkingDirectory, ".codegraph", "codegraph.db"),
+                "controlled index");
+            return Task.FromResult(new CodeGraphProcessResult(0, [], [], TimedOut: false));
+        }
+    }
+
+    private const string SlowReturnedDescriptorServerScript = """
+        $ErrorActionPreference = 'Stop'
+        [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot 'process-id.txt'), [string]$PID)
+        while ($null -ne ($line = [Console]::In.ReadLine())) {
+            $request = $line | ConvertFrom-Json
+            $response = $null
+            if ($request.method -eq 'initialize') {
+                $response = @{
+                    jsonrpc = '2.0'; id = $request.id
+                    result = @{
+                        protocolVersion = $request.params.protocolVersion
+                        capabilities = @{ tools = @{} }
+                        serverInfo = @{ name = 'controlled-codegraph'; version = '1.5.0' }
+                    }
+                }
+            }
+            elseif ($request.method -eq 'tools/list') {
+                $response = @{
+                    jsonrpc = '2.0'; id = $request.id
+                    result = @{ tools = @(@{
+                        name = 'codegraph_explore'; description = 'Controlled native tool'
+                        inputSchema = @{
+                            type = 'object'
+                            properties = @{
+                                query = @{ type = 'string' }
+                                maxFiles = @{ type = 'number' }
+                                projectPath = @{ type = 'string' }
+                            }
+                            required = @('query')
+                        }
+                    }) }
+                }
+            }
+            elseif ($request.method -eq 'tools/call') {
+                [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot 'call-started.txt'), 'started')
+                Start-Sleep -Seconds 4
+                [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot 'call-finished.txt'), 'finished')
+                $response = @{
+                    jsonrpc = '2.0'; id = $request.id
+                    result = @{ content = @(@{ type = 'text'; text = 'late response' }) }
+                }
+            }
+            if ($null -ne $response) {
+                [Console]::Out.WriteLine(($response | ConvertTo-Json -Depth 16 -Compress))
+                [Console]::Out.Flush()
+            }
+        }
+        """;
 }
