@@ -1,0 +1,8 @@
+{
+  "suite": "LocalTools",
+  "controlledFilter": true,
+  "resultsRoot": "TestResults/isolation-2acf1e883ba84ba495721d8ef6ad59bf",
+  "testsExecuted": 0,
+  "classification": "Normal test-author compilation correction. New native fixture lacked Infrastructure.Source import and accessible tool-use authorizer. No product RED, workflow failure, or JDT launch.",
+  "sourceStabilityNote": "Test author added Xunit.Abstractions after initial source-safe handoff during build; root informed owner to hold after subsequent handoff until result."
+}

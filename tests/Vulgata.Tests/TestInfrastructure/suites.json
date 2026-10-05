@@ -329,6 +329,10 @@
     "suite": "LocalTools",
     "reason": "Human Story 18.2 instruction excludes dedicated JDT tests from basic suite; controlled and native evidence reported separately."
   },
+  "AnalysisRuntime/PreparedJdtLsDedicatedQualificationTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Runs the authorized real JDT-LS, Python bootstrap and Java process chain against an owned fixture; excluded from the basic suite."
+  },
   "AnalysisRuntime/PreparedJavaNavigationCompositionTests.cs": {
     "suite": "LocalTools",
     "reason": "Human Story 18.2 instruction excludes dedicated JDT navigation tests from basic suite; assertions preserved, explicit controlled qualification."

@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="b760d294-47c8-430d-bf5d-fb9a1c7a531f" name="13728@ZHDPT-ASUS-5 2026-10-05 21:23:46" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T21:23:46.5038873+08:00" queuing="2026-10-05T21:23:46.5038874+08:00" start="2026-10-05T21:23:44.4578121+08:00" finish="2026-10-05T21:23:46.5070341+08:00" />
+  <TestSettings name="default" id="2484a5e5-e891-4970-b2a2-66cd6ad71c2e">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-05_21_23_46" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="603f4baa-207b-43e8-983c-daee21d895f8" testId="f7cb0047-9490-02b4-ced4-2e712b968e3b" testName="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" computerName="ZHDPT-ASUS-5" duration="00:00:00.0709622" startTime="2026-10-05T21:23:46.3329206+08:00" endTime="2026-10-05T21:23:46.3848393+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="603f4baa-207b-43e8-983c-daee21d895f8">
+      <Output>
+        <StdOut>Read-only current-host resolver preflight: Rejected; pinned input count=0.&#xD;
+No-follow executable/runtime input C:\Users\13728\.local\bin\jdtls.bat: True.&#xD;
+No-follow executable/runtime input C:\Users\13728\.local\bin\python.exe: False.&#xD;
+No-follow executable/runtime input C:\Program Files\Common Files\Oracle\Java\javapath\java.exe: False.&#xD;
+No-follow executable/runtime input C:\WINDOWS\system32\cmd.exe: True.&#xD;
+No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\bin\jdtls: True.&#xD;
+No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\bin\jdtls.py: True.&#xD;
+No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\config_win\config.ini: True.&#xD;
+No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\plugins\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar: True.&#xD;
+No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\plugins\org.eclipse.jdt.ls.core_1.58.0.202605150919.jar: True.&#xD;
+No-follow executable/runtime input C:\Program Files\Java\jdk-27\bin\java.exe: True.&#xD;
+First-PATH Java parent attributes=Directory, ReparsePoint; linkTarget=C:\Program Files\Common Files\Oracle\Java\javapath_target_776515.</StdOut>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Pinned&#xD;
+Actual:   Rejected</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs:line 156&#xD;
+   at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs:line 290&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f7cb0047-9490-02b4-ced4-2e712b968e3b">
+      <Execution id="603f4baa-207b-43e8-983c-daee21d895f8" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests" name="OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f7cb0047-9490-02b4-ced4-2e712b968e3b" executionId="603f4baa-207b-43e8-983c-daee21d895f8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.16]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.35]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.37]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.46]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.46]       Expected: Pinned&#xD;
+[xUnit.net 00:00:01.46]       Actual:   Rejected&#xD;
+[xUnit.net 00:00:01.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.46]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs(156,0): at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess()&#xD;
+[xUnit.net 00:00:01.46]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs(290,0): at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess()&#xD;
+[xUnit.net 00:00:01.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.46]       Output:&#xD;
+[xUnit.net 00:00:01.46]         Read-only current-host resolver preflight: Rejected; pinned input count=0.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input C:\Users\13728\.local\bin\jdtls.bat: True.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input C:\Users\13728\.local\bin\python.exe: False.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input C:\Program Files\Common Files\Oracle\Java\javapath\java.exe: False.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input C:\WINDOWS\system32\cmd.exe: True.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\bin\jdtls: True.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\bin\jdtls.py: True.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\config_win\config.ini: True.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\plugins\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar: True.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\plugins\org.eclipse.jdt.ls.core_1.58.0.202605150919.jar: True.&#xD;
+[xUnit.net 00:00:01.46]         No-follow executable/runtime input C:\Program Files\Java\jdk-27\bin\java.exe: True.&#xD;
+[xUnit.net 00:00:01.46]         First-PATH Java parent attributes=Directory, ReparsePoint; linkTarget=C:\Program Files\Common Files\Oracle\Java\javapath_target_776515.&#xD;
+[xUnit.net 00:00:01.49]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-05T21:23:46.3867301+08:00">
+        <Text>[xUnit.net 00:00:01.46]     Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-05T21:23:46.4734102+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

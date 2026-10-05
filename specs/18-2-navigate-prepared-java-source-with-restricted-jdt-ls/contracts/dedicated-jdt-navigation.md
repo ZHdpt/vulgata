@@ -132,3 +132,34 @@ from basic SelfContained. The four dedicated JDT test files, including their con
 protocol cases, are classified LocalTools as whole units at the human's request;
 the shared fixture helper remains SelfContained and starts no native child. See the dated runtime authorization
 evidence. The old runner and skipped items remain frozen.
+
+
+### Bounded selected-command alias correction — 2026-10-05
+
+The human answered the bounded Java-junction question with “Use the first java you
+found”; the earlier explicit Python-bootstrap authorization remains applicable.
+Actual preflight proves Oracle Java's selected parent is a junction and selected
+Python is a file symbolic link. This adopts only local trusted-command target
+binding, preserving first running-host PATH selection and every source lease guard.
+No old workflow review/recovery cycle or skipped item resumes.
+
+Append optional `SelectedAliases` to the internal pinned-command record. Each
+`PreparedJdtSelectedExecutableAlias` binds selected absolute path, ordinary physical
+target, original PATH index and the accepted kind: selected Java parent junction or
+selected Python file symbolic link. Both selected and physical executable parent
+directories must be application-approved; physical targets are pinned no-follow,
+remain outside prepared source/state, and contain no further reparse traversal.
+Recheck each alias still binds the exact approved physical target immediately before
+start, then launch the pinned physical Python/Java paths. Unsupported/changed aliases
+refuse; no later PATH fallback. Pinning the physical target prevents a subsequent
+alias swap from redirecting execution. The junction object's identity itself is not
+a new shared contract. Oracle's registry delegation and inherited filesystem/network
+rights remain declared residuals; offline settings are not network confinement.
+
+Owned changes are limited to `JdtLsAnalysisAdapter.cs`,
+`PreparedJdtProcessLauncher.cs` and their existing dedicated test files. A focused
+owned-alias behavioral RED/GREEN must cover positive selection, physical pins and
+retarget refusal before the real T046 fixture/function/shutdown qualification.
+The exact Oracle physical target directory is explicitly included in the native
+application policy; Python's target is in the already-approved `.local/bin`.
+Ordinary 18.1 readers, the shared lease and 18.3 ownership remain unchanged.

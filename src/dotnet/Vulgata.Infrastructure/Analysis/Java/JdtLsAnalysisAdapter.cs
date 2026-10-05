@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Buffers.Binary;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json.Linq;
 using NewtonsoftJsonFormatting = Newtonsoft.Json.Formatting;
 using StreamJsonRpc;
@@ -166,6 +168,8 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
                 },
                 linked.Token);
             if (finalScope != PreparedToolWorkspaceCheckStatus.Current || rootIdentity is null ||
+                !PreparedJdtCommandResolver.AliasesCurrent(
+                    commands, _fixedHostPolicy, root, stateRoot) ||
                 !TryPinCommands(commands, pinnedFiles))
             {
                 throw new InvalidOperationException("jdt_pin_unavailable");
@@ -611,9 +615,21 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
                     return Rejected();
                 }
 
+                if (!TryResolveSelectedCommand(javaPath, javaIndex,
+                        PreparedJdtSelectedExecutableAliasKind.JavaParentJunction,
+                        request.FixedHostPolicy, preparedRoot, stateRoot,
+                        out string? physicalJava, out PreparedJdtSelectedExecutableAlias? javaAlias) ||
+                    !TryResolveSelectedCommand(pythonPath, pythonIndex,
+                        PreparedJdtSelectedExecutableAliasKind.PythonFileSymbolicLink,
+                        request.FixedHostPolicy, preparedRoot, stateRoot,
+                        out string? physicalPython, out PreparedJdtSelectedExecutableAlias? pythonAlias))
+                {
+                    return Rejected();
+                }
+
                 if (!TryDescribe(batchPath, index, out PreparedJdtPinnedFile? jdtPin) ||
-                    !TryDescribe(javaPath, javaIndex, out PreparedJdtPinnedFile? javaPin) ||
-                    !TryDescribe(pythonPath, pythonIndex, out PreparedJdtPinnedFile? pythonPin) ||
+                    !TryDescribe(physicalJava!, javaIndex, out PreparedJdtPinnedFile? javaPin) ||
+                    !TryDescribe(physicalPython!, pythonIndex, out PreparedJdtPinnedFile? pythonPin) ||
                     !TryDescribe(cmdPath, null, out PreparedJdtPinnedFile? cmdPin) ||
                     !TryDescribe(bootstrapPath, null, out PreparedJdtPinnedFile? bootstrapPin) ||
                     !TryDescribeRuntime(request.FixedHostPolicy.DeclaredRuntimeReadRoots,
@@ -623,10 +639,14 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
                     return Rejected();
                 }
 
+                PreparedJdtSelectedExecutableAlias[] aliases =
+                    new[] { javaAlias, pythonAlias }.OfType<PreparedJdtSelectedExecutableAlias>()
+                        .ToArray();
+
                 return Task.FromResult(new PreparedJdtCommandResolution(
                     PreparedJdtCommandResolutionStatus.Pinned,
                     new PreparedJdtPinnedCommands(jdtPin!, javaPin!, cmdPin!,
-                        pythonPin, bootstrapPin, runtimePins)));
+                        pythonPin, bootstrapPin, runtimePins, aliases)));
             }
         }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException or
@@ -661,6 +681,173 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
         !IsWithin(path, preparedRoot) && !IsWithin(path, stateRoot) &&
         IsApprovedDirectory(Path.GetDirectoryName(path)!,
             request.FixedHostPolicy.ApprovedExecutableDirectories);
+
+    internal static bool AliasesCurrent(PreparedJdtPinnedCommands commands,
+        PreparedJdtHostPolicy policy, string preparedRoot, string stateRoot)
+    {
+        if (commands.SelectedAliases is null)
+        {
+            return true;
+        }
+
+        if (commands.SelectedAliases.Count > 2 ||
+            commands.SelectedAliases.Select(alias => alias.Kind).Distinct().Count() !=
+                commands.SelectedAliases.Count)
+        {
+            return false;
+        }
+
+        foreach (PreparedJdtSelectedExecutableAlias alias in commands.SelectedAliases)
+        {
+            if (!TryResolveSelectedCommand(alias.SelectedAbsolutePath,
+                    alias.FirstPathEntryIndex, alias.Kind, policy, preparedRoot, stateRoot,
+                    out string? actual, out PreparedJdtSelectedExecutableAlias? observed) ||
+                observed != alias ||
+                !string.Equals(actual, alias.PhysicalAbsolutePath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            PreparedJdtPinnedFile pin = alias.Kind ==
+                    PreparedJdtSelectedExecutableAliasKind.JavaParentJunction
+                ? commands.JavaCommand : commands.PythonCommand!;
+            if (pin is null || pin.FirstPathEntryIndex != alias.FirstPathEntryIndex ||
+                !string.Equals(pin.CanonicalAbsolutePath, alias.PhysicalAbsolutePath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryResolveSelectedCommand(string selectedPath, int index,
+        PreparedJdtSelectedExecutableAliasKind kind, PreparedJdtHostPolicy policy,
+        string preparedRoot, string stateRoot,
+        out string? physicalPath, out PreparedJdtSelectedExecutableAlias? alias)
+    {
+        physicalPath = null;
+        alias = null;
+        if (index < 0 || !Path.IsPathFullyQualified(selectedPath))
+        {
+            return false;
+        }
+
+        string selected = Path.GetFullPath(selectedPath);
+        string selectedDirectory = Path.GetDirectoryName(selected)!;
+        if (!IsApprovedDirectory(selectedDirectory, policy.ApprovedExecutableDirectories) ||
+            IsWithin(selected, preparedRoot) || IsWithin(selected, stateRoot))
+        {
+            return false;
+        }
+
+        if (kind == PreparedJdtSelectedExecutableAliasKind.JavaParentJunction &&
+            (File.GetAttributes(selectedDirectory) & FileAttributes.ReparsePoint) != 0)
+        {
+            if (!HasReparseTag(selectedDirectory, directory: true, 0xA0000003))
+            {
+                return false;
+            }
+
+            FileSystemInfo? resolved = new DirectoryInfo(selectedDirectory)
+                .ResolveLinkTarget(returnFinalTarget: false);
+            if (resolved is not DirectoryInfo targetDirectory ||
+                (targetDirectory.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                return false;
+            }
+
+            physicalPath = Path.GetFullPath(Path.Combine(targetDirectory.FullName,
+                Path.GetFileName(selected)));
+            alias = new PreparedJdtSelectedExecutableAlias(selected, physicalPath, index, kind);
+        }
+        else if (kind == PreparedJdtSelectedExecutableAliasKind.PythonFileSymbolicLink &&
+            (File.GetAttributes(selected) & FileAttributes.ReparsePoint) != 0)
+        {
+            if (!HasReparseTag(selected, directory: false, 0xA000000C))
+            {
+                return false;
+            }
+
+            FileSystemInfo? resolved = new FileInfo(selected)
+                .ResolveLinkTarget(returnFinalTarget: false);
+            if (resolved is not FileInfo targetFile ||
+                (targetFile.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                return false;
+            }
+
+            physicalPath = Path.GetFullPath(targetFile.FullName);
+            alias = new PreparedJdtSelectedExecutableAlias(selected, physicalPath, index, kind);
+        }
+        else
+        {
+            physicalPath = selected;
+        }
+
+        return !IsWithin(physicalPath, preparedRoot) &&
+            !IsWithin(physicalPath, stateRoot) &&
+            IsApprovedDirectory(Path.GetDirectoryName(physicalPath)!,
+                policy.ApprovedExecutableDirectories) &&
+            (File.GetAttributes(physicalPath) & FileAttributes.ReparsePoint) == 0;
+    }
+
+    private static bool HasReparseTag(string path, bool directory, uint expectedTag)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return false;
+        }
+
+        string? parent = Path.GetDirectoryName(path);
+        if (parent is null)
+        {
+            return false;
+        }
+
+        (PreparedSourceTraversal.OpenStatus parentStatus, SafeFileHandle? heldParent) =
+            PreparedSourceTraversal.OpenRoot(parent);
+        using (heldParent)
+        {
+            if (parentStatus != PreparedSourceTraversal.OpenStatus.Opened || heldParent is null)
+            {
+                return false;
+            }
+
+            const uint fileReadAttributes = 0x80;
+            const uint shareReadWriteDelete = 0x7;
+            const uint openExisting = 3;
+            const uint openReparsePoint = 0x00200000;
+            const uint backupSemantics = 0x02000000;
+            using SafeFileHandle link = CreateFileW(path, fileReadAttributes,
+                shareReadWriteDelete, IntPtr.Zero, openExisting,
+                openReparsePoint | (directory ? backupSemantics : 0), IntPtr.Zero);
+            if (link.IsInvalid)
+            {
+                return false;
+            }
+
+            const int fileAttributeTagInfo = 9;
+            byte[] information = new byte[8];
+            return GetFileInformationByHandleEx(link, fileAttributeTagInfo,
+                    information, (uint)information.Length) &&
+                BinaryPrimitives.ReadUInt32LittleEndian(information.AsSpan(4)) == expectedTag;
+        }
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern SafeFileHandle CreateFileW(
+        string fileName, uint desiredAccess, uint shareMode,
+        IntPtr securityAttributes, uint creationDisposition,
+        uint flagsAndAttributes, IntPtr templateFile);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandleEx(
+        SafeFileHandle file, int fileInformationClass,
+        [Out] byte[] fileInformation, uint bufferSize);
 
     private static (string? Path, int Index) FindFirst(string[] entries, string fileName)
     {
@@ -809,7 +996,20 @@ internal sealed record PreparedJdtPinnedCommands(
     PreparedJdtPinnedFile? FixedInterpreter,
     PreparedJdtPinnedFile? PythonCommand = null,
     PreparedJdtPinnedFile? BootstrapScript = null,
-    IReadOnlyList<PreparedJdtPinnedFile>? RuntimeInputs = null);
+    IReadOnlyList<PreparedJdtPinnedFile>? RuntimeInputs = null,
+    IReadOnlyList<PreparedJdtSelectedExecutableAlias>? SelectedAliases = null);
+
+internal enum PreparedJdtSelectedExecutableAliasKind
+{
+    JavaParentJunction,
+    PythonFileSymbolicLink,
+}
+
+internal sealed record PreparedJdtSelectedExecutableAlias(
+    string SelectedAbsolutePath,
+    string PhysicalAbsolutePath,
+    int FirstPathEntryIndex,
+    PreparedJdtSelectedExecutableAliasKind Kind);
 
 internal sealed record PreparedJdtFileIdentity(
     uint VolumeSerialNumber,

@@ -5104,6 +5104,304 @@ public sealed class JdtLsPreparedNavigationTests
     }
 
     [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task PreparedJdtCommandResolver_WhenFirstJavaAndPythonAreApprovedAliases_PinsAndRechecksSelectedChain()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string stateRoot = Path.Combine(fixture.SiblingPath, "resolver-alias-state");
+        string jdtDirectory = Path.Combine(fixture.SiblingPath, "resolver-alias-jdt");
+        string javaAliasDirectory = Path.Combine(fixture.SiblingPath, "resolver-alias-java");
+        string javaTargetDirectory = Path.Combine(fixture.SiblingPath, "resolver-physical-java");
+        string replacementJavaDirectory = Path.Combine(fixture.SiblingPath, "resolver-replacement-java");
+        string pythonDirectory = Path.Combine(fixture.SiblingPath, "resolver-alias-python");
+        string cmdDirectory = Path.Combine(fixture.SiblingPath, "resolver-alias-cmd");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "resolver-alias-runtime");
+        string runtimeBin = Path.Combine(runtimeRoot, "bin");
+        string runtimeConfiguration = Path.Combine(runtimeRoot, "config_win");
+        string runtimePlugins = Path.Combine(runtimeRoot, "plugins");
+        foreach (string directory in new[]
+        {
+            stateRoot,
+            jdtDirectory,
+            javaTargetDirectory,
+            replacementJavaDirectory,
+            pythonDirectory,
+            cmdDirectory,
+            runtimeBin,
+            runtimeConfiguration,
+            runtimePlugins,
+        })
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string jdtCommandPath = Path.Combine(jdtDirectory, "jdtls.bat");
+        string bootstrapPath = Path.Combine(runtimeBin, "jdtls");
+        string pythonModulePath = Path.Combine(runtimeBin, "jdtls.py");
+        string configPath = Path.Combine(runtimeConfiguration, "config.ini");
+        string launcherPath = Path.Combine(runtimePlugins, "org.eclipse.equinox.launcher_1.0.0.jar");
+        string physicalJavaPath = Path.Combine(javaTargetDirectory, "java.exe");
+        string replacementJavaPath = Path.Combine(replacementJavaDirectory, "java.exe");
+        string selectedJavaPath = Path.Combine(javaAliasDirectory, "java.exe");
+        string physicalPythonPath = Path.Combine(pythonDirectory, "python3.15.exe");
+        string selectedPythonPath = Path.Combine(pythonDirectory, "python.exe");
+        string cmdPath = Path.Combine(cmdDirectory, "cmd.exe");
+        await CreateDirectoryJunctionAsync(javaAliasDirectory, javaTargetDirectory);
+        File.CreateSymbolicLink(selectedPythonPath, physicalPythonPath);
+        await File.WriteAllTextAsync(jdtCommandPath, $"@echo off\r\npython \"{bootstrapPath}\" %*\r\n");
+        await File.WriteAllTextAsync(bootstrapPath, "controlled alias bootstrap fixture\n");
+        await File.WriteAllTextAsync(pythonModulePath, "controlled alias module fixture\n");
+        await File.WriteAllTextAsync(configPath, "controlled alias config fixture\n");
+        await File.WriteAllTextAsync(launcherPath, "controlled alias launcher fixture\n");
+        await File.WriteAllTextAsync(physicalJavaPath, "controlled physical Java target fixture\n");
+        await File.WriteAllTextAsync(replacementJavaPath, "controlled replacement Java target fixture\n");
+        await File.WriteAllTextAsync(physicalPythonPath, "controlled physical Python target fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+
+        Assert.True((File.GetAttributes(javaAliasDirectory) & FileAttributes.ReparsePoint) != 0,
+            "The selected Java executable's PATH parent must be the controlled junction.");
+        Assert.True((File.GetAttributes(selectedPythonPath) & FileAttributes.ReparsePoint) != 0,
+            "The selected Python executable must be a controlled file symbolic link.");
+        Assert.Equal(Path.GetFullPath(javaTargetDirectory),
+            Path.GetFullPath(new DirectoryInfo(javaAliasDirectory).ResolveLinkTarget(returnFinalTarget: true)!.FullName));
+        Assert.Equal(Path.GetFullPath(physicalPythonPath),
+            Path.GetFullPath(new FileInfo(selectedPythonPath).ResolveLinkTarget(returnFinalTarget: true)!.FullName));
+
+        string[] approvedDirectories =
+        [jdtDirectory, javaAliasDirectory, javaTargetDirectory, replacementJavaDirectory,
+            pythonDirectory, cmdDirectory];
+        var hostPolicy = new PreparedJdtHostPolicy(
+            approvedDirectories,
+            [runtimeRoot],
+            cmdPath,
+            [jdtDirectory, javaAliasDirectory, pythonDirectory, cmdDirectory]);
+        var request = new PreparedJdtCommandRequest(
+            string.Join(Path.PathSeparator, jdtDirectory, javaAliasDirectory, pythonDirectory, cmdDirectory),
+            fixture.PreparedRootPath,
+            stateRoot,
+            hostPolicy);
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Pinned, resolution.Status);
+        PreparedJdtPinnedCommands commands = Assert.IsType<PreparedJdtPinnedCommands>(resolution.Commands);
+        await AssertPinnedCommandAsync(commands.JavaCommand, physicalJavaPath, expectedPathIndex: 1);
+        await AssertPinnedCommandAsync(commands.PythonCommand, physicalPythonPath, expectedPathIndex: 2);
+        IReadOnlyList<PreparedJdtSelectedExecutableAlias> aliases = Assert.IsAssignableFrom<
+            IReadOnlyList<PreparedJdtSelectedExecutableAlias>>(commands.SelectedAliases);
+        Assert.Contains(aliases, alias =>
+            alias.SelectedAbsolutePath == Path.GetFullPath(selectedJavaPath) &&
+            alias.PhysicalAbsolutePath == Path.GetFullPath(physicalJavaPath) &&
+            alias.FirstPathEntryIndex == 1 &&
+            alias.Kind == PreparedJdtSelectedExecutableAliasKind.JavaParentJunction);
+        Assert.Contains(aliases, alias =>
+            alias.SelectedAbsolutePath == Path.GetFullPath(selectedPythonPath) &&
+            alias.PhysicalAbsolutePath == Path.GetFullPath(physicalPythonPath) &&
+            alias.FirstPathEntryIndex == 2 &&
+            alias.Kind == PreparedJdtSelectedExecutableAliasKind.PythonFileSymbolicLink);
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+        var launcher = new RecordingPreparedJdtProcessLauncher();
+        var protocols = new RecordingPreparedJdtProtocolFactory();
+        var runtime = new PreparedJdtLsRuntime(
+            new RecordingPreparedJdtCommandResolver(commands),
+            launcher,
+            protocols,
+            hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+
+        try
+        {
+            Directory.Delete(javaAliasDirectory);
+            await CreateDirectoryJunctionAsync(javaAliasDirectory, replacementJavaDirectory);
+
+            PreparedJdtLsOpenFailureException failure = await Assert.ThrowsAsync<
+                PreparedJdtLsOpenFailureException>(async () =>
+                    await runtime.OpenAsync(lease, profile));
+
+            Assert.Equal(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable, failure.Status);
+            Assert.True(failure.CleanupConfirmed);
+            Assert.Equal(0, launcher.CallCount);
+            Assert.Equal(0, protocols.CallCount);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task PreparedJdtCommandResolver_WhenFirstPythonAliasChainsThroughAnotherLink_RejectsWithoutLaterFallback()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string stateRoot = Path.Combine(fixture.SiblingPath, "resolver-python-chain-state");
+        string jdtDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-chain-jdt");
+        string javaDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-chain-java");
+        string pythonDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-chain-selected");
+        string physicalDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-chain-physical");
+        string fallbackDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-chain-fallback");
+        string cmdDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-chain-cmd");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "resolver-python-chain-runtime");
+        foreach (string directory in new[]
+        {
+            stateRoot, jdtDirectory, javaDirectory, pythonDirectory, physicalDirectory,
+            fallbackDirectory, cmdDirectory, Path.Combine(runtimeRoot, "bin"),
+            Path.Combine(runtimeRoot, "config_win"), Path.Combine(runtimeRoot, "plugins"),
+        })
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string bootstrapPath = Path.Combine(runtimeRoot, "bin", "jdtls");
+        string selectedPython = Path.Combine(pythonDirectory, "python.exe");
+        string intermediatePython = Path.Combine(pythonDirectory, "python-physical-link.exe");
+        string physicalPython = Path.Combine(physicalDirectory, "python3.15.exe");
+        string fallbackPython = Path.Combine(fallbackDirectory, "python.exe");
+        string javaPath = Path.Combine(javaDirectory, "java.exe");
+        string cmdPath = Path.Combine(cmdDirectory, "cmd.exe");
+        await File.WriteAllTextAsync(Path.Combine(jdtDirectory, "jdtls.bat"),
+            $"@echo off\r\npython \"{bootstrapPath}\" %*\r\n");
+        await File.WriteAllTextAsync(bootstrapPath, "controlled chain bootstrap fixture\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "bin", "jdtls.py"), "module\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "config_win", "config.ini"), "config\n");
+        await File.WriteAllTextAsync(
+            Path.Combine(runtimeRoot, "plugins", "org.eclipse.equinox.launcher_1.0.0.jar"), "launcher\n");
+        await File.WriteAllTextAsync(javaPath, "approved Java candidate\n");
+        await File.WriteAllTextAsync(physicalPython, "approved physical Python candidate\n");
+        await File.WriteAllTextAsync(fallbackPython, "approved later Python fallback\n");
+        await File.WriteAllTextAsync(cmdPath, "approved cmd fixture\n");
+        File.CreateSymbolicLink(intermediatePython, physicalPython);
+        File.CreateSymbolicLink(selectedPython, intermediatePython);
+
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [jdtDirectory, javaDirectory, pythonDirectory, physicalDirectory, fallbackDirectory, cmdDirectory],
+            [runtimeRoot],
+            cmdPath,
+            [jdtDirectory, javaDirectory, pythonDirectory, physicalDirectory, fallbackDirectory, cmdDirectory]);
+        var request = new PreparedJdtCommandRequest(
+            string.Join(Path.PathSeparator,
+                jdtDirectory, javaDirectory, pythonDirectory, fallbackDirectory, cmdDirectory),
+            fixture.PreparedRootPath,
+            stateRoot,
+            hostPolicy);
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Rejected, resolution.Status);
+        Assert.Null(resolution.Commands);
+        Assert.True((File.GetAttributes(selectedPython) & FileAttributes.ReparsePoint) != 0);
+        Assert.True((File.GetAttributes(intermediatePython) & FileAttributes.ReparsePoint) != 0);
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task PreparedJdtCommandResolver_WhenFirstJavaParentIsSymbolicLinkInsteadOfJunction_RejectsWithoutFallback()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string stateRoot = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-state");
+        string jdtDirectory = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-jdt");
+        string javaAliasDirectory = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-alias");
+        string javaTargetDirectory = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-target");
+        string fallbackJavaDirectory = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-fallback");
+        string pythonDirectory = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-python");
+        string cmdDirectory = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-cmd");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "resolver-java-link-kind-runtime");
+        foreach (string directory in new[]
+        {
+            stateRoot, jdtDirectory, javaTargetDirectory, fallbackJavaDirectory,
+            pythonDirectory, cmdDirectory, Path.Combine(runtimeRoot, "bin"),
+            Path.Combine(runtimeRoot, "config_win"), Path.Combine(runtimeRoot, "plugins"),
+        })
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string bootstrapPath = Path.Combine(runtimeRoot, "bin", "jdtls");
+        string physicalJava = Path.Combine(javaTargetDirectory, "java.exe");
+        string fallbackJava = Path.Combine(fallbackJavaDirectory, "java.exe");
+        string pythonPath = Path.Combine(pythonDirectory, "python.exe");
+        string cmdPath = Path.Combine(cmdDirectory, "cmd.exe");
+        Directory.CreateSymbolicLink(javaAliasDirectory, javaTargetDirectory);
+        await File.WriteAllTextAsync(Path.Combine(jdtDirectory, "jdtls.bat"),
+            $"@echo off\r\npython \"{bootstrapPath}\" %*\r\n");
+        await File.WriteAllTextAsync(bootstrapPath, "controlled link-kind bootstrap fixture\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "bin", "jdtls.py"), "module\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "config_win", "config.ini"), "config\n");
+        await File.WriteAllTextAsync(
+            Path.Combine(runtimeRoot, "plugins", "org.eclipse.equinox.launcher_1.0.0.jar"), "launcher\n");
+        await File.WriteAllTextAsync(physicalJava, "approved physical Java target\n");
+        await File.WriteAllTextAsync(fallbackJava, "approved later Java candidate\n");
+        await File.WriteAllTextAsync(pythonPath, "approved Python candidate\n");
+        await File.WriteAllTextAsync(cmdPath, "approved cmd fixture\n");
+
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [jdtDirectory, javaAliasDirectory, javaTargetDirectory, fallbackJavaDirectory, pythonDirectory, cmdDirectory],
+            [runtimeRoot],
+            cmdPath,
+            [jdtDirectory, javaAliasDirectory, fallbackJavaDirectory, pythonDirectory, cmdDirectory]);
+        var request = new PreparedJdtCommandRequest(
+            string.Join(Path.PathSeparator,
+                jdtDirectory, javaAliasDirectory, fallbackJavaDirectory, pythonDirectory, cmdDirectory),
+            fixture.PreparedRootPath,
+            stateRoot,
+            hostPolicy);
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Rejected, resolution.Status);
+        Assert.Null(resolution.Commands);
+        Assert.True((File.GetAttributes(javaAliasDirectory) & FileAttributes.ReparsePoint) != 0);
+        Assert.Equal(Path.GetFullPath(javaTargetDirectory),
+            Path.GetFullPath(new DirectoryInfo(javaAliasDirectory).ResolveLinkTarget(returnFinalTarget: true)!.FullName));
+    }
+
+    private static async Task CreateDirectoryJunctionAsync(string junctionPath, string targetPath)
+    {
+        var start = new ProcessStartInfo
+        {
+            FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+        };
+        // cmd.exe applies its own /c quoting rules, so pass the raw quoted command line
+        // instead of allowing ArgumentList to escape inner quotes for the CRT parser.
+        start.Arguments = $"/d /c mklink /J \"{junctionPath}\" \"{targetPath}\"";
+        using Process process = Process.Start(start) ??
+            throw new InvalidOperationException("controlled_junction_helper_start_failed");
+        await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+        string error = await process.StandardError.ReadToEndAsync();
+        Assert.True(process.ExitCode == 0 && Directory.Exists(junctionPath),
+            $"The owned LocalTools fixture must create its junction before resolver assertions; exit={process.ExitCode}; error={error}");
+    }
+
+    [Trait("Suite", "LocalTools")]
     [SuiteTheory("LocalTools")]
     [InlineData("first-java")]
     [InlineData("first-python")]

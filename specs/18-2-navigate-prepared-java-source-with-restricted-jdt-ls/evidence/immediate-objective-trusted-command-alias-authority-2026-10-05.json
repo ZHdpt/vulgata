@@ -1,0 +1,12 @@
+{
+  "humanSource": "Direct reply to bounded Java alias binding question: Use the first java you found",
+  "relatedHumanSource": "Earlier direct instruction: Allow this python bootstrap. You can safely assume python is on the path; runtime authority within current story.",
+  "decision": "Retain actualfirst PATH Java/Python. Adopt local JDT-only positive alias bindings with explicit physicaltarget approval/pinning and immediate prelaunch alias-target recheck. No latercandidate fallback.",
+  "javaAlias": "C:/Program Files/Common Files/Oracle/Java/javapath/java.exe",
+  "javaPhysicalTarget": "C:/Program Files/Common Files/Oracle/Java/javapath_target_776515/java.exe",
+  "pythonAlias": "C:/Users/13728/.local/bin/python.exe",
+  "pythonPhysicalTarget": "C:/Users/13728/.local/bin/python3.15.exe",
+  "evidence": "TryDescribe selectedJava=False and selectedPython=False; other commands/JDT components/directJDK=True in phase14attempt04; metadata confirms parentjunction/filelink.",
+  "limits": "FirstJava reply applies to proposed narrow Java seam. Pythonfile targetbinding preserves alreadyexplicitly authorized inspected bootstrap. Ordinarysource/lease guards, physical targetnofollow pins, original PATHindex, separatelypinnedJDK and stated registry/filesystem/networkresiduals remain. No oldtasks/workflow/models/counters changed.",
+  "verificationRequired": "Controlledowned aliases behaviorRED/GREEN plus actualnativefunctions+shutdown before completion."
+}

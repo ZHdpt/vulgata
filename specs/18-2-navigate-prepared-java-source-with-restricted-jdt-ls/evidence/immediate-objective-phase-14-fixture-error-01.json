@@ -1,0 +1,9 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-34184c5b8bb84e5bb149630f7bdf8da8/results.trx",
+  "nativeJdtLaunched": false,
+  "classification": "Fixture invalid four-minute grant denied by existing thirty-second PreparedSourceGrantLimits.Default deadline. Not native product RED.",
+  "correction": "Use existing maximum thirty-second grant; preserve lease/source contract and bounded runtime settings. If actual qualification requires longer authority, report genuine blocker rather than weaken contract."
+}

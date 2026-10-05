@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="c855dffc-3322-443e-9908-865722c487d7" name="13728@ZHDPT-ASUS-5 2026-10-05 21:19:24" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T21:19:24.0706637+08:00" queuing="2026-10-05T21:19:24.0706639+08:00" start="2026-10-05T21:19:22.1837900+08:00" finish="2026-10-05T21:19:24.0736420+08:00" />
+  <TestSettings name="default" id="658e21cd-bec6-4969-b727-ca203b6b7672">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-05_21_19_24" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="effc5112-d49c-4ecf-8e7f-02146b94554e" testId="f7cb0047-9490-02b4-ced4-2e712b968e3b" testName="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" computerName="ZHDPT-ASUS-5" duration="00:00:00.0402301" startTime="2026-10-05T21:19:23.9240113+08:00" endTime="2026-10-05T21:19:23.9437781+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="effc5112-d49c-4ecf-8e7f-02146b94554e">
+      <Output>
+        <StdOut>Read-only current-host resolver preflight: Rejected; pinned input count=0.</StdOut>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Pinned&#xD;
+Actual:   Rejected</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs:line 120&#xD;
+   at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs:line 254&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f7cb0047-9490-02b4-ced4-2e712b968e3b">
+      <Execution id="effc5112-d49c-4ecf-8e7f-02146b94554e" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests" name="OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f7cb0047-9490-02b4-ced4-2e712b968e3b" executionId="effc5112-d49c-4ecf-8e7f-02146b94554e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.16]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.23]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.25]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.32]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.32]       Expected: Pinned&#xD;
+[xUnit.net 00:00:01.32]       Actual:   Rejected&#xD;
+[xUnit.net 00:00:01.32]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.32]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs(120,0): at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess()&#xD;
+[xUnit.net 00:00:01.32]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs(254,0): at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess()&#xD;
+[xUnit.net 00:00:01.32]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.32]       Output:&#xD;
+[xUnit.net 00:00:01.32]         Read-only current-host resolver preflight: Rejected; pinned input count=0.&#xD;
+[xUnit.net 00:00:01.33]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-05T21:19:23.9456576+08:00">
+        <Text>[xUnit.net 00:00:01.32]     Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-05T21:19:24.0251961+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
