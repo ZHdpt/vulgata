@@ -1,5 +1,10 @@
 # Feature Specification: Navigate Prepared Java Source with Restricted JDT-LS
 
+> **Current correction (2026-10-02):** The former workflow is stopped. Use the appended
+> immediate-objective correction and [correction status](immediate-objective-correction.md).
+> Earlier scope/items remain preserved; old unchecked tasks are [SKIP]. Implementation
+> and native execution remain paused; old approvals do not authorize the new path.
+
 **Feature Branch**: `codex/18-2-plan`
 **Created**: 2026-09-29
 **Status**: Draft
@@ -113,3 +118,43 @@ As a source-analysis operator, I want time-bounded navigation with clear failure
 - Story 18.3 owns its CodeGraph adapter, index and sessions and the agreed ordinary-reader repair so generated `.codegraph` state does not consume or distort Story 18.1 list/read/search coverage or continuations. Story 18.2 owns only the shared trusted workspace capability and its verification; Story 18.1's public read contract remains unchanged.
 - The user-authorized direct route for Story 18.3's trusted pinned CodeGraph child inherits host filesystem rights and makes no preventive OS write-denial claim. The shared authority's controlled checks do not qualify native behavior. Story 18.3 must separately observe native writes and unchanged source, configuration and hooks, stop readiness on out-of-footprint effects, and report the remaining host-rights risk and any network behavior without treating this exception as a Worker, JDT-LS or general process permission.
 - This story adds no other LSP, dependency-aware import/restore, Docker packaging, UI, management CLI or CodeGraph implementation. The broader architecture's Docker target remains authoritative outside this October story's host qualification.
+
+
+## Immediate-objective correction — 2026-10-02
+
+This additive correction follows the direct human instruction to stop the previous
+workflow, retain existing items and generate corrected plan/tasks in this feature.
+It is the current planning scope for the new items. Earlier requirements and
+acceptance/evidence remain preserved at commit `3e518de0`; conflicting full-integration
+requirements are deferred from this slice, not satisfied or deleted. The old story
+is not complete. Implementation and native execution remain paused.
+
+**Immediate objective:** Given an application-selected dedicated prepared Java
+Repository, initialize the pinned JDT-LS over the whole root in the agreed temporary
+offline configuration, return a disposable definition/reference navigation context,
+and expose its methods through the existing Microsoft Agent Framework-compatible
+function adapter. Root selection, startup, executable policy and disposal remain
+application-controlled.
+
+- **IO-R01 (US1):** Whole prepared Repository is `rootUri` and the workspace folder;
+  writable data, Equinox configuration, temp and profile state stay outside source.
+- **IO-R02 (US1):** Maven/Gradle import, build and dependency restoration stay disabled.
+  These settings are not enforced filesystem or network isolation.
+- **IO-R03 (US1):** A real pinned server must return useful definition and reference
+  results, as contained Repository-relative locations, through the function adapter.
+- **IO-R04 (US2):** Application supplies the current exact-purpose root lease; tools
+  retain only relative path, one-based line/character and bounded location arguments.
+  Preserve current authority/root checks, raw-URI validation and sanitized failures.
+- **IO-R05 (US3):** Keep cancellation, bounded initialization/request/shutdown,
+  process/session ownership, serialized requests and cleanup uncertainty reporting.
+- **IO-R06:** The new dedicated-source-only entry point must not require CodeGraph
+  ledger, registry, restart/adoption or cross-process cleanup machinery. It may not
+  silently bypass the existing CodeGraph-aware entry point or its guards. No concurrent
+  CodeGraph preparation/cache mutation is supported in this session's root.
+- **IO-R07:** Trusted direct-child JDT execution is a proposed, pending human exception.
+  The approved CodeGraph exception is not JDT authority. Without explicit JDT scope
+  and separate execution permission, the new production launch path remains closed.
+- **IO-R08:** Completion evidence for this slice includes real-server initialization,
+  expected definition and reference anchors on an owned Java fixture, actual `AIFunction`
+  invocation, session shutdown/process exit and unchanged source. Controlled protocol
+  tests alone cannot satisfy it. No full mixed-root or old-story completion follows.

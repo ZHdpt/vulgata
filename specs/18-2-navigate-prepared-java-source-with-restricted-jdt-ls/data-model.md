@@ -1,5 +1,10 @@
 # Navigation Data and Lifetime Model
 
+> **Current correction (2026-10-02):** The former workflow is stopped. Use the appended
+> immediate-objective correction and [correction status](immediate-objective-correction.md).
+> Earlier scope/items remain preserved; old unchecked tasks are [SKIP]. Implementation
+> and native execution remain paused; old approvals do not authorize the new path.
+
 Navigation records bind to integrated Story 18.1 source identity and authorization without changing its public read issuer, context, functions or result envelope. Story 18.2 owns the shared trusted physical-workspace lease; Story 18.3 consumes it after a separately authorized verified checkpoint.
 
 | Concept | Required information | Invariant and owner |
@@ -42,3 +47,23 @@ Before that durable lifecycle is used, the process-local registry moves Closed â
 ## Containment and currentness
 
 Validate relative inputs and every JSON-decoded raw returned URI string against the live, application-granted prepared root, including literal device prefixes and symlink/reparse escapes. Reject unsafe raw syntax before URI parsing; the internal root scope uses the held root handle for no-follow containment and rejects JDT state-root overlap or reparse redirection. It is invalid after callback completion; only contained relative locations may be retained. The JDT context first obtains the same current ownership view as the reader, denies an owned-state descendant input before protocol, excludes mapped output only by matching the verified Ready entry's physical identity, and repeats that view before disclosure. `VerifiedUnowned` protects legitimate same-name source; a missing or changing view denies the entire ambiguous response. Never return a location that cannot be mapped safely. Recheck exact current source and tool-purpose authority immediately before release of any response; changed authority/root discards buffered mappings. The operator keeps source unchanged; known absence/change invalidates inspection claims. No repository-wide hash/change detector is introduced. Separate JDT-LS data/configuration from source and qualify its distinct no-write/restricted subprocess profile. The application-controlled `.codegraph` exception is limited to one positively owned tool-state entry in a dedicated workspace. The pinned direct CodeGraph child inherits host rights: neither callback, state path nor ownership-store placement prevents other OS writes or network activity. Story 18.3 observes its native write footprint and blocks readiness on out-of-state or source/configuration/hook changes while reporting residual external/network uncertainty.
+
+
+## Immediate-objective correction data/lifetime model â€” 2026-10-02
+
+No new persistent entity, schema, ledger, manager or CodeGraph descriptor is needed.
+
+| Existing value | Role and retained constraints |
+| --- | --- |
+| PreparedSourceApproval / PreparedToolWorkspaceLease | Exact Repository/approval/root identity and selected JdtNavigation purpose; application-held, live checks, expiry/cancellation/disposal, no model root field. |
+| PreparedJavaNavigationProfile | Separate absolute disposable-state root; positive initialization/request/shutdown bounds and positive response-byte cap. |
+| PreparedJdtHostPolicy | Trusted application configuration of approved executable directories, runtime inputs, fixed interpreter and child PATH. Make accessible to application construction, not tool arguments. Actual first-PATH identities/digests/bootstrap version must be pinned. Configuration is not native confinement or authority by itself. |
+| PreparedJavaNavigationOpenResult / IPreparedJavaNavigationContext | Existing Opened/null-context failure statuses and disposable definition/reference capability. Lease ownership remains with caller; context/session disposed first. |
+| PreparedJavaNavigationRequest | RelativePath, Line/Character one-based, MaximumLocations; existing function validation requires 1 through 100 locations. |
+| PreparedJavaNavigationResult | Relative source locations, explicit outcome/limits; no physical paths, approval/source details in sanitized failures. |
+
+Process-local lifetime: lease current -> bounded opening -> initialized owned session
+-> serialized requests -> closing -> settled/disposed. Failed or uncertain cleanup
+quarantines this session/slot; restored permission cannot resurrect old authority.
+There is no adoption/restart transition in this slice. Existing durable ownership
+phases and host registry remain preserved for their original separate scope.

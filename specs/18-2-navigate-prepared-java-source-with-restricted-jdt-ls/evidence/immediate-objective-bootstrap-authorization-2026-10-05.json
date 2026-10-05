@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-05",
+  "task": "T037",
+  "status": "Partially resolved; pending runtime authority and launch qualification",
+  "human_source": "Direct message in this chat",
+  "instruction": "Allow this python bootstrap. You can safely assume python is on the path",
+  "approved_chain": "First PATH jdtls.bat -> PATH Python -> inspected external eclipse.jdt.ls bootstrap -> pinned Java/JDT inputs",
+  "observed_python": {
+    "path_index": 28,
+    "path": "C:/Users/13728/.local/bin/python.exe",
+    "sha256": "80d4e874275ba362e8b592a75c66b16dc393257bf8cf2e347bd861e133a056d0",
+    "version": "Unqualified; file metadata empty; no execution"
+  },
+  "observed_java": {
+    "path": "C:/Program Files/Common Files/Oracle/Java/javapath/java.exe",
+    "file_version": "27.0.0.0",
+    "sha256": "2766dc71d761fd674129bb075d7fc8b7ce01c407cff502122a7084de651421e4",
+    "java_home": "Unset",
+    "evidence_kind": "Static file metadata only"
+  },
+  "remaining": "Trusted JDT child exception/native execution permission, complete chain identity/pins and owned fixture/state scope; no launch occurred",
+  "preservation": "Previous prerequisite record unchanged; no tasks checked, old runner/code/tests unchanged"
+}

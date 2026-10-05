@@ -1,0 +1,13 @@
+{
+  "phase": "10",
+  "status": "Intermediate GREEN; final before-start cancellation and cleanup identity checks pending",
+  "kind": "Controlled transport/files; zero real JDT server starts",
+  "runner": "eng/test.ps1 -Suite LocalTools -Filter JdtLsPreparedNavigationTests OR PreparedJavaNavigationFunctionsTests OR PreparedJavaNavigationCompositionTests OR JdtLsAdapterTests",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-dfe63373f17845b2a9e17bbfaeba8405",
+  "selected": 87,
+  "passed": 87,
+  "failed": 0,
+  "skipped": 0,
+  "native_qualification": "Not performed; this result does not prove real navigation or native session shutdown",
+  "basic_suite": "Dedicated four JDT test files explicitly excluded via LocalTools guarded attributes and matching suites.json entries; no assertions deleted"
+}

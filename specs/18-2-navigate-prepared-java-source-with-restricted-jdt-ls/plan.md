@@ -5,6 +5,11 @@ governed_delivery_reason: Binds a material Worker navigation tool and a shared p
 
 # Implementation Plan: Navigate Prepared Java Source with Restricted JDT-LS
 
+> **Current correction (2026-10-02):** The former workflow is stopped. Use the appended
+> immediate-objective correction and [correction status](immediate-objective-correction.md).
+> Earlier scope/items remain preserved; old unchecked tasks are [SKIP]. Implementation
+> and native execution remain paused; old approvals do not authorize the new path.
+
 **Branch**: `codex/18-2-plan` | **Date**: 2026-09-29 | **Spec**: [spec.md](spec.md)
 
 **Input**: Story 18.2 of `docs/bmad/planning-artifacts/october-release-epics.md`, the September 26 October proposal, this feature's specification, the integrated Story 18.1 contract at `specs/016-contained-source-tools/contracts/prepared-source-tools.md`, and the user's dedicated in-place CodeGraph policy. Ordered plan reviews 01–14 and definition reviews 01–12 remain historical evidence; the T029 production-composition assessment requires a new plan review and affected downstream gates.
@@ -166,3 +171,152 @@ tests/Vulgata.Tests/AnalysisRuntime/
 - **Lessons**: `docs/project-lessons.md` lines 3–7 require construction inputs, callable method/result, ownership/disposal, cancellation and permitted arguments before behavioral TDD. The T031 discovery showed that the accepted borrow/close signatures lacked a way to reach Open; `contracts/navigation-tool.md` now names the registry constructor, `AdmitAsync` result, host observation/held proof, previous-generation verifier, time bounds and registry/host-hold disposal. T031 can invoke that internal seam with controlled dependencies before T033's binding source, while missing-type compilation remains only a scaffold, not RED. T029/T022 fixture evidence does not satisfy host/native qualification. Windows native root-open failures must still be interpreted under the same launcher and permission boundary before changing containment.
 
 No Constitution violation is proposed, so Complexity Tracking is not needed.
+
+
+## Immediate-objective correction — 2026-10-02 (current new-item plan)
+
+**Authority:** Direct human instruction: stop the previous workflow and unfinished
+work; use `speckit-plan` and `speckit-tasks` to correct the immediate objective, retain
+existing items, keep branch/feature and tag all previously unfinished tasks as skip.
+The bounded objective and six required behaviors are recorded in the specification
+addendum above. This section governs T037–T047; preceding sections remain historical
+full-integration planning and are not instructions to resume T014–T036.
+
+### Summary and technical context
+
+Reuse .NET 10/C#, existing StreamJsonRpc, Infrastructure navigation/session code,
+`PreparedToolWorkspaceLease`, Core request/result contracts and
+`PreparedJavaNavigationFunctions`. No package, database, service, source copy,
+repository manager, new LSP, source-reader API or CodeGraph ownership platform.
+One whole dedicated prepared Repository and one owned session; state is external.
+Resolve executables from the first running-host PATH match, with trusted application
+policy and pinned identities/digests. No executable override or `.env`/`JDT_LS_BIN`
+selector. The resolver currently never returns Pinned; the prepared launcher has no
+production implementation. The old factory/context also require CodeGraph ownership.
+These are the concrete implementation gaps, not reasons for another general audit.
+
+### Smallest callable API
+
+Add an application-only factory constructor using the existing host policy (made
+public for trusted configuration), and an explicitly separate open method:
+
+```csharp
+public PreparedJavaNavigationContextFactory(
+    PreparedJavaNavigationProfile profile, PreparedJdtHostPolicy trustedHostPolicy);
+public Task<PreparedJavaNavigationOpenResult> OpenDedicatedAsync(
+    PreparedToolWorkspaceLease workspaceLease,
+    CancellationToken cancellationToken = default);
+```
+
+Reuse `IPreparedJavaNavigationContext` and its definition/reference/DisposeAsync methods.
+The application issues a `JdtNavigation` lease from its exact live source grant, checks
+Opened, exposes `new PreparedJavaNavigationFunctions(context).Create()`, and disposes
+context before lease. Models cannot invoke factory/startup/configuration/disposal or
+choose a physical root. Existing `OpenAsync` keeps its ownership requirements; missing
+ownership never causes automatic fallback to the dedicated path.
+
+### Design: essential lifetime versus deferred ownership
+
+The dedicated entry point is for an application-assigned source-only root whose
+lifetime excludes concurrent CodeGraph preparation/cache mutation. This is an explicit
+application precondition, not a caller flag proving OS confinement. Retain current
+lease/purpose/root identity checks before launch, before navigation and before result
+disclosure; raw URI mapping remains no-follow and relative. Keep one process-local
+session slot, bounded waiting, per-session serialization and quarantine when owned
+cleanup is unconfirmed. No adoption of earlier session/state and no retry from Unknown.
+
+Keep JDT data/configuration/profile/temp external, newly owned for the session. Seed
+Equinox configuration from the pinned distribution when required; never mirror source.
+Pin first approved JDT/Java candidates, interpreter where needed, and declared server
+bootstrap artifacts; hold/check identity/digest immediately before launch. An unexpected
+Python/external-checkout chain is unavailable until inspected and explicitly approved;
+never skip an unsafe first candidate for a later one. Use fixed arguments/environment,
+redirected stdio, bounded stderr and owned process/tree handles. Lifetime tracking is
+not filesystem/network confinement. Remove only this session's known external state
+when settled; preserve uncertain resources for diagnosis, never delete general caches.
+
+Reuse initialization/settings/protocol methods. Add only document readiness, actual
+reply-shape or shutdown handling demonstrated necessary by the real fixture; capture
+any genuine gap as focused behavioral evidence before correction. Do not manufacture
+new protocol requirements or replace the existing implementation with a second client.
+
+### Exact implementation files
+
+| Path | Delta |
+| --- | --- |
+| `src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs` | Positive first-PATH pinning in PreparedJdtCommandResolver, application-visible host policy and only needed real-server protocol/bootstrap/shutdown corrections. Reuse PreparedJdtLsRuntime, protocol factory, pin checks and OwnedPreparedJdtLsSession. |
+| `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs` (new) | Concrete prepared launcher under the explicitly approved JDT execution profile: external state, fixed chain/environment, redirected streams, bounded stderr, owned process/tree cleanup. |
+| `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs` | Trusted production construction and OpenDedicatedAsync without CodeGraph dependencies; preserve old OpenAsync, slot limit and failed-open cleanup. |
+| `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs` | Explicit dedicated-source construction reusing mapping/currentness/navigation/disposal; retain the old ownership-aware constructor/path. |
+| `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` | Focused new-path/resolver/lifetime coverage and regression of existing guards; reuse current tests instead of rerunning RED for correct behavior. |
+| `tests/Vulgata.Tests/AnalysisRuntime/PreparedJdtLsDedicatedQualificationTests.cs` (new) | Real-server owned Java fixture, expected anchors through AIFunctions, external state, source preservation and shutdown evidence. |
+| `tests/Vulgata.Tests/TestInfrastructure/suites.json` | Classify new native qualification as LocalTools; retain current classifications and failures. |
+
+Core contracts, Agents wrappers, Web registration, 18.1 readers and all existing
+ownership-store/registry/verifier files remain unchanged by this planned slice.
+
+### Minimum shared contract and integration limits
+
+Common input: exact application-held source approval/root binding and a purpose-scoped
+physical-root lease with currentness and bounded lifetime. Common output: contained
+relative locations/status, not model-visible physical paths or command descriptors.
+Ordinary source tools retain their existing issued read context and list/read/search
+contracts. 18.3 uses `CodeGraphPreparation` and its existing positive owned-entry view
+for reader/cache integration; its isolated owned-fixture design is not blanket-blocked
+on completing 18.2's durable registry. Real native MCP, reader filtering/direct access,
+budgets/continuations and positive mixed-root binding remain 18.3 integration work.
+This JDT path does not establish simultaneous JDT/CodeGraph use of an indexed root.
+
+### Deferrals (preserved, not waived)
+
+Cross-process mutex/arbitration, durable restart recovery, previous-generation/native
+settlement, cache adoption, mixed-root concurrency and generalized cleanup are outside
+the new JDT slice. Existing code/tests/evidence stay intact. The prepared customer
+Repository follow-up is deferred; the owned Java fixture is the immediate target.
+Original strict OS-child confinement is not declared achieved or silently relaxed:
+the proposed trusted-JDT exception needs explicit human authority. Source unchanged
+is still required by qualification; checksums/footprint observation are not preventive
+denial of native writes. Skipped old tasks are not completed and do not resume on their own.
+
+### Constitution/PRD check and exact authority gate
+
+Core stays domain-only, Agents gain no host authority, and application-selected
+Infrastructure owns startup/lifetime. AD-15/FR-15.1 permit the temporary no-import,
+no-build/no-restore profile without claiming network air-gapping. FR-15.3's single
+session and application-selected workspace remain. The proposed direct-child profile
+has residual rights inconsistent with claiming the earlier preventive child boundary;
+record that exception for a human decision before implementation enables any launch.
+
+**Blocking decision:** explicit authorization of this JDT boundary and its trusted
+child exception, including the inspected pinned command/distribution/Java/interpreter
+chain, principal and dedicated fixture/root/state scope. The child inherits the host
+principal's filesystem rights (potential outside-state/source writes) and network
+rights. Fixed child PATH, relative tools, no-import settings and process/job ownership
+do not remove those rights. CodeGraph authority cannot be substituted. If declined,
+keep launch closed; an enforcing OS profile needs separately authorized scope. This
+plan/task correction is not implementation approval or native execution permission.
+
+### Evidence and stopping point
+
+Use focused existing/new controlled tests, then a separately authorized LocalTools run
+that starts real pinned JDT-LS and proves expected declaration/caller anchors for both
+functions on an owned fixture. Invoke actual AIFunctions, record serialized settings
+and observed results/limitations, whole root and external state, source hashes, server
+identity and bounded shutdown/process exit. No provider, database or LLM call is needed.
+The preserved full regression is 2144/2145 with a legacy CodeGraph test-PATH dependency;
+retain it and qualify environment/owner decisions instead of deleting or weakening it.
+Stop after these definition artifacts; implementation/runtime remain paused.
+
+
+## Bootstrap authorization update — 2026-10-05
+
+Direct human instruction: "Allow this python bootstrap. You can safely assume python
+is on the path". This authorizes the inspected first-PATH batch shim invoking Python
+against `G:/source/repos/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/bin/jdtls`.
+Resolve Python from running-host PATH; pin the actual interpreter, bootstrap and server
+inputs before launch. No fallback executable selector or host PATH change is introduced.
+The earlier Java-17 observation is historical: current first PATH Java file metadata
+is 27.0.0.0 and JAVA_HOME is unset. This is static evidence, not native qualification.
+The separate trusted-JDT-child residual-rights exception and owned native execution
+permission remain pending. T037 is incomplete; no server was launched. Earlier
+evidence and skipped work remain preserved.

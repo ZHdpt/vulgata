@@ -1,5 +1,10 @@
 # Story 18.2 Validation Guide
 
+> **Current correction (2026-10-02):** The former workflow is stopped. Use the appended
+> immediate-objective correction and [correction status](immediate-objective-correction.md).
+> Earlier scope/items remain preserved; old unchecked tasks are [SKIP]. Implementation
+> and native execution remain paused; old approvals do not authorize the new path.
+
 Use `spec.md`, `contracts/navigation-tool.md` and `data-model.md` as expected behavior. Execute the scenarios under the accepted task ownership, resource authorization and verification gates.
 
 ## Preconditions
@@ -29,3 +34,50 @@ After the prepared registration/login Repository is actually supplied and access
 ## Evidence limits
 
 Controlled fakes verify tool seams and failure handling; a real JDT-LS run through host `PATH` verifies this host/profile. Record exact source/profile and result classifications. The 18.2 shared-workspace checkpoint must prove both its JDT-independent root binding and the newly approved purpose-bound owned-state contract before authorized 18.3 consumption; it does not qualify native CodeGraph effects, preventive child isolation or the reader repair. Preserve static, controlled-test and real runtime evidence distinctions under `docs/agents/testing.md`. For Windows native traversal failures, apply `docs/project-lessons.md`: compare launcher permission modes and native status before changing containment code.
+
+
+## Immediate-objective correction validation — 2026-10-02
+
+This guide is for a later separately authorized run. It grants no implementation,
+JDT/Java/interpreter launch, host ACL/PATH/profile change or provider/database access.
+See [dedicated contract](contracts/dedicated-jdt-navigation.md) and active T037–T047.
+
+1. Obtain explicit dedicated-JDT boundary/exception and owned native-fixture execution
+   authority. Record current first host PATH candidates, actual chain/version/digests,
+   principal and permitted root/state. If unsupported or invisible, stop without
+   fallback. Do not substitute CodeGraph approval or the test-only shortened PATH.
+2. Reuse/create an owned prepared Java fixture with known declaration/caller anchors,
+   and an owned state root outside source. Use a dependency-free case; if server needs
+   Eclipse project metadata, keep it declared within the owned fixture, with no Maven/
+   Gradle import/build/restore. Record all source/config/hook bytes before launch.
+3. Application issues matching JdtNavigation lease, constructs trusted dedicated
+   factory/profile, opens the whole root and requires real initialization. Failure
+   returns a sanitized null-context status; collect logs without changing assertions.
+4. Build existing PreparedJavaNavigationFunctions from the returned context. Invoke
+   both actual AIFunctions at declared fixture positions; assert useful expected
+   declaration/reference anchors and Repository-relative locations, not merely nonempty
+   output or an empty-result success. No LLM/provider call is required.
+5. Observe configured no-import/no-build/no-restore profile, whole root and external
+   data/config/temp/profile; compare fixture bytes afterward. Report actual server gaps
+   and residual host/network rights; neither settings nor checksums prove isolation.
+6. Dispose context then lease; require bounded owned protocol/process shutdown/exit.
+   Confirm no unrelated process was terminated and no owned live child remains. Unknown
+   cleanup stays quarantined and is reported; never delete uncertain/general state.
+
+Future standard controlled command: `pwsh -NoProfile -File eng/test.ps1`.
+Future authorized real-fixture command:
+`pwsh -NoProfile -File eng/test.ps1 -Suite LocalTools -Filter FullyQualifiedName~PreparedJdtLsDedicatedQualificationTests`.
+The new test must be suite-classified before execution. No run occurred in this correction.
+Preserve the existing 2144/2145 SelfContained result and legacy CodeGraph PATH failure;
+its separate environment/owner decision is not permission to delete/skip a failing test.
+
+
+## Authorized execution update — 2026-10-05
+
+The human has authorized JDT-LS execution within this story, including the explained
+trusted-child residual rights and first-PATH Python bootstrap. Phase 9 evidence records
+the actual chain and owned fixture/state. This supersedes the earlier pause for
+T037–T047 only. Run real JDT qualification explicitly in LocalTools; default
+SelfContained excludes native JDT starts. Fixed test-only short PATH may be reused
+for controlled tests, but native qualification must use the actual host PATH for
+first-match selection. No host PATH/ACL edits or old skipped-task resumption.

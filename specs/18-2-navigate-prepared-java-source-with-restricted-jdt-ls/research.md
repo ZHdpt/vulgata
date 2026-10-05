@@ -1,5 +1,10 @@
 # Story 18.2 Research and Decision Record
 
+> **Current correction (2026-10-02):** The former workflow is stopped. Use the appended
+> immediate-objective correction and [correction status](immediate-objective-correction.md).
+> Earlier scope/items remain preserved; old unchecked tasks are [SKIP]. Implementation
+> and native execution remain paused; old approvals do not authorize the new path.
+
 This is repository-grounded planning, not live JDT-LS qualification. Authority: `spec.md`, October proposal prepared-input/whole-root/F0 sections, October epics O-FR06/O-AR09/O-NFR01, PRD FR-4.9/15.1–15.3, architecture AD-15, Constitution I/IV/V and current source.
 
 ## Prepared source and session binding
@@ -109,3 +114,47 @@ This is repository-grounded planning, not live JDT-LS qualification. Authority: 
 ## Applicable project lesson
 
 The public-seam lesson in `docs/project-lessons.md` applies: new callable boundaries need explicit constructor, call, result, ownership, cancellation and permitted arguments before behavioral TDD. The native filesystem lesson applies when qualification uses Windows handle-relative traversal under a sandboxed launcher: compare effective permission modes and native status before calling a root-open failure a product defect. Neither lesson waives the required real JDT-LS and containment evidence.
+
+
+## Immediate-objective correction research — 2026-10-02
+
+This phase reuses directly inspected repository code and the bounded proposal rather
+than a general audit or a new technology selection. No research agent can grant the
+pending human runtime exception. Earlier research remains preserved historical scope.
+
+- **Decision:** reuse prepared protocol/context/functions and current root lease.
+  **Rationale:** actual code already implements whole-root initialize/configuration,
+  definition/references, raw URI mapping, limits and owned cleanup.
+  **Alternative:** replacing the LSP client or introducing a repository manager adds
+  no value to the immediate fixture objective.
+- **Decision:** complete first-PATH positive pinning and concrete prepared launcher.
+  **Evidence:** PreparedJdtCommandResolver returns only Rejected/Unavailable; only
+  IPreparedJdtProcessLauncher exists. The legacy ProcessJdtLsLauncher implements a
+  different interface and does not supply this prepared startup policy.
+- **Decision:** explicit dedicated-source entry point; preserve old guarded OpenAsync.
+  **Rationale:** current two-argument factory still fails without CodeGraph coordinator
+  and binding; context currently requires them too. Absence must not become implicit
+  fallback. Defer mixed caches/concurrent CodeGraph for this path.
+- **Decision:** proposed trusted direct JDT child is authority-pending, not approved.
+  **Rationale:** CodeGraph exception is tool-specific; offline settings do not block
+  network access. If that residual profile is not accepted, launch stays closed.
+- **Decision:** owned real Java fixture, actual function invocation and shutdown are
+  required evidence. Current controlled test counts are reuse evidence only.
+- **Executable-chain unknown:** resolve the first current host candidates and inspect
+  required bootstrap/Java/interpreter artifacts under future explicit fixture authority;
+  pin actual identities/digests/version, never guess paths, versions or Python approval.
+  This is a declared qualification prerequisite, not a fabricated resolved runtime fact.
+
+
+## Bootstrap authorization update — 2026-10-05
+
+Direct human instruction: "Allow this python bootstrap. You can safely assume python
+is on the path". This authorizes the inspected first-PATH batch shim invoking Python
+against `G:/source/repos/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/bin/jdtls`.
+Resolve Python from running-host PATH; pin the actual interpreter, bootstrap and server
+inputs before launch. No fallback executable selector or host PATH change is introduced.
+The earlier Java-17 observation is historical: current first PATH Java file metadata
+is 27.0.0.0 and JAVA_HOME is unset. This is static evidence, not native qualification.
+The separate trusted-JDT-child residual-rights exception and owned native execution
+permission remain pending. T037 is incomplete; no server was launched. Earlier
+evidence and skipped work remain preserved.
