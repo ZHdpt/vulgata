@@ -103,7 +103,7 @@
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-4-implement-20261005T113559Z-aef821",
+    "checkpoint_id": "bmad-18-4-implement-20261005T120840Z-c1af22",
     "commit_sha": null,
     "stage": "implement"
   },
@@ -159,42 +159,42 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "4864f19921ef599736fd756b676e6bfe03b074bc",
-    "git_identity_sha256": "c96bce6f3a2a59e6b230baaeab12b7ec374e5cb7ff37c88b9345efe00315575a",
-    "status_sha256": "1f1a729ef6e82974e167e4a1ee5f49067d09b0a61f456cb89ff361c00f6d1114",
-    "observed_at": "2026-10-05T11:31:50.2214293Z"
+    "git_identity_sha256": "b82dec6bfac0d4023ebf5b22bc111ae339112d5eb5e6b07e2dc437425c0d685a",
+    "head": "2d438c6a11812dfeff2a662566c5a3345f383b00",
+    "observed_at": "2026-10-05T12:08:40.7995519Z",
+    "status_sha256": "b0231a43111b5b77910cda14c473c1a85af281cd8b7692688ba4acf24e25faf5"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "pause",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 6,
+      "at_count": 7,
       "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json",
-        "sha256": "246bc9ef3ccbcb1ba98c6e84da681222cf292c0ee15b53eaeb1a475161338ec2"
+        "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-diagnosis-01.json",
+        "sha256": "d281b2c8c809793c2c8ac4ae7692f8a3755a233f60b28a1e8598e16342ff62e8"
       }
     },
-    "earliest_owner": "tasks",
+    "earliest_owner": "tests",
     "episode_id": "18-4-implementation-setup-seam-01",
     "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/2",
-    "failed_results": 6,
+    "failed_results": 7,
     "holds": [],
     "last_result": {
-      "path": "specs/017-october-batch-setup/evidence/plan-review-10.json",
-      "sha256": "f445bc3f9659d7b21c666005385df001da51fcf3b5eced4b8823401a4e7bf780"
+      "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-recurring-failure-01.json",
+      "sha256": "2b5294b9b540da91da2f7b93f5538583e6db543a8e077b0356b0ba593ebb667e"
     },
     "pause_at": 7
   },
   "resume": {
-    "stage": "implement",
-    "reason": "User-authorized test slimming complete: eight redundant Web starts consolidated to one; controlled37/37. Normal delivery/runtime remain paused at checkpoint21. Accepted scope/approvals, recovery6/7 and tasks23/30 unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/checkpoint-implementation-21.json"
+    "evidence_path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-diagnosis-01.json",
+    "reason": "Paused at7/7: recurring T029 RoleCount fixture-order failure after attempted repair. Human-only finite extension required; no edits/runs. Accepted definition/approvals and tasks23/30 remain.",
+    "stage": "implement"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0122-ordinary-web-definition-review-accepted.json",
-    "sha256": "d337ee0e137eb25a642239d4e969f4e26b87511992ddd6adf134427dae024e15"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0124-ordinary-web-pg-role-order-diagnosed.json",
+    "sha256": "3b47b44d3709828dff99e05512ca6780b39f209a6d7f30e65c81d3e12461de14"
   },
-  "updated_at": "2026-10-05T11:35:59.000Z"
+  "updated_at": "2026-10-05T12:08:40.799Z"
 }

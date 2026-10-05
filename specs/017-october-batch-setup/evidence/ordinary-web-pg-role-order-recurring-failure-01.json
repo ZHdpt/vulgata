@@ -1,0 +1,24 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0122-ordinary-web-definition-review-accepted.json",
+    "sha256": "d337ee0e137eb25a642239d4e969f4e26b87511992ddd6adf134427dae024e15"
+  },
+  "raw_result": {
+    "kind": "command",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.October.OctoberPostgreSqlIsolationTests.PostgreSqlOrdinaryWebStartup_UsesOwnedDatabaseFactoriesWithoutOctoberMigration'",
+    "source_commit": "2d438c6a11812dfeff2a662566c5a3345f383b00",
+    "observed_at": "2026-10-05T12:03:23.967Z",
+    "exit_code": 1,
+    "raw_output_path": "TestResults/isolation-36cdfff6758f49cebee545d70524ae2f/results.trx",
+    "raw_output_sha256": "adf1a8421be3bda69c50e3c7f23cdc507f5fdc9a1f2d502787753f9b75a9985d",
+    "test_counts": {
+      "selected": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0
+    },
+    "summary": "Same RoleCount3-versus1 assertion recurred after synthetic Administrator deletion. URI/login and provider CRUD assertions passed; both databases/temp roots and container/volume cleanup verified."
+  },
+  "classification": "Count one recurrence of the same problem after attempted repair under the actual human accounting correction. Initial URI failure and first newly discovered role-count failure remain noncounting development evidence; do not count this message or duplicate TRX reads again."
+}

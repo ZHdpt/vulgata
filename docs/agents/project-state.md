@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-02 (Story 18.4 ordinary-Web controlled implementation verified; revised PostgreSQL/A-B qualification pending).
+Updated: 2026-10-05 (Story 18.4 owned PG qualification reached a recurring fixture-order failure; paused7/7 with accepted definition retained).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -43,8 +43,8 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  user-paused safe checkpoint20 (ordinary-Web capture/startup removal, bounded type
-  cleanup and compiled runtime-test reconciliation; not a final verified candidate), whose unique binding
+  checkpoint22 (root-owned recurring-role-count evidence and7/7 pause;
+  unverified test edits stay unstaged, not a completed candidate), whose unique binding
   is recorded in its workflow state.
   On 2026-10-02 the human clarified ordinary Web startup with only its database
   configuration changed. Its retained Astra-medium owner completed the bounded
@@ -57,17 +57,24 @@ verification before reuse.
   boundary. Current ordinary-Web public composition/WAF checks passed64/64 and43/43:
   final Build-time database capture, stale-setting inertness, setup-service absence
   and normal browser/role/system-provider behavior. Generator/source18.1 files are
-  unchanged. Residual type/runtime-test reconciliation and revised owned PostgreSQL,
-  A/B process and provider-administration qualification remain before completion.
-  The user requested a pause at the next safe checkpoint; the already-running
-  cleanup passed43/43, and all workers are idle. Do not dispatch or acquire runtime
-  resources until explicit resume. Positive separate-generator-Identity and real
+  unchanged. Residual startup-type cleanup and runtime-test source reconciliation
+  are saved; revised owned PostgreSQL/A-B process and provider-administration
+  qualification remain before completion.
+  The earlier user pause ended with the explicit 2026-10-05 instruction
+  "Postgre sql is on. Proceed". Qualification uses fresh runner-owned PG17 resources
+  under the existing authorization, never an ambient/shared database. Positive separate-generator-Identity and real
   PG/process provider-admin cases remain under existingT020/T029; no new external
-  prerequisite or definition restart is needed. Counts/holds/owners stay6/7 and
-  task markers stay23/30; this is a user pause, not completion. Certificate types
+  prerequisite or definition restart is needed. The first fresh PG filter passed95/96;
+  the new URI oracle was corrected, then a role-count fixture-order assertion
+  recurred after an ineffective synthetic-account cleanup. A is seeded before its
+  snapshot; B has not yet run ordinary Web. Count is now7/7, owner tests, holds empty,
+  task markers23/30. All owned resources were verified cleaned; workers are idle.
+  Only a fresh human finite extension can permit the bounded fixture-order fix and
+  affected rerun; delegate ceiling7 is exhausted. Accepted definition/approvals and
+  production remain unchanged. Certificate types
   required by protected legacy consumers remain; retired startup types are removed.
-  these controlled tests do not substitute for them. Exact user decision and correction diagnosis are story-owned evidence;
-  recovery remains6/7. The old diagnostic hold is superseded only for definition
+  Controlled tests do not substitute for real qualification. Exact user decision and correction diagnosis are story-owned evidence;
+  recovery is now7/7 at the test-only pause. The old diagnostic hold is superseded only for definition
   correction, not proof of a passing runtime or permission for an old-path rerun.
   The retained Astra-medium owner previously completed the bounded plan
   correction; independent plan-review-14 accepted it at transition 0077 and delegated

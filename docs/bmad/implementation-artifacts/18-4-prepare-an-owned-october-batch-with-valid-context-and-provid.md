@@ -1,6 +1,6 @@
 # Story 18.4 development record
 
-Status: in-progress (paused by user at safe checkpoint20; runtime qualification and final gates pending)
+Status: in-progress (paused at recovery7/7 after recurring T029 fixture-order assertion; accepted definition retained)
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
@@ -83,6 +83,62 @@ Final assessment: coverage-preserving test consolidation; no production refactor
 fabricated RED, scope change or qualification claim. This is not final verification
 or story closure. Normal delivery/runtime remain user-paused after checkpoint21;
 all required independent gates and pending T020/T029 qualification remain.
+
+## Resumed qualification (2026-10-05)
+
+Actual human instruction: "Postgre sql is on. Proceed". This lifts the earlier
+delivery pause, retaining the slimmed tests and every existing gate/resource limit.
+Root verified HEAD `2d438c6a11812dfeff2a662566c5a3345f383b00`, assigned branch
+`oct14/story-18-4`, checkpoint21 binding, accepted spec/plan/tasks hashes and ancestor
+merge/source18.1 baselines. Docker reports29.8.2. Readiness is not permission to use
+an ambient database: existing recorded authorization covers fresh owned PG17
+containers/volumes/databases, synthetic fixtures and recorded generator/Web processes.
+Only remaining accepted T020/T029 coverage and qualification are dispatched initially;
+positive separate generator Identity and real ordinary-host provider administration
+are existing gaps, not new requirements. No Web redesign or source18.1 contract
+change is inferred from this resume. Recovery6/7, definition profile, approvals and
+23/30 task markers remain intact; unrelated dirty files remain protected.
+
+First fresh PostgreSQL qualification passed95/96, no skips. The new provider-admin
+login helper incorrectly expected relative `Location: /`, whereas normal Identity
+returned the same-origin absolute root redirect. Primary and cleanup diagnostics
+are separate; all owned databases/temp roots, logger locks, container and volume
+cleanup passed. This first development test-oracle defect is noncounting under the
+actual human accounting correction, not a production RED or a qualification pass.
+See `evidence/ordinary-web-pg-provider-login-oracle-01.json`. The retained owner is
+assigned one corrected affected-case/class rerun; existing95 passes are retained
+for their unchanged frozen scope. Actual-process provider CRUD belongs in the
+existing A/B test, not an additional host suite. No production change is authorized
+by this oracle diagnosis; recovery remains6/7 and all final gates remain pending.
+
+The URI correction passed. The next check exposed role count3 versus1, and the
+attempted synthetic-account deletion did not fix it. Root independently verified
+that `CaptureOrdinaryDataStateAsync` counts roles, not users: A already ran ordinary
+`RoleSeeder`, whereas B had not yet started Web and had only its fixture SystemOwner
+role. The earlier worker/root user-count hypothesis was incorrect. Normal seeding
+is required and correct; do not suppress it or weaken the comparison. Move the
+existing B ordinary startup before equivalent ordinary-shape snapshots, assert
+all normal seeded roles after each host starts and preserve every October/history/
+cross-target check. This needs no extra host or production/definition change.
+
+Run `9355c7a248c94a2d908ecb40d488d1a0` first exposed this distinct fixture-order defect;
+run `36cdfff6758f49cebee545d70524ae2f` reproduced it after attempted account cleanup.
+Only the latter is counted as one recurring failed repair under the actual human
+accounting correction. Existing historical6 becomes7; initial development failures
+and duplicate reports remain noncounting. Raw TRX, frozen test hashes and diagnosis
+are preserved in `evidence/ordinary-web-pg-role-order-recurring-failure-01.json` and
+`evidence/ordinary-web-pg-role-order-diagnosis-01.json`. Transition123 records the
+single increment;124 records the current at-count7 diagnosis. Owner is tests, not
+spec/plan/tasks, so accepted plan15/definition14 and approvals06/08 remain valid.
+The existing delegate ceiling is7; only the human may grant a fresh finite7-to8
+extension for the bounded fixture-order correction and affected rerun. All workers
+are idle. Every run verified exact owned database/temp/container/volume cleanup;
+actual E2E/process provider-admin qualification has not started. Source/production
+and23/30 task markers remain unchanged. Preserve the two unverified test edits
+unstaged; checkpoint22 contains root evidence/state only, never failing test code.
+No further repair, runtime invocation, new resources or definition restart proceeds
+through this pause. This is allowance only: all remaining qualification/convergence/
+lookback/independent quality/E2E/final gates still apply and failure8 would pause again.
 
 ## Historical pre-correction boundary (2026-10-01)
 

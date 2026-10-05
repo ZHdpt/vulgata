@@ -1,0 +1,38 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "summary": "T029 fixture compares ordinary role counts before B ordinary startup. Actual failing field is RoleCount, not users: A has normal RoleSeeder's three roles, B fixture has only SystemOwner. Deleting the synthetic Administrator cannot change role count and the same assertion recurred. Existing production role seeding is required and correct; fix fixture ordering, not production or requirements.",
+  "source_commit": "2d438c6a11812dfeff2a662566c5a3345f383b00",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "failed_results_after_recurring_check": 7,
+  "pause_at": 7,
+  "owner": "tests",
+  "failed_approaches": [
+    {
+      "run": "TestResults/isolation-e85a6d51eaa14db78db92bd74fa21cbb",
+      "outcome": "95/96; new relative-URI oracle defect",
+      "counted": false
+    },
+    {
+      "run": "TestResults/isolation-9355c7a248c94a2d908ecb40d488d1a0",
+      "trx_sha256": "6de36c2abe8597cf0213b59d44758400b7826152af64bbd3eee5a20d5bf9f4fc",
+      "outcome": "URI fix passed; first newly exposed RoleCount3vs1",
+      "counted": false
+    },
+    {
+      "run": "TestResults/isolation-36cdfff6758f49cebee545d70524ae2f",
+      "trx_sha256": "adf1a8421be3bda69c50e3c7f23cdc507f5fdc9a1f2d502787753f9b75a9985d",
+      "outcome": "Deleted synthetic Administrator; same RoleCount3vs1 remains",
+      "counted": true
+    }
+  ],
+  "test_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "22af12eb8cf3a399f02ab034b1a20bbf2c999656b5d0d173edea25084bbd721b",
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "6c8d6c6c6a55b6ae74375d744a3a86ea03251b67cbe22cfe1bc3bc18e6b5884f"
+  },
+  "changed_approach": "Move the existing B ordinary startup before equivalent ordinary-shape snapshots; assert every normal seeded role after each host starts, preserve migration/schema/October-before-after and cross-target assertions, add no extra host/test suite. Correct only tests, then rerun affected PG qualification; actual process provider CRUD/E2E and all remaining gates stay required.",
+  "authority": "Human-only fresh finite extension needed at delegated cumulative ceiling7; proposed next pause_at8 for this bounded correction. No product/architecture/resource decision or waiver, no definition restart, no new author/escalation.",
+  "resources": "All three launcher runs verified exact owned databases/temp roots and container/volume cleanup; no E2E run launched.",
+  "preserved": "Accepted plan15/definition14, approvals06/08, retained definition profile, production/source contracts, 23/30 task markers, count history, unrelated files.",
+  "root_diagnosis": "Observed code and stack locate AssertEquivalentOrdinaryDataShape.RoleCount; RoleSeeder.SeedAsync creates roles, not users. Correct earlier root/worker user-count hypothesis; do not repeat it."
+}
