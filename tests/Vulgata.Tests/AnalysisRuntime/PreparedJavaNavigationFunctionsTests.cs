@@ -12,8 +12,8 @@ public sealed class PreparedJavaNavigationFunctionsTests
     private static readonly Guid RepositoryId =
         Guid.Parse("a6000000-0000-4000-8000-000000000182");
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Create_ExposesExactlyTwoOrderedNavigationFunctionsWithClosedArguments()
     {
         var context = new RecordingPreparedJavaNavigationContext(RepositoryId);
@@ -35,8 +35,8 @@ public sealed class PreparedJavaNavigationFunctionsTests
         Assert.Equal(0, context.DisposeCallCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Functions_ForwardExactDefinitionAndReferenceRequestsAndCancellation_ReturnResultsUnchanged()
     {
         var context = new RecordingPreparedJavaNavigationContext(RepositoryId)
@@ -94,8 +94,8 @@ public sealed class PreparedJavaNavigationFunctionsTests
         Assert.Equal(0, context.DisposeCallCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Function_WhenCancellationArrivesDuringCall_ReturnsEmptyCancelledResult()
     {
         var context = new RecordingPreparedJavaNavigationContext(RepositoryId);
@@ -145,8 +145,8 @@ public sealed class PreparedJavaNavigationFunctionsTests
         Assert.Equal(0, context.DisposeCallCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Functions_RejectPhysicalRootAndAuthorityArgumentsWithoutContextCalls()
     {
         const string protectedRoot = @"C:\owned\prepared-java";

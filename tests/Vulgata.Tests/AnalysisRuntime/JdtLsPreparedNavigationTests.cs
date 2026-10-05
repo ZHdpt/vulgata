@@ -17,8 +17,8 @@ namespace Vulgata.Tests.AnalysisRuntime;
 [Collection(PreparedSourceTestCollection.Name)]
 public sealed class JdtLsPreparedNavigationTests
 {
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(9)]
     [InlineData(10)]
     public async Task GetDefinitionAsync_WhenPurposeIsDeniedAfterMappingOrBeforeDisclosure_RetiresSession(
@@ -99,8 +99,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(PreparedSourceAuthorityStatus.Revoked, PreparedJavaNavigationOutcome.Denied)]
     [InlineData(PreparedSourceAuthorityStatus.Unavailable, PreparedJavaNavigationOutcome.AuthorityUnavailable)]
     public async Task GetDefinitionAsync_WhenSourceAuthorityIsLostBeforeDisclosure_DiscardsBufferedPayload(
@@ -186,8 +186,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenAuthorityLossCannotSettleSession_QuarantinesRepository()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -283,8 +283,8 @@ public sealed class JdtLsPreparedNavigationTests
         Assert.Equal(1, runtime.Session.DisposeCallCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(@"C:\outside\Secret.java")]
     [InlineData("../outside/Secret.java")]
     [InlineData(@"src\main\java\Secret.java")]
@@ -365,8 +365,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WithCurrentJdtLease_PassesFixedProfileAndReturnsOneContext()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -427,8 +427,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WithCodeGraphPurposeLease_DeniesWithoutInvokingRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -471,8 +471,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WithDisposedJdtLease_DeniesWithoutInvokingRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -516,8 +516,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WithInvalidTrustedProfile_ReturnsConfigurationUnavailableWithoutRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -558,8 +558,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WithStateRootInsidePreparedRoot_RejectsBeforeRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -607,8 +607,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WhenAuthorityIsRevokedAfterSessionReturn_DisposesSessionAndReleasesSlot()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -687,8 +687,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenPathIsInsideVerifiedOwnedState_DeniesBeforeProtocol()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -762,8 +762,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenSameNamePathIsVerifiedUnowned_AllowsProtocolAndMapping()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -847,8 +847,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WithJdtOnlyRegistryGrant_ClassifiesSameNameAbsentStateAsOrdinarySource()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1004,8 +1004,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CloseForDispositionAsync_WhenCallerLeaseIsDisposedButJdtSessionRemainsOpen_StaysActiveUntilContextDisposal()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1145,8 +1145,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CloseForDispositionAsync_WhenTrackedJdtSessionDisposalTimesOut_RemainsUnknownAfterLateCompletion()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1298,8 +1298,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenAbsentWorkspaceBecomesReadyDuringBufferedReply_DiscardsEntireReply()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1520,8 +1520,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenReplyIncludesVerifiedOwnedState_FiltersOnlyOwnedLocation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1611,8 +1611,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenOwnershipViewBecomesUnavailableBeforeDisclosure_DiscardsBufferedReply()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1721,8 +1721,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenReadyVersionChangesBeforeDisclosure_DiscardsBufferedReply()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1841,8 +1841,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DefinitionFunction_WithContainedRawFileLocation_ReturnsRepositoryRelativeLocation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1928,8 +1928,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DefinitionFunction_WithJsonDecodedUntrustedUrisWithholdsPathsAndMapsContainedControl()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2054,8 +2054,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenActiveWorkerIsCancelled_ReturnsCancelledAndRetiresSession()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2129,8 +2129,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenSessionExceedsRequestTimeout_ReturnsDeadlineExceededAndRetiresSession()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2204,8 +2204,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenProtocolDoesNotSettleBeforeShutdown_QuarantinesRepositoryAndDiscardsLateReply()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2290,8 +2290,8 @@ public sealed class JdtLsPreparedNavigationTests
         Assert.Null(result.StoppingLimit);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenClasspathCapabilityIsUnavailable_ReturnsLimitedWithoutLeakingRawDetail()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2362,8 +2362,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenProtocolThrows_RetiresSessionBeforeExplicitRetry()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2462,8 +2462,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenProtocolReplyIsNull_RetiresSessionBeforeExplicitRetry()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2561,8 +2561,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenProtocolFailureCleanupIsUnconfirmed_QuarantinesRepository()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2649,8 +2649,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WhenReturnedSessionCleanupExceedsShutdownTimeout_QuarantinesRepository()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2728,8 +2728,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WhenRuntimeReturnsAfterInitializationDeadline_DisposesSessionBeforeDeadlineResult()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2790,8 +2790,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WhenRuntimeReadinessExceedsInitializationTimeout_SettlesBeforeReturningDeadlineExceeded()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2858,8 +2858,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_AfterUnconfirmedCleanup_QuarantinesRepositoryWithoutRetryingRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2907,8 +2907,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_AfterConfirmedPreReturnCleanup_AllowsSameRepositoryRetry()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -2965,8 +2965,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_AfterUnexpectedRuntimeException_QuarantinesRepository()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3020,8 +3020,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenWorkersOverlap_SerializesProtocolCalls()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3104,8 +3104,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetDefinitionAsync_WhenWorkerIsCancelledWhileWaitingForSession_StopsBeforeProtocolCall()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3197,8 +3197,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WhenSameRepositorySlotRemainsBusy_ExpiresBoundedWaitWithoutSecondRuntimeOpen()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3263,8 +3263,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WhenSameRepositorySlotIsBusy_CancelledWaitDoesNotInvokeRuntimeAgain()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3356,8 +3356,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WhenLeaseAndPinnedCommandsAreCurrent_InitializesForGrantedRootWithOfflineSettings()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3494,8 +3494,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3607,8 +3607,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesDefinitionAndMapsRawProtocolLocation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3746,8 +3746,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesReferencesAndMapsRawProtocolLocation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3894,8 +3894,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WithOversizedStdioReferencesReply_ReturnsByteLimitedResultWithoutContinuation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4045,8 +4045,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WithEmptyStdioReferencesReply_ReturnsNoResultObserved()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4175,8 +4175,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtCommandResolver_WhenFirstJdtMatchIsInsidePreparedRoot_RejectsResolution()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4217,8 +4217,8 @@ public sealed class JdtLsPreparedNavigationTests
         Assert.Equal(sourceMarker, await File.ReadAllBytesAsync(sourceMarkerPath));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtCommandResolver_WhenFirstJdtMatchIsInsideDisposableStateRoot_RejectsResolution()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4258,8 +4258,501 @@ public sealed class JdtLsPreparedNavigationTests
         Assert.Equal(sourceMarker, await File.ReadAllBytesAsync(sourceMarkerPath));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task PreparedJdtCommandResolver_WhenApprovedPythonBootstrapIsFirstOnPath_PinsTheCommandChain()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string stateRoot = Path.Combine(fixture.SiblingPath, "resolver-python-state");
+        string jdtCommandDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-jdt");
+        string javaDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-java");
+        string pythonDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-python");
+        string cmdDirectory = Path.Combine(fixture.SiblingPath, "resolver-python-cmd");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "resolver-python-runtime");
+        string bootstrapDirectory = Path.Combine(runtimeRoot, "bin");
+        string pluginDirectory = Path.Combine(runtimeRoot, "plugins");
+        foreach (string directory in new[]
+        {
+            stateRoot,
+            jdtCommandDirectory,
+            javaDirectory,
+            pythonDirectory,
+            cmdDirectory,
+            bootstrapDirectory,
+            Path.Combine(runtimeRoot, "config_win"),
+            pluginDirectory,
+        })
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string bootstrapPath = Path.Combine(bootstrapDirectory, "jdtls");
+        string pythonModulePath = Path.Combine(bootstrapDirectory, "jdtls.py");
+        string configurationPath = Path.Combine(runtimeRoot, "config_win", "config.ini");
+        string launcherModulePath = Path.Combine(pluginDirectory, "org.eclipse.equinox.launcher_1.0.0.jar");
+        string jdtCommandPath = Path.Combine(jdtCommandDirectory, "jdtls.bat");
+        string javaPath = Path.Combine(javaDirectory, "java.exe");
+        string pythonPath = Path.Combine(pythonDirectory, "python.exe");
+        string cmdPath = Path.Combine(cmdDirectory, "cmd.exe");
+        await File.WriteAllTextAsync(
+            jdtCommandPath,
+            $"@echo off\r\npython \"{bootstrapPath}\" %*\r\n");
+        await File.WriteAllTextAsync(bootstrapPath, "controlled JDT bootstrap fixture\n");
+        await File.WriteAllTextAsync(pythonModulePath, "controlled Python module fixture\n");
+        await File.WriteAllTextAsync(configurationPath, "controlled Equinox configuration fixture\n");
+        await File.WriteAllTextAsync(launcherModulePath, "controlled launcher module fixture\n");
+        await File.WriteAllTextAsync(javaPath, "controlled Java executable fixture\n");
+        await File.WriteAllTextAsync(pythonPath, "controlled Python executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [jdtCommandDirectory, javaDirectory, pythonDirectory, cmdDirectory],
+            [runtimeRoot],
+            cmdPath,
+            [jdtCommandDirectory, javaDirectory, pythonDirectory, cmdDirectory]);
+        var request = new PreparedJdtCommandRequest(
+            string.Join(
+                Path.PathSeparator,
+                jdtCommandDirectory,
+                javaDirectory,
+                pythonDirectory,
+                cmdDirectory),
+            fixture.PreparedRootPath,
+            stateRoot,
+            hostPolicy);
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Pinned, resolution.Status);
+        PreparedJdtPinnedCommands commands = Assert.IsType<PreparedJdtPinnedCommands>(resolution.Commands);
+        await AssertPinnedCommandAsync(commands.JdtCommand, jdtCommandPath, expectedPathIndex: 0);
+        await AssertPinnedCommandAsync(commands.JavaCommand, javaPath, expectedPathIndex: 1);
+        await AssertPinnedCommandAsync(commands.FixedInterpreter, cmdPath, expectedPathIndex: null);
+        await AssertPinnedCommandAsync(commands.PythonCommand, pythonPath, expectedPathIndex: 2);
+        await AssertPinnedCommandAsync(commands.BootstrapScript, bootstrapPath, expectedPathIndex: null);
+        IReadOnlyList<PreparedJdtPinnedFile> runtimeInputs = Assert.IsAssignableFrom<
+            IReadOnlyList<PreparedJdtPinnedFile>>(commands.RuntimeInputs);
+        foreach (string runtimeInputPath in new[]
+        {
+            pythonModulePath,
+            configurationPath,
+            launcherModulePath,
+        })
+        {
+            PreparedJdtPinnedFile runtimeInput = Assert.Single(runtimeInputs.Where(pin =>
+                string.Equals(
+                    pin.CanonicalAbsolutePath,
+                    Path.GetFullPath(runtimeInputPath),
+                    StringComparison.OrdinalIgnoreCase)));
+            await AssertPinnedCommandAsync(runtimeInput, runtimeInputPath, expectedPathIndex: null);
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
+    [InlineData("first-java")]
+    [InlineData("first-python")]
+    [InlineData("bootstrap-outside-runtime-root")]
+    public async Task PreparedJdtCommandResolver_WhenFirstChainInputIsUnapproved_RejectsWithoutFallback(
+        string unsafeInput)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string stateRoot = Path.Combine(fixture.SiblingPath, "resolver-unsafe-state");
+        string jdtDirectory = Path.Combine(fixture.SiblingPath, "resolver-unsafe-jdt");
+        string approvedJavaDirectory = Path.Combine(fixture.SiblingPath, "resolver-approved-java");
+        string unapprovedJavaDirectory = Path.Combine(fixture.SiblingPath, "resolver-unapproved-java");
+        string approvedPythonDirectory = Path.Combine(fixture.SiblingPath, "resolver-approved-python");
+        string unapprovedPythonDirectory = Path.Combine(fixture.SiblingPath, "resolver-unapproved-python");
+        string cmdDirectory = Path.Combine(fixture.SiblingPath, "resolver-unsafe-cmd");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "resolver-unsafe-runtime");
+        string externalBootstrapRoot = Path.Combine(fixture.SiblingPath, "resolver-escaped-bootstrap");
+        string bootstrapPath = Path.Combine(runtimeRoot, "bin", "jdtls");
+        string externalBootstrapPath = Path.Combine(externalBootstrapRoot, "jdtls");
+        string selectedBootstrap = unsafeInput == "bootstrap-outside-runtime-root"
+            ? externalBootstrapPath
+            : bootstrapPath;
+
+        foreach (string directory in new[]
+        {
+            stateRoot,
+            jdtDirectory,
+            approvedJavaDirectory,
+            unapprovedJavaDirectory,
+            approvedPythonDirectory,
+            unapprovedPythonDirectory,
+            cmdDirectory,
+            Path.GetDirectoryName(bootstrapPath)!,
+            Path.Combine(runtimeRoot, "config_win"),
+            Path.Combine(runtimeRoot, "plugins"),
+            externalBootstrapRoot,
+        })
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string jdtCommandPath = Path.Combine(jdtDirectory, "jdtls.bat");
+        string approvedJavaPath = Path.Combine(approvedJavaDirectory, "java.exe");
+        string unapprovedJavaPath = Path.Combine(unapprovedJavaDirectory, "java.exe");
+        string approvedPythonPath = Path.Combine(approvedPythonDirectory, "python.exe");
+        string unapprovedPythonPath = Path.Combine(unapprovedPythonDirectory, "python.exe");
+        string cmdPath = Path.Combine(cmdDirectory, "cmd.exe");
+        await File.WriteAllTextAsync(jdtCommandPath, $"@echo off\r\npython \"{selectedBootstrap}\" %*\r\n");
+        await File.WriteAllTextAsync(bootstrapPath, "controlled declared bootstrap fixture\n");
+        await File.WriteAllTextAsync(externalBootstrapPath, "controlled escaped bootstrap fixture\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "bin", "jdtls.py"), "controlled module fixture\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "config_win", "config.ini"), "controlled config fixture\n");
+        await File.WriteAllTextAsync(
+            Path.Combine(runtimeRoot, "plugins", "org.eclipse.equinox.launcher_1.0.0.jar"),
+            "controlled plugin fixture\n");
+        await File.WriteAllTextAsync(approvedJavaPath, "approved Java candidate fixture\n");
+        await File.WriteAllTextAsync(unapprovedJavaPath, "unapproved first Java fixture\n");
+        await File.WriteAllTextAsync(approvedPythonPath, "approved Python candidate fixture\n");
+        await File.WriteAllTextAsync(unapprovedPythonPath, "unapproved first Python fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "approved command interpreter fixture\n");
+
+        var pathEntries = new List<string> { jdtDirectory };
+        if (unsafeInput == "first-java")
+        {
+            pathEntries.Add(unapprovedJavaDirectory);
+        }
+
+        pathEntries.Add(approvedJavaDirectory);
+        if (unsafeInput == "first-python")
+        {
+            pathEntries.Add(unapprovedPythonDirectory);
+        }
+
+        pathEntries.Add(approvedPythonDirectory);
+        pathEntries.Add(cmdDirectory);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [jdtDirectory, approvedJavaDirectory, approvedPythonDirectory, cmdDirectory],
+            [runtimeRoot],
+            cmdPath,
+            [jdtDirectory, approvedJavaDirectory, approvedPythonDirectory, cmdDirectory]);
+        var request = new PreparedJdtCommandRequest(
+            string.Join(Path.PathSeparator, pathEntries),
+            fixture.PreparedRootPath,
+            stateRoot,
+            hostPolicy);
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Rejected, resolution.Status);
+        Assert.Null(resolution.Commands);
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
+    [InlineData("changed-bytes")]
+    [InlineData("same-bytes-new-identity")]
+    public async Task PreparedJdtLsRuntime_WhenPinnedRuntimeInputChangesBeforeOpen_DoesNotLaunch(
+        string replacementKind)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-runtime-input-change-state");
+        string commandRoot = Path.Combine(fixture.SiblingPath, "jdt-runtime-input-change-commands");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "jdt-runtime-input-change-installation");
+        string runtimeBin = Path.Combine(runtimeRoot, "bin");
+        string runtimeConfig = Path.Combine(runtimeRoot, "config_win");
+        string runtimePlugins = Path.Combine(runtimeRoot, "plugins");
+        foreach (string directory in new[]
+        {
+            stateRoot,
+            commandRoot,
+            runtimeBin,
+            runtimeConfig,
+            runtimePlugins,
+        })
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string jdtCommandPath = Path.Combine(commandRoot, "jdtls.bat");
+        string javaPath = Path.Combine(commandRoot, "java.exe");
+        string pythonPath = Path.Combine(commandRoot, "python.exe");
+        string cmdPath = Path.Combine(commandRoot, "cmd.exe");
+        string bootstrapPath = Path.Combine(runtimeBin, "jdtls");
+        string pythonModulePath = Path.Combine(runtimeBin, "jdtls.py");
+        string configurationPath = Path.Combine(runtimeConfig, "config.ini");
+        string priorConfigurationPath = Path.Combine(runtimeConfig, "prior-config.ini");
+        string launcherModulePath = Path.Combine(runtimePlugins, "org.eclipse.equinox.launcher_1.0.0.jar");
+        const string configurationContents = "controlled Equinox configuration fixture\n";
+        await File.WriteAllTextAsync(jdtCommandPath, $"@echo off\r\npython \"{bootstrapPath}\" %*\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled Java executable fixture\n");
+        await File.WriteAllTextAsync(pythonPath, "controlled Python executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        await File.WriteAllTextAsync(bootstrapPath, "controlled JDT bootstrap fixture\n");
+        await File.WriteAllTextAsync(pythonModulePath, "controlled Python module fixture\n");
+        await File.WriteAllTextAsync(configurationPath, configurationContents);
+        await File.WriteAllTextAsync(launcherModulePath, "controlled launcher module fixture\n");
+
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtCommandPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 1);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+        PreparedJdtPinnedFile pythonCommand = await ObservePinnedFileAsync(pythonPath, 2);
+        PreparedJdtPinnedFile bootstrap = await ObservePinnedFileAsync(bootstrapPath, null);
+        PreparedJdtPinnedFile pythonModule = await ObservePinnedFileAsync(pythonModulePath, null);
+        PreparedJdtPinnedFile configuration = await ObservePinnedFileAsync(configurationPath, null);
+        PreparedJdtPinnedFile launcherModule = await ObservePinnedFileAsync(launcherModulePath, null);
+        var commands = new PreparedJdtPinnedCommands(
+            jdtCommand,
+            javaCommand,
+            fixedInterpreter,
+            PythonCommand: pythonCommand,
+            BootstrapScript: bootstrap,
+            RuntimeInputs: [pythonModule, configuration, launcherModule]);
+        if (replacementKind == "same-bytes-new-identity")
+        {
+            File.Move(configurationPath, priorConfigurationPath);
+            await File.WriteAllTextAsync(configurationPath, configurationContents);
+            PreparedJdtPinnedFile replacedConfiguration = await ObservePinnedFileAsync(configurationPath, null);
+            Assert.Equal(configuration.Sha256, replacedConfiguration.Sha256);
+            Assert.NotEqual(configuration.FileIdentity, replacedConfiguration.FileIdentity);
+        }
+        else
+        {
+            await File.AppendAllTextAsync(configurationPath, "changed after command resolution\n");
+            PreparedJdtPinnedFile changedConfiguration = await ObservePinnedFileAsync(configurationPath, null);
+            Assert.NotEqual(configuration.Sha256, changedConfiguration.Sha256);
+        }
+
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [commandRoot],
+            [runtimeRoot],
+            cmdPath,
+            [commandRoot]);
+        var resolver = new RecordingPreparedJdtCommandResolver(commands);
+        var launcher = new RecordingPreparedJdtProcessLauncher();
+        var protocols = new RecordingPreparedJdtProtocolFactory();
+        var runtime = new PreparedJdtLsRuntime(resolver, launcher, protocols, hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            MaximumResponseBytes: 64 * 1024);
+
+        try
+        {
+            PreparedJdtLsOpenFailureException failure = await Assert.ThrowsAsync<
+                PreparedJdtLsOpenFailureException>(async () => await runtime.OpenAsync(lease, profile));
+
+            Assert.Equal(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable, failure.Status);
+            Assert.True(failure.CleanupConfirmed);
+            Assert.Equal(1, resolver.CallCount);
+            Assert.Equal(0, launcher.CallCount);
+            Assert.Equal(0, protocols.CallCount);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task PreparedJdtLsRuntime_WhenCancelledBeforeCommandResolution_DoesNotLaunch()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-cancelled-before-resolution-state");
+        Directory.CreateDirectory(stateRoot);
+        var hostPolicy = new PreparedJdtHostPolicy([], [], string.Empty, []);
+        var launcher = new RecordingPreparedJdtProcessLauncher();
+        var protocols = new RecordingPreparedJdtProtocolFactory();
+        var runtime = new PreparedJdtLsRuntime(
+            new PreparedJdtCommandResolver(),
+            launcher,
+            protocols,
+            hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            MaximumResponseBytes: 64 * 1024);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        try
+        {
+            PreparedJdtLsOpenFailureException failure = await Assert.ThrowsAsync<
+                PreparedJdtLsOpenFailureException>(async () =>
+                    await runtime.OpenAsync(lease, profile, cancellation.Token));
+
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Cancelled, failure.Status);
+            Assert.True(failure.CleanupConfirmed);
+            Assert.Equal(0, launcher.CallCount);
+            Assert.Equal(0, protocols.CallCount);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public void PreparedJdtOwnedStateDirectories_WhenCreatedDirectoryIsReplaced_RefusesCleanupAndPreservesReplacement()
+    {
+        string stateRoot = Path.Combine(Path.GetTempPath(), $"vulgata-jdt-owned-state-{Guid.NewGuid():N}");
+        string dataPath = Path.Combine(stateRoot, "data");
+        string configurationPath = Path.Combine(stateRoot, "configuration");
+        string tempPath = Path.Combine(stateRoot, "temp");
+        string profilePath = Path.Combine(stateRoot, "profile");
+        string displacedDataPath = Path.Combine(Path.GetTempPath(), $"vulgata-jdt-displaced-data-{Guid.NewGuid():N}");
+        string replacementMarkerPath = Path.Combine(dataPath, "replacement-marker.txt");
+        const string replacementMarker = "leave replacement state untouched";
+        var ownedState = new PreparedJdtOwnedStateDirectories(stateRoot);
+
+        try
+        {
+            ownedState.Prepare(dataPath, configurationPath, tempPath, profilePath);
+            Directory.Move(dataPath, displacedDataPath);
+            Directory.CreateDirectory(dataPath);
+            File.WriteAllText(replacementMarkerPath, replacementMarker);
+
+            InvalidOperationException failure = Assert.Throws<InvalidOperationException>(
+                ownedState.CleanupAfterConfirmedExit);
+
+            Assert.Equal("jdt_state_cleanup_unconfirmed", failure.Message);
+            Assert.True(Directory.Exists(dataPath));
+            Assert.Equal(replacementMarker, File.ReadAllText(replacementMarkerPath));
+        }
+        finally
+        {
+            if (Directory.Exists(stateRoot))
+            {
+                Directory.Delete(stateRoot, recursive: true);
+            }
+
+            if (Directory.Exists(displacedDataPath))
+            {
+                Directory.Delete(displacedDataPath, recursive: true);
+            }
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public void PreparedJdtOwnedStateDirectories_WhenStateRootAlreadyExists_PreservesCallerOwnedContent()
+    {
+        string stateRoot = Path.Combine(Path.GetTempPath(), $"vulgata-jdt-existing-state-{Guid.NewGuid():N}");
+        string markerPath = Path.Combine(stateRoot, "caller-owned-marker.txt");
+        string marker = "preserve caller-owned state";
+        string dataPath = Path.Combine(stateRoot, "data");
+        string configurationPath = Path.Combine(stateRoot, "configuration");
+        string tempPath = Path.Combine(stateRoot, "temp");
+        string profilePath = Path.Combine(stateRoot, "profile");
+        Directory.CreateDirectory(stateRoot);
+        File.WriteAllText(markerPath, marker);
+        var ownedState = new PreparedJdtOwnedStateDirectories(stateRoot);
+
+        try
+        {
+            ownedState.Prepare(dataPath, configurationPath, tempPath, profilePath);
+            ownedState.CleanupAfterConfirmedExit();
+
+            Assert.True(Directory.Exists(stateRoot));
+            Assert.Equal(marker, File.ReadAllText(markerPath));
+            Assert.False(Directory.Exists(dataPath));
+            Assert.False(Directory.Exists(configurationPath));
+            Assert.False(Directory.Exists(tempPath));
+            Assert.False(Directory.Exists(profilePath));
+        }
+        finally
+        {
+            if (Directory.Exists(stateRoot))
+            {
+                Directory.Delete(stateRoot, recursive: true);
+            }
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public void PreparedJdtOwnedStateDirectories_WhenDataDirectoryAlreadyExists_RejectsReuseAndPreservesMarker()
+    {
+        string stateRoot = Path.Combine(Path.GetTempPath(), $"vulgata-jdt-existing-data-{Guid.NewGuid():N}");
+        string dataPath = Path.Combine(stateRoot, "data");
+        string configurationPath = Path.Combine(stateRoot, "configuration");
+        string tempPath = Path.Combine(stateRoot, "temp");
+        string profilePath = Path.Combine(stateRoot, "profile");
+        string markerPath = Path.Combine(dataPath, "previous-session-marker.txt");
+        const string marker = "do not adopt previous JDT data";
+        Directory.CreateDirectory(dataPath);
+        File.WriteAllText(markerPath, marker);
+        var ownedState = new PreparedJdtOwnedStateDirectories(stateRoot);
+
+        try
+        {
+            InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() =>
+                ownedState.Prepare(dataPath, configurationPath, tempPath, profilePath));
+
+            Assert.Equal("jdt_state_freshness_unavailable", failure.Message);
+            Assert.True(Directory.Exists(dataPath));
+            Assert.Equal(marker, File.ReadAllText(markerPath));
+            Assert.False(Directory.Exists(configurationPath));
+            Assert.False(Directory.Exists(tempPath));
+            Assert.False(Directory.Exists(profilePath));
+        }
+        finally
+        {
+            if (Directory.Exists(stateRoot))
+            {
+                Directory.Delete(stateRoot, recursive: true);
+            }
+        }
+    }
+
+    private static async Task AssertPinnedCommandAsync(
+        PreparedJdtPinnedFile? pinned,
+        string expectedPath,
+        int? expectedPathIndex)
+    {
+        PreparedJdtPinnedFile actual = Assert.IsType<PreparedJdtPinnedFile>(pinned);
+        PreparedJdtPinnedFile expected = await ObservePinnedFileAsync(expectedPath, expectedPathIndex);
+        Assert.Equal(expected.CanonicalAbsolutePath, actual.CanonicalAbsolutePath);
+        Assert.Equal(expected.FileIdentity, actual.FileIdentity);
+        Assert.Equal(expected.Sha256, actual.Sha256);
+        Assert.Equal(expectedPathIndex, actual.FirstPathEntryIndex);
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4366,8 +4859,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WhenLauncherReturnsProcessAfterCancellation_SettlesLateProcessWithoutConfirmingCleanup()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4460,8 +4953,8 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WhenProtocolInitializationReturnsSessionAfterCancellation_SettlesLateSession()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

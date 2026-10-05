@@ -219,8 +219,8 @@ startup or controlled protocol replay alone is insufficient.
 
 ### Phase 10 — Foundational: make the existing runtime launchable
 
-- [ ] T038 Add focused behavioral tests in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for the actual prepared resolver's Pinned success and first-match refusal, Java/bootstrap/interpreter pin identity/digest, replacement recheck, fixed whole-root launch arguments/environment, separate data/config/temp/profile and cancellation before start; use owned files and controlled process seams, no real child. Reuse existing negative/handshake tests. Declaration-only setup may compile tests; missing-type compilation is not behavioral RED. Classify any new helper in `tests/Vulgata.Tests/TestInfrastructure/suites.json` before execution.
-- [ ] T039 Reach matching GREEN in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs` and new `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs`: complete first-host-PATH positive resolver/pinning and implement IPreparedJdtProcessLauncher for the explicitly authorized profile. Preserve prepared/state/unsafe/ambiguous first-match refusals and no fallback; inspect any Python/external chain instead of guessing approval. Prepare only owned external state/configuration, fixed args/child environment, redirected streams and bounded stderr; retain last root/pin recheck and runtime partial-open ownership. Owned process/job lifetime is not filesystem/network confinement. Leave historical AnalysisScope/mirror route unchanged.
+- [X] T038 Add focused behavioral tests in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for the actual prepared resolver's Pinned success and first-match refusal, Java/bootstrap/interpreter pin identity/digest, replacement recheck, fixed whole-root launch arguments/environment, separate data/config/temp/profile and cancellation before start; use owned files and controlled process seams, no real child. Reuse existing negative/handshake tests. Declaration-only setup may compile tests; missing-type compilation is not behavioral RED. Classify any new helper in `tests/Vulgata.Tests/TestInfrastructure/suites.json` before execution.
+- [X] T039 Reach matching GREEN in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs` and new `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs`: complete first-host-PATH positive resolver/pinning and implement IPreparedJdtProcessLauncher for the explicitly authorized profile. Preserve prepared/state/unsafe/ambiguous first-match refusals and no fallback; inspect any Python/external chain instead of guessing approval. Prepare only owned external state/configuration, fixed args/child environment, redirected streams and bounded stderr; retain last root/pin recheck and runtime partial-open ownership. Owned process/job lifetime is not filesystem/network confinement. Leave historical AnalysisScope/mirror route unchanged.
 
 ### Phase 11 — US1 (P1): open a dedicated navigation context and expose functions
 
@@ -273,8 +273,8 @@ cache adoption, mixed-root concurrent tool use, generalized cleanup, customer Re
 follow-up and full18.3 integration. Their original obligations and partial work stay in
 [SKIP] items. Deferral is not evidence that those protections or integrations succeeded.
 
-**Execution status (2026-10-05):** T037 completed under direct human implementation
-and JDT runtime authorization; T038–T047 remain unchecked. Real JDT qualification
+**Execution status (2026-10-05):** T037–T039 completed under direct human implementation
+and JDT runtime authorization; T040–T047 remain unchecked. Real JDT qualification
 is LocalTools and excluded from the basic SelfContained suite.
 The only prerequisite decisions are explicit new implementation-boundary/JDT exception
 and resource authority. This document does not manufacture acceptance by the old

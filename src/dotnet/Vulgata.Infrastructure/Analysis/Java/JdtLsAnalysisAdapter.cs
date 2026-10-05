@@ -3,6 +3,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using NewtonsoftJsonFormatting = Newtonsoft.Json.Formatting;
 using StreamJsonRpc;
@@ -180,6 +181,8 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
                 ["TEMP"] = Path.Combine(stateRoot, "temp"),
                 ["TMP"] = Path.Combine(stateRoot, "temp"),
                 ["USERPROFILE"] = Path.Combine(stateRoot, "profile"),
+                ["APPDATA"] = Path.Combine(stateRoot, "profile"),
+                ["PYTHONDONTWRITEBYTECODE"] = "1",
             };
             var launch = new PreparedJdtLaunchRequest(
                 root,
@@ -366,14 +369,20 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
             },
         };
 
-    private static bool TryPinCommands(
+    internal static bool TryPinCommands(
         PreparedJdtPinnedCommands commands,
         List<FileStream> pinnedFiles)
     {
         return TryPinFile(commands.JdtCommand, pinnedFiles) &&
             TryPinFile(commands.JavaCommand, pinnedFiles) &&
             (commands.FixedInterpreter is null ||
-                TryPinFile(commands.FixedInterpreter, pinnedFiles));
+                TryPinFile(commands.FixedInterpreter, pinnedFiles)) &&
+            (commands.PythonCommand is null ||
+                TryPinFile(commands.PythonCommand, pinnedFiles)) &&
+            (commands.BootstrapScript is null ||
+                TryPinFile(commands.BootstrapScript, pinnedFiles)) &&
+            (commands.RuntimeInputs is null ||
+                commands.RuntimeInputs.All(pin => TryPinFile(pin, pinnedFiles)));
     }
 
     private static bool TryPinFile(PreparedJdtPinnedFile pin, List<FileStream> pinnedFiles)
@@ -514,6 +523,10 @@ internal interface IPreparedJdtCommandResolver
 
 internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
 {
+    private static readonly Regex PythonBootstrap = new(
+        "\\A\\uFEFF?@echo off\\r?\\npython \"(?<bootstrap>[^\"\\r\\n]+)\" %\\*\\r?\\n?\\z",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
     public Task<PreparedJdtCommandResolution> ResolveAsync(
         PreparedJdtCommandRequest request,
         CancellationToken cancellationToken)
@@ -534,9 +547,11 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
             string stateRoot = Path.GetFullPath(request.DisposableStateRoot)
                 .TrimEnd(Path.DirectorySeparatorChar);
             string statePrefix = stateRoot + Path.DirectorySeparatorChar;
-            foreach (string entry in request.HostPathSnapshot.Split(Path.PathSeparator))
+            string[] pathEntries = request.HostPathSnapshot.Split(Path.PathSeparator);
+            for (int index = 0; index < pathEntries.Length; index++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                string entry = pathEntries[index];
                 if (!Path.IsPathFullyQualified(entry))
                 {
                     return Unavailable();
@@ -556,14 +571,66 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
                 bool insideDisposableStateRoot =
                     string.Equals(directory, stateRoot, StringComparison.OrdinalIgnoreCase) ||
                     directory.StartsWith(statePrefix, StringComparison.OrdinalIgnoreCase);
+                if (insidePreparedRoot || insideDisposableStateRoot || executable && batch || executable ||
+                    !IsApprovedDirectory(directory, request.FixedHostPolicy.ApprovedExecutableDirectories))
+                {
+                    return Rejected();
+                }
+
+                string batchPath = Path.Combine(directory, "jdtls.bat");
+                Match match = PythonBootstrap.Match(File.ReadAllText(batchPath));
+                if (!match.Success || !Path.IsPathFullyQualified(match.Groups["bootstrap"].Value))
+                {
+                    return Rejected();
+                }
+
+                string bootstrapPath = Path.GetFullPath(match.Groups["bootstrap"].Value);
+                string runtimeRoot = Path.GetFullPath(Path.Combine(
+                    Path.GetDirectoryName(bootstrapPath)!, ".."));
+                if (!IsApprovedDirectory(runtimeRoot, request.FixedHostPolicy.DeclaredRuntimeReadRoots) ||
+                    IsWithin(runtimeRoot, preparedRoot) || IsWithin(runtimeRoot, stateRoot) ||
+                    !string.Equals(Path.GetFileName(bootstrapPath), "jdtls", StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(Path.GetFileName(Path.GetDirectoryName(bootstrapPath)), "bin", StringComparison.OrdinalIgnoreCase) ||
+                    !File.Exists(Path.Combine(runtimeRoot, "bin", "jdtls.py")) ||
+                    !File.Exists(Path.Combine(runtimeRoot, "config_win", "config.ini")) ||
+                    Directory.GetFiles(Path.Combine(runtimeRoot, "plugins"),
+                        "org.eclipse.equinox.launcher_*.jar").Length != 1)
+                {
+                    return Rejected();
+                }
+
+                (string? javaPath, int javaIndex) = FindFirst(pathEntries, "java.exe");
+                (string? pythonPath, int pythonIndex) = FindFirst(pathEntries, "python.exe");
+                string cmdPath = request.FixedHostPolicy.FixedCmdAbsolutePath;
+                if (javaPath is null || pythonPath is null || !Path.IsPathFullyQualified(cmdPath) ||
+                    !string.Equals(Path.GetFileName(cmdPath), "cmd.exe", StringComparison.OrdinalIgnoreCase) ||
+                    !IsApprovedExecutable(javaPath, request, preparedRoot, stateRoot) ||
+                    !IsApprovedExecutable(pythonPath, request, preparedRoot, stateRoot) ||
+                    !IsApprovedExecutable(cmdPath, request, preparedRoot, stateRoot))
+                {
+                    return Rejected();
+                }
+
+                if (!TryDescribe(batchPath, index, out PreparedJdtPinnedFile? jdtPin) ||
+                    !TryDescribe(javaPath, javaIndex, out PreparedJdtPinnedFile? javaPin) ||
+                    !TryDescribe(pythonPath, pythonIndex, out PreparedJdtPinnedFile? pythonPin) ||
+                    !TryDescribe(cmdPath, null, out PreparedJdtPinnedFile? cmdPin) ||
+                    !TryDescribe(bootstrapPath, null, out PreparedJdtPinnedFile? bootstrapPin) ||
+                    !TryDescribeRuntime(request.FixedHostPolicy.DeclaredRuntimeReadRoots,
+                        preparedRoot, stateRoot, cancellationToken,
+                        out IReadOnlyList<PreparedJdtPinnedFile>? runtimePins))
+                {
+                    return Rejected();
+                }
+
                 return Task.FromResult(new PreparedJdtCommandResolution(
-                    insidePreparedRoot || insideDisposableStateRoot || executable && batch
-                        ? PreparedJdtCommandResolutionStatus.Rejected
-                        : PreparedJdtCommandResolutionStatus.Unavailable,
-                    null));
+                    PreparedJdtCommandResolutionStatus.Pinned,
+                    new PreparedJdtPinnedCommands(jdtPin!, javaPin!, cmdPin!,
+                        pythonPin, bootstrapPin, runtimePins)));
             }
         }
-        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or
+            PathTooLongException or IOException or UnauthorizedAccessException)
         {
             return Unavailable();
         }
@@ -574,6 +641,148 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
     private static Task<PreparedJdtCommandResolution> Unavailable() =>
         Task.FromResult(new PreparedJdtCommandResolution(
             PreparedJdtCommandResolutionStatus.Unavailable, null));
+
+    private static Task<PreparedJdtCommandResolution> Rejected() =>
+        Task.FromResult(new PreparedJdtCommandResolution(
+            PreparedJdtCommandResolutionStatus.Rejected, null));
+
+    private static bool IsWithin(string candidate, string root) =>
+        string.Equals(candidate, root, StringComparison.OrdinalIgnoreCase) ||
+        candidate.StartsWith(root.TrimEnd(Path.DirectorySeparatorChar) +
+            Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsApprovedDirectory(string candidate, IReadOnlyList<string> approved) =>
+        approved.Any(directory => Path.IsPathFullyQualified(directory) &&
+            string.Equals(Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar),
+                candidate.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsApprovedExecutable(string path, PreparedJdtCommandRequest request,
+        string preparedRoot, string stateRoot) =>
+        !IsWithin(path, preparedRoot) && !IsWithin(path, stateRoot) &&
+        IsApprovedDirectory(Path.GetDirectoryName(path)!,
+            request.FixedHostPolicy.ApprovedExecutableDirectories);
+
+    private static (string? Path, int Index) FindFirst(string[] entries, string fileName)
+    {
+        for (int i = 0; i < entries.Length; i++)
+        {
+            if (!Path.IsPathFullyQualified(entries[i]))
+            {
+                return (null, -1);
+            }
+
+            string candidate = Path.Combine(Path.GetFullPath(entries[i]), fileName);
+            if (File.Exists(candidate))
+            {
+                return (candidate, i);
+            }
+        }
+
+        return (null, -1);
+    }
+
+    private static bool TryDescribe(string path, int? index, out PreparedJdtPinnedFile? pin)
+    {
+        pin = null;
+        string absolute = Path.GetFullPath(path);
+        string? parent = Path.GetDirectoryName(absolute);
+        if (parent is null)
+        {
+            return false;
+        }
+
+        (PreparedSourceTraversal.OpenStatus directoryStatus, SafeFileHandle? directory) =
+            PreparedSourceTraversal.OpenRoot(parent);
+        using (directory)
+        {
+            if (directoryStatus != PreparedSourceTraversal.OpenStatus.Opened || directory is null)
+            {
+                return false;
+            }
+
+            (PreparedSourceTraversal.OpenStatus fileStatus, SafeFileHandle? file) =
+                PreparedSourceTraversal.OpenRelativeFile(directory, Path.GetFileName(absolute));
+            using (file)
+            {
+                PreparedSourceTraversal.FileIdentity? identity = file is null
+                    ? null : PreparedSourceTraversal.ObserveFile(file);
+                if (fileStatus != PreparedSourceTraversal.OpenStatus.Opened || identity is null)
+                {
+                    return false;
+                }
+
+                using var stream = new FileStream(absolute, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (PreparedSourceTraversal.ObserveFile(stream.SafeFileHandle) != identity)
+                {
+                    return false;
+                }
+
+                pin = new PreparedJdtPinnedFile(absolute,
+                    new PreparedJdtFileIdentity(identity.VolumeSerialNumber,
+                        identity.FileIndexHigh, identity.FileIndexLow),
+                    Convert.ToHexString(SHA256.HashData(stream)), index);
+                return true;
+            }
+        }
+    }
+
+    private static bool TryDescribeRuntime(IReadOnlyList<string> roots,
+        string preparedRoot, string stateRoot, CancellationToken cancellationToken,
+        out IReadOnlyList<PreparedJdtPinnedFile>? pins)
+    {
+        pins = null;
+        var result = new List<PreparedJdtPinnedFile>();
+        var pending = new Stack<string>();
+        foreach (string declaredRoot in roots)
+        {
+            if (!Path.IsPathFullyQualified(declaredRoot))
+            {
+                return false;
+            }
+
+            string root = Path.GetFullPath(declaredRoot);
+            if (IsWithin(root, preparedRoot) || IsWithin(root, stateRoot))
+            {
+                return false;
+            }
+
+            pending.Push(root);
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (pending.TryPop(out string? directory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!seen.Add(directory))
+            {
+                continue;
+            }
+
+            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0)
+            {
+                return false;
+            }
+
+            foreach (string child in Directory.EnumerateDirectories(directory))
+            {
+                pending.Push(child);
+            }
+
+            foreach (string file in Directory.EnumerateFiles(directory))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!TryDescribe(file, null, out PreparedJdtPinnedFile? pin))
+                {
+                    return false;
+                }
+
+                result.Add(pin!);
+            }
+        }
+
+        pins = result;
+        return result.Count > 0;
+    }
 }
 
 internal sealed record PreparedJdtCommandRequest(
@@ -597,7 +806,10 @@ internal sealed record PreparedJdtCommandResolution(
 internal sealed record PreparedJdtPinnedCommands(
     PreparedJdtPinnedFile JdtCommand,
     PreparedJdtPinnedFile JavaCommand,
-    PreparedJdtPinnedFile? FixedInterpreter);
+    PreparedJdtPinnedFile? FixedInterpreter,
+    PreparedJdtPinnedFile? PythonCommand = null,
+    PreparedJdtPinnedFile? BootstrapScript = null,
+    IReadOnlyList<PreparedJdtPinnedFile>? RuntimeInputs = null);
 
 internal sealed record PreparedJdtFileIdentity(
     uint VolumeSerialNumber,

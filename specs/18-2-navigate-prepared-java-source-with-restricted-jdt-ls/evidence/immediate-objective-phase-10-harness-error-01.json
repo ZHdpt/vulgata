@@ -1,0 +1,11 @@
+{
+  "phase": "10",
+  "kind": "Pre-test harness failure, not product/test failure",
+  "attempt": "Final focused LocalTools verification before rerun",
+  "error": "eng/test-policy.ps1:45 Select-Object -Unique: Object reference not set to an instance of an object",
+  "exit_code": 1,
+  "product_tests_executed": false,
+  "results_directory_created": false,
+  "fresh_check": "Same unchanged eng/test.ps1 -PolicyOnly in new bundled pwsh process passed all 293 source classifications and probes, exit0",
+  "action": "One fresh focused rerun after policy qualification; no policy edits, test deletions, assertion changes or historical recovery counter updates"
+}

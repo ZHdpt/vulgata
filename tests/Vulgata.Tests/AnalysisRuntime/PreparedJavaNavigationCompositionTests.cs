@@ -14,8 +14,8 @@ namespace Vulgata.Tests.AnalysisRuntime;
 [Collection(PreparedSourceTestCollection.Name)]
 public sealed class PreparedJavaNavigationCompositionTests
 {
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenCancelledAfterRuntimeOpen_SettlesSessionAndLease()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -87,8 +87,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenControlledRuntimeOpenFails_DisposesIssuedLeaseAndKeepsFiles()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -154,8 +154,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("approval-identity")]
     [InlineData("root-binding-identity")]
     [InlineData("physical-root")]
@@ -243,8 +243,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenSelectedApprovalBelongsToAnotherRepository_DeniesBeforeIssue()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -311,8 +311,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenSelectedToolPurposeIsNotNavigation_DeniesBeforeRuntimeOpen()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -378,8 +378,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenWorkspaceAuthorityIsUnavailable_KeepsFileFunctionsUsable()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -465,8 +465,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, readContext.Lifetime);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenTrustedOwnershipBindingIsMissing_LeavesNavigationUnavailable()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -537,8 +537,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("callback-null")]
     [InlineData("approval-mismatch")]
     [InlineData("root-mismatch")]
@@ -659,8 +659,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenCurrentBindingIsVerifiedUnowned_OpensNavigation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -743,8 +743,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenCurrentBindingIsVerifiedOwned_OpensNavigation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -820,8 +820,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenNavigationOpens_KeepsFiveFunctionsAfterLimitedCall()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -928,8 +928,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, readContext.Lifetime);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ComposeAsync_WhenNavigationDependenciesAreClosed_KeepsFileFunctionsUsable()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

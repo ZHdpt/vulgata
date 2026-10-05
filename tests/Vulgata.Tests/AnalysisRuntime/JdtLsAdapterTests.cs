@@ -26,8 +26,8 @@ public sealed class JdtLsAdapterTests
     private const string CodeGraphHash =
         "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03";
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void JavaSession_PublicLifecycle_ProvidesAsyncDisposalForShutdownAndCleanup()
     {
         Assert.True(
@@ -36,8 +36,8 @@ public sealed class JdtLsAdapterTests
             "exit, stream closure, bounded wait, and forced process-tree cleanup remain observable.");
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void JdtLsIdentity_MissingArchiveOrCoreJarSubstitution_RemainsFailClosed()
     {
         Assert.Throws<ArgumentException>(() => CreateIdentity(jdtLsDistributionArchiveName: null));
@@ -62,8 +62,8 @@ public sealed class JdtLsAdapterTests
         Assert.Equal("jdt_distribution_archive_checksum_missing", result.FailureCode);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task JdtLsAdapter_ClosedStdioLifecycle_BindsExactRuntimeAndRevisionWorkspace()
     {
         AnalysisRuntimeIdentity identity = CreateIdentity();
@@ -197,8 +197,8 @@ public sealed class JdtLsAdapterTests
         Assert.False(Directory.Exists(workspaceRoot));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedRevisionWorkspace_UsesContainedMutableProjectMirror_AndPreservesExactSnapshotIdentity()
     {
         string root = Path.Combine(
@@ -246,8 +246,8 @@ public sealed class JdtLsAdapterTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(true)]
     [InlineData(false)]
     public async Task PreparedRevisionWorkspace_PreExistingReparsePointCleanup_FailsClosedWithoutTouchingExternalSentinel(
@@ -319,8 +319,8 @@ public sealed class JdtLsAdapterTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task StreamJsonRpcJdtLsClient_UsesEvidenceBytesAndRejectsMirrorGeneratedResponseUri()
     {
         string root = Path.Combine(
@@ -414,8 +414,8 @@ public sealed class JdtLsAdapterTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task StreamJsonRpcJdtLsClient_DocumentSymbolRoot_PreservesAuthorityProvenanceAndTypeNameAsync()
     {
         string root = Path.Combine(

@@ -306,7 +306,8 @@
     "suite": "SelfContained"
   },
   "AnalysisRuntime/JdtLsAdapterTests.cs": {
-    "suite": "SelfContained"
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT tests from basic suite; controlled and native evidence reported separately."
   },
   "AnalysisRuntime/JdtLsMissingArchiveQualificationTests.cs": {
     "suite": "LocalTools"
@@ -321,13 +322,16 @@
     "suite": "SelfContained"
   },
   "AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs": {
-    "suite": "SelfContained"
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT navigation tests from basic suite; assertions preserved, explicit controlled qualification."
   },
   "AnalysisRuntime/JdtLsPreparedNavigationTests.cs": {
-    "suite": "SelfContained"
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT tests from basic suite; controlled and native evidence reported separately."
   },
   "AnalysisRuntime/PreparedJavaNavigationCompositionTests.cs": {
-    "suite": "SelfContained"
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT navigation tests from basic suite; assertions preserved, explicit controlled qualification."
   },
   "AnalysisRuntime/RecordingProcessLauncherDouble.cs": {
     "suite": "SelfContained"

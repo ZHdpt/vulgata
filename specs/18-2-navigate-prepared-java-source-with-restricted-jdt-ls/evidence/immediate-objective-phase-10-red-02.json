@@ -1,0 +1,13 @@
+{
+  "phase": "10",
+  "task": "T039 essential owned state cleanup",
+  "kind": "Controlled replacement fixture, no native child",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-b9e893ff4d674883b2b2eb51e365f2a0",
+  "selected": 2,
+  "passed": 1,
+  "failed": 1,
+  "failure": "CleanupAfterConfirmedExit accepted a replaced created data directory; expected InvalidOperationException, no exception thrown",
+  "test": "PreparedJdtOwnedStateDirectories_WhenCreatedDirectoryIsReplaced_RefusesCleanupAndPreservesReplacement",
+  "passing_coverage": "Cancellation before command resolution; zero launcher/protocol calls",
+  "route": "Expected behavioral RED before minimal identity/no-follow correction; no old workflow recovery count updated"
+}
