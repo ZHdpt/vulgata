@@ -236,8 +236,8 @@ context. Controlled tests establish this seam; T046 supplies real-server usefuln
 **Independent test:** Changed source/root authority and hostile input/output locations
 withhold all outside/buffered payload on the dedicated path, including before disclosure.
 
-- [ ] T042 [US2] Extend the dedicated-path cases in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for wrong purpose/current grant, root substitution, revocation/unavailable verifier, cancellation/expiry/disposal, raw device/UNC/traversal/encoded/symlink/outside replies and bounded relative results. Invoke existing function adapters, preserve their one-based position/location bounds, and assert no command/root/approval selector or leaked failure detail. Reuse adequate original lease/URI tests instead of inventing RED for already-correct behavior; only demonstrated dedicated-route gaps need behavioral RED.
-- [ ] T043 [US2] Reach matching GREEN in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs` with current JdtNavigation lease/purpose/root checks before protocol, raw no-follow relative mapping and fresh pre-disclosure check. Discard all buffered locations/counts/limits on changed/unavailable authority. Preserve source-only assignment and old mixed-root ownership filtering; do not introduce a lexical .codegraph filter, another reader service or changes to `src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs` or the18.1 public contract.
+- [X] T042 [US2] Extend the dedicated-path cases in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for wrong purpose/current grant, root substitution, revocation/unavailable verifier, cancellation/expiry/disposal, raw device/UNC/traversal/encoded/symlink/outside replies and bounded relative results. Invoke existing function adapters, preserve their one-based position/location bounds, and assert no command/root/approval selector or leaked failure detail. Reuse adequate original lease/URI tests instead of inventing RED for already-correct behavior; only demonstrated dedicated-route gaps need behavioral RED.
+- [X] T043 [US2] Reach matching GREEN in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs` with current JdtNavigation lease/purpose/root checks before protocol, raw no-follow relative mapping and fresh pre-disclosure check. Discard all buffered locations/counts/limits on changed/unavailable authority. Preserve source-only assignment and old mixed-root ownership filtering; do not introduce a lexical .codegraph filter, another reader service or changes to `src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs` or the18.1 public contract.
 
 ### Phase 13 — US3 (P3): bounded session ownership and failure cleanup
 
@@ -273,8 +273,8 @@ cache adoption, mixed-root concurrent tool use, generalized cleanup, customer Re
 follow-up and full18.3 integration. Their original obligations and partial work stay in
 [SKIP] items. Deferral is not evidence that those protections or integrations succeeded.
 
-**Execution status (2026-10-05):** T037–T041 completed under direct human implementation
-and JDT runtime authorization; T042–T047 remain unchecked. Real JDT qualification
+**Execution status (2026-10-05):** T037–T043 completed under direct human implementation
+and JDT runtime authorization; T044–T047 remain unchecked. Real JDT qualification
 is LocalTools and excluded from the basic SelfContained suite.
 The only prerequisite decisions are explicit new implementation-boundary/JDT exception
 and resource authority. This document does not manufacture acceptance by the old

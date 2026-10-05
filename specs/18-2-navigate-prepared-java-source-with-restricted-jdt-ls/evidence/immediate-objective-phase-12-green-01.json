@@ -1,0 +1,17 @@
+{
+  "phase": "12",
+  "tasks_completed": [
+    "T042",
+    "T043"
+  ],
+  "kind": "Controlled LocalTools; no native JDT",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-3be70c68aff64006a2692aa3db0a9819",
+  "selected": 100,
+  "passed": 100,
+  "failed": 0,
+  "skipped": 0,
+  "new_coverage": "Dedicated AIFunction hostile device/UNC/traversal/encoded/outside/symlink replies; revoked/unavailable authority before protocol and after buffered replies with no locations/limitations/limit/raw details",
+  "retained_coverage": "Root replacement, expiry, disposal and ordinary raw URI mapping retained; same shared guards reused",
+  "production_delta": "None required; T043 matching GREEN verifies existing dedicated currentness/no-follow mapping/pre-disclosure behavior",
+  "test_sha256": "82e454c1ab0ba1d54634ae8b2d7c6e3ef85849e2794dfccfa3d5977e2b60c7df"
+}

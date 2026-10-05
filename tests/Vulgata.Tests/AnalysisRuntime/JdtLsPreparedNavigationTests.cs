@@ -629,6 +629,235 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task OpenDedicatedAsync_WhenFunctionReplyContainsHostileUris_WithholdsEveryLocation()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
+        Directory.CreateDirectory(javaDirectory);
+        string callerPath = Path.Combine(javaDirectory, "Caller.java");
+        await File.WriteAllTextAsync(callerPath, "package example; class Caller { void call() {} }\n");
+        string targetPath = Path.Combine(javaDirectory, "Target.java");
+        await File.WriteAllTextAsync(targetPath, "package example; class Target { void target() {} }\n");
+        string symlinkPath = Path.Combine(javaDirectory, "EscapesToSentinel.java");
+        File.CreateSymbolicLink(symlinkPath, fixture.SentinelPath);
+
+        string rootUri = new Uri(
+            Path.GetFullPath(fixture.PreparedRootPath).TrimEnd(Path.DirectorySeparatorChar) +
+            Path.DirectorySeparatorChar).AbsoluteUri;
+        string driveRoot = Path.GetPathRoot(targetPath)!;
+        string relativeToDrive = Path.GetRelativePath(driveRoot, targetPath).Replace('\\', '/');
+        string rawDevicePath = $"\\\\?\\{targetPath}";
+        string rawDeviceNamespace = $"\\\\.\\{targetPath}";
+        string[] untrustedUris =
+        [
+            $"file:///?/{driveRoot.Replace('\\', '/')}{relativeToDrive}",
+            "file://server/share/Secret.java",
+            rootUri + "%2e%2e/outside/sentinel.txt",
+            rootUri + "src/main/java%2FTarget.java",
+            new Uri(fixture.SentinelPath).AbsoluteUri,
+            new Uri(symlinkPath).AbsoluteUri,
+            rawDevicePath,
+            rawDeviceNamespace,
+        ];
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-hostile-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            untrustedUris.Select(uri => new PreparedJdtLsRawLocation(uri, 1, 1, 1, 3)).ToArray(),
+            LimitReached: false,
+            CapabilityLimitation: null);
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+
+        try
+        {
+            opened = await factory.OpenDedicatedAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            AIFunction definition = Assert.Single(
+                new PreparedJavaNavigationFunctions(context).Create().Where(function =>
+                    function.Name == "navigate_java_definition"));
+            object? rawResult = await definition.InvokeAsync(
+                new AIFunctionArguments(new Dictionary<string, object?>
+                {
+                    ["relativePath"] = "src/main/java/example/Caller.java",
+                    ["line"] = 1,
+                    ["character"] = 1,
+                    ["maximumLocations"] = 100,
+                }),
+                CancellationToken.None);
+            PreparedJavaNavigationResult result = Assert.IsType<PreparedJavaNavigationResult>(rawResult);
+
+            Assert.Equal(PreparedJavaNavigationOutcome.NoResultObserved, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Equal(untrustedUris.Length, result.Limitations.Count);
+            Assert.All(result.Limitations, limitation =>
+            {
+                Assert.Equal("UnmappableLocation", limitation.Code);
+                Assert.Null(limitation.Source);
+            });
+            string serializedResult = JsonSerializer.Serialize(result);
+            foreach (string uri in untrustedUris)
+            {
+                Assert.DoesNotContain(uri, serializedResult, StringComparison.OrdinalIgnoreCase);
+            }
+
+            Assert.DoesNotContain(fixture.PreparedRootPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(fixture.SentinelPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(1, runtime.Session.NavigateCallCount);
+        }
+        finally
+        {
+            if (opened?.Context is not null)
+            {
+                await opened.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
+    [InlineData(true, PreparedSourceAuthorityStatus.Revoked, PreparedJavaNavigationOutcome.Denied)]
+    [InlineData(true, PreparedSourceAuthorityStatus.Unavailable, PreparedJavaNavigationOutcome.AuthorityUnavailable)]
+    [InlineData(false, PreparedSourceAuthorityStatus.Revoked, PreparedJavaNavigationOutcome.Denied)]
+    [InlineData(false, PreparedSourceAuthorityStatus.Unavailable, PreparedJavaNavigationOutcome.AuthorityUnavailable)]
+    public async Task OpenDedicatedAsync_WhenSourceAuthorityIsLostBeforeRequestOrAfterReply_DiscardsPayload(
+        bool loseBeforeRequest,
+        PreparedSourceAuthorityStatus loss,
+        PreparedJavaNavigationOutcome expectedOutcome)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
+        Directory.CreateDirectory(javaDirectory);
+        string callerPath = Path.Combine(javaDirectory, "Caller.java");
+        await File.WriteAllTextAsync(callerPath, "package example; class Caller { void call() {} }\n");
+        string targetPath = Path.Combine(javaDirectory, "Target.java");
+        await File.WriteAllTextAsync(targetPath, "package example; class Target { void target() {} }\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-authority-loss-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [new PreparedJdtLsRawLocation(new Uri(targetPath).AbsoluteUri, 4, 1, 4, 8)],
+            LimitReached: true,
+            CapabilityLimitation: "private capability detail");
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+
+        try
+        {
+            opened = await factory.OpenDedicatedAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            if (loseBeforeRequest)
+            {
+                SetSourceAuthorityLoss(fixture, loss);
+            }
+            else
+            {
+                runtime.Session.AfterNavigate = () => SetSourceAuthorityLoss(fixture, loss);
+            }
+
+            AIFunction definition = Assert.Single(
+                new PreparedJavaNavigationFunctions(context).Create().Where(function =>
+                    function.Name == "navigate_java_definition"));
+            object? rawResult = await definition.InvokeAsync(
+                new AIFunctionArguments(new Dictionary<string, object?>
+                {
+                    ["relativePath"] = "src/main/java/example/Caller.java",
+                    ["line"] = 1,
+                    ["character"] = 1,
+                    ["maximumLocations"] = 5,
+                }),
+                CancellationToken.None);
+            PreparedJavaNavigationResult result = Assert.IsType<PreparedJavaNavigationResult>(rawResult);
+
+            Assert.Equal(expectedOutcome, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(loseBeforeRequest ? 0 : 1, runtime.Session.NavigateCallCount);
+            Assert.Equal(PreparedToolWorkspaceLifetime.AuthorityClosed, lease.Lifetime);
+            string serializedResult = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(callerPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(targetPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(new Uri(targetPath).AbsoluteUri, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(stateRoot, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("private capability detail", serializedResult, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (opened?.Context is not null)
+            {
+                await opened.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    private static void SetSourceAuthorityLoss(
+        PreparedSourceFixture fixture,
+        PreparedSourceAuthorityStatus loss)
+    {
+        if (loss == PreparedSourceAuthorityStatus.Revoked)
+        {
+            fixture.Authority.Revoke();
+        }
+        else
+        {
+            fixture.Authority.MakeUnavailable();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WithCodeGraphPurposeLease_DeniesWithoutInvokingRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
