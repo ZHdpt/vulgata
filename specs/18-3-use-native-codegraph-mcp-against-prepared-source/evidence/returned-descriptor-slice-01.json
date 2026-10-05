@@ -1,0 +1,41 @@
+{
+  "kind": "bounded-implementation-and-native-qualification",
+  "story": "18-3-use-native-codegraph-mcp-against-prepared-source",
+  "scope": "2026-10-02 immediate returned-descriptor slice, T018-T023 only",
+  "observed_at_utc": "2026-10-02T14:13:40Z",
+  "final_verified_at_utc": "2026-10-05T11:35:40Z",
+  "starting_commit": "95bcdccd74b3eeda301e772535f34034f2267292",
+  "installed_components": {
+    "codegraph_package": "@colbymchenry/codegraph@1.5.0",
+    "platform_package": "@colbymchenry/codegraph-win32-x64@1.5.0",
+    "package_json_sha256": "11c22f9779cf074d74d1751598713285515559cef0b75de7a4d2e8a4f404fc29",
+    "npm_shim_sha256": "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877",
+    "bundled_node_sha256": "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
+    "bundled_cli_sha256": "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03",
+    "model_context_protocol_core": "1.4.1",
+    "microsoft_agents_ai": "1.13.0"
+  },
+  "behavior_evidence": {
+    "t018_red": "Focused SelfContained test selected 4, failed 4 on the intended NotImplementedException; TRX SHA-256 eb7964639712179c4e3a7e1e9e5a018e618d1cf889d8c9b358f53879fbd5e557.",
+    "t020_red": "Returned-descriptor consumer test selected 1, failed 1 because the descriptor constructor was missing; TRX SHA-256 2ab89939efde45bfa1aee81b1b281cdced323fdacaebc0262f00beb9f217c5b6.",
+    "focused_green": "After the public trusted-session API adjustment, prepared connection and closed Worker tests selected 44, passed 44; TRX SHA-256 d6b6d6b4b1fabd3e42d041e8e0495e8e0b9cf62f72e66c1b16a61556f5dca368.",
+    "final_self_contained": "At the exact final candidate, eng/test.ps1 selected 2019, passed 2019, failed 0, skipped 0 on 2026-10-05; TRX SHA-256 8969c8d84c0d4b605473ca679b7d843c93b67e9ec048105362474b4cb8d5cdf7. An earlier invocation was interrupted before producing a TRX and is not counted as evidence.",
+    "web_build": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj passed with 0 errors; warnings were reported separately by the command."
+  },
+  "native_evidence": {
+    "suite": "LocalTools",
+    "selection": "PreparedCodeGraphConnectionQualificationTests",
+    "result": "selected 1, passed 1, failed 0, skipped 0",
+    "trx_sha256": "b8bb13a71a5baf17e5f96e9a9c3a7d2bcfebcf236d6d070b6ff999bf7b6562fb",
+    "fixture": "Test-created dedicated no-Git prepared directory under the selected host's temporary directory; removed after the run.",
+    "path": "Trusted application code called PrepareAsync and returned an immutable stdio descriptor. The existing native client consumed that value, completed MCP initialize and reviewed-tool discovery, and CodeGraphFunctions invoked one real codegraph_explore call yielding the selected fixture source. A model-supplied projectPath was denied before native invocation.",
+    "descriptor": "Fixed pwsh -NoProfile -File pinned shim; serve --mcp -p <same application-selected root> --no-watch; working directory <same root>; six declared CodeGraph environment flags. No Worker-visible command, root or environment control.",
+    "local_effects": "The test asserted unchanged fixture source, absent root codegraph.json and Git hooks, and only the owned .codegraph entry alongside the two source files at the workspace root. It disposed the native client and removed the owned fixture. A later read-only process query, after closing observer shells and excluding the observer itself, found zero node.exe/pwsh.exe command lines with this fixture prefix.",
+    "launcher_diagnosis": "A narrowed child PATH without the pinned shim's outer node.exe made an older fixture exit 0 without an index and the new descriptor time out. The factory now requires outer Node on PATH and codegraph.db after init; the successful run used only PowerShell, dotnet, the selected outer Node, pinned CodeGraph prefix and Windows system directories on PATH."
+  },
+  "limits": [
+    "The process query is a post-run prefix check, not a complete PID or descendant-tree trace.",
+    "The trusted pinned child inherits host filesystem and network rights; no preventive OS denial or comprehensive external-effect observation is claimed.",
+    "The owned-fixture result does not establish general approved-Repository binding, Story 18.2 capabilities, held contained source reads, positive-bound ordinary-reader exclusion, a model/provider call, or full Story 18.3 completion."
+  ]
+}

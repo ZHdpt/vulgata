@@ -127,7 +127,10 @@ internal sealed class CodeGraphProcessRequest
         string workingDirectory,
         TimeSpan timeout,
         int standardOutputByteLimit,
-        int standardErrorByteLimit)
+        int standardErrorByteLimit,
+        IReadOnlyDictionary<string, string>? environmentVariables = null,
+        bool closeStandardInput = false,
+        bool inheritEnvironmentVariables = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentNullException.ThrowIfNull(arguments);
@@ -143,6 +146,12 @@ internal sealed class CodeGraphProcessRequest
         Timeout = timeout;
         StandardOutputByteLimit = standardOutputByteLimit;
         StandardErrorByteLimit = standardErrorByteLimit;
+        EnvironmentVariables = new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(
+            environmentVariables is null
+                ? new Dictionary<string, string>(StringComparer.Ordinal)
+                : new Dictionary<string, string>(environmentVariables, StringComparer.Ordinal));
+        CloseStandardInput = closeStandardInput;
+        InheritEnvironmentVariables = inheritEnvironmentVariables;
     }
 
     public string FileName { get; }
@@ -151,6 +160,9 @@ internal sealed class CodeGraphProcessRequest
     public TimeSpan Timeout { get; }
     public int StandardOutputByteLimit { get; }
     public int StandardErrorByteLimit { get; }
+    public IReadOnlyDictionary<string, string> EnvironmentVariables { get; }
+    public bool CloseStandardInput { get; }
+    public bool InheritEnvironmentVariables { get; }
 }
 
 internal sealed record CodeGraphProcessResult(
@@ -179,6 +191,11 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
         if (!process.Start())
         {
             throw new InvalidOperationException("codegraph process failed to start");
+        }
+
+        if (request.CloseStandardInput)
+        {
+            process.StandardInput.Close();
         }
 
         Task<byte[]> stdout = ReadBoundedAsync(
@@ -226,6 +243,7 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = request.CloseStandardInput,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
         };
@@ -241,6 +259,16 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
         foreach (string argument in request.Arguments)
         {
             startInfo.ArgumentList.Add(argument);
+        }
+
+        if (!request.InheritEnvironmentVariables)
+        {
+            startInfo.Environment.Clear();
+        }
+
+        foreach ((string name, string value) in request.EnvironmentVariables)
+        {
+            startInfo.Environment[name] = value;
         }
 
         return startInfo;

@@ -24,6 +24,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
     private readonly Guid _repositoryId;
     private readonly string _commandPath;
     private readonly string _projectPath;
+    private readonly PreparedCodeGraphConnection? _connection;
     private readonly TimeProvider _timeProvider;
     private readonly TimeSpan _operationTimeout;
     private readonly DateTimeOffset _expiresAt;
@@ -38,6 +39,16 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
     internal NativeCodeGraphMcpClient(Guid repositoryId, string commandPath, string projectPath)
         : this(repositoryId, commandPath, projectPath, TimeProvider.System)
     {
+    }
+
+    internal NativeCodeGraphMcpClient(PreparedCodeGraphConnection connection)
+        : this(
+            (connection ?? throw new ArgumentNullException(nameof(connection))).RepositoryId,
+            connection.CommandPath,
+            connection.WorkingDirectory,
+            TimeProvider.System)
+    {
+        _connection = connection;
     }
 
     internal NativeCodeGraphMcpClient(
@@ -402,6 +413,25 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
 
     private StdioClientTransport CreateTransport()
     {
+        return new StdioClientTransport(CreateTransportOptions());
+    }
+
+    internal StdioClientTransportOptions CreateTransportOptions()
+    {
+        if (_connection is not null)
+        {
+            return new StdioClientTransportOptions
+            {
+                Name = "prepared-codegraph",
+                Command = _connection.Command,
+                Arguments = _connection.Arguments.ToArray(),
+                WorkingDirectory = _connection.WorkingDirectory,
+                InheritEnvironmentVariables = false,
+                EnvironmentVariables = new Dictionary<string, string>(_connection.Environment),
+            };
+        }
+
+        // Historical fixture callers retain their independently constructed route.
         string command = _commandPath;
         string[] arguments = ["serve", "--mcp", "-p", _projectPath, "--no-watch"];
         if (Path.GetExtension(_commandPath).Equals(".ps1", StringComparison.OrdinalIgnoreCase))
@@ -414,7 +444,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
         environment["CODEGRAPH_NO_DAEMON"] = "1";
         environment["CODEGRAPH_TELEMETRY"] = "0";
         environment["DO_NOT_TRACK"] = "1";
-        return new StdioClientTransport(new StdioClientTransportOptions
+        return new StdioClientTransportOptions
         {
             Name = "prepared-codegraph",
             Command = command,
@@ -422,7 +452,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
             WorkingDirectory = _projectPath,
             InheritEnvironmentVariables = false,
             EnvironmentVariables = environment,
-        });
+        };
     }
 
     private static bool IsReviewedSchema(JsonElement schema)

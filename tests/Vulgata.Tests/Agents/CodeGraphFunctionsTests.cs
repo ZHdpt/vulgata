@@ -190,6 +190,9 @@ public sealed class CodeGraphFunctionsTests
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("projectPath")]
+    [InlineData("root")]
+    [InlineData("command")]
+    [InlineData("environment")]
     [InlineData("unknownField")]
     [InlineData("nestedAuthoritySelector")]
     [InlineData("queryMissing")]
@@ -400,6 +403,9 @@ public sealed class CodeGraphFunctionsTests
         switch (scenario)
         {
             case "projectPath": values["projectPath"] = @"C:\foreign"; break;
+            case "root": values["root"] = @"C:\foreign"; break;
+            case "command": values["command"] = "foreign-tool"; break;
+            case "environment": values["environment"] = new Dictionary<string, object?> { ["CODEGRAPH_DIR"] = "foreign" }; break;
             case "unknownField": values["unsafeSelector"] = "foreign"; break;
             case "nestedAuthoritySelector": values["selector"] = new Dictionary<string, object?> { ["projectPath"] = @"C:\foreign" }; break;
             case "queryMissing": values.Remove("query"); break;
