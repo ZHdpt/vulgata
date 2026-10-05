@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Runtime.ExceptionServices;
@@ -113,19 +115,23 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
 
             await targetA.AssertOctoberSchemaAbsentAsync();
             await targetB.AssertOctoberSchemaAbsentAsync();
-            await AssertOrdinaryWebCompositionAsync(targetA, output, teardownFailures);
+            await AssertOrdinaryWebCompositionAsync(
+                targetA, output, teardownFailures, verifyProviderAdministration: true);
             await targetA.AssertOctoberSchemaAbsentAsync();
 
             await PrepareOwnedTargetAsync(targetA);
             await PrepareOwnedTargetAsync(targetB);
 
-            OrdinaryDataState ordinaryStateA = await CaptureOrdinaryDataStateAsync(targetA);
-            OrdinaryDataState ordinaryStateB = await CaptureOrdinaryDataStateAsync(targetB);
             var octoberStateA = await targetA.CaptureOctoberStateAsync();
             var octoberStateB = await targetB.CaptureOctoberStateAsync();
+            await AssertOrdinaryWebCompositionAsync(targetB, output, teardownFailures);
+            await AssertOctoberStateUnchangedAsync(targetA, octoberStateA);
+            await AssertOctoberStateUnchangedAsync(targetB, octoberStateB);
+
+            OrdinaryDataState ordinaryStateA = await CaptureOrdinaryDataStateAsync(targetA);
+            OrdinaryDataState ordinaryStateB = await CaptureOrdinaryDataStateAsync(targetB);
             AssertEquivalentOrdinaryDataShape(ordinaryStateA, ordinaryStateB);
 
-            await AssertOrdinaryWebCompositionAsync(targetB, output, teardownFailures);
             await AssertOctoberStateUnchangedAsync(targetA, octoberStateA);
             await AssertOctoberStateUnchangedAsync(targetB, octoberStateB);
             AssertEquivalentOrdinaryDataShape(ordinaryStateA, await CaptureOrdinaryDataStateAsync(targetA));
@@ -276,7 +282,8 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
     private static async Task AssertOrdinaryWebCompositionAsync(
         OctoberHostSelectionTests.GeneratorPrepareFixture fixture,
         ITestOutputHelper output,
-        List<(string Owner, Exception Failure)> teardownFailures)
+        List<(string Owner, Exception Failure)> teardownFailures,
+        bool verifyProviderAdministration = false)
     {
         string logPath = Path.Combine(fixture.OwnedRoot, "ordinary-web.log");
         WebApplicationFactory<Program> parentFactory = new();
@@ -321,8 +328,11 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
             AssertTargetDatabase(identity.Database.GetDbConnection().ConnectionString, fixture);
             Assert.NotEmpty(await identity.Database.GetAppliedMigrationsAsync());
             RoleManager<IdentityRole> roles = services.GetRequiredService<RoleManager<IdentityRole>>();
-            Assert.True(await roles.RoleExistsAsync(RoleNames.SystemOwner),
-                "Ordinary Web startup should preserve normal role seeding.");
+            foreach (string role in RoleNames.SeededRoles)
+            {
+                Assert.True(await roles.RoleExistsAsync(role),
+                    $"Ordinary Web startup should preserve normal seeding of the '{role}' role.");
+            }
             VulgataDbContext scopedManagement = services.GetRequiredService<VulgataDbContext>();
             AssertTargetDatabase(scopedManagement.Database.GetDbConnection().ConnectionString, fixture);
             Assert.NotEmpty(await scopedManagement.Database.GetAppliedMigrationsAsync());
@@ -344,6 +354,13 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
                 StringComparison.Ordinal);
             systems = await anonymousBrowser.GetAsync("/api/systems/");
             Assert.Equal(System.Net.HttpStatusCode.Unauthorized, systems.StatusCode);
+            if (verifyProviderAdministration)
+            {
+                (string email, string password) = await CreateProviderAdministratorAsync(services);
+                await LoginAsync(anonymousBrowser, email, password);
+                await AssertProviderAdministrationAsync(anonymousBrowser, factoryManagement);
+                await DeleteProviderAdministratorAsync(services, email);
+            }
 
             output.WriteLine($"ordinary-web-log-exclusive-open-before-disposal={ProbeExclusiveLogOpen(logPath)}");
         }
@@ -444,6 +461,130 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
             Assert.True((bool)(await command.ExecuteScalarAsync() ?? false),
                 $"Ordinary Web should retain migration history at {schema}.{table}.");
         }
+    }
+
+    internal static async Task<(string Email, string Password)> CreateProviderAdministratorAsync(
+        IServiceProvider services)
+    {
+        RoleManager<IdentityRole> roles = services.GetRequiredService<RoleManager<IdentityRole>>();
+        Assert.True(await roles.RoleExistsAsync(RoleNames.Administrator),
+            "Ordinary Web startup should seed the Administrator role.");
+
+        string email = $"story184.pg-admin-{Guid.NewGuid():N}@example.invalid";
+        string password = $"Valid1!Story184-{Guid.NewGuid():N}";
+        UserManager<ApplicationUser> users = services.GetRequiredService<UserManager<ApplicationUser>>();
+        ApplicationUser user = new()
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+        };
+        IdentityResult created = await users.CreateAsync(user, password);
+        Assert.True(created.Succeeded, string.Join(";", created.Errors.Select(error => error.Code)));
+        IdentityResult assigned = await users.AddToRoleAsync(user, RoleNames.Administrator);
+        Assert.True(assigned.Succeeded, string.Join(";", assigned.Errors.Select(error => error.Code)));
+        return (email, password);
+    }
+
+    internal static async Task DeleteProviderAdministratorAsync(IServiceProvider services, string email)
+    {
+        UserManager<ApplicationUser> users = services.GetRequiredService<UserManager<ApplicationUser>>();
+        ApplicationUser user = Assert.IsType<ApplicationUser>(await users.FindByEmailAsync(email));
+        IdentityResult deleted = await users.DeleteAsync(user);
+        Assert.True(deleted.Succeeded, string.Join(";", deleted.Errors.Select(error => error.Code)));
+    }
+
+    internal static async Task LoginAsync(HttpClient client, string email, string password)
+    {
+        Dictionary<string, string> fields =
+            await OctoberHostSelectionTests.GetLoginFormFieldsAsync(client);
+        fields["Input.Email"] = email;
+        fields["Input.Password"] = password;
+        fields["Input.RememberMe"] = "false";
+        using HttpResponseMessage response = await client.PostAsync(
+            "/Account/Login", new FormUrlEncodedContent(fields));
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Uri location = Assert.IsType<Uri>(response.Headers.Location);
+        string path = location.IsAbsoluteUri ? location.PathAndQuery : location.OriginalString;
+        Assert.Equal("/", path);
+        if (location.IsAbsoluteUri)
+        {
+            Assert.Equal(
+                client.BaseAddress!.GetLeftPart(UriPartial.Authority),
+                location.GetLeftPart(UriPartial.Authority));
+        }
+    }
+
+    internal static async Task AssertProviderAdministrationAsync(
+        HttpClient client,
+        VulgataDbContext management)
+    {
+        string secret = $"synthetic-story184-provider-{Guid.NewGuid():N}";
+        using HttpResponseMessage create = await client.PostAsJsonAsync("/api/llm-providers", new
+        {
+            name = $"Story 18.4 PG provider {Guid.NewGuid():N}",
+            baseEndpointUrl = "https://provider.story184.invalid/v1",
+            apiKey = secret,
+            supportedApiTypes = 3,
+            defaultAgentType = 0,
+        });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+        LlmProviderAdminResponse created = Assert.IsType<LlmProviderAdminResponse>(
+            await create.Content.ReadFromJsonAsync<LlmProviderAdminResponse>());
+        Assert.True(created.HasApiKey);
+        string encrypted = await management.LlmProviders
+            .AsNoTracking()
+            .Where(provider => provider.Id == created.Id)
+            .Select(provider => provider.EncryptedApiKey)
+            .SingleAsync();
+        Assert.NotEqual(secret, encrypted);
+
+        using HttpResponseMessage list = await client.GetAsync("/api/llm-providers");
+        Assert.Equal(HttpStatusCode.OK, list.StatusCode);
+        List<LlmProviderAdminResponse> providers = Assert.IsType<List<LlmProviderAdminResponse>>(
+            await list.Content.ReadFromJsonAsync<List<LlmProviderAdminResponse>>());
+        Assert.Contains(providers, provider => provider.Id == created.Id && provider.HasApiKey);
+
+        using HttpResponseMessage update = await client.PutAsJsonAsync(
+            $"/api/llm-providers/{created.Id}", new
+            {
+                name = "Story 18.4 PG provider updated",
+                baseEndpointUrl = "https://provider.story184.invalid/v1/",
+                apiKey = "",
+                supportedApiTypes = 4,
+                defaultAgentType = 1,
+            });
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        LlmProviderAdminResponse updated = Assert.IsType<LlmProviderAdminResponse>(
+            await update.Content.ReadFromJsonAsync<LlmProviderAdminResponse>());
+        Assert.Equal("Story 18.4 PG provider updated", updated.Name);
+        Assert.True(updated.HasApiKey);
+        Assert.Equal(encrypted, await management.LlmProviders
+            .AsNoTracking()
+            .Where(provider => provider.Id == created.Id)
+            .Select(provider => provider.EncryptedApiKey)
+            .SingleAsync());
+
+        using HttpResponseMessage page = await client.GetAsync("/management/settings/llm-providers");
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        string pageHtml = await page.Content.ReadAsStringAsync();
+        Assert.Contains("LLM 提供商管理", pageHtml, StringComparison.Ordinal);
+        Assert.Contains("Story 18.4 PG provider updated", pageHtml, StringComparison.Ordinal);
+
+        using HttpResponseMessage delete = await client.DeleteAsync($"/api/llm-providers/{created.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+        using HttpResponseMessage afterDelete = await client.GetAsync("/api/llm-providers");
+        Assert.Equal(HttpStatusCode.OK, afterDelete.StatusCode);
+        List<LlmProviderAdminResponse> remaining = Assert.IsType<List<LlmProviderAdminResponse>>(
+            await afterDelete.Content.ReadFromJsonAsync<List<LlmProviderAdminResponse>>());
+        Assert.DoesNotContain(remaining, provider => provider.Id == created.Id);
+    }
+
+    private sealed class LlmProviderAdminResponse
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public bool HasApiKey { get; init; }
     }
 
     private static void CaptureSynchronousDisposalFailure(

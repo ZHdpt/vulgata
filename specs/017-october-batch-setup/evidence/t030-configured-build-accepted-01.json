@@ -1,0 +1,35 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0126-role-order-extension-diagnosed.json",
+    "sha256": "9326cbcb40250aa1c759f999e985eefcb5bbf307d853a6de7614fe68be9dd43f"
+  },
+  "raw_result": {
+    "kind": "command",
+    "stage": "verify-build",
+    "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+    "source_commit": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+    "observed_at": "2026-10-05T13:04:34.201Z",
+    "exit_code": 0,
+    "raw_output_path": "TestResults/isolation-6d8bd79d056548599d155a02f763d009/web-configured-exact-build.log",
+    "raw_output_sha256": "aab605ae86fa560c96dc68d8ff712b4ebe74f15e013d111125c3a7d9e483ce42",
+    "input_hashes": {
+      "specs/017-october-batch-setup/plan.md": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd",
+      "specs/017-october-batch-setup/spec.md": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864",
+      "specs/017-october-batch-setup/tasks.md": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "4a03942c8e4128ba6d7554dd961875e56f8c5a7f7e0fb91338561aea3ca8dbab",
+      "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "897fcd1a09e6c463df70ab975af7ed02c4611e3108eaa4798c46ac65cb748248",
+      "src/dotnet/Vulgata.Web/Program.cs": "f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e"
+    },
+    "owned_paths": [
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/tasks.md",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+      "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+      "src/dotnet/Vulgata.Web/Program.cs"
+    ],
+    "summary": "Actual exact configured build passes35warnings0errors. Manifest captured before this command, after mechanical task completion; not reconstructed from earlier run input."
+  }
+}

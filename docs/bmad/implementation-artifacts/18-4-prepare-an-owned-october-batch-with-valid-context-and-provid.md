@@ -1,6 +1,6 @@
 # Story 18.4 development record
 
-Status: in-progress (paused at recovery7/7 after recurring T029 fixture-order assertion; accepted definition retained)
+Status: in-progress (30/30 tasks verified; independent convergence and downstream gates pending; recovery7/8)
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
@@ -139,6 +139,57 @@ unstaged; checkpoint22 contains root evidence/state only, never failing test cod
 No further repair, runtime invocation, new resources or definition restart proceeds
 through this pause. This is allowance only: all remaining qualification/convergence/
 lookback/independent quality/E2E/final gates still apply and failure8 would pause again.
+
+The human replied "Approve" to the explicit finite7-to8 extension request. Root
+bound and validated that decision in
+`evidence/recovery-extension-implementation-setup-seam-01-count-07.json`.
+Transitions125/126 preserve count7, raise only the human-approved pause limit to8,
+and refresh the at-count7 diagnosis before the implement guard passed. The retained
+Luna/high test owner resumes the smallest ordering correction and affected PG check,
+then existing process provider-admin qualification. No production redesign, test
+weakening, new resource permission or delegated ceiling increase is granted. A
+counted failure8 requires a fresh human decision. Current definition/reviews and
+approvals remain unchanged. The compact approval pointer for historical
+implementation-approval02 was evicted solely to retain the bounded pointer limit;
+its original evidence and transition history remain intact.
+
+The corrected affected PostgreSQL method passed1/1, failed0/skipped0, on frozen
+test SHA `f401655cd39460a2da327783d8e400b9562e54dc2b5a214ac98552d2bcbfc795`.
+Root independently read its TRX and exact container/volume absence logs:
+`TestResults/isolation-c4b298eae1a644d2a975d573f25f574b`. The evidence is
+`evidence/ordinary-web-pg-role-order-final-green-01.json`. Both ordinary startups
+retain all seeded-role assertions; A/B comparisons now occur after both startups,
+and October/history/cross-target checks remain. This PASS does not close recovery
+or substitute for actual-process qualification and final independent gates.
+
+Actual-process A/B qualification now passes the corrected method1/1, retaining20
+unchanged passing executable cases from the21-case class selection. Separate
+generator Identity, ordinary startup before October setup, A/B restart and live
+Administrator provider CRUD/encryption/admin-page checks are qualified without
+extra hosts or paid calls. Exact cleanup is independently verified; see
+`evidence/ordinary-web-runtime-qualification-final-green-01.json`. Its first
+new scoped-service fixture error remains recorded and noncounting, not a product
+RED. Root marks T018/T019/T020/T025/T026/T029 complete using current controlled,
+cleanup and runtime evidence; only T030 remains under the same30 IDs.
+
+T030 focused October SelfContained passed174/174, no skips. The full suite then
+passed2148/2149; its unchanged CodeGraph static-integrity test could not find the
+installed command through root's short PATH. All three installed hashes match.
+`evidence/t030-full-suite-path-diagnosis-01.json` records the environment correction:
+add only the verified npm command directory for the required full suite, not a
+CodeGraph launch/install or test exclusion. The original failure remains raw and
+noncounting; invocation2/maximum3 is dispatched. Full PASS/configured build and
+convergence/lookback/quality/E2E decision/pinned verification remain required.
+
+The corrected full SelfContained command passed2149/2149 with zero failures/skips,
+and the configured Web build passed35warnings/zeroerrors. Root also ran the exact
+configured build command without the test owner's quiet-output flag; its real
+pre-command current-input manifest and output are bound in
+`evidence/t030-configured-build-accepted-01.json`. Transition127 advances recovery
+action to proceed while preserving count7/limit8. T030 is complete; all30 original
+IDs are checked. `evidence/t030-implementation-prerequisites-01.json` binds focused,
+full and build results and corrected-environment invocation2/maximum3. This is
+implementation prerequisite evidence, not final governed verification or closure.
 
 ## Historical pre-correction boundary (2026-10-01)
 

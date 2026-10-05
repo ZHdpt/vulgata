@@ -1,6 +1,13 @@
 {
   "approvals": [
     {
+      "decided_at": "2026-10-05T12:29:07.622Z",
+      "decision_id": "18-4/recovery-extension/implementation-setup-seam-01/3",
+      "evidence_path": "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-07.json",
+      "scope_sha256": "98ab5af7cd80d94d27f84ff53a9059d4832d3afad59c5af425c9e0bb959b839f",
+      "status": "accepted"
+    },
+    {
       "decided_at": "2026-10-02T08:34:33.000Z",
       "decision_id": "18-4/plan-authorization/6",
       "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-06.json",
@@ -12,13 +19,6 @@
       "decision_id": "18-4/implementation-approval/8",
       "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-08.json",
       "scope_sha256": "187354cfc71bf1f2b1837d76a7dc183e1728d5799c14e43052d8b90bb0ab5b26",
-      "status": "accepted"
-    },
-    {
-      "decided_at": "2026-09-29T11:22:29.4265806Z",
-      "decision_id": "18-4/implementation-approval/2",
-      "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-02.json",
-      "scope_sha256": "dc024516a55beb4efbad78a9d067e2240454feb60ffa3f813c3d9214f7d8474c",
       "status": "accepted"
     },
     {
@@ -96,16 +96,16 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "e49c76e9c2e24da858d6afd055b979f7e66ae4710d096d60d365264281d44f4c"
+      "sha256": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "binding_status": "pending",
-    "checkpoint_id": "bmad-18-4-implement-20261005T120840Z-c1af22",
+    "checkpoint_id": "bmad-18-4-implement-20261005T130500Z-aed923",
+    "stage": "implement",
     "commit_sha": null,
-    "stage": "implement"
+    "binding_status": "pending"
   },
   "convergence": {
     "attempt": 0,
@@ -121,11 +121,11 @@
     "specs/017-october-batch-setup/evidence/source-adapter-t015-final-shape-01.json",
     "specs/017-october-batch-setup/evidence/ordinary-web-unused-types-final-green-01.json",
     "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json",
-    "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json",
     "specs/017-october-batch-setup/evidence/identity-group-final-green-01.json",
-    "specs/017-october-batch-setup/evidence/generator-cli-diagnostics-final-green-01.json"
+    "specs/017-october-batch-setup/evidence/generator-cli-diagnostics-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-runtime-qualification-final-green-01.json"
   ],
   "definition_author": {
     "escalation_decision_id": "18-4/definition-escalation/1",
@@ -159,42 +159,42 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "git_identity_sha256": "b82dec6bfac0d4023ebf5b22bc111ae339112d5eb5e6b07e2dc437425c0d685a",
-    "head": "2d438c6a11812dfeff2a662566c5a3345f383b00",
-    "observed_at": "2026-10-05T12:08:40.7995519Z",
-    "status_sha256": "b0231a43111b5b77910cda14c473c1a85af281cd8b7692688ba4acf24e25faf5"
+    "git_identity_sha256": "3ded2812f4391c39546154394f84675407a75b25eceb960564f65207832d0e39",
+    "head": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+    "observed_at": "2026-10-05T13:08:14.281Z",
+    "status_sha256": "ecc15ca66c5c3962dfed9a877be76f8a32b809924be0097ad73583fb2764f27e"
   },
   "recovery": {
-    "action": "pause",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 7,
       "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-diagnosis-01.json",
-        "sha256": "d281b2c8c809793c2c8ac4ae7692f8a3755a233f60b28a1e8598e16342ff62e8"
+        "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-post-extension-diagnosis-01.json",
+        "sha256": "140fd029f0782076ac9904a90a8ee1bd7008c7caf79f80df283cbd88d17f6a3c"
       }
     },
     "earliest_owner": "tests",
     "episode_id": "18-4-implementation-setup-seam-01",
-    "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/2",
+    "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/3",
     "failed_results": 7,
     "holds": [],
     "last_result": {
       "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-recurring-failure-01.json",
       "sha256": "2b5294b9b540da91da2f7b93f5538583e6db543a8e077b0356b0ba593ebb667e"
     },
-    "pause_at": 7
+    "pause_at": 8
   },
   "resume": {
-    "evidence_path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-diagnosis-01.json",
-    "reason": "Paused at7/7: recurring T029 RoleCount fixture-order failure after attempted repair. Human-only finite extension required; no edits/runs. Accepted definition/approvals and tasks23/30 remain.",
-    "stage": "implement"
+    "stage": "converge",
+    "reason": "All30tasks verified; dispatch independent convergence. Recovery7/8 remains open until final accepted/verified boundary.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/ordinary-web-runtime-qualification-final-green-01.json"
   },
   "schema_version": "3.1",
-  "stage": "implement",
+  "stage": "converge",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0124-ordinary-web-pg-role-order-diagnosed.json",
-    "sha256": "3b47b44d3709828dff99e05512ca6780b39f209a6d7f30e65c81d3e12461de14"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0127-qualified-implementation-accepted.json",
+    "sha256": "cae5a43e6750ed3b383509d63ff124a5a91e01412c7dbe94e7f09926f715da0c"
   },
-  "updated_at": "2026-10-05T12:08:40.799Z"
+  "updated_at": "2026-10-05T13:08:10.049Z"
 }

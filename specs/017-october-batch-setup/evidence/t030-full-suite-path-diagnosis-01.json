@@ -1,0 +1,23 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "test-environment-input-correction",
+  "source_commit": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+  "task": "T030",
+  "command": "pwsh -NoProfile -File eng/test.ps1",
+  "run": "TestResults/isolation-9aee6cfc62d44b88b5084cf38f646ffd",
+  "counts": { "selected": 2149, "passed": 2148, "failed": 1, "skipped": 0 },
+  "trx_sha256": "00bb251a776d2bc7e0dd6218847c589232dc6a101b93b7d2ffff68763de7aded",
+  "build_log_sha256": "04f12879b9a3391ce182fa3798c81f33e473577eb95018e2156a44652f21e59c",
+  "summary": "Existing SelfContained CodeGraphAdapterTests expects a static integrity lookup to find codegraph.ps1 through PATH. The root-selected short test PATH excluded G:/packages/npm/prefix, so unchanged CodeGraphIntegrityProbe returns codegraph_unavailable/NotReady. Root independently read the probe and verified all three installed hashes match. This is an execution-environment input omission, not a Story 18.4 production or definition defect.",
+  "correction": "Add only the verified existing G:/packages/npm/prefix directory to the short process-local PATH for the configured full SelfContained command. Preserve all suite guards/assertions and do not select LocalTools, install, index, or launch CodeGraph. Then run the configured Web build.",
+  "verified_installed_hashes": {
+    "codegraph.js": "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03",
+    "node.exe": "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
+    "npm-shim.js": "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877"
+  },
+  "technical_retry": { "operation": { "command": "pwsh -NoProfile -File eng/test.ps1", "target": "T030 full SelfContained", "cause": "short PATH omitted installed static integrity lookup directory" }, "invocations": 1, "maximum": 3, "next_root_invocation": 2 },
+  "accounting": { "counted": false, "failed_results": 7, "pause_at": 8 },
+  "production_or_test_edits": false,
+  "scope_expansion": false
+}

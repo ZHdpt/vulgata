@@ -188,7 +188,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Equal(TimeSpan.Zero, actual.SelectedAtUtc.Offset);
     }
 
-    private static async Task<Dictionary<string, string>> GetLoginFormFieldsAsync(HttpClient client)
+    internal static async Task<Dictionary<string, string>> GetLoginFormFieldsAsync(HttpClient client)
     {
         using HttpResponseMessage response = await client.GetAsync("/Account/Login");
         response.EnsureSuccessStatusCode();
@@ -380,7 +380,8 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
 
         // The first ordinary Web process succeeds before any October schema or batch exists.
         // Stop it before independent generator preparation and the restart against target B.
-        await PrepareOwnedTargetAsync(targetA);
+        await AddGeneratorIdentityToSeparateDatabaseAsync(targetB, targetA);
+        await PrepareOwnedTargetAsync(targetA, targetB);
         await PrepareOwnedTargetAsync(targetB);
         OctoberBoundSetupSnapshot snapshotA = await targetA.ReadBoundSnapshotAsync();
         OctoberBoundSetupSnapshot snapshotB = await targetB.ReadBoundSnapshotAsync();
@@ -402,14 +403,43 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.NotEqual(snapshotA.Request.SelectionDigest, snapshotB.Request.SelectionDigest);
     }
 
-    private static async Task PrepareOwnedTargetAsync(GeneratorPrepareFixture fixture)
+    private static async Task AddGeneratorIdentityToSeparateDatabaseAsync(
+        GeneratorPrepareFixture identityDatabase,
+        GeneratorPrepareFixture account)
+    {
+        await using AsyncServiceScope scope = identityDatabase.Services.CreateAsyncScope();
+        UserManager<ApplicationUser> users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        ApplicationUser identity = new()
+        {
+            Id = account.SubjectId,
+            UserName = account.OperatorUserName,
+            Email = account.OperatorUserName,
+            EmailConfirmed = true,
+            LockoutEnabled = true,
+        };
+        IdentityResult created = await users.CreateAsync(identity, account.OperatorPassword);
+        Assert.True(created.Succeeded, string.Join(";", created.Errors.Select(error => error.Code)));
+        IdentityResult assigned = await users.AddToRoleAsync(identity, RoleNames.SystemOwner);
+        Assert.True(assigned.Succeeded, string.Join(";", assigned.Errors.Select(error => error.Code)));
+    }
+
+    private static async Task PrepareOwnedTargetAsync(
+        GeneratorPrepareFixture fixture,
+        GeneratorPrepareFixture? separateIdentityDatabase = null)
     {
         OctoberSetupRequest request = fixture.CreatePrepareRequest();
         await fixture.AssertOwnedOperatorCanPrepareAsync(request);
         await fixture.AssertOwnedProviderDocumentBindsAsync();
         await fixture.AssertOctoberSchemaAbsentAsync();
 
-        using Process process = fixture.StartGenerator(JsonSerializer.Serialize(request));
+        string requestJson = JsonSerializer.Serialize(request);
+        using Process process = separateIdentityDatabase is null
+            ? fixture.StartGenerator(requestJson)
+            : fixture.StartGenerator(
+                "prepare",
+                requestJson,
+                identityConnectionStringOverride: separateIdentityDatabase.ConnectionString,
+                identityCanonicalDatabaseIdentityOverride: separateIdentityDatabase.CanonicalDatabaseIdentity);
         (int exitCode, string standardOutput, string standardError) =
             await fixture.WaitForGeneratorAsync(process);
         string childOutput = standardOutput + standardError;
@@ -418,6 +448,12 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
         Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
         Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        if (separateIdentityDatabase is not null)
+        {
+            Assert.DoesNotContain(separateIdentityDatabase.ConnectionString, childOutput, StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                separateIdentityDatabase.CanonicalDatabaseIdentity, childOutput, StringComparison.OrdinalIgnoreCase);
+        }
         Assert.Equal(0, exitCode);
         Assert.Contains("Prepared", childOutput, StringComparison.Ordinal);
         Assert.Contains(fixture.BatchId.ToString("D"), childOutput, StringComparison.OrdinalIgnoreCase);
@@ -545,6 +581,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 await contextAfterResponse.Content.ReadAsStringAsync());
             Assert.Equal(contextWritten,
                 contextAfter.RootElement.GetProperty("currentContext").GetString());
+            await AssertOrdinaryWebProcessProviderAdministrationAsync(fixture, port);
             Assert.False(process.HasExited,
                 "The ordinary Web process should stay alive until its owned restart boundary.");
         }
@@ -567,6 +604,38 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 startupOrBrowserFailure);
         return contextWritten ??
             throw new InvalidOperationException("The ordinary Web browser write was not observed.");
+    }
+
+    private static async Task AssertOrdinaryWebProcessProviderAdministrationAsync(
+        GeneratorPrepareFixture fixture,
+        int port)
+    {
+        await using AsyncServiceScope scope = fixture.Services.CreateAsyncScope();
+        IServiceProvider services = scope.ServiceProvider;
+        (string email, string password) =
+            await OctoberPostgreSqlIsolationTests.CreateProviderAdministratorAsync(services);
+        try
+        {
+            using HttpClient browser = new(new HttpClientHandler
+            {
+                AllowAutoRedirect = false,
+                CheckCertificateRevocationList = true,
+                CookieContainer = new CookieContainer()
+            })
+            {
+                BaseAddress = new Uri($"http://127.0.0.1:{port}")
+            };
+            await OctoberPostgreSqlIsolationTests.LoginAsync(browser, email, password);
+
+            await using VulgataDbContext management = await services
+                .GetRequiredService<IDbContextFactory<VulgataDbContext>>()
+                .CreateDbContextAsync();
+            await OctoberPostgreSqlIsolationTests.AssertProviderAdministrationAsync(browser, management);
+        }
+        finally
+        {
+            await OctoberPostgreSqlIsolationTests.DeleteProviderAdministratorAsync(services, email);
+        }
     }
 
     private static async Task WaitForWebStartupAsync(

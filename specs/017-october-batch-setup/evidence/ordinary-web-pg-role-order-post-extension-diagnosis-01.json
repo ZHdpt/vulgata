@@ -1,0 +1,19 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "summary": "Human finite7-to8 extension changes allowance only. Root reconfirms observed RoleCount3-vs1 comes from comparing A after its normal RoleSeeder with B before ordinary startup, not account count or production authority. Move the existing B startup before equivalent ordinary-shape snapshots and assert all seeded roles after both hosts; keep exact October-before/after, histories, non-seeding and cross-target dimensions. Recheck affected PG case before actual process provider CRUD/E2E; no extra host, weakening, production/definition redesign or new resource permission.",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "failed_results": 7,
+  "pause_at": 8,
+  "owner": "tests",
+  "source_commit": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+  "prior_diagnosis": {
+    "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-diagnosis-01.json",
+    "sha256": "d281b2c8c809793c2c8ac4ae7692f8a3755a233f60b28a1e8598e16342ff62e8"
+  },
+  "approval": {
+    "path": "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-07.json",
+    "sha256": "b64fc7df4fe1d61ec979229499cc9b27cca04d9775b0bde359e9ce659014734a"
+  },
+  "stop": "Counted failure8 requires fresh human decision; unchanged delegate ceiling7 and no standing retry allowance."
+}

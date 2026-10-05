@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-05 (Story 18.4 owned PG qualification reached a recurring fixture-order failure; paused7/7 with accepted definition retained).
+Updated: 2026-10-05 (Story 18.4 all30 tasks verified; independent completion gates pending, recovery7/8).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -42,107 +42,42 @@ verification before reuse.
   owns their scoped requirements and definitions, routed from the canonical epic index.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
-  Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  checkpoint22 (root-owned recurring-role-count evidence and7/7 pause;
-  unverified test edits stay unstaged, not a completed candidate), whose unique binding
-  is recorded in its workflow state.
-  On 2026-10-02 the human clarified ordinary Web startup with only its database
-  configuration changed. Its retained Astra-medium owner completed the bounded
-  specification/plan/tasks correction; independent plan-review15 and definition-review14
-  accepted it, and scoped delegate approvals06/08 permit dependency-ready delivery.
-  Only T018/T025/T026 reopened;23/30 tasks remain completed. No October mode, batch ID, setup credentials
-  or generator provider binding may be Web startup prerequisites. Independent batch
-  setup, source18.1 and isolation remain. Prior selected-Web tests/approvals described
-  below are historical for that affected path, not acceptance of the revised Web
-  boundary. Current ordinary-Web public composition/WAF checks passed64/64 and43/43:
-  final Build-time database capture, stale-setting inertness, setup-service absence
-  and normal browser/role/system-provider behavior. Generator/source18.1 files are
-  unchanged. Residual startup-type cleanup and runtime-test source reconciliation
-  are saved; revised owned PostgreSQL/A-B process and provider-administration
-  qualification remain before completion.
-  The earlier user pause ended with the explicit 2026-10-05 instruction
-  "Postgre sql is on. Proceed". Qualification uses fresh runner-owned PG17 resources
-  under the existing authorization, never an ambient/shared database. Positive separate-generator-Identity and real
-  PG/process provider-admin cases remain under existingT020/T029; no new external
-  prerequisite or definition restart is needed. The first fresh PG filter passed95/96;
-  the new URI oracle was corrected, then a role-count fixture-order assertion
-  recurred after an ineffective synthetic-account cleanup. A is seeded before its
-  snapshot; B has not yet run ordinary Web. Count is now7/7, owner tests, holds empty,
-  task markers23/30. All owned resources were verified cleaned; workers are idle.
-  Only a fresh human finite extension can permit the bounded fixture-order fix and
-  affected rerun; delegate ceiling7 is exhausted. Accepted definition/approvals and
-  production remain unchanged. Certificate types
-  required by protected legacy consumers remain; retired startup types are removed.
-  Controlled tests do not substitute for real qualification. Exact user decision and correction diagnosis are story-owned evidence;
-  recovery is now7/7 at the test-only pause. The old diagnostic hold is superseded only for definition
-  correction, not proof of a passing runtime or permission for an old-path rerun.
-  The retained Astra-medium owner previously completed the bounded plan
-  correction; independent plan-review-14 accepted it at transition 0077 and delegated
-  plan-authorization-05 permits affected task reconciliation only. The candidate
-  distinguishes callable source-adapter integration from setup-only execution,
-  which disposes its session, and pins the provider binder's callable seam. T015
-  and affected task ordering are reconciled under the same 30 IDs. Independent
-  definition-review-13 accepted the current eight-artifact boundary and delegated
-  implementation-approval-07 permits dependency-ready delivery. Plan-review-13,
-  definition-review-12 and delegated bindings 04/06 remain
-  historical accepted authority for unchanged scope; affected gates were invalidated
-  and rerun for this correction, not waived or treated as advance approval.
-  Its corrected plan uses independent batch execution and startup-only Web dataset
-  selection; previous online-Web transport evidence is historical. Story 18.1
-  contracts remain integrated and unchanged. Direct authority and actual source-issuer
-  integration have bounded controlled/native-root evidence (20 focused, 344 surrounding);
-  selected-Web controlled startup/route checks passed 17/17 with 249 surrounding
-  checks. Revised T015 callable-adapter assessment needs no production edit; current
-  real-authority module/lockout tests pass 2/2 and surrounding authority/source/Web
-  checks pass 267/267. The concrete provider binder now passes independent36/36
-  focused and270/270 mapped surrounding tests, no skips, including real ephemeral
-  Data Protection compatibility. Selected-Web provider startup now passes independent
-  12/12 focused and 249/249 surrounding tests, including pre-authentication atomic
-  rejection and fixed process selection. This is controlled WAF/SQLite evidence;
-  Immutable context projection is additionally covered through the existing public
-  store/selector (1/1 focused, 166/166 surrounding); no duplicate store was added.
-  Actual generator prepare now passes an independent real child-process tracer
-  with Web stopped (1/1), model consistency (5/5) and surrounding regressions
-  (270/270), using fresh authorized PostgreSQL 17 resources with verified cleanup.
-  The frozen metadata correction leaves migration operations unchanged. Generator
-  select/provider/auth-denial coverage now passes9/9 real-process cases with exact
-  owned cleanup. Controlled Web isolation and missing-batch diagnostics additionally
-  pass22/22 with262/262 surrounding tests, including split Identity and normal browser
-  authorization. Actual generator FR010 diagnostics now pass19/19 executable cases
-  and272/272 mapped surrounding tests after expected RED/minimal GREEN; both owners
-  assessed final units and exact owned cleanup is verified. See the story's
-  `evidence/generator-cli-diagnostics-final-green-01.json`. Identity descriptor
-  enforcement now covers all five fresh-authority entrypoints; successful selected-Web
-  provider binding is retained for the process. After the authorized fixture consolidation,
-  fresh PostgreSQL authority/source checks pass93/93, actual generator checks20/20,
-  selected-Web Identity WAF checks3/3 and October SelfContained187/187. Exact owned
-  containers/volumes are absent. See `evidence/identity-group-final-green-01.json`.
-  Actual-Web A/B qualification subsequently exposed a management serializable transaction
-  executed outside the configured Npgsql retry strategy. The one-file correction now
-  executes the complete serializable capture within that strategy and passes actual A/B
-  minimal GREEN1/1 with verified owned cleanup. T019 remains open until independent
-  surrounding verification. Its raw RED/minimal GREEN remain in
-  `evidence/selected-web-management-retry-transaction-red-01.json` and
-  `evidence/selected-web-management-retry-minimal-green-01.json`.
-  The same30 task IDs now have26 completed markers; full A/B PostgreSQL/process
-  qualification, cross-cutting verification and every remaining governed gate remain open.
-  Actual host-selection qualification passed21/21, but the separate PostgreSQL WAF
-  lane is blocked: three bounded log-lifetime checks retain a process-owned file handle,
-  and fixture cleanup masks an earlier setup/assertion exception. Its primary failure
-  must be preserved before a further finite diagnostic execution; no full-Web assertion
-  PASS is inferred. See `evidence/postgresql-fixture-log-lifetime-blocked-01.json`.
-  WAF/SQLite selected-data checks are not full PostgreSQL/listener qualification. Status in
-  other assigned worktrees must be verified there. Sprint planning alone activated
-  no feature.
-  Its bounded retained-source
-  qualification does not prove the generic Scan workflow.
+  Story 18.4 is the only active feature in this assigned checkout, on
+  `oct14/story-18-4`, mapped to `specs/017-october-batch-setup`.
+  Independent batch execution retains source18.1 authority/context lifetime,
+  isolation, context provenance and explicit provider binding. Ordinary Web uses
+  only startup DefaultConnection, with normal migrations/roles/browser/provider
+  administration and no October mode, batch, setup operator or generator provider
+  prerequisite. Plan-review15/definition-review14 and scoped approvals06/08 remain
+  current; retained definition owner is Astra/medium. Historical special-Web
+  evidence is not current qualification.
+  All30 original tasks now have verified completion markers. Current controlled
+  October checks pass174/174, full SelfContained2149/2149 with zero skips and Web
+  build zeroerrors/35existing package-feed/source-mapping/EF-conflict warnings.
+  Owned PostgreSQL and actual generator/Web A/B process qualification pass,
+  including separate generator Identity, ordinary startup before October setup,
+  normal browser authorization and synthetic provider CRUD/encryption. No paid
+  provider calls or later generation/native-tool qualification is claimed. Exact
+  run-owned resource cleanup is verified. See the feature's
+  `evidence/ordinary-web-runtime-qualification-final-green-01.json` and
+  `evidence/t030-implementation-prerequisites-01.json`.
+  The human approved finite recovery7-to8 after the recurring role-order fixture
+  defect; count7 is retained, delegate ceiling7 unchanged, holds empty. Transition127
+  records the passing exact configured build and permits independent convergence.
+  The corrected full-suite environment adds only the hash-verified existing npm
+  prefix for an unchanged static integrity lookup, not CodeGraph launch or scope.
+  Recovery remains open until final accepted/verified delivery; a counted failure8
+  needs a fresh human decision. Convergence, lookback, quality review, conditional
+  E2E decision and pinned final verification remain pending. No merge/push/history
+  rewrite or next-story work is authorized. Unrelated activation draft and historical
+  dirty evidence are preserved. Status in other worktrees must be verified there.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
 Story 18.4 is the only feature activated in this checkout after the workflow
 installation. Its `specs/017-october-batch-setup` state retains the Astra-medium
-recovery author and open episode at 6/7. Affected authority/composition tasks were
+recovery author and open episode at 7/8. Affected authority/composition tasks were
 reopened; unchanged completed work and historical evidence remain. Expected TDD
 RED and ordinary first-pass development build failures do not consume recovery
 allowance; independent negative review/convergence and recurrent defects after
