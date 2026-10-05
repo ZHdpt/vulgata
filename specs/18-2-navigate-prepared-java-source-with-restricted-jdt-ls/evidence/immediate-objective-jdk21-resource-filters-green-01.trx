@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="d0a8459b-5450-4156-8cff-350303712ea8" name="13728@ZHDPT-ASUS-5 2026-10-05 23:52:23" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T23:52:23.6882316+08:00" queuing="2026-10-05T23:52:23.6882318+08:00" start="2026-10-05T23:52:21.7152386+08:00" finish="2026-10-05T23:52:27.3151006+08:00" />
+  <TestSettings name="default" id="89607dff-5dca-4284-8e6e-5dbab6219a10">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-05_23_52_23" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="52ec5b20-81c2-48ee-9ffc-97aab6a00358" testId="279273a2-cec5-92bb-212f-46d30865eb44" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState" computerName="ZHDPT-ASUS-5" duration="00:00:00.2623393" startTime="2026-10-05T23:52:24.9549019+08:00" endTime="2026-10-05T23:52:25.2157572+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="52ec5b20-81c2-48ee-9ffc-97aab6a00358" />
+    <UnitTestResult executionId="c72df9e5-72f0-4c41-9699-bb01f653b857" testId="e82a3517-0e26-f843-7e18-af5a87d01db2" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithEmptyStdioReferencesReply_ReturnsNoResultObserved" computerName="ZHDPT-ASUS-5" duration="00:00:00.0318451" startTime="2026-10-05T23:52:23.7843484+08:00" endTime="2026-10-05T23:52:23.8151487+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c72df9e5-72f0-4c41-9699-bb01f653b857" />
+    <UnitTestResult executionId="f6dd0122-8572-4551-91fd-7c1d14976594" testId="e8f36f9d-57a5-aaac-5581-160f84bae2c6" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesReferencesAndMapsRawProtocolLocation" computerName="ZHDPT-ASUS-5" duration="00:00:00.0269547" startTime="2026-10-05T23:52:24.8999372+08:00" endTime="2026-10-05T23:52:24.9259747+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f6dd0122-8572-4551-91fd-7c1d14976594" />
+    <UnitTestResult executionId="bf027d4a-1504-4bde-afe1-9b1eda933a7d" testId="b1bd7d5d-81e4-0386-097c-6db3197aa947" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithOversizedStdioReferencesReply_ReturnsByteLimitedResultWithoutContinuation" computerName="ZHDPT-ASUS-5" duration="00:00:00.0498385" startTime="2026-10-05T23:52:23.7337122+08:00" endTime="2026-10-05T23:52:23.7828551+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bf027d4a-1504-4bde-afe1-9b1eda933a7d" />
+    <UnitTestResult executionId="44727b74-715c-4391-90e1-e7398623ab0d" testId="dde71ce6-5b2a-07bf-da2a-9d10b78b1cd1" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenProtocolInitializationReturnsSessionAfterCancellation_SettlesLateSession" computerName="ZHDPT-ASUS-5" duration="00:00:01.0320303" startTime="2026-10-05T23:52:23.8171015+08:00" endTime="2026-10-05T23:52:24.8475459+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="44727b74-715c-4391-90e1-e7398623ab0d" />
+    <UnitTestResult executionId="5a6ea485-f5d0-40c1-99b9-096ec3a91e19" testId="067dfaeb-3f25-6ac2-d4d5-f21c5d928476" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenPinnedRuntimeInputChangesBeforeOpen_DoesNotLaunch(replacementKind: &quot;same-bytes-new-identity&quot;)" computerName="ZHDPT-ASUS-5" duration="00:00:00.0438793" startTime="2026-10-05T23:52:23.5912870+08:00" endTime="2026-10-05T23:52:23.6231215+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5a6ea485-f5d0-40c1-99b9-096ec3a91e19" />
+    <UnitTestResult executionId="a8109e1e-d4fb-4b47-865d-7d439ac5d7ab" testId="b1d193fc-8b03-5728-dbcc-40995a5fb701" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesDefinitionAndMapsRawProtocolLocation" computerName="ZHDPT-ASUS-5" duration="00:00:00.0711720" startTime="2026-10-05T23:52:23.6623704+08:00" endTime="2026-10-05T23:52:23.7320656+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a8109e1e-d4fb-4b47-865d-7d439ac5d7ab" />
+    <UnitTestResult executionId="c96b6e44-8765-4354-91ca-5c2e4368a6f9" testId="47c25c31-946f-d84d-c400-3df6e78bcd6c" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch" computerName="ZHDPT-ASUS-5" duration="00:00:00.0174263" startTime="2026-10-05T23:52:24.8500170+08:00" endTime="2026-10-05T23:52:24.8652551+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c96b6e44-8765-4354-91ca-5c2e4368a6f9" />
+    <UnitTestResult executionId="e744bb11-b0a3-43d8-8d43-4ec3e8505675" testId="462d8647-88c5-7e2f-6cf7-15af27df6699" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenLauncherReturnsProcessAfterCancellation_SettlesLateProcessWithoutConfirmingCleanup" computerName="ZHDPT-ASUS-5" duration="00:00:02.0229715" startTime="2026-10-05T23:52:25.2173835+08:00" endTime="2026-10-05T23:52:27.2389535+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e744bb11-b0a3-43d8-8d43-4ec3e8505675" />
+    <UnitTestResult executionId="7c425bca-3ac0-4973-8dbf-ef6ed067e228" testId="b607c6da-1736-2704-a742-1ff8d6866554" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeProcessDisposal" computerName="ZHDPT-ASUS-5" duration="00:00:00.1297158" startTime="2026-10-05T23:52:23.4823388+08:00" endTime="2026-10-05T23:52:23.5780212+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7c425bca-3ac0-4973-8dbf-ef6ed067e228" />
+    <UnitTestResult executionId="f086611c-d9df-4240-b78b-49e805359369" testId="f584dc6e-9f04-47b7-0d03-11d067964fe1" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenPinnedRuntimeInputChangesBeforeOpen_DoesNotLaunch(replacementKind: &quot;changed-bytes&quot;)" computerName="ZHDPT-ASUS-5" duration="00:00:00.0370469" startTime="2026-10-05T23:52:23.6255581+08:00" endTime="2026-10-05T23:52:23.6605244+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f086611c-d9df-4240-b78b-49e805359369" />
+    <UnitTestResult executionId="8b520ff4-f4bd-43a8-9603-57a157b25dde" testId="089b16d1-0c7b-93ec-8e67-39f0fe70e378" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenLeaseAndPinnedCommandsAreCurrent_InitializesForGrantedRootWithOfflineSettings" computerName="ZHDPT-ASUS-5" duration="00:00:00.0267634" startTime="2026-10-05T23:52:24.8675114+08:00" endTime="2026-10-05T23:52:24.8922762+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8b520ff4-f4bd-43a8-9603-57a157b25dde" />
+    <UnitTestResult executionId="f7c4211d-7c46-42c6-990d-8eaaeebe7aa4" testId="f7a9fee0-c837-236a-391d-ef7fa018dd88" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenCancelledBeforeCommandResolution_DoesNotLaunch" computerName="ZHDPT-ASUS-5" duration="00:00:00.0061050" startTime="2026-10-05T23:52:24.8944264+08:00" endTime="2026-10-05T23:52:24.8986438+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f7c4211d-7c46-42c6-990d-8eaaeebe7aa4" />
+    <UnitTestResult executionId="4a96adf5-9fa6-4f34-9982-f980fe125fdd" testId="fa76e7c8-3b10-2352-6b33-92ba2b487703" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened" computerName="ZHDPT-ASUS-5" duration="00:00:00.0266667" startTime="2026-10-05T23:52:24.9289039+08:00" endTime="2026-10-05T23:52:24.9531400+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4a96adf5-9fa6-4f34-9982-f980fe125fdd" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="47c25c31-946f-d84d-c400-3df6e78bcd6c">
+      <Execution id="c96b6e44-8765-4354-91ca-5c2e4368a6f9" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithEmptyStdioReferencesReply_ReturnsNoResultObserved" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="e82a3517-0e26-f843-7e18-af5a87d01db2">
+      <Execution id="c72df9e5-72f0-4c41-9699-bb01f653b857" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithEmptyStdioReferencesReply_ReturnsNoResultObserved" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenPinnedRuntimeInputChangesBeforeOpen_DoesNotLaunch(replacementKind: &quot;same-bytes-new-identity&quot;)" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="067dfaeb-3f25-6ac2-d4d5-f21c5d928476">
+      <Execution id="5a6ea485-f5d0-40c1-99b9-096ec3a91e19" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenPinnedRuntimeInputChangesBeforeOpen_DoesNotLaunch" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="279273a2-cec5-92bb-212f-46d30865eb44">
+      <Execution id="52ec5b20-81c2-48ee-9ffc-97aab6a00358" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeProcessDisposal" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="b607c6da-1736-2704-a742-1ff8d6866554">
+      <Execution id="7c425bca-3ac0-4973-8dbf-ef6ed067e228" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeProcessDisposal" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenProtocolInitializationReturnsSessionAfterCancellation_SettlesLateSession" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="dde71ce6-5b2a-07bf-da2a-9d10b78b1cd1">
+      <Execution id="44727b74-715c-4391-90e1-e7398623ab0d" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenProtocolInitializationReturnsSessionAfterCancellation_SettlesLateSession" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenPinnedRuntimeInputChangesBeforeOpen_DoesNotLaunch(replacementKind: &quot;changed-bytes&quot;)" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f584dc6e-9f04-47b7-0d03-11d067964fe1">
+      <Execution id="f086611c-d9df-4240-b78b-49e805359369" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenPinnedRuntimeInputChangesBeforeOpen_DoesNotLaunch" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="fa76e7c8-3b10-2352-6b33-92ba2b487703">
+      <Execution id="4a96adf5-9fa6-4f34-9982-f980fe125fdd" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenCancelledBeforeCommandResolution_DoesNotLaunch" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f7a9fee0-c837-236a-391d-ef7fa018dd88">
+      <Execution id="f7c4211d-7c46-42c6-990d-8eaaeebe7aa4" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenCancelledBeforeCommandResolution_DoesNotLaunch" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenLauncherReturnsProcessAfterCancellation_SettlesLateProcessWithoutConfirmingCleanup" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="462d8647-88c5-7e2f-6cf7-15af27df6699">
+      <Execution id="e744bb11-b0a3-43d8-8d43-4ec3e8505675" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenLauncherReturnsProcessAfterCancellation_SettlesLateProcessWithoutConfirmingCleanup" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithOversizedStdioReferencesReply_ReturnsByteLimitedResultWithoutContinuation" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="b1bd7d5d-81e4-0386-097c-6db3197aa947">
+      <Execution id="bf027d4a-1504-4bde-afe1-9b1eda933a7d" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithOversizedStdioReferencesReply_ReturnsByteLimitedResultWithoutContinuation" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenLeaseAndPinnedCommandsAreCurrent_InitializesForGrantedRootWithOfflineSettings" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="089b16d1-0c7b-93ec-8e67-39f0fe70e378">
+      <Execution id="8b520ff4-f4bd-43a8-9603-57a157b25dde" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenLeaseAndPinnedCommandsAreCurrent_InitializesForGrantedRootWithOfflineSettings" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesDefinitionAndMapsRawProtocolLocation" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="b1d193fc-8b03-5728-dbcc-40995a5fb701">
+      <Execution id="a8109e1e-d4fb-4b47-865d-7d439ac5d7ab" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesDefinitionAndMapsRawProtocolLocation" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesReferencesAndMapsRawProtocolLocation" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="e8f36f9d-57a5-aaac-5581-160f84bae2c6">
+      <Execution id="f6dd0122-8572-4551-91fd-7c1d14976594" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesReferencesAndMapsRawProtocolLocation" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="279273a2-cec5-92bb-212f-46d30865eb44" executionId="52ec5b20-81c2-48ee-9ffc-97aab6a00358" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e82a3517-0e26-f843-7e18-af5a87d01db2" executionId="c72df9e5-72f0-4c41-9699-bb01f653b857" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e8f36f9d-57a5-aaac-5581-160f84bae2c6" executionId="f6dd0122-8572-4551-91fd-7c1d14976594" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b1bd7d5d-81e4-0386-097c-6db3197aa947" executionId="bf027d4a-1504-4bde-afe1-9b1eda933a7d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dde71ce6-5b2a-07bf-da2a-9d10b78b1cd1" executionId="44727b74-715c-4391-90e1-e7398623ab0d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="067dfaeb-3f25-6ac2-d4d5-f21c5d928476" executionId="5a6ea485-f5d0-40c1-99b9-096ec3a91e19" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b1d193fc-8b03-5728-dbcc-40995a5fb701" executionId="a8109e1e-d4fb-4b47-865d-7d439ac5d7ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="47c25c31-946f-d84d-c400-3df6e78bcd6c" executionId="c96b6e44-8765-4354-91ca-5c2e4368a6f9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="462d8647-88c5-7e2f-6cf7-15af27df6699" executionId="e744bb11-b0a3-43d8-8d43-4ec3e8505675" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b607c6da-1736-2704-a742-1ff8d6866554" executionId="7c425bca-3ac0-4973-8dbf-ef6ed067e228" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f584dc6e-9f04-47b7-0d03-11d067964fe1" executionId="f086611c-d9df-4240-b78b-49e805359369" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="089b16d1-0c7b-93ec-8e67-39f0fe70e378" executionId="8b520ff4-f4bd-43a8-9603-57a157b25dde" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f7a9fee0-c837-236a-391d-ef7fa018dd88" executionId="f7c4211d-7c46-42c6-990d-8eaaeebe7aa4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fa76e7c8-3b10-2352-6b33-92ba2b487703" executionId="4a96adf5-9fa6-4f34-9982-f980fe125fdd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="14" executed="14" passed="14" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.16]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.22]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.25]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:05.06]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-05T23:52:27.2901263+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

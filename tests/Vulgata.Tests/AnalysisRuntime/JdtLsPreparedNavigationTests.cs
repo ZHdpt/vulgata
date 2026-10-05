@@ -4249,6 +4249,189 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            new ControlledPreparedToolUseAuthorizer(
+                fixture.Approval,
+                PreparedToolPurpose.JdtNavigation)).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-unconfirmed-exit-state");
+        string toolRoot = Path.Combine(fixture.SiblingPath, "jdt-unconfirmed-exit-tools");
+        Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(toolRoot);
+        string jdtScriptPath = Path.Combine(toolRoot, "jdtls.bat");
+        string javaPath = Path.Combine(toolRoot, "java.exe");
+        string cmdPath = Path.Combine(toolRoot, "cmd.exe");
+        await File.WriteAllTextAsync(jdtScriptPath, "@echo off\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled java executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtScriptPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 0);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [toolRoot],
+            [toolRoot],
+            cmdPath,
+            [toolRoot]);
+        var resolver = new RecordingPreparedJdtCommandResolver(
+            new PreparedJdtPinnedCommands(jdtCommand, javaCommand, fixedInterpreter));
+        var process = new UnconfirmedExitMarkerPreparedJdtProcess();
+        var launcher = new UnconfirmedExitMarkerPreparedJdtProcessLauncher(process);
+        var runtime = new PreparedJdtLsRuntime(
+            resolver,
+            launcher,
+            new RecordingPreparedJdtProtocolFactory(),
+            hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(1),
+            TimeSpan.FromMilliseconds(250),
+            MaximumResponseBytes: 64 * 1024);
+
+        IPreparedJdtLsSession? session = null;
+        try
+        {
+            session = await runtime.OpenAsync(lease, profile);
+            string ownedMarker = Assert.IsType<string>(process.OwnedStateMarkerPath);
+            Assert.True(File.Exists(ownedMarker),
+                "The controlled process must first create its private disposable-state marker.");
+
+            TimeoutException? cleanupFailure = null;
+            try
+            {
+                await session.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            catch (TimeoutException exception)
+            {
+                cleanupFailure = exception;
+            }
+
+            Assert.NotNull(cleanupFailure);
+            Assert.Equal("jdt_cleanup_unconfirmed", cleanupFailure.Message);
+            Assert.Equal(1, process.KillTreeCallCount);
+            Assert.Equal(1, process.WaitForExitCallCount);
+            Assert.True(File.Exists(ownedMarker),
+                "Disposable JDT state must remain untouched until the owned process exit is confirmed.");
+            Assert.Equal(0, process.DisposeCallCount);
+        }
+        finally
+        {
+            if (session is not null)
+            {
+                await session.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeProcessDisposal()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            new ControlledPreparedToolUseAuthorizer(
+                fixture.Approval,
+                PreparedToolPurpose.JdtNavigation)).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "prepared-stdio-graceful-shutdown-state");
+        string toolRoot = Path.Combine(fixture.SiblingPath, "prepared-stdio-graceful-shutdown-tools");
+        Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(toolRoot);
+        string jdtScriptPath = Path.Combine(toolRoot, "jdtls.bat");
+        string javaPath = Path.Combine(toolRoot, "java.exe");
+        string cmdPath = Path.Combine(toolRoot, "cmd.exe");
+        await File.WriteAllTextAsync(jdtScriptPath, "@echo off\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled java executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtScriptPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 0);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [toolRoot],
+            [toolRoot],
+            cmdPath,
+            [toolRoot]);
+        var resolver = new RecordingPreparedJdtCommandResolver(
+            new PreparedJdtPinnedCommands(jdtCommand, javaCommand, fixedInterpreter));
+        var process = new PreparedJdtStdioPeerProcess();
+        var runtime = new PreparedJdtLsRuntime(
+            resolver,
+            new ReturningTrackedPreparedJdtProcessLauncher(process),
+            new PreparedJdtProtocolFactory(),
+            hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            MaximumResponseBytes: 64 * 1024);
+
+        IPreparedJdtLsSession? session = null;
+        try
+        {
+            session = await runtime.OpenAsync(lease, profile);
+            await session.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+            session = null;
+            JsonElement[] messages = process.ObservedMessages.ToArray();
+            string[] methods = messages.Select(message => message.GetProperty("method").GetString()!).ToArray();
+            int shutdownIndex = Array.IndexOf(methods, "shutdown");
+            int exitIndex = Array.IndexOf(methods, "exit");
+            Assert.True(shutdownIndex >= 0,
+                $"The prepared stdio peer must receive the LSP shutdown request before owned-process disposal; methods={string.Join(",", methods)}.");
+            Assert.True(exitIndex > shutdownIndex,
+                $"The LSP exit notification must follow shutdown; methods={string.Join(",", methods)}.");
+            Assert.True(messages[shutdownIndex].TryGetProperty("id", out _),
+                "The LSP shutdown method must be a request so the peer can acknowledge it.");
+            Assert.False(messages[exitIndex].TryGetProperty("id", out _),
+                "The LSP exit method must be a notification.");
+
+            string[] lifecycle = process.LifecycleEvents.ToArray();
+            int shutdownObserved = Array.IndexOf(lifecycle, "shutdown");
+            int exitObserved = Array.IndexOf(lifecycle, "exit");
+            int processDisposed = Array.IndexOf(lifecycle, "process-dispose");
+            Assert.True(shutdownObserved >= 0 && exitObserved > shutdownObserved &&
+                processDisposed > exitObserved,
+                $"The peer must observe shutdown then exit before process disposal; lifecycle={string.Join(",", lifecycle)}.");
+            Assert.Equal(1, process.WaitForExitCallCount);
+            Assert.Equal(0, process.KillTreeCallCount);
+        }
+        finally
+        {
+            if (session is not null)
+            {
+                await session.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+            await process.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -6321,6 +6504,13 @@ public sealed class JdtLsPreparedNavigationTests
         Assert.Equal("disabled", java.GetProperty("configuration").GetProperty("updateBuildConfiguration").GetString());
         Assert.False(java.GetProperty("maven").GetProperty("downloadSources").GetBoolean());
         Assert.False(java.GetProperty("maven").GetProperty("updateSnapshots").GetBoolean());
+
+        Assert.True(java.TryGetProperty("project", out JsonElement project),
+            "Fixed JDT settings must explicitly disable default project resource filters.");
+        Assert.True(project.TryGetProperty("resourceFilters", out JsonElement resourceFilters),
+            "java.project.resourceFilters must be present in the initialize settings.");
+        Assert.Equal(JsonValueKind.Array, resourceFilters.ValueKind);
+        Assert.Empty(resourceFilters.EnumerateArray());
     }
 
     private static bool AreEquivalentJsonValues(JsonElement expected, JsonElement actual)
@@ -6624,6 +6814,70 @@ public sealed class JdtLsPreparedNavigationTests
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
+    private sealed class UnconfirmedExitMarkerPreparedJdtProcess : IJdtLsProcess
+    {
+        private int _killTreeCallCount;
+        private int _waitForExitCallCount;
+        private int _disposeCallCount;
+
+        internal string? OwnedStateMarkerPath { get; set; }
+
+        internal int KillTreeCallCount => Volatile.Read(ref _killTreeCallCount);
+
+        internal int WaitForExitCallCount => Volatile.Read(ref _waitForExitCallCount);
+
+        internal int DisposeCallCount => Volatile.Read(ref _disposeCallCount);
+
+        public Stream StandardInput => Stream.Null;
+
+        public Stream StandardOutput => Stream.Null;
+
+        public Task<string> ReadBoundedStandardErrorAsync(int byteLimit, CancellationToken cancellationToken) =>
+            Task.FromResult(string.Empty);
+
+        public async Task<int> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _waitForExitCallCount);
+            await Task.Delay(timeout, cancellationToken);
+            throw new TimeoutException("controlled_process_exit_unconfirmed");
+        }
+
+        public Task KillTreeAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Interlocked.Increment(ref _killTreeCallCount);
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Increment(ref _disposeCallCount);
+            if (OwnedStateMarkerPath is { } markerPath && File.Exists(markerPath))
+            {
+                File.Delete(markerPath);
+            }
+
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class UnconfirmedExitMarkerPreparedJdtProcessLauncher(
+        UnconfirmedExitMarkerPreparedJdtProcess process) : IPreparedJdtProcessLauncher
+    {
+        public async Task<IJdtLsProcess> LaunchAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJdtLaunchRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Directory.CreateDirectory(request.DataPath);
+            string markerPath = Path.Combine(request.DataPath, "controlled-owned-state.marker");
+            await File.WriteAllTextAsync(markerPath, "keep until process exit is known\n", cancellationToken);
+            process.OwnedStateMarkerPath = markerPath;
+            return process;
+        }
+    }
+
     private sealed class PreparedJdtStdioPeerProcess : IJdtLsProcess
     {
         private const int MaximumFrameBytes = 64 * 1024;
@@ -6634,6 +6888,7 @@ public sealed class JdtLsPreparedNavigationTests
         private readonly Stream _peerInput;
         private readonly Stream _peerOutput;
         private readonly ConcurrentQueue<JsonElement> _observedMessages = new();
+        private readonly ConcurrentQueue<string> _lifecycleEvents = new();
         private readonly TaskCompletionSource<bool> _handshakeObserved =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<bool> _definitionObserved =
@@ -6644,6 +6899,8 @@ public sealed class JdtLsPreparedNavigationTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly Task _peerTask;
         private int _disposed;
+        private int _killTreeCallCount;
+        private int _waitForExitCallCount;
 
         internal PreparedJdtStdioPeerProcess()
         {
@@ -6666,6 +6923,12 @@ public sealed class JdtLsPreparedNavigationTests
 
         internal ConcurrentQueue<JsonElement> ObservedMessages => _observedMessages;
 
+        internal ConcurrentQueue<string> LifecycleEvents => _lifecycleEvents;
+
+        internal int KillTreeCallCount => Volatile.Read(ref _killTreeCallCount);
+
+        internal int WaitForExitCallCount => Volatile.Read(ref _waitForExitCallCount);
+
         internal JsonElement? DefinitionReply { get; set; }
 
         internal JsonElement? ReferencesReply { get; set; }
@@ -6676,6 +6939,8 @@ public sealed class JdtLsPreparedNavigationTests
 
         public async Task<int> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
+            Interlocked.Increment(ref _waitForExitCallCount);
+            _lifecycleEvents.Enqueue("wait-for-exit");
             await _processExited.Task.WaitAsync(timeout, cancellationToken);
             return 0;
         }
@@ -6683,6 +6948,8 @@ public sealed class JdtLsPreparedNavigationTests
         public async Task KillTreeAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Interlocked.Increment(ref _killTreeCallCount);
+            _lifecycleEvents.Enqueue("kill-tree");
             _processExited.TrySetResult(true);
             await CompleteWriterAsync(_clientToPeer.Writer);
             await CompleteWriterAsync(_peerToClient.Writer);
@@ -6695,6 +6962,7 @@ public sealed class JdtLsPreparedNavigationTests
                 return;
             }
 
+            _lifecycleEvents.Enqueue("process-dispose");
             _processExited.TrySetResult(true);
             await CompleteWriterAsync(_clientToPeer.Writer);
             await CompleteWriterAsync(_peerToClient.Writer);
@@ -6729,10 +6997,16 @@ public sealed class JdtLsPreparedNavigationTests
                     _referencesObserved.TrySetResult(true);
                 }
 
+                if (string.Equals(method, "shutdown", StringComparison.Ordinal))
+                {
+                    _lifecycleEvents.Enqueue("shutdown");
+                }
+
                 if (string.Equals(method, "exit", StringComparison.Ordinal))
                 {
+                    _lifecycleEvents.Enqueue("exit");
                     _processExited.TrySetResult(true);
-                    return;
+                    continue;
                 }
 
                 if (message.TryGetProperty("id", out JsonElement requestId))

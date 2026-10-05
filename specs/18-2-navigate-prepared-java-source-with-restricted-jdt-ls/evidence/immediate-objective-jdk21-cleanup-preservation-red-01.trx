@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="021e5f71-29c5-44ae-881f-d53d457a9f77" name="13728@ZHDPT-ASUS-5 2026-10-05 23:30:18" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T23:30:18.6695740+08:00" queuing="2026-10-05T23:30:18.6695742+08:00" start="2026-10-05T23:30:16.6975012+08:00" finish="2026-10-05T23:30:18.9772895+08:00" />
+  <TestSettings name="default" id="87900b96-6768-450a-a66d-901e37440406">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-05_23_30_18" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="429bc37e-9760-49e2-b68d-907cb5b8199f" testId="279273a2-cec5-92bb-212f-46d30865eb44" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState" computerName="ZHDPT-ASUS-5" duration="00:00:00.2703063" startTime="2026-10-05T23:30:18.6280364+08:00" endTime="2026-10-05T23:30:18.9006546+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="429bc37e-9760-49e2-b68d-907cb5b8199f">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 4324&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 4336&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 4336&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9226c70c-0c76-48bb-b316-7e6d95f625c8" testId="b6fd761b-4e1a-28be-dc32-d7a795e34920" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeDisposingTransport" computerName="ZHDPT-ASUS-5" duration="00:00:00.0233125" startTime="2026-10-05T23:30:18.6146974+08:00" endTime="2026-10-05T23:30:18.6257162+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9226c70c-0c76-48bb-b316-7e6d95f625c8" />
+    <UnitTestResult executionId="b8a03adf-26f4-44c9-bed9-3f20fdfe4374" testId="b1bd7d5d-81e4-0386-097c-6db3197aa947" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithOversizedStdioReferencesReply_ReturnsByteLimitedResultWithoutContinuation" computerName="ZHDPT-ASUS-5" duration="00:00:00.1788067" startTime="2026-10-05T23:30:18.4552858+08:00" endTime="2026-10-05T23:30:18.6012517+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b8a03adf-26f4-44c9-bed9-3f20fdfe4374" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithOversizedStdioReferencesReply_ReturnsByteLimitedResultWithoutContinuation" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="b1bd7d5d-81e4-0386-097c-6db3197aa947">
+      <Execution id="b8a03adf-26f4-44c9-bed9-3f20fdfe4374" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithOversizedStdioReferencesReply_ReturnsByteLimitedResultWithoutContinuation" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="279273a2-cec5-92bb-212f-46d30865eb44">
+      <Execution id="429bc37e-9760-49e2-b68d-907cb5b8199f" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeDisposingTransport" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="b6fd761b-4e1a-28be-dc32-d7a795e34920">
+      <Execution id="9226c70c-0c76-48bb-b316-7e6d95f625c8" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeDisposingTransport" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="279273a2-cec5-92bb-212f-46d30865eb44" executionId="429bc37e-9760-49e2-b68d-907cb5b8199f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b6fd761b-4e1a-28be-dc32-d7a795e34920" executionId="9226c70c-0c76-48bb-b316-7e6d95f625c8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b1bd7d5d-81e4-0386-097c-6db3197aa947" executionId="b8a03adf-26f4-44c9-bed9-3f20fdfe4374" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="3" executed="3" passed="2" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.16]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.21]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.23]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.73]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.73]       Expected: 0&#xD;
+[xUnit.net 00:00:01.73]       Actual:   1&#xD;
+[xUnit.net 00:00:01.73]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.73]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(4324,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState()&#xD;
+[xUnit.net 00:00:01.73]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(4336,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState()&#xD;
+[xUnit.net 00:00:01.73]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(4336,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState()&#xD;
+[xUnit.net 00:00:01.73]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.74]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-05T23:30:18.9023005+08:00">
+        <Text>[xUnit.net 00:00:01.73]     Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WhenOwnedProcessExitIsUnconfirmed_PreservesExternalState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-05T23:30:18.9512694+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

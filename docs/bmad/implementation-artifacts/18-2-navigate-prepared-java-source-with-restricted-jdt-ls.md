@@ -1,40 +1,48 @@
 # Story 18.2 development record
 
-Status: in-progress — immediate-objective T046 navigation observed under configured JDK 21; shutdown unqualified; historical governed workflow frozen
+Status: in-progress — immediate T037–T047 owned-fixture slice qualified with JDK21; original full story deferred and historical governed workflow frozen
 Feature directory: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls
 Workflow state: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/workflow-state.json
 
-## Current immediate-objective boundary — 2026-10-05
+## Current immediate-objective boundary — 2026-10-06
 
 The human stopped the previous workflow and authorized direct SpecKit correction
-and implementation of T037–T047 in the existing branch/feature. T037–T045 are
-complete; 19 earlier unfinished items remain SKIP, not completed or waived. Historical
+and implementation of T037–T047 in the existing branch/feature. T037–T047 are
+complete for the owned-fixture slice; final basic SelfContained passed 2063/2063, no skips.
+All 19 earlier unfinished items remain SKIP, not completed or waived. Historical
 reviews, counter, owners/models and workflow state remain preserved and inactive.
 
-The public dedicated factory, existing protocol/navigation/functions and concrete
-launcher now support the selected first-PATH Python/Java chain, pinned physical
-command targets, strict single-hop aliases, whole prepared root and separate fresh
-state. Application retains root/startup/disposal authority; default Web remains
-file-only. No shared 18.1/18.3 workspace/reader/filter contract changed.
+The public dedicated factory composes the retained protocol/navigation/functions
+and concrete launcher over the whole selected prepared root, with separate fresh
+JDT state. The optional application-owned JavaBinDirectory dependency selects a
+pinned physical Java executable; invalid configuration refuses without fallback.
+No JDK installation location is embedded in production or fixture code. Application
+retains root/startup/disposal authority; default Web remains file-only. No shared
+18.1/18.3 workspace/ordinary-reader/filter contract changed.
 
-Controlled JDT LocalTools: 110/110; basic SelfContained: 2063/2063, no skips. The
-first basic build's coreclr.dll crash is preserved; a fresh qualified unchanged retry
-passed. The old CodeGraph short-PATH case passed with actual unmodified host PATH.
+Controlled JDT LocalTools passed 112/112; final affected checks passed 2/2 and 14/14.
+The real pinned JDT1.58 public-factory fixture under user-selected JDK21 passed:
+actual functions returned Target.java:3 definition and Caller.java:3 reference,
+bounded shutdown/combined process wait completed, owned state was removed, caller
+state marker and unrelated sentinel survived, and whole source inventory/bytes
+(including Eclipse metadata, Git configuration and hooks) remained unchanged.
+See `evidence/immediate-objective-jdk21-native-qualified-01.json` and raw TRX/log.
+JDT tests are LocalTools, excluded from basic SelfContained verification.
 
-The historical first-PATH Java 27 trial failed initialization because bundled
-ASM/weaving rejected class-file major version 71. Its failure and confirmed own
-cleanup evidence are retained. The user-selected JDK 21 trial supplies a physical
-Java bin through the optional trusted host policy dependency; production code has
-no fixed JDK location and refuses invalid configured selection without fallback.
+Historical Java27 incompatibility, unconfirmed Java-child cleanup, the fresh-fixture
+.project mutation, all genuine REDs, intermediate failures and test-harness corrections
+are retained. Bounded shutdown/exit and cleanup only after confirmed combined wait
+corrected the lifecycle defect. Empty fixed java.project.resourceFilters prevents
+the observed default .project filter insertion on this fresh fixture. These settings
+are not OS network/filesystem isolation or universal source-write prevention.
 
-With JDK 21, the public factory initialized pinned JDT and its existing function
-adapters returned definition Target.java:3 and references Caller.java:3 on the
-owned Java fixture. Shutdown remains unqualified: the combined parent/stderr wait
-did not complete and uncertain state is preserved. Focused observations distinguish
-parent/child exit and pipe completion before a bounded repair. T046 and T047 stay
-unfinished. Customer Repository is not ready; mixed-root/restart/cache/shared
-integration obligations remain deferred. See feature evidence
-`immediate-objective-jdk21-trial-01.json` and `immediate-objective-jdk21-diagnostic-02.json`.
+Known unqualified cases remain explicit: the registration/login Repository is not
+ready; existing JDT-created filters can still cause metadata rewrite; forced Windows
+tree termination may leave an unresponsive Java descendant, so failed combined waits
+retain/quarantine state. Mixed roots, restart/cache adoption, cross-process guarantees,
+shared producer handoff and full integration remain outside this qualified fixture.
+No source normalization, restoration, weakened assertion or full-story completion applies.
+Final basic evidence: `evidence/immediate-objective-jdk21-final-selfcontained-01.json` and raw TRX. Only the immediate fixture slice closes; the full story remains unfinished.
 The following sections retain historical governed delivery decisions and evidence;
 they do not reactivate the stopped workflow.
 

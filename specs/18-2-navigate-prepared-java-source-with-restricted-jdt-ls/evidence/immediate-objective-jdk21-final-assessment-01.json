@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-06",
+  "branch": "codex/18-2-plan",
+  "checkpointBefore": "c8b612e2",
+  "activeCompleted": "T037-T047, immediate owned-fixture slice only",
+  "productionUnit": "JdtLsAnalysisAdapter.cs: bounded shutdown/exit, graceful success flag, confirmed combined wait before state disposal, empty fixed JDT resourceFilters.",
+  "javaBoundary": "PreparedJdtHostPolicy.JavaBinDirectory optional application dependency already committed at9529333c; caller resolves supplied logical JDK root; no installation path in code.",
+  "testUnits": [
+    "Actual framed protocol shutdown/exit and wire-setting assertions.",
+    "Unconfirmed wait retains marker; old quarantine/authority tests retained.",
+    "Native fixture preserves uncertain state and reports exact source mutation without changing equality."
+  ],
+  "verification": [
+    "Controlled LocalTools112/112; final affected2/2 and14/14.",
+    "Real public-factory JDK21 fixture1/1 with useful actual function definition/reference, shutdown, source bytes and owned/unrelated state checks.",
+    "Standard basic SelfContained2063/2063, JDT/native tests excluded."
+  ],
+  "preserved": [
+    "T001-T036 historical task lines unchanged, including19 SKIP.",
+    "Feature selector, historical workflow/recovery/reviews, installed owners/models unchanged.",
+    "18.1 merge checkpoint2ba504c7 remains ancestor.",
+    "PreparedToolWorkspaceIssuer and Worker function contract unchanged."
+  ],
+  "remaining": [
+    "Prepared registration/login Repository not ready.",
+    "Preexisting JDT-created filters may cause source metadata mutation; no universal source write prevention claim.",
+    "Unresponsive Java forced termination may remain unconfirmed; state quarantined.",
+    "No mixed-root/shared producer/integrated readiness or full-story completion."
+  ],
+  "shared": "No new shared capability or ordinary-reader/filter contract;18.3 continues to require its existing application-owned exact-purpose physical workspace lease and separately qualified owned-state/native contract.",
+  "hooks": "Installed extensions.yml registers no before_implement or after_implement hooks.",
+  "workflow": "Direct user-authorized SpecKit implementation; stopped historical governed cycle is not restarted. Expected RED and compile corrections not counted as workflow failures."
+}

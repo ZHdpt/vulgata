@@ -1,0 +1,14 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-f675308e88004931b1a3a68275d31357/results.trx",
+  "selected": 1,
+  "passed": 0,
+  "failed": 1,
+  "skipped": 0,
+  "duration": "00:00:08.6905745",
+  "navigation": "Actual public factory/function adapters returned Target.java:3 definition and Caller.java:3 reference under injected JDK21.",
+  "shutdown": "Context disposal completed without quarantine; owned data/config/temp/profile removed, preexisting caller marker retained. Exact fixture CIM query afterward found no Java/Python processes.",
+  "source": "File inventory retained but .project bytes changed: JDT-created filteredResources added. Whole-tree byte assertion failed; fixture preserved.",
+  "qualification": "Incomplete. Source preservation is required; no normalization, restored bytes or weakened assertion adopted.",
+  "next": "Focused fixed-settings assessment of JDT resource-filter metadata mutation; new source authority seam requires a bounded decision before implementation."
+}

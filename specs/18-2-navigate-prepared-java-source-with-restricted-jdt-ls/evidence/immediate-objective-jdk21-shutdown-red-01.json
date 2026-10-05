@@ -1,0 +1,13 @@
+{
+  "route": "Behavioral RED/GREEN for demonstrated native cleanup defect",
+  "test": "PreparedJdtLsRuntime_WithPreparedStdioSession_SendsShutdownAndExitBeforeDisposingTransport",
+  "results": "TestResults/isolation-820787046f9e42ce816017815e93f96b/results.trx",
+  "selected": 1,
+  "passed": 0,
+  "failed": 1,
+  "skipped": 0,
+  "failure": "Actual prepared stdio peer saw initialize, initialized and workspace/didChangeConfiguration; no shutdown request before transport closure.",
+  "nativeEvidence": "immediate-objective-jdk21-diagnostic-03.trx",
+  "scope": "Bounded dedicated session shutdown/exit; existing application timeout, kill fallback and uncertainty quarantine. Shared source/lease contracts unchanged.",
+  "history": "Expected RED is not a workflow failure; historical state and recovery remain frozen."
+}

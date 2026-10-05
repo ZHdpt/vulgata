@@ -23,272 +23,358 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
     [SuiteFact("LocalTools")]
     public async Task OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess()
     {
-        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
-        string callerRelativePath = "src/main/java/fixture/Caller.java";
-        string targetRelativePath = "src/main/java/fixture/Target.java";
-        string callerPath = Path.Combine(fixture.PreparedRootPath, callerRelativePath.Replace('/', Path.DirectorySeparatorChar));
-        string targetPath = Path.Combine(fixture.PreparedRootPath, targetRelativePath.Replace('/', Path.DirectorySeparatorChar));
-        string projectPath = Path.Combine(fixture.PreparedRootPath, ".project");
-        string classpathPath = Path.Combine(fixture.PreparedRootPath, ".classpath");
-        string compilerSettingsPath = Path.Combine(
-            fixture.PreparedRootPath, ".settings", "org.eclipse.jdt.core.prefs");
-        string gitHeadPath = Path.Combine(fixture.PreparedRootPath, ".git", "HEAD");
-        string gitConfigPath = Path.Combine(fixture.PreparedRootPath, ".git", "config");
-        string hookPath = Path.Combine(fixture.PreparedRootPath, ".git", "hooks", "pre-commit");
-
-        string callerText =
-            "package fixture;\n" +
-            "public class Caller {\n" +
-            "    public void call() { new Target().targetMethod(); }\n" +
-            "}\n";
-        string targetText =
-            "package fixture;\n" +
-            "public class Target {\n" +
-            "    public void targetMethod() {}\n" +
-            "}\n";
-        string[] sourceDirectories = [Path.GetDirectoryName(callerPath)!, Path.GetDirectoryName(targetPath)!];
-        foreach (string directory in sourceDirectories.Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        Directory.CreateDirectory(Path.GetDirectoryName(compilerSettingsPath)!);
-        Directory.CreateDirectory(Path.GetDirectoryName(hookPath)!);
-
-        await File.WriteAllTextAsync(callerPath, callerText, Utf8);
-        await File.WriteAllTextAsync(targetPath, targetText, Utf8);
-        await File.WriteAllTextAsync(projectPath, """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <projectDescription>
-              <name>story18-2-dedicated-fixture</name>
-              <buildSpec><buildCommand><name>org.eclipse.jdt.core.javabuilder</name></buildCommand></buildSpec>
-              <natures><nature>org.eclipse.jdt.core.javanature</nature></natures>
-            </projectDescription>
-            """, Utf8);
-        await File.WriteAllTextAsync(classpathPath, """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <classpath>
-              <classpathentry kind="src" path="src/main/java"/>
-              <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-              <classpathentry kind="output" path="bin"/>
-            </classpath>
-            """, Utf8);
-        await File.WriteAllTextAsync(compilerSettingsPath, """
-            eclipse.preferences.version=1
-            org.eclipse.jdt.core.compiler.source=21
-            org.eclipse.jdt.core.compiler.compliance=21
-            org.eclipse.jdt.core.compiler.codegen.targetPlatform=21
-            """, Utf8);
-        await File.WriteAllTextAsync(gitHeadPath, "ref: refs/heads/fixture\n", Utf8);
-        await File.WriteAllTextAsync(gitConfigPath,
-            "[core]\n\trepositoryformatversion = 0\n\tbare = false\n", Utf8);
-        await File.WriteAllTextAsync(hookPath, "# marker: JDT qualification must not alter or invoke this hook\n", Utf8);
-
-        string[] protectedPaths =
-        [callerPath, targetPath, projectPath, classpathPath, compilerSettingsPath,
-            gitHeadPath, gitConfigPath, hookPath];
-        byte[][] protectedBytes = await Task.WhenAll(
-            protectedPaths.Select(path => File.ReadAllBytesAsync(path)));
-        IReadOnlyDictionary<string, byte[]> sourceTreeBefore = await SnapshotFilesAsync(fixture.PreparedRootPath);
-
-        string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-state");
-        Directory.CreateDirectory(stateRoot);
-        string callerStateMarker = Path.Combine(stateRoot, "caller-owned-marker.txt");
-        await File.WriteAllTextAsync(callerStateMarker, "preserve caller-owned state\n", Utf8);
-        var (hostPath, hostPolicy, runtimeRoot, javaPath, pythonPath, jdtCommandPath) =
-            CreateCurrentHostPolicy();
-        Assert.Equal(hostPath, Environment.GetEnvironmentVariable("PATH"));
-
-        using (var preflightDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(90)))
-        {
-            PreparedJdtCommandResolution preflight = await new PreparedJdtCommandResolver().ResolveAsync(
-                new PreparedJdtCommandRequest(
-                    hostPath,
-                    fixture.PreparedRootPath,
-                    stateRoot,
-                    hostPolicy),
-                preflightDeadline.Token);
-            int pinCount = preflight.Commands is { } commands
-                ? new[]
-                    {
-                        commands.JdtCommand,
-                        commands.JavaCommand,
-                        commands.FixedInterpreter,
-                        commands.PythonCommand,
-                        commands.BootstrapScript,
-                    }.Count(pin => pin is not null) + (commands.RuntimeInputs?.Count ?? 0)
-                : 0;
-            output.WriteLine("Read-only current-host resolver preflight: {0}; pinned input count={1}.",
-                preflight.Status, pinCount);
-            if (preflight.Status != PreparedJdtCommandResolutionStatus.Pinned)
-            {
-                string bootstrap = Regex.Match(
-                    File.ReadAllText(jdtCommandPath),
-                    "(?im)^\\s*python\\s+\\\"(?<bootstrap>[^\\\"]+)\\\"\\s+%")
-                    .Groups["bootstrap"].Value;
-                string runtimeBin = Path.GetDirectoryName(bootstrap)!;
-                string plugin = Directory.GetFiles(
-                    Path.Combine(runtimeRoot, "plugins"), "org.eclipse.equinox.launcher_*.jar").Single();
-                string jdtServer = Directory.GetFiles(
-                    Path.Combine(runtimeRoot, "plugins"), "org.eclipse.jdt.ls.core_*.jar").FirstOrDefault() ??
-                    Path.Combine(runtimeRoot, "plugins", "org.eclipse.jdt.ls.core_*.jar");
-                foreach (string path in new[]
-                {
-                    jdtCommandPath,
-                    pythonPath,
-                    javaPath,
-                    hostPolicy.FixedCmdAbsolutePath,
-                    bootstrap,
-                    Path.Combine(runtimeBin, "jdtls.py"),
-                    Path.Combine(runtimeRoot, "config_win", "config.ini"),
-                    plugin,
-                    jdtServer,
-                    Path.Combine(@"C:\Program Files\Java\jdk-27", "bin", "java.exe"),
-                })
-                {
-                    output.WriteLine("No-follow executable/runtime input {0}: {1}.",
-                        path, TryDescribeInput(path));
-                }
-
-                DirectoryInfo javaParent = new(Path.GetDirectoryName(javaPath)!);
-                output.WriteLine("First-PATH Java parent attributes={0}; linkTarget={1}.",
-                    javaParent.Attributes, javaParent.LinkTarget ?? "<none>");
-            }
-
-            Assert.Equal(PreparedJdtCommandResolutionStatus.Pinned, preflight.Status);
-            Assert.True(pinCount > 0, "The resolver must verify the approved first-PATH launch chain and runtime inputs.");
-        }
-
-        fixture.Authority.Approve(fixture.Approval);
-        var toolAuthorization = new FixtureToolUseAuthorizer(fixture.Approval);
-        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
-            fixture.Authority,
-            toolAuthorization).IssueAsync(
-                new PreparedToolWorkspaceGrantRequest(
-                    fixture.Approval,
-                    fixture.PreparedRootPath,
-                    PreparedToolPurpose.JdtNavigation,
-                    TimeSpan.FromSeconds(30)));
-        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
-        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
-
-        var profile = new PreparedJavaNavigationProfile(
-            stateRoot,
-            TimeSpan.FromSeconds(20),
-            TimeSpan.FromSeconds(6),
-            TimeSpan.FromSeconds(15),
-            MaximumResponseBytes: 2 * 1024 * 1024);
-        var factory = new PreparedJavaNavigationContextFactory(profile, hostPolicy);
-        IPreparedJavaNavigationContext? context = null;
-        Process? unrelatedSentinel = null;
-        bool contextSettled = false;
-
+        PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        bool preserveFixture = true;
+        Exception? primaryFailure = null;
         try
         {
-            unrelatedSentinel = StartUnrelatedWaitingProcess(hostPolicy.FixedCmdAbsolutePath);
-            await Task.Delay(TimeSpan.FromMilliseconds(100));
-            Assert.False(unrelatedSentinel.HasExited,
-                "The unrelated test-owned sibling process must be alive before JDT starts.");
+            string callerRelativePath = "src/main/java/fixture/Caller.java";
+            string targetRelativePath = "src/main/java/fixture/Target.java";
+            string callerPath = Path.Combine(fixture.PreparedRootPath, callerRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            string targetPath = Path.Combine(fixture.PreparedRootPath, targetRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            string projectPath = Path.Combine(fixture.PreparedRootPath, ".project");
+            string classpathPath = Path.Combine(fixture.PreparedRootPath, ".classpath");
+            string compilerSettingsPath = Path.Combine(
+                fixture.PreparedRootPath, ".settings", "org.eclipse.jdt.core.prefs");
+            string gitHeadPath = Path.Combine(fixture.PreparedRootPath, ".git", "HEAD");
+            string gitConfigPath = Path.Combine(fixture.PreparedRootPath, ".git", "config");
+            string hookPath = Path.Combine(fixture.PreparedRootPath, ".git", "hooks", "pre-commit");
 
-            PreparedJavaNavigationOpenResult opened = await factory.OpenDedicatedAsync(lease)
-                .WaitAsync(profile.InitializationTimeout + TimeSpan.FromSeconds(10));
-            Assert.True(opened.Status == PreparedJavaNavigationOpenStatus.Opened,
-                $"The configured first-PATH JDT server must initialize on the complete prepared root; status={opened.Status}, " +
-                $"jdt={jdtCommandPath}, java={javaPath}, python={pythonPath}, runtime={runtimeRoot}.");
-            context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            string callerText =
+                "package fixture;\n" +
+                "public class Caller {\n" +
+                "    public void call() { new Target().targetMethod(); }\n" +
+                "}\n";
+            string targetText =
+                "package fixture;\n" +
+                "public class Target {\n" +
+                "    public void targetMethod() {}\n" +
+                "}\n";
+            string[] sourceDirectories = [Path.GetDirectoryName(callerPath)!, Path.GetDirectoryName(targetPath)!];
+            foreach (string directory in sourceDirectories.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                Directory.CreateDirectory(directory);
+            }
 
-            AIFunction[] functions = new PreparedJavaNavigationFunctions(context).Create().ToArray();
-            Assert.Equal(
-                new[] { "navigate_java_definition", "navigate_java_references" },
-                functions.Select(function => function.Name));
+            Directory.CreateDirectory(Path.GetDirectoryName(compilerSettingsPath)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(hookPath)!);
 
-            string callerLine = callerText.Split('\n')[2];
-            string targetLine = targetText.Split('\n')[2];
-            AIFunctionArguments definitionArguments = Arguments(
-                callerRelativePath,
-                line: 3,
-                character: callerLine.IndexOf("targetMethod", StringComparison.Ordinal) + 1);
-            object? rawDefinition = await functions[0].InvokeAsync(definitionArguments, CancellationToken.None)
-                .AsTask().WaitAsync(profile.RequestTimeout + TimeSpan.FromSeconds(5));
-            PreparedJavaNavigationResult definition = Assert.IsType<PreparedJavaNavigationResult>(rawDefinition);
-            Assert.Equal(PreparedJavaNavigationOutcome.Observed, definition.Outcome);
-            Assert.Contains(definition.Locations, location =>
-                location.Source.RepositoryId == fixture.Approval.RepositoryId &&
-                location.Source.RelativePath == targetRelativePath &&
-                location.StartLine == 3);
+            await File.WriteAllTextAsync(callerPath, callerText, Utf8);
+            await File.WriteAllTextAsync(targetPath, targetText, Utf8);
+            await File.WriteAllTextAsync(projectPath, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <projectDescription>
+                  <name>story18-2-dedicated-fixture</name>
+                  <buildSpec><buildCommand><name>org.eclipse.jdt.core.javabuilder</name></buildCommand></buildSpec>
+                  <natures><nature>org.eclipse.jdt.core.javanature</nature></natures>
+                </projectDescription>
+                """, Utf8);
+            await File.WriteAllTextAsync(classpathPath, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <classpath>
+                  <classpathentry kind="src" path="src/main/java"/>
+                  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+                  <classpathentry kind="output" path="bin"/>
+                </classpath>
+                """, Utf8);
+            await File.WriteAllTextAsync(compilerSettingsPath, """
+                eclipse.preferences.version=1
+                org.eclipse.jdt.core.compiler.source=21
+                org.eclipse.jdt.core.compiler.compliance=21
+                org.eclipse.jdt.core.compiler.codegen.targetPlatform=21
+                """, Utf8);
+            await File.WriteAllTextAsync(gitHeadPath, "ref: refs/heads/fixture\n", Utf8);
+            await File.WriteAllTextAsync(gitConfigPath,
+                "[core]\n\trepositoryformatversion = 0\n\tbare = false\n", Utf8);
+            await File.WriteAllTextAsync(hookPath, "# marker: JDT qualification must not alter or invoke this hook\n", Utf8);
 
-            AIFunctionArguments referenceArguments = Arguments(
-                targetRelativePath,
-                line: 3,
-                character: targetLine.IndexOf("targetMethod", StringComparison.Ordinal) + 1);
-            object? rawReferences = await functions[1].InvokeAsync(referenceArguments, CancellationToken.None)
-                .AsTask().WaitAsync(profile.RequestTimeout + TimeSpan.FromSeconds(5));
-            PreparedJavaNavigationResult references = Assert.IsType<PreparedJavaNavigationResult>(rawReferences);
-            Assert.Equal(PreparedJavaNavigationOutcome.Observed, references.Outcome);
-            Assert.Contains(references.Locations, location =>
-                location.Source.RepositoryId == fixture.Approval.RepositoryId &&
-                location.Source.RelativePath == callerRelativePath &&
-                location.StartLine == 3);
+            string[] protectedPaths =
+            [callerPath, targetPath, projectPath, classpathPath, compilerSettingsPath,
+                gitHeadPath, gitConfigPath, hookPath];
+            byte[][] protectedBytes = await Task.WhenAll(
+                protectedPaths.Select(path => File.ReadAllBytesAsync(path)));
+            IReadOnlyDictionary<string, byte[]> sourceTreeBefore = await SnapshotFilesAsync(fixture.PreparedRootPath);
 
-            output.WriteLine("Real JDT-LS dedicated navigation qualified through the public host-policy factory.");
-            output.WriteLine("Host PATH chain: JDT command {0}; Python {1}; Java {2}; runtime {3}.",
-                jdtCommandPath, pythonPath, javaPath, runtimeRoot);
-            string[] serverBundles = Directory.GetFiles(
-                Path.Combine(runtimeRoot, "plugins"), "org.eclipse.jdt.ls.core_*.jar");
-            output.WriteLine("Server bundle(s): {0}.", string.Join(", ", serverBundles.Select(Path.GetFileName)));
-            output.WriteLine("Settings contract: Maven/Gradle import, autobuild, build-configuration update, source downloads, snapshots and dependency restoration disabled; this is not OS network isolation.");
-            output.WriteLine("Definition: {0}:{1}; references: {2}:{3}.",
-                targetRelativePath,
-                Assert.Single(definition.Locations.Where(location => location.Source.RelativePath == targetRelativePath)).StartLine,
-                callerRelativePath,
-                Assert.Single(references.Locations.Where(location => location.Source.RelativePath == callerRelativePath)).StartLine);
-        }
-        finally
-        {
+            string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-state");
+            Directory.CreateDirectory(stateRoot);
+            string callerStateMarker = Path.Combine(stateRoot, "caller-owned-marker.txt");
+            await File.WriteAllTextAsync(callerStateMarker, "preserve caller-owned state\n", Utf8);
+            var (hostPath, hostPolicy, runtimeRoot, javaPath, pythonPath, jdtCommandPath) =
+                CreateCurrentHostPolicy();
+            Assert.Equal(hostPath, Environment.GetEnvironmentVariable("PATH"));
+
+            using (var preflightDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(90)))
+            {
+                PreparedJdtCommandResolution preflight = await new PreparedJdtCommandResolver().ResolveAsync(
+                    new PreparedJdtCommandRequest(
+                        hostPath,
+                        fixture.PreparedRootPath,
+                        stateRoot,
+                        hostPolicy),
+                    preflightDeadline.Token);
+                int pinCount = preflight.Commands is { } commands
+                    ? new[]
+                        {
+                            commands.JdtCommand,
+                            commands.JavaCommand,
+                            commands.FixedInterpreter,
+                            commands.PythonCommand,
+                            commands.BootstrapScript,
+                        }.Count(pin => pin is not null) + (commands.RuntimeInputs?.Count ?? 0)
+                    : 0;
+                output.WriteLine("Read-only current-host resolver preflight: {0}; pinned input count={1}.",
+                    preflight.Status, pinCount);
+                if (preflight.Status != PreparedJdtCommandResolutionStatus.Pinned)
+                {
+                    string bootstrap = Regex.Match(
+                        File.ReadAllText(jdtCommandPath),
+                        "(?im)^\\s*python\\s+\\\"(?<bootstrap>[^\\\"]+)\\\"\\s+%")
+                        .Groups["bootstrap"].Value;
+                    string runtimeBin = Path.GetDirectoryName(bootstrap)!;
+                    string plugin = Directory.GetFiles(
+                        Path.Combine(runtimeRoot, "plugins"), "org.eclipse.equinox.launcher_*.jar").Single();
+                    string jdtServer = Directory.GetFiles(
+                        Path.Combine(runtimeRoot, "plugins"), "org.eclipse.jdt.ls.core_*.jar").FirstOrDefault() ??
+                        Path.Combine(runtimeRoot, "plugins", "org.eclipse.jdt.ls.core_*.jar");
+                    foreach (string path in new[]
+                    {
+                        jdtCommandPath,
+                        pythonPath,
+                        javaPath,
+                        hostPolicy.FixedCmdAbsolutePath,
+                        bootstrap,
+                        Path.Combine(runtimeBin, "jdtls.py"),
+                        Path.Combine(runtimeRoot, "config_win", "config.ini"),
+                        plugin,
+                        jdtServer,
+                        javaPath,
+                    })
+                    {
+                        output.WriteLine("No-follow executable/runtime input {0}: {1}.",
+                            path, TryDescribeInput(path));
+                    }
+
+                    DirectoryInfo javaBin = new(Path.GetDirectoryName(javaPath)!);
+                    output.WriteLine("Configured Java bin attributes={0}; linkTarget={1}.",
+                        javaBin.Attributes, javaBin.LinkTarget ?? "<none>");
+                }
+
+                Assert.Equal(PreparedJdtCommandResolutionStatus.Pinned, preflight.Status);
+                Assert.True(pinCount > 0, "The resolver must verify the approved first-PATH launch chain and runtime inputs.");
+            }
+
+            fixture.Authority.Approve(fixture.Approval);
+            var toolAuthorization = new FixtureToolUseAuthorizer(fixture.Approval);
+            PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+                fixture.Authority,
+                toolAuthorization).IssueAsync(
+                    new PreparedToolWorkspaceGrantRequest(
+                        fixture.Approval,
+                        fixture.PreparedRootPath,
+                        PreparedToolPurpose.JdtNavigation,
+                        TimeSpan.FromSeconds(30)));
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+            PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+            var profile = new PreparedJavaNavigationProfile(
+                stateRoot,
+                TimeSpan.FromSeconds(20),
+                TimeSpan.FromSeconds(6),
+                TimeSpan.FromSeconds(15),
+                MaximumResponseBytes: 2 * 1024 * 1024);
+            var factory = new PreparedJavaNavigationContextFactory(profile, hostPolicy);
+            IPreparedJavaNavigationContext? context = null;
+            Process? unrelatedSentinel = null;
+            bool contextSettled = false;
+            bool openAttemptCompleted = false;
+            PreparedJavaNavigationOpenResult? opened = null;
+            Exception? cleanupFailure = null;
+
             try
             {
-                if (context is not null)
-                {
-                    await context.DisposeAsync().AsTask().WaitAsync(profile.ShutdownTimeout + TimeSpan.FromSeconds(5));
-                    contextSettled = true;
-                }
+                unrelatedSentinel = StartUnrelatedWaitingProcess(hostPolicy.FixedCmdAbsolutePath);
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+                Assert.False(unrelatedSentinel.HasExited,
+                    "The unrelated test-owned sibling process must be alive before JDT starts.");
 
-                if (unrelatedSentinel is not null)
-                {
-                    bool sentinelSurvivedJdtShutdown = contextSettled && !unrelatedSentinel.HasExited;
-                    if (!unrelatedSentinel.HasExited)
-                    {
-                        unrelatedSentinel.Kill(entireProcessTree: true);
-                        await unrelatedSentinel.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
-                    }
+                opened = await factory.OpenDedicatedAsync(lease)
+                    .WaitAsync(profile.InitializationTimeout + TimeSpan.FromSeconds(10));
+                openAttemptCompleted = true;
+                Assert.True(opened.Status == PreparedJavaNavigationOpenStatus.Opened,
+                    $"The configured first-PATH JDT server must initialize on the complete prepared root; status={opened.Status}, " +
+                    $"jdt={jdtCommandPath}, java={javaPath}, python={pythonPath}, runtime={runtimeRoot}.");
+                context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
 
-                    unrelatedSentinel.Dispose();
-                    if (contextSettled)
-                    {
-                        Assert.True(sentinelSurvivedJdtShutdown,
-                            "Stopping the owned JDT process tree must leave an unrelated sibling process running.");
-                    }
-                }
+                AIFunction[] functions = new PreparedJavaNavigationFunctions(context).Create().ToArray();
+                Assert.Equal(
+                    new[] { "navigate_java_definition", "navigate_java_references" },
+                    functions.Select(function => function.Name));
 
-                if (contextSettled)
-                {
-                    Assert.Equal("preserve caller-owned state\n", await File.ReadAllTextAsync(callerStateMarker));
-                    Assert.Equal(new[] { callerStateMarker }, Directory.EnumerateFiles(stateRoot).ToArray());
-                    Assert.Empty(Directory.EnumerateDirectories(stateRoot));
-                    await AssertFileTreeUnchangedAsync(fixture.PreparedRootPath, sourceTreeBefore);
-                    for (int i = 0; i < protectedPaths.Length; i++)
-                    {
-                        Assert.Equal(protectedBytes[i], await File.ReadAllBytesAsync(protectedPaths[i]));
-                    }
+                string callerLine = callerText.Split('\n')[2];
+                string targetLine = targetText.Split('\n')[2];
+                AIFunctionArguments definitionArguments = Arguments(
+                    callerRelativePath,
+                    line: 3,
+                    character: callerLine.IndexOf("targetMethod", StringComparison.Ordinal) + 1);
+                object? rawDefinition = await functions[0].InvokeAsync(definitionArguments, CancellationToken.None)
+                    .AsTask().WaitAsync(profile.RequestTimeout + TimeSpan.FromSeconds(5));
+                PreparedJavaNavigationResult definition = Assert.IsType<PreparedJavaNavigationResult>(rawDefinition);
+                Assert.Equal(PreparedJavaNavigationOutcome.Observed, definition.Outcome);
+                Assert.Contains(definition.Locations, location =>
+                    location.Source.RepositoryId == fixture.Approval.RepositoryId &&
+                    location.Source.RelativePath == targetRelativePath &&
+                    location.StartLine == 3);
 
-                    output.WriteLine("Shutdown completed within {0}; owned state removal followed the launcher's process-exited check, and only the preexisting caller marker remains.",
-                        profile.ShutdownTimeout + TimeSpan.FromSeconds(5));
-                    output.WriteLine("All fixture source, Eclipse configuration and hook marker bytes are unchanged.");
-                }
+                AIFunctionArguments referenceArguments = Arguments(
+                    targetRelativePath,
+                    line: 3,
+                    character: targetLine.IndexOf("targetMethod", StringComparison.Ordinal) + 1);
+                object? rawReferences = await functions[1].InvokeAsync(referenceArguments, CancellationToken.None)
+                    .AsTask().WaitAsync(profile.RequestTimeout + TimeSpan.FromSeconds(5));
+                PreparedJavaNavigationResult references = Assert.IsType<PreparedJavaNavigationResult>(rawReferences);
+                Assert.Equal(PreparedJavaNavigationOutcome.Observed, references.Outcome);
+                Assert.Contains(references.Locations, location =>
+                    location.Source.RepositoryId == fixture.Approval.RepositoryId &&
+                    location.Source.RelativePath == callerRelativePath &&
+                    location.StartLine == 3);
+
+                output.WriteLine("Real JDT-LS navigation observed through the public host-policy factory; awaiting owned-process and fixture-settlement verification.");
+                output.WriteLine("Host PATH chain: JDT command {0}; Python {1}; Java {2}; runtime {3}.",
+                    jdtCommandPath, pythonPath, javaPath, runtimeRoot);
+                string[] serverBundles = Directory.GetFiles(
+                    Path.Combine(runtimeRoot, "plugins"), "org.eclipse.jdt.ls.core_*.jar");
+                output.WriteLine("Server bundle(s): {0}.", string.Join(", ", serverBundles.Select(Path.GetFileName)));
+                output.WriteLine("Settings contract: Maven/Gradle import, autobuild, build-configuration update, source downloads, snapshots and dependency restoration disabled; this is not OS network isolation.");
+                output.WriteLine("Definition: {0}:{1}; references: {2}:{3}.",
+                    targetRelativePath,
+                    Assert.Single(definition.Locations.Where(location => location.Source.RelativePath == targetRelativePath)).StartLine,
+                    callerRelativePath,
+                    Assert.Single(references.Locations.Where(location => location.Source.RelativePath == callerRelativePath)).StartLine);
+            }
+            catch (Exception exception)
+            {
+                primaryFailure = exception;
+                throw;
             }
             finally
             {
-                await lease.DisposeAsync();
+                try
+                {
+                    if (context is not null)
+                    {
+                        try
+                        {
+                            await context.DisposeAsync().AsTask().WaitAsync(profile.ShutdownTimeout + TimeSpan.FromSeconds(5));
+                            contextSettled = true;
+                        }
+                        catch (Exception exception)
+                        {
+                            cleanupFailure = exception;
+                            output.WriteLine("Owned navigation context disposal did not confirm settlement: {0}: {1}",
+                                exception.GetType().FullName, exception.Message);
+                        }
+                    }
+
+                    bool repositoryQuarantined = IsRepositorySlotQuarantined(lease.RepositoryId);
+                    if (repositoryQuarantined)
+                    {
+                        cleanupFailure ??= new InvalidOperationException("jdt_context_slot_quarantined_after_disposal");
+                        output.WriteLine("The owned Repository slot remains quarantined after context disposal.");
+                    }
+
+                    if (unrelatedSentinel is not null)
+                    {
+                        bool sentinelSurvivedJdtShutdown = contextSettled && !repositoryQuarantined && !unrelatedSentinel.HasExited;
+                        if (!unrelatedSentinel.HasExited)
+                        {
+                            unrelatedSentinel.Kill(entireProcessTree: true);
+                            await unrelatedSentinel.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+                        }
+
+                        unrelatedSentinel.Dispose();
+                        if (contextSettled && !repositoryQuarantined)
+                        {
+                            if (!sentinelSurvivedJdtShutdown)
+                            {
+                                cleanupFailure ??= new InvalidOperationException(
+                                    "jdt_shutdown_affected_unrelated_sentinel");
+                            }
+                        }
+                    }
+
+                    if (contextSettled && !repositoryQuarantined && cleanupFailure is null)
+                    {
+                        try
+                        {
+                            Assert.Equal("preserve caller-owned state\n", await File.ReadAllTextAsync(callerStateMarker));
+                            Assert.Equal(new[] { callerStateMarker }, Directory.EnumerateFiles(stateRoot).ToArray());
+                            Assert.Empty(Directory.EnumerateDirectories(stateRoot));
+                            await AssertFileTreeUnchangedAsync(fixture.PreparedRootPath, sourceTreeBefore);
+                            for (int i = 0; i < protectedPaths.Length; i++)
+                            {
+                                Assert.Equal(protectedBytes[i], await File.ReadAllBytesAsync(protectedPaths[i]));
+                            }
+
+                            output.WriteLine("Shutdown completed within {0}; owned state removal followed the launcher's process-exited check, and only the preexisting caller marker remains.",
+                                profile.ShutdownTimeout + TimeSpan.FromSeconds(5));
+                            output.WriteLine("All fixture source, Eclipse configuration and hook marker bytes are unchanged.");
+                        }
+                        catch (Exception exception)
+                        {
+                            cleanupFailure = exception;
+                            output.WriteLine("Post-shutdown source/state verification failed: {0}: {1}",
+                                exception.GetType().FullName, exception.Message);
+                        }
+                    }
+                    else
+                    {
+                        cleanupFailure ??= new InvalidOperationException(
+                            openAttemptCompleted ? "jdt_cleanup_unconfirmed" : "jdt_open_cleanup_unverified");
+                    }
+                }
+                catch (Exception exception)
+                {
+                    cleanupFailure ??= exception;
+                    output.WriteLine("Owned JDT teardown diagnostic failed: {0}: {1}",
+                        exception.GetType().FullName, exception.Message);
+                }
+
+                try
+                {
+                    await lease.DisposeAsync();
+                }
+                catch (Exception exception)
+                {
+                    cleanupFailure ??= exception;
+                    output.WriteLine("Prepared workspace lease disposal failed: {0}: {1}",
+                        exception.GetType().FullName, exception.Message);
+                }
+
+                if (cleanupFailure is not null)
+                {
+                    preserveFixture = true;
+                    output.WriteLine("Cleanup remains unconfirmed; preserving fixture at {0}.", fixture.SandboxPath);
+                    ReportRemainingFiles(output, "prepared source", fixture.PreparedRootPath);
+                    ReportRemainingFiles(output, "external JDT state", stateRoot);
+                }
+
+                preserveFixture = cleanupFailure is not null;
+                if (cleanupFailure is not null && primaryFailure is null)
+                {
+                    throw new InvalidOperationException("jdt_qualification_cleanup_unconfirmed", cleanupFailure);
+                }
+            }
+        }
+        finally
+        {
+            if (preserveFixture)
+            {
+                output.WriteLine("Cleanup is unconfirmed or setup failed; preserving fixture at {0}.", fixture.SandboxPath);
+                ReportRemainingFiles(output, "fixture", fixture.SandboxPath);
+            }
+            else
+            {
+                await fixture.DisposeAsync();
             }
         }
     }
@@ -307,7 +393,8 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
             await File.WriteAllTextAsync(sourcePath,
                 "package fixture;\npublic class Probe { public void inspect() {} }\n", Utf8);
 
-            string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-diagnostic-state");
+            string fixtureMarker = Guid.NewGuid().ToString("N");
+            string stateRoot = Path.Combine(fixture.SiblingPath, $"dedicated-jdt-diagnostic-state-{fixtureMarker}");
             Directory.CreateDirectory(stateRoot);
             string callerMarker = Path.Combine(stateRoot, "caller-owned-marker.txt");
             await File.WriteAllTextAsync(callerMarker, "preserve caller state\n", Utf8);
@@ -335,7 +422,7 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
                 TimeSpan.FromSeconds(6),
                 TimeSpan.FromSeconds(15),
                 MaximumResponseBytes: 2 * 1024 * 1024);
-            var processLauncher = new DiagnosticPreparedJdtProcessLauncher(output);
+            var processLauncher = new DiagnosticPreparedJdtProcessLauncher(output, fixtureMarker);
             var protocols = new DiagnosticPreparedJdtProtocolFactory(output);
             var runtime = new PreparedJdtLsRuntime(
                 new PreparedJdtCommandResolver(),
@@ -419,6 +506,53 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
         }
     }
 
+    private static bool IsRepositorySlotQuarantined(Guid repositoryId)
+    {
+        FieldInfo slotsField = Assert.IsAssignableFrom<FieldInfo>(typeof(PreparedJavaNavigationContextFactory)
+            .GetField("RepositorySlots", BindingFlags.Static | BindingFlags.NonPublic));
+        System.Collections.IDictionary slots = Assert.IsAssignableFrom<System.Collections.IDictionary>(
+            slotsField.GetValue(null));
+        if (!slots.Contains(repositoryId))
+        {
+            return false;
+        }
+
+        object slot = Assert.IsAssignableFrom<object>(slots[repositoryId]);
+        PropertyInfo quarantined = Assert.IsAssignableFrom<PropertyInfo>(slot.GetType().GetProperty(
+            "Quarantined", BindingFlags.Instance | BindingFlags.NonPublic));
+        return Assert.IsType<bool>(quarantined.GetValue(slot));
+    }
+
+    private static void ReportRemainingFiles(ITestOutputHelper output, string label, string root)
+    {
+        try
+        {
+            if (!Directory.Exists(root))
+            {
+                output.WriteLine("Remaining {0}: root absent ({1}).", label, root);
+                return;
+            }
+
+            string[] directories = Directory.EnumerateDirectories(root, "*", SearchOption.AllDirectories)
+                .Select(path => Path.GetRelativePath(root, path).Replace('\\', '/'))
+                .Order(StringComparer.Ordinal)
+                .Take(40)
+                .ToArray();
+            string[] files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+                .Select(path => Path.GetRelativePath(root, path).Replace('\\', '/'))
+                .Order(StringComparer.Ordinal)
+                .Take(40)
+                .ToArray();
+            output.WriteLine("Remaining {0} under {1}: directories=[{2}]; files=[{3}].",
+                label, root, string.Join(", ", directories), string.Join(", ", files));
+        }
+        catch (Exception exception)
+        {
+            output.WriteLine("Remaining {0} listing failed at {1}: {2}: {3}.",
+                label, root, exception.GetType().FullName, exception.Message);
+        }
+    }
+
     private static AIFunctionArguments Arguments(string relativePath, int line, int character) =>
         new(new Dictionary<string, object?>
         {
@@ -448,8 +582,49 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
         Assert.Equal(expected.Keys.Order(StringComparer.Ordinal), actual.Keys.Order(StringComparer.Ordinal));
         foreach ((string relativePath, byte[] expectedBytes) in expected)
         {
-            Assert.Equal(expectedBytes, actual[relativePath]);
+            byte[] actualBytes = actual[relativePath];
+            int firstDifference = FirstDifference(expectedBytes, actualBytes);
+            if (firstDifference >= 0)
+            {
+                Assert.True(false,
+                    $"Prepared source file '{relativePath}' changed at byte {firstDifference}: " +
+                    $"expected {DescribeByte(expectedBytes, firstDifference)}, actual {DescribeByte(actualBytes, firstDifference)}; " +
+                    $"expected length={expectedBytes.Length}, actual length={actualBytes.Length}.");
+            }
         }
+    }
+
+    private static int FirstDifference(byte[] expected, byte[] actual)
+    {
+        int sharedLength = Math.Min(expected.Length, actual.Length);
+        for (int index = 0; index < sharedLength; index++)
+        {
+            if (expected[index] != actual[index])
+            {
+                return index;
+            }
+        }
+
+        return expected.Length == actual.Length ? -1 : sharedLength;
+    }
+
+    private static string DescribeByte(byte[] bytes, int index)
+    {
+        if (index >= bytes.Length)
+        {
+            return "<end-of-file>";
+        }
+
+        byte value = bytes[index];
+        return value switch
+        {
+            0x09 => "tab (0x09)",
+            0x0A => "line-feed (0x0A)",
+            0x0D => "carriage-return (0x0D)",
+            0x20 => "space (0x20)",
+            >= 0x21 and <= 0x7E => $"'{(char)value}' (0x{value:X2})",
+            _ => $"0x{value:X2}",
+        };
     }
 
     private static Process StartUnrelatedWaitingProcess(string commandInterpreter)
@@ -469,7 +644,7 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
         return Process.Start(start) ?? throw new InvalidOperationException("test_sentinel_start_failed");
     }
 
-    private sealed class DiagnosticPreparedJdtProcessLauncher(ITestOutputHelper output) : IPreparedJdtProcessLauncher
+    private sealed class DiagnosticPreparedJdtProcessLauncher(ITestOutputHelper output, string fixtureMarker) : IPreparedJdtProcessLauncher
     {
         private readonly PreparedJdtProcessLauncher _inner = new();
 
@@ -487,7 +662,8 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
                 request.DataPath,
                 request.ConfigurationPath);
             IJdtLsProcess process = await _inner.LaunchAsync(workspaceLease, request, cancellationToken);
-            OwnedProcess = new DiagnosticPreparedJdtOwnedProcess(process, request.DataPath, output);
+            OwnedProcess = new DiagnosticPreparedJdtOwnedProcess(
+                process, request.DataPath, request.ConfigurationPath, fixtureMarker, output);
             output.WriteLine("Process launch completed and an owned process handle was returned.");
             return OwnedProcess;
         }
@@ -525,8 +701,13 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
     private sealed class DiagnosticPreparedJdtOwnedProcess(
         IJdtLsProcess inner,
         string dataPath,
+        string configurationPath,
+        string fixtureMarker,
         ITestOutputHelper output) : IJdtLsProcess
     {
+        private readonly Process _parentProcess = GetParentProcess(inner);
+        private readonly Task _stderrPump = GetStderrPump(inner);
+
         internal bool StartCompleted { get; } = true;
 
         internal bool KillRequested { get; private set; }
@@ -546,22 +727,44 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
 
         public async Task<int> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
-            int exitCode = await inner.WaitForExitAsync(timeout, cancellationToken);
-            ExitObserved = true;
-            ExitCode = exitCode;
-            output.WriteLine("Owned process exited with code {0}.", exitCode);
-            return exitCode;
+            await ReportOwnedProcessesAsync("before-wait");
+            ReportParent("before-wait");
+            try
+            {
+                int exitCode = await inner.WaitForExitAsync(timeout, cancellationToken);
+                ExitObserved = true;
+                ExitCode = exitCode;
+                output.WriteLine("Owned process wait completed with code {0}.", exitCode);
+                ReportParent("after-wait");
+                await ReportOwnedProcessesAsync("after-wait");
+                return exitCode;
+            }
+            catch (Exception exception)
+            {
+                output.WriteLine("Owned process wait failed: {0}: {1}; stderrPumpCompleted={2}.",
+                    exception.GetType().FullName, exception.Message, _stderrPump.IsCompleted);
+                ReportParent("wait-failed");
+                await ReportOwnedProcessesAsync("wait-failed");
+                throw;
+            }
         }
 
-        public Task KillTreeAsync(CancellationToken cancellationToken)
+        public async Task KillTreeAsync(CancellationToken cancellationToken)
         {
             KillRequested = true;
-            output.WriteLine("Owned process tree termination was requested.");
-            return inner.KillTreeAsync(cancellationToken);
+            ReportParent("before-kill");
+            await ReportOwnedProcessesAsync("before-kill");
+            await inner.KillTreeAsync(cancellationToken);
+            output.WriteLine("Owned process tree termination request completed; stderrPumpCompleted={0}.",
+                _stderrPump.IsCompleted);
+            ReportParent("after-kill");
+            await ReportOwnedProcessesAsync("after-kill");
         }
 
         public async ValueTask DisposeAsync()
         {
+            ReportParent("before-dispose");
+            await ReportOwnedProcessesAsync("before-dispose");
             await ReportCapturedStderrAsync();
             string logPath = Path.Combine(dataPath, ".metadata", ".log");
             string? logTail = await ReadFileTailAsync(logPath, maximumBytes: 64 * 1024);
@@ -570,9 +773,29 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
                 output.WriteLine("JDT workspace log tail ({0} bytes max):\n{1}", 64 * 1024, logTail);
             }
 
-            await inner.DisposeAsync();
-            CleanupConfirmed = true;
-            output.WriteLine("Owned process wrapper disposal and confirmed state cleanup completed.");
+            string eclipseLockPath = Path.Combine(configurationPath,
+                "org.eclipse.core.runtime", ".manager", ".tmp74.instance");
+            output.WriteLine("Eclipse runtime lock at disposal: path={0}; exists={1}.",
+                eclipseLockPath, File.Exists(eclipseLockPath));
+            try
+            {
+                await inner.DisposeAsync();
+                CleanupConfirmed = true;
+                output.WriteLine("Owned process wrapper disposal and confirmed state cleanup completed.");
+            }
+            catch (Exception exception)
+            {
+                output.WriteLine("Owned process wrapper disposal failed: {0}: {1}.",
+                    exception.GetType().FullName, exception.Message);
+                PreparedJdtLsDedicatedQualificationTests.ReportRemainingFiles(output, "owned data", dataPath);
+                PreparedJdtLsDedicatedQualificationTests.ReportRemainingFiles(output, "owned configuration", configurationPath);
+                throw;
+            }
+            finally
+            {
+                ReportParent("after-dispose");
+                await ReportOwnedProcessesAsync("after-dispose");
+            }
         }
 
         internal async Task ReportCapturedStderrAsync()
@@ -580,6 +803,95 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
             string stderr = await inner.ReadBoundedStandardErrorAsync(64 * 1024, CancellationToken.None);
             output.WriteLine("Bounded owned-process stderr (up to 64 KiB):\n{0}",
                 string.IsNullOrWhiteSpace(stderr) ? "<empty>" : stderr);
+        }
+
+        private void ReportParent(string phase)
+        {
+            try
+            {
+                output.WriteLine("Python parent {0}: pid={1}; hasExited={2}; stderrPumpCompleted={3}.",
+                    phase, _parentProcess.Id, _parentProcess.HasExited, _stderrPump.IsCompleted);
+            }
+            catch (Exception exception)
+            {
+                output.WriteLine("Python parent {0} status unavailable: {1}: {2}.",
+                    phase, exception.GetType().FullName, exception.Message);
+            }
+        }
+
+        private async Task ReportOwnedProcessesAsync(string phase)
+        {
+            try
+            {
+                string json = await ReadFixtureProcessesAsync(fixtureMarker);
+                output.WriteLine("Java/Python processes for fixture {0} at {1}: {2}",
+                    fixtureMarker, phase, string.IsNullOrWhiteSpace(json) ? "<none>" : json);
+            }
+            catch (Exception exception)
+            {
+                output.WriteLine("Owned Java/Python process query failed at {0}: {1}: {2}.",
+                    phase, exception.GetType().FullName, exception.Message);
+            }
+        }
+
+        private static Process GetParentProcess(IJdtLsProcess process)
+        {
+            FieldInfo field = Assert.IsAssignableFrom<FieldInfo>(typeof(PreparedJdtOwnedProcess).GetField(
+                "_process", BindingFlags.Instance | BindingFlags.NonPublic));
+            return Assert.IsType<Process>(field.GetValue(process));
+        }
+
+        private static Task GetStderrPump(IJdtLsProcess process)
+        {
+            FieldInfo field = Assert.IsAssignableFrom<FieldInfo>(typeof(PreparedJdtOwnedProcess).GetField(
+                "_stderrPump", BindingFlags.Instance | BindingFlags.NonPublic));
+            return Assert.IsAssignableFrom<Task>(field.GetValue(process));
+        }
+
+        private static async Task<string> ReadFixtureProcessesAsync(string fixtureMarker)
+        {
+            string query = $"SELECT ProcessId,Name,CommandLine FROM Win32_Process WHERE " +
+                $"(Name='java.exe' OR Name='python.exe') AND CommandLine LIKE '%{fixtureMarker}%'";
+            string script = "$q=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('" +
+                Convert.ToBase64String(Encoding.Unicode.GetBytes(query)) +
+                "')); Get-CimInstance -Query $q | Select-Object ProcessId,Name,CommandLine | ConvertTo-Json -Compress";
+            string encodedScript = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+            var start = new ProcessStartInfo
+            {
+                FileName = "pwsh",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            start.ArgumentList.Add("-NoProfile");
+            start.ArgumentList.Add("-NonInteractive");
+            start.ArgumentList.Add("-EncodedCommand");
+            start.ArgumentList.Add(encodedScript);
+            using Process queryProcess = Process.Start(start) ??
+                throw new InvalidOperationException("owned_process_cim_query_start_failed");
+            Task<string> stdout = queryProcess.StandardOutput.ReadToEndAsync();
+            Task<string> stderr = queryProcess.StandardError.ReadToEndAsync();
+            try
+            {
+                await queryProcess.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            }
+            catch (TimeoutException)
+            {
+                queryProcess.Kill(entireProcessTree: true);
+                await queryProcess.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(2));
+                throw new TimeoutException("owned_process_cim_query_timeout");
+            }
+
+            string result = await stdout.WaitAsync(TimeSpan.FromSeconds(1));
+            string error = await stderr.WaitAsync(TimeSpan.FromSeconds(1));
+            if (queryProcess.ExitCode != 0)
+            {
+                throw new InvalidOperationException(
+                    $"owned_process_cim_query_failed:{queryProcess.ExitCode}:{error.Trim()}");
+            }
+
+            return result.Length <= 16 * 1024 ? result : result[..(16 * 1024)];
         }
 
         private static async Task<string?> ReadFileTailAsync(string path, int maximumBytes)
@@ -615,23 +927,29 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
         string hostPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
         string[] entries = hostPath.Split(Path.PathSeparator);
         string jdtCommandPath = FindFirstOnPath(entries, "jdtls.bat");
-        string javaPath = FindFirstOnPath(entries, "java.exe");
         string pythonPath = FindFirstOnPath(entries, "python.exe");
         string approvedJdtCommand = Path.GetFullPath(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin", "jdtls.bat"));
         string approvedPython = Path.GetFullPath(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin", "python.exe"));
-        string approvedJava = @"C:\Program Files\Common Files\Oracle\Java\javapath\java.exe";
         Assert.Equal(approvedJdtCommand, jdtCommandPath);
         Assert.Equal(approvedPython, pythonPath);
-        Assert.Equal(Path.GetFullPath(approvedJava), javaPath);
-        string javaAliasDirectory = Path.GetDirectoryName(javaPath)!;
-        string javaPhysicalDirectory = Path.GetFullPath(
-            new DirectoryInfo(javaAliasDirectory).ResolveLinkTarget(returnFinalTarget: true)?.FullName ??
-            throw new InvalidOperationException("approved_first_java_parent_link_unavailable"));
-        Assert.Equal(
-            Path.GetFullPath(@"C:\Program Files\Common Files\Oracle\Java\javapath_target_776515"),
-            javaPhysicalDirectory);
+        string javaBinDirectory = Environment.GetEnvironmentVariable("VULGATA_JDT_JAVA_BIN") ?? string.Empty;
+        Assert.True(Path.IsPathFullyQualified(javaBinDirectory),
+            "The test caller must supply the human-approved physical Java bin directory.");
+        javaBinDirectory = Path.GetFullPath(javaBinDirectory);
+        Assert.Equal("bin", Path.GetFileName(javaBinDirectory.TrimEnd(Path.DirectorySeparatorChar)),
+            ignoreCase: true);
+        Assert.True(Directory.Exists(javaBinDirectory));
+        Assert.True((File.GetAttributes(javaBinDirectory) & FileAttributes.ReparsePoint) == 0,
+            "The configured Java bin itself must be the resolved physical directory.");
+        string javaRuntimeRoot = Directory.GetParent(javaBinDirectory)?.FullName ??
+            throw new InvalidOperationException("configured_java_runtime_root_unavailable");
+        Assert.True(Directory.Exists(javaRuntimeRoot));
+        Assert.True((File.GetAttributes(javaRuntimeRoot) & FileAttributes.ReparsePoint) == 0,
+            "The configured Java runtime root must be physical.");
+        string javaPath = Path.Combine(javaBinDirectory, "java.exe");
+        Assert.True(File.Exists(javaPath), "The supplied Java 21 bin must contain java.exe.");
         string? bootstrapPath = Regex.Match(
             File.ReadAllText(jdtCommandPath),
             "(?im)^\\s*python\\s+\\\"(?<bootstrap>[^\\\"]+)\\\"\\s+%")
@@ -647,26 +965,22 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
             Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
         Assert.True(File.Exists(cmdPath), "The approved fixed Windows command interpreter must exist.");
 
-        string jdkRuntimeRoot = @"C:\Program Files\Java\jdk-27";
-        Assert.True(Directory.Exists(jdkRuntimeRoot),
-            "The Java 27 runtime recorded in the approved native preflight must remain available.");
         string[] approvedDirectories =
         [
             Path.GetDirectoryName(jdtCommandPath)!,
-            javaAliasDirectory,
-            javaPhysicalDirectory,
+            javaBinDirectory,
             Path.GetDirectoryName(pythonPath)!,
             Path.GetDirectoryName(cmdPath)!,
-            Path.Combine(jdkRuntimeRoot, "bin"),
         ];
         string[] fixedChildPath = approvedDirectories
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var policy = new PreparedJdtHostPolicy(
             fixedChildPath,
-            [runtimeRoot, jdkRuntimeRoot],
+            [runtimeRoot, javaRuntimeRoot],
             cmdPath,
-            fixedChildPath);
+            fixedChildPath,
+            JavaBinDirectory: javaBinDirectory);
         return (hostPath, policy, runtimeRoot, javaPath, pythonPath, jdtCommandPath);
     }
 

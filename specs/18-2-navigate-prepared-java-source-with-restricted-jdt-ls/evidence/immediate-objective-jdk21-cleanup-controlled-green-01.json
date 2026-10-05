@@ -1,0 +1,16 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-198c838b2bb647a0bb269a1aeba55eca/results.trx",
+  "selected": 112,
+  "passed": 112,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": [
+    "Actual prepared stdio shutdown request and exit notification; successful process wait before disposal; responsive no forced kill.",
+    "Faulted-RPC oversized response remains Limited after confirmed fallback cleanup.",
+    "Unconfirmed exit wait preserves owned marker and does not invoke state-cleaning process disposal.",
+    "Existing root/authority, cancellation, timeouts, URI protection, response bounds, late-session retention, quarantine and function adapter checks."
+  ],
+  "native": "Real JDK21 public factory qualification still pending after cleanup correction.",
+  "source": "Only JdtLsAnalysisAdapter.cs cleanup sequencing changed; public root/function/shared lease contracts unchanged."
+}

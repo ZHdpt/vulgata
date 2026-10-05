@@ -1,0 +1,25 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-3d1fb9cdcafa48b286e3de8804ddafd0/results.trx",
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "duration": "00:00:08.4498668",
+  "jdk": "User-supplied logical JDK21 root resolved to physical JDK21.0.12 bin in the tool caller; JavaBinDirectory injected through trusted application policy; no production/test JDK installation path, host PATH edit or fallback.",
+  "server": "org.eclipse.jdt.ls.core_1.58.0.202605150919.jar; 666 pinned runtime inputs.",
+  "navigation": [
+    "Actual public OpenDedicatedAsync factory and existing AIFunction: definition src/main/java/fixture/Target.java:3.",
+    "Existing AIFunction: references src/main/java/fixture/Caller.java:3."
+  ],
+  "lifetime": "Bounded session shutdown and successful combined owned-process wait before state cleanup; unrelated sentinel survived. Only preexisting caller state marker remained.",
+  "source": "Whole file-tree inventory and all bytes, including .project, .classpath, compiler preferences, Git config and hook marker, unchanged.",
+  "settings": "Maven/Gradle import, autobuild, build configuration updates, source downloads and snapshots disabled; explicit empty java.project.resourceFilters prevents observed fresh-fixture filter insertion. No OS network/filesystem isolation claim.",
+  "limitations": [
+    "Owned fresh Java fixture qualified. Prepared registration/login Repository not ready.",
+    "Existing JDT-created filter metadata may still be rewritten; settings are not universal source write prevention.",
+    "Unresponsive Java may remain after Windows parent/tree termination; unconfirmed combined wait retains/quarantines state.",
+    "Mixed CodeGraph roots, restart/cache adoption, cross-process guarantees, producer handoff and full integration are not qualified."
+  ],
+  "history": "Only immediate T037-T047 slice; old SKIP tasks and historical workflow/recovery/reviews remain frozen."
+}

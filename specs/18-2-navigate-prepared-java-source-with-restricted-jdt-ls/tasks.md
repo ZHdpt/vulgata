@@ -250,7 +250,7 @@ must quarantine rather than reopen a slot or appear as successful cancellation.
 
 ### Phase 14 — US1 real-server qualification (depends on US2/US3)
 
-- [ ] T046 [US1] Create `tests/Vulgata.Tests/AnalysisRuntime/PreparedJdtLsDedicatedQualificationTests.cs` and classify it LocalTools in `tests/Vulgata.Tests/TestInfrastructure/suites.json`; run only after T037 and explicit execution permission. Use an owned dependency-free Java declaration/caller fixture, whole-root real pinned JDT-LS and separate owned state. Invoke both existing AIFunctions, require useful expected Repository-relative definition and reference file/line anchors, record actual server/settings/limitations and source/config/hook byte preservation, then dispose context/lease and prove bounded process shutdown/exit and no unrelated termination. If actual server exposes a protocol/bootstrap/readiness/reply-shape gap, retain raw failure, add its focused behavioral test and make only the necessary correction in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs`; a change needing another source/authority seam returns for a bounded definition decision. Do not substitute controlled replay, initialization alone, empty results, checksums-as-confinement or CodeGraph execution authority.
+- [X] T046 [US1] Create `tests/Vulgata.Tests/AnalysisRuntime/PreparedJdtLsDedicatedQualificationTests.cs` and classify it LocalTools in `tests/Vulgata.Tests/TestInfrastructure/suites.json`; run only after T037 and explicit execution permission. Use an owned dependency-free Java declaration/caller fixture, whole-root real pinned JDT-LS and separate owned state. Invoke both existing AIFunctions, require useful expected Repository-relative definition and reference file/line anchors, record actual server/settings/limitations and source/config/hook byte preservation, then dispose context/lease and prove bounded process shutdown/exit and no unrelated termination. If actual server exposes a protocol/bootstrap/readiness/reply-shape gap, retain raw failure, add its focused behavioral test and make only the necessary correction in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs`; a change needing another source/authority seam returns for a bounded definition decision. Do not substitute controlled replay, initialization alone, empty results, checksums-as-confinement or CodeGraph execution authority.
 
 T046 also includes the adopted 2026-10-05 bounded selected-command alias correction
 in the plan/contract: owned alias RED/GREEN precedes native rerun. No new story or
@@ -258,7 +258,7 @@ old [SKIP] item is activated.
 
 ### Phase 15 — Cross-cutting validation and retained obligations
 
-- [ ] T047 Run the affected controlled suites and configured SelfContained regression through `eng/test.ps1`, assess final changed source/test units, and retain real qualification provenance under this feature's `evidence/`. Follow `quickstart.md` and `docs/agents/testing.md`; classify executed/excluded native cases and investigate permission/environment denial using evidence. Keep the existing legacy CodeGraph test-PATH failure visible until properly resolved, not filtered/deleted/weakened. Confirm ordinary18.1 functions, old guarded navigation path, code/evidence/history, branch and feature mapping remain preserved. Report only completion of the immediate slice; do not mark the original full story complete or restart [SKIP] tasks, old reviews/recovery or mixed-root integration.
+- [X] T047 Run the affected controlled suites and configured SelfContained regression through `eng/test.ps1`, assess final changed source/test units, and retain real qualification provenance under this feature's `evidence/`. Follow `quickstart.md` and `docs/agents/testing.md`; classify executed/excluded native cases and investigate permission/environment denial using evidence. Keep the existing legacy CodeGraph test-PATH failure visible until properly resolved, not filtered/deleted/weakened. Confirm ordinary18.1 functions, old guarded navigation path, code/evidence/history, branch and feature mapping remain preserved. Report only completion of the immediate slice; do not mark the original full story complete or restart [SKIP] tasks, old reviews/recovery or mixed-root integration.
 
 ### Current dependencies and parallel opportunities
 
@@ -277,25 +277,35 @@ cache adoption, mixed-root concurrent tool use, generalized cleanup, customer Re
 follow-up and full18.3 integration. Their original obligations and partial work stay in
 [SKIP] items. Deferral is not evidence that those protections or integrations succeeded.
 
-**Execution status (2026-10-05):** T037–T045 completed under direct human implementation
-and JDT runtime authorization; T046–T047 remain unchecked. Real JDT qualification
+**Execution status (2026-10-06):** T037–T047 completed for the immediate owned-fixture boundary under direct human implementation
+and JDT runtime authorization; The original full story and all old SKIP items remain unfinished. Real JDT qualification
 is LocalTools and excluded from the basic SelfContained suite.
 The only prerequisite decisions are explicit new implementation-boundary/JDT exception
 and resource authority. This document does not manufacture acceptance by the old
 review/approval hashes or authorize a native child through a caller boolean.
 
 
-### Current runtime checkpoint — 2026-10-05
+### Current runtime checkpoint — 2026-10-06
 
-T046 remains unfinished. The historical first-PATH Java 27 trial failed JDT
-initialization because ASM rejected class-file major version 71; that evidence
-is retained. The user-selected JDK 21 trial now uses the optional application-owned
-JavaBinDirectory dependency, without a production JDK location or PATH fallback.
-Controlled JDT LocalTools passes 110/110. The real public-factory fixture initialized
-pinned JDT 1.58 and returned useful definition and reference results through the
-existing function adapters. Its process/session shutdown remains unqualified:
-combined parent/stderr wait timed out and uncertain state is preserved. Focused
-owned-process observations are in progress; no completion claim follows from
-navigation alone. Basic SelfContained previously passed 2063/2063 and excludes
-all dedicated JDT classes. T047 retains that evidence but remains unfinished
-with T046. All old SKIP items and the historical workflow remain frozen.
+T046 is complete for the immediate owned-fixture boundary. The user-selected JDK21
+is supplied as an optional application-owned JavaBinDirectory dependency; production
+and fixture code contain no JDK installation location or PATH fallback. The real
+public factory initialized pinned JDT1.58, and existing function adapters returned
+useful definition Target.java:3 and reference Caller.java:3. Session shutdown and
+combined process wait completed; owned state was removed, the caller marker and
+unrelated sentinel survived, and the complete source inventory/bytes stayed unchanged.
+See evidence/immediate-objective-jdk21-native-qualified-01.json and raw TRX.
+
+Prior Java27 incompatibility, Java-child cleanup failure, source metadata mutation,
+controlled REDs, intermediate failures and test-harness corrections are preserved.
+Bounded shutdown/exit and cleanup only after confirmed combined wait corrected the
+lifetime defect. Empty fixed java.project.resourceFilters prevents the observed
+fresh-fixture .project filter insertion; it is not general source-write prevention.
+Prepared projects with existing JDT-created filters may still be rewritten and remain
+unqualified, as does the not-ready registration/login Repository. No normalization,
+source restoration, weakened assertion or OS network/filesystem isolation claim applies.
+
+Controlled JDT LocalTools passed 112/112; final affected checks passed 2/2 and 14/14.
+The final basic SelfContained regression passed 2063/2063 with no skips and excludes
+all JDT classes. T047 is complete for this slice. All 19 old SKIP items and the historical workflow remain frozen;
+no full-story, shared producer, mixed-root or integration readiness is claimed.

@@ -1,0 +1,12 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-62d301cb287e435c9d522b9c3573a96d/results.trx",
+  "selected": 14,
+  "passed": 14,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": "Affected runtime and actual framed initialize/configuration settings include explicit empty java.project.resourceFilters; prior offline and lifetime assertions retained.",
+  "surrounding": "112/112 cleanup/authority/navigation/function cases; final renamed/timeout-message cases2/2 retained separately.",
+  "native": "Fresh owned JDK21 fixture qualification in progress; broader metadata/customer cases remain unqualified.",
+  "source": "One fixed-setting addition in existing JdtLsAnalysisAdapter.cs. No hardcoded Java path or shared workspace/reader change."
+}

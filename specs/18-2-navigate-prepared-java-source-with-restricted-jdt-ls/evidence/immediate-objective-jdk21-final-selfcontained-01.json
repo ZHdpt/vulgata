@@ -1,0 +1,19 @@
+{
+  "suite": "SelfContained",
+  "results": "TestResults/isolation-80af5389548d4ffd8cc6fd0c0eaa7147/results.trx",
+  "discovered": 3004,
+  "selected": 2063,
+  "passed": 2063,
+  "failed": 0,
+  "skipped": 0,
+  "excluded": [
+    "LocalTools including all JDT classes",
+    "PostgreSql",
+    "External",
+    "E2E",
+    "HistoricalBoundary"
+  ],
+  "execution": "Standard eng/test.ps1 current build and suite policy; no host PATH edits, external installation changes or unrelated termination.",
+  "native": "Real owned JDK21 public-factory fixture separately passed1/1; LocalTools112 surrounding and final2/14 affected checks retained.",
+  "boundary": "Immediate T037-T047 owned-fixture slice only. All19 old SKIP items, frozen workflow/recovery/reviews, shared contracts and unresolved Repository/integration cases retained."
+}

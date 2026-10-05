@@ -1,0 +1,8 @@
+Read-only current-host resolver preflight: Pinned; pinned input count=666.
+Real JDT-LS navigation observed through the public host-policy factory; awaiting owned-process and fixture-settlement verification.
+Host PATH chain: JDT command C:\Users\13728\.local\bin\jdtls.bat; Python C:\Users\13728\.local\bin\python.exe; Java C:\Program Files\Java\jdk-21.0.12\bin\java.exe; runtime G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository.
+Server bundle(s): org.eclipse.jdt.ls.core_1.58.0.202605150919.jar.
+Settings contract: Maven/Gradle import, autobuild, build-configuration update, source downloads, snapshots and dependency restoration disabled; this is not OS network isolation.
+Definition: src/main/java/fixture/Target.java:3; references: src/main/java/fixture/Caller.java:3.
+Shutdown completed within 00:00:20; owned state removal followed the launcher's process-exited check, and only the preexisting caller marker remains.
+All fixture source, Eclipse configuration and hook marker bytes are unchanged.

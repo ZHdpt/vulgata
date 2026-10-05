@@ -229,7 +229,7 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
                 process,
                 new PreparedJdtInitializeRequest(
                     rootUri, rootUri, "repository", FixedOfflineSettings(),
-                    profile.MaximumResponseBytes),
+                    profile.MaximumResponseBytes, profile.ShutdownTimeout),
                 linked.Token);
             initialized = await pendingInitialization.WaitAsync(linked.Token);
             if (initialized is null ||
@@ -371,6 +371,7 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
                 autobuild = new { enabled = false },
                 configuration = new { updateBuildConfiguration = "disabled" },
                 maven = new { downloadSources = false, updateSnapshots = false },
+                project = new { resourceFilters = Array.Empty<string>() },
             },
         };
 
@@ -462,27 +463,66 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
         TimeSpan shutdownTimeout)
     {
         bool settled = true;
+        bool gracefulShutdown = false;
         using var deadline = new CancellationTokenSource(shutdownTimeout > TimeSpan.Zero
             ? shutdownTimeout : TimeSpan.FromSeconds(1));
         if (initialized is not null)
         {
-            try { await initialized.DisposeAsync().AsTask().WaitAsync(deadline.Token); }
+            try
+            {
+                await initialized.DisposeAsync().AsTask().WaitAsync(deadline.Token);
+                gracefulShutdown = initialized is IPreparedJdtGracefulShutdownSession
+                    { ExitSent: true };
+            }
             catch (Exception) { settled = false; }
         }
 
         if (process is not null)
         {
-            try { await process.KillTreeAsync(CancellationToken.None).WaitAsync(deadline.Token); }
-            catch (Exception) { settled = false; }
-            try { await process.WaitForExitAsync(shutdownTimeout, CancellationToken.None)
-                .WaitAsync(deadline.Token); }
-            catch (Exception) { settled = false; }
-            try { await process.DisposeAsync().AsTask().WaitAsync(deadline.Token); }
-            catch (Exception) { settled = false; }
+            bool exited = false;
+            if (gracefulShutdown)
+            {
+                try
+                {
+                    await process.WaitForExitAsync(
+                        GracefulShutdownSlice(shutdownTimeout), CancellationToken.None)
+                        .WaitAsync(deadline.Token);
+                    exited = true;
+                }
+                catch (Exception)
+                {
+                    // The owned process did not settle within the graceful slice.
+                }
+            }
+
+            if (!exited)
+            {
+                try { await process.KillTreeAsync(CancellationToken.None).WaitAsync(deadline.Token); }
+                catch (Exception) { settled = false; }
+                try
+                {
+                    await process.WaitForExitAsync(shutdownTimeout, CancellationToken.None)
+                        .WaitAsync(deadline.Token);
+                    exited = true;
+                }
+                catch (Exception) { settled = false; }
+            }
+            if (exited)
+            {
+                try { await process.DisposeAsync().AsTask().WaitAsync(deadline.Token); }
+                catch (Exception) { settled = false; }
+            }
+            else
+            {
+                settled = false;
+            }
         }
 
         return settled;
     }
+
+    internal static TimeSpan GracefulShutdownSlice(TimeSpan shutdownTimeout) =>
+        TimeSpan.FromTicks(Math.Max(1, shutdownTimeout.Ticks / 3));
 
     private sealed class OwnedPreparedJdtLsSession(
         IPreparedJdtLsSession inner,
@@ -1137,12 +1177,18 @@ internal interface IPreparedJdtProtocolFactory
         CancellationToken cancellationToken);
 }
 
+internal interface IPreparedJdtGracefulShutdownSession : IPreparedJdtLsSession
+{
+    bool ExitSent { get; }
+}
+
 internal sealed record PreparedJdtInitializeRequest(
     string RootUri,
     string WorkspaceFolderUri,
     string WorkspaceFolderName,
     IReadOnlyDictionary<string, object> FixedSettings,
-    int MaximumResponseBytes);
+    int MaximumResponseBytes,
+    TimeSpan ShutdownTimeout = default);
 
 internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
 {
@@ -1187,7 +1233,11 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
                 "workspace/didChangeConfiguration",
                 new { settings = request.FixedSettings }).WaitAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            return new PreparedJdtProtocolSession(rpc, new Uri(request.RootUri), boundedOutput);
+            return new PreparedJdtProtocolSession(
+                rpc, new Uri(request.RootUri), boundedOutput,
+                request.ShutdownTimeout > TimeSpan.Zero
+                    ? PreparedJdtLsRuntime.GracefulShutdownSlice(request.ShutdownTimeout)
+                    : TimeSpan.FromSeconds(1));
         }
         catch
         {
@@ -1199,8 +1249,11 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
     private sealed class PreparedJdtProtocolSession(
         JsonRpc rpc,
         Uri rootUri,
-        PreparedJdtBoundedResponseStream boundedOutput) : IPreparedJdtLsSession
+        PreparedJdtBoundedResponseStream boundedOutput,
+        TimeSpan gracefulShutdownTimeout) : IPreparedJdtGracefulShutdownSession
     {
+        public bool ExitSent { get; private set; }
+
         public async Task<PreparedJdtLsRawReply> NavigateAsync(
             PreparedJavaNavigationOperation operation,
             PreparedJavaNavigationRequest request,
@@ -1262,10 +1315,24 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
             return new PreparedJdtLsRawReply(locations, LimitReached: false, CapabilityLimitation: null);
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            rpc.Dispose();
-            return ValueTask.CompletedTask;
+            try
+            {
+                using var timeout = new CancellationTokenSource(gracefulShutdownTimeout);
+                await rpc.InvokeWithCancellationAsync(
+                    "shutdown", Array.Empty<object>(), timeout.Token);
+                await rpc.NotifyAsync("exit").WaitAsync(timeout.Token);
+                ExitSent = true;
+            }
+            catch (Exception)
+            {
+                // A failed graceful handshake uses the owned-process fallback.
+            }
+            finally
+            {
+                rpc.Dispose();
+            }
         }
     }
 }
