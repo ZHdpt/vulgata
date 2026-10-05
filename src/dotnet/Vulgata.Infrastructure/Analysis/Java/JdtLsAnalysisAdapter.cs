@@ -822,7 +822,7 @@ internal sealed record PreparedJdtPinnedFile(
     string Sha256,
     int? FirstPathEntryIndex);
 
-internal sealed record PreparedJdtHostPolicy(
+public sealed record PreparedJdtHostPolicy(
     IReadOnlyList<string> ApprovedExecutableDirectories,
     IReadOnlyList<string> DeclaredRuntimeReadRoots,
     string FixedCmdAbsolutePath,

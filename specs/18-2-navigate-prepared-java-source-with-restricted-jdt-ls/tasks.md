@@ -228,8 +228,8 @@ startup or controlled protocol replay alone is insufficient.
 ledger or registry; actual existing AIFunctions invoke definition/references on that
 context. Controlled tests establish this seam; T046 supplies real-server usefulness.
 
-- [ ] T040 [US1] Add controlled tests in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for `PreparedJavaNavigationContextFactory(profile, trustedHostPolicy)` and `OpenDedicatedAsync(lease, token)`, existing Opened/null-context failure results, whole-root/separate-state handoff, one slot, actual `PreparedJavaNavigationFunctions.Create()` invocation and context-before-lease disposal. Preserve constraints `positive initialization/request/shutdown bounds and positive response-byte cap`, `Line/Character one-based` and location bound `1 through 100`. Confirm old OpenAsync still fails closed without its original ownership inputs; no automatic fallback and no real process in this slice.
-- [ ] T041 [US1] Implement minimal dedicated construction/opening in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs` and `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs`; reuse prepared runtime/protocol, existing slot/request serialization and Core context/result contracts. The application assigns a source-only root with no concurrent CodeGraph preparation/cache mutation and owns the lease; context owns its session. Do not require CodeGraph ownership platform on this path, expose startup/root/disposal through tools, alter the existing guarded path, or enable default Web registration. Reuse `src/dotnet/Vulgata.Agents/WorkerExecution/PreparedJavaNavigationFunctions.cs` without changing its two-tool contract.
+- [X] T040 [US1] Add controlled tests in `tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs` for `PreparedJavaNavigationContextFactory(profile, trustedHostPolicy)` and `OpenDedicatedAsync(lease, token)`, existing Opened/null-context failure results, whole-root/separate-state handoff, one slot, actual `PreparedJavaNavigationFunctions.Create()` invocation and context-before-lease disposal. Preserve constraints `positive initialization/request/shutdown bounds and positive response-byte cap`, `Line/Character one-based` and location bound `1 through 100`. Confirm old OpenAsync still fails closed without its original ownership inputs; no automatic fallback and no real process in this slice.
+- [X] T041 [US1] Implement minimal dedicated construction/opening in `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs` and `src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs`; reuse prepared runtime/protocol, existing slot/request serialization and Core context/result contracts. The application assigns a source-only root with no concurrent CodeGraph preparation/cache mutation and owns the lease; context owns its session. Do not require CodeGraph ownership platform on this path, expose startup/root/disposal through tools, alter the existing guarded path, or enable default Web registration. Reuse `src/dotnet/Vulgata.Agents/WorkerExecution/PreparedJavaNavigationFunctions.cs` without changing its two-tool contract.
 
 ### Phase 12 — US2 (P2): keep the new path inside its grant
 
@@ -273,8 +273,8 @@ cache adoption, mixed-root concurrent tool use, generalized cleanup, customer Re
 follow-up and full18.3 integration. Their original obligations and partial work stay in
 [SKIP] items. Deferral is not evidence that those protections or integrations succeeded.
 
-**Execution status (2026-10-05):** T037–T039 completed under direct human implementation
-and JDT runtime authorization; T040–T047 remain unchecked. Real JDT qualification
+**Execution status (2026-10-05):** T037–T041 completed under direct human implementation
+and JDT runtime authorization; T042–T047 remain unchecked. Real JDT qualification
 is LocalTools and excluded from the basic SelfContained suite.
 The only prerequisite decisions are explicit new implementation-boundary/JDT exception
 and resource authority. This document does not manufacture acceptance by the old

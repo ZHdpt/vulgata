@@ -429,6 +429,206 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task OpenDedicatedAsync_WithCurrentJdtLease_ExposesBothFunctionsAndKeepsCallerLease()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
+        Directory.CreateDirectory(javaDirectory);
+        await File.WriteAllTextAsync(
+            Path.Combine(javaDirectory, "Caller.java"),
+            "package example; class Caller { void call() {} }\n");
+        string targetPath = Path.Combine(javaDirectory, "Target.java");
+        await File.WriteAllTextAsync(targetPath, "package example; class Target { void target() {} }\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromMilliseconds(50),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [new PreparedJdtLsRawLocation(new Uri(targetPath).AbsoluteUri, 7, 2, 7, 13)],
+            LimitReached: false,
+            CapabilityLimitation: null);
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+        IPreparedJavaNavigationContext? context = null;
+        bool contextDisposed = false;
+
+        try
+        {
+            opened = await factory.OpenDedicatedAsync(lease);
+
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+            Assert.Same(lease, runtime.LastWorkspaceLease);
+            Assert.Equal(profile, runtime.LastProfile);
+            Assert.True(runtime.LastCancellationToken.CanBeCanceled);
+
+            string? grantedRoot = null;
+            bool stateRootIsSeparate = false;
+            PreparedToolWorkspaceCheckStatus leaseStatus = await lease.UseContainedRootAsync(
+                PreparedToolPurpose.JdtNavigation,
+                (scope, _) =>
+                {
+                    grantedRoot = scope.GetPhysicalRootPathForTrustedToolBinding();
+                    stateRootIsSeparate = scope.IsSeparateDisposableStateRoot(profile.DisposableStateRoot);
+                    return ValueTask.CompletedTask;
+                });
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, leaseStatus);
+            Assert.Equal(Path.GetFullPath(fixture.PreparedRootPath), grantedRoot);
+            Assert.True(stateRootIsSeparate);
+
+            AIFunction[] functions = new PreparedJavaNavigationFunctions(context).Create().ToArray();
+            Assert.Equal(
+                new[] { "navigate_java_definition", "navigate_java_references" },
+                functions.Select(function => function.Name));
+            var arguments = new AIFunctionArguments(new Dictionary<string, object?>
+            {
+                ["relativePath"] = "src/main/java/example/Caller.java",
+                ["line"] = 3,
+                ["character"] = 4,
+                ["maximumLocations"] = 5,
+            });
+
+            object? rawDefinition = await functions[0].InvokeAsync(arguments, CancellationToken.None);
+            PreparedJavaNavigationResult definition = Assert.IsType<PreparedJavaNavigationResult>(rawDefinition);
+            Assert.Equal(fixture.Approval.RepositoryId, definition.RepositoryId);
+            Assert.Equal(PreparedJavaNavigationOperation.Definition, definition.Operation);
+            Assert.Equal(PreparedJavaNavigationOutcome.Observed, definition.Outcome);
+            Assert.Equal(
+                new PreparedJavaLocation(
+                    new PreparedSourceLocation(fixture.Approval.RepositoryId, "src/main/java/example/Target.java"),
+                    7,
+                    2,
+                    7,
+                    13),
+                Assert.Single(definition.Locations));
+            Assert.Equal(PreparedJavaNavigationOperation.Definition, runtime.Session.LastOperation);
+            Assert.Equal(
+                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 3, 4, 5),
+                runtime.Session.LastRequest);
+
+            object? rawReferences = await functions[1].InvokeAsync(arguments, CancellationToken.None);
+            PreparedJavaNavigationResult references = Assert.IsType<PreparedJavaNavigationResult>(rawReferences);
+            Assert.Equal(fixture.Approval.RepositoryId, references.RepositoryId);
+            Assert.Equal(PreparedJavaNavigationOperation.References, references.Operation);
+            Assert.Equal(PreparedJavaNavigationOutcome.Observed, references.Outcome);
+            Assert.Equal(
+                new PreparedJavaLocation(
+                    new PreparedSourceLocation(fixture.Approval.RepositoryId, "src/main/java/example/Target.java"),
+                    7,
+                    2,
+                    7,
+                    13),
+                Assert.Single(references.Locations));
+            Assert.Equal(2, runtime.Session.NavigateCallCount);
+            Assert.Equal(PreparedJavaNavigationOperation.References, runtime.Session.LastOperation);
+            Assert.Equal(
+                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 3, 4, 5),
+                runtime.Session.LastRequest);
+
+            PreparedJavaNavigationOpenResult competingOpen = await factory.OpenDedicatedAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.DeadlineExceeded, competingOpen.Status);
+            Assert.Null(competingOpen.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+
+            await context.DisposeAsync();
+            contextDisposed = true;
+            context = null;
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+            Assert.Equal(PreparedToolWorkspaceLifetime.Open, lease.Lifetime);
+
+            PreparedJavaNavigationOpenResult guardedOpen = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable, guardedOpen.Status);
+            Assert.Null(guardedOpen.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+        }
+        finally
+        {
+            if (!contextDisposed && context is not null)
+            {
+                await context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
+    [InlineData("wrong-purpose")]
+    [InlineData("invalid-profile")]
+    public async Task OpenDedicatedAsync_WhenPurposeOrProfileIsInvalid_ReturnsFailureWithoutRuntime(
+        string invalidInput)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        PreparedToolPurpose purpose = invalidInput == "wrong-purpose"
+            ? PreparedToolPurpose.CodeGraphPreparation
+            : PreparedToolPurpose.JdtNavigation;
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(fixture.Approval, purpose);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    purpose,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-invalid-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            invalidInput == "invalid-profile" ? "relative-state-root" : stateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+
+        try
+        {
+            PreparedJavaNavigationOpenResult result = await factory.OpenDedicatedAsync(lease);
+
+            Assert.Equal(
+                invalidInput == "wrong-purpose"
+                    ? PreparedJavaNavigationOpenStatus.Denied
+                    : PreparedJavaNavigationOpenStatus.ConfigurationUnavailable,
+                result.Status);
+            Assert.Null(result.Context);
+            Assert.Equal(0, runtime.OpenCallCount);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OpenAsync_WithCodeGraphPurposeLease_DeniesWithoutInvokingRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

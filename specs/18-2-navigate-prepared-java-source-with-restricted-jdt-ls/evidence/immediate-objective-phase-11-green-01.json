@@ -1,0 +1,21 @@
+{
+  "phase": "11",
+  "tasks_completed": [
+    "T040",
+    "T041"
+  ],
+  "kind": "Controlled LocalTools through existing AIFunctions, no native JDT",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-ef65ea72639d4b398e98fe969e8c9500",
+  "selected": 95,
+  "passed": 95,
+  "failed": 0,
+  "skipped": 0,
+  "behavior": "Explicit OpenDedicatedAsync shares existing slot/runtime lifetime and lease checks; no CodeGraph requirement on dedicated path; old OpenAsync guard retained; context owns session and caller owns lease",
+  "source_sha256": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs": "73c493d962f3467ce454bba8c18618ec21ae2d17bca97fa20732a81089442a14",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs": "5f5333330d1aff591a4d5bfa9618aea6cc0e7ef3a1805a9f7d890bbb72c150d8",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs": "7bca3c6ca559c47b92a8360b81487d84df53f68a6db7d402efb98aae614b1af0",
+    "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs": "3b721b60ed3852cc4daeb133ff023a0805df84832dc12c5e325419f959fb58a1"
+  },
+  "qualification_pending": "Real public host-policy composition and server usefulness/shutdown in T046; US2/US3 dedicated tests in T042/T044"
+}

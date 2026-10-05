@@ -11,8 +11,9 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
 {
     private readonly PreparedToolWorkspaceLease _workspaceLease;
     private readonly IPreparedJdtLsSession _session;
-    private readonly PreparedCodeGraphStateCoordinator _ownershipCoordinator;
-    private readonly PreparedCodeGraphWorkspaceOwnership _workspaceBinding;
+    private readonly PreparedCodeGraphStateCoordinator? _ownershipCoordinator;
+    private readonly PreparedCodeGraphWorkspaceOwnership? _workspaceBinding;
+    private readonly bool _dedicated;
     private readonly Action<bool> _releaseSlot;
     private readonly TimeSpan _requestTimeout;
     private readonly TimeSpan _shutdownTimeout;
@@ -43,6 +44,21 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         _shutdownTimeout = shutdownTimeout;
         _sessionRegistration = sessionRegistration;
         _sessionProbe = sessionProbe;
+    }
+
+    internal PreparedJdtLsNavigationContext(
+        PreparedToolWorkspaceLease workspaceLease,
+        IPreparedJdtLsSession session,
+        Action<bool> releaseSlot,
+        TimeSpan requestTimeout,
+        TimeSpan shutdownTimeout)
+    {
+        _workspaceLease = workspaceLease;
+        _session = session;
+        _dedicated = true;
+        _releaseSlot = releaseSlot;
+        _requestTimeout = requestTimeout;
+        _shutdownTimeout = shutdownTimeout;
     }
 
     public Guid RepositoryId => _workspaceLease.RepositoryId;
@@ -97,11 +113,13 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 return Empty(operation, Map(before));
             }
 
-            PreparedCodeGraphOwnershipViewResult ownershipView;
+            PreparedCodeGraphOwnershipViewResult? ownershipView = null;
+            if (!_dedicated)
+            {
             try
             {
-                ownershipView = await _ownershipCoordinator.GetOwnershipViewAsync(
-                    _workspaceBinding, _workspaceBinding.Approval, linked.Token).WaitAsync(linked.Token);
+                ownershipView = await _ownershipCoordinator!.GetOwnershipViewAsync(
+                    _workspaceBinding!, _workspaceBinding!.Approval, linked.Token).WaitAsync(linked.Token);
             }
             catch (OperationCanceledException) when (linked.IsCancellationRequested)
             {
@@ -119,7 +137,7 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 PreparedCodeGraphWorkspaceOwnership? owned = ownershipView.Record;
                 if (owned is not { Phase: PreparedCodeGraphOwnershipPhase.Ready,
                     StateEntryObjectIdentity: not null } ||
-                    owned.OwnershipId != _workspaceBinding.OwnershipId)
+                    owned.OwnershipId != _workspaceBinding!.OwnershipId)
                 {
                     return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
                 }
@@ -156,6 +174,7 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
             else if (ownershipView.Status != PreparedCodeGraphOwnershipViewStatus.VerifiedUnowned)
             {
                 return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
             }
 
             if (linked.IsCancellationRequested)
@@ -235,7 +254,7 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
             var locations = new List<PreparedJavaLocation>();
             var limitations = new List<PreparedJavaLimitation>();
             PreparedCodeGraphWorkspaceOwnership? ownedRecord =
-                ownershipView.Status == PreparedCodeGraphOwnershipViewStatus.VerifiedOwned
+                ownershipView?.Status == PreparedCodeGraphOwnershipViewStatus.VerifiedOwned
                     ? ownershipView.Record : null;
             bool ownedEntryMatches = true;
             PreparedToolWorkspaceCheckStatus mapping = await _workspaceLease.UseContainedRootAsync(
@@ -305,11 +324,13 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
+            if (!_dedicated)
+            {
             PreparedCodeGraphOwnershipViewResult disclosureView;
             try
             {
-                disclosureView = await _ownershipCoordinator.GetOwnershipViewAsync(
-                    _workspaceBinding, _workspaceBinding.Approval, linked.Token).WaitAsync(linked.Token);
+                disclosureView = await _ownershipCoordinator!.GetOwnershipViewAsync(
+                    _workspaceBinding!, _workspaceBinding!.Approval, linked.Token).WaitAsync(linked.Token);
             }
             catch (OperationCanceledException) when (linked.IsCancellationRequested)
             {
@@ -326,11 +347,12 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
-            if (disclosureView.Status != ownershipView.Status ||
+            if (disclosureView.Status != ownershipView!.Status ||
                 disclosureView.Record != ownershipView.Record)
             {
                 _ = await RetireSessionUnderGateAsync();
                 return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
             }
 
             if (linked.IsCancellationRequested)

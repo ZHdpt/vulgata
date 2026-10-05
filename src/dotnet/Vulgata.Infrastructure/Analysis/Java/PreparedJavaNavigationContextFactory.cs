@@ -129,6 +129,22 @@ public sealed class PreparedJavaNavigationContextFactory
         _ownershipCoordinator = null;
     }
 
+    public PreparedJavaNavigationContextFactory(
+        PreparedJavaNavigationProfile profile,
+        PreparedJdtHostPolicy trustedHostPolicy)
+        : this(profile, new PreparedJdtLsRuntime(
+            new PreparedJdtCommandResolver(),
+            new PreparedJdtProcessLauncher(),
+            new PreparedJdtProtocolFactory(),
+            trustedHostPolicy ?? throw new ArgumentNullException(nameof(trustedHostPolicy))))
+    {
+    }
+
+    public Task<PreparedJavaNavigationOpenResult> OpenDedicatedAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        CancellationToken cancellationToken = default)
+        => OpenCoreAsync(workspaceLease, dedicated: true, cancellationToken);
+
     internal PreparedJavaNavigationContextFactory(
         PreparedJavaNavigationProfile profile,
         IPreparedJdtLsRuntime runtime,
@@ -151,9 +167,15 @@ public sealed class PreparedJavaNavigationContextFactory
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
 
-    public async Task<PreparedJavaNavigationOpenResult> OpenAsync(
+    public Task<PreparedJavaNavigationOpenResult> OpenAsync(
         PreparedToolWorkspaceLease workspaceLease,
         CancellationToken cancellationToken = default)
+        => OpenCoreAsync(workspaceLease, dedicated: false, cancellationToken);
+
+    private async Task<PreparedJavaNavigationOpenResult> OpenCoreAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        bool dedicated,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(workspaceLease);
 
@@ -167,7 +189,7 @@ public sealed class PreparedJavaNavigationContextFactory
             return Failed(PreparedJavaNavigationOpenStatus.Denied);
         }
 
-        if (_ownershipCoordinator is null || _getWorkspaceBinding is null)
+        if (!dedicated && (_ownershipCoordinator is null || _getWorkspaceBinding is null))
         {
             return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
         }
@@ -214,10 +236,36 @@ public sealed class PreparedJavaNavigationContextFactory
                 return Failed(Map(leaseStatus));
             }
 
-            PreparedCodeGraphWorkspaceOwnership? binding;
+            PreparedCodeGraphWorkspaceOwnership? binding = null;
+            PreparedWorkspaceBorrow? sessionRegistration = null;
+            PreparedJdtSessionSettlementProbe? sessionProbe = null;
+            if (dedicated)
+            {
+                bool stateRootIsSeparate = false;
+                PreparedToolWorkspaceCheckStatus stateCheck =
+                    await workspaceLease.UseContainedRootAsync(
+                        PreparedToolPurpose.JdtNavigation,
+                        (scope, _) =>
+                        {
+                            stateRootIsSeparate = scope.IsSeparateDisposableStateRoot(
+                                _profile.DisposableStateRoot);
+                            return ValueTask.CompletedTask;
+                        }, waitToken.Token);
+                if (stateCheck != PreparedToolWorkspaceCheckStatus.Current)
+                {
+                    return Failed(Map(stateCheck));
+                }
+
+                if (!stateRootIsSeparate)
+                {
+                    return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
+                }
+            }
+            else
+            {
             try
             {
-                binding = await _getWorkspaceBinding(waitToken.Token).AsTask().WaitAsync(waitToken.Token);
+                binding = await _getWorkspaceBinding!(waitToken.Token).AsTask().WaitAsync(waitToken.Token);
             }
             catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
             {
@@ -264,7 +312,7 @@ public sealed class PreparedJavaNavigationContextFactory
             PreparedCodeGraphOwnershipViewResult ownershipView;
             try
             {
-                ownershipView = await _ownershipCoordinator.GetOwnershipViewAsync(
+                ownershipView = await _ownershipCoordinator!.GetOwnershipViewAsync(
                     binding, binding.Approval, waitToken.Token).WaitAsync(waitToken.Token);
             }
             catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
@@ -284,8 +332,6 @@ public sealed class PreparedJavaNavigationContextFactory
                 return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
             }
 
-            PreparedWorkspaceBorrow? sessionRegistration = null;
-            PreparedJdtSessionSettlementProbe? sessionProbe = null;
             if (_registry is not null)
             {
                 sessionProbe = new PreparedJdtSessionSettlementProbe();
@@ -300,6 +346,7 @@ public sealed class PreparedJavaNavigationContextFactory
                 }
 
                 sessionRegistration = registered.Borrow;
+            }
             }
 
             IPreparedJdtLsSession session;
@@ -375,26 +422,25 @@ public sealed class PreparedJavaNavigationContextFactory
             }
 
             transferred = true;
+            Action<bool> releaseSlot = cleanupConfirmed =>
+            {
+                if (!cleanupConfirmed)
+                {
+                    slot.Quarantined = true;
+                }
+
+                slot.Gate.Release();
+            };
             return new PreparedJavaNavigationOpenResult(
                 PreparedJavaNavigationOpenStatus.Opened,
-                new PreparedJdtLsNavigationContext(
-                    workspaceLease,
-                    session,
-                    _ownershipCoordinator,
-                    binding,
-                    cleanupConfirmed =>
-                    {
-                        if (!cleanupConfirmed)
-                        {
-                            slot.Quarantined = true;
-                        }
-
-                        slot.Gate.Release();
-                    },
-                    _profile.RequestTimeout,
-                    _profile.ShutdownTimeout,
-                    sessionRegistration,
-                    sessionProbe));
+                dedicated
+                    ? new PreparedJdtLsNavigationContext(
+                        workspaceLease, session, releaseSlot,
+                        _profile.RequestTimeout, _profile.ShutdownTimeout)
+                    : new PreparedJdtLsNavigationContext(
+                        workspaceLease, session, _ownershipCoordinator!, binding!, releaseSlot,
+                        _profile.RequestTimeout, _profile.ShutdownTimeout,
+                        sessionRegistration, sessionProbe));
         }
         finally
         {
