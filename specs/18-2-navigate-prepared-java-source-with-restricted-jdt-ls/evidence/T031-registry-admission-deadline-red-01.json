@@ -1,0 +1,15 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: source authority ignores cancellation and public admission exceeds its100ms trusted deadline. Independent shutdown is not used to meet the bound; cleanup releases and observes the provider/admission and confirms no late borrow. No setup/environment failure.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "2287a639db54d4f39872036dff19c9b06c66b960",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "16a76e122b1426e4856dbb51604c7727cc94af84e893a792ed43dd6dcf0e24e5", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "bd82c7eeb37340b2bd0a2313d8a0ee77465193f1cccd79b8d8c0685ae8652ac6"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-123a91326dc349979e47ceb8acbf9990/results.trx", "sha256": "195496d0922ead90b8aabb45ef118db6092234c74366475b6e55e830c84e942d", "selected": 10, "passed": 9, "failed": 1, "skipped": 0},
+  "assertion": "Admission must finish within its trusted deadline even when the current-source provider ignores cancellation.",
+  "build": {"path": "TestResults/isolation-123a91326dc349979e47ceb8acbf9990/build.log", "sha256": "3562cff9658f7330dffd510bedd82374821690a32d6fd1dfc0d3f617a88306c9", "result": "passed"},
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

@@ -1,0 +1,9 @@
+{
+  "phase": "13",
+  "kind": "Normal TDD compile correction, not behavioral RED/workflow failure",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-62f010b4b4564743a722b11e2dc7269c",
+  "error": "CS1501 Assert.Same has no three-argument overload in installed xUnit2.9.3",
+  "product_tests_executed": false,
+  "correction": "Same-reference winner assertion uses Assert.True(ReferenceEquals(openTask,completed),message); meaning retained",
+  "historical_counter": "Unchanged; no recovery episode restarted"
+}

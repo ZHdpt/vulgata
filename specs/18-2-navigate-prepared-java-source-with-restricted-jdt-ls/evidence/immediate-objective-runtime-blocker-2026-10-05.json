@@ -1,0 +1,39 @@
+{
+  "status": "Blocked: T046 unfinished; originalstory notcomplete",
+  "selectedRuntime": "FirstPATH Java27 retainedasdirected; PythonbootstrapandJDT1.58.0.202605150919 physicalinputs pinned",
+  "controlledJdt": {
+    "suite": "LocalTools",
+    "passed": 107,
+    "selected": 107,
+    "skipped": 0,
+    "results": "TestResults/isolation-c23a541eb38f4dcc878d11028a738348/results.trx"
+  },
+  "basic": {
+    "suite": "SelfContained",
+    "passed": 2063,
+    "selected": 2063,
+    "skipped": 0,
+    "results": "TestResults/isolation-a60b7636522f4063bf2d26f491b0312c/results.trx",
+    "JdtExcluded": true
+  },
+  "nativePublicFactory": "FailedConfigurationUnavailable; neitherdefinitionnorreferencesfunctions invoked",
+  "nativeDiagnostic": {
+    "probePassed": 1,
+    "scope": "Boundeddiagnosticcapture+ownedcleanup only; notnavigationacceptance",
+    "processStarted": true,
+    "initError": "StreamJsonRpc.ConnectionLostException after16830ms",
+    "rootCause": "java.lang.IllegalArgumentException: Unsupported class file major version 71 at org.objectweb.asm.ClassReader -> weavinghook ClassFormatError -> m2e.core pluginactivationfailure -> JDT language server inactive",
+    "killRequested": true,
+    "waitCompleted": true,
+    "exitCode": -1,
+    "disposeCompleted": true,
+    "cleanupConfirmed": true,
+    "callerMarkerPreserved": true,
+    "results": "TestResults/isolation-e332493a19ac43b8a4cb12dc578db630/results.trx"
+  },
+  "remaining": "CompatiblepinnedJDTdistribution forselectedfirstJava27, thenfreshpins andrealpublicfactory fixturedefinition/references/function/sourcepreservation/shutdownqualification. PreparedcustomerRepositorynotready.",
+  "decisions": "No laterJavafallback, externalinstallationupdate ornewruntimeauthority implied; user mustsupplycompatibleJDTorauthorizearuntimeboundarychange.",
+  "shared18_3": "Currentpurpose-bound app-issued containedphysicalworkspacelease remainsminimum; nosharedcontract/reader/filterchanges orCodeGraphownershipplatform introduced. Fullmixed-root producer/reader integration remainsunqualified.",
+  "preserved": "Old19SKIP tasks, workflowstate/history/counter/owners/models/approvals, sourceprotectionandfailingnativeacceptance retained.",
+  "diagnosticFormatting": "Readable extracted log normalizes carriage returns only; original captured output remains in retained attempt06 TRX and untouched TestResults."
+}

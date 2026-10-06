@@ -1,0 +1,15 @@
+{
+  "kind": "analysis",
+  "stage": "plan-review",
+  "observed_at": "2026-09-29T10:41:47.651556Z",
+  "summary": "Root corrected uncommitted transition ordering: phase_complete(plan) was provisionally persisted before mandatory independent plan-review acceptance, causing the installed validator to route recovery to tasks and reject the plan ACCEPT. The uncommitted phase transition/wrapper were removed from the chain; raw plan self-review and independent ACCEPT remain unchanged. Recovery episode 18-2-path-trust-20260929T103129Z remains at failed_results=1, earliest owner plan, transition head 0009.",
+  "affected_files": [
+    "evidence/transition-0010.json",
+    "evidence/plan-self-review-path-trust-result-01.json"
+  ],
+  "preserved": [
+    "evidence/plan-review-04.json",
+    "evidence/plan-review-05.json",
+    "evidence/plan-self-review-path-trust-01.json"
+  ]
+}

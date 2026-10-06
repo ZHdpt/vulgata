@@ -1,0 +1,26 @@
+{
+  "phase": "13",
+  "kind": "Pre-product-test harness crash, not valid RED or permission denial",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-0abcec4305b44bbf854cdbabdc50241f",
+  "guard_trx": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\guard-4776a82ecd2e4b7f94d05762eda0b362\\disabled.trx",
+  "executed": 0,
+  "build_errors": 0,
+  "windows_event": {
+    "provider": "Application Error",
+    "id": 1000,
+    "time_client_timezone": "2026-10-05 20:30:36 Asia/Shanghai",
+    "application": "testhost.exe",
+    "exception": "0xc0000005",
+    "module": "unknown",
+    "fault_offset": "1"
+  },
+  "classification": "Access violation in harness testhost; no evidence sentinel or JDT fixture ran; not 0xc0000022 environment access denial",
+  "fresh_guard": {
+    "command": "eng/test-guard-regressions.ps1",
+    "exit_code": 0,
+    "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\guard-9c0eb57ba3ad444fa28b718f558335a3",
+    "disabled_total": 0,
+    "enabled_expected_failures": 1
+  },
+  "action": "One bounded standard-runner retry after fresh unchanged guard qualification; no cache/process reset, bypass, guard/test change or historical workflow update"
+}

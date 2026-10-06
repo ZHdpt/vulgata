@@ -1,0 +1,12 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-ef7e552a57524c719711f7902189b75c/results.trx",
+  "initialize": "Succeeded in 3166 ms under configured JDK 21.",
+  "dispose": "TimeoutException jdt_cleanup_unconfirmed",
+  "process": "Started=True; KillRequested=True; WaitCompleted=False; Exit=unobserved; DisposeCompleted=False.",
+  "fixture": "Preserved owned fixture 782bc6b50ab648c1829b75a43a5a7927; no blind deletion or unrelated process termination.",
+  "next": "Read-only PID, HasExited and owned Java observations during bounded wait; no production fix before identifying the cause.",
+  "bootstrapWindows": "Approved jdtls.py uses subprocess.run(Java) on Windows and inherits stderr; the combined parent/stderr wait does not distinguish which wait blocked."
+}

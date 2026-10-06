@@ -1,0 +1,66 @@
+{
+  "kind": "analysis",
+  "summary": "Tracked issuer lifecycle verified: CodeGraph preparation lease registered before return under Absent, actual contained callback keeps closure Active, Closing rejects further IssueAsync, callback observed and serialized disposal closes root then releases ticket, after which disposition Settled. Native BeginBorrow remains Ready-only.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T032-tracked-issuer-lifetime-red-01.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "b209a4fef1feedbb03d5f25b01a0afe4dbbce37eb51d3328642919ccbe3690f6",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "247e3549e1d6af6eaeba3af9dc8a1514995926be8ad47b11865cfc0ea99222b6",
+    "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs": "a2654397b4776b5fda7d66457c8261aadc2168219d52b0af634f1821df93837c"
+  },
+  "minimal_green": {
+    "path": "TestResults/isolation-1b536c5e7b194b2e9c7acb618d369de2/results.trx",
+    "sha256": "30a1c53d0352160212deedcb9f583ba526ee2336629d73b2ccf41b08f2b33016",
+    "selected": 36,
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-1b536c5e7b194b2e9c7acb618d369de2/build.log",
+    "build_sha256": "23c08116fb4f16051d89c0881970891719758645379c6308deaa58ce0d791733"
+  },
+  "minimal_registry_regression": {
+    "path": "TestResults/isolation-34eae80b794945de89d4ef700563b4d3/results.trx",
+    "sha256": "72f3defb00b1ed1c056dfc1fa39973cc57eee3cc4bda7298c1b5dc29708e091e",
+    "selected": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-34eae80b794945de89d4ef700563b4d3/build.log",
+    "build_sha256": "14e8d96aa81b4a0972829f924db69b4448b79ba107f094dd5407906eb0cf37fc"
+  },
+  "independent_final_green": {
+    "path": "TestResults/isolation-9b4ad45bc62b4b0bad22bea516e29903/results.trx",
+    "sha256": "705862b97010f286b0d3d5217934e28d2d7c997734e09cdd66b459692730896b",
+    "selected": 36,
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-9b4ad45bc62b4b0bad22bea516e29903/build.log",
+    "build_sha256": "eb86a7155722b0abdbefdf6f90d14901d1490dc109b431de2e35c663afc52a29"
+  },
+  "independent_registry_regression": {
+    "path": "TestResults/isolation-874a66487ec64fe0a0b00beb0ea38da1/results.trx",
+    "sha256": "72305917d31371e10a9cbf5ffd7c8bd45ac45f6e9cb5dfbc86cced799319bcca",
+    "selected": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-874a66487ec64fe0a0b00beb0ea38da1/build.log",
+    "build_sha256": "13f3fcb2417d974e0657c3dc43ad1d90bc5366b0589f2918308d815f135ae03e"
+  },
+  "final_shape": {
+    "production": "Public issuer/request unchanged, producer-internal registration gated by current exact facts, lease probe avoids gate reentry, release follows actual serialized disposal; failed registration cleans allocation. No refactor needed.",
+    "tests": "Started/released callback, Active closure, post-close no lease, observed completion, owned disposal and Settled recheck through public seams. No refactor needed."
+  },
+  "limitations": "Current tracked constructor retains binding copy; post-coordinator Ready reissue/current-binding refresh and terminal coordinator verifier integration remain unfinished. Actual Windows/binding/native/18.3 readiness and later gates remain unqualified.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

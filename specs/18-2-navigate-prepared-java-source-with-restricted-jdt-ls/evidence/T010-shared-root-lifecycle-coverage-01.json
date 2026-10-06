@@ -1,0 +1,18 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "task_id": "T010",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "6077c59da396882559ff0a2a4c759d9bbfdedfdd33b1132370ad5de15e534c7418",
+  "coverage_reason": "Existing lease behavior rejects a replaced pinned root before callback, closes on controlled cancellation during callback, and separates prepared root/descendant from an owned sibling disposable state directory. No fabricated RED or production edit.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 25,
+  "passed": 25,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-712f7a9f7b374251960dfd8afac6655a/results.trx",
+  "trx_sha256": "3043f372f79d46fcfa1527e667698932e42b181b00fe0c34f9628c9b4a6fba6e",
+  "environment": "Restricted build denied writing test obj manifest; approved native launcher passed. No JDT or CodeGraph process started.",
+  "remaining": "Reparse/symlink URI escape and state-root redirection, post-callback disposal/near-deadline edges, and full JDT containment remain unqualified."
+}

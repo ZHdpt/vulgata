@@ -1,0 +1,19 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: admission waits past its deadline while disposal of its partially acquired hold remains pending. The test releases and observes disposal and admission in finally; shutdown does not mask the admission observation.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "f2fb30c3b9ae056ee2418b64745754c93c2fc990",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "7fcaa3dcde144d9dac66407ad3a96dfc6dfdf570aee2067b842cd5d7cb104a03",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "53d735f7c719cac5e96a635cd02e3a129b775e135662b6a4fbf8bf462cd74a8b"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-e4b6959c3c074c0a9d2f4479d826f79c/results.trx", "sha256": "430a401c04a2ea718413519ac3107defc18ebd33297df3a9fc8b4647a8b511fd", "selected": 17, "passed": 16, "failed": 1, "skipped": 0},
+  "assertion": "Admission must honor its deadline while partial-hold disposal remains pending.",
+  "build": {"path": "TestResults/isolation-e4b6959c3c074c0a9d2f4479d826f79c/build.log", "sha256": "32ef944643db8e86ae475e2616e2f561cab7fda22ad56507eafa595c0ef5b66c", "result": "passed"},
+  "resources": "Controlled fakes only; no native tool, actual Windows protection or host-resource qualification.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

@@ -1,0 +1,13 @@
+{
+  "phase": "11",
+  "task": "T040",
+  "kind": "Controlled injected runtime; actual AIFunction adapter test; no native child",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-9be05c9302ea4e6da989784fdf7f7b0e",
+  "selected": 1,
+  "passed": 0,
+  "failed": 1,
+  "test": "OpenDedicatedAsync_WithCurrentJdtLease_ExposesBothFunctionsAndKeepsCallerLease",
+  "expected": "Opened",
+  "actual": "ConfigurationUnavailable",
+  "route": "Declaration-only dedicated-opening stub RED before shared-core dedicated route GREEN"
+}

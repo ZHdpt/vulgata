@@ -1,0 +1,31 @@
+{
+  "kind": "analysis",
+  "summary": "Next dependency-ready T032 producer slice evaluated against accepted ID-I10 and contracts/navigation-tool.md issuer/registry construction, resource lifetime and preparation-lease paragraph. Public IssueAsync/request unchanged; internal constructor wires existing typed binding plus registry so OwnershipId never becomes Worker/request argument. This is local accepted binding injection, no second descriptor/schema/shared public contract.",
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "771f8f304efe7909821441d50b9155022ee2e991f498791f23526f081ba97e35",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "b934528a1954e89e6d17c01f8913eaca3354ae4245bf1a80449d0dcccc452f3e",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedCodeGraphStateCoordinator.cs": "bc65ecc6078a6fd311b3f763fc4adbfc52a4b1fddfaa40253c199a3954df7426"
+  },
+  "first_scenario": "Tracked CodeGraphPreparation lease under admitted Absent keeps CloseForDisposition Active while lease/contained operations are live, then Settled after owned disposal; Closing refuses another IssueAsync. Native borrow still requires Ready.",
+  "construction_scaffold": "Internal overload (sourceAuthority, toolAuthorization, existing PreparedCodeGraphWorkspaceOwnership binding, PreparedWorkspaceUseRegistry registry) delegates unchanged public constructor and only validates non-null trusted inputs; no registration behavior or field changes before behavioral RED. Public two-argument constructor and IssueAsync unchanged.",
+  "verification_route": "Declaration-only construction: direct compile/regression verification; then honest public IssueAsync behavioral RED/GREEN. Missing-type compilation is not RED.",
+  "ownership": {
+    "tests": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+    "production": [
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs"
+    ],
+    "root": "workflow/evidence/Git remain root-only"
+  },
+  "remaining_dependency": "Coordinator repeated current-owner/disposition proof spans Disposing/Removed and must be integrated under accepted latched lifetime before terminal readiness. Actual Windows/binding/native resource qualifications remain closed.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

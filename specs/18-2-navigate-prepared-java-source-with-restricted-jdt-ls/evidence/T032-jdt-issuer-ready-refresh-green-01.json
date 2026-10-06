@@ -1,0 +1,39 @@
+{
+  "kind": "analysis",
+  "summary": "Minimal GREEN: trusted-store Ready refresh applies to both producer lease purposes on same immutable key and retained host hold. Native borrowing unchanged.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "b209a4fef1feedbb03d5f25b01a0afe4dbbce37eb51d3328642919ccbe3690f6",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "86e9b82af8b6ffdfad1160d408874e761a6d1b90f401ef088eb94aea7b547d1e",
+    "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs": "61a7ee2b8311106d38368fd0d6ad4e922d5d049d09bcaa8cd7e0db053e6ba987"
+  },
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T032-jdt-issuer-ready-refresh-red-01.json",
+  "minimal_green": {
+    "path": "TestResults/isolation-9f2fef9a3efa48c59e17fbf2f2b40000/results.trx",
+    "sha256": "e50d892f75d37bc7710be8cc926019f609173cad297b410fde72f552dd6ee89e",
+    "selected": 38,
+    "passed": 38,
+    "failed": 0,
+    "skipped": 0,
+    "build": {
+      "path": "TestResults/isolation-9f2fef9a3efa48c59e17fbf2f2b40000/build.log",
+      "sha256": "c3f6ea4ff225a9970d11e23934110288ebc2e770748177b60558ac4ef1bf7e88"
+    }
+  },
+  "final_shape": "Both owners assess final affected units at coherent checkpoint; production owner found no additional refactor needed beyond supported-purpose predicate. Early closure/key checks and current authority/store/held checks retained.",
+  "remaining": [
+    "independent final verification",
+    "terminal coordinator integration",
+    "Windows/host/native qualification"
+  ],
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

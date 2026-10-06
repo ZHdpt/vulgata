@@ -1,0 +1,13 @@
+{
+  "phase": "13",
+  "kind": "Controlled known/unknown-start GREEN plus noncooperative-open RED",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-d0bbdbef39c14bb19d7e6925c7aedd8e",
+  "selected": 11,
+  "passed": 10,
+  "failed": 1,
+  "passing_behavior": "Known CreateProcess failure cleans only launcher-created child dirs; uncertain startup retains state with CleanupUnconfirmed(false); caller marker preserved",
+  "failing_test": "OpenDedicatedAsync_WhenRuntimeIgnoresDeadline_ReturnsUnknownAndSettlesLateSession",
+  "failure": "Initialization deadline did not bound direct await; Task.WhenAny bound elapsed at ~518ms",
+  "expected": "Prompt CleanupUnconfirmed/null context, no retry while unconfirmed, late session owned/disposed",
+  "route": "Minimal WaitAsync and retained pending-open ownership/quarantine GREEN; no general cleanup platform or native child"
+}

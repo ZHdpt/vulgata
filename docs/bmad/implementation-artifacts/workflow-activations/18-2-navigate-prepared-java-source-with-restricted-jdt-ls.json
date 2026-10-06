@@ -1,0 +1,73 @@
+{
+  "schema_version": "3.1",
+  "bmad_story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "bmad_epic_key": "epic-18",
+  "status": "superseded",
+  "requested_feature_directory": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "feature_directory": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "preflight": {
+    "branch": "codex/18-2-plan",
+    "head": "d99f6a0f71a7c20b36b68e462efe9b0a552578c7",
+    "git_identity_sha256": "1e50cee828524b1d5e69531732dcaca9b54e3cb8a9d4be81bf56f5409597c1aa",
+    "status_sha256": "874ac0de9b0bc5de43969f6980dac2d55560d1d0889556f253ca17a43f0be92a",
+    "observed_at": "2026-09-29T02:09:09.386498Z"
+  },
+  "authorities": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "8ea82d812c8720044d17eb9d8882d02100ea8ec728273ca2317abec0d5e51459"
+    },
+    {
+      "path": "docs/agents/project-state.md",
+      "sha256": "ce8fbcf7120ba5626f7f9c8960927020cce35a94e8ff2392fbcf610de6738dbb"
+    },
+    {
+      "path": "docs/bmad/epics.md",
+      "sha256": "5946844ec463a5d71a32761c82410d2838e8dbdbdedf8c8cde5ca8de2e11a2d3"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/october-release-epics.md",
+      "sha256": "38489ae285e46abeebd627653e0b66bab621e72268407cf30753d88c744c43d3"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md",
+      "sha256": "3bf198470beefa78acf879ae28cb304a0de8176a4a3271adcf9539155c8e0863"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture.md",
+      "sha256": "04f1e97b1c1078e8c1095b3d553978b1a927d3dd82feb9858e32c23c56d3f55c"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "sha256": "6db04423129e6512ac9f39f6121c32f3672106947fd7d87a72efbd524284d855"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "sha256": "cba2398cf8400ff93daa1860fd4ae4d77d3861b03afb2dca67f72f07f68624c3"
+    },
+    {
+      "path": ".specify/memory/constitution.md",
+      "sha256": "0f3198751810904ae57fe20eab180474396157064622edf5167781969f1e0c20"
+    },
+    {
+      "path": "docs/UBIQUITOUS_LANGUAGE.md",
+      "sha256": "6734a91273ab8efd290c23b5f5ed77a46bd850d2b5e0799180061ac371aef267"
+    }
+  ],
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/workflow-activations/18-2-navigate-prepared-java-source-with-restricted-jdt-ls.json",
+    "docs/bmad/implementation-artifacts/18-2-navigate-prepared-java-source-with-restricted-jdt-ls.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    ".specify/feature.json",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/"
+  ],
+  "unrelated_paths": [],
+  "git_identity": {
+    "repository_root": "C:/Users/13728/.codex/worktrees/7535/vulgata",
+    "common_directory": "G:/source/repos/vulgata/.git",
+    "worktree": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata"
+  },
+  "porcelain_v2": "# branch.oid d99f6a0f71a7c20b36b68e462efe9b0a552578c7\n# branch.head codex/18-2-plan\n1 .M N... 100644 100644 100644 32ca2e5b5ac2c2c1a7638f3ee67bfa5961f72e8d 32ca2e5b5ac2c2c1a7638f3ee67bfa5961f72e8d docs/bmad/implementation-artifacts/sprint-status.yaml",
+  "created_at": "2026-09-29T02:09:09.386498Z",
+  "scope": "Story 18.2 definition and planning only; stop after independent plan review. Story 18.1 unresolved completion dependency. Approval delegate chat 01a0e708-c489-7871-9f73-31413f20bf2c applies only to permitted, current gates; no gate approval yet."
+}

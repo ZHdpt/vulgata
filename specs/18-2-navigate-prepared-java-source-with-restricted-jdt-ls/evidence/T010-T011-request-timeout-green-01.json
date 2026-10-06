@@ -1,0 +1,30 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011", "T018"],
+  "slice": "cooperative controlled request timeout with bounded protocol settlement before slot release; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs": "3741480fe4b43f3af38b5dcb0575eb770adc320844fa9f1cb4db8dcbca868107",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs": "50607d50184b0e863dd17363d44422dec7b612e53e0ed5a6f79b87c719614822"
+  },
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "0e88f461ec4c25920b87be2d3693f5fb02fb96b83d475295491b54c7c5ac8d81",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-request-timeout-red-01.json",
+  "recovery_evidence": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-request-timeout-green-failure-01.json",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-request-timeout-green-failure-02.json",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/recovery-extension-01.json",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/recovery-extension-02.json"
+  ],
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 40,
+  "passed": 40,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-c87aa453455940b2b841a4b23b7127f3/results.trx",
+  "trx_sha256": "78dca03622e63e4ed38bc1eae854aafd1b08dae5058d90f16bd6c3325dee130a",
+  "environment": "Approved native launcher; restricted build denied CSC Infrastructure obj write. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "minimal_green": "Context applies trusted RequestTimeout, cancels the passed protocol token, waits at most ShutdownTimeout for its pending task, bounds session disposal, and returns only empty DeadlineExceeded/Cancelled after confirmed settlement. Unconfirmed settlement quarantines the Repository slot and emits empty ConfigurationUnavailable; late reply is withheld.",
+  "final_shape": "Separate owners assessed the final context/test. Cooperative timeout is verified. Uncooperative protocol settlement, delayed reply, post-reply deadline during mapping and real subprocess containment remain unverified; T010/T011/T018 stay open."
+}

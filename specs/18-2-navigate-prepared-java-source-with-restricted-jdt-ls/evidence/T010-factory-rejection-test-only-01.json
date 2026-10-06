@@ -1,0 +1,19 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "controlled factory rejects wrong-purpose lease, disposed JDT lease and invalid trusted profile before runtime invocation",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "cba1943bb2cb59b72d4e5369820d1c3bcbadca3ec061f7b6905f27372901450e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 44,
+  "passed": 44,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-bad93988debd4f6aabe4cd34d13bea4d/results.trx",
+  "trx_sha256": "43a735b7d6ad3882d81ce43eb94c12e40ce724a07d33eb1b577d33bf57af51dd",
+  "environment": "Approved native launcher. Restricted build failed before assertions with denied Core obj write, then first approved native attempt failed to compile due three undefined test-fake names; finite recovery-extension-03 authorized exactly that test-only correction. No Java or JDT-LS process started.",
+  "coverage_reason": "Existing factory behavior now has direct public-seam tests: CodeGraphPreparation lease returns Denied/null, disposed JdtNavigation lease returns Denied/null, and invalid relative profile returns ConfigurationUnavailable/null; controlled runtime OpenCallCount stays zero in each. No production behavior change was made for this coverage.",
+  "final_shape": "Separate test owner assessed owned fixture disposal, existing fake use and unchanged fail-closed assertions. Shared lease and real process boundaries are outside this test-only result."
+}

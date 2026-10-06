@@ -1,0 +1,13 @@
+{
+  "phase": "13",
+  "task": "T044",
+  "kind": "Valid controlled no-child callback RED after fresh guard qualification",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-63a2949c655742a8816985274f122654",
+  "selected": 2,
+  "passed": 0,
+  "failed": 2,
+  "known_start_failure": "Win32Exception(2) reached start seam; known created data directory remained instead of cleanup",
+  "unknown_start_failure": "Injected ambiguous start callback reached; expected PreparedJdtLsOpenFailureException CleanupUnconfirmed(false), got original InvalidOperationException",
+  "resource_scope": "Caller-owned state root/marker exists and remains protected; only launcher-created child state is cleanup target; zero actual child starts",
+  "route": "Minimal cleanup/uncertainty GREEN authorized after actual behavior failure; earlier setup/crash attempts preserved separately"
+}

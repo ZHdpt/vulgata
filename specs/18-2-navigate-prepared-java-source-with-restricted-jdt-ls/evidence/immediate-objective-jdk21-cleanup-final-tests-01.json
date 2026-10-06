@@ -1,0 +1,11 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-b948401407b34fc8a049bf47f4954e41/results.trx",
+  "selected": 2,
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "scope": "Final renamed shutdown/exit peer test and exact cleanup-unconfirmed timeout/marker preservation assertion. Native source-byte diagnostic wording compiled; equality unchanged.",
+  "surrounding": "112/112 in isolation-198c838b2bb647a0bb269a1aeba55eca/results.trx",
+  "native": "Latest trial02 remains failed on .project mutation; no normalization or hidden failure."
+}

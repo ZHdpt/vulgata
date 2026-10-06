@@ -1,0 +1,14 @@
+{
+  "id": "18-2/tasks/1",
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T09:30:30.998439Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md": "f10d7109c0a65235875555a9d2754f4ce4c2cae067481e7591bae059f3737adb"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+  ],
+  "summary": "Retained definition author wrote 26 dependency-ordered tasks, with separate RED/GREEN behavioral slices and direct/real-tool verification. All accepted R/I/S/A/F/L/T IDs covered, no alternative/consequence ID task citations; deterministic plan/task validator and git diff --check passed. Shared seam checkpoint precedes JDT/18.3 use; real qualification dependencies remain explicit."
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T005",
+  "observed_at": "2026-09-29T09:53:30.012728Z",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "cf8dcee283be898fc5e30914fd2447d92b99531f20d18a56b5e831ca2191adb5",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~CheckCurrentAsync_WhenSourceApprovalIsRevoked_ClosesLease",
+  "launcher": "approved native launcher after restricted root-open denial",
+  "exit_code": 1,
+  "selected": 1,
+  "passed": 0,
+  "failed": 1,
+  "skipped": 0,
+  "observed": "IssueAsync succeeded; after source authority revocation CheckCurrentAsync returned Denied but lease Lifetime stayed Open. Expected terminal AuthorityClosed. Product RED.",
+  "trx_path": "TestResults/isolation-eb8c09950bff464898d1759775aae2a1/results.trx",
+  "trx_sha256": "a01aad72495d30470b7061842d83f4dfdab55f34031b70f034d759176387769a",
+  "execution_log_path": "TestResults/isolation-eb8c09950bff464898d1759775aae2a1/execution.log",
+  "execution_log_sha256": "d0c43365acd22d8fba34d36c64d314e356a2d74e6f8761773da1d9925e8633cc"
+}

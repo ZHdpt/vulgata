@@ -1,0 +1,19 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "task_id": "T010",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "4a00b2fadc3a695c6eb5f3e5b12b4a7e3a0130530359d98c802437c913823d16",
+  "coverage_reason": "Negative control: OriginalString retains `%2e%2e` traversal and LocalPath resolves to a real sibling file outside the prepared root; mapper returns false/null. This existing-safe behavior must survive the positive `%20` correction.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 1,
+  "selected": 21,
+  "passed": 20,
+  "failed": 1,
+  "skipped": 0,
+  "negative_case": "passed",
+  "remaining_red": "UseContainedRootAsync_MapsCanonicalFileUriForFilenameWithSpace",
+  "trx_path": "TestResults/isolation-ee91fcf259a54a24a330fc067630f7c4/results.trx",
+  "trx_sha256": "284a62d20f0af20c2a581b6c40cecb2b791c01f46b0bdf2fef34cc0d4808c946",
+  "environment": "Restricted build denied writing test obj manifest; approved native run reached both cases. No native tool process started."
+}

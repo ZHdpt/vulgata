@@ -1,0 +1,7 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-269ed976cfaa447fa60ef8fc9c19aa55/results.trx",
+  "classification": "Test fixture exact reflection type assertion failed: RtFieldInfo is a FieldInfo subclass. Correct to assignability; intended quarantine/exact retained session assertions unchanged. Not product RED or workflow failure."
+}

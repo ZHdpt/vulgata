@@ -1,0 +1,13 @@
+{
+  "kind": "direct-verification",
+  "stage": "implement",
+  "task_id": "T001",
+  "observed_at": "2026-09-29T09:37:49.876162Z",
+  "inputs": {
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "f83cf4fae7c7d3b65f3fefb0b58aa6c73f7aacf8be08e138e8b94f850f6c0a81",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs": "2db8aca265c780bffc3d08ead08745403df4762056e0e839c0ed3f2417c6469d",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs": "a70be27f230327e8e8c1ff2515e2e6e8971b3ffd8d08879a0a54bd3243d57410"
+  },
+  "result": "passed",
+  "summary": "Integrated 18.1 contract and source expose exact PreparedSourceApproval tuple and mandatory current-authority verifier. IPreparedSourceReadContext has only ListAsync, ReadTextRangeAsync and SearchTextAsync plus lifetime/disposal; PreparedSourceContextIssuer receives application-held PhysicalRootPath, opens root privately and returns a context. No public physical-root lease exists. Story 18.2 accepted plan adds a separate trusted tool-purpose lease without modifying these 18.1 contracts."
+}

@@ -1,0 +1,11 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-748288a76b0444aca6740dc48bfca73d/results.trx",
+  "resolverStatus": "Rejected",
+  "pinnedInputCount": 0,
+  "nativeJdtLaunched": false,
+  "observation": "First Java command parent is Oracle javapath junction to C:/Program Files/Common Files/Oracle/Java/javapath_target_776515. Command file is regular; no-follow parent admission likely refusal. Exact private TryDescribe diagnostic pending.",
+  "constraints": "Preserve no-follow source contracts and no later Java fallback. Trusted executable alias support is not silently authorized by disabling path checks."
+}

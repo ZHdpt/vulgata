@@ -1,0 +1,9 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "results": "TestResults/isolation-cee740fbdc8d49929d52b855cc29bdf8/results.trx",
+  "coverage": "Physicaltarget pin selection plus changedJavajunction refused before launcher/protocol. Retarget was alreadyimplemented in coherentGREEN; no fabricatedRED.",
+  "filterLimit": "Initialcombinedfilter matched onlypositivealiascase; negatives were run by exactnames separately."
+}

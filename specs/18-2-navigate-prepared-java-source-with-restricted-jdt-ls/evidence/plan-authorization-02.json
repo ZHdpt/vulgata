@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "plan-review",
+  "decision_id": "18-2/plan-authorization/02",
+  "status": "accepted",
+  "scope_sha256": "d685e3cbf89f5bfaaf810a379ea8d98ad82300c80f2e56d49eb4c095db3a7d00",
+  "story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "delegation": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/user-delegation-01.json",
+    "sha256": "7ec0729f79c94c39612eb35e04524b0c3dce1e933305a3a6f6494818786d8cfa"
+  },
+  "response_source": "Codex chat 01a0e708-c489-7871-9f73-31413f20bf2c turn 01a0ecc2-e1cc-7411-a77f-2aa5d332ee64 final message msg_0e55faeae43f1fb3016abb965954ec8196a6c14bb8591c7580",
+  "response_text": "APPROVE — 18-2/plan-authorization/02, planned-change gate only. Verified the direct user PATH instruction, review 05 ACCEPT, and all six current artifact hashes. Approved boundary: Base: 9924357ae85855adcf282fa9d4eab722d84751e2 Manifest: 63e49b80a80f3bb2b99077af2b5d86c3454b299601e3eaa6143aa72521950b0f Review-file SHA-256: f1954d2e1b2a17e49d6a808c6debf54058b5ee692d25422bb8205b5dec8b516a The corrected plan follows the user’s PATH choice while rejecting untrusted executable selection. Command visibility remains distinct from trusted launch and real navigation qualification. This authorizes affected task correction only. Fresh complete-definition review and implementation approval remain required before further production writes. Preserve existing evidence and recovery count; no runtime permissions, broader process privileges or 18.3 integration authority are granted. No message sent to the active runner; root records and validates this decision.",
+  "review": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-result-05.json",
+    "sha256": "4ddb9e145b50e63158b4d02a4356675ea65ed4c36175dc3490a27f88e016678e"
+  },
+  "summary": "Delegate approved only affected task correction for independently accepted PATH trust plan review 05; fresh definition review/implementation approval and all runtime gates remain.",
+  "decided_at": "2026-09-29T10:44:21.733586Z"
+}

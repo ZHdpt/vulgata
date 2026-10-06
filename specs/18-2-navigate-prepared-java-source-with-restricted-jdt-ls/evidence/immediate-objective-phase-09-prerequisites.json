@@ -1,0 +1,49 @@
+{
+  "recorded_at_utc": "2026-10-02T14:12:45.011130+00:00",
+  "phase": "9",
+  "task": "T037",
+  "status": "Blocked prerequisite; incomplete",
+  "branch": "codex/18-2-plan",
+  "head": "3e518de0599f2e8f48286cd08d0ef28ed9189fe9",
+  "implementation_authorization": {
+    "source": "Direct human message in this chat",
+    "text": "$speckit-implement implement new tasks phase by phase",
+    "scope": "New T037-T047 only; old unfinished SKIP items remain excluded"
+  },
+  "execution_authority": {
+    "trusted_jdt_exception": "Pending separate human decision",
+    "native_fixture_execution": "Pending separate human permission",
+    "effective_inspection_principal": "ZHDPT-ASUS-5\\13728",
+    "fixture_and_state": "Not created or selected for launch; must be owned paths in assigned checkout and external state, respectively"
+  },
+  "inspection": "Read-only host PATH files and bootstrap text; no JDT/Java/version/native qualification process launched",
+  "first_matches": [
+    {
+      "path_index": 31,
+      "path": "C:\\Users\\13728\\.local\\bin\\jdtls.bat",
+      "sha256": "3459e44c0e045f1f531d9b8d5dcdf7410377d36e8b6dae0065850a74709cc240"
+    },
+    {
+      "path_index": 7,
+      "path": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.20.101-hotspot\\bin\\java.exe",
+      "sha256": "1977f302375adbb920d41dac65c7e22eb9c2ed8e1e8d6258964154ff16f14406"
+    }
+  ],
+  "blockers": [
+    "First supported JDT candidate at PATH index 31 invokes python against external G:/source/repos/eclipse.jdt.ls build output. Current dedicated contract rejects unsupported Python/external checkout chains; no later candidate fallback is authorized.",
+    "First java.exe at PATH index 7 is Temurin 17.0.20.1+1, confirmed from release metadata. Actual bootstrap requires Java >=21. JAVA_HOME also names that Java 17 installation.",
+    "User implementation authorization does not supply the separately reserved tool-specific trusted-JDT exception/native fixture launch permission."
+  ],
+  "unqualified": "File handle identities, complete distribution/runtime manifest and pin checks, bootstrap interpreter identity/version, native effective principal, source protection/real navigation/shutdown remain unqualified.",
+  "residual_rights": "A direct trusted child inherits its effective principal filesystem read/write and network rights, potentially beyond source/state. Fixed PATH, offline import/build/restore settings and own-process cleanup do not enforce isolation.",
+  "next_boundary": "Provide a supported first host PATH command chain with Java >=21, or explicitly authorize a bounded contract correction for the inspected Python/external chain; then identify pinned inputs/owned resources and obtain JDT-specific exception and execution permission before completing T037.",
+  "preservation": "No old workflow, recovery counter, code, tests, SKIP tasks, mapping, policy or branch changed. No task marked complete.",
+  "bootstrap": {
+    "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\jdtls",
+    "sha256": "0f54aa25d9291c68b3abbeb06dd30ec0f1a7e02a13724fa11af29860e151356d"
+  },
+  "bootstrap_module": {
+    "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\jdtls.py",
+    "sha256": "7f768da6a5476c2a9703376ec9e4a685d1060b424e85014f030a4f93599cdbdc"
+  }
+}

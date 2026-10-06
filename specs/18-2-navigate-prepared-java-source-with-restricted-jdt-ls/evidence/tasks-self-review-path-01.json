@@ -1,0 +1,14 @@
+{
+  "id": "18-2/tasks/path-executable-correction-01",
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T10:46:59.015463Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md": "f5802826f79f7c4865f09442469587d97f8ac56d4a85ba7da7f8d83478e8c798"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+  ],
+  "summary": "Retained definition author corrected only unchecked T010/T011/T013/T020/T022-T025 for trusted host PATH command selection, first-match rejection, pinned identity/replacement checks, batch-child process profile and real qualification. T001-T007 checked checkpoint and T008 RED task unchanged. 26 ordered IDs and all R/I/S/A/F/L/T coverage preserved; deterministic validator and git diff --check passed."
+}

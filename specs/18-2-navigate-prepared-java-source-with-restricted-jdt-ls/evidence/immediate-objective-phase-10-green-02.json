@@ -1,0 +1,28 @@
+{
+  "phase": "10",
+  "tasks_completed": [
+    "T038",
+    "T039"
+  ],
+  "kind": "Controlled LocalTools, no real JDT server",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-2067c30f6b8d4201a7fe26f6f63991a5",
+  "selected": 92,
+  "passed": 92,
+  "failed": 0,
+  "skipped": 0,
+  "source_sha256": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs": "3f6c814b2a6a1fc4d8de479c2c8af50e24a94563cf4ea3f4535f67450d22c1bf",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs": "2e821c5f7dab7928c5c47454d07f85dc4c007589c40940d24a0d2cef8d79ce0e",
+    "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs": "a88a40d71a4534c2571e8af86d0ef2f19fd9b81b46c45de44e3eb61cb07cbe84",
+    "tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs": "a197b6d33d92e492591bcade5e8eb62f0c4acf74ecef31fa5ef478b7e15aace6",
+    "tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs": "0016448e4e619aaf6da8731d33eec795b895ab7964f581cee52f2f89e3810c6f",
+    "tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationCompositionTests.cs": "c983c1bf86d4a1e3ee71453b2e13ff65ab3509ddf671796f483fedf4a2b874a0",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "7b8e854b274d13cfa3e613f29097423953351318253c3ddd8cae250d499dc769"
+  },
+  "limits": [
+    "Real JDT usefulness/shutdown pending T046",
+    "Oracle javapath wrapper registry delegation cannot be atomically bound solely by file pins; actual JDK27 inputs recorded",
+    "Failed prelaunch known-state cleanup and late/unknown settlement remain for planned T044/T045"
+  ],
+  "preservation": "Old AnalysisScope route, ordinary source contracts, frozen workflow/history and SKIP tasks preserved"
+}

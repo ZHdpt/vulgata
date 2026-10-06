@@ -1,0 +1,12 @@
+{
+  "kind": "analysis",
+  "summary": "Controlled same-Ready JDT and CodeGraph borrowers independently verified with separate current purpose checks and all-ticket settlement; final PreparedSource179/179 passed. No resource or integration qualification.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-shared-purpose-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-81803d46a11443c487d000057200bf11/results.trx", "sha256": "f68e3f03c0794067569c00df031b52f5953c8d7c31e93651b4a29c69761bd3a5", "passed": 4, "failed": 0, "skipped": 0},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedSource'", "path": "TestResults/isolation-34b06b3a514a427d98f3654c5697e99b/results.trx", "sha256": "6fbf1507c79c15ba1f66a3a378e34a57cd53161d18351ed6b0771d5ecf8a7d28", "passed": 179, "failed": 0, "skipped": 0, "build_sha256": "558cef96f7ea38c4783e8f9b0a9197c95cd6648ba22d5e389ec84de5a66716e1"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "41bfbcc26267d9db389ebbc7aa438151dedbf5ea4cb93b77cc1673198672feb5", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "a086041109cde4e06f9b4a5361f29c057922bbf02fdddbc35791fde94025fdae", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Removed admission-purpose equality, retained known purpose/current source/tool/store/hold checks and all-ticket tracking; no further local bounded-slice refactor.", "test": "Complete four-test unit independently assessed; separate purpose assertions and Active-to-all-Settled ordering clear, no refactor needed."},
+  "unfinished": "Bounded full disposal and pending-call settlement, hold retention through terminal readback, monotonic Absent-to-Ready, issuer/coordinator registration, Windows host behavioral RED/GREEN and actual host/native/Repository qualification.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

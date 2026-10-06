@@ -1,0 +1,55 @@
+{
+  "kind": "analysis",
+  "summary": "Same-process current Ready borrowing verified under original Absent admission and retained host hold: fixed immutable key, coordinator Creating v1 then Ready v2, exact current store readback, source/tool/held checks, no fresh admission. Creating refused as native borrow.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "d152931c8dfb4ded12e8c3020ddef47dbd3e2005",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-same-process-progression-red-01.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "f01d7a374ac913daf042b6910777da0bb6cda0be4b94060e4f9dae6175c5c59c",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "88a30fc3676a231734bef8c95841397f4f17d5801d5767df6b4729a213d1130d"
+  },
+  "minimal_green": {
+    "path": "TestResults/isolation-38ef0f048480449cbdec0cc7dac56106/results.trx",
+    "sha256": "3a5002e149e7ccd22b369039ab884ef749a9da2a9919257383edfb559f21f4ad",
+    "selected": 21,
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-38ef0f048480449cbdec0cc7dac56106/build.log",
+    "build_sha256": "78cbdb5ed0cdde0efbc7d7906e404499db6542eebfa98a5a91eef1a0a76d625b"
+  },
+  "owner_final_green": {
+    "path": "TestResults/isolation-7897caf22bf94ea79db509f0ae3b9ee9/results.trx",
+    "sha256": "0fc52b5737480f41888c39d009172f7c892f187ec7d912cfeb5c385772f62e35",
+    "selected": 21,
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-7897caf22bf94ea79db509f0ae3b9ee9/build.log",
+    "build_sha256": "e7b14f61138dbf2b68df9621bea4df4653af8d2a1b39d6a7a4906c4e3d317af1"
+  },
+  "independent_final_green": {
+    "path": "TestResults/isolation-c313a17b878d43c480927ef31f2d32b5/results.trx",
+    "sha256": "259c3e2188342f66afa4cc88d76d7b460fafc2392987e6bdf348d6776f5214fd",
+    "selected": 21,
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-c313a17b878d43c480927ef31f2d32b5/build.log",
+    "build_sha256": "c22c774b74548882175bcea5ff6d5b6a2aaae62eb765cc8efca8c3e77ae63fd5"
+  },
+  "final_shape": {
+    "production": "Immutable-key/current-or-Ready-progression helper centralizes accepted key. Local numeric overflow guard added after minimal GREEN, preserving valid coordinator progression and all protected authority/contract/schema/dependency boundaries. Owner rerun and independent final both21/21.",
+    "tests": "Fresh exact Ready load and same retained host acquisition observed; one coherent progression, no native or fresh-process qualification. No additional test refactor needed."
+  },
+  "limitations": "Current Ready disposition before any Ready borrow, negative version/key/currentness coverage, producer integration and actual Windows/native qualification remain unfinished. No task completion or integrated readiness.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

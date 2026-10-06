@@ -354,7 +354,8 @@
     "suite": "SelfContained"
   },
   "AnalysisRuntime/JdtLsAdapterTests.cs": {
-    "suite": "SelfContained"
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT tests from basic suite; controlled and native evidence reported separately."
   },
   "AnalysisRuntime/JdtLsMissingArchiveQualificationTests.cs": {
     "suite": "LocalTools"
@@ -364,6 +365,25 @@
   },
   "AnalysisRuntime/PreparedScanRealQualificationTests.cs": {
     "suite": "LocalTools"
+  },
+  "AnalysisRuntime/PreparedJavaNavigationFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT navigation tests from basic suite; assertions preserved, explicit controlled qualification."
+  },
+  "AnalysisRuntime/JdtLsPreparedNavigationTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT tests from basic suite; controlled and native evidence reported separately."
+  },
+  "AnalysisRuntime/PreparedJdtLsDedicatedQualificationTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Runs the authorized real JDT-LS, Python bootstrap and Java process chain against an owned fixture; excluded from the basic suite."
+  },
+  "AnalysisRuntime/PreparedJavaNavigationCompositionTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Human Story 18.2 instruction excludes dedicated JDT navigation tests from basic suite; assertions preserved, explicit controlled qualification."
   },
   "AnalysisRuntime/RecordingProcessLauncherDouble.cs": {
     "suite": "SelfContained"
@@ -900,6 +920,25 @@
   },
   "PreparedSource/PreparedSourceToolFunctionTests.cs": {
     "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedToolWorkspaceIssuerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/WindowsPreparedManagedWorkspaceHostVerifierTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Exercises owned Windows token, fixture DACL and named-mutex behavior; requires explicit LocalTools execution authority."
+  },
+  "PreparedSource/PreparedManagedWorkspaceBindingSourceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedWorkspaceUseRegistryTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedCodeGraphPersistenceQualificationTests.cs": {
+    "suite": "LocalTools"
   },
   "PostgreSqlHeavyCollection.cs": {
     "suite": "PostgreSql"

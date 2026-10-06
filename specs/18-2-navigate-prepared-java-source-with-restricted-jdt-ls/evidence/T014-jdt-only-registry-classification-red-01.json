@@ -1,0 +1,41 @@
+{
+  "kind": "analysis",
+  "summary": "Expected producer-backed JdtNavigation-only public factory RED: exact admitted positive-Absent scope, initialized durable store and tracked JDT lease cannot Open because registry owner verification incorrectly demands CodeGraphPreparation. Controlled runtime/protocol not reached. Accepted source-only classification remains separate from CG mutation/disposition grants.",
+  "task_ids": [
+    "T014",
+    "T015",
+    "T031",
+    "T032"
+  ],
+  "verification_route": "behavioral RED/GREEN",
+  "source_commit": "c2fd2d56e73d054bd9b1a8a7df2051dce44d8408",
+  "assessment_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T014-jdt-only-registry-classification-assessment-01.json",
+  "source_hashes": {
+    "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs": "55dc56c50948c68be241669cd35408c24f534662fdfec393b6604466b370e5a4",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "9681fd8222d814710b863db7831c6dc80121a15cb7a645b32cfffc97721425f3",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedCodeGraphStateCoordinator.cs": "bc65ecc6078a6fd311b3f763fc4adbfc52a4b1fddfaa40253c199a3954df7426"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~GetDefinitionAsync_WithJdtOnlyRegistryGrant_ClassifiesSameNameAbsentStateAsOrdinarySource'",
+  "result": {
+    "path": "TestResults/isolation-e2ade10eedf040d79e2daf4d057558b3/results.trx",
+    "sha256": "ea1e55e7d75e5d6b10b803213e96b51f4a4c9c0cfd2f19cd29cc17141b9a6710",
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0
+  },
+  "build": {
+    "path": "TestResults/isolation-e2ade10eedf040d79e2daf4d057558b3/build.log",
+    "sha256": "c13e3eaeb71a3fa4f5d461fca522f1f29c15ab2e2a6b608b2dd4b27aad3feeab",
+    "result": "passed"
+  },
+  "raw_failure_messages": [
+    "Assert.Equal() Failure: Values differ\r\nExpected: Opened\r\nActual:   ConfigurationUnavailable"
+  ],
+  "resources": "Owned local store/source fixtures and controlled runtime/host only; no native tools or Windows ACL/mutex execution.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

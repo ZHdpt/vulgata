@@ -1,0 +1,18 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "factory rejects disposable state root inside prepared source before runtime open",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "1b92ec19c323857ef45f90bcfbff3716d3cf381a97a6ea788b7a9c8c98788469",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests'",
+  "exit_code": 1,
+  "selected": 5,
+  "passed": 4,
+  "failed": 1,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-e38d386cd1b04ed7a3dd78a74bc99b4b/results.trx",
+  "trx_sha256": "1673a8cfefa0af50996fc402449388b9d3a5b77e9cbcc71b926fbf12af63b21e",
+  "result": "Controlled profile used a real descendant directory inside the granted prepared root as DisposableStateRoot. Factory returned Opened instead of ConfigurationUnavailable, so it would call the injected runtime with overlapping source and writable state.",
+  "environment": "Restricted build denied a Core obj write (MSB3491); approved native launcher reached product assertion. No Java or JDT-LS process started."
+}

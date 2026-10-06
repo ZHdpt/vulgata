@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-2/implementation-approval/09",
+  "status": "accepted",
+  "scope_sha256": "7fd869b6173359695f4cfd201e5e10ddb1c2bae6af59f1ef71df40abc494e48d",
+  "story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "delegation": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/user-delegation-01.json",
+    "sha256": "7ec0729f79c94c39612eb35e04524b0c3dce1e933305a3a6f6494818786d8cfa"
+  },
+  "review": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-14.json",
+    "sha256": "be345dcf7c7df24aebfafec3fe80bcef5a8c7f13a87f442057e0442bf2b5f98a"
+  },
+  "response_source": "Designated chat 01a0e708-c489-7871-9f73-31413f20bf2c turn 01a0f82a-4ed1-7c60-b284-711c8cd561eb final message msg_0e55faeae43f1fb3016abe81d2574881969c3cdfc14a7d71bf",
+  "response_text": "**APPROVE — Story 18.2 implementation approval request 09.**\n\nVerified binding:\n\n- Checkpoint: `8300fde7ef3383ea290a898e9e4c1c1d8aab6d7c`\n- Definition review 14 **ACCEPT**, SHA-256: `be345dcf7c7df24aebfafec3fe80bcef5a8c7f13a87f442057e0442bf2b5f98a`\n- Scope SHA-256: `7fd869b6173359695f4cfd201e5e10ddb1c2bae6af59f1ef71df40abc494e48d`\n\nAll seven artifact hashes match; the worktree is clean. The ordering defect is resolved: **T031/T032 registry RED/GREEN precedes T033/T034 binding RED/GREEN**, without treating compilation failure as behavioral RED.\n\nProceed with dependency-ready implementation within the accepted definition. Preserve completed work, separate test/production owners, model strategy and all subsequent verification gates.\n\nWeb remains file-only without qualified admission/protection. Host qualification, native execution, Story 18.3 settlement/reader work and the prepared Repository remain separate dependencies and permissions—not waived by this approval.\n\nRecovery remains **2/12** as recorded, with no reset or extension granted. New authority, owner, schema or root decisions return to the user. The story root alone records and validates this decision.",
+  "decided_at": "2026-10-01T15:54:06Z",
+  "summary": "Root verified actual designation, response and accepted definition/current artifact scope. Dependency-ready implementation approved, beginning controlled registry TDD; all separate native/host execution permissions and qualified admission remain closed, recovery2/12 unchanged."
+}

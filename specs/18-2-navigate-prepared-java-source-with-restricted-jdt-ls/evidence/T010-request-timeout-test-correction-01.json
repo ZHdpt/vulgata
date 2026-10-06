@@ -1,0 +1,5 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "summary": "After finite recovery-extension-01, the test owner changed only BlockingNavigationSession to register a callback on the supplied cancellation token. The public result, empty payload, bounded completion, disposal and finally-release assertions remained. The corrected test file SHA-256 was 0e88f461ec4c25920b87be2d3693f5fb02fb96b83d475295491b54c7c5ac8d81. The production owner removed an unverified noncompiling follow-on shutdown-join patch and retained the first linked RequestTimeout implementation. This was a qualifying changed test stimulus before the next native check, not a claimed GREEN."
+}

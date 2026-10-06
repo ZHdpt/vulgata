@@ -1,0 +1,18 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED under unchanged accepted shutdown semantics: Dispose returns/releases hold without inspecting registered live work. Corrected test permits hold release after bounded shutdown waiting and forbids any settlement or new-use claim; it does not require hold retention after completed shutdown. Prior five tests pass.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "d9aa2d0d2d1a5bd74ddea37e901bd55a80fb7821",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "dispatch_correction": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-shutdown-dispatch-interpretation-01.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "ac28bb52d786dd4979e22dbdd7fd94b9a92aa4106a8664ceb6fb8d36643a0bf9", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "d83efeccf2a068b2b53fe680392ebce8fc2f41e638980704b0fdb00ee3561b5b"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-beae1c9b40834570b9005f586cffbb82/results.trx", "sha256": "79b5cd24c52129d561e4614fd90b81931613ef4ac14e56da99df97ae2edf2748", "selected": 6, "passed": 5, "failed": 1, "skipped": 0},
+  "assertion": {"test": "DisposeAsync_WhenRegisteredProbeIgnoresCancellation_BoundsShutdownWithoutClaimingSettlement", "message": "Bounded shutdown must inspect registered work before releasing its hold."},
+  "build": {"path": "TestResults/isolation-beae1c9b40834570b9005f586cffbb82/build.log", "sha256": "21a7b7887674b64db141c388a919860185c2e8688eb883f7700ee182475dfb9a", "result": "passed"},
+  "setup_observation": {"path": "TestResults/isolation-40d1f97df4234985a5d6e10442785a1b/build.log", "sha256": "73aebcde47d3767e84df61d5c114e075b925b73b8f31385e3a9486516db74f82", "classification": "uncounted normal unsupported xUnit assertion overload correction; no behavioral RED"},
+  "limits": "Controlled probe/hold only, no physical host or native settlement qualification.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

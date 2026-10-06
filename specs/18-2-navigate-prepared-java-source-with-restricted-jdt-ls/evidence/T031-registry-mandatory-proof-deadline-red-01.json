@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED for one parameterized admission-deadline contract: tool authorization, ownership-store readback, prior-generation settlement and held current proof each ignore cancellation and admission exceeds its deadline. Eleven previous cases pass; all provider/admission cleanup is observed. Failing theory rows are not workflow failures.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "2287a639db54d4f39872036dff19c9b06c66b960",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "6c6728cc5329074f74c03bcce8f9559b9db949e921c4bff417e89a5ffb71d3cc", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "d91a65d13f2ad8ba7d0ae4ce69589ddfe2464ca5154cc7bbc6ab5bc349372e3d", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-0d89994bf79248128dc08c4b2ac1b853/results.trx", "sha256": "8254965acab4693190733cb2ca2a3ab5405024c338a942b414c3cd314e0c3530", "selected": 15, "passed": 11, "failed": 4, "skipped": 0},
+  "failed_rows": ["tool-authorization", "ownership-store", "previous-generation", "held-current-check"],
+  "assertion": "Admission must bound the selected proof even when its provider ignores cancellation.",
+  "build": {"path": "TestResults/isolation-0d89994bf79248128dc08c4b2ac1b853/build.log", "sha256": "2f2ff3f02851f6429e53deead62ff5d4c18023fdaeba359fc8d4bc7aefd8b523", "result": "passed"},
+  "setup_observation": "Initial policy validation stopped on the new theory's missing SelfContained trait; test owner added the required trait before the actual behavioral RED. Uncounted test setup correction; no environment or production failure claimed.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

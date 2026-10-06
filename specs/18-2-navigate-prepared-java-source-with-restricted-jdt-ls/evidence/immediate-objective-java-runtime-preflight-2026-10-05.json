@@ -1,0 +1,910 @@
+{
+  "recorded_at_utc": "2026-10-05T11:40:22.058317+00:00",
+  "kind": "Authorized LocalTools bootstrap preflight, no JDT server",
+  "java_first_path_launcher": "C:/Program Files/Common Files/Oracle/Java/javapath/java.exe",
+  "observed_java_home": "C:/Program Files/Java/jdk-27",
+  "version": "27+35-2325",
+  "evidence": "java -XshowSettings:properties -version",
+  "runtime_inputs": [
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\release",
+      "sha256": "40104634f99269c150822c97355c098ff6a0214035183f35618971fb84c42e85",
+      "observed_file_id": "8162774325941476",
+      "size": 1184
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-console-l1-1-0.dll",
+      "sha256": "880cb1680bf1977aa232cccb59a49dc9d3708d940af0f0a9029734216a6dc2bb",
+      "observed_file_id": "6473924465342015",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-console-l1-2-0.dll",
+      "sha256": "233bb2af5176deb0957c42651cc2126328640c0816ccfd09a619aa5bee9ce309",
+      "observed_file_id": "5348024558499392",
+      "size": 22056
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-datetime-l1-1-0.dll",
+      "sha256": "d5bcedb99014c6d0993eb76af35ac16e820969ecfb149f19b75d02d603dd52a9",
+      "observed_file_id": "5629499535210049",
+      "size": 22072
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-debug-l1-1-0.dll",
+      "sha256": "7c8276339755acd397f44b7affa938103ea72966d4c066a4cdc259bc0e8500fe",
+      "observed_file_id": "6473924465342018",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-errorhandling-l1-1-0.dll",
+      "sha256": "0c06dfc6cd7d358b58ea4e6af0cb54e0469bb89d5b2a12c187fc788f9543741f",
+      "observed_file_id": "5348024558499396",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-fibers-l1-1-0.dll",
+      "sha256": "804c3ae2c3dc033bdc5beec45cb369c8470c0d9a790bed79b05ae93cdad83460",
+      "observed_file_id": "6192449488631366",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-fibers-l1-1-1.dll",
+      "sha256": "0456c30ee2124ebe7788cd7c41a96a8ce8f5c18e4f28c782e1be4b9852c5b0b0",
+      "observed_file_id": "5629499535210055",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-file-l1-1-0.dll",
+      "sha256": "7645683e443ba242e8ae03fa8241aaec1c304bbb3b6eacd5897f85846d98e2c7",
+      "observed_file_id": "5910974511920712",
+      "size": 26192
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-file-l1-2-0.dll",
+      "sha256": "b2c7cb7d8cc4d78d3aeaa33be5f37fa72c8dacdafb9259e2ab9c633eb4523221",
+      "observed_file_id": "6473924465342028",
+      "size": 22064
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-file-l2-1-0.dll",
+      "sha256": "cf9bbd97661a1bafe171e5f9fc1edf7f172da0bc6424e1b68550455196a0a049",
+      "observed_file_id": "4785074605078093",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-handle-l1-1-0.dll",
+      "sha256": "a6a86eed6c1b67723d66b8715bc148e45650f3017c2a22d35ae2b06348a4b8e0",
+      "observed_file_id": "5348024558499406",
+      "size": 22072
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-heap-l1-1-0.dll",
+      "sha256": "81cae96e0876aa0b5242e2acc6014b5c51f811389979d7dc583d3cb9374e549c",
+      "observed_file_id": "5629499535210067",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-interlocked-l1-1-0.dll",
+      "sha256": "bcb5b0ec15fd59cf19d5ffc490a40d907c1f320c3a5f2b9570c24bf62d8c43d6",
+      "observed_file_id": "5066549581788758",
+      "size": 22056
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-kernel32-legacy-l1-1-1.dll",
+      "sha256": "d3667ed353e1548c8833280e50834b634b9775d15d25ce0511d2b385d7a607a8",
+      "observed_file_id": "5629499535210072",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-libraryloader-l1-1-0.dll",
+      "sha256": "007305876bdf0472c403ddcf8c1f8a0d3831427e06ddfaea8e40aaaa8d870384",
+      "observed_file_id": "5348024558499418",
+      "size": 22056
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-localization-l1-2-0.dll",
+      "sha256": "058a3bcb3c1e463bce5c1990c369600dcca924f1b0aac87dde15f10c00fb4aaf",
+      "observed_file_id": "7599824372184667",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-memory-l1-1-0.dll",
+      "sha256": "b27f216be782ad764c881d45612838efe3e4ee34ac8a7171319d6d42c0bee37b",
+      "observed_file_id": "6473924465342044",
+      "size": 22072
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-namedpipe-l1-1-0.dll",
+      "sha256": "9054404f0aff7ac16d86f672117715047ec1d2797a47ed44bdcb2fbb022421c5",
+      "observed_file_id": "5629499535210084",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-processenvironment-l1-1-0.dll",
+      "sha256": "1ec7a2a06577bb6781fbd3e32176de34e22692134e79ed3b478bde9048c007f9",
+      "observed_file_id": "5348024558499430",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-processthreads-l1-1-0.dll",
+      "sha256": "dd41abec22841140f58ee12b60f825d72bdb7b6c61765c4465c10dcb6072373e",
+      "observed_file_id": "5910974511920744",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-processthreads-l1-1-1.dll",
+      "sha256": "0203d7ebe58d19216f53812a8944044c663df83ad118fc3e308dfe8a694774fe",
+      "observed_file_id": "6755399442052714",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-profile-l1-1-0.dll",
+      "sha256": "c4f24e945d3cb6362ac6cc396b8d235f16308c80831770e2b8b72456330fb475",
+      "observed_file_id": "5629499535210100",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-rtlsupport-l1-1-0.dll",
+      "sha256": "e93bcae3cce38e176e7cda2d3f83c04aee03288062fb2a111468ec2fbc641bbb",
+      "observed_file_id": "6192449488631415",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-string-l1-1-0.dll",
+      "sha256": "8eb1da72518c92b2250e16e5fcf221bcc3febdcb9294f6830f3034756d44aae9",
+      "observed_file_id": "6192449488631417",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-synch-l1-1-0.dll",
+      "sha256": "5f2c9c688fcba002f7dd0ffcb22b213402a3f18fa5cede2a0a6d960a614ab6f6",
+      "observed_file_id": "5629499535210107",
+      "size": 22072
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-synch-l1-2-0.dll",
+      "sha256": "7bd60aee2db91901c5804c6c69f9d877727bd8cddec30bcd047bc3afec5d8852",
+      "observed_file_id": "6473924465342077",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-sysinfo-l1-1-0.dll",
+      "sha256": "0eea540b635eadae0d4fd77d72438d8f49658bc6433253babf99fdf1fe3aec0a",
+      "observed_file_id": "6473924465342079",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-sysinfo-l1-2-0.dll",
+      "sha256": "f03792b75b79cd3ed91953c2960019e5b5d331dd5bad713b617cd3ec8d3150fb",
+      "observed_file_id": "4785074605078145",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-timezone-l1-1-0.dll",
+      "sha256": "ef80d454da25256a4c5af5322ced313867576978e8201ec0946eac21d44fe637",
+      "observed_file_id": "6192449488631427",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-core-util-l1-1-0.dll",
+      "sha256": "910f94a276ac11a8f2721a5bdaf25c2089d2c5fa83fa593b05dbb0f5b00b6d27",
+      "observed_file_id": "4785074605078148",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-conio-l1-1-0.dll",
+      "sha256": "d306cb07db31e3d74d2c79891e8c861feaa13e8dfa5d1ce042cd777ea1566b0a",
+      "observed_file_id": "6192449488631429",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-convert-l1-1-0.dll",
+      "sha256": "81f4b3cd11611aeaa94171ebc1079e501ec247e8da6c113e6c81a3877acca15d",
+      "observed_file_id": "5066549581788807",
+      "size": 26192
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-environment-l1-1-0.dll",
+      "sha256": "1884872dbbe89023100d7f15e7b3a3eac16c3c8e3c103016c87c223bdc60ba7a",
+      "observed_file_id": "6192449488631436",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-filesystem-l1-1-0.dll",
+      "sha256": "54545d0571542469e80141d18e1af3c5185f6ce849478f1bd829f53703a92ae1",
+      "observed_file_id": "6192449488631437",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-heap-l1-1-0.dll",
+      "sha256": "0d69f5d5720655dd15172949e379dce5dc364e1920f6fcab8f809aed7ed2ce9c",
+      "observed_file_id": "6473924465342095",
+      "size": 22072
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-locale-l1-1-0.dll",
+      "sha256": "7d49900ca3815f1737b10e0c7e603dde326053d56e89139c41eae3d27dec7d8b",
+      "observed_file_id": "4785074605078161",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-math-l1-1-0.dll",
+      "sha256": "a991ecd3b528f586274c638cdfa196454f2bccca70692652867bf224f7cc6258",
+      "observed_file_id": "5910974511920786",
+      "size": 30272
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-multibyte-l1-1-0.dll",
+      "sha256": "0cd1b25eaf2ec2988f3be4df11da60f0306fd0834b3465710dae025d7781db6d",
+      "observed_file_id": "5629499535210133",
+      "size": 30288
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-private-l1-1-0.dll",
+      "sha256": "b481e525346526ceccac17603eb7d10b565201735e94e76aa0333bca230fa723",
+      "observed_file_id": "4503599628367510",
+      "size": 75344
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-process-l1-1-0.dll",
+      "sha256": "95a4f71991dc98393a69a56c3562f38882a9842daeb7f905e49d9b40a1ea5e38",
+      "observed_file_id": "5910974511920791",
+      "size": 22080
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-runtime-l1-1-0.dll",
+      "sha256": "09b320d575b456b1199e4e2b09d34d4200fb8146b297ca78d06d80e9158a45e0",
+      "observed_file_id": "5629499535210137",
+      "size": 26192
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-stdio-l1-1-0.dll",
+      "sha256": "4e72f645f47abae98427b4ce8c510f96112c16e640721ce3f82d3619eb3961a8",
+      "observed_file_id": "5910974511920795",
+      "size": 26192
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-string-l1-1-0.dll",
+      "sha256": "265c87b9a63420de788ba7855e847b4eb794c4256080eeacf64b81e70af889cd",
+      "observed_file_id": "5348024558499484",
+      "size": 26192
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-time-l1-1-0.dll",
+      "sha256": "ac90c44b194135bf555ac7df2405d443da87e1374e5b5bb408a2761a9bc63e3d",
+      "observed_file_id": "6755399442052765",
+      "size": 22072
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\api-ms-win-crt-utility-l1-1-0.dll",
+      "sha256": "3fc3564e2276e8149856e74f59f594549d017a3a967ea66450e1c04af8768bc8",
+      "observed_file_id": "5910974511920798",
+      "size": 22096
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\attach.dll",
+      "sha256": "2ed00206c9f3541df59bbb5fb46fbdb7ebe21fc9d0b6bcb034f4501c7da05776",
+      "observed_file_id": "6755399442052767",
+      "size": 30376
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\awt.dll",
+      "sha256": "f6ec6b458e91131f5d3758b77021ede1ee84d2a45e31a4b5b48c9ec9d63c655e",
+      "observed_file_id": "5066549581788832",
+      "size": 1440936
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\dt_shmem.dll",
+      "sha256": "79418aa22d4fac057ef73212f5c7c9d0cb419651a885eb0f1d0f365f096f0f7d",
+      "observed_file_id": "6473924465342117",
+      "size": 37544
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\dt_socket.dll",
+      "sha256": "1a38303191df87c653ed740a231dde0e59731c869504fb24da242345b7070a1b",
+      "observed_file_id": "4503599628367526",
+      "size": 37032
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\extnet.dll",
+      "sha256": "c52ba19261b862cc5ed11cb8670670414751fcff5ef5a0c7acf9f92a397bbd7e",
+      "observed_file_id": "5910974511920807",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\fontmanager.dll",
+      "sha256": "a5eb66990d7891fef3e76cdbb16743f940712c2ef100e826fa9dc966e49ce1c8",
+      "observed_file_id": "6755399442052787",
+      "size": 1014952
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\freetype.dll",
+      "sha256": "4d20b93ba4a07aa7afa61a31387b7ce483f5b8a2c7402f286d1bb5293b31840e",
+      "observed_file_id": "5629499535210197",
+      "size": 562856
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\instrument.dll",
+      "sha256": "e4b74eecddae6d3e0823cea973f5ad8f92be06d03eb2b1e12194bf737e73d966",
+      "observed_file_id": "11821949022846552",
+      "size": 52904
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\j2gss.dll",
+      "sha256": "06837677b926fec049b6ee1d125b8d7c41ebdf154f6c9ee03f62da5a9df41558",
+      "observed_file_id": "13229323906399866",
+      "size": 53416
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\j2pcsc.dll",
+      "sha256": "614239e2224f58c59c990b7c2d96be0a4695c9567cbcd422cc1f4cb453c51b91",
+      "observed_file_id": "10414574139293334",
+      "size": 26792
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\j2pkcs11.dll",
+      "sha256": "85aa7d8588854eccf0c9e9af769285c5c53b2949fb0c451d5e82fc8cc4b8c39e",
+      "observed_file_id": "12103423999557291",
+      "size": 84648
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jaas.dll",
+      "sha256": "3b316142e075a3f8f59e60190f340b9ddca0a68ca6a2086ff63642a03931bd23",
+      "observed_file_id": "6473924465358327",
+      "size": 28840
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jabswitch.exe",
+      "sha256": "a87381f88c5e2bc232da60dd403439083d747069d1668c0376caed83e41375ad",
+      "observed_file_id": "6755399442068988",
+      "size": 45224
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jaccessinspector.exe",
+      "sha256": "809b248b5736135e359c7ea862f1b2e240bb92a396d76b6ea7d52f31414b868e",
+      "observed_file_id": "8162774325622276",
+      "size": 106664
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jaccesswalker.exe",
+      "sha256": "3dbc339bc139b0f5470afb98daea775da6d7404854e89088d1ad6faeb2db40b9",
+      "observed_file_id": "6192449488684060",
+      "size": 71336
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jar.exe",
+      "sha256": "33e98aee168a191c1d76bb3bba9868ced02212e5c51d2bd18f280b0f87128897",
+      "observed_file_id": "38843546787142117",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jarsigner.exe",
+      "sha256": "991c31994ba7b7b606c46b233962b61958a51bb0c050429c012a9842e86d8794",
+      "observed_file_id": "6192449488716104",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\java.dll",
+      "sha256": "914d0afcd68a08e5ea6c6b07e4d99ec43e9e29a975364a15d188290e98c255dd",
+      "observed_file_id": "81627743247180780",
+      "size": 117928
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\java.exe",
+      "sha256": "ba5fd04b4cdd7316e6862f5fd404f899d8fd9a70b23d5ccd1c546d8050d18738",
+      "observed_file_id": "52354345669272589",
+      "size": 54952
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\javaaccessbridge.dll",
+      "sha256": "ea3b4983adef803163da8d1bb4773ce51ea2548d22275d98ca87b2ff351090b8",
+      "observed_file_id": "9288674232542230",
+      "size": 313512
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\javac.exe",
+      "sha256": "6f44d9f928c249cf911f726a7343f1b2e5f527d70ecac109117b92f5692a9f4c",
+      "observed_file_id": "9007199255831580",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\javadoc.exe",
+      "sha256": "f71e5eb3822571124a583f49fba66b3629f63c65e370aff314af464246d9f672",
+      "observed_file_id": "18295873487288342",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\javajpeg.dll",
+      "sha256": "f8159905c2cdf6fdaf1955eb2bde960df1b766ed9c5983d7cb704afbe710faf3",
+      "observed_file_id": "10133099162679685",
+      "size": 182440
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\javap.exe",
+      "sha256": "e612013b477a77c0b89c0ebab338f23038f30a4a673d5151ea245b33d2ee59ee",
+      "observed_file_id": "18858823440710389",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\javaw.exe",
+      "sha256": "5dece1ce29f95349eca5f62e012e02b91b9bdb26e1db0cbd6a9a935c33612214",
+      "observed_file_id": "10977524092812410",
+      "size": 54952
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jawt.dll",
+      "sha256": "53357ac8de2fccda1bc160738cb29d92854adedaffff754182a88922b5ec04b5",
+      "observed_file_id": "10414574139391101",
+      "size": 21672
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jcmd.exe",
+      "sha256": "5e1bd7679445af83bd94e79638e4441ae739002c3686027d5f274fe2666bef5c",
+      "observed_file_id": "10414574139391173",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jconsole.exe",
+      "sha256": "06a4fde327b725e53f4dd9abe3a2bb4b6a519f0b1907fbc075f74896a828dddc",
+      "observed_file_id": "10133099162686699",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jdb.exe",
+      "sha256": "db8e161743be80dfbf0077f96dbb8df0cdc1bd5b118c81cbc3e1e970c1cb7fc4",
+      "observed_file_id": "13229323906503929",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jdeprscan.exe",
+      "sha256": "0faf797018388317fe885d2cf97c494fd5274a29fcdf6b02665906ce87cc1822",
+      "observed_file_id": "14636698790057788",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jdeps.exe",
+      "sha256": "00ca4f841afcdd273a312970a100a5951453bccb67c8219947eaf5f73c109a20",
+      "observed_file_id": "13792273859925920",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jdwp.dll",
+      "sha256": "92cfd7e2f404d861b1145249ae59bfc571c668b333c1ff2d220381cc8c012982",
+      "observed_file_id": "14355223813347244",
+      "size": 242344
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jfr.exe",
+      "sha256": "4b8aecb4d3e0ddab64ddf4f2494baeeb5a75e618e752771fdf43fd5b1acca0fa",
+      "observed_file_id": "17169973580454013",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jhsdb.exe",
+      "sha256": "ec7ab56266fc46a4a15d2d4d90a4a1ad6ea04f3c84dd3621b091c57651161a1e",
+      "observed_file_id": "12666373953083540",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jimage.dll",
+      "sha256": "e0ee525b11e7dacbed0f9e29839c83bcc084adda4ecd1c6a5659490882b3ff76",
+      "observed_file_id": "19984723347560634",
+      "size": 33960
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jimage.exe",
+      "sha256": "101c2035c6d33fe7dfdbe8773764830402c7b57c05810b5271e8d75ad96fb257",
+      "observed_file_id": "47850746041915634",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jinfo.exe",
+      "sha256": "359212d9472db736f87b64068a478ab4387fed88a91571f0143e80e4db2260a8",
+      "observed_file_id": "15199648743479587",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jli.dll",
+      "sha256": "b592a834be35ed52e9875879f6371165bf28f961dd9e17fb2210b99c46b735a2",
+      "observed_file_id": "14918173766768935",
+      "size": 84136
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jlink.exe",
+      "sha256": "df36083f9069d548b8e1a07b3429eab1a7717fa4eb0dd04644932cd83ad26311",
+      "observed_file_id": "14918173766769556",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jmap.exe",
+      "sha256": "70d59ae2f7b5dc99ca1fd273bbd617ee208e3569a4fb17aa387b902e09904d6a",
+      "observed_file_id": "15481123720190931",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jmod.exe",
+      "sha256": "91db07c01d7ed6b7443031d2359183373abad268911e9ea332860cd29514c892",
+      "observed_file_id": "14073748836637906",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jnativescan.exe",
+      "sha256": "db9bef442f7047aacce9f9cc2f9d689062ad4e949538e48964eeba36e1f7803e",
+      "observed_file_id": "15199648743482836",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jpackage.dll",
+      "sha256": "dd51b92d048e818199e19effeb072c0bc105187cd3b1bcd2df5c29fc23b915c4",
+      "observed_file_id": "14918173766772295",
+      "size": 149160
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jpackage.exe",
+      "sha256": "e6ce417971e9434a4cb33e7899aa0f35821a870daa7e4c6baed38c2052555f04",
+      "observed_file_id": "16044073673614973",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jps.exe",
+      "sha256": "9747c9298d022c1837d1b81ab3fd5e28615f001be68ca9573f0c1f2e20732373",
+      "observed_file_id": "15199648743483087",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jshell.exe",
+      "sha256": "9862b59c28f5675a5ac5574e60c0038c541afcac5a28bd6b21d150c9370d8f81",
+      "observed_file_id": "16325548650325790",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jsound.dll",
+      "sha256": "2162d71aefa464086d170169c687abb01fcdbab75ebb2c6e2e46428771c581b2",
+      "observed_file_id": "14355223813351255",
+      "size": 61608
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jstack.exe",
+      "sha256": "732f1dd1d14de21c8612839b197155f578dcc868695c3cea1a0f61e617036664",
+      "observed_file_id": "14355223813351261",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jstat.exe",
+      "sha256": "d3bf10460cce83ced75c4a62c1f1a828042b9c3445e74753c04c8fb5ee88a67c",
+      "observed_file_id": "14355223813351285",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jstatd.exe",
+      "sha256": "b0c6faa3984cb7f384bddd2b94309b7629d73864d49aa1347c31da9d9936e768",
+      "observed_file_id": "14355223813351301",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jsvml.dll",
+      "sha256": "42398caf8c3e836acbd42c3c7196ab2f5749e78e839e72813321551d2a94b089",
+      "observed_file_id": "14355223813351352",
+      "size": 869544
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\jwebserver.exe",
+      "sha256": "9cd25c9e3d13717475c085f24efba83f781257be3f8cec2293db653bf8296212",
+      "observed_file_id": "14355223813351366",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\keytool.exe",
+      "sha256": "99f8941fddd9b6b76213fa5b1e5894c935e9620a9c79bd863b88dc06c318f989",
+      "observed_file_id": "14073748836640724",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\kinit.exe",
+      "sha256": "d4a1dfb48a7f0859aea56bff607358e948784228258c4dd308d667290af06097",
+      "observed_file_id": "14073748836640733",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\klist.exe",
+      "sha256": "0c8c312bd41dfe080fce9f5a8850d110b0c545022e46c2f96018f798f2a6db28",
+      "observed_file_id": "14073748836640741",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\ktab.exe",
+      "sha256": "6495d806e0a400480bf5154033aa34b14aab5c85cc499cf4e0c1e50abb4a3709",
+      "observed_file_id": "14355223813351404",
+      "size": 24232
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\lcms.dll",
+      "sha256": "078c5f01c0970e696a00b8d0908d52343d5a735e06d1761b18d5a80b7fb73678",
+      "observed_file_id": "18577348464011250",
+      "size": 260776
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\management.dll",
+      "sha256": "78d732a93200a480900d2582c2a010d359a204eabd4f1a870af732b120773259",
+      "observed_file_id": "14073748836640762",
+      "size": 29864
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\management_agent.dll",
+      "sha256": "2b243953089b6a9de8ce22f73ca6dd49a3417eb43832738696de69087cc6e823",
+      "observed_file_id": "14073748836640772",
+      "size": 25256
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\management_ext.dll",
+      "sha256": "f32b0b1635cf89383f74e3d70895d9ebbac69b00b413e35e4b6896a165b32ac4",
+      "observed_file_id": "14355223813351430",
+      "size": 36520
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\mlib_image.dll",
+      "sha256": "17397eee56a41376a9ee137a0f7316609e7d52fb2e6cafafc67380397c3377f8",
+      "observed_file_id": "14355223813351433",
+      "size": 523944
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\msvcp140.dll",
+      "sha256": "b99eb28a471311113f5c4109cb3c463f39cfd9bdb3b07f706204dedddb4516a1",
+      "observed_file_id": "14355223813351437",
+      "size": 575568
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\net.dll",
+      "sha256": "8a1c958ea7718539890444a54e048aa8d08938c4f1368f4a3e1830565c375cc1",
+      "observed_file_id": "14355223813351440",
+      "size": 62120
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\nio.dll",
+      "sha256": "6c6260837fd7a47b53ae2a5a9198d208fed1e8db8c6bca33e3d07fe5bab4294c",
+      "observed_file_id": "14918173766772791",
+      "size": 82088
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\prefs.dll",
+      "sha256": "4346e1f2b9a546456fd0b65a73f7e49d00b70365c0d7d3510e5b990ff4740b37",
+      "observed_file_id": "13792273859930202",
+      "size": 25768
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\rmi.dll",
+      "sha256": "298517ce24c321287d6a5069cb4f49bc821dd6246ed462cf7ab921919d6507ae",
+      "observed_file_id": "14636698790062173",
+      "size": 21160
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\rmiregistry.exe",
+      "sha256": "0666cec56c4239c72a83095f4f4850d3a9d569815fab34d199a398d4581910e8",
+      "observed_file_id": "13792273859930208",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\saproc.dll",
+      "sha256": "da8872b7d96efda15cb143bd5e64183ba610579c218a9d3c5a6401ace93be62f",
+      "observed_file_id": "13792273859930219",
+      "size": 40104
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\serialver.exe",
+      "sha256": "087c16decc609631d4ad02c20a6e4dca1e0bdcf91c6c458be0958fef486689f8",
+      "observed_file_id": "13792273859930250",
+      "size": 24744
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\server\\classes.jsa",
+      "sha256": "9bbb7bbd05a4e69949aa2852251c476885aff2ba67fcd7f927826e877355210a",
+      "observed_file_id": "16044073673615564",
+      "size": 16056320
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\server\\classes_nocoh.jsa",
+      "sha256": "4fbe7e6ec5be48f71308354d215cad55278c4be81f7775df33a33736c835d325",
+      "observed_file_id": "14636698790062302",
+      "size": 16121856
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\server\\classes_nocoops.jsa",
+      "sha256": "f9e2f16235a90d1e84181074a5b93f91139522215fc98b8353e317faf80ef87e",
+      "observed_file_id": "13792273859930352",
+      "size": 16515072
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\server\\classes_nocoops_nocoh.jsa",
+      "sha256": "a98fcd87f80295e7006b44652b430802481cdc6a6137ab10368367a090fb0abf",
+      "observed_file_id": "13792273859930375",
+      "size": 16580608
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\server\\jvm.dll",
+      "sha256": "063b2945f60cf763090cf7046356aaa8c6173f325146b181c8ac3d3473b9e9ad",
+      "observed_file_id": "13792273859930390",
+      "size": 14273704
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\splashscreen.dll",
+      "sha256": "5947de99629ba86699043ebe1d15ca5a688fded87cb39550775812d396941561",
+      "observed_file_id": "13792273859930501",
+      "size": 215720
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\sspi_bridge.dll",
+      "sha256": "08d2433d284e7b69e2e205dbf0338c29ad2446ae173335a101228be2de86e881",
+      "observed_file_id": "17732923533879695",
+      "size": 45224
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\sunmscapi.dll",
+      "sha256": "5cb07c37e45f6c0a44e968dfa166c43044d6e968979f165a1dcfa582caec0573",
+      "observed_file_id": "14355223813351841",
+      "size": 49832
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\syslookup.dll",
+      "sha256": "e2a4b084596261dc158a2a6e950a4407bc8e1e38d0122ba7b0137042ff5aaa37",
+      "observed_file_id": "14073748836641206",
+      "size": 28840
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\ucrtbase.dll",
+      "sha256": "3088326cb0fe5b5646e02c7b2de71ae363fcd26a0000cf32209c8bed05a7a866",
+      "observed_file_id": "14073748836641219",
+      "size": 1361464
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\vcruntime140.dll",
+      "sha256": "052ad6a20d375957e82aa6a3c441ea548d89be0981516ca7eb306e063d5027f4",
+      "observed_file_id": "14073748836641228",
+      "size": 120400
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\vcruntime140_1.dll",
+      "sha256": "6a99bc0128e0c7d6cbbf615fcc26909565e17d4ca3451b97f8987f9c6acbc6c8",
+      "observed_file_id": "13792273859930592",
+      "size": 49776
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\verify.dll",
+      "sha256": "7d96ffa83b82b3e3b6254b77ea37e9046ea5c5f066224a0a9132c9ce91b5b06b",
+      "observed_file_id": "13792273859930608",
+      "size": 55464
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\w2k_lsa_auth.dll",
+      "sha256": "caf03a2680e4560b020c523c1d714e29a2f4673247dc0bda7cc0f46737220589",
+      "observed_file_id": "13792273859930615",
+      "size": 32424
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\windowsaccessbridge-64.dll",
+      "sha256": "6dbc3b77d6a2c0e90ada6a8e471f29471528624e039e03a9223923b4cf359463",
+      "observed_file_id": "13792273859930630",
+      "size": 72360
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\bin\\zip.dll",
+      "sha256": "bd044d4738657ba98e5947fc452fbe72803c9f11f5660098b6a331c9799eeb64",
+      "observed_file_id": "17451448557169190",
+      "size": 82600
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\classlist",
+      "sha256": "020d285d28f81363657b280077d068c10cbba2a1f3f3f061dc4b2857e3643531",
+      "observed_file_id": "3377699721852110",
+      "size": 88959
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\ct.sym",
+      "sha256": "17fb938607d5afd5b455d679b247c20a76f803af6c3c48aa6dde879694a19bff",
+      "observed_file_id": "3377699721852111",
+      "size": 11984324
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\fontconfig.bfc",
+      "sha256": "c7e2e76b908cb6330823e698889943c162e9861a4575501cbb59c9b830158ab0",
+      "observed_file_id": "9288674232775889",
+      "size": 4836
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\fontconfig.properties.src",
+      "sha256": "cb3cad9d445f4d8e70eea962ed5c63f510e3721305522e9fc275a7bff5086b17",
+      "observed_file_id": "3377699721852115",
+      "size": 11615
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\jawt.lib",
+      "sha256": "163220a0ca37814a50676294b8d1fe5079694aac27bb05d68b4c02fa011df1e1",
+      "observed_file_id": "5629499535537405",
+      "size": 1682
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\jfr\\default.jfc",
+      "sha256": "40a2b45d688d53b4447f4ca1e547d1d338c8362f0de68affd65fb7148c08c1f8",
+      "observed_file_id": "3659174698562817",
+      "size": 40971
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\jfr\\profile.jfc",
+      "sha256": "666369719b1a8e11f6c16ecf8be9cbc58537f7c305cba10236f11d6bf7ae001e",
+      "observed_file_id": "3377699721852162",
+      "size": 40853
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\jrt-fs.jar",
+      "sha256": "5aa8ad90d0ae71d05003863f5ead2882496bc0d686fded4b7a85a003c6a61c2f",
+      "observed_file_id": "7318349395801348",
+      "size": 120640
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\jvm.cfg",
+      "sha256": "aa9efb969444c1484e29adecab55a122458090616e766b2f1230ef05bc3867e0",
+      "observed_file_id": "6192449488958725",
+      "size": 29
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\jvm.lib",
+      "sha256": "32fa2c611bf659cd3767a65e9025c943f8c21d285b568c2267486790a3a2c939",
+      "observed_file_id": "3377699721852167",
+      "size": 1148022
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\modules",
+      "sha256": "bd7f2a8707751151a78c0a6681ac5f58f1eb8b19ff0b354d6466416792f17cfb",
+      "observed_file_id": "7036874419090696",
+      "size": 145971562
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\psfont.properties.ja",
+      "sha256": "0c790de696536165913685785ea8cbe1ac64acf09e2c8d92d802083a6da09393",
+      "observed_file_id": "3377699721852170",
+      "size": 2796
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\psfontj2d.properties",
+      "sha256": "dbb7c1108e542525dfdce40a44526f02901ba86a237dc81379aacb2075c3e208",
+      "observed_file_id": "3377699721852175",
+      "size": 10375
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\security\\blocked.certs",
+      "sha256": "583500b76965eb54b03493372989ab4d3426f85462d1db232c5ae6706a4d6c58",
+      "observed_file_id": "8725724279354777",
+      "size": 2527
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\security\\cacerts",
+      "sha256": "2675a0aa6e7c158bbccf1181383ee794319e362df9a6bc88e1a5f8469a4c1dd7",
+      "observed_file_id": "4222124651984290",
+      "size": 134174
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\security\\public_suffix_list.dat",
+      "sha256": "37e71e43c8605f29b9072f152d0ea4708735cdf335a5b68b2bc2f875760806c3",
+      "observed_file_id": "16607023627253185",
+      "size": 229254
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\src.zip",
+      "sha256": "2de94c3a2586dbd20b47f4eafbb8540767476d0f4a204b324997819540ee22b7",
+      "observed_file_id": "20547673301202429",
+      "size": 46090546
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\tzdb.dat",
+      "sha256": "5906b44e25a8a730131d7ba1beb5d15af27043f6536f1a169ca8a5d8b8bed8f8",
+      "observed_file_id": "6473924465669630",
+      "size": 102956
+    },
+    {
+      "path": "C:\\Program Files\\Java\\jdk-27\\lib\\tzmappings",
+      "sha256": "da4bdb6f420ecd4b27100c7dc3d0bee911402e7c07c27e445e8ee6823bf8acdf",
+      "observed_file_id": "18295873487522818",
+      "size": 15945
+    }
+  ]
+}

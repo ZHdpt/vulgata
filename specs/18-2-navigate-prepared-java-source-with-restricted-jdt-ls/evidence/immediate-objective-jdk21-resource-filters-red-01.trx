@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="25ceb503-007d-43f4-8661-d8a278a8509f" name="13728@ZHDPT-ASUS-5 2026-10-05 23:48:12" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T23:48:12.1657679+08:00" queuing="2026-10-05T23:48:12.1657681+08:00" start="2026-10-05T23:48:10.2518324+08:00" finish="2026-10-05T23:48:12.1684295+08:00" />
+  <TestSettings name="default" id="216072b0-883d-43ab-98f4-f2792dd30aa7">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-05_23_48_12" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="8c9bd561-9b11-44c4-84f5-9e6dfa51692d" testId="fa76e7c8-3b10-2352-6b33-92ba2b487703" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened" computerName="ZHDPT-ASUS-5" duration="00:00:00.1363903" startTime="2026-10-05T23:48:11.9397388+08:00" endTime="2026-10-05T23:48:12.0565647+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8c9bd561-9b11-44c4-84f5-9e6dfa51692d">
+      <Output>
+        <ErrorInfo>
+          <Message>Fixed JDT settings must explicitly disable default project resource filters.</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.AssertFixedOfflineWireSettings(JsonElement settings) in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 6508&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 4529&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 4543&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 4543&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="fa76e7c8-3b10-2352-6b33-92ba2b487703">
+      <Execution id="8c9bd561-9b11-44c4-84f5-9e6dfa51692d" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="fa76e7c8-3b10-2352-6b33-92ba2b487703" executionId="8c9bd561-9b11-44c4-84f5-9e6dfa51692d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.15]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.20]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.21]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.38]       Fixed JDT settings must explicitly disable default project resource filters.&#xD;
+[xUnit.net 00:00:01.38]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.38]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(6508,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.AssertFixedOfflineWireSettings(JsonElement settings)&#xD;
+[xUnit.net 00:00:01.38]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(4529,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened()&#xD;
+[xUnit.net 00:00:01.38]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(4543,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened()&#xD;
+[xUnit.net 00:00:01.38]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(4543,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened()&#xD;
+[xUnit.net 00:00:01.38]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.39]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-05T23:48:12.0584160+08:00">
+        <Text>[xUnit.net 00:00:01.38]     Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-05T23:48:12.1232481+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

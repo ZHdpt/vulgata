@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-2/implementation-approval/01",
+  "status": "accepted",
+  "scope_sha256": "e74b515aa5855f111c4784546b7afeb778c4e49d313aaea60e9bec33f1962f22",
+  "story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "delegation": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/user-delegation-01.json",
+    "sha256": "7ec0729f79c94c39612eb35e04524b0c3dce1e933305a3a6f6494818786d8cfa"
+  },
+  "response_source": "Codex chat 01a0e708-c489-7871-9f73-31413f20bf2c turn 01a0ec83-0f07-7151-bd49-55c76e424fe2 final message msg_0e55faeae43f1fb3016abb86085730819698d7d368a4dbfb66",
+  "response_text": "Approve — 18-2/implementation-approval/01, implementation gate only. Verified independent definition-review ACCEPT and all seven current artifact hashes. The six previously approved planning artifacts are unchanged; the 26 tasks remain within that scope. Approved boundary: Base: 2ba504c7cad5f340966bdc2842625f0619fecca0 Manifest: e3951c690ddc1cf2b30fef222803c8e0a33d902d5b4b8e5b55d22e40f66c6534 Raw review SHA-256: 084547cc232c6beabd20228adfd6a651aaa24e79bce0160c9220be7eb924cd01 This permits production writes for the accepted definition after root records and validates this decision. It does not grant runtime permissions, Story 18.3 integration authority, verification waivers or an out-of-plan isolation redesign. Real JDT-LS navigation, source protection and subprocess containment still require evidence. T025 remains pending until the prepared Repository is supplied and access authorized; fixture success cannot substitute for it. The runner is active, so no interrupting message was sent.",
+  "review": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-result-01.json",
+    "sha256": "f1df20327ab09b4bd534253b228338556c37110d283300de7ab264d714ecba26"
+  },
+  "summary": "Delegate approved first production writes only for current accepted Story 18.2 complete definition; all later qualification, verification, runtime permission and 18.3 integration gates remain.",
+  "decided_at": "2026-09-29T09:34:36.954027Z"
+}

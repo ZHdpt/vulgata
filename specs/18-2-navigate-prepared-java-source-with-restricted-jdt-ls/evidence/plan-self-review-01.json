@@ -1,0 +1,39 @@
+{
+  "id": "18-2/plan/1",
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "source_commit": "e1c0678c166e2875448104f027ce3f0b789283f7",
+  "observed_at": "2026-09-29T02:22:27.574955Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "dbb3024b8d0c18908f57013eec853511c8c726a13af4ed6f4a9a7d4f4dff6ca2",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "482c39c6b4cf08d3b38b03a27993379b4f5d85f97f5489df14d43ed3346ee4c5",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "666bc49f6c2c6ab72a1fddd723f8b33b507d950475d4b05787ddb7f5775a396b",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "37add115977f50ea9ffa95f2e2d63864f2adf4fab88c19931918a80875977f79",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "410aebd4b78fd22058df26219f9f493640eb1ba655aa198864319ef9455de15c",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "b2947eef7e587adcc9792dab723cddd8d2c377e9509287f8a9c715d559440b6a"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+  ],
+  "summary": "Sol/high plan architect classified architecture for material Worker navigation tool and prepared-root/session authority. Reviewed feasibility, constitution/ADR alignment, 18.1 dependency, fixture-first then prepared-Repository qualification, and no runtime claim. Deterministic implementation-design validation returned no findings.",
+  "raw_result": {
+    "classification": "architecture",
+    "plan_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+    ],
+    "unresolved_dependencies": [
+      "Integrated verified Story 18.1 grant/location/file-tool contract",
+      "Real restricted-profile JDT-LS navigation and direct-root no-write qualification"
+    ]
+  }
+}

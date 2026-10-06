@@ -1,0 +1,33 @@
+{
+  "kind": "analysis",
+  "summary": "Existing-correct fresh-registry Ready uncertainty coverage: healthy source/tool/store and empty local tracking do not bypass exact independent previous-generation Unknown proof. Admission Unavailable, no ticket, disposition not Settled; owned hold cleanup via shutdown if acquired.",
+  "verification_route": "test-only coverage of existing correct behavior",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "d152931c8dfb4ded12e8c3020ddef47dbd3e2005",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "b934528a1954e89e6d17c01f8913eaca3354ae4245bf1a80449d0dcccc452f3e",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "c9d6a2cb72d4f23185b3754d57eca2acd07cfc1f6a3e632d593772623fbc9e5f"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {
+    "path": "TestResults/isolation-e698b6a8c6a745ef9b34c6b25ec20fae/results.trx",
+    "sha256": "df11093df29adbe5d8fe55b4f8b3a1087662c91d8ba1f53cecfa9db7e30df202",
+    "selected": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-e698b6a8c6a745ef9b34c6b25ec20fae/build.log",
+    "build_sha256": "3cf1b4a22e6ff93ed6fc7f4d8d8e3721341229f6c82b2f4695be304a647c445f"
+  },
+  "red": "Not applicable: existing-correct behavior, no production change or fabricated RED.",
+  "final_shape": "Public admission/borrow/closure assertions, exact independent-verifier argument observed, no incidental host acquisition order assumed. No refactor needed.",
+  "limitations": "Models fresh registry, not real separate-process/native settlement or actual Windows protection; producer and later gates remain unfinished.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "kind": "analysis",
+  "summary": "Expected JdtNavigation same-issuer current Ready refresh RED. Fresh exact Ready store readback passes; next JDT-purpose issue returns AuthorityUnavailable instead of Issued. Preserved CodeGraph-purpose row passes.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "b209a4fef1feedbb03d5f25b01a0afe4dbbce37eb51d3328642919ccbe3690f6",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "aa01d2215fc87b4c0e919e95f90dd09f44e3759fe1817f220885866c5db3b391",
+    "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs": "61a7ee2b8311106d38368fd0d6ad4e922d5d049d09bcaa8cd7e0db053e6ba987"
+  },
+  "result": {
+    "path": "TestResults/isolation-2914a75336904d30906de56704fdf2a4/results.trx",
+    "sha256": "4f348f87056880abc92d055042982b9163ec92aad4ea1bf44a245fb4d30a873a",
+    "selected": 38,
+    "passed": 37,
+    "failed": 1,
+    "skipped": 0
+  },
+  "build": {
+    "path": "TestResults/isolation-2914a75336904d30906de56704fdf2a4/build.log",
+    "sha256": "4ead853ebb0f83b1f0533cf60149f564f834cca30ab112cff8d9fe69e1ff81ba",
+    "result": "passed"
+  },
+  "raw_failure_messages": [
+    "Assert.Equal() Failure: Values differ\r\nExpected: Issued\r\nActual:   AuthorityUnavailable"
+  ],
+  "resources": "Controlled fixture store/host, public issuer only; no JDT execution.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

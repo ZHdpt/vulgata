@@ -1,0 +1,19 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "current factory already disposes returned session and releases slot when source authority is revoked before handoff",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "98a020c411ae43115291a21617b4100d6f1ff533617005b4969f04d930bf21de",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 37,
+  "passed": 37,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-681080dea3694603a47af2b5ac2f3f4d/results.trx",
+  "trx_sha256": "e381aeea7b1f20114b9ab3ecb548ae1f275a8a25e6c1f41b4f7d31ce32ab0e02",
+  "environment": "Approved native launcher; restricted build denied test obj manifest write. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "coverage_reason": "A new test exercised existing code: runtime returns a session after source authority is revoked, factory returns Denied/null, disposes the returned session and releases the Repository slot, allowing a separately reauthorized new lease to open. No production behavior change was made for this coverage.",
+  "final_shape": "Separate test owner assessed the test; no edit required after GREEN. Further confirmed pre-return cleanup and raw-reply failure cases remain unfinished."
+}

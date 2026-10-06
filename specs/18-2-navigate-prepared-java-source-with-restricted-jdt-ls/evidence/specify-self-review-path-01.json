@@ -1,0 +1,14 @@
+{
+  "id": "18-2/specify/path-executable-correction-01",
+  "kind": "self-review",
+  "stage": "specify",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T10:25:35.093326Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "b12a0422ab2864d5aeef1026e4085c03c52878dcee22e5804be2e0bba0f236ce"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md"
+  ],
+  "summary": "Retained definition author replaced executable config/.env assumptions with user-revised PATH availability for JDT-LS/Java; invisible command blocks and is reported. PATH visibility is not runtime qualification. All authority, source-protection, shared-seam and fixture-first semantics remain. git diff --check passed."
+}

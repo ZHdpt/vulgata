@@ -1,0 +1,45 @@
+{
+  "kind": "analysis",
+  "summary": "Expected public same-issuer reissuance RED after exact same-key Absent v0 to Creating v1 to Ready v2. Fresh store Ready readback succeeds but issue returns AuthorityUnavailable instead of Issued; stale constructor phase passed to registration.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "b209a4fef1feedbb03d5f25b01a0afe4dbbce37eb51d3328642919ccbe3690f6",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "247e3549e1d6af6eaeba3af9dc8a1514995926be8ad47b11865cfc0ea99222b6",
+    "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs": "a2cbaebecaf303d5dde3591aa7b9afc4a0dcfb4ab6fd540381698e13e8b44886"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "result": {
+    "path": "TestResults/isolation-a9642b6f8cdf47cab62e65a3c8425a54/results.trx",
+    "sha256": "f94ed990a72f69617be425474a1015ba9266b5a50dcaf8f2eb3068386c741911",
+    "selected": 37,
+    "passed": 36,
+    "failed": 1,
+    "skipped": 0
+  },
+  "raw_failure_messages": [
+    "Assert.Equal() Failure: Values differ\r\nExpected: Issued\r\nActual:   AuthorityUnavailable"
+  ],
+  "build": {
+    "path": "TestResults/isolation-a9642b6f8cdf47cab62e65a3c8425a54/build.log",
+    "sha256": "ac09f132fa150882fbbac5ac2dba310c21c0c45b04e80f485afaa5ecfd094190",
+    "result": "passed"
+  },
+  "setup_attempt": {
+    "path": "TestResults/isolation-6094dbab8bb34e889b667b5bfc4e1d99/build.log",
+    "sha256": "30b9f0ef4f2bbf8450d78078e2001691064e478ca77ee38b77a283fdec4a5188",
+    "classification": "uncounted test helper compile correction, not behavioral RED"
+  },
+  "resources": "Controlled store and host with owned fixture root; no native tool or actual host protection qualification.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

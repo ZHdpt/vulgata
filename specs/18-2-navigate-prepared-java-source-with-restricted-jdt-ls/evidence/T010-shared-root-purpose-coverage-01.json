@@ -1,0 +1,18 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "task_id": "T010",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "a155da660ab3bca66179d0a9ee3878b8cb13e3e2e3767e5b5c36ab6101933410",
+  "coverage_reason": "Existing implementation already denies mismatched expected purpose before callback, accepts separately authorized JDT and CodeGraph leases, and invalidates the short root scope after callback. No fabricated RED or production edit.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 18,
+  "passed": 18,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-0115d6c28202496c94dab9191960ec74/results.trx",
+  "trx_sha256": "0baf440779e88b70ca0e2fbde88a0bae96da0e825d7d1dc3239d9e10d0f5b8a0",
+  "environment": "Restricted build denied writing the test obj manifest; approved native launcher passed. No real JDT or CodeGraph process started.",
+  "remaining": "Authority/root replacement, cancellation/deadline/disposal, state-root overlap/reparse, and rejected URI cases remain before shared checkpoint."
+}

@@ -1,0 +1,11 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-90b0ceb863f64c5d9ab1ab49782ae5af/results.trx",
+  "selected": 1,
+  "failed": 1,
+  "classification": "Valid behavioralRED afterownedWindowsjunction/filelink creationandtarget assertions.",
+  "failure": "ExpectedPinned ActualRejected atJdtLsPreparedNavigationTests.cs:5183",
+  "correction": "Adopted JDT-only selectedJava/Python aliases -> physicalnofollowpins, originalPATHindex, approveddirs, prestarttargetrecheck, nofallback.",
+  "nativeJdtLaunched": false,
+  "oldWorkflowChanged": false
+}

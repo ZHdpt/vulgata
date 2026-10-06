@@ -1,0 +1,18 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "atomic same-Repository runtime-open slot and cancellable waiter",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "63f07724ff0f3ec4c66d36e661072bdd8b2727207f8655393dca1b47d95ba343",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests'",
+  "exit_code": 1,
+  "selected": 4,
+  "passed": 3,
+  "failed": 1,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-4d270eafe9d54326a619e31bea384f51/results.trx",
+  "trx_sha256": "5b89f1d8fa1507b4f65551b8e89d8c914e21d56c411ebc34ac442fb1c9d3d0d1",
+  "result": "First controlled runtime open was held at a barrier; second same-Repository open started then its waiting token was cancelled. The second returned Opened instead of Cancelled, showing no atomic slot reservation before runtime invocation.",
+  "environment": "Restricted build denied an obj/bin write; approved native launcher reached product assertion. No Java or JDT-LS process started."
+}

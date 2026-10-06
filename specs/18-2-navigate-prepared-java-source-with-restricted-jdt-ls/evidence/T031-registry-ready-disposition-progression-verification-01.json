@@ -1,0 +1,42 @@
+{
+  "kind": "analysis",
+  "summary": "Direct current Ready disposition verified through original Absent admission/hold without a prior Ready borrow. Fresh source/CodeGraph-purpose/store/held proof and registered-use settlement/deadline required, then closure remains latched.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "d152931c8dfb4ded12e8c3020ddef47dbd3e2005",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-ready-disposition-progression-red-01.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "b934528a1954e89e6d17c01f8913eaca3354ae4245bf1a80449d0dcccc452f3e",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "748b6df31332a17aa1de035144681a4f2708ebf7a51046a2bb96abca7f476c42"
+  },
+  "minimal_green": {
+    "path": "TestResults/isolation-07583168f73246a38f8418f7543d4f50/results.trx",
+    "sha256": "879cd36b3820125b2dc51414e2678716798276c4d1d25d1d0728a5ee560a27d6",
+    "selected": 22,
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-07583168f73246a38f8418f7543d4f50/build.log",
+    "build_sha256": "6ac13847c4a17f63a3b8d648e0a4f8ca2fc3dbc09c8b39c5cb2111c4179330cb"
+  },
+  "independent_final_green": {
+    "path": "TestResults/isolation-14fb2c9bb9924bd9ac47eae9307cd499/results.trx",
+    "sha256": "959e76b9e2deb6d97bd1393b85c8c217453b441819d3c5d3930fb41a1af795b4",
+    "selected": 22,
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-14fb2c9bb9924bd9ac47eae9307cd499/build.log",
+    "build_sha256": "82126508432a3c31979fb1af0cfeb8136affe64363e6c310614cc7c183d4e5a7"
+  },
+  "final_shape": "Shared immutable progression helper serves borrowing and closure, current binding advances only after proved facts; one hold preserved, later borrow refused. No additional refactor needed.",
+  "limitations": "Controlled same-process only. Negative key/version/currentness, producer integration, actual Windows host and native qualifications remain unfinished; no task completion or integrated readiness.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "tasks": ["T010", "T011", "T018", "T019"],
+  "slice": "uncooperative injected protocol call cannot settle inside shutdown bound and quarantines Repository slot",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "3f9bd3b9b2cd56350ba22ffa9349527c52f1a00facf157c8de1c4ccbab91918c",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 41,
+  "passed": 41,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-8fe5d1a7159e4deaaafe4ca325fde91f/results.trx",
+  "trx_sha256": "1eb4d5b23e430457aef65e84a8d727c947faa7cc263618080f9ab87bc6b1b7ff",
+  "environment": "Approved native launcher; restricted build denied obj writes. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "coverage_reason": "New controlled fake ignored request cancellation, left its protocol task pending beyond trusted ShutdownTimeout and did not confirm disposal. Existing context returned bounded empty ConfigurationUnavailable, kept the Repository slot quarantined, and a second same-Repository open did not call runtime. Test finally released owned barriers, awaited the fake task and reasserted the previously returned sanitized result after the late reply. No production behavior change was made for this case.",
+  "final_shape": "Separate test owner assessed the fixture's bounded cleanup, late-reply assertion and suite classification. Cooperative delayed-reply settlement, post-reply deadline during mapping, actual process cleanup and real JDT-LS remain unqualified."
+}

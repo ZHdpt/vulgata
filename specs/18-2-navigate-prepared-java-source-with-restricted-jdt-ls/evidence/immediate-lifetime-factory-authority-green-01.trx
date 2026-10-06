@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="5b766621-4ab3-4f86-a2b5-5195f33ffade" name="13728@ZHDPT-ASUS-5 2026-10-06 10:20:12" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-06T10:20:12.4387689+08:00" queuing="2026-10-06T10:20:12.4387690+08:00" start="2026-10-06T10:20:09.9777810+08:00" finish="2026-10-06T10:20:12.4416068+08:00" />
+  <TestSettings name="default" id="b9c637fd-11e1-4b57-a446-bb125bf2b0cb">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-06_10_20_12" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="ab33e3dd-b47a-4df3-917a-d1182b4afa27" testId="24f97388-f863-6ea4-4d97-e100d311e5d9" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession(blockOnVerification: 6, verificationStage: &quot;post-open authority check&quot;, expectedRuntimeOpenCalls: 1, expectedSessionDisposeCalls: 1)" computerName="ZHDPT-ASUS-5" duration="00:00:00.2189702" startTime="2026-10-06T10:20:12.1392223+08:00" endTime="2026-10-06T10:20:12.3558490+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ab33e3dd-b47a-4df3-917a-d1182b4afa27" />
+    <UnitTestResult executionId="e2ae253b-9ddd-42fa-accf-4cf5a5856bd4" testId="6ac95727-a965-0192-c797-f4cac4087b7f" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession(blockOnVerification: 4, verificationStage: &quot;dedicated state-root authority check&quot;, expectedRuntimeOpenCalls: 0, expectedSessionDisposeCalls: 0)" computerName="ZHDPT-ASUS-5" duration="00:00:00.2158242" startTime="2026-10-06T10:20:11.9320347+08:00" endTime="2026-10-06T10:20:12.1361485+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e2ae253b-9ddd-42fa-accf-4cf5a5856bd4" />
+    <UnitTestResult executionId="79c6d89b-23e8-4664-8de9-4c5333d74125" testId="b23d2a1c-a2e8-5bb8-faca-1a5db31abde1" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession(blockOnVerification: 3, verificationStage: &quot;in-slot authority check&quot;, expectedRuntimeOpenCalls: 0, expectedSessionDisposeCalls: 0)" computerName="ZHDPT-ASUS-5" duration="00:00:00.2450466" startTime="2026-10-06T10:20:11.7060840+08:00" endTime="2026-10-06T10:20:11.9195698+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="79c6d89b-23e8-4664-8de9-4c5333d74125" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession(blockOnVerification: 3, verificationStage: &quot;in-slot authority check&quot;, expectedRuntimeOpenCalls: 0, expectedSessionDisposeCalls: 0)" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="b23d2a1c-a2e8-5bb8-faca-1a5db31abde1">
+      <Execution id="79c6d89b-23e8-4664-8de9-4c5333d74125" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession(blockOnVerification: 4, verificationStage: &quot;dedicated state-root authority check&quot;, expectedRuntimeOpenCalls: 0, expectedSessionDisposeCalls: 0)" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="6ac95727-a965-0192-c797-f4cac4087b7f">
+      <Execution id="e2ae253b-9ddd-42fa-accf-4cf5a5856bd4" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession(blockOnVerification: 6, verificationStage: &quot;post-open authority check&quot;, expectedRuntimeOpenCalls: 1, expectedSessionDisposeCalls: 1)" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="24f97388-f863-6ea4-4d97-e100d311e5d9">
+      <Execution id="ab33e3dd-b47a-4df3-917a-d1182b4afa27" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="OpenDedicatedAsync_WhenSourceVerifierIgnoresCancellationAtFactoryCheckpoint_BoundsOpenAndSettlesSession" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="24f97388-f863-6ea4-4d97-e100d311e5d9" executionId="ab33e3dd-b47a-4df3-917a-d1182b4afa27" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6ac95727-a965-0192-c797-f4cac4087b7f" executionId="e2ae253b-9ddd-42fa-accf-4cf5a5856bd4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b23d2a1c-a2e8-5bb8-faca-1a5db31abde1" executionId="79c6d89b-23e8-4664-8de9-4c5333d74125" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="3" executed="3" passed="3" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.15]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.20]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.22]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.93]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-06T10:20:12.4067732+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

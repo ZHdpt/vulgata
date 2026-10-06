@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="5e693de6-6f66-4d11-9590-095259ba7587" name="13728@ZHDPT-ASUS-5 2026-10-05 23:05:41" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T23:05:41.6243985+08:00" queuing="2026-10-05T23:05:41.6243988+08:00" start="2026-10-05T23:05:19.8861979+08:00" finish="2026-10-05T23:05:41.6286992+08:00" />
+  <TestSettings name="default" id="cc021cba-3ad2-4a6d-992b-136720b8708b">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-05_23_05_41" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="3752e804-da5d-470e-a797-bc37a4f7cc70" testId="406a1341-cc1e-5f33-5373-110394a5a582" testName="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails" computerName="ZHDPT-ASUS-5" duration="00:00:19.8930364" startTime="2026-10-05T23:05:21.5721265+08:00" endTime="2026-10-05T23:05:41.4427554+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3752e804-da5d-470e-a797-bc37a4f7cc70">
+      <Output>
+        <StdOut>Diagnostic host selection: JDT C:\Users\13728\.local\bin\jdtls.bat; Python C:\Users\13728\.local\bin\python.exe; Java C:\Program Files\Java\jdk-21.0.12\bin\java.exe; pinned runtime root G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository.&#xD;
+Process launch requested: python=C:\Users\13728\.local\bin\python3.15.exe; bootstrap=G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\bin\jdtls; Java=C:\Program Files\Java\jdk-21.0.12\bin\java.exe; data=C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\outside\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\data; configuration=C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\outside\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\configuration.&#xD;
+Process launch completed and an owned process handle was returned.&#xD;
+LSP initialize requested: root=file:///C:/Users/13728/AppData/Local/Temp/vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8/prepared/; workspace=file:///C:/Users/13728/AppData/Local/Temp/vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8/prepared/; settings={"java":{"import":{"maven":{"enabled":false,"offline":{"enabled":true}},"gradle":{"enabled":false,"offline":{"enabled":true},"wrapper":{"enabled":false}}},"autobuild":{"enabled":false},"configuration":{"updateBuildConfiguration":"disabled"},"maven":{"downloadSources":false,"updateSnapshots":false}}}.&#xD;
+LSP initialize succeeded after 2942 ms.&#xD;
+Diagnostic runtime initialization succeeded; opening session for bounded disposal.&#xD;
+Python parent before-kill: pid=12836; hasExited=False; stderrPumpCompleted=False.&#xD;
+Java/Python processes for fixture 903b6d0d8be74febab066812df78feb2 at before-kill: [{"ProcessId":10220,"Name":"python.exe","CommandLine":"\"C:\\Users\\13728\\AppData\\Roaming\\uv\\python\\cpython-3.15.0a6-windows-x86_64-none\\python.exe\"  G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\jdtls --java-executable \"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"},{"ProcessId":32620,"Name":"java.exe","CommandLine":"\"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dosgi.checkConfiguration=true -Dosgi.sharedConfiguration.area=G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_win -Dosgi.sharedConfiguration.area.readOnly=true -Dosgi.configuration.cascaded=true -Xms1G --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -jar G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"}]&#xD;
+&#xD;
+Owned process tree termination request completed; stderrPumpCompleted=False.&#xD;
+Python parent after-kill: pid=12836; hasExited=True; stderrPumpCompleted=False.&#xD;
+Java/Python processes for fixture 903b6d0d8be74febab066812df78feb2 at after-kill: {"ProcessId":32620,"Name":"java.exe","CommandLine":"\"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dosgi.checkConfiguration=true -Dosgi.sharedConfiguration.area=G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_win -Dosgi.sharedConfiguration.area.readOnly=true -Dosgi.configuration.cascaded=true -Xms1G --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -jar G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"}&#xD;
+&#xD;
+Java/Python processes for fixture 903b6d0d8be74febab066812df78feb2 at before-wait: {"ProcessId":32620,"Name":"java.exe","CommandLine":"\"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dosgi.checkConfiguration=true -Dosgi.sharedConfiguration.area=G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_win -Dosgi.sharedConfiguration.area.readOnly=true -Dosgi.configuration.cascaded=true -Xms1G --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -jar G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"}&#xD;
+&#xD;
+Python parent before-wait: pid=12836; hasExited=True; stderrPumpCompleted=False.&#xD;
+Python parent before-dispose: pid=12836; hasExited=True; stderrPumpCompleted=False.&#xD;
+Diagnostic session disposal failed: System.TimeoutException: jdt_cleanup_unconfirmed&#xD;
+Bounded owned-process stderr (up to 64 KiB):
+WARNING: Using incubator modules: jdk.incubator.vector&#xD;
+10月 05, 2026 11:05:24 下午 org.apache.aries.spifly.BaseActivator log&#xD;
+INFO: Registered provider ch.qos.logback.classic.spi.LogbackServiceProvider of service org.slf4j.spi.SLF4JServiceProvider in bundle ch.qos.logback.classic&#xD;
+&#xD;
+Owned-process result: started=True; killRequested=True; waitCompleted=False; exitCode=&lt;unobserved&gt;; disposeCompleted=False.&#xD;
+Cleanup was not confirmed; preserving diagnostic source/state at C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8.</StdOut>
+        <ErrorInfo>
+          <Message>Unconfirmed owned-process cleanup must preserve diagnostic files and fail this qualification.</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs:line 478&#xD;
+   at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs:line 506&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="406a1341-cc1e-5f33-5373-110394a5a582">
+      <Execution id="3752e804-da5d-470e-a797-bc37a4f7cc70" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests" name="DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="406a1341-cc1e-5f33-5373-110394a5a582" executionId="3752e804-da5d-470e-a797-bc37a4f7cc70" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.14]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.20]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.22]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:21.14]       Unconfirmed owned-process cleanup must preserve diagnostic files and fail this qualification.&#xD;
+[xUnit.net 00:00:21.14]       Stack Trace:&#xD;
+[xUnit.net 00:00:21.14]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs(478,0): at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails()&#xD;
+[xUnit.net 00:00:21.14]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\PreparedJdtLsDedicatedQualificationTests.cs(506,0): at Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails()&#xD;
+[xUnit.net 00:00:21.14]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:21.14]       Output:&#xD;
+[xUnit.net 00:00:21.14]         Diagnostic host selection: JDT C:\Users\13728\.local\bin\jdtls.bat; Python C:\Users\13728\.local\bin\python.exe; Java C:\Program Files\Java\jdk-21.0.12\bin\java.exe; pinned runtime root G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository.&#xD;
+[xUnit.net 00:00:21.14]         Process launch requested: python=C:\Users\13728\.local\bin\python3.15.exe; bootstrap=G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\bin\jdtls; Java=C:\Program Files\Java\jdk-21.0.12\bin\java.exe; data=C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\outside\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\data; configuration=C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\outside\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\configuration.&#xD;
+[xUnit.net 00:00:21.14]         Process launch completed and an owned process handle was returned.&#xD;
+[xUnit.net 00:00:21.14]         LSP initialize requested: root=file:///C:/Users/13728/AppData/Local/Temp/vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8/prepared/; workspace=file:///C:/Users/13728/AppData/Local/Temp/vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8/prepared/; settings={"java":{"import":{"maven":{"enabled":false,"offline":{"enabled":true}},"gradle":{"enabled":false,"offline":{"enabled":true},"wrapper":{"enabled":false}}},"autobuild":{"enabled":false},"configuration":{"updateBuildConfiguration":"disabled"},"maven":{"downloadSources":false,"updateSnapshots":false}}}.&#xD;
+[xUnit.net 00:00:21.14]         LSP initialize succeeded after 2942 ms.&#xD;
+[xUnit.net 00:00:21.14]         Diagnostic runtime initialization succeeded; opening session for bounded disposal.&#xD;
+[xUnit.net 00:00:21.14]         Python parent before-kill: pid=12836; hasExited=False; stderrPumpCompleted=False.&#xD;
+[xUnit.net 00:00:21.14]         Java/Python processes for fixture 903b6d0d8be74febab066812df78feb2 at before-kill: [{"ProcessId":10220,"Name":"python.exe","CommandLine":"\"C:\\Users\\13728\\AppData\\Roaming\\uv\\python\\cpython-3.15.0a6-windows-x86_64-none\\python.exe\"  G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\jdtls --java-executable \"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"},{"ProcessId":32620,"Name":"java.exe","CommandLine":"\"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dosgi.checkConfiguration=true -Dosgi.sharedConfiguration.area=G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_win -Dosgi.sharedConfiguration.area.readOnly=true -Dosgi.configuration.cascaded=true -Xms1G --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -jar G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"}]&#xD;
+[xUnit.net 00:00:21.14]         &#xD;
+[xUnit.net 00:00:21.14]         Owned process tree termination request completed; stderrPumpCompleted=False.&#xD;
+[xUnit.net 00:00:21.14]         Python parent after-kill: pid=12836; hasExited=True; stderrPumpCompleted=False.&#xD;
+[xUnit.net 00:00:21.14]         Java/Python processes for fixture 903b6d0d8be74febab066812df78feb2 at after-kill: {"ProcessId":32620,"Name":"java.exe","CommandLine":"\"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dosgi.checkConfiguration=true -Dosgi.sharedConfiguration.area=G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_win -Dosgi.sharedConfiguration.area.readOnly=true -Dosgi.configuration.cascaded=true -Xms1G --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -jar G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"}&#xD;
+[xUnit.net 00:00:21.14]         &#xD;
+[xUnit.net 00:00:21.14]         Java/Python processes for fixture 903b6d0d8be74febab066812df78feb2 at before-wait: {"ProcessId":32620,"Name":"java.exe","CommandLine":"\"C:\\Program Files\\Java\\jdk-21.0.12\\bin\\java.exe\" -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dosgi.checkConfiguration=true -Dosgi.sharedConfiguration.area=G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_win -Dosgi.sharedConfiguration.area.readOnly=true -Dosgi.configuration.cascaded=true -Xms1G --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -jar G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar -data C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\data -configuration C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8\\outside\\dedicated-jdt-diagnostic-state-903b6d0d8be74febab066812df78feb2\\configuration"}&#xD;
+[xUnit.net 00:00:21.14]         &#xD;
+[xUnit.net 00:00:21.14]         Python parent before-wait: pid=12836; hasExited=True; stderrPumpCompleted=False.&#xD;
+[xUnit.net 00:00:21.14]         Python parent before-dispose: pid=12836; hasExited=True; stderrPumpCompleted=False.&#xD;
+[xUnit.net 00:00:21.14]         Diagnostic session disposal failed: System.TimeoutException: jdt_cleanup_unconfirmed&#xD;
+[xUnit.net 00:00:21.14]         Bounded owned-process stderr (up to 64 KiB):
+WARNING: Using incubator modules: jdk.incubator.vector&#xD;
+[xUnit.net 00:00:21.14]         10月 05, 2026 11:05:24 下午 org.apache.aries.spifly.BaseActivator log&#xD;
+[xUnit.net 00:00:21.14]         INFO: Registered provider ch.qos.logback.classic.spi.LogbackServiceProvider of service org.slf4j.spi.SLF4JServiceProvider in bundle ch.qos.logback.classic&#xD;
+[xUnit.net 00:00:21.14]         &#xD;
+[xUnit.net 00:00:21.14]         Owned-process result: started=True; killRequested=True; waitCompleted=False; exitCode=&lt;unobserved&gt;; disposeCompleted=False.&#xD;
+[xUnit.net 00:00:21.14]         Cleanup was not confirmed; preserving diagnostic source/state at C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-3d4d623def224618b2e11f90382b10d8.&#xD;
+[xUnit.net 00:00:21.15]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-05T23:05:41.4446142+08:00">
+        <Text>[xUnit.net 00:00:21.14]     Vulgata.Tests.AnalysisRuntime.PreparedJdtLsDedicatedQualificationTests.DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-05T23:05:41.5913660+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

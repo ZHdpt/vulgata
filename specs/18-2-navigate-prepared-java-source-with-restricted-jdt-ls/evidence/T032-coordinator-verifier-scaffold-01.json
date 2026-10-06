@@ -1,0 +1,19 @@
+{
+  "kind": "analysis",
+  "summary": "Local existing-interface integration scaffold only: registry implements existing current and disposition verifier methods with false. Test author will compile seam and observe required behavioral RED, not missing-type failure.",
+  "source_commit": "261d9b151b8ec2932967c0f0edcb48f972e258ed",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "80f1c3b62f6c25838999fc0e3492e80d7851d8a2909e83eb7537d77af2325c2f"
+  },
+  "verification_route": "declaration-only direct inspection; behavioral RED pending",
+  "contract_decision": "Existing internal ownership verifier signature unchanged; producer-local registry wiring within accepted plan and approval. No new shared descriptor/reader/schema.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

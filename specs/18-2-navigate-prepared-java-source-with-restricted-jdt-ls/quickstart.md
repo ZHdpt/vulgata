@@ -1,0 +1,104 @@
+# Story 18.2 Validation Guide
+
+> **Current correction (2026-10-02):** The former workflow is stopped. Use the appended
+> immediate-objective correction and [correction status](immediate-objective-correction.md).
+> Earlier scope/items remain preserved; old unchecked tasks are [SKIP]. Implementation
+> and native execution remain paused; old approvals do not authorize the new path.
+
+Use `spec.md`, `contracts/navigation-tool.md` and `data-model.md` as expected behavior. Execute the scenarios under the accepted task ownership, resource authorization and verification gates.
+
+## Preconditions
+
+1. Use the integrated, verified Story 18.1 `PreparedSourceApproval` and current-authority verifier; preserve its issuer/context/functions unchanged. The in-place `.codegraph` state operation is a changed architecture/tool authority: obtain fresh independent plan review and planned-change authorization before correcting tasks, then complete-definition review and implementation approval before the shared production edit. Authorize and verify the 18.2-owned shared trusted-workspace checkpoint separately before 18.3 consumption.
+2. Establish explicitly owned fixture directories and disposable process/state resources. Resolve JDT-LS and Java from ordered running-host `PATH` entries using exact supported names, reject an untrusted first match without falling through, pin canonical absolute path/file identity/digest and recheck immediately before launch. The first observed `jdtls.bat` is a user-owned writable shim invoking Python from another checkout; the first observed Java is JDK 17, while the pinned JDT server's compatibility still requires verification. These static observations do not authorize adopting that child chain, a later command, a PATH edit or a native start. Do not use a config-file executable override, user-profile fallback or `.env`/`JDT_LS_BIN`. If command visibility/trust blocks qualification, report the specific prerequisite and keep the real runtime closed.
+3. Before any native launch, qualify an actual OS-enforcing child profile: selected prepared root read-only; separate writable `-data`, configuration, redirected profile/TEMP/TMP; no unrelated host read or write except declared JDT/Java runtime inputs; constrained fixed `cmd.exe`, script, Java and permitted descendants. A Windows LPAC is a candidate only after owned state, transitive runtime access and host resource permissions are established. A path lease, caller bool, recording launcher, startup flag or job object alone is insufficient. Send fixed `java.import.maven.enabled=false`, `java.import.gradle.enabled=false`, `java.autobuild.enabled=false`, `java.configuration.updateBuildConfiguration="disabled"`, Maven/Gradle offline true, Gradle wrapper false and Maven source/snapshot download false on the pinned server's effective initialization/configuration path; inspect serialized settings and confirm actual no-import/no-build/no-restore behavior separately.
+4. For controlled T010/T011/T013/T018 verification, construct the October `PreparedJavaNavigationContextFactory` with trusted profile and injected fake `IPreparedJdtLsRuntime`; supply an already issued current `JdtNavigation` lease. For navigation eligibility, use its internal trusted constructor with the current exact application-held workspace binding, existing coordinator and controlled durable store; the retained two-argument constructor alone cannot enable production navigation. Check `Opened` gives one context and failures give none. Make the fake acquire a partial resource then throw/cancel before returning: assert the fake runtime itself cleans it, while the factory maps status and frees its slot. A typed unconfirmed-cleanup failure or unexpected exception yields `CleanupUnconfirmed`/null context and an unavailable slot; a second open must not invoke runtime, and any Worker projection is empty `ConfigurationUnavailable`. Make the fake return a session before a later factory validation/cancellation failure: assert the factory disposes that returned session. On successful handoff, assert context disposal settles the session, then the caller disposes its separate lease. Record zero real process starts. Keep production-capable runtime composition fail-closed until accepted trusted-PATH/process-profile work; never substitute legacy `JdtLsAnalysisSessionFactory.OpenAsync(AnalysisScope)`. A fake cannot establish real JDT `rootUri`, `-data`/configuration or restricted settings; check those through observable production-runtime behavior at T022–T024.
+5. Exercise the accepted internal `UseContainedRootAsync` callback with current JDT purpose and a separate CodeGraph-purpose lease. Prove JDT state root remains outside the prepared root. Create the owned `.codegraph` entry and show its expected parent-directory last-write change does not close either purpose's otherwise current lease; replace the root object and show both close. This is stable root-object verification, not a source-byte unchanged claim. Pass literal JSON-decoded raw protocol location strings before `System.Uri` construction: admit a canonical contained `file:` URI and reject device/extended-length, UNC, query/fragment, non-file, outside, encoded-traversal/syntax and symlink-escaping strings. A constructed `Uri` does not qualify the device case. Check wrong purpose, revoked/unavailable approval, expired/disposed lease, root replacement and callback cancellation. Only sanitized status and relative locations leave; changed authority discards buffered mappings. This is controlled lease/URI evidence, not process isolation or real JDT navigation.
+6. After affected plan/approval gates, use the implemented fixed `SourceStorage/.prepared-codegraph-ownership` file-CAS store, but qualify its production root, no-follow placement, host ACL/mount protection and restart readback; T029's fixture lock/CAS pass does not establish those facts. Its bytes must be inaccessible through model-visible Worker tools but are not claimed OS-inaccessible to the pinned native CodeGraph child; without protected production composition the capability stays unavailable. In an explicitly dedicated managed workspace, have the coordinator atomically persist `Creating` from an `Absent` draft before any root mutation, exclusively create `.codegraph`, observe its entry identity and persist `Ready` with that non-null identity before callback/use. Verify later lease and `GetOwnershipViewAsync` return the same current checked Ready record only as VerifiedOwned, a positively verified absent/unowned binding as VerifiedUnowned, and store/authority/transition uncertainty as Unavailable; actual CodeGraph use also requires current tool-purpose authority. Story 18.3 consumes these states without a second descriptor. Simulate preexisting/foreign entry, competing create, create-to-commit authority loss, failed/unknown persistence and restart with `Creating`; these must not adopt by name or yield a ready binding. Verify contained descendant operation and unchanged source/unrelated bytes. At disposition, stop grants/settle child/handles, inject the existing source-current/tool-purpose and owner/readiness verifiers, pass a matching trusted current approval, persist `Disposing` before deletion, recheck exact source/CodeGraph/owner/entry before each bounded chunk and authority/root/absence afterward, then require durable `Removed` readback before success. Simulate failed terminal commit, restart in `Disposing`, revoked/unavailable authority, mismatched approval, root/entry replacement, traversal, reparse/hardlink, sibling mutation, active child/handle and partial cleanup; all remain unavailable/quarantined without a by-name retry. Verify an unowned same-name source entry never yields a positive binding. This qualifies application ownership operations only. Story 18.3 separately owns reader/continuation repair, observed native write-footprint readiness and residual external/network risk reporting under its direct-child exception.
+7. For affected T014–T017, test the JDT consumer of that **same** view with a current exact fixture binding. A request descending from the physical Ready entry must stop before any protocol call; a request inside a positively `VerifiedUnowned` same-name directory must reach the recording protocol. Map raw returned URIs through the held-root mapper and exclude only locations whose first-entry object identity matches the current Ready record. A same-name unowned source location remains visible. A null/mismatched binding, absent store, `Unavailable` view, substituted entry, stale Ready version or approval loss produces no protocol call or no payload. Transition from VerifiedUnowned to owned while a call is in flight, or change the owned version before disclosure: discard all buffered locations/counts/limits rather than reporting an empty semantic result. Repeat with controlled cancellation. No additional reader descriptor or name-only filter satisfies these checks; 18.3 still owns ordinary list/read/search repair.
+
+8. For T031, construct `PreparedWorkspaceUseRegistry` directly with controlled exact current source/tool verifiers, the same store/fixed SourceStorage policy, fake host observation/verify-and-hold with a disposable root/metadata/mutex proof, controlled old-generation settlement verifier and positive trusted admission/disposition deadlines. Start Closed; call `AdmitAsync(binding, selectedPurpose, token)` on a controlled Absent or current Ready record and assert `Opened` only after positive authority, current ledger, protected non-null hold and independent old-resource settlement for fresh-process Ready. Denied, unavailable, timeout or cancelled checks dispose partial holds and leave Closed. Then call `BeginBorrowAsync` directly, register controlled JDT/18.3 leases and live child/protocol/call/handle probes, latch `CloseForDispositionAsync` and prove no new issue/borrow, no success on active/unknown resources, and fresh exact CodeGraph-purpose authority still checked during cleanup. Same-process Absent→Creating→Ready must keep immutable key with monotonic loaded version; a restarted Ready with empty tracking or reacquired mutex stays Unknown. This fake test is behavioral registry evidence, not selected-host or native qualification.\n9. For T033 after registry GREEN, exercise `PreparedManagedWorkspaceBindingSource.BindAsync` from trusted operator admission with the exact 18.1 grant/current source and separate tool-purpose verifier. `ObserveAsync` only derives owner/root lookup fields; the binding source must call registry `AdmitAsync`, whose `VerifyAndHoldAsync` rechecks protected root/metadata/mutex before `Bound`. Match the fixed protected SourceStorage ledger and existing typed record; deny caller owner strings/flags, wrong root/approval, uninitialized/corrupt metadata, reparse or metadata reachable through ordinary Worker tools. Actual selected-host ACL/mount and 18.3 pinned-child settlement need separate qualification; parent PID exit or MCP disposal alone does not pass. Keep default Web composition file-only until all production inputs and JDT's separate restricted profile are qualified.
+
+## Fixture-first qualification
+
+1. Prepare a small owned Java Repository with a declaration and caller; note expected definition and reference locations. Issue the trusted workspace lease with exact 18.1 approval plus separate `JdtNavigation` purpose, then exercise the production Worker navigation interface.
+2. Record actual definition and reference protocol outcomes and relative locations. Record observed classpath/capability limits and compare source before/after for writes. Initialization alone is not a pass.
+3. Exercise missing verifier/tool authorizer, wrong tool purpose, foreign/traversing/symlink input and out-of-root returned URI; verify withheld locations and no outside-root disclosure. Revoke/change approval or make either verifier unavailable at issuance, during use and immediately before disclosure with multiple buffered requests. Verify every response releases zero payload and the closed lease cannot resume without new issuance. Exercise overlap, cancellation, timeout, readiness failure, failed navigation and owned cleanup without touching unrelated processes.
+4. Confirm 18.1 file tools remain independently available under their own grant when JDT-LS is limited, and do not mark CodeGraph satisfied by that fallback.
+5. For T022, construct the actual October `PreparedJdtLsRuntime` with recording internal resolver, OS-launcher and protocol dependencies; do not merely use a factory fake or historical `AnalysisScope` launcher. Observe the typed whole-root launch request, separate state paths, fixed child environment, serialized `rootUri`/matching `workspaceFolders` and fixed settings. In an owned controlled PATH fixture, put a source/tool-state candidate before a trusted one and exercise empty/relative/current-directory entries, duplicate JDT names, reparse/wrong-type/unapproved or child-writable directory, candidate replacement, unsafe fixed interpreter/child PATH and cancellation. Unsafe first matches cause zero launcher calls and no later fallback. Recording dependencies prove construction and selection only; T023 needs an OS-enforcing launcher/probe and T024 needs real JDT settings, useful navigation and source/host-access observations under separately authorized native execution.
+
+## Prepared Repository follow-up
+
+After the prepared registration/login Repository is actually supplied and access is authorized, repeat representative definition/reference navigation with its real grant and declared profile. Report fixture and prepared-Repository outcomes separately; neither proves universal Java completeness. If direct-root operation writes source, escapes the process profile or useful navigation is impossible under the restricted profile, stop and return a design finding for architecture review rather than copying or changing the input.
+
+## Evidence limits
+
+Controlled fakes verify tool seams and failure handling; a real JDT-LS run through host `PATH` verifies this host/profile. Record exact source/profile and result classifications. The 18.2 shared-workspace checkpoint must prove both its JDT-independent root binding and the newly approved purpose-bound owned-state contract before authorized 18.3 consumption; it does not qualify native CodeGraph effects, preventive child isolation or the reader repair. Preserve static, controlled-test and real runtime evidence distinctions under `docs/agents/testing.md`. For Windows native traversal failures, apply `docs/project-lessons.md`: compare launcher permission modes and native status before changing containment code.
+
+
+## Immediate-objective correction validation — 2026-10-02
+
+This guide is for a later separately authorized run. It grants no implementation,
+JDT/Java/interpreter launch, host ACL/PATH/profile change or provider/database access.
+See [dedicated contract](contracts/dedicated-jdt-navigation.md) and active T037–T047.
+
+1. Obtain explicit dedicated-JDT boundary/exception and owned native-fixture execution
+   authority. Record current first host PATH candidates, actual chain/version/digests,
+   principal and permitted root/state. If unsupported or invisible, stop without
+   fallback. Do not substitute CodeGraph approval or the test-only shortened PATH.
+2. Reuse/create an owned prepared Java fixture with known declaration/caller anchors,
+   and an owned state root outside source. Use a dependency-free case; if server needs
+   Eclipse project metadata, keep it declared within the owned fixture, with no Maven/
+   Gradle import/build/restore. Record all source/config/hook bytes before launch.
+3. Application issues matching JdtNavigation lease, constructs trusted dedicated
+   factory/profile, opens the whole root and requires real initialization. Failure
+   returns a sanitized null-context status; collect logs without changing assertions.
+4. Build existing PreparedJavaNavigationFunctions from the returned context. Invoke
+   both actual AIFunctions at declared fixture positions; assert useful expected
+   declaration/reference anchors and Repository-relative locations, not merely nonempty
+   output or an empty-result success. No LLM/provider call is required.
+5. Observe configured no-import/no-build/no-restore profile, whole root and external
+   data/config/temp/profile; compare fixture bytes afterward. Report actual server gaps
+   and residual host/network rights; neither settings nor checksums prove isolation.
+6. Dispose context then lease; require bounded owned protocol/process shutdown/exit.
+   Confirm no unrelated process was terminated and no owned live child remains. Unknown
+   cleanup stays quarantined and is reported; never delete uncertain/general state.
+
+Future standard controlled command: `pwsh -NoProfile -File eng/test.ps1`.
+Future authorized real-fixture command:
+`pwsh -NoProfile -File eng/test.ps1 -Suite LocalTools -Filter FullyQualifiedName~PreparedJdtLsDedicatedQualificationTests`.
+The new test must be suite-classified before execution. No run occurred in this correction.
+Preserve the existing 2144/2145 SelfContained result and legacy CodeGraph PATH failure;
+its separate environment/owner decision is not permission to delete/skip a failing test.
+
+
+## Authorized execution update — 2026-10-05
+
+The human has authorized JDT-LS execution within this story, including the explained
+trusted-child residual rights and first-PATH Python bootstrap. Phase 9 evidence records
+the actual chain and owned fixture/state. This supersedes the earlier pause for
+T037–T047 only. Run real JDT qualification explicitly in LocalTools; default
+SelfContained excludes native JDT starts. Fixed test-only short PATH may be reused
+for controlled tests, but native qualification must use the actual host PATH for
+first-match selection. No host PATH/ACL edits or old skipped-task resumption.
+
+
+## Actual October 5 checkpoint
+
+Dedicated JDT controlled cases are LocalTools (107/107); basic SelfContained is
+2063/2063. The legacy CodeGraph test passed with unmodified running-host PATH; its
+earlier short-PATH failure and initial CLR build crash remain recorded separately.
+
+The real first-PATH Java 27 / JDT 1.58 chain starts and cleans up, but initialization
+fails with `Unsupported class file major version 71` in ASM/weaving/m2e. This is a
+compatibility blocker, not navigation qualification. Keep the failing public-factory
+test. The diagnostic method is a capture/cleanup probe and cannot substitute for it.
+After a compatible runtime is supplied, use the exact acceptance selection:
+
+```powershell
+pwsh -NoProfile -File eng/test.ps1 -Suite LocalTools -Filter 'FullyQualifiedName~OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess'
+```
+
+Keep the live workspace grant within its existing 30-second limit; source-only root,
+separate state, physical pins/alias rechecks, offline settings and bounded cleanup
+remain required. No machine PATH edits, silent Java fallback or cache adoption.

@@ -1,0 +1,43 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED through public tracked issuer: CodeGraph preparation lease issued on admitted Absent workspace enters live contained-root callback, but registry closure does not report required Active. Declaration scaffold ignores registration. Callback, leases and registry are released/observed in finally; post-close issuance also measured.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "construction_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T032-tracked-issuer-construction-scaffold-01.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "3f7213f396cb90ba589fb4241ae95f2a3ad5094eb2864674bb95f90cf8bfc9bb",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "b934528a1954e89e6d17c01f8913eaca3354ae4245bf1a80449d0dcccc452f3e",
+    "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs": "a2654397b4776b5fda7d66457c8261aadc2168219d52b0af634f1821df93837c"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "result": {
+    "path": "TestResults/isolation-c15e06880f41441d990f86a3043218a6/results.trx",
+    "sha256": "dd2c37e431b7d75f159237e987d0c3c1180cbb9464bb1fc1c10134fcf657d72a",
+    "selected": 36,
+    "passed": 35,
+    "failed": 1,
+    "skipped": 0
+  },
+  "raw_failure_messages": [
+    "A tracked CodeGraph preparation lease stays active while its contained root operation is live."
+  ],
+  "observation": "CloseForDisposition must be Active while actual contained callback and lease handles remain live; test line1751 failed that expected enum condition.",
+  "build": {
+    "path": "TestResults/isolation-c15e06880f41441d990f86a3043218a6/build.log",
+    "sha256": "923a9bf4cee18ccc4296c110ee3962b5fe2a23b6dd3b58c0eaf15dd8505c002e",
+    "result": "passed"
+  },
+  "classification": "Product behavior RED, not environment denial: callback entered, build succeeded and35 neighboring tests passed.",
+  "resources": "Owned local lease/source handle and controlled registry host/store only; no native tool/actual Windows protection qualification.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

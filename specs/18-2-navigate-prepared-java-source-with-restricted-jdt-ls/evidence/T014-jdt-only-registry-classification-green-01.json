@@ -1,0 +1,41 @@
+{
+  "kind": "analysis",
+  "summary": "Minimal GREEN: ownership classification uses bounded current source/owner/store/held proof independently of CodeGraph-purpose grant. Jdt-only bound factory opens, maps one ordinary same-name source location; public CodeGraph issuance remains denied/null without separate grant. Actual mutation/borrow/closure/disposition keep fresh CG authorization.",
+  "task_ids": [
+    "T014",
+    "T015",
+    "T031",
+    "T032"
+  ],
+  "verification_route": "behavioral RED/GREEN",
+  "source_commit": "c2fd2d56e73d054bd9b1a8a7df2051dce44d8408",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "faad0d65f5d958faaa5d0ca658e1ee4ac76f887019455020d840dc1fdc765943",
+    "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs": "55dc56c50948c68be241669cd35408c24f534662fdfec393b6604466b370e5a4"
+  },
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T014-jdt-only-registry-classification-red-01.json",
+  "minimal_green": {
+    "path": "TestResults/isolation-09ae83b3ea684e87a1a600e683f535df/results.trx",
+    "sha256": "a25713c1381604fe1aec73b6e48396b05fc303a51404da54ed8421ee2d8320a9",
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "build": {
+      "path": "TestResults/isolation-09ae83b3ea684e87a1a600e683f535df/build.log",
+      "sha256": "a1c9e47cab6389b9f6644afb4bf5500d3f8f9936831496658e99dfda9ea2a60c"
+    }
+  },
+  "final_shape": "Local current-source helper extraction separates source classification from purpose authorization within existing interface and accepted scope; production owner assessed affected units, no further refactor needed.",
+  "remaining": [
+    "independent surrounding JDT/Source verification",
+    "unowned-to-owned buffered-reply eligibility change coverage",
+    "pending human Windows fixture execution permission",
+    "actual native/binding/later gates"
+  ],
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

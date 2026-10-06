@@ -1,0 +1,39 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": [
+    "T005",
+    "T006"
+  ],
+  "observed_at": "2026-09-29T09:56:26.799840Z",
+  "production_path": "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs",
+  "production_sha256": "6c85e57f7029d0f580215ef37912bc230a3600202940bbc6edc9da5ca3c6c6e4",
+  "focused_command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedToolWorkspaceIssuerTests",
+  "launcher": "approved native launcher",
+  "exit_code": 0,
+  "selected": 2,
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-91c5bce4b7b64e74891a6903a036596b/results.trx",
+  "trx_sha256": "3c452c5126fcd404613dcebb1b76d834d863ea1b185a4fd9da702005f698afd3",
+  "final_shape": "Issuer handles issuance; lease handles current-use/lifetime. Exact source and tool-purpose rechecked per use; authority loss latches closed and disposes held root, observed root identity, deadline/cancellation/disposal; no JDT coupling or 18.1 change. No refactor needed for current slice. Further T005 cases and T007 surrounding/final verification remain.",
+  "minimal_green": {
+    "trx_path": "TestResults/isolation-91c5bce4b7b64e74891a6903a036596b/results.trx",
+    "trx_sha256": "3c452c5126fcd404613dcebb1b76d834d863ea1b185a4fd9da702005f698afd3",
+    "selected": 2,
+    "passed": 2
+  },
+  "final_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedToolWorkspaceIssuerTests",
+    "launcher": "approved native launcher",
+    "exit_code": 0,
+    "selected": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-cf09decc8b554dd8822743d660b1a3a8/results.trx",
+    "trx_sha256": "b4600db6ebdfcdde759183adc815c68f25b6ef771061d72bae288bfdaa260f62"
+  },
+  "local_refactor": "Final-shape safety correction rechecked deadline and cancellation after observed-root identity before returning Current; no public contract change. Final focused native GREEN 2/2."
+}

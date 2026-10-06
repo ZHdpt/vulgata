@@ -1,0 +1,12 @@
+{
+  "kind": "analysis",
+  "summary": "Controlled current-Ready borrow lifecycle independently verified: ticket is registered before simulated start, Active blocks settlement, and Settled probe plus ticket disposal permits closure. Final PreparedSource178/178 passed. No exclusivity, host/native qualification or complete T032 claim.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-ready-borrow-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-0b9227f4f88f47778adc1aa61865b2e4/results.trx", "sha256": "27d08838a7912b58dc9ce55a6d26c3ca97b916bed927709908eb38c1c41ee5fb", "passed": 3, "failed": 0, "skipped": 0},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedSource'", "path": "TestResults/isolation-c73c5411097746b68832d55617683222/results.trx", "sha256": "cfc189e6f3298df9195692d8a22cc92dbf9c69e5137f55bbcedd80c51836716a", "passed": 178, "failed": 0, "skipped": 0, "build_sha256": "49088946e392051d08b4f431474bb5f42812f4a7758bfba4b570bec8f8e5ad5d"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "188d8a0f093664426051338e31f3d04201711da46c76273bf67cbc48615b4bb6", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "3c8313cbe178993ba31fd93ce59c0e43df34a80f4c9346721f0b6d5dc4300c8b", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Tickets and owned probes tracked under gate; Closing latches before current CodeGraph authority/store/hold checks. No concrete bounded-slice refactor needed.", "test": "Complete controlled unit assessed independently; public closure observes settlement, no invented exclusivity, no refactor needed."},
+  "unfinished": "Monotonic Absent-to-Ready, cross-purpose sharing, issuer/coordinator registration, full Dispose settlement and held lifetime through terminal readback, actual Windows adapter RED/GREEN, selected-host/native and prepared Repository qualification.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

@@ -1,12 +1,17 @@
 using System.Diagnostics;
+using Microsoft.Win32.SafeHandles;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Buffers.Binary;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json.Linq;
 using NewtonsoftJsonFormatting = Newtonsoft.Json.Formatting;
 using StreamJsonRpc;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Git;
+using Vulgata.Infrastructure.Source;
 
 namespace Vulgata.Infrastructure.Analysis.Java;
 
@@ -64,6 +69,1399 @@ internal interface IJdtLsProcess : IAsyncDisposable
     Task<int> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken);
 
     Task KillTreeAsync(CancellationToken cancellationToken);
+}
+
+internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
+{
+    private readonly IPreparedJdtCommandResolver _commands;
+    private readonly IPreparedJdtProcessLauncher _launcher;
+    private readonly IPreparedJdtProtocolFactory _protocols;
+    private readonly PreparedJdtHostPolicy _fixedHostPolicy;
+
+    internal PreparedJdtLsRuntime(
+        IPreparedJdtCommandResolver commands,
+        IPreparedJdtProcessLauncher launcher,
+        IPreparedJdtProtocolFactory protocols,
+        PreparedJdtHostPolicy fixedHostPolicy)
+    {
+        _commands = commands ?? throw new ArgumentNullException(nameof(commands));
+        _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
+        _protocols = protocols ?? throw new ArgumentNullException(nameof(protocols));
+        _fixedHostPolicy = fixedHostPolicy ?? throw new ArgumentNullException(nameof(fixedHostPolicy));
+    }
+
+    public async Task<IPreparedJdtLsSession> OpenAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        PreparedJavaNavigationProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceLease);
+        ArgumentNullException.ThrowIfNull(profile);
+        if (workspaceLease.ToolPurpose != PreparedToolPurpose.JdtNavigation ||
+            profile.InitializationTimeout <= TimeSpan.Zero ||
+            profile.RequestTimeout <= TimeSpan.Zero ||
+            profile.ShutdownTimeout <= TimeSpan.Zero ||
+            profile.MaximumResponseBytes <= 0 ||
+            !Path.IsPathFullyQualified(profile.DisposableStateRoot))
+        {
+            throw new PreparedJdtLsOpenFailureException(
+                PreparedJavaNavigationOpenStatus.ConfigurationUnavailable,
+                cleanupConfirmed: true);
+        }
+
+        IJdtLsProcess? process = null;
+        IPreparedJdtLsSession? initialized = null;
+        Task<IJdtLsProcess>? pendingLaunch = null;
+        Task<IPreparedJdtLsSession>? pendingInitialization = null;
+        var pinnedFiles = new List<FileStream>();
+        using var timeout = new CancellationTokenSource(profile.InitializationTimeout);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, timeout.Token);
+        try
+        {
+            string? root = null;
+            PreparedToolDirectoryObjectIdentity? rootIdentity = null;
+            bool separateState = false;
+            PreparedToolWorkspaceCheckStatus scopeStatus = await workspaceLease.UseContainedRootAsync(
+                PreparedToolPurpose.JdtNavigation,
+                (scope, _) =>
+                {
+                    root = scope.GetPhysicalRootPathForTrustedToolBinding();
+                    rootIdentity = scope.ObserveRootObjectIdentity();
+                    separateState = scope.IsSeparateDisposableStateRoot(profile.DisposableStateRoot);
+                    return ValueTask.CompletedTask;
+                },
+                linked.Token);
+            if (scopeStatus != PreparedToolWorkspaceCheckStatus.Current ||
+                root is null || rootIdentity is null || !separateState)
+            {
+                throw new InvalidOperationException("jdt_root_unavailable");
+            }
+
+            string stateRoot = Path.GetFullPath(profile.DisposableStateRoot);
+            PreparedJdtCommandResolution resolution = await _commands.ResolveAsync(
+                new PreparedJdtCommandRequest(
+                    Environment.GetEnvironmentVariable("PATH") ?? string.Empty,
+                    root,
+                    stateRoot,
+                    _fixedHostPolicy),
+                linked.Token).WaitAsync(linked.Token);
+            if (resolution.Status != PreparedJdtCommandResolutionStatus.Pinned ||
+                resolution.Commands is not { } commands)
+            {
+                throw new InvalidOperationException("jdt_command_unavailable");
+            }
+
+            PreparedToolWorkspaceCheckStatus finalScope = await workspaceLease.UseContainedRootAsync(
+                PreparedToolPurpose.JdtNavigation,
+                (scope, _) =>
+                {
+                    if (scope.ObserveRootObjectIdentity() != rootIdentity ||
+                        !string.Equals(scope.GetPhysicalRootPathForTrustedToolBinding(),
+                            root, StringComparison.OrdinalIgnoreCase) ||
+                        !scope.IsSeparateDisposableStateRoot(stateRoot))
+                    {
+                        rootIdentity = null;
+                    }
+
+                    return ValueTask.CompletedTask;
+                },
+                linked.Token);
+            if (finalScope != PreparedToolWorkspaceCheckStatus.Current || rootIdentity is null ||
+                !PreparedJdtCommandResolver.ConfiguredJavaMatches(commands, _fixedHostPolicy) ||
+                !PreparedJdtCommandResolver.AliasesCurrent(
+                    commands, _fixedHostPolicy, root, stateRoot) ||
+                !TryPinCommands(commands, pinnedFiles))
+            {
+                throw new InvalidOperationException("jdt_pin_unavailable");
+            }
+
+            string rootUri = new Uri(root.TrimEnd(Path.DirectorySeparatorChar) +
+                Path.DirectorySeparatorChar).AbsoluteUri;
+            string dataPath = Path.Combine(stateRoot, "data");
+            string configurationPath = Path.Combine(stateRoot, "configuration");
+            var childEnvironment = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["PATH"] = string.Join(Path.PathSeparator, _fixedHostPolicy.FixedChildPathEntries),
+                ["TEMP"] = Path.Combine(stateRoot, "temp"),
+                ["TMP"] = Path.Combine(stateRoot, "temp"),
+                ["USERPROFILE"] = Path.Combine(stateRoot, "profile"),
+                ["APPDATA"] = Path.Combine(stateRoot, "profile"),
+                ["PYTHONDONTWRITEBYTECODE"] = "1",
+            };
+            var launch = new PreparedJdtLaunchRequest(
+                root,
+                rootIdentity,
+                rootUri,
+                dataPath,
+                configurationPath,
+                commands,
+                ["-data", dataPath, "-configuration", configurationPath],
+                childEnvironment,
+                _fixedHostPolicy);
+            bool launchRootCurrent = false;
+            PreparedToolWorkspaceCheckStatus launchScope =
+                await workspaceLease.UseContainedRootAsync(
+                    PreparedToolPurpose.JdtNavigation,
+                    (scope, _) =>
+                    {
+                        launchRootCurrent = scope.ObserveRootObjectIdentity() ==
+                                launch.RootIdentity &&
+                            string.Equals(scope.GetPhysicalRootPathForTrustedToolBinding(),
+                                launch.CanonicalPreparedRoot, StringComparison.OrdinalIgnoreCase) &&
+                            scope.IsSeparateDisposableStateRoot(stateRoot);
+                        return ValueTask.CompletedTask;
+                    },
+                    linked.Token);
+            if (launchScope != PreparedToolWorkspaceCheckStatus.Current || !launchRootCurrent)
+            {
+                throw new InvalidOperationException("jdt_prelaunch_authority_unavailable");
+            }
+
+            pendingLaunch = _launcher.LaunchAsync(workspaceLease, launch, linked.Token);
+            process = await pendingLaunch.WaitAsync(linked.Token);
+            if (process is null)
+            {
+                throw new InvalidOperationException("jdt_process_unavailable");
+            }
+
+            pendingInitialization = _protocols.InitializeAsync(
+                process,
+                new PreparedJdtInitializeRequest(
+                    rootUri, rootUri, "repository", FixedOfflineSettings(),
+                    profile.MaximumResponseBytes, profile.ShutdownTimeout),
+                linked.Token);
+            initialized = await pendingInitialization.WaitAsync(linked.Token);
+            if (initialized is null ||
+                await workspaceLease.CheckCurrentAsync(linked.Token) !=
+                    PreparedToolWorkspaceCheckStatus.Current)
+            {
+                throw new InvalidOperationException("jdt_initialization_unavailable");
+            }
+
+            return new OwnedPreparedJdtLsSession(
+                initialized, process, pinnedFiles.ToArray(), profile.ShutdownTimeout);
+        }
+        catch (Exception exception)
+        {
+            bool pendingUnconfirmed = false;
+            bool pinsTransferred = false;
+            if (pendingLaunch is not null && process is null)
+            {
+                try
+                {
+                    process = await pendingLaunch.WaitAsync(profile.ShutdownTimeout);
+                }
+                catch (TimeoutException)
+                {
+                    pendingUnconfirmed = true;
+                    pinsTransferred = true;
+                    _ = SettleLateLaunchAsync(pendingLaunch, pinnedFiles.ToArray(),
+                        profile.ShutdownTimeout);
+                }
+                catch (Exception)
+                {
+                    // A completed failed launch returned no process to settle.
+                }
+            }
+
+            if (pendingInitialization is not null && initialized is null)
+            {
+                try
+                {
+                    initialized = await pendingInitialization.WaitAsync(profile.ShutdownTimeout);
+                }
+                catch (TimeoutException)
+                {
+                    pendingUnconfirmed = true;
+                    pinsTransferred = true;
+                    _ = SettleLateInitializationAsync(pendingInitialization,
+                        pinnedFiles.ToArray(), profile.ShutdownTimeout);
+                }
+                catch (Exception)
+                {
+                    // A completed failed initialization returned no session.
+                }
+            }
+
+            bool settled = await SettleAsync(initialized, process, profile.ShutdownTimeout);
+            if (!pinsTransferred)
+            {
+                DisposePins(pinnedFiles);
+            }
+
+            PreparedJavaNavigationOpenStatus status = cancellationToken.IsCancellationRequested
+                ? PreparedJavaNavigationOpenStatus.Cancelled
+                : timeout.IsCancellationRequested
+                    ? PreparedJavaNavigationOpenStatus.DeadlineExceeded
+                    : exception is PreparedJdtLsOpenFailureException failure
+                        ? failure.Status
+                        : PreparedJavaNavigationOpenStatus.ConfigurationUnavailable;
+            throw new PreparedJdtLsOpenFailureException(
+                status,
+                settled && !pendingUnconfirmed &&
+                (exception is not PreparedJdtLsOpenFailureException prior ||
+                    prior.CleanupConfirmed));
+        }
+    }
+
+    private static async Task SettleLateLaunchAsync(
+        Task<IJdtLsProcess> pendingLaunch,
+        FileStream[] pinnedFiles,
+        TimeSpan shutdownTimeout)
+    {
+        try
+        {
+            IJdtLsProcess? lateProcess = await pendingLaunch;
+            _ = await SettleAsync(null, lateProcess, shutdownTimeout);
+        }
+        catch (Exception)
+        {
+            // The failed launcher returned no process; this path never attests cleanup.
+        }
+        finally
+        {
+            DisposePins(pinnedFiles);
+        }
+    }
+
+    private static async Task SettleLateInitializationAsync(
+        Task<IPreparedJdtLsSession> pendingInitialization,
+        FileStream[] pinnedFiles,
+        TimeSpan shutdownTimeout)
+    {
+        try
+        {
+            IPreparedJdtLsSession? lateSession = await pendingInitialization;
+            _ = await SettleAsync(lateSession, null, shutdownTimeout);
+        }
+        catch (Exception)
+        {
+            // The failed protocol factory returned no session; cleanup was unconfirmed.
+        }
+        finally
+        {
+            DisposePins(pinnedFiles);
+        }
+    }
+
+    private static void DisposePins(IEnumerable<FileStream> pinnedFiles)
+    {
+        foreach (FileStream pinnedFile in pinnedFiles)
+        {
+            pinnedFile.Dispose();
+        }
+    }
+
+    private static IReadOnlyDictionary<string, object> FixedOfflineSettings() =>
+        new Dictionary<string, object>
+        {
+            ["java"] = new
+            {
+                import = new
+                {
+                    maven = new { enabled = false, offline = new { enabled = true } },
+                    gradle = new
+                    {
+                        enabled = false,
+                        offline = new { enabled = true },
+                        wrapper = new { enabled = false },
+                    },
+                },
+                autobuild = new { enabled = false },
+                configuration = new { updateBuildConfiguration = "disabled" },
+                maven = new { downloadSources = false, updateSnapshots = false },
+                project = new { resourceFilters = Array.Empty<string>() },
+            },
+        };
+
+    internal static bool TryPinCommands(
+        PreparedJdtPinnedCommands commands,
+        List<FileStream> pinnedFiles)
+    {
+        return TryPinFile(commands.JdtCommand, pinnedFiles) &&
+            TryPinFile(commands.JavaCommand, pinnedFiles) &&
+            (commands.FixedInterpreter is null ||
+                TryPinFile(commands.FixedInterpreter, pinnedFiles)) &&
+            (commands.PythonCommand is null ||
+                TryPinFile(commands.PythonCommand, pinnedFiles)) &&
+            (commands.BootstrapScript is null ||
+                TryPinFile(commands.BootstrapScript, pinnedFiles)) &&
+            (commands.RuntimeInputs is null ||
+                commands.RuntimeInputs.All(pin => TryPinFile(pin, pinnedFiles)));
+    }
+
+    private static bool TryPinFile(PreparedJdtPinnedFile pin, List<FileStream> pinnedFiles)
+    {
+        if (!Path.IsPathFullyQualified(pin.CanonicalAbsolutePath) ||
+            !string.Equals(Path.GetFullPath(pin.CanonicalAbsolutePath),
+                pin.CanonicalAbsolutePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        string? directory = Path.GetDirectoryName(pin.CanonicalAbsolutePath);
+        if (directory is null)
+        {
+            return false;
+        }
+
+        (PreparedSourceTraversal.OpenStatus directoryStatus, SafeFileHandle? heldDirectory) =
+            PreparedSourceTraversal.OpenRoot(directory);
+        using (heldDirectory)
+        {
+            if (directoryStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                heldDirectory is null)
+            {
+                return false;
+            }
+
+            (PreparedSourceTraversal.OpenStatus fileStatus, SafeFileHandle? heldFile) =
+                PreparedSourceTraversal.OpenRelativeFile(
+                    heldDirectory, Path.GetFileName(pin.CanonicalAbsolutePath));
+            using (heldFile)
+            {
+                PreparedSourceTraversal.FileIdentity? observed = heldFile is null
+                    ? null : PreparedSourceTraversal.ObserveFile(heldFile);
+                if (fileStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                    observed is null ||
+                    new PreparedJdtFileIdentity(observed.VolumeSerialNumber,
+                        observed.FileIndexHigh, observed.FileIndexLow) != pin.FileIdentity)
+                {
+                    return false;
+                }
+
+                var stream = new FileStream(pin.CanonicalAbsolutePath,
+                    FileMode.Open, FileAccess.Read, FileShare.Read);
+                try
+                {
+                    PreparedSourceTraversal.FileIdentity? readIdentity =
+                        PreparedSourceTraversal.ObserveFile(stream.SafeFileHandle);
+                    if (readIdentity is null || readIdentity != observed ||
+                        !string.Equals(Convert.ToHexString(SHA256.HashData(stream)),
+                            pin.Sha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        stream.Dispose();
+                        return false;
+                    }
+
+                    pinnedFiles.Add(stream);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    stream.Dispose();
+                    throw;
+                }
+            }
+        }
+    }
+
+    private static async Task<bool> SettleAsync(
+        IPreparedJdtLsSession? initialized,
+        IJdtLsProcess? process,
+        TimeSpan shutdownTimeout)
+    {
+        bool settled = true;
+        bool gracefulShutdown = false;
+        using var deadline = new CancellationTokenSource(shutdownTimeout > TimeSpan.Zero
+            ? shutdownTimeout : TimeSpan.FromSeconds(1));
+        if (initialized is not null)
+        {
+            try
+            {
+                await initialized.DisposeAsync().AsTask().WaitAsync(deadline.Token);
+                gracefulShutdown = initialized is IPreparedJdtGracefulShutdownSession
+                    { ExitSent: true };
+            }
+            catch (Exception) { settled = false; }
+        }
+
+        if (process is not null)
+        {
+            bool exited = false;
+            if (gracefulShutdown)
+            {
+                try
+                {
+                    await process.WaitForExitAsync(
+                        GracefulShutdownSlice(shutdownTimeout), CancellationToken.None)
+                        .WaitAsync(deadline.Token);
+                    exited = true;
+                }
+                catch (Exception)
+                {
+                    // The owned process did not settle within the graceful slice.
+                }
+            }
+
+            if (!exited)
+            {
+                try { await process.KillTreeAsync(CancellationToken.None).WaitAsync(deadline.Token); }
+                catch (Exception) { settled = false; }
+                try
+                {
+                    await process.WaitForExitAsync(shutdownTimeout, CancellationToken.None)
+                        .WaitAsync(deadline.Token);
+                    exited = true;
+                }
+                catch (Exception) { settled = false; }
+            }
+            if (exited)
+            {
+                try { await process.DisposeAsync().AsTask().WaitAsync(deadline.Token); }
+                catch (Exception) { settled = false; }
+            }
+            else
+            {
+                settled = false;
+            }
+        }
+
+        return settled;
+    }
+
+    internal static TimeSpan GracefulShutdownSlice(TimeSpan shutdownTimeout) =>
+        TimeSpan.FromTicks(Math.Max(1, shutdownTimeout.Ticks / 3));
+
+    private sealed class OwnedPreparedJdtLsSession(
+        IPreparedJdtLsSession inner,
+        IJdtLsProcess process,
+        FileStream[] pinnedFiles,
+        TimeSpan shutdownTimeout) : IPreparedJdtLsSession
+    {
+        private int _disposed;
+
+        public Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default) =>
+            inner.NavigateAsync(operation, request, cancellationToken);
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            bool settled = await SettleAsync(inner, process, shutdownTimeout);
+            foreach (FileStream pinnedFile in pinnedFiles)
+            {
+                pinnedFile.Dispose();
+            }
+
+            if (!settled)
+            {
+                throw new TimeoutException("jdt_cleanup_unconfirmed");
+            }
+        }
+    }
+}
+
+internal interface IPreparedJdtCommandResolver
+{
+    Task<PreparedJdtCommandResolution> ResolveAsync(
+        PreparedJdtCommandRequest request,
+        CancellationToken cancellationToken);
+}
+
+internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
+{
+    private static readonly Regex PythonBootstrap = new(
+        "\\A\\uFEFF?@echo off\\r?\\npython \"(?<bootstrap>[^\"\\r\\n]+)\" %\\*\\r?\\n?\\z",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    public Task<PreparedJdtCommandResolution> ResolveAsync(
+        PreparedJdtCommandRequest request,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (request is null || string.IsNullOrWhiteSpace(request.HostPathSnapshot) ||
+            !Path.IsPathFullyQualified(request.PreparedRoot) ||
+            !Path.IsPathFullyQualified(request.DisposableStateRoot))
+        {
+            return Unavailable();
+        }
+
+        try
+        {
+            string preparedRoot = Path.GetFullPath(request.PreparedRoot)
+                .TrimEnd(Path.DirectorySeparatorChar);
+            string preparedPrefix = preparedRoot + Path.DirectorySeparatorChar;
+            string stateRoot = Path.GetFullPath(request.DisposableStateRoot)
+                .TrimEnd(Path.DirectorySeparatorChar);
+            string statePrefix = stateRoot + Path.DirectorySeparatorChar;
+            string[] pathEntries = request.HostPathSnapshot.Split(Path.PathSeparator);
+            for (int index = 0; index < pathEntries.Length; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                string entry = pathEntries[index];
+                if (!Path.IsPathFullyQualified(entry))
+                {
+                    return Unavailable();
+                }
+
+                string directory = Path.GetFullPath(entry).TrimEnd(Path.DirectorySeparatorChar);
+                bool executable = File.Exists(Path.Combine(directory, "jdtls.exe"));
+                bool batch = File.Exists(Path.Combine(directory, "jdtls.bat"));
+                if (!executable && !batch)
+                {
+                    continue;
+                }
+
+                bool insidePreparedRoot =
+                    string.Equals(directory, preparedRoot, StringComparison.OrdinalIgnoreCase) ||
+                    directory.StartsWith(preparedPrefix, StringComparison.OrdinalIgnoreCase);
+                bool insideDisposableStateRoot =
+                    string.Equals(directory, stateRoot, StringComparison.OrdinalIgnoreCase) ||
+                    directory.StartsWith(statePrefix, StringComparison.OrdinalIgnoreCase);
+                if (insidePreparedRoot || insideDisposableStateRoot || executable && batch || executable ||
+                    !IsApprovedDirectory(directory, request.FixedHostPolicy.ApprovedExecutableDirectories))
+                {
+                    return Rejected();
+                }
+
+                string batchPath = Path.Combine(directory, "jdtls.bat");
+                Match match = PythonBootstrap.Match(File.ReadAllText(batchPath));
+                if (!match.Success || !Path.IsPathFullyQualified(match.Groups["bootstrap"].Value))
+                {
+                    return Rejected();
+                }
+
+                string bootstrapPath = Path.GetFullPath(match.Groups["bootstrap"].Value);
+                string runtimeRoot = Path.GetFullPath(Path.Combine(
+                    Path.GetDirectoryName(bootstrapPath)!, ".."));
+                if (!IsApprovedDirectory(runtimeRoot, request.FixedHostPolicy.DeclaredRuntimeReadRoots) ||
+                    IsWithin(runtimeRoot, preparedRoot) || IsWithin(runtimeRoot, stateRoot) ||
+                    !string.Equals(Path.GetFileName(bootstrapPath), "jdtls", StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(Path.GetFileName(Path.GetDirectoryName(bootstrapPath)), "bin", StringComparison.OrdinalIgnoreCase) ||
+                    !File.Exists(Path.Combine(runtimeRoot, "bin", "jdtls.py")) ||
+                    !File.Exists(Path.Combine(runtimeRoot, "config_win", "config.ini")) ||
+                    Directory.GetFiles(Path.Combine(runtimeRoot, "plugins"),
+                        "org.eclipse.equinox.launcher_*.jar").Length != 1)
+                {
+                    return Rejected();
+                }
+
+                string? javaPath;
+                int javaIndex;
+                if (request.FixedHostPolicy.JavaBinDirectory is { } configuredBin)
+                {
+                    if (!TryConfiguredJava(configuredBin, request.FixedHostPolicy,
+                            preparedRoot, stateRoot, out javaPath))
+                    {
+                        return Rejected();
+                    }
+
+                    javaIndex = -1;
+                }
+                else
+                {
+                    (javaPath, javaIndex) = FindFirst(pathEntries, "java.exe");
+                }
+
+                (string? pythonPath, int pythonIndex) = FindFirst(pathEntries, "python.exe");
+                string cmdPath = request.FixedHostPolicy.FixedCmdAbsolutePath;
+                if (javaPath is null || pythonPath is null || !Path.IsPathFullyQualified(cmdPath) ||
+                    !string.Equals(Path.GetFileName(cmdPath), "cmd.exe", StringComparison.OrdinalIgnoreCase) ||
+                    !IsApprovedExecutable(javaPath, request, preparedRoot, stateRoot) ||
+                    !IsApprovedExecutable(pythonPath, request, preparedRoot, stateRoot) ||
+                    !IsApprovedExecutable(cmdPath, request, preparedRoot, stateRoot))
+                {
+                    return Rejected();
+                }
+
+                string? physicalJava = javaPath;
+                PreparedJdtSelectedExecutableAlias? javaAlias = null;
+                if (javaIndex >= 0 &&
+                    !TryResolveSelectedCommand(javaPath, javaIndex,
+                        PreparedJdtSelectedExecutableAliasKind.JavaParentJunction,
+                        request.FixedHostPolicy, preparedRoot, stateRoot,
+                        out physicalJava, out javaAlias))
+                {
+                    return Rejected();
+                }
+
+                if (!TryResolveSelectedCommand(pythonPath, pythonIndex,
+                        PreparedJdtSelectedExecutableAliasKind.PythonFileSymbolicLink,
+                        request.FixedHostPolicy, preparedRoot, stateRoot,
+                        out string? physicalPython, out PreparedJdtSelectedExecutableAlias? pythonAlias))
+                {
+                    return Rejected();
+                }
+
+                if (!TryDescribe(batchPath, index, out PreparedJdtPinnedFile? jdtPin) ||
+                    !TryDescribe(physicalJava!, javaIndex < 0 ? null : javaIndex,
+                        out PreparedJdtPinnedFile? javaPin) ||
+                    !TryDescribe(physicalPython!, pythonIndex, out PreparedJdtPinnedFile? pythonPin) ||
+                    !TryDescribe(cmdPath, null, out PreparedJdtPinnedFile? cmdPin) ||
+                    !TryDescribe(bootstrapPath, null, out PreparedJdtPinnedFile? bootstrapPin) ||
+                    !TryDescribeRuntime(request.FixedHostPolicy.DeclaredRuntimeReadRoots,
+                        preparedRoot, stateRoot, cancellationToken,
+                        out IReadOnlyList<PreparedJdtPinnedFile>? runtimePins))
+                {
+                    return Rejected();
+                }
+
+                PreparedJdtSelectedExecutableAlias[] aliases =
+                    new[] { javaAlias, pythonAlias }.OfType<PreparedJdtSelectedExecutableAlias>()
+                        .ToArray();
+
+                return Task.FromResult(new PreparedJdtCommandResolution(
+                    PreparedJdtCommandResolutionStatus.Pinned,
+                    new PreparedJdtPinnedCommands(jdtPin!, javaPin!, cmdPin!,
+                        pythonPin, bootstrapPin, runtimePins, aliases)));
+            }
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or
+            PathTooLongException or IOException or UnauthorizedAccessException)
+        {
+            return Unavailable();
+        }
+
+        return Unavailable();
+    }
+
+    private static Task<PreparedJdtCommandResolution> Unavailable() =>
+        Task.FromResult(new PreparedJdtCommandResolution(
+            PreparedJdtCommandResolutionStatus.Unavailable, null));
+
+    private static Task<PreparedJdtCommandResolution> Rejected() =>
+        Task.FromResult(new PreparedJdtCommandResolution(
+            PreparedJdtCommandResolutionStatus.Rejected, null));
+
+    private static bool IsWithin(string candidate, string root) =>
+        string.Equals(candidate, root, StringComparison.OrdinalIgnoreCase) ||
+        candidate.StartsWith(root.TrimEnd(Path.DirectorySeparatorChar) +
+            Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsApprovedDirectory(string candidate, IReadOnlyList<string> approved) =>
+        approved.Any(directory => Path.IsPathFullyQualified(directory) &&
+            string.Equals(Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar),
+                candidate.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsApprovedExecutable(string path, PreparedJdtCommandRequest request,
+        string preparedRoot, string stateRoot) =>
+        !IsWithin(path, preparedRoot) && !IsWithin(path, stateRoot) &&
+        IsApprovedDirectory(Path.GetDirectoryName(path)!,
+            request.FixedHostPolicy.ApprovedExecutableDirectories);
+
+    private static bool TryConfiguredJava(string configuredBin,
+        PreparedJdtHostPolicy policy, string preparedRoot, string stateRoot,
+        out string? javaPath)
+    {
+        javaPath = null;
+        if (!Path.IsPathFullyQualified(configuredBin))
+        {
+            return false;
+        }
+
+        string bin = Path.GetFullPath(configuredBin).TrimEnd(Path.DirectorySeparatorChar);
+        string? jdkRoot = Path.GetDirectoryName(bin);
+        if (!string.Equals(configuredBin.TrimEnd(Path.DirectorySeparatorChar), bin,
+                StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(Path.GetFileName(bin), "bin", StringComparison.OrdinalIgnoreCase) ||
+            jdkRoot is null || IsWithin(bin, preparedRoot) || IsWithin(bin, stateRoot) ||
+            !IsApprovedDirectory(bin, policy.ApprovedExecutableDirectories) ||
+            !IsApprovedDirectory(jdkRoot, policy.DeclaredRuntimeReadRoots) ||
+            !policy.FixedChildPathEntries.Any(entry =>
+                Path.IsPathFullyQualified(entry) &&
+                string.Equals(Path.GetFullPath(entry).TrimEnd(Path.DirectorySeparatorChar),
+                    bin, StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
+        }
+
+        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? heldBin) =
+            PreparedSourceTraversal.OpenRoot(bin);
+        using (heldBin)
+        {
+            if (status != PreparedSourceTraversal.OpenStatus.Opened || heldBin is null)
+            {
+                return false;
+            }
+        }
+
+        javaPath = Path.Combine(bin, "java.exe");
+        return File.Exists(javaPath) &&
+            (File.GetAttributes(javaPath) & FileAttributes.ReparsePoint) == 0;
+    }
+
+    internal static bool ConfiguredJavaMatches(PreparedJdtPinnedCommands commands,
+        PreparedJdtHostPolicy policy)
+    {
+        if (policy.JavaBinDirectory is null)
+        {
+            return true;
+        }
+
+        return Path.IsPathFullyQualified(policy.JavaBinDirectory) &&
+            commands.JavaCommand.FirstPathEntryIndex is null &&
+            string.Equals(commands.JavaCommand.CanonicalAbsolutePath,
+                Path.Combine(Path.GetFullPath(policy.JavaBinDirectory), "java.exe"),
+                StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static bool AliasesCurrent(PreparedJdtPinnedCommands commands,
+        PreparedJdtHostPolicy policy, string preparedRoot, string stateRoot)
+    {
+        if (commands.SelectedAliases is null)
+        {
+            return true;
+        }
+
+        if (commands.SelectedAliases.Count > 2 ||
+            commands.SelectedAliases.Select(alias => alias.Kind).Distinct().Count() !=
+                commands.SelectedAliases.Count)
+        {
+            return false;
+        }
+
+        foreach (PreparedJdtSelectedExecutableAlias alias in commands.SelectedAliases)
+        {
+            if (!TryResolveSelectedCommand(alias.SelectedAbsolutePath,
+                    alias.FirstPathEntryIndex, alias.Kind, policy, preparedRoot, stateRoot,
+                    out string? actual, out PreparedJdtSelectedExecutableAlias? observed) ||
+                observed != alias ||
+                !string.Equals(actual, alias.PhysicalAbsolutePath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            PreparedJdtPinnedFile pin = alias.Kind ==
+                    PreparedJdtSelectedExecutableAliasKind.JavaParentJunction
+                ? commands.JavaCommand : commands.PythonCommand!;
+            if (pin is null || pin.FirstPathEntryIndex != alias.FirstPathEntryIndex ||
+                !string.Equals(pin.CanonicalAbsolutePath, alias.PhysicalAbsolutePath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryResolveSelectedCommand(string selectedPath, int index,
+        PreparedJdtSelectedExecutableAliasKind kind, PreparedJdtHostPolicy policy,
+        string preparedRoot, string stateRoot,
+        out string? physicalPath, out PreparedJdtSelectedExecutableAlias? alias)
+    {
+        physicalPath = null;
+        alias = null;
+        if (index < 0 || !Path.IsPathFullyQualified(selectedPath))
+        {
+            return false;
+        }
+
+        string selected = Path.GetFullPath(selectedPath);
+        string selectedDirectory = Path.GetDirectoryName(selected)!;
+        if (!IsApprovedDirectory(selectedDirectory, policy.ApprovedExecutableDirectories) ||
+            IsWithin(selected, preparedRoot) || IsWithin(selected, stateRoot))
+        {
+            return false;
+        }
+
+        if (kind == PreparedJdtSelectedExecutableAliasKind.JavaParentJunction &&
+            (File.GetAttributes(selectedDirectory) & FileAttributes.ReparsePoint) != 0)
+        {
+            if (!HasReparseTag(selectedDirectory, directory: true, 0xA0000003))
+            {
+                return false;
+            }
+
+            FileSystemInfo? resolved = new DirectoryInfo(selectedDirectory)
+                .ResolveLinkTarget(returnFinalTarget: false);
+            if (resolved is not DirectoryInfo targetDirectory ||
+                (targetDirectory.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                return false;
+            }
+
+            physicalPath = Path.GetFullPath(Path.Combine(targetDirectory.FullName,
+                Path.GetFileName(selected)));
+            alias = new PreparedJdtSelectedExecutableAlias(selected, physicalPath, index, kind);
+        }
+        else if (kind == PreparedJdtSelectedExecutableAliasKind.PythonFileSymbolicLink &&
+            (File.GetAttributes(selected) & FileAttributes.ReparsePoint) != 0)
+        {
+            if (!HasReparseTag(selected, directory: false, 0xA000000C))
+            {
+                return false;
+            }
+
+            FileSystemInfo? resolved = new FileInfo(selected)
+                .ResolveLinkTarget(returnFinalTarget: false);
+            if (resolved is not FileInfo targetFile ||
+                (targetFile.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                return false;
+            }
+
+            physicalPath = Path.GetFullPath(targetFile.FullName);
+            alias = new PreparedJdtSelectedExecutableAlias(selected, physicalPath, index, kind);
+        }
+        else
+        {
+            physicalPath = selected;
+        }
+
+        return !IsWithin(physicalPath, preparedRoot) &&
+            !IsWithin(physicalPath, stateRoot) &&
+            IsApprovedDirectory(Path.GetDirectoryName(physicalPath)!,
+                policy.ApprovedExecutableDirectories) &&
+            (File.GetAttributes(physicalPath) & FileAttributes.ReparsePoint) == 0;
+    }
+
+    private static bool HasReparseTag(string path, bool directory, uint expectedTag)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return false;
+        }
+
+        string? parent = Path.GetDirectoryName(path);
+        if (parent is null)
+        {
+            return false;
+        }
+
+        (PreparedSourceTraversal.OpenStatus parentStatus, SafeFileHandle? heldParent) =
+            PreparedSourceTraversal.OpenRoot(parent);
+        using (heldParent)
+        {
+            if (parentStatus != PreparedSourceTraversal.OpenStatus.Opened || heldParent is null)
+            {
+                return false;
+            }
+
+            const uint fileReadAttributes = 0x80;
+            const uint shareReadWriteDelete = 0x7;
+            const uint openExisting = 3;
+            const uint openReparsePoint = 0x00200000;
+            const uint backupSemantics = 0x02000000;
+            using SafeFileHandle link = CreateFileW(path, fileReadAttributes,
+                shareReadWriteDelete, IntPtr.Zero, openExisting,
+                openReparsePoint | (directory ? backupSemantics : 0), IntPtr.Zero);
+            if (link.IsInvalid)
+            {
+                return false;
+            }
+
+            const int fileAttributeTagInfo = 9;
+            byte[] information = new byte[8];
+            return GetFileInformationByHandleEx(link, fileAttributeTagInfo,
+                    information, (uint)information.Length) &&
+                BinaryPrimitives.ReadUInt32LittleEndian(information.AsSpan(4)) == expectedTag;
+        }
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern SafeFileHandle CreateFileW(
+        string fileName, uint desiredAccess, uint shareMode,
+        IntPtr securityAttributes, uint creationDisposition,
+        uint flagsAndAttributes, IntPtr templateFile);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandleEx(
+        SafeFileHandle file, int fileInformationClass,
+        [Out] byte[] fileInformation, uint bufferSize);
+
+    private static (string? Path, int Index) FindFirst(string[] entries, string fileName)
+    {
+        for (int i = 0; i < entries.Length; i++)
+        {
+            if (!Path.IsPathFullyQualified(entries[i]))
+            {
+                return (null, -1);
+            }
+
+            string candidate = Path.Combine(Path.GetFullPath(entries[i]), fileName);
+            if (File.Exists(candidate))
+            {
+                return (candidate, i);
+            }
+        }
+
+        return (null, -1);
+    }
+
+    private static bool TryDescribe(string path, int? index, out PreparedJdtPinnedFile? pin)
+    {
+        pin = null;
+        string absolute = Path.GetFullPath(path);
+        string? parent = Path.GetDirectoryName(absolute);
+        if (parent is null)
+        {
+            return false;
+        }
+
+        (PreparedSourceTraversal.OpenStatus directoryStatus, SafeFileHandle? directory) =
+            PreparedSourceTraversal.OpenRoot(parent);
+        using (directory)
+        {
+            if (directoryStatus != PreparedSourceTraversal.OpenStatus.Opened || directory is null)
+            {
+                return false;
+            }
+
+            (PreparedSourceTraversal.OpenStatus fileStatus, SafeFileHandle? file) =
+                PreparedSourceTraversal.OpenRelativeFile(directory, Path.GetFileName(absolute));
+            using (file)
+            {
+                PreparedSourceTraversal.FileIdentity? identity = file is null
+                    ? null : PreparedSourceTraversal.ObserveFile(file);
+                if (fileStatus != PreparedSourceTraversal.OpenStatus.Opened || identity is null)
+                {
+                    return false;
+                }
+
+                using var stream = new FileStream(absolute, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (PreparedSourceTraversal.ObserveFile(stream.SafeFileHandle) != identity)
+                {
+                    return false;
+                }
+
+                pin = new PreparedJdtPinnedFile(absolute,
+                    new PreparedJdtFileIdentity(identity.VolumeSerialNumber,
+                        identity.FileIndexHigh, identity.FileIndexLow),
+                    Convert.ToHexString(SHA256.HashData(stream)), index);
+                return true;
+            }
+        }
+    }
+
+    private static bool TryDescribeRuntime(IReadOnlyList<string> roots,
+        string preparedRoot, string stateRoot, CancellationToken cancellationToken,
+        out IReadOnlyList<PreparedJdtPinnedFile>? pins)
+    {
+        pins = null;
+        var result = new List<PreparedJdtPinnedFile>();
+        var pending = new Stack<string>();
+        foreach (string declaredRoot in roots)
+        {
+            if (!Path.IsPathFullyQualified(declaredRoot))
+            {
+                return false;
+            }
+
+            string root = Path.GetFullPath(declaredRoot);
+            if (IsWithin(root, preparedRoot) || IsWithin(root, stateRoot))
+            {
+                return false;
+            }
+
+            pending.Push(root);
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (pending.TryPop(out string? directory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!seen.Add(directory))
+            {
+                continue;
+            }
+
+            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0)
+            {
+                return false;
+            }
+
+            foreach (string child in Directory.EnumerateDirectories(directory))
+            {
+                pending.Push(child);
+            }
+
+            foreach (string file in Directory.EnumerateFiles(directory))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!TryDescribe(file, null, out PreparedJdtPinnedFile? pin))
+                {
+                    return false;
+                }
+
+                result.Add(pin!);
+            }
+        }
+
+        pins = result;
+        return result.Count > 0;
+    }
+}
+
+internal sealed record PreparedJdtCommandRequest(
+    string HostPathSnapshot,
+    string PreparedRoot,
+    string DisposableStateRoot,
+    PreparedJdtHostPolicy FixedHostPolicy);
+
+internal enum PreparedJdtCommandResolutionStatus
+{
+    Pinned,
+    Missing,
+    Rejected,
+    Unavailable,
+}
+
+internal sealed record PreparedJdtCommandResolution(
+    PreparedJdtCommandResolutionStatus Status,
+    PreparedJdtPinnedCommands? Commands);
+
+internal sealed record PreparedJdtPinnedCommands(
+    PreparedJdtPinnedFile JdtCommand,
+    PreparedJdtPinnedFile JavaCommand,
+    PreparedJdtPinnedFile? FixedInterpreter,
+    PreparedJdtPinnedFile? PythonCommand = null,
+    PreparedJdtPinnedFile? BootstrapScript = null,
+    IReadOnlyList<PreparedJdtPinnedFile>? RuntimeInputs = null,
+    IReadOnlyList<PreparedJdtSelectedExecutableAlias>? SelectedAliases = null);
+
+internal enum PreparedJdtSelectedExecutableAliasKind
+{
+    JavaParentJunction,
+    PythonFileSymbolicLink,
+}
+
+internal sealed record PreparedJdtSelectedExecutableAlias(
+    string SelectedAbsolutePath,
+    string PhysicalAbsolutePath,
+    int FirstPathEntryIndex,
+    PreparedJdtSelectedExecutableAliasKind Kind);
+
+internal sealed record PreparedJdtFileIdentity(
+    uint VolumeSerialNumber,
+    uint FileIndexHigh,
+    uint FileIndexLow);
+
+internal sealed record PreparedJdtPinnedFile(
+    string CanonicalAbsolutePath,
+    PreparedJdtFileIdentity FileIdentity,
+    string Sha256,
+    int? FirstPathEntryIndex);
+
+public sealed record PreparedJdtHostPolicy(
+    IReadOnlyList<string> ApprovedExecutableDirectories,
+    IReadOnlyList<string> DeclaredRuntimeReadRoots,
+    string FixedCmdAbsolutePath,
+    IReadOnlyList<string> FixedChildPathEntries,
+    string? JavaBinDirectory = null);
+
+internal interface IPreparedJdtProcessLauncher
+{
+    Task<IJdtLsProcess> LaunchAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        PreparedJdtLaunchRequest request,
+        CancellationToken cancellationToken);
+}
+
+internal sealed record PreparedJdtLaunchRequest(
+    string CanonicalPreparedRoot,
+    PreparedToolDirectoryObjectIdentity RootIdentity,
+    string RootUri,
+    string DataPath,
+    string ConfigurationPath,
+    PreparedJdtPinnedCommands Commands,
+    IReadOnlyList<string> FixedArguments,
+    IReadOnlyDictionary<string, string> FixedChildEnvironment,
+    PreparedJdtHostPolicy FixedHostPolicy);
+
+internal interface IPreparedJdtProtocolFactory
+{
+    Task<IPreparedJdtLsSession> InitializeAsync(
+        IJdtLsProcess process,
+        PreparedJdtInitializeRequest request,
+        CancellationToken cancellationToken);
+}
+
+internal interface IPreparedJdtGracefulShutdownSession : IPreparedJdtLsSession
+{
+    bool ExitSent { get; }
+}
+
+internal sealed record PreparedJdtInitializeRequest(
+    string RootUri,
+    string WorkspaceFolderUri,
+    string WorkspaceFolderName,
+    IReadOnlyDictionary<string, object> FixedSettings,
+    int MaximumResponseBytes,
+    TimeSpan ShutdownTimeout = default);
+
+internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
+{
+    public async Task<IPreparedJdtLsSession> InitializeAsync(
+        IJdtLsProcess process,
+        PreparedJdtInitializeRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(process);
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.MaximumResponseBytes <= 0 ||
+            !string.Equals(request.RootUri, request.WorkspaceFolderUri, StringComparison.Ordinal) ||
+            request.FixedSettings is null)
+        {
+            throw new InvalidOperationException("jdt_prepared_protocol_unavailable");
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var boundedOutput = new PreparedJdtBoundedResponseStream(
+            process.StandardOutput, request.MaximumResponseBytes);
+        JsonRpc rpc = JsonRpc.Attach(process.StandardInput, boundedOutput, target: null);
+        try
+        {
+            _ = await rpc.InvokeWithParameterObjectAsync<JsonElement>(
+                "initialize",
+                new
+                {
+                    processId = Environment.ProcessId,
+                    rootUri = request.RootUri,
+                    capabilities = new { },
+                    workspaceFolders = new[]
+                    {
+                        new { uri = request.WorkspaceFolderUri, name = request.WorkspaceFolderName },
+                    },
+                    initializationOptions = new { settings = request.FixedSettings },
+                },
+                argumentDeclaredTypes: null,
+                cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            await rpc.NotifyWithParameterObjectAsync("initialized", new { }).WaitAsync(cancellationToken);
+            await rpc.NotifyWithParameterObjectAsync(
+                "workspace/didChangeConfiguration",
+                new { settings = request.FixedSettings }).WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return new PreparedJdtProtocolSession(
+                rpc, new Uri(request.RootUri), boundedOutput,
+                request.ShutdownTimeout > TimeSpan.Zero
+                    ? PreparedJdtLsRuntime.GracefulShutdownSlice(request.ShutdownTimeout)
+                    : TimeSpan.FromSeconds(1));
+        }
+        catch
+        {
+            rpc.Dispose();
+            throw;
+        }
+    }
+
+    private sealed class PreparedJdtProtocolSession(
+        JsonRpc rpc,
+        Uri rootUri,
+        PreparedJdtBoundedResponseStream boundedOutput,
+        TimeSpan gracefulShutdownTimeout) : IPreparedJdtGracefulShutdownSession
+    {
+        public bool ExitSent { get; private set; }
+
+        public async Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            if (operation is not (PreparedJavaNavigationOperation.Definition or
+                    PreparedJavaNavigationOperation.References) || request is null ||
+                !PreparedSourceTraversal.IsCanonicalRelativePath(request.RelativePath, allowEmpty: false) ||
+                request.Line <= 0 || request.Character <= 0)
+            {
+                throw new InvalidOperationException("jdt_prepared_navigation_unavailable");
+            }
+
+            string relativeUri = string.Join('/',
+                request.RelativePath.Split('/').Select(Uri.EscapeDataString));
+            string documentUri = new Uri(rootUri, relativeUri).AbsoluteUri;
+            var textDocument = new { uri = documentUri };
+            var position = new { line = request.Line - 1, character = request.Character - 1 };
+            object parameters = operation == PreparedJavaNavigationOperation.References
+                ? new { textDocument, position, context = new { includeDeclaration = true } }
+                : new { textDocument, position };
+            JToken responseToken;
+            try
+            {
+                responseToken = await rpc.InvokeWithParameterObjectAsync<JToken>(
+                    operation == PreparedJavaNavigationOperation.References
+                        ? "textDocument/references" : "textDocument/definition",
+                    parameters,
+                    argumentDeclaredTypes: null,
+                    cancellationToken);
+            }
+            catch (Exception) when (boundedOutput.LimitExceeded && !cancellationToken.IsCancellationRequested)
+            {
+                throw new PreparedJdtResponseBytesExceededException();
+            }
+            using JsonDocument responseDocument = JsonDocument.Parse(
+                responseToken.ToString(NewtonsoftJsonFormatting.None));
+            JsonElement response = responseDocument.RootElement;
+            if (response.ValueKind != JsonValueKind.Array)
+            {
+                throw new InvalidOperationException("jdt_prepared_definition_invalid");
+            }
+
+            var locations = new List<PreparedJdtLsRawLocation>();
+            foreach (JsonElement location in response.EnumerateArray())
+            {
+                JsonElement range = location.GetProperty("range");
+                JsonElement start = range.GetProperty("start");
+                JsonElement end = range.GetProperty("end");
+                locations.Add(new PreparedJdtLsRawLocation(
+                    location.GetProperty("uri").GetString() ??
+                        throw new InvalidOperationException("jdt_prepared_definition_invalid"),
+                    checked(start.GetProperty("line").GetInt32() + 1),
+                    checked(start.GetProperty("character").GetInt32() + 1),
+                    checked(end.GetProperty("line").GetInt32() + 1),
+                    checked(end.GetProperty("character").GetInt32() + 1)));
+            }
+
+            return new PreparedJdtLsRawReply(locations, LimitReached: false, CapabilityLimitation: null);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                using var timeout = new CancellationTokenSource(gracefulShutdownTimeout);
+                await rpc.InvokeWithCancellationAsync(
+                    "shutdown", Array.Empty<object>(), timeout.Token);
+                await rpc.NotifyAsync("exit").WaitAsync(timeout.Token);
+                ExitSent = true;
+            }
+            catch (Exception)
+            {
+                // A failed graceful handshake uses the owned-process fallback.
+            }
+            finally
+            {
+                rpc.Dispose();
+            }
+        }
+    }
+}
+
+internal sealed class PreparedJdtResponseBytesExceededException : Exception { }
+
+internal sealed class PreparedJdtBoundedResponseStream(Stream inner, int maximumBodyBytes) : Stream
+{
+    private const int MaximumHeaderBytes = 4096;
+    private readonly List<byte> _header = [];
+    private int _bodyRemaining;
+    private bool _readingBody;
+    private int _limitExceeded;
+
+    internal bool LimitExceeded => Volatile.Read(ref _limitExceeded) != 0;
+
+    public override bool CanRead => inner.CanRead;
+
+    public override bool CanSeek => false;
+
+    public override bool CanWrite => false;
+
+    public override long Length => throw new NotSupportedException();
+
+    public override long Position
+    {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) =>
+        Read(buffer.AsSpan(offset, count));
+
+    public override int Read(Span<byte> buffer)
+    {
+        if (buffer.IsEmpty)
+        {
+            return 0;
+        }
+
+        int read = inner.Read(buffer[..ReadLength(buffer.Length)]);
+        Inspect(buffer[..read]);
+        return read;
+    }
+
+    public override async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken = default)
+    {
+        if (buffer.IsEmpty)
+        {
+            return 0;
+        }
+
+        int read = await inner.ReadAsync(buffer[..ReadLength(buffer.Length)], cancellationToken);
+        Inspect(buffer.Span[..read]);
+        return read;
+    }
+
+    public override Task<int> ReadAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken) =>
+        ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+
+    private int ReadLength(int requested) =>
+        LimitExceeded ? throw new InvalidDataException("jdt_prepared_response_too_large") :
+        _readingBody ? Math.Min(requested, _bodyRemaining) : 1;
+
+    private void Inspect(ReadOnlySpan<byte> bytes)
+    {
+        if (_readingBody)
+        {
+            _bodyRemaining -= bytes.Length;
+            if (_bodyRemaining == 0)
+            {
+                _readingBody = false;
+            }
+
+            return;
+        }
+
+        foreach (byte value in bytes)
+        {
+            _header.Add(value);
+            if (_header.Count > MaximumHeaderBytes)
+            {
+                throw new InvalidDataException("jdt_prepared_header_invalid");
+            }
+
+            int count = _header.Count;
+            if (count < 4 || _header[count - 4] != '\r' || _header[count - 3] != '\n' ||
+                _header[count - 2] != '\r' || _header[count - 1] != '\n')
+            {
+                continue;
+            }
+
+            string header = Encoding.ASCII.GetString(_header.ToArray());
+            string[] lengths = header.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+                .Where(line => line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            if (lengths.Length != 1 || !int.TryParse(lengths[0]["Content-Length:".Length..].Trim(),
+                    System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out int bodyLength) ||
+                bodyLength < 0)
+            {
+                throw new InvalidDataException("jdt_prepared_header_invalid");
+            }
+
+            _header.Clear();
+            if (bodyLength > maximumBodyBytes)
+            {
+                Volatile.Write(ref _limitExceeded, 1);
+                throw new InvalidDataException("jdt_prepared_response_too_large");
+            }
+
+            _bodyRemaining = bodyLength;
+            _readingBody = bodyLength != 0;
+        }
+    }
+
+    public override void Flush() { }
+
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 }
 
 internal interface IJdtLsProtocolClientFactory

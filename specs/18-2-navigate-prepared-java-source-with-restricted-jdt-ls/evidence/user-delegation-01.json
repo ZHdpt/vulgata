@@ -1,0 +1,15 @@
+{
+  "kind": "user-delegation",
+  "status": "accepted",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "gates": [
+    "plan-review",
+    "implementation-approval",
+    "recovery-extension"
+  ],
+  "scope": "Story 18.2 in-scope planned-change and implementation gates and finite recovery extensions; cumulative per-episode max_pause_at=7; each reached limit requires a fresh decision; no reset or waiver. Human-reserved decisions and separate execution permissions remain with user.",
+  "max_pause_at": 7,
+  "user_source": "current Story 18.2 user instruction in chat 01a0eae8-edeb-7fb3-874e-35ce36ee4a92 on 2026-09-29, paragraph beginning Retain Vulgata October Approver",
+  "user_instruction": "Retain Vulgata October Approver\n01a0e708-c489-7871-9f73-31413f20bf2c as my designated delegate for this\nstory's in-scope planned-change and implementation gates, and finite\nrecovery extensions with cumulative per-episode max_pause_at=7.\nEach reached limit needs a fresh decision; no reset or waiver is granted.\nHuman-reserved decisions and separate execution permissions remain mine."
+}

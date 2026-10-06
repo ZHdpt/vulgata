@@ -1,0 +1,42 @@
+{
+  "kind": "analysis",
+  "summary": "Borrowing held-proof deadline verified: bounded Unknown/null, observed late result cannot grant a ticket, admitted hold remains registry-owned for normal shutdown. Failed/timed-out proof latches registry Unknown.",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "verification_route": "behavioral RED/GREEN",
+  "source_commit": "1722b381a7c433de159954bad58ebb8f7a7908bc",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-borrow-held-proof-deadline-red-01.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "2eb3e3981e8fe03a94d42e6b5772da754ba3b8eb80357895efb3866087f1fec0",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "84b67c5c45f7028b504bf017ad8fd6b162bee01e19eef67e38a09afd9ef3fe5a"
+  },
+  "minimal_green": {
+    "path": "TestResults/isolation-f11f810f07cf4d0f94bfb6f036f843ad/results.trx",
+    "sha256": "e62647c270988fcb82453ab434a13527c0936234e5310851a6e17bc1b9668e02",
+    "selected": 19,
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-f11f810f07cf4d0f94bfb6f036f843ad/build.log",
+    "build_sha256": "7a94fa77062380093b94ec3bff353c5730c44fe3aa6419342ed29e6c6f6f1e4e"
+  },
+  "independent_final_green": {
+    "path": "TestResults/isolation-8b3c63e713064a56a8ebcc64347bd4bc/results.trx",
+    "sha256": "be84429468ea1410045c56b9a4c1803f5a99a94d5ab00b91662842881b0b3366",
+    "selected": 19,
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-8b3c63e713064a56a8ebcc64347bd4bc/build.log",
+    "build_sha256": "707216f48b134e020971bdfa2a9e01602e64f542005ea620419673d218ee5be5"
+  },
+  "final_shape": "Existing bounded proof helper reused; controlled test observes late check and one hold disposal. No additional refactor required for this slice.",
+  "limitations": "Controlled registry only. Disposition held-proof bounds, monotonic binding, producer registration/integration and actual Windows/native qualification remain unfinished. No task completion or integrated readiness.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

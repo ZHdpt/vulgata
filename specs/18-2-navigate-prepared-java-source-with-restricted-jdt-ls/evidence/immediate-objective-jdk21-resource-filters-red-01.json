@@ -1,0 +1,15 @@
+{
+  "results": "TestResults/isolation-df67be0c3aa2436bb3d1829434e57391/results.trx",
+  "selected": 1,
+  "passed": 0,
+  "failed": 1,
+  "skipped": 0,
+  "test": "PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened",
+  "failure": "Actual initialization wire settings lack explicit empty java.project.resourceFilters.",
+  "nativeRed": "immediate-objective-jdk21-trial-02.trx: .project mutation adds JDT-created resource filter.",
+  "candidate": "Fixed java.project.resourceFilters=[] for the current dedicated profile; no source/fixture normalization or root/lease/reader contract change.",
+  "limitations": "Existing JDT-created filters may still be deleted/rewritten by JDT. Empty filters admits .git/node_modules into the Eclipse resource tree; ordinary source/authority guards remain unchanged. This is no universal source-write or network isolation guarantee.",
+  "upstream": "https://raw.githubusercontent.com/eclipse-jdtls/eclipse.jdt.ls/main/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/ProjectsManager.java#L642-L674",
+  "scope": "Owned fixture qualification only; prepared Repository and broader metadata cases remain unqualified.",
+  "nonEvidence": "Prior a487532aa1ea47b9a99fae67277fabef passed wrong helper; retained in TestResults, not RED/GREEN."
+}

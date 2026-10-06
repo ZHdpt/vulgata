@@ -1,0 +1,23 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "first successful factory handoff only; tasks not complete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs": "eb3d0c712deb66a2e91eb5ff4c5f3405c06014e2b228f114a5f0912bf9fb724e",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs": "93640dc0e10b8501bb6fc6e76cb0985954f94071552d11345a4d076d17513f7a"
+  },
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "61331fdd60d6d7a5a2ce329508d68255a0da3189cb760029d33c42ede7ab8bcd",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests'",
+  "exit_code": 0,
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-ed1cc14345f24d439dd8bb3880fb9296/results.trx",
+  "trx_sha256": "4c4e3586e11b1b5b067c5a0e99b963fa3794bb71d1fbe49a2e482aa1df34ba43",
+  "environment": "Restricted launcher built but failed at the Story 18.1 fixture with RootUnavailable; approved native execution passed. No real JDT or Java process started.",
+  "minimal_green": "Accepted factory, profile, runtime, session and raw-reply seam passes a current JdtNavigation lease and fixed profile to a controlled runtime, returns one context and transfers returned-session disposal to context while caller lease stays open.",
+  "final_shape": "Test owner found clear independent expected values and fixture cleanup. Production owner found cohesive factory/context for this slice. No local refactor needed. Remaining T010/T011 containment, profile separation, quarantine and concurrency are unfinished; navigation currently returns empty ConfigurationUnavailable."
+}

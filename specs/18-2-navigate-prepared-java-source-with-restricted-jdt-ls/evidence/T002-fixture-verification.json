@@ -1,0 +1,18 @@
+{
+  "kind": "direct-verification",
+  "stage": "implement",
+  "task_id": "T002",
+  "observed_at": "2026-09-29T10:00:56.253797Z",
+  "fixture_path": "tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFixture.cs",
+  "fixture_sha256": "bb55e32a21c32e96582b03380960d3cdfa002a0d3da3322103acfed142f26b28",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedJavaNavigationFixtureTests",
+  "launcher": "approved native launcher",
+  "result": "passed",
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-5c0b32a7df8649fc95595998c12c2fae/results.trx",
+  "trx_sha256": "3d326ae71639f04735889b857611ed4e0e9103ee08c68a52ff75af5414f47c64",
+  "coverage": "Owned Java declaration/caller Repository, foreign sentinel and symlink escape, separate writable tool state, explicit ownership and cleanup. No JDT process started."
+}

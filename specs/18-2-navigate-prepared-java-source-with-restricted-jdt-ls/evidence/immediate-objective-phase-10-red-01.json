@@ -1,0 +1,16 @@
+{
+  "task": "T038",
+  "phase": "10",
+  "kind": "Controlled behavioral RED, no JDT child",
+  "runner": "eng/test.ps1 -Filter FullyQualifiedName~PreparedJdtCommandResolver",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-51bbb7f13f5849848eaf361fd2af38fd",
+  "build_errors": 0,
+  "selected": 3,
+  "passed": 2,
+  "failed": 1,
+  "expected": "Pinned",
+  "actual": "Unavailable",
+  "test": "PreparedJdtCommandResolver_WhenApprovedPythonBootstrapIsFirstOnPath_PinsTheCommandChain",
+  "suite_at_run": "SelfContained",
+  "suite_after_human_directive": "LocalTools; all future dedicated JDT runs explicit. Initial run preserved without rewriting evidence."
+}

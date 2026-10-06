@@ -1,0 +1,18 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "trusted request timeout cancels a stalled injected navigation request and retires its session",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "4d1026265d1ab70d995ef9e281ced04b428e4c85ffc352c58bb50f84480dfe53",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests'",
+  "exit_code": 1,
+  "selected": 9,
+  "passed": 8,
+  "failed": 1,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-ec5370ec836a4ac5a10a5c56e58f37bf/results.trx",
+  "trx_sha256": "0dbad306558370e005ea6dba7ba0aafa9ea90333cd6f31fc8d21e421ece5853e",
+  "result": "Controlled session request waited for cancellation under a trusted 200ms RequestTimeout and no caller cancellation. The public GetDefinitionAsync task remained incomplete until the 5s harness allowance; no product timeout reached the session. Test finally released the fake and settled resources.",
+  "environment": "Restricted build denied test obj manifest write; approved native launcher reached product assertion. No Java or JDT-LS process started."
+}

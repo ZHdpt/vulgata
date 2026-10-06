@@ -1,0 +1,14 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "episode_id": "18-2-path-trust-20260929T103129Z",
+  "at_count": 6,
+  "summary": "The prior bounded protocol settlement repair reached native 40/40 and the uncooperative quarantine case reached 41/41, both preserved in committed checkpoints. Three new test-only public-factory rejection cases then failed compilation before any assertion because the test author used RecordingRuntime, a type absent from this test unit; the existing controlled fake is ControlledPreparedJdtLsRuntime. This is a test-author compile defect, not a JDT product failure. The correction is to replace only those three fake construction names with the existing controlled runtime, retain wrong-purpose/closed-lease/invalid-profile assertions and no-runtime-call checks, then run the focused and adjacent native suites. No shared lease or CodeGraph scope change is included. The recovery count reaches the cumulative pause limit 6 and a fresh finite decision is required before editing.",
+  "failed_approaches": [
+    "Counts 1-3: definition reviews found path-trust/adapter-seam defects, later corrected and accepted.",
+    "Counts 4-5: two timeout GREEN attempts failed a cancellation/settlement race, later corrected through bounded join and verified native 40/40.",
+    "Count 6: new test-only rejection cases used an undefined fake name and did not compile; no product assertion ran."
+  ],
+  "changed_approach": "After a fresh finite extension within the user's max_pause_at=7, test owner changes only RecordingRuntime to the existing ControlledPreparedJdtLsRuntime in three new cases, confirms no production edits are required, and root runs focused and adjacent native suites. Preserve current product and approval boundaries.",
+  "latest_failure": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-factory-rejection-compile-failure-01.json"
+}

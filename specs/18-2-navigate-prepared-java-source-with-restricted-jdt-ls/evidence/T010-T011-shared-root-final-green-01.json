@@ -1,0 +1,22 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "JDT-independent internal contained-root lease callback and adjacent Story 18.1 containment regression; factory and actual JDT-LS qualification remain incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "2406dc759a3ca42e6a1442f4f719ad9c9ef462d575d50f69a7f0d36e4f819b8b"
+  },
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "b062b868142429c144f7f053020f1cc3b4cf54d41b5b85eabad266405773a55d",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests|FullyQualifiedName~PreparedSourceContainmentTests'",
+  "exit_code": 0,
+  "selected": 46,
+  "passed": 46,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-c1f190de33574d19992805b79cb595e5/results.trx",
+  "trx_sha256": "8c40c7afbad4a256fe619a0d3af5565a2a1485333cb7aff51b83ba827ff170a9",
+  "environment": "Approved native launcher; earlier restricted launcher denied build or native root access. No Java or JDT-LS process started.",
+  "final_shape": "Separate test and production owners assessed lease authority, callback lifetime, URI decoding and source containment. The suite covers purpose separation, revocation, expiry, disposal serialization, root replacement, symlink escapes, encoded traversal, canonical escaped Unicode and space. Device URI and junction-specific behavior remain unqualified; fail-closed implementation applies.",
+  "boundary": "Only the Infrastructure-contained-root lease seam is available for a future separately authorized 18.3 integration. This result does not qualify CodeGraph or JDT-LS subprocess confinement."
+}

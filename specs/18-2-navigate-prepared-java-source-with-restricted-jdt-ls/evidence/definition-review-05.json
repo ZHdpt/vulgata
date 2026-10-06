@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+  "reviewed_boundary": {
+    "base_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+    "candidate_commit": null,
+    "diff_sha256": "3fa0f2a79b39f5348eb59ada6ed8eaf557348bfdefb783caf3a0a9a3cfdd594c",
+    "artifact_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "b12a0422ab2864d5aeef1026e4085c03c52878dcee22e5804be2e0bba0f236ce",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "d6b7e05957908b991f8e19ac5067e04c8b5a3029cdae9e665adbda4f1b8a3e92",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "311352d9e21d76c0438bc16a28b386c632c5ddbdfde9efbef5dbd2ebcb6983aa",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "ee91370c6602ec7742a32ef295212ba7b0834b3f7111c557d91e04063cc60a69",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "cf9b35df77ecc8431de31e78da272a48380c41f1793281beb8290aad21b307dd",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "e076ff148304d2802825bd8ecbdcc063b497818300c01c215356e0897e031fee",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md": "5336a7dc125ca464d91637888f2972425ee5169f475767cbe61763c1cec53b38"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+  ],
+  "findings": [],
+  "summary": "Complete-definition ACCEPT. P-PARTIAL-OPEN-OWNERSHIP-01 from definition review 04 is resolved by accepted plan review 07: runtime owns pre-return resources and attests cleanup, factory releases or quarantines its Repository slot according to settlement, returned session ownership passes through factory to context, and caller retains the separate lease. T-RUNTIME-SETTINGS-SEAM-01 is resolved in tasks: T010 tests observable controlled factory/lease/raw-reply/cleanup behavior, while T022 RED, T023 GREEN and T024 real qualification cover actual rootUri, disposable state/configuration and restricted JDT settings. Prior P-PATH-TRUST-01 and T-PATH-LAUNCH-ORDER-01 remain resolved. T001–T007 checked checkpoint remains; T008/T009 checklist is unchanged, with no T010 or real JDT result claimed. All production-capable launch paths remain closed until T023. The selected-feature prerequisite check passed, read-only SpecKit analysis found no remaining semantic gap, and deterministic plan/task validation returned no errors. The 26 tasks cover the 11 functional requirements, six success criteria and every required implementation ID. The prepared Repository remains an explicit unavailable qualification dependency. diff_sha256 is SHA-256 of canonical sorted path-to-artifact-SHA256 JSON encoded as UTF-8 with a terminal newline."
+}

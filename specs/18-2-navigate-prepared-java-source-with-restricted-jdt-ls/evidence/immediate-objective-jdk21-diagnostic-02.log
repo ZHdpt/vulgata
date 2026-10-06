@@ -1,0 +1,78 @@
+Diagnostic host selection: JDT C:\Users\13728\.local\bin\jdtls.bat; Python C:\Users\13728\.local\bin\python.exe; Java C:\Program Files\Java\jdk-21.0.12\bin\java.exe; pinned runtime root G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository.
+Process launch requested: python=C:\Users\13728\.local\bin\python3.15.exe; bootstrap=G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository\bin\jdtls; Java=C:\Program Files\Java\jdk-21.0.12\bin\java.exe; data=C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-782bc6b50ab648c1829b75a43a5a7927\outside\dedicated-jdt-diagnostic-state\data; configuration=C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-782bc6b50ab648c1829b75a43a5a7927\outside\dedicated-jdt-diagnostic-state\configuration.
+Process launch completed and an owned process handle was returned.
+LSP initialize requested: root=file:///C:/Users/13728/AppData/Local/Temp/vulgata-prepared-source-782bc6b50ab648c1829b75a43a5a7927/prepared/; workspace=file:///C:/Users/13728/AppData/Local/Temp/vulgata-prepared-source-782bc6b50ab648c1829b75a43a5a7927/prepared/; settings={"java":{"import":{"maven":{"enabled":false,"offline":{"enabled":true}},"gradle":{"enabled":false,"offline":{"enabled":true},"wrapper":{"enabled":false}}},"autobuild":{"enabled":false},"configuration":{"updateBuildConfiguration":"disabled"},"maven":{"downloadSources":false,"updateSnapshots":false}}}.
+LSP initialize succeeded after 3166 ms.
+Diagnostic runtime initialization succeeded; opening session for bounded disposal.
+Owned process tree termination was requested.
+Bounded owned-process stderr (up to 64 KiB):
+WARNING: Using incubator modules: jdk.incubator.vector
+10月 05, 2026 10:34:55 下午 org.apache.aries.spifly.BaseActivator log
+INFO: Registered provider ch.qos.logback.classic.spi.LogbackServiceProvider of service org.slf4j.spi.SLF4JServiceProvider in bundle ch.qos.logback.classic
+
+JDT workspace log tail (65536 bytes max):
+!SESSION 2026-10-05 22:34:55.215 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=21.0.12
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Command-line arguments:  -data C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-782bc6b50ab648c1829b75a43a5a7927\outside\dedicated-jdt-diagnostic-state\data
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:56.709
+!MESSAGE class org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin is started
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:56.789
+!MESSAGE Started org.eclipse.buildship.core 37ms
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:56.791
+!MESSAGE Started org.eclipse.m2e.core 0ms
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.086
+!MESSAGE Main thread is waiting
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.168
+!MESSAGE >> initialize
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.176
+!MESSAGE Initializing JDT Language Server (Standard)
+	- Version: 1.58.0-SNAPSHOT (OSGi 1.58.0.202605150919)
+	- Git Commit: 7be965c - Update release date
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.758
+!MESSAGE ProjectRegistryRefreshJob finished 966ms
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.829
+!MESSAGE Static Commands: []
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.829
+!MESSAGE Non-Static Commands: [java.project.import, java.project.changeImportedProjects, java.navigate.openTypeHierarchy, java.project.resolveStackTraceLocation, java.edit.handlePasteEvent, java.edit.stringFormatting, java.project.getSettings, java.project.resolveWorkspaceSymbol, java.project.upgradeGradle, java.project.createModuleInfo, java.vm.getAllInstalls, java.edit.organizeImports, java.project.refreshDiagnostics, java.project.removeFromSourcePath, java.project.listSourcePaths, java.project.updateSettings, java.project.getAll, java.reloadBundles, java.project.isTestFile, java.project.resolveText, java.project.getClasspaths, java.navigate.resolveTypeHierarchy, java.getTroubleshootingInfo, java.edit.smartSemicolonDetection, java.project.updateSourceAttachment, java.project.updateClassPaths, java.decompile, java.protobuf.generateSources, java.project.resolveSourceAttachment, java.project.updateJdk, java.project.addToSourcePath, java.completion.onDidSelect]
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.834
+!MESSAGE RepositoryRegistryUpdateJob finished 0ms
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.860
+!MESSAGE >> initialized
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.860
+!MESSAGE Importers: GradleProjectImporter, MavenProjectImporter, EclipseProjectImporter, InvisibleProjectImporter
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.869
+!MESSAGE Workspace initialized in 35ms
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.882
+!MESSAGE >> initialization job finished
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.896
+!MESSAGE >> build jobs finished
+
+!ENTRY org.eclipse.jdt.ls.core 1 0 2026-10-05 22:34:57.897
+!MESSAGE >> registerWatchers'
+
+Diagnostic session disposal failed: System.TimeoutException: jdt_cleanup_unconfirmed
+Bounded owned-process stderr (up to 64 KiB):
+WARNING: Using incubator modules: jdk.incubator.vector
+10月 05, 2026 10:34:55 下午 org.apache.aries.spifly.BaseActivator log
+INFO: Registered provider ch.qos.logback.classic.spi.LogbackServiceProvider of service org.slf4j.spi.SLF4JServiceProvider in bundle ch.qos.logback.classic
+
+Owned-process result: started=True; killRequested=True; waitCompleted=False; exitCode=<unobserved>; disposeCompleted=False.
+Cleanup was not confirmed; preserving diagnostic source/state at C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-782bc6b50ab648c1829b75a43a5a7927.

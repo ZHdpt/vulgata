@@ -1,0 +1,15 @@
+{
+  "results": "TestResults/isolation-9ab8eedb483f4f39bd4f965401bdd4e9/results.trx",
+  "selected": 3,
+  "passed": 2,
+  "failed": 1,
+  "skipped": 0,
+  "green": [
+    "Actual prepared stdio peer receives shutdown request then exit notification; successful exit wait before process disposal; no forced kill for responsive peer.",
+    "Existing oversized-reference response retains Limited after faulted-RPC cleanup fallback."
+  ],
+  "red": "Unconfirmed exit wait still calls state-cleaning process.Dispose: expected zero calls, actual one; controlled owned marker deleted.",
+  "correction": "Runtime permits owned-state disposal only after successful combined exit wait; unknown state remains retained. No shared lease/platform changes.",
+  "testCorrection": "Peer EOF observation replaced with actual protocol ordering and confirmed exit before process disposal; fake leaveOpen streams cannot prove RPC stream closure from peer EOF.",
+  "history": "All prior raw RED and intermediate results retained; expected RED is not a historical workflow failure."
+}

@@ -1,0 +1,11 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-c23a541eb38f4dcc878d11028a738348/results.trx",
+  "selected": 107,
+  "passed": 107,
+  "failed": 0,
+  "skipped": 0,
+  "scope": "Controlled selected first Java/Python alias resolution, physical no-follow pins and original indexes, strict Windows reparse tags, one hop, retarget refusal before launch. Existing source/security/lifetime/functions/old guarded path regressions passed.",
+  "nativeQualification": "Pending actual server run; T046 remains unchecked.",
+  "oldWorkflowChanged": false
+}

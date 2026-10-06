@@ -1,0 +1,1727 @@
+{
+  "recorded_at_utc": "2026-10-05T11:33:24.836199+00:00",
+  "task": "T037",
+  "status": "Authorized preparation complete; runtime use still requires fresh pin/currentness checks",
+  "user_instruction": "Authorize run JDT-LS within current story. Apart from that, tests about JDT should be reported out of basic tests suit for further development according to project rules. Proceed the story",
+  "authority": "Direct human in this chat, following explicit explanation of inherited filesystem/network rights and owned fixture/function/shutdown scope",
+  "scope": "New T037-T047 dedicated owned fixture; inspected PATH batch/Python/external JDT bootstrap and Java; no providers/databases/CodeGraph/default Web or machine PATH/ACL edits",
+  "principal": "ZHDPT-ASUS-5\\13728",
+  "python_version": "3.15.0a6",
+  "java_version": "27+35-2325",
+  "jdt_core": "1.58.0.202605150919",
+  "fixture_root": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\story18-2-dedicated\\febd3fa1-782b-4e9a-92c7-418b55efd503\\source",
+  "external_state": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\story18-2-dedicated\\febd3fa1-782b-4e9a-92c7-418b55efd503\\state",
+  "residual_rights": "Trusted child inherits account filesystem and network rights. Offline/no-import/no-build/no-restore settings are not enforced network isolation. Source preservation must be observed; unknown cleanup quarantines.",
+  "suite_policy": "Real JDT/Java/bootstrap process qualification is LocalTools, excluded from default SelfContained. Controlled transports/files with zero native child remain SelfContained under project rules.",
+  "manifest": [
+    {
+      "path": "C:\\Users\\13728\\.local\\bin\\jdtls.bat",
+      "sha256": "3459e44c0e045f1f531d9b8d5dcdf7410377d36e8b6dae0065850a74709cc240",
+      "observed_device": 11842272911651261302,
+      "observed_file_id": "10696049115277830",
+      "size": 108
+    },
+    {
+      "path": "C:\\Users\\13728\\.local\\bin\\python.exe",
+      "sha256": "80d4e874275ba362e8b592a75c66b16dc393257bf8cf2e347bd861e133a056d0",
+      "observed_device": 11842272911651261302,
+      "observed_file_id": "3940649676013938",
+      "size": 46592
+    },
+    {
+      "path": "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath\\java.exe",
+      "sha256": "2766dc71d761fd674129bb075d7fc8b7ce01c407cff502122a7084de651421e4",
+      "observed_device": 11842272911651261302,
+      "observed_file_id": "6755399442052632",
+      "size": 701072
+    },
+    {
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "sha256": "1a0f4e24602f8a8457babe1c7e60997a9e7603e3f89287e0b82d636cd15f725e",
+      "observed_device": 11842272911651261302,
+      "observed_file_id": "3096224744368997",
+      "size": 339968
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\artifacts.xml",
+      "sha256": "21482fadea5551bc63c49522a3f5c431a3ec091fc117e6df8f330e4fc17141a6",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265668004385359755476996",
+      "size": 260470
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\artifacts.xml.xz",
+      "sha256": "80882e2ca0303e94473db4a4468923e8f9bb0211b9683795d2086d6c16373ab2",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265668004385359755476998",
+      "size": 49652
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\__pycache__\\jdtls.cpython-312.pyc",
+      "sha256": "3226b2eeed33b091021c8512ae424d636b06fa66f18d489cc3a16ad5fb62a617",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311434376432233153036290",
+      "size": 6696
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\__pycache__\\jdtls.cpython-314.pyc",
+      "sha256": "440d011b64ff331f46193569e426652e816edf5a4be3f81ada420523a6dcbc72",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311434376432233153036291",
+      "size": 7027
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\__pycache__\\jdtls.cpython-315.pyc",
+      "sha256": "a462c06bee906e2e17f08674317b3b9b54279e7c7467bbc6e874e97d69c43922",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311434376432233153036292",
+      "size": 7031
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\jdtls",
+      "sha256": "0f54aa25d9291c68b3abbeb06dd30ec0f1a7e02a13724fa11af29860e151356d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279244808023609985466370",
+      "size": 892
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\jdtls.bat",
+      "sha256": "ea7b73d102b6beb4f69c75443e67dd030632daa57d7bb6fa5f36fe1332d3fb45",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279244808023609985466371",
+      "size": 41
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\bin\\jdtls.py",
+      "sha256": "7f768da6a5476c2a9703376ec9e4a685d1060b424e85014f030a4f93599cdbdc",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279244808023609985466372",
+      "size": 5125
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\languageServer.product.executable.cocoa.macosx.aarch64_1.0.0",
+      "sha256": "3996fcdd370017c600759a63ed0af455685b137a1cbe5d11ca92b126c7073f7e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131849",
+      "size": 16861
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\languageServer.product.executable.cocoa.macosx.x86_64_1.0.0",
+      "sha256": "5a09db3513c8ae4dce07aa0a1ad1ba8a21f2e094a0ee6893897a793d51a10e90",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131846",
+      "size": 16909
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\languageServer.product.executable.gtk.linux.aarch64_1.0.0",
+      "sha256": "9a3761e324412869dda89699088ae2a0ba663dc04160cda7cc40bb268bad06f7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131845",
+      "size": 32652
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\languageServer.product.executable.gtk.linux.x86_64_1.0.0",
+      "sha256": "d7fbcf298112f2d266cbe8ad0d5461586c1eb22b007a506b753610173f96d85a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131851",
+      "size": 36370
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\languageServer.product.executable.win32.win32.x86_64_1.0.0",
+      "sha256": "5f338b69d0f898cbb4c8bc32f6ee9f05ae5bdadaddaedcbcbfb788f24426aa44",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131850",
+      "size": 287825
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\syntaxServer.product.executable.cocoa.macosx.aarch64_1.0.0",
+      "sha256": "08852919f661ef6cf3d3f44a16ecd34a518636ea3b48ca1e5ed27fb43d7d80d9",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131844",
+      "size": 16860
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\syntaxServer.product.executable.cocoa.macosx.x86_64_1.0.0",
+      "sha256": "b7cd0c9ea87b6d693f3552b536ed9cfbae8ce88f60dc9fb403a00540debb28aa",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131848",
+      "size": 16908
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\syntaxServer.product.executable.gtk.linux.aarch64_1.0.0",
+      "sha256": "9a3761e324412869dda89699088ae2a0ba663dc04160cda7cc40bb268bad06f7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131843",
+      "size": 32652
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\syntaxServer.product.executable.gtk.linux.x86_64_1.0.0",
+      "sha256": "d7fbcf298112f2d266cbe8ad0d5461586c1eb22b007a506b753610173f96d85a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131847",
+      "size": 36370
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\binary\\syntaxServer.product.executable.win32.win32.x86_64_1.0.0",
+      "sha256": "5f338b69d0f898cbb4c8bc32f6ee9f05ae5bdadaddaedcbcbfb788f24426aa44",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265723344617580884131842",
+      "size": 287825
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_linux\\config.ini",
+      "sha256": "be64250536dc8cd87b654e12057378d5336ce13041cee2932902f010dc1266c7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279115680815094018605058",
+      "size": 8727
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_linux_arm\\config.ini",
+      "sha256": "b85f98cb84cdd828af510739ab3b50c6430a65434004c57899ff83c72972239c",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279134127559167728156674",
+      "size": 8728
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_mac\\config.ini",
+      "sha256": "5c5e5bfe9e5c5ceb952f8c26fc224d56e994f85e8c7166330311e87f0603bb69",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279060340582872889950210",
+      "size": 8812
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_mac_arm\\config.ini",
+      "sha256": "efe8e52792d9840b012ff1799b0c6deca0a44a9add614459f5fb6ab84d69da4a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279078787326946599501826",
+      "size": 8813
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_ss_linux\\config.ini",
+      "sha256": "fb969596fe5cc5a04aa0b2450f6aa0623da552f4b78e358d29dbeec9f7af459f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279207914535462566363138",
+      "size": 6692
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_ss_linux_arm\\config.ini",
+      "sha256": "8314abd4af5a473cfc02df9181c5b8c58aa4ee441493966edd6964ed680ea3c7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279226361279536275914754",
+      "size": 6693
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_ss_mac\\config.ini",
+      "sha256": "ed5ca443d0d8a08ad36a83438bf13835358cfb69dccf89b009c4aab8abcfa377",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279152574303241437708290",
+      "size": 6777
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_ss_mac_arm\\config.ini",
+      "sha256": "8fddbba2b2620f0c7c50cb5b599283c68c74c6824e4dcbe0145d7df9d7fc650e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279171021047315147259906",
+      "size": 6778
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_ss_win\\config.ini",
+      "sha256": "90b373d5359b4540ce08f4bed383303416f6b20760728ba14bfeabf2cd8f56d8",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279189467791388856811522",
+      "size": 6689
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\config_win\\config.ini",
+      "sha256": "611dc8c5a954d351c03f57c870cd951a074f327655ddceae2fcff44d6c9702d8",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1279097234071020309053442",
+      "size": 8724
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.core.runtime\\.manager\\.fileTableLock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311766417825559924965378",
+      "size": 0
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.core.runtime\\.manager\\.tmp3.instance",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311766417825559924965384",
+      "size": 0
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.equinox.app\\.manager\\.fileTableLock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311803311313707344068610",
+      "size": 0
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.equinox.app\\.manager\\.tmp4.instance",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311803311313707344068612",
+      "size": 0
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.equinox.app\\.manager\\.tmp5.instance",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311803311313707344068613",
+      "size": 0
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.equinox.app\\.manager\\.tmp75.instance",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311803311313707344068611",
+      "size": 0
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.equinox.launcher\\org.eclipse.equinox.launcher.win32.win32.x86_64_1.3.0.v20260203-2149\\eclipse_11919.dll",
+      "sha256": "23254b2b218e1d4141e955420c5754a00217dcc1175763562f4df4568937f94e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311489716664454281691138",
+      "size": 268968
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\.manager\\.fileTable.1",
+      "sha256": "9f50e177e88fb2633bf6793206ae23953f90a9aee85610518c32664f6e4aadb1",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311526610152601700794375",
+      "size": 78
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\.manager\\.fileTable.2",
+      "sha256": "c712afe415d0f5f1340ea09abda227a46200554d577aedc8ef206d3ac78cebf0",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311526610152601700794376",
+      "size": 78
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\.manager\\.fileTableLock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311526610152601700794370",
+      "size": 0
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-antlr.jar",
+      "sha256": "593e04cca55ca691441dbc6aa15e21026ea76481d4f2c45f1059e7630d37c8e3",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000835",
+      "size": 21503
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-apache-bcel.jar",
+      "sha256": "367baa893865070b96c2f32dc46e29ad458e81c510f6444a5d045af0f5dd7d9d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000837",
+      "size": 25204
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-apache-bsf.jar",
+      "sha256": "ea9eda96f3e6c73b5f7a7278c5dcb1bd263dd08ff5569394a584c1f322018691",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000839",
+      "size": 19545
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-apache-log4j.jar",
+      "sha256": "810ba0cbcede20a2f501ee5562cc663ea7bd420fd875029ca608a6b09c590893",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000841",
+      "size": 18074
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-apache-oro.jar",
+      "sha256": "bedd14cdfbcb4d8668bdd78357e756e1b7c5dff504ae5908a2b84b949e88ae57",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000843",
+      "size": 19483
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-apache-regexp.jar",
+      "sha256": "db54f7db5d1f415a403a6241c44cec40902362f77f44b468f57a0948c62d7322",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000845",
+      "size": 19439
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-apache-resolver.jar",
+      "sha256": "a5da0f1921759e9fe7949a00f32cda664c1c6022f93000f3c6a54f7f6c0b7ebc",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000847",
+      "size": 19354
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-apache-xalan2.jar",
+      "sha256": "eba9b0665ffb890433fbc4b6d022b31cdb198e0ac31f52affd7c8cadddb56811",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000849",
+      "size": 17762
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-commons-logging.jar",
+      "sha256": "95eedefa3c8f3082f59aa82f68ff33033c51977cf3b9f12c3defb18aed19335c",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000851",
+      "size": 19501
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-commons-net.jar",
+      "sha256": "eb9d44bc175fb4ed9e9c28f400c7e95295322c8c13761189836360869b085ece",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000853",
+      "size": 102702
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-imageio.jar",
+      "sha256": "a102f45e72890ac38d81af29f673a690a3906f558476351b341f97f03df9142e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000855",
+      "size": 42323
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-jakartamail.jar",
+      "sha256": "60f40f7d371bef89f5d341ac2ebe00069434737de552c601f963bb5ccbbc8a89",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000857",
+      "size": 23919
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-javamail.jar",
+      "sha256": "b0dbc07741804d05ecc448b219cd180ab44458e56d8af33d4f3badcd645ed99d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000859",
+      "size": 23922
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-jdepend.jar",
+      "sha256": "2a91ce0dc5cd5bf8c3ce7598906408f65a1431b29575609965b87e57bb45cd95",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000861",
+      "size": 24377
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-jmf.jar",
+      "sha256": "bda48df028af87336bc831bc648d5679224a907b130f2da79e9db040846f7821",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000863",
+      "size": 22486
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-jsch.jar",
+      "sha256": "fe94a9c76b0d4a1f71a7110631ed7a3216272cdae66e02adce18a051d8d96a84",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000865",
+      "size": 66361
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-junit.jar",
+      "sha256": "040a7d017e17189ab5684c33c17ceb05020ae36dec9635b595a59a12a33a48e5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000867",
+      "size": 154934
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-junit4.jar",
+      "sha256": "ef66e9fc51692c10c7e148d6bcffeb44d00251cc8f4979f4705630edc5d9179b",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000869",
+      "size": 23448
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-junitlauncher.jar",
+      "sha256": "be198af854ea06532d3789105ceb1e319fc46da13c320015b49be1e31b4e73dd",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000871",
+      "size": 110020
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-launcher.jar",
+      "sha256": "1cbde4733d72fb954483d10bcf8cc7d04ee94c6e0fb78c53aa2962518ae16a6d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000873",
+      "size": 28300
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-netrexx.jar",
+      "sha256": "62b5dce0e1478e08fa8632fe0bc8623760a60456b22365413cdce45eede6aa1d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000875",
+      "size": 26763
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-swing.jar",
+      "sha256": "c9ad3946d32f23b27bfd3c5d1e96e92ddc0c0edffd73480325c249781edd9ed5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000877",
+      "size": 23301
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-testutil.jar",
+      "sha256": "e1f84b64f6e30e2ea4f296d881ffea0a81ee43111fffc16ddb4c5d5ffe61e3df",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000879",
+      "size": 39179
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant-xz.jar",
+      "sha256": "11eb2dd9941d0ee93796b15c05dfb667723a91e3fd252ec1f6d595d2c23736b6",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000881",
+      "size": 20884
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\12\\0\\.cp\\lib\\ant.jar",
+      "sha256": "f67a9be04f23c9f11976ba1ddd468462652ed64145c5e39434f8eaef1cb3693e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311600397128896539000883",
+      "size": 2423297
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\53\\0\\.cp\\jdimodel.jar",
+      "sha256": "cc0c0e268002a4f8212a9edc1148331b803361111695598438da1e60b0bcc973",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311655737361117667655683",
+      "size": 1024270
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\aopalliance-1.0.jar",
+      "sha256": "0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862147",
+      "size": 4467
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\asm-9.9.jar",
+      "sha256": "03d99a74ad1ee5c71334ef67437f4ef4fe3488caa7c96d8645abc73c8e2017d4",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862149",
+      "size": 126122
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\error_prone_annotations-2.41.0.jar",
+      "sha256": "a56e782b5b50811ac204073a355a21d915a2107fce13ec711331ad036f660fcc",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862151",
+      "size": 20389
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\gson-2.13.2.jar",
+      "sha256": "dd0ce1b55a3ed2080cb70f9c655850cda86c206862310009dcb5e5c95265a5e0",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862153",
+      "size": 289901
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\guice-5.1.0-classes.jar",
+      "sha256": "142ad4475e19524d2fe3ac995b3f7cbc962fc726f2edb9dbdccc61feab9b2bf9",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862155",
+      "size": 656919
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\httpclient-4.5.14.jar",
+      "sha256": "c8bc7e1c51a6d4ce72f40d2ebbabf1c4b68bfe76e732104b04381b493478e9d6",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862157",
+      "size": 785639
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\httpcore-4.4.16.jar",
+      "sha256": "6c9b3dd142a09dc468e23ad39aad6f75a0f2b85125104469f026e52a474e464f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862159",
+      "size": 327891
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\jansi-2.4.2.jar",
+      "sha256": "32eb542a3b19b3e295b9219e985aef8b245898d9b0b4e66f311dae12f7fdf556",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862161",
+      "size": 273451
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\jcl-over-slf4j-1.7.36.jar",
+      "sha256": "ab57ca8fd223772c17365d121f59e94ecbf0ae59d08c03a3cb5b81071c019195",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862163",
+      "size": 16555
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-artifact-3.9.12.jar",
+      "sha256": "4361cecd7e863c0992a6c901202afbb6db2a06b4f9a5e4b22481d4d39bcf137c",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862165",
+      "size": 58821
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-builder-support-3.9.12.jar",
+      "sha256": "22a0345c7a90dbe7758209d52135967daa8aae6543c7016cb635891b0eceeed4",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862167",
+      "size": 14351
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-compat-3.9.12.jar",
+      "sha256": "76043e1b4311f12310b72da4d1524b503f96480649575170d4ea2a16bb19e8c5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862169",
+      "size": 286630
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-core-3.9.12.jar",
+      "sha256": "1ee217c759a895771a07a2018c026bba01373305d9bad0099f06dbbdbcf2c332",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862171",
+      "size": 720355
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-embedder-3.9.12.jar",
+      "sha256": "8cd71547431f8a908345869c5884ddae51cf3acba8d4592ea19d3b844563d345",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862173",
+      "size": 117398
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-model-3.9.12.jar",
+      "sha256": "d443a20cb801a7f116e10a80dd1ebf7aaae7182880d1097e0681d498c45e168b",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862175",
+      "size": 217939
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-model-builder-3.9.12.jar",
+      "sha256": "1cb12b9e51b9855599dd1d02e77f08ff88772e9d4b4a7c4ee1e5d7a4f2b9b9ea",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862177",
+      "size": 208642
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-plugin-api-3.9.12.jar",
+      "sha256": "104a1e073e5484eae2eac594c6e49b59bdd1103fe480ceb9a3468cd427449570",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862179",
+      "size": 47588
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-repository-metadata-3.9.12.jar",
+      "sha256": "b3688646dde74429e2e04ba4d7e1482f720bd68ab53824990089d0d8c821f1da",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862181",
+      "size": 28531
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-api-1.9.25.jar",
+      "sha256": "f414e7f40aff338cef65f836aabf6cd9a9e2a0f1bfa88589315beb0ac2f498c5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862183",
+      "size": 158199
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-connector-basic-1.9.25.jar",
+      "sha256": "23639c6186c9f06477a166e72df4556f1172ace1eddae5e7a04a009fbcabfdf0",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862185",
+      "size": 40188
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-impl-1.9.25.jar",
+      "sha256": "8d28766de3a000efa3662d5f67e428ca225498a89001195f7b3c55ea7a8bc56d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862187",
+      "size": 327261
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-named-locks-1.9.25.jar",
+      "sha256": "e9fc779106713c33b4b5a7ed85e4273cfd7b9a96df7cf678eb0ac588f72669e3",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862189",
+      "size": 37937
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-provider-3.9.12.jar",
+      "sha256": "79be07f591709b41d35e3ede06244a3447330fad469499fd5decb7606be01005",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862191",
+      "size": 79028
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-spi-1.9.25.jar",
+      "sha256": "781fafec23ea24f2624f3e3b48c674912f4bb1a1009a051df194307ed380280e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862193",
+      "size": 51656
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-transport-file-1.9.25.jar",
+      "sha256": "f5ec3b1b54f669ee90e0b07ab45ecbae6ce51d6e47e71f0e3c5c3e52cf55200f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862195",
+      "size": 16214
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-transport-http-1.9.25.jar",
+      "sha256": "e412d960e953cbae4689813f1e8a370021b54ae1a4a81a9649a03fea21c22cdf",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862197",
+      "size": 62913
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-transport-wagon-1.9.25.jar",
+      "sha256": "73425c699e593cbb5b51dc01efc8cd334bdf793bb3c4070d48f32a72e99b61ed",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862199",
+      "size": 32467
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-resolver-util-1.9.25.jar",
+      "sha256": "e31330fdb29045f3087b4985cb488a5b5ebbcbd7d879fda14e6ed4dd61b1fdf7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862201",
+      "size": 197361
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-settings-3.9.12.jar",
+      "sha256": "eabb1adfa3ce3c9217318b6d289de20259ee42d7290660ed4358eecd56b5664f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862203",
+      "size": 44672
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-settings-builder-3.9.12.jar",
+      "sha256": "92d137e366a4b4549eda848b52d968ef076ce24b9fb2db1b7a3083b9cc896eb1",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862205",
+      "size": 42355
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\maven-shared-utils-3.4.2.jar",
+      "sha256": "b613357e1bad4dfc1dead801691c9460f9585fe7c6b466bc25186212d7d18487",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862207",
+      "size": 151103
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\org.eclipse.sisu.inject-0.9.0.M4.jar",
+      "sha256": "1cbd7a965a5e2a9ea823bab311962a4e5aa5c240705bdbad5a52b40ffdfa1004",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862209",
+      "size": 305040
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\org.eclipse.sisu.plexus-0.9.0.M4.jar",
+      "sha256": "b90579bc652eac7331436e0a25533fce14130b9c6e015f2dd3a3d4bb07e942b7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862211",
+      "size": 215833
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-build-api-0.0.7.jar",
+      "sha256": "934171640fbd3d2495c50b79b0d9adb11e2c83e65bad157df8fe34bcac0ff798",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862213",
+      "size": 8482
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-build-api-1.2.0.jar",
+      "sha256": "570ae55a95e1887c3004882d30dc4e9035d2a46ba8d58b991de04175f141d88f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862215",
+      "size": 6585
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-cipher-2.0.jar",
+      "sha256": "9a7f1b5c5a9effd61eadfd8731452a2f76a8e79111fac391ef75ea801bea203a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862217",
+      "size": 13003
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-classworlds-2.9.0.jar",
+      "sha256": "1ad3292cd563381e3fd632f3fded1988f9e9b2be7a9f3db63ff4c4cedba13fa5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862219",
+      "size": 54086
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-component-annotations-2.2.0.jar",
+      "sha256": "50edb93c73786e62822b4fe1336e22880fdf147191373cf5c911370e16748fcf",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862221",
+      "size": 4151
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-interpolation-1.29.jar",
+      "sha256": "088d444dbcedfb384630d8686697ece3c401d6f33c8f8b3aa7259ea1c6996878",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862223",
+      "size": 88118
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-sec-dispatcher-2.0.jar",
+      "sha256": "873139960c4c780176dda580b003a2c4bf82188bdce5bb99234e224ef7acfceb",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862225",
+      "size": 23604
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\plexus-utils-3.6.0.jar",
+      "sha256": "27ef130e32c236090e408fb5498d94cb9ea26d14070fb1c8985d607b62d098d1",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862227",
+      "size": 271773
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\wagon-file-3.5.3.jar",
+      "sha256": "afc9216fa97b78dad227b4a8d4d67b9897bf113a57f80598d62993841113e103",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862229",
+      "size": 11350
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\wagon-http-3.5.3.jar",
+      "sha256": "d2b6e48c9fcbe579e1858c622d14464011ff265fa6e28e794004a6882154a509",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862231",
+      "size": 9405
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\wagon-http-shared-3.5.3.jar",
+      "sha256": "8e7da766f55164fde8779aaaa125832506c2848cab4876b5305138873e28037f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862233",
+      "size": 40832
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\67\\0\\.cp\\jars\\wagon-provider-api-3.5.3.jar",
+      "sha256": "5e72000338945ed3e96f8e4f578d1d0672e1af7e19c0e9014197ae5b31af3ef4",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311729524337412505862235",
+      "size": 55101
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\configuration\\org.eclipse.osgi\\framework.info.1",
+      "sha256": "d322bbb5cf953ed26274226bc3e5d7de1a3561171df01f1ff8243fb04b84dd98",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1311508163408527991242754",
+      "size": 437483
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\content.xml",
+      "sha256": "b3f8fcacd5da6f4d5bdf34723a3b81de4dffedbbb060a269a36e5970b586a1d4",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265668004385359755476995",
+      "size": 1055194
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\content.xml.xz",
+      "sha256": "14a011f146991ec634de420c09496a2eaa970f102e0c3a4b17dd3b363a83cf4a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265668004385359755476997",
+      "size": 39528
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\features\\org.eclipse.equinox.executable_3.8.3300.v20260414-2255.jar",
+      "sha256": "7a5a8a796719753e05c8575e81a38bcd48a8ace3eb755c3055d6e518fab84e5c",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265741791361654593683458",
+      "size": 738881
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\p2.index",
+      "sha256": "e2f64e1b76f7679bebae5f938a1ef8520f51a788da65fd9d2c06f5904f37772c",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265668004385359755476999",
+      "size": 176
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\ch.qos.logback.classic_1.5.21.jar",
+      "sha256": "b2523f7b0dabf4386c81312f0371d267e3a9fbce409046f16b042bf68571ba4a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580290",
+      "size": 308056
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\ch.qos.logback.core_1.5.21.jar",
+      "sha256": "0825ac1fc5296369121e5423e397c52d125b0e3fae743cfc0d8e416159f14f44",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580269",
+      "size": 639441
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\com.google.gson_2.14.0.jar",
+      "sha256": "2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580317",
+      "size": 313604
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\com.google.guava.failureaccess_1.0.3.jar",
+      "sha256": "cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580340",
+      "size": 10763
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\com.google.guava_33.5.0.jre.jar",
+      "sha256": "1e301f0c52ac248b0b14fdc3d12283c77252d4d6f48521d572e7d8c4c2cc4ac7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580295",
+      "size": 3017283
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\com.sun.jna.platform_5.18.1.jar",
+      "sha256": "ad14c1b1ec4f43d396231219dfa635ebf828f738eac9f890ea1bc07795892d9a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580345",
+      "size": 1380744
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\com.sun.jna_5.18.1.v20251001-0800.jar",
+      "sha256": "db89e4a3c622d97f2f4e1bdda2f243adad8f19edde83a29185d12675b8d00c15",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580313",
+      "size": 2017745
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\jakarta.annotation-api_1.3.5.jar",
+      "sha256": "85fb03fc054cdf4efca8efd9b6712bbb418e1ab98241c4539c8585bbc23e1b8a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580261",
+      "size": 25058
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\jakarta.inject.jakarta.inject-api_1.0.5.jar",
+      "sha256": "a852b0971c589491e24334bd77e92760c048d2c102fc4c68e582e1cd53130f84",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580301",
+      "size": 10860
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\jakarta.servlet-api_6.1.0.jar",
+      "sha256": "8a31f465f3593bf2351531a5c952014eb839da96a605b5825b93dd54714c48c4",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580350",
+      "size": 398424
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.apache.ant_1.10.17.v20260410-1000.jar",
+      "sha256": "fa6813bdafc5465f2095bc561099b2aa3f8ff6de22208519347fd9c2caff7768",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580351",
+      "size": 3441896
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.apache.aries.spifly.dynamic.bundle_1.3.7.jar",
+      "sha256": "50446b18eaaa135d1927e283639a63e452c94111c28c2a54419b1b3fa0339afc",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580304",
+      "size": 153960
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.apache.commons.cli_1.11.0.jar",
+      "sha256": "8f7f8605d68e15bf32db61ec94eac6fdafc51b1bdbe1e0e0802b57d23f387792",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580328",
+      "size": 110167
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.apache.commons.commons-codec_1.20.0.jar",
+      "sha256": "6af66595f9f6a7bb58ce66518d6888d40b547c366d2262f06676eee19528ff66",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580289",
+      "size": 401021
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.apache.commons.lang3_3.20.0.jar",
+      "sha256": "69e5c9fa35da7a51a5fd2099dfe56a2d8d32cf233e2f6d770e796146440263f4",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580271",
+      "size": 713862
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.apache.felix.scr_2.2.18.jar",
+      "sha256": "c5bd887c8fd5ec4cd563249e7552bb1a1a1ca57e05a1f1ef8425a7b7b7bd2fbe",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580288",
+      "size": 409468
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.commonmark-gfm-tables_0.24.0.v20241021-1700.jar",
+      "sha256": "b6480b2c0b8038be5fa7742bf9d2bfd1a5aba747b592cec574df943c15e75b49",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580237",
+      "size": 34954
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.commonmark_0.28.0.jar",
+      "sha256": "f8b28e00f97c568329ee1b2496cfec5c3ef8664b565ea09cf8988894183b956d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580279",
+      "size": 218324
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.ant.core_3.7.900.v20260427-0433.jar",
+      "sha256": "8b7e17129fd1c6acab9b3d9cef7fd23011ee220b6542dd8a3f8a97d0bb89d1ac",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580329",
+      "size": 105895
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.buildship.compat_3.1.10.v20250827-0209-s.jar",
+      "sha256": "d212fedb4e07ee47aa83fd6af99cfd1d84cd2ef86c93ef95bdbbe49b4007e7d9",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580293",
+      "size": 19636
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.buildship.core_3.1.10.v20250827-0209-s.jar",
+      "sha256": "dfc5ee42407674608f6253c1ccdddeb6f12e2df5ff84ab4ef260de2cd453600d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580232",
+      "size": 572526
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.compare.core_3.8.800.v20250718-1505.jar",
+      "sha256": "23e48bcc7e6b4d94b5fe686af8ddce4a31ac5ca04aedbaa768ce324c09528438",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580229",
+      "size": 72895
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.commands_3.12.500.v20251103-0733.jar",
+      "sha256": "44713362e55ed28e6db5d2c31bf67524fef087645a44dc3239dac60ece017cb9",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580273",
+      "size": 122155
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.contenttype_3.9.800.v20251105-1620.jar",
+      "sha256": "e0c2db96600d519ce36a75f9b7c971afd2870d2d059eee4bf2436d9b33aa0b8d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580234",
+      "size": 108005
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.expressions_3.9.600.v20260514-2026.jar",
+      "sha256": "eff84cfc8f20e235448c3a64fa4c2fa65f97e0ed08d26302f331b677dff77a66",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580291",
+      "size": 99317
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.filebuffers_3.8.600.v20260426-1223.jar",
+      "sha256": "1537b244abd74626b9627395c8562e910f68b6526330a7556f32d2a624b6e198",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580292",
+      "size": 122324
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.filesystem_1.11.400.v20251107-0507.jar",
+      "sha256": "6f70b95d14b90ec57b94c5e3dba7e1d189679cf9a4bc4526e9c91beed7d6a0ef",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580303",
+      "size": 79139
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.jobs_3.15.800.v20260325-1353.jar",
+      "sha256": "0497acb909d5cbe12080e78845f280d9292838721592b508c85cbfbdc7b2d7fe",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580259",
+      "size": 120975
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.net_1.5.900.v20260507-0401.jar",
+      "sha256": "6e7a8db7d87a44bb35924bb345ddf0d9372413e3fee2edd842b50ed630ec254f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580265",
+      "size": 77837
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.resources_3.24.0.v20260512-1533.jar",
+      "sha256": "d3d1b9e8dde3604ca861df3f2e44fae1ba0214ac098c9d7824edde6882519be9",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580266",
+      "size": 964298
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.runtime_3.34.200.v20251220-0953.jar",
+      "sha256": "b4f36a0acb08f03d0b3db54b21fc5638c820c447446a410ba496a5070fa34363",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580343",
+      "size": 90520
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.core.variables_3.6.800.v20260427-0433.jar",
+      "sha256": "44d944cc1cc1f645964034c350e4f26812737b5958297fc60962be368e751d32",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580262",
+      "size": 40281
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.debug.core_3.23.300.v20260513-0740.jar",
+      "sha256": "4354ac8ceebb8b83351bf34b8d5c6bd1ea5b2708fbb0163514f8a63a5e12c631",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580316",
+      "size": 418906
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.app_1.7.600.v20251211-1038.jar",
+      "sha256": "fd353398835107608f554779a6e91891725efb94e0f57559d0ab3cea4b6156c7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580336",
+      "size": 93212
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.common_3.20.400.v20260512-1534.jar",
+      "sha256": "423b58613a4e9bbbe6ec2239690ff329f13d69ebb28406a5f9d70516a6643a24",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580332",
+      "size": 164849
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.frameworkadmin.equinox_1.3.400.v20250515-0513.jar",
+      "sha256": "5efab37c3d1de41fa4bba91d4b0fb682f03477f89a8616eae49e0768e2766663",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580282",
+      "size": 75996
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.frameworkadmin_2.3.600.v20260306-0554.jar",
+      "sha256": "f2b956930b8383d708f1fe9df92938bffbe2e129082d4fd0b3d5f59c20a5c9f0",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580281",
+      "size": 41506
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.http.service.api_1.2.202.v20260307-0016.jar",
+      "sha256": "137b88b279ec3a52a22b354b43d14d567241e355ee041a4f63d7d5db2ea44927",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580242",
+      "size": 14796
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher.cocoa.macosx.aarch64_1.2.1500.v20260414-2255.jar",
+      "sha256": "73222ca4efbd605d2260102f3428e50fc1b61097647d5b703ad00c775af2b77f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580275",
+      "size": 42848
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher.cocoa.macosx.x86_64_1.2.1500.v20260414-2255.jar",
+      "sha256": "043bb146f19961ddae530fdd57fd6308501fd52d4728ab4dc1af04904d35706a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580335",
+      "size": 42606
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher.gtk.linux.aarch64_1.2.1500.v20250801-0854.jar",
+      "sha256": "9ebf40ea96503d6e22fcf83a6c419cc4f13d59b7ba2968352054c6795d132a56",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580226",
+      "size": 85996
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher.gtk.linux.x86_64_1.2.1500.v20250801-0854.jar",
+      "sha256": "b6076b99743ccdfbeb40187874d49d8ca5ea69a1a20da15619a99b1de185f120",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580264",
+      "size": 90830
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher.win32.win32.x86_64_1.3.0.v20260203-2149.jar",
+      "sha256": "a59cfda1d4333f2360fea789256b36ae843a62c26ddf8d58d455a6d1f1da6725",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580321",
+      "size": 150739
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar",
+      "sha256": "0209ecc491bdb20a0f09661e11696a8e0cdbd60cf14e2c55dbcb633d5fdd10bf",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580323",
+      "size": 52574
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.preferences_3.12.100.v20251111-0704.jar",
+      "sha256": "fd04e81a28ab32b6bb073286eb293c44b760176fcf1e35ef15614d62df820f86",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580296",
+      "size": 130382
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.registry_3.12.600.v20250906-0651.jar",
+      "sha256": "4f8cd72681446b598390a8c24ee9b9996f6e4c5fabed022b50bd26f6f5a0bf6c",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580309",
+      "size": 206425
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.security.linux_1.1.400.v20250521-0415.jar",
+      "sha256": "fd2fe77849feea313fcc8fb49c7114bd55f0e3cc5ec4bd6c0891d79d7a7a8b08",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580274",
+      "size": 27064
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.security.macosx_1.102.500.v20250521-0414.jar",
+      "sha256": "a8408d4bcdc70e019d2d89ed8b1b0413eb74ea73e74fa3d064b7401643539797",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580299",
+      "size": 31714
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.security.win32_1.3.0.v20240419-2334.jar",
+      "sha256": "cf9668c1d1e481059366abc2719468aa52e1276475cf9c32d4d10f57b34d7182",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580339",
+      "size": 15476
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.security_1.4.700.v20250622-1644.jar",
+      "sha256": "91b74719f9c1a130193407808fe5daab3b92431efbf30b8f886f1ff5e97f468f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580341",
+      "size": 120654
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.simpleconfigurator.manipulator_2.3.700.v20260306-0556.jar",
+      "sha256": "1a24a3c0fb01ad71f97432d5c2b364d9868b5a5ebd99a1308aacb1a2c03c47da",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580231",
+      "size": 31055
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.equinox.simpleconfigurator_1.5.700.v20251111-1031.jar",
+      "sha256": "d250938d3715529a9822fcdf46ad2f5de39720558d7195b5c1a8713af00bcd13",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580251",
+      "size": 57247
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.apt.core_3.8.700.v20260309-1433.jar",
+      "sha256": "5f4d54a1984c9dc6ac57d997cd99b8ed8e22b7011399112816764e802258a2e6",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580305",
+      "size": 411083
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.apt.pluggable.core_1.4.700.v20251202-0459.jar",
+      "sha256": "1bde3ae8f333266497c999e5160cc3a7ea8951a10d5191bf60dcda2c942242de",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580256",
+      "size": 43117
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.core.compiler.batch_3.46.0.v20260512-1158.jar",
+      "sha256": "bd78a0f001f0ac2ac9fb82c771d0951820746ad97cc319f221b5e5a5c4afb135",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580308",
+      "size": 3370519
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.core.manipulation_1.24.100.v20260514-2049.jar",
+      "sha256": "468a83309828fa1d2312407dfa95a4f05f16da1a58968dbf48b5d0dab1fcec49",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580302",
+      "size": 4915222
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.core_3.46.0.v20260514-1442.jar",
+      "sha256": "6e1a6fb04d11a4a5b59d5c02ade0ed9fe02c1ca359104006f2c516dc737cbee5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580346",
+      "size": 4510305
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.debug_3.26.0.v20260418-1439.jar",
+      "sha256": "c1e7e74c609139bca6191e57df34902836240dfc7e243a4d43b1018154b305ab",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580228",
+      "size": 964544
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.junit.core_3.14.200.v20260507-0922.jar",
+      "sha256": "a08e25472ab172a29189daf64e68473ba83432a7970a4ef4fddf67ae3b565f3c",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580227",
+      "size": 195018
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.junit.runtime_3.8.100.v20260507-0922.jar",
+      "sha256": "40f42db018f283e8e799333c1870d8a6ee14691a591927c77419373a1dd0d3a9",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580306",
+      "size": 64703
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.launching.macosx_3.6.400.v20260211-1052.jar",
+      "sha256": "a0a012ee18e76f7ca3f0b2d56c44d96776e3e4e6fb6d1d10a885fe591d6730c1",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580278",
+      "size": 22306
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.launching_3.24.200.v20260408-0443.jar",
+      "sha256": "1f0743ca6ab90acc1d92ba44bf54b4208141f3d19fbfc1019e81c716b3ee86b5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580330",
+      "size": 609683
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.ls.core_1.58.0.202605150919.jar",
+      "sha256": "937be6da6a929a6e8547dac96c1a9d75594a5e88ac8545cf342ae5a61089438a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580331",
+      "size": 1702312
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.ls.filesystem_1.58.0.202605150919.jar",
+      "sha256": "d06a38e5f36889a19bea08c1b67e5d7af41d50dc2c64c87c646960fb7f5d5f21",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580318",
+      "size": 13142
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jdt.ls.logback.appender_1.58.0.202605150919.jar",
+      "sha256": "47fecfe860ba6d58e2ea0f06f2e25b0896dde41e91d22741ef3195181edbcb96",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580240",
+      "size": 7306
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.jetty.servlet-api_4.0.9.jar",
+      "sha256": "89916c0360ad8be8b0b6bab41d9f0d5d03b742abb5e13aeeac06817c14fdf037",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580344",
+      "size": 314446
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.lsp4j.jsonrpc_0.24.0.v20250131-1745.jar",
+      "sha256": "7721572e849d4f359b46ede55d5604b982ff498d0d92ebc70e18029f59823c08",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580333",
+      "size": 153369
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.lsp4j_0.24.0.v20250131-1745.jar",
+      "sha256": "2caea31ffa2abd13c6f5d13489be071ad08f108eae83a34473ac72d96cf72922",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580247",
+      "size": 615974
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.ltk.core.refactoring_3.15.200.v20260421-0620.jar",
+      "sha256": "05e2f007fbc7eeecd0994cc83190125ff4914300ae0af005955d76038888e146",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580233",
+      "size": 368560
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.m2e.apt.core_2.3.100.20250418-1315.jar",
+      "sha256": "768aab803fc90eff25130aaf583aeb8791f7a8e55a9c3cadba305b95c70032f9",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580319",
+      "size": 56663
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.m2e.core_2.7.700.20260205-1611.jar",
+      "sha256": "166f29d7bbe5c2c8242e23664f200ad13c7a32b6f1bf33d0170d2db7de8c299e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580314",
+      "size": 629736
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.m2e.jdt_2.5.100.20260205-1607.jar",
+      "sha256": "1510ca33788eed77a3d7b9d6d53eb687ce3c339571cf87c4d2bff66fe6a0e2be",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580287",
+      "size": 174925
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.m2e.maven.runtime_3.9.1200.20260112-2306.jar",
+      "sha256": "f737020bfb5d24af8f7e7849a898e5bc0184a3d241a11d8ebca3785d71a16e74",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580337",
+      "size": 5958141
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.m2e.workspace.cli_0.4.0.jar",
+      "sha256": "53376fa2d7bfd2d5166806e74af9576ee3f8f1c1ac916e2cb4d2bb0c3e72c02f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580277",
+      "size": 17901
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.osgi.compatibility.state_1.3.0.v20251022-1724.jar",
+      "sha256": "94c1f866af37588c50ed3e95ed6f03eae6e1d81f111cba100d503fef23186028",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580320",
+      "size": 260438
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.osgi.services_3.12.300.v20250707-1221.jar",
+      "sha256": "01a738db34660b62e3938d67b0c08bbba5ebabc062078c0410b9843991293a0a",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580244",
+      "size": 29793
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.osgi_3.24.200.v20260429-2000.jar",
+      "sha256": "666287fcdeec107b7217537e420396ac22afde6f67715c234e2005f5d2f1da50",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580253",
+      "size": 1615530
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.search.core_3.16.700.v20260505-0615.jar",
+      "sha256": "daa86749c223226d64d47f1574be7c88580e27da4d562e0160cf44bfa569e843",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580300",
+      "size": 62763
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.text_3.14.700.v20260326-1107.jar",
+      "sha256": "4075f7aa3a19f2ce6ffd1f555ebc0884e065cc40b59f71d774da0928c1423555",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580294",
+      "size": 363943
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.eclipse.xtext.xbase.lib_2.41.0.v20251124-0739.jar",
+      "sha256": "c06b502f4fda81bfaa0447f9cc216d437aed28b9b287c68d2508465a659d40e7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580285",
+      "size": 170352
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.gradle.toolingapi_8.9.0.v20250827-0209-s.jar",
+      "sha256": "9138372a7ab2ec22076b6c4e7622af60464e30090b56d6222c3823166fa9c368",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580283",
+      "size": 3302738
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.hamcrest_3.0.0.jar",
+      "sha256": "5d66b6a4a680755cb6ed7cb104fa7835ef644667586ff0737adeb977c39ecdbc",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580315",
+      "size": 126373
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.jsoup_1.19.1.jar",
+      "sha256": "7b850eb00f2f77f606a343b2e4effe4107f3c1faa183729d85fbe16baf606096",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580230",
+      "size": 472999
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.junit_4.13.2.v20240929-1000.jar",
+      "sha256": "62f9c996330614c3fce34abf18f4226b11b1ef646ba735cb1089b463a5ba15af",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580322",
+      "size": 426304
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.objectweb.asm.commons_9.9.1.jar",
+      "sha256": "c2319e014ce7199f2b7f7d56d6bb991863168c3f4b6cd6c9f542a4937ef7ef88",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580338",
+      "size": 75010
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.objectweb.asm.tree.analysis_9.9.1.jar",
+      "sha256": "6260bffc8ec008dd1b713702c7994e2c94d188a3da5bef9e87278a16df6a7522",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580246",
+      "size": 35170
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.objectweb.asm.tree_9.9.1.jar",
+      "sha256": "0f3555096b720b820bbacab0b515589bee0200bee099bda14c561738ae837ba1",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580239",
+      "size": 51963
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.objectweb.asm.util_9.9.1.jar",
+      "sha256": "c5ebbbeaf68126af094b42fa4800f59bc4413abd02d95b9aefad722cd257e207",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580250",
+      "size": 94643
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.objectweb.asm_9.9.1.jar",
+      "sha256": "6f3828a215c920059a5efa2fb55c233d6c54ec5cadca99ce1b1bdd10077c7ddd",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580263",
+      "size": 126252
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.cm_1.6.1.202109301733.jar",
+      "sha256": "529da7b6806af4d788acc0aef0079c9c920f6cb1d2679c8f392ca552fb2e1d35",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580286",
+      "size": 55580
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.component_1.5.1.202212101352.jar",
+      "sha256": "0653852deab5c6f6e9c84e3aa8f72e72b9ce7dfaf7a6431f3d80f6f9d7a433ad",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580342",
+      "size": 66447
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.device_1.1.1.202109301733.jar",
+      "sha256": "c1763296d98638b4e78519209de71681568d2afbcd31119d33da2c16358beb25",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580241",
+      "size": 20356
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.event_1.4.1.202109301733.jar",
+      "sha256": "9f11c68980dbd931850f3f27fc7c35e1d710ecc728fe872bd6d786cd7e4b7b5e",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580327",
+      "size": 47710
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.http.whiteboard_1.1.1.202109301733.jar",
+      "sha256": "dbe1680a0a712e4c33781daee881ed6d790a28218879b2489230334aae170a99",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580280",
+      "size": 99604
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.metatype_1.4.1.202109301733.jar",
+      "sha256": "83d9cc2b62500d2e438be91c157659c2d693a262cfd14eb9b916286ca627ed00",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580276",
+      "size": 30379
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.prefs_1.1.2.202109301733.jar",
+      "sha256": "43c7c870710e363405d422da653cce0d798a4537f76e4930f79bceadd3a55345",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580324",
+      "size": 20165
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.provisioning_1.2.0.201505202024.jar",
+      "sha256": "59bf433907fe38b46acac4b771a8ffd3a4d693248bbd205968129d25c1a7d019",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580310",
+      "size": 13697
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.upnp_1.2.1.202109301733.jar",
+      "sha256": "f76ddece1420351cbbe6e19e17b00fb3b4b1633c3e4afdcbe9d0b8b2db4bdd7f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580252",
+      "size": 31309
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.useradmin_1.1.1.202109301733.jar",
+      "sha256": "e9af5301dbc71f548c8f9b85fdd4a8532fc1290f5388867b94da57657298f8b1",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580325",
+      "size": 36679
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.service.wireadmin_1.0.2.202109301733.jar",
+      "sha256": "e78911f12f8823e24a3dde68ba16502a7dd7f4c630386215b0ac7c2ede25b9a7",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580307",
+      "size": 43876
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.util.function_1.2.0.202109301733.jar",
+      "sha256": "208819c7c71690c15a6bb8b187474e7f9d0147946b680182a62b9f222ae014ec",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580326",
+      "size": 23641
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\org.osgi.util.promise_1.3.0.202212101352.jar",
+      "sha256": "7053c57e7d7d88fec6b90979a3af125e1d2bb847268a328a2f1ed65ad0a4c185",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580255",
+      "size": 85659
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\slf4j.api_2.0.18.jar",
+      "sha256": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580270",
+      "size": 69982
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.jetbrains.intellij.java.java-decompiler-engine_253.29346.240.jar",
+      "sha256": "7ff2dfd2c1a5dcc151d00f2fbee6d34452bcec2d1596f5ec46bdb1327e8324c8",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580312",
+      "size": 940444
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-ext-emoji_0.64.8.jar",
+      "sha256": "9e33717f1457c51d830312981f9e086d8f35a972d89b8da644e3ff3e898374db",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580238",
+      "size": 98640
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-ext-gfm-strikethrough_0.64.8.jar",
+      "sha256": "f7592ef981755993d8ab012392897111a29beb97e8e201f6a1ca6b857d12a9a2",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580245",
+      "size": 24324
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-ext-ins_0.64.8.jar",
+      "sha256": "535ca9d3d74f13bb9111752f51d3e61c14a0621fdb86cf4a580c25df8f4c7ae8",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580249",
+      "size": 12452
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-ext-superscript_0.64.8.jar",
+      "sha256": "e96f769c55e5ef1f5e0af9437b7f0aba09cc99f38aae41895c99f0bb77b68c03",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580349",
+      "size": 12937
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-ext-tables_0.64.8.jar",
+      "sha256": "0413d0c5b7492921433dcee2de062636c740876c7c925396501c068e126bfdf5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580267",
+      "size": 48708
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-ext-wikilink_0.64.8.jar",
+      "sha256": "a6e0678d38b70b3ff84ff5c7b389c71587fb52559d68cf81cc58e56a8ab0e093",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580334",
+      "size": 31081
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-html2md-converter_0.64.8.jar",
+      "sha256": "561224823f195584e8a07b0808764721ccf62abde7937e159d3162da0116d744",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580272",
+      "size": 82996
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-jira-converter_0.64.8.jar",
+      "sha256": "eddecf2a51e36783a3a30c2d9f1c7adcdd4d990267bec0e4b4bac7a8095876ee",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580347",
+      "size": 12874
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-ast_0.64.8.jar",
+      "sha256": "db5ed11ac9914321ba81eb472c4b6773a5a6dd28b32ea2e7c404839515921946",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580243",
+      "size": 67307
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-builder_0.64.8.jar",
+      "sha256": "091241b812f931b18095914e11ee757be7333a8be60589a12fb5c9e6ff562d16",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580236",
+      "size": 5788
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-collection_0.64.8.jar",
+      "sha256": "f507a93fc1f45a2f1a898afe545386df0ce6af295a5ad042828e3003dcace0d3",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580258",
+      "size": 68042
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-data_0.64.8.jar",
+      "sha256": "c14a9628ce3b19d986df64db9fc03cdaa3a568df609fad9aeff610b33774f24f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580284",
+      "size": 25964
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-dependency_0.64.8.jar",
+      "sha256": "e3913ac2c4915568d45a461e4835088cc7045ee9aa9d76bf51e1365ee3498bd5",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580248",
+      "size": 17130
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-format_0.64.8.jar",
+      "sha256": "674bdb178a03c17c7ed73881adb4fafd92ce1117db436ba0d36847d8c07a691f",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580268",
+      "size": 111485
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-html_0.64.8.jar",
+      "sha256": "276e5568544623c50eb33577dacab1ce5714b9658648f5f76da5330cbe74bee0",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580298",
+      "size": 45422
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-misc_0.64.8.jar",
+      "sha256": "d2cb83ae0ff0a4940ecb8ccc738f41d7fef02c5a69b04288542588532627f8a8",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580260",
+      "size": 60547
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-options_0.64.8.jar",
+      "sha256": "09cc69b565d917583545d2b57e8d18bcce82f18fc142fe5112150210544b5eb0",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580297",
+      "size": 12497
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-sequence_0.64.8.jar",
+      "sha256": "54ace32ecccf694156330e1bea898f043f0f4d86d672012d08e5a32ab0b946fb",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580311",
+      "size": 239121
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util-visitor_0.64.8.jar",
+      "sha256": "a3c5d4f046981611dc6ee783d658faf14c347b2e57923ce838f7a41eaf78ffda",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580257",
+      "size": 7278
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark-util_0.64.8.jar",
+      "sha256": "4da8a1d73909cb3b73adea632ddb116313d0317cc26dd65c6d3db281d424b622",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580254",
+      "size": 2152
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.com.vladsch.flexmark.flexmark_0.64.8.jar",
+      "sha256": "6a4fdff87356ce6b318aae241017bc2853f6f577f7f694217ff1770b6710873d",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580348",
+      "size": 451877
+    },
+    {
+      "path": "G:\\source\\repos\\eclipse.jdt.ls\\org.eclipse.jdt.ls.product\\target\\repository\\plugins\\wrapped.org.jetbrains.annotations_24.0.1.jar",
+      "sha256": "fe7c7bae899887f22f9bbcf62ba01f1381a1a8799bfeb69dd105b62d53f74a89",
+      "observed_device": 12543299856246018479,
+      "observed_file_id": "1265704897873507174580235",
+      "size": 32568
+    }
+  ],
+  "verification": "Only Python identification and Java -version run thus far; no JDT server start, navigation or shutdown qualification yet."
+}

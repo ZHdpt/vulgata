@@ -1,0 +1,16 @@
+{
+  "phase": "10",
+  "kind": "Controlled fresh-state RED and identity/cancellation GREEN; no JDT server",
+  "results_directory": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\isolation-3241823c1e044af6abdeeddcda5763ad",
+  "selected": 4,
+  "passed": 3,
+  "failed": 1,
+  "test": "PreparedJdtOwnedStateDirectories_WhenDataDirectoryAlreadyExists_RejectsReuseAndPreservesMarker",
+  "failure": "Expected InvalidOperationException for cache reuse; no exception thrown",
+  "passing_coverage": [
+    "Created-directory replacement is rejected and preserved",
+    "Preexisting caller-owned state root marker preserved",
+    "Cancellation before command resolution invokes no launcher/protocol"
+  ],
+  "route": "Normal expected RED before fresh-child preflight correction; historical workflow unchanged"
+}

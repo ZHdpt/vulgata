@@ -113,6 +113,36 @@
 /specs/017-october-batch-setup/evidence/verify-test-output-01.txt text eol=lf
 /specs/017-october-batch-setup/evidence/verify-build-output-01.txt text eol=lf
 
+# Story 18.2 accepted plan and transition evidence retain their reviewed bytes.
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md text eol=crlf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/checklists/requirements.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/workflow-state.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/specify-self-review-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-self-review-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-02.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-result-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-result-02.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0001.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0002.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0003.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/*.json -text whitespace=cr-at-eol
+/src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs text eol=lf
+/tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs text eol=lf
+/tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFixture.cs text eol=lf
+/src/dotnet/Vulgata.Core/DomainServices/PreparedJavaNavigationContracts.cs text eol=lf
+/src/dotnet/Vulgata.Agents/WorkerExecution/PreparedJavaNavigationFunctions.cs text eol=lf
+/tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs text eol=lf
+/tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs text eol=lf
+
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace
 

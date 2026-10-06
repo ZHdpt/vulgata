@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED at accepted registry AdmitAsync seam; normal TDD RED and earlier test setup compilation are uncounted. Actual host and native qualification remain closed.",
+  "task_ids": ["T031", "T032"],
+  "verification_route": "behavioral RED/GREEN",
+  "source_commit": "b05361bf61d9ec016a00100fb941bc79b8be69bb",
+  "accepted_definition": {"path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json", "sha256": "f9ffcaabd43b4df89df1bbe3de610669b6024198757e56aa778a3e2a7388a259"},
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "test_source": {"path": "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs", "sha256": "818c2ac5dd883d3b00f0e3a6e66410d23680e342048fa85f4990294b6478ce0e"},
+  "production_scaffold": {"path": "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs", "sha256": "f8aa9798f295b1cd6965b46160e15040c483e53d8fd61bb8740ec838139f87b9"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-22eaf155208e48f3bc1f3e27490fe106/results.trx", "sha256": "154f5f9fef4890d5e5709e0b9524dd8f1c37142ee17e140ae4a04d692d698522", "selected": 1, "passed": 0, "failed": 1, "skipped": 0},
+  "assertion": {"test": "AdmitAsync_CurrentAbsentBindingWithProtectedHostHold_OpensRegistry", "expected": "Opened", "actual": "Unavailable", "line": 67},
+  "build": {"path": "TestResults/isolation-22eaf155208e48f3bc1f3e27490fe106/build.log", "sha256": "7bd7e75c0a0bdc1fadb585c6f7b982658e3bd30b06f025453bb9aab55ea68611", "result": "passed"},
+  "setup_observation": {"path": "TestResults/isolation-6c69d5ad0de9466886797d813bd8b074/build.log", "sha256": "f6860f66a942ab0daa607b77b6bb74c0a29549a134b34099ceb0a6494b3a432f", "classification": "uncounted normal test compilation/setup: missing SuiteFact namespace corrected by test owner; no behavioral RED"},
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

@@ -1,0 +1,23 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "factory rejects disposable state root inside prepared source before runtime open; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs": "c25bb4d0eb88f32d4cbe28ac8a302a7dc6bd1c3e74e23d1481f76a9856ba1238"
+  },
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "1b92ec19c323857ef45f90bcfbff3716d3cf381a97a6ea788b7a9c8c98788469",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-state-root-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 36,
+  "passed": 36,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-0ed45386336b48e6b159a08f6fc21397/results.trx",
+  "trx_sha256": "720a29d90c5305668e6003fb878b85cf52a14196d39e076f72b2b09fcef17cf5",
+  "environment": "Approved native launcher; restricted build denied Infrastructure DLL write. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "minimal_green": "Factory checks physical state-root separation through the short internal contained-root scope under its reserved slot, failing with sanitized ConfigurationUnavailable/null before runtime invocation.",
+  "final_shape": "Separate owners assessed factory and test. Positive sibling state still opens. Real launch must revalidate pinned state path immediately before process start; controlled test is not subprocess containment."
+}

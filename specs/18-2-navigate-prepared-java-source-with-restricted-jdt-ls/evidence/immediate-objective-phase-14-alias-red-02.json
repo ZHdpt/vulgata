@@ -1,0 +1,14 @@
+{
+  "suite": "LocalTools",
+  "selected": 2,
+  "passed": 0,
+  "failed": 2,
+  "results": "TestResults/isolation-ace43a1c5b324fd0ac249fd676915d58/results.trx",
+  "classification": "GenuinebehavioralRED forboundedaliassecurity requirements.",
+  "failures": [
+    "NestedPythonfilealias ExpectedRejected ActualPinned",
+    "Java directorysymboliclink instead ofjunction ExpectedRejected ActualPinned"
+  ],
+  "correction": "Resolveonlyonehop andrequireexplicitacceptedreparse tags, usinglocalJDT metadatahelper; preserveno-followphysicalpin/sourceguard/no fallback.",
+  "nativeJdtLaunched": false
+}

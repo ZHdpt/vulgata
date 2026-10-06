@@ -1,0 +1,16 @@
+Read-only current-host resolver preflight: Pinned; pinned input count=666.
+Real JDT-LS navigation observed through the public host-policy factory; awaiting owned-process and fixture-settlement verification.
+Host PATH chain: JDT command C:\Users\13728\.local\bin\jdtls.bat; Python C:\Users\13728\.local\bin\python.exe; Java C:\Program Files\Java\jdk-21.0.12\bin\java.exe; runtime G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository.
+Server bundle(s): org.eclipse.jdt.ls.core_1.58.0.202605150919.jar.
+Settings contract: Maven/Gradle import, autobuild, build-configuration update, source downloads, snapshots and dependency restoration disabled; this is not OS network isolation.
+Definition: src/main/java/fixture/Target.java:3; references: src/main/java/fixture/Caller.java:3.
+Post-shutdown source/state verification failed: Xunit.Sdk.EqualException: Assert.Equal() Failure: Collections differ
+                        ↓ (pos 62)
+Expected: [···, 13, 10, 32, 32, 60, ···]
+Actual:   [···, 13, 10, 9, 60, 110, ···]
+                        ↑ (pos 62)
+Cleanup remains unconfirmed; preserving fixture at C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-b0b6bb21ad374352948cd6aad1cebadf.
+Remaining prepared source under C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-b0b6bb21ad374352948cd6aad1cebadf\prepared: directories=[.git, .git/hooks, .settings, src, src/main, src/main/java, src/main/java/fixture]; files=[.classpath, .git/HEAD, .git/config, .git/hooks/pre-commit, .project, .settings/org.eclipse.jdt.core.prefs, empty.datax, invalid.bytesx, long.payloadx, notes.oddlangx, src/main/java/fixture/Caller.java, src/main/java/fixture/Target.java].
+Remaining external JDT state under C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-b0b6bb21ad374352948cd6aad1cebadf\outside\dedicated-jdt-state: directories=[]; files=[caller-owned-marker.txt].
+Cleanup is unconfirmed or setup failed; preserving fixture at C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-b0b6bb21ad374352948cd6aad1cebadf.
+Remaining fixture under C:\Users\13728\AppData\Local\Temp\vulgata-prepared-source-b0b6bb21ad374352948cd6aad1cebadf: directories=[outside, outside/dedicated-jdt-state, prepared, prepared/.git, prepared/.git/hooks, prepared/.settings, prepared/src, prepared/src/main, prepared/src/main/java, prepared/src/main/java/fixture]; files=[outside/dedicated-jdt-state/caller-owned-marker.txt, outside/sentinel.txt, prepared/.classpath, prepared/.git/HEAD, prepared/.git/config, prepared/.git/hooks/pre-commit, prepared/.project, prepared/.settings/org.eclipse.jdt.core.prefs, prepared/empty.datax, prepared/invalid.bytesx, prepared/long.payloadx, prepared/notes.oddlangx, prepared/src/main/java/fixture/Caller.java, prepared/src/main/java/fixture/Target.java].

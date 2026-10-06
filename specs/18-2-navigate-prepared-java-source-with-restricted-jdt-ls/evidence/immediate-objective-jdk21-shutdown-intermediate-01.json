@@ -1,0 +1,12 @@
+{
+  "results": "TestResults/isolation-265299e7ee434ccdbcdcdc203a4a7e27/results.trx",
+  "selected": 111,
+  "passed": 109,
+  "failed": 2,
+  "skipped": 0,
+  "failures": [
+    "New peer-EOF-before-process-disposal assertion failed. Controlled streams leave the pipe writer open; fake process disposal produces peer EOF. Root independently identified this as invalid instrumentation for RPC stream disposal. Original raw failure preserved.",
+    "Existing oversized reference response returned ConfigurationUnavailable instead of Limited after cleanup. Faulted RPC graceful shutdown is being diagnosed; existing assertion retained."
+  ],
+  "scope": "No native process selected. Separate source/test owners retained. No historical workflow/recovery transition."
+}

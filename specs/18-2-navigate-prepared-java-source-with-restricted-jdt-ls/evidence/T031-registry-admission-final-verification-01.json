@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "summary": "Two accepted registry admission slices are verified: current-Absent admission with protected controlled hold and fail-closed partial-hold disposal failure with guaranteed gate release. Separate retained test and production owners assessed final units; final PreparedSource selection passed177/177. No task completion or actual host/native qualification is claimed.",
+  "task_ids": ["T031", "T032"],
+  "verification_route": "behavioral RED/GREEN",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "red": ["specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-positive-admission-red-01.json", "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-partial-cleanup-red-01.json"],
+  "minimal_green": {"path": "TestResults/isolation-01e6a2675cfa4365a707375824f30218/results.trx", "sha256": "29acbad83504bd2309f8d4c10457e99d050698c2e22041d92f3cfd47b582df6a", "passed": 2, "failed": 0, "skipped": 0},
+  "producer_final_green": {"path": "TestResults/isolation-33d40f83752a4680b2c6c0ddc1f573b3/results.trx", "sha256": "6bc2f0bb956e709405a9451edf867dee4f998896d41110e134a97a10a5333c5b", "passed": 2, "failed": 0, "skipped": 0},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedSource'", "path": "TestResults/isolation-6f712fe9931e4c2398d831adf7962b62/results.trx", "sha256": "efb5aaf577442a9df134cf021e886160fb2eaabf6a5e797e7cc12c384f1950ab", "passed": 177, "failed": 0, "skipped": 0, "build_path": "TestResults/isolation-6f712fe9931e4c2398d831adf7962b62/build.log", "build_sha256": "66b33c652b78eca7aaf9d363be1ef32b53fe0d8cc1bb4bf261e0c4fb59ddc2b7"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "3de956678aada6e33276f1b5cef62d587afb4ed9f72725a9451be7fae1148d56", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "0842760850a8bdce43457f33f9869e035100483a4946f305c2b645e2b13d23a7", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Nested finally guarantees gate release after partial-hold cleanup throws; Unknown remains fail closed. Redundant nested catch removed while GREEN, final tests repeated. Current admission unit assessed, no further local refactor.", "test": "Complete two-test unit independently assessed; controlled setup and bounded disposal assertion preserve uncertainty, no refactor needed."},
+  "setup_observation": {"path": "TestResults/isolation-72376b19a4354dbaa4bd68a72239fea0/build.log", "sha256": "73ea4d15be20c5786e144407842835b54b9e4d9e1161dfaa45de5f8e36b030c5", "classification": "uncounted normal xUnit overload setup, corrected assertions preserve intent; no behavioral RED"},
+  "qualification": "Controlled fake-host only. Borrow/disposition, issuer/coordinator integration, actual Windows adapter security RED/GREEN, selected-host/native qualification and prepared Repository remain incomplete; no production enablement or integrated18.3 handoff.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

@@ -1,0 +1,23 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "unconfirmed runtime cleanup quarantines same Repository slot; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs": "0f694ef71c0d942adf10d08287a9c8d91efa0a04a9a5ed258164dd6873b8a762"
+  },
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "60ab2aa1169bcb7114db867b91635aaf01c34f88d8827ed28daa46e3525abadc",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-quarantine-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 34,
+  "passed": 34,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-acfbf1de14184324bc89e8a85e658ed1/results.trx",
+  "trx_sha256": "d866d58cd2b682f502912d1b12e2c0c299f6e7def5537f9e6421d6e4475b0bec",
+  "environment": "Approved native launcher; restricted build denied Infrastructure DLL write. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "minimal_green": "Factory records Repository quarantine when runtime cleanup is unconfirmed or lacks attestation, rejects another open before invoking runtime, and leaves caller-owned lease untouched.",
+  "final_shape": "Separate owners assessed affected factory and test; no local refactor required. Atomic active-session reservation/release and an owned quarantine-resolution mechanism remain unverified and unfinished."
+}

@@ -1,0 +1,10 @@
+{
+  "suite": "LocalTools",
+  "results": "TestResults/isolation-5841bedc0c874bb18cc46d9c362be432/results.trx",
+  "selected": 1,
+  "failed": 1,
+  "classification": "Owned junction creation cmd.exe/mklink syntax error before resolver; not permission denial or product RED.",
+  "error": "The filename, directory name, or volume label syntax is incorrect.",
+  "correction": "Correct fixed cmd builtin argument quoting for owned fixture paths; keep pin/alias assertions and permissions unchanged.",
+  "nativeJdtLaunched": false
+}

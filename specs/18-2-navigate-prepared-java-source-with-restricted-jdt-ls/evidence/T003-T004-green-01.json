@@ -1,0 +1,29 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": [
+    "T003",
+    "T004"
+  ],
+  "observed_at": "2026-09-29T09:49:35.793730Z",
+  "production_path": "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs",
+  "production_sha256": "75ecf1d26d7ce876ba4c584ad9edb09a4e24b4b1269bce2ce1fb7d7b772dbf4b",
+  "focused_command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedToolWorkspaceIssuerTests",
+  "minimal_green": {
+    "launcher": "approved native launcher",
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-72dc1c5667b749b197954f37f474873a/results.trx",
+    "trx_sha256": "b7b691b89d3f4b1a1a8e251042a1aadf898ac85139154d32b5009c91e0c70705"
+  },
+  "restricted_comparison": {
+    "exit_code": 1,
+    "observed": "Build succeeded but test issued RootUnavailable when sandbox denied ancestor traversal; not treated as product failure.",
+    "trx_path": "TestResults/isolation-d6abc4a2870c406f8235debec9a1488d/results.trx",
+    "trx_sha256": "35bc13fb3062822f369d6f2f761d102bc343f2b89608fcc6e7c0210d78832330"
+  },
+  "final_shape": "Implementer assessed public issuer and lease: exact source approval plus separate purpose authorization before held no-follow root; sanitized lease fields; disposal closes handle. CheckCurrentAsync fails closed pending T005/T006 next slice. No local refactor needed at minimal GREEN."
+}

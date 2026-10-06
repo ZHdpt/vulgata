@@ -1,0 +1,37 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: current Ready v2 from same-process Absent\u2192Creating v1\u2192Ready v2 cannot borrow through original retained admission. Immutable key remained equal; Creating refused, current Ready has observed non-null entry identity. Fixture store commits represent coordinator progression, not native/production integration.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "d152931c8dfb4ded12e8c3020ddef47dbd3e2005",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "617278b398dc1b0e151cd12567297d8f8d666d75479ee7c154179955f89d127a",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "88a30fc3676a231734bef8c95841397f4f17d5801d5767df6b4729a213d1130d"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {
+    "path": "TestResults/isolation-daf57d5d099042f490d13a9d4e102b37/results.trx",
+    "sha256": "7b3f2524b04e7ecd634fd4ede43f9d3e643a72b853e0728c85cea97fea017400",
+    "selected": 21,
+    "passed": 20,
+    "failed": 1,
+    "skipped": 0
+  },
+  "assertion": "A current Ready record on the admitted immutable key must be borrowable under the retained hold.",
+  "build": {
+    "path": "TestResults/isolation-daf57d5d099042f490d13a9d4e102b37/build.log",
+    "sha256": "fe42701a4ef969855faeae92a8d1ecdf083b9d5b0896828b34f8b81e120922d9",
+    "result": "passed"
+  },
+  "resources": "Controlled registry/store/host fixtures only; actual Windows/native routes remain unqualified.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

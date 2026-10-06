@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: after successful admission, registry shutdown awaits stalled host hold disposal beyond its trusted deadline. Later admission/borrow/disposition are checked while disposal remains unreleased; finally releases and observes cleanup.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "f2fb30c3b9ae056ee2418b64745754c93c2fc990",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "9c4aa23a805985065613b702825336ccd68ca101fd809af193ee57a998fdcbf9", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "9ea5a7c51ebc8d98c0c30e7c3f465fc0150f407323c85126c9a3a97a89f1d769"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-1475fbd6df87470484241ba90273d3bd/results.trx", "sha256": "336eb24dc0623e5e561906eb0479798a438b97c5291764d419a40fc60c39137e", "selected": 18, "passed": 17, "failed": 1, "skipped": 0},
+  "assertion": "Registry shutdown must honor its trusted deadline while the admitted host hold remains pending disposal.",
+  "build": {"path": "TestResults/isolation-1475fbd6df87470484241ba90273d3bd/build.log", "sha256": "544e7a9f837f2fcf18337f0a3fbe03d8d4690c98def1e74fc95334e0c44c2d2f", "result": "passed"},
+  "setup_observation": {"path": "TestResults/isolation-f9a90e7a07fa4911b31384cb8d52ebae/results.trx", "sha256": "49b09cbd7da1d26a5a2bb2f5bbb1303479337c63a552528bb0694071c5ced4af", "build_sha256": "fc9f33634549fb10de8c924f3c851ff05bca4e36789e5418fd2fa11609836cec", "classification": "Uncounted observation-guard setup timeout; outer guard equalled admission deadline. Corrected trusted admission deadline to 100ms with independent 2s guard; intended assertions preserved."},
+  "resources": "Controlled fakes only; actual Windows/native routes remain unqualified.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

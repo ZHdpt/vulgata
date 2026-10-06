@@ -1,0 +1,12 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-4df911057c724f578af890c231cd3dc3/results.trx",
+  "durationSeconds": 0.2025524,
+  "status": "ConfigurationUnavailable",
+  "lease": "Issued within existing thirty-second cap",
+  "nativeSessionInitialized": false,
+  "classification": "Unlocalized production composition/resolver/profile preflight failure, not yet valid native protocol RED. Retained owners investigating exact boundary before changes.",
+  "claimLimit": "No proof of server launch or useful navigation from this attempt."
+}

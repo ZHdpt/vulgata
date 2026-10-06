@@ -1,0 +1,14 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "episode_id": "18-2-path-trust-20260929T103129Z",
+  "at_count": 5,
+  "summary": "The second native GREEN candidate again passed 8/9 but timed out at the fake's cancellation-observation assertion. The passed token was linked to RequestTimeout, yet the outer WaitAsync can return as cancellation begins while the underlying protocol task remains pending. Context disposal then releases the fake's wait and may unregister its callback before that callback runs. Independent test and production owners agree this exposes both a fake-session cleanup gap and the accepted product obligation to settle a timed-out Worker call before releasing the Repository slot. The earlier count-4 test-only diagnosis was incomplete; preserve it as history. Plan ID-A01 and the accepted navigation contract require bounded active-operation settlement, no late disclosure and quarantine when cleanup cannot be confirmed. The new approach is a bounded join of the pending protocol task using trusted ShutdownTimeout before session disposal, with quarantine and empty ConfigurationUnavailable if settlement is unconfirmed. The fake must make DisposeAsync await its owned request task and the test must observe token cancellation and settlement without requiring a particular catch-continuation order. No CodeGraph shared-write change is included.",
+  "failed_approaches": [
+    "Original context used only caller token and never applied RequestTimeout; expected RED established the missing bound.",
+    "First GREEN candidate linked RequestTimeout and disposed the session immediately; fake catch-continuation assertion raced disposal, native 8/9 failed at count 4.",
+    "Test registered a token callback and the noncompiling unverified shutdown-join patch was removed; callback still raced immediate session disposal, native 8/9 failed at count 5."
+  ],
+  "changed_approach": "After a fresh finite extension, production owner joins the pending protocol task for at most trusted ShutdownTimeout, retires and releases only after confirmed settlement, otherwise quarantines and emits empty ConfigurationUnavailable. Test owner corrects the fake session's DisposeAsync to await owned task settlement and asserts cancellation and no late payload without depending on catch callback ordering. Run focused and adjacent native suites before further work.",
+  "latest_failure": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-request-timeout-green-failure-02.json"
+}

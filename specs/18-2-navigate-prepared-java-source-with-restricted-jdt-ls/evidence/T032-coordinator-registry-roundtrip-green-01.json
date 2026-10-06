@@ -1,0 +1,66 @@
+{
+  "kind": "analysis",
+  "summary": "Existing coordinator verifier now reaches controlled file-store roundtrip GREEN, including pre-close cleanup denial and Closed/Settled transition before durable Removed. Gate/deadline/key/current source/tool/store/host and closure latch remain registry-owned.",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "verification_route": "behavioral RED/GREEN",
+  "source_commit": "261d9b151b8ec2932967c0f0edcb48f972e258ed",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "9106d4c1d977ae261802aa1dfaa232cc56fd2937a28cb2612fb10ce2b977971c",
+    "tests/Vulgata.Tests/PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": "6fab8782f8d349c2b84f22bd5608cec2534375c35921d18fdb4edc4e235961f8"
+  },
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T032-coordinator-registry-roundtrip-red-01.json",
+  "runs": [
+    {
+      "label": "minimal",
+      "path": "TestResults/isolation-5c715b5a0ae7403eb717a9a5a40e808e/results.trx",
+      "sha256": "ab119d95c7a59625d96992bf01e1ee92906da41a86a35355099fe35ea52f7af2",
+      "selected": 22,
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "build": {
+        "path": "TestResults/isolation-5c715b5a0ae7403eb717a9a5a40e808e/build.log",
+        "sha256": "16b044f95ca721a72545b6b71530384e574d23143121c5e3daddb05d7f805abf"
+      }
+    },
+    {
+      "label": "final phase readability refactor",
+      "path": "TestResults/isolation-4931da6a76f24cd082c1aa7d5812e151/results.trx",
+      "sha256": "5e11993b2ba6d8b2820cff6bbaab3c0dbb3d79a281904db3bd92dcbf6fc91692",
+      "selected": 22,
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "build": {
+        "path": "TestResults/isolation-4931da6a76f24cd082c1aa7d5812e151/build.log",
+        "sha256": "457d72a795a55d0740b50b548b98279468fe5e83a7398daacf7c1431be344dec"
+      }
+    }
+  ],
+  "refactor": "Private phase switch readability refactor preserves supported phases/key/version/entry proof, interfaces/schema/authority/ownership; focused tests before/after pass.",
+  "remaining": [
+    "fresh-record held proof on later ownership-view read",
+    "actual Windows/host/native and binding qualification"
+  ],
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  },
+  "independent_verification": {
+    "path": "TestResults/isolation-c81dda058e9841738d36b142bb6059ec/results.trx",
+    "sha256": "69ef9860135913093ed8e97b1d20af0b1d9afcffd5a1a48dc0167d4fac3c0241",
+    "selected": 22,
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0,
+    "build": {
+      "path": "TestResults/isolation-c81dda058e9841738d36b142bb6059ec/build.log",
+      "sha256": "2863431311c7ebbc59028105e7ccbb27b2121edf45e40d6585c983b892dc3158"
+    },
+    "test_sha256_before_variant": "6fab8782f8d349c2b84f22bd5608cec2534375c35921d18fdb4edc4e235961f8"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "canonical escaped UTF-8 in-root Java filename",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "7b980aaac7ddee46c7acb78b20e0fe22c2621c681b6a078dc3430709561a0f23",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 1,
+  "selected": 22,
+  "passed": 21,
+  "failed": 1,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-588203901e9a4e869d46c917fca27911/results.trx",
+  "trx_sha256": "51a64cb5f1a8be623a329164f586d6a669c552b973f46a6af466f8d315a31c20",
+  "result": "Unicode source file 服务.java was created inside the granted root before issuance. Test asserted OriginalString contains escaped UTF-8 `%E6%9C%8D%E5%8A%A1`. UseContainedRootAsync returned Current but TryMapContainedFileUri returned false at test line 156; expected literal Repository-relative path was withheld. Escaped-space positive and encoded traversal negative both passed.",
+  "environment": "Restricted build was denied writing test obj manifest; approved native run reached product assertion. No real JDT or Java process started."
+}

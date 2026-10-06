@@ -1,0 +1,20 @@
+{
+  "kind": "analysis",
+  "summary": "Accepted concrete Windows host-verifier declaration-only compile seam, default Unavailable/null observations/holds; no native token/ACL/mutex/resource call or positive behavior.",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "c2fd2d56e73d054bd9b1a8a7df2051dce44d8408",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/WindowsPreparedManagedWorkspaceHostVerifier.cs": "1f0e3bb8d92a35b6107cdc2fb96ec6d370ff0629c39a48bd257e4c0e8e546c28"
+  },
+  "verification_route": "declaration-only direct inspection; actual behavioral RED waits prepared guarded tests and separate resource authorization",
+  "accepted_contract": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md:464",
+  "resource_boundary": "Prepare fixture-only tests without execution; real ACL/mutex setup waits explicit user permission.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "kind": "analysis",
+  "summary": "Partial hold cleanup deadline verified. Admission returns Unavailable by its deadline, retains and observes the single pending disposal, closes reuse and grants no borrow while cleanup is uncertain.",
+  "task_ids": ["T031", "T032"],
+  "verification_route": "behavioral RED/GREEN",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-partial-disposal-deadline-red-01.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "9c4aa23a805985065613b702825336ccd68ca101fd809af193ee57a998fdcbf9", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "53d735f7c719cac5e96a635cd02e3a129b775e135662b6a4fbf8bf462cd74a8b"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "minimal_green": {"path": "TestResults/isolation-7352ec69ed5c45c183c44975262a8cb0/results.trx", "sha256": "0628bd43b1285a039e53aa545cf6c9b837302981ee6cdd5700768f50b61b32e8", "selected": 17, "passed": 17, "failed": 0, "skipped": 0, "build_sha256": "f49519716f2aa0c5a97de7af48fa21478cb1699398fc549a2970577752822575"},
+  "independent_final_green": {"path": "TestResults/isolation-7bf1ccad92ee4d37813b9210dfba4c17/results.trx", "sha256": "e1686da3a26198ca364a4f5dbac69d8c37358d6face4d3e8b70aac42a0c57b6b", "selected": 17, "passed": 17, "failed": 0, "skipped": 0, "build_sha256": "2d27a422dd8d244695c01074cfd171ab24a1c613812564ff1763f277d84eb7bf"},
+  "final_shape": {"production": "Pending cleanup ownership is explicit and local; no further bounded refactor needed.", "tests": "Public admission completion is measured before disposal release; finally drains controlled disposal and admission. Previous sixteen cases preserved."},
+  "limitations": "Controlled registry only. Shutdown hold-disposal bounds, immutable progression, producer integration, actual Windows protection and native qualification remain unfinished. No task completion or integrated readiness is claimed.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

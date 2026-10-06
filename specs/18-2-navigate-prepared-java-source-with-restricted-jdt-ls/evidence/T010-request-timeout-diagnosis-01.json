@@ -1,0 +1,12 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "episode_id": "18-2-path-trust-20260929T103129Z",
+  "summary": "The prior definition defects were corrected through accepted definition-review-06. The bounded request timeout GREEN candidate failed one assertion. The fake signalled CancellationObserved only from an OperationCanceledException catch; factory-owned session disposal released the fake's wait before that catch could run. The accepted contract requires timeout cancellation, empty DeadlineExceeded, settlement and no late disclosure, but does not require this catch to win the disposal race. Test owner recommends observing the passed token's cancellation with a registered callback while retaining result and disposal assertions. Production owner applied an unverified follow-on patch before receiving the read-only hold; it currently lacks a factory constructor argument and contains an invalid early return. Preserve it for a gated correction decision, then remove or repair it according to the accepted behavior. No new architecture or shared CodeGraph scope is authorized by this diagnosis.",
+  "failed_approaches": [
+    "Initial context used caller token only and never enforced RequestTimeout; expected RED established that defect.",
+    "First GREEN candidate linked RequestTimeout and disposed the session, but the fake's catch-continuation assertion raced disposal; native 8/9 failed."
+  ],
+  "changed_approach": "After a fresh finite extension decision, correct the test stimulus to register cancellation on the token, verify bounded empty DeadlineExceeded plus session disposal, and remove the unverified production follow-on patch unless a separate product defect is evidenced. Run focused and adjacent native suites under the approved launcher.",
+  "latest_failure": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-request-timeout-green-failure-01.json"
+}

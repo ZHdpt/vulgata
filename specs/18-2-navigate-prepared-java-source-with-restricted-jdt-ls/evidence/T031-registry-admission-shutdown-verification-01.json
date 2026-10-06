@@ -1,0 +1,12 @@
+{
+  "kind": "analysis",
+  "summary": "Stalled admission authority no longer blocks public shutdown beyond its deadline or publishes Open in the controlled scenario; independent eight-case registry verification passes. Broader concurrency and provider cleanup remain unfinished.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-admission-shutdown-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-23fb43d91c3d4d9aa27d89743bc8beb8/results.trx", "sha256": "8647c884f177017fc51c2dbbff8b972e52412eeb954755a938f3728bf5146b13", "passed": 8, "failed": 0, "skipped": 0, "build_sha256": "242478aa0a19f79ed3400bf6a2d67ef1815d2264aa5d6c405a6aa9869260fc06"},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'", "path": "TestResults/isolation-b37575d496f5441bbaf2496a638325ff/results.trx", "sha256": "b989db539c6797e45df12491893c8dd1eef4d415f89b8b6635b4c7880619f632", "passed": 8, "failed": 0, "skipped": 0, "build_sha256": "90780d17099af8b13167184c1ae3de0a40bae98bfead1e94b0946a3298462325"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "ed688bfd4fb0f9dde1f6a5454d89038f27334cce9d274e2c482ec0e90b091c52", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "23883f98587d9a2add7bb36bd766d8ea03a2e4f08cdfab37b9beb2810318278a", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Shutdown latch and bounded gate acquisition satisfy the stalled admission case. Separate final latch check/publication can race, and hold release after timed-out gate acquisition remains unresolved; reported before group completion.", "test": "Public provider handshake, release and bounded observation verify the controlled scenario without private hooks or elapsed-time assertions. Existing seven cases preserved; no refactor needed."},
+  "remaining": "Admission/borrow/close provider bounds, partial-hold cleanup and atomic concurrent publication require further accepted behavioral verification. Current eight-case passes do not qualify full registry or actual host/native behavior.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

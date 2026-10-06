@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-05 (Story 18.4 all30 tasks verified and convergence01 clean; formal gate/completion status is in its feature state).
+Updated: 2026-10-06 (Story 18.4 completion and Story 18.2 immediate-objective checkpoint integrated; qualification remains scoped to their recorded evidence).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -148,7 +148,7 @@ runtime workflow:
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
 | Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
-| CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
+| CodeGraph/LSP | Historical CodeGraph 1.5 integration is CLI/JSON, not native MCP. October Story 18.2 in its assigned branch has 121 controlled JDT LocalTools passes (including bounded authority waits and public disposal uncertainty) and a passing real pinned JDT1.58 fixture under application-supplied JDK21: definition/reference function results, bounded shutdown, owned cleanup and unchanged source bytes. Final basic SelfContained passes 2063/2063 and excludes JDT/native LocalTools. Prepared Repository, existing JDT-filter metadata, mixed roots and integrated producer handoff remain unqualified. Historical failures remain recorded; no universal filesystem/network isolation is claimed. Old unfinished tasks/workflow are preserved and stopped. See the [18.2 development record](../bmad/implementation-artifacts/18-2-navigate-prepared-java-source-with-restricted-jdt-ls.md). |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |
 | Chat | Provider SSE is ingested but the current answer path buffers strict candidates and reveals accepted text in the UI. Pair-bound scope and process-local dialogue/publication are not genuine generic streaming/durable reattachment or Business BL-only behavior. |

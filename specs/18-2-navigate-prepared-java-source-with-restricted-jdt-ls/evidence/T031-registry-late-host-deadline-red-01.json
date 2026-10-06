@@ -1,0 +1,15 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: host acquisition ignores cancellation and admission misses its trusted deadline. Controlled cleanup releases provider, observes admission and late hold disposal, verifies no post-timeout borrow, then shuts down. No build/environment failure.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "2287a639db54d4f39872036dff19c9b06c66b960",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "683928a44666871a287d7db4d4dd238ee42afbc80fb748dcb6d27d70fb277904", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "70ea8a2a37c5c5f50ab84c44231f21fe8ba098758da320ef53ea0911ae7ed932"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-d9c7b239b3e743ce9054ba638bf0cb45/results.trx", "sha256": "f7ddb1abee5d35c7d4bc7b5f08b91d5b1736b79f8bdc17dda216ee5e30e75033", "selected": 11, "passed": 10, "failed": 1, "skipped": 0},
+  "assertion": "Admission must finish within its trusted deadline when host verification ignores cancellation.",
+  "build": {"path": "TestResults/isolation-d9c7b239b3e743ce9054ba638bf0cb45/build.log", "sha256": "4e8d2ef263fcb690d3a416217ddd03cab5c2f09ef3f79dfd9fd9394281531bd0", "result": "passed"},
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

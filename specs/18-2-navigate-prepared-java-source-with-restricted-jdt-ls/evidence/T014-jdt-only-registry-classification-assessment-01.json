@@ -1,0 +1,25 @@
+{
+  "kind": "analysis",
+  "summary": "Source-grounded implementation correction identified after controlled coordinator checkpoint: registry existing VerifyCurrentAsync unconditionally requires CodeGraphPreparation, conflicting with accepted ownership classification for readers/JdtNavigation-only use. Existing GetOwnershipViewAsync source/current-owner checks intentionally exclude CodeGraph-purpose authority; actual state mutation and disposition retain separate CodeGraph tool checks. No definition/shared signature/schema change is needed.",
+  "source_commit": "c2fd2d56e73d054bd9b1a8a7df2051dce44d8408",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "9681fd8222d814710b863db7831c6dc80121a15cb7a645b32cfffc97721425f3"
+  },
+  "authority": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md:206",
+  "task_ids": [
+    "T014",
+    "T015",
+    "T016",
+    "T017",
+    "T031",
+    "T032"
+  ],
+  "verification_route": "one registry-backed JdtNavigation-only public factory/navigation behavioral RED before scoped implementation correction; existing permissive-double JDT passes do not cover producer-backed tool separation",
+  "next_check": "Bound factory opens on exact current positive-Absent view with JdtNavigation-only authority and permits positively unowned .codegraph/Ordinary.java navigation via controlled protocol; CodeGraph mutations remain denied without separate grant.",
+  "resources": "Controlled transport/store/host and owned local fixture only; independent of pending Windows ACL/mutex execution permission.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "kind": "verified-task-group",
+  "stage": "implement",
+  "tasks": [
+    "T001",
+    "T002",
+    "T003",
+    "T004",
+    "T005",
+    "T006",
+    "T007"
+  ],
+  "observed_at": "2026-09-29T10:16:23.721172Z",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "6c85e57f7029d0f580215ef37912bc230a3600202940bbc6edc9da5ca3c6c6e4"
+  },
+  "tests": {
+    "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs": "15f515582b5f7b0ae5785cdeb7297a989ed921d74b64f7600b9a42ab0a68f994",
+    "tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFixture.cs": "bb55e32a21c32e96582b03380960d3cdfa002a0d3da3322103acfed142f26b28",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "75ae2a66793b2ab24fdc6e80a906b75e728c07ce490af5e295d90aae123d0b45"
+  },
+  "final_command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedToolWorkspaceIssuerTests|FullyQualifiedName~PreparedJavaNavigationFixtureTests",
+  "launcher": "approved native launcher",
+  "result": {
+    "exit_code": 0,
+    "selected": 16,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-f6f5c57a86684b9e9223d9acc5952ca9/results.trx",
+    "trx_sha256": "4b50abd17a5dc56f4979eab92ffd0fa87dfbd1ce4c776499173f6497d0171abf"
+  },
+  "behavioral_evidence": [
+    "evidence/T003-red-01.json",
+    "evidence/T003-T004-green-01.json",
+    "evidence/T005-red-01.json",
+    "evidence/T005-T006-green-01.json",
+    "evidence/T005-root-identity-coverage.json"
+  ],
+  "direct_evidence": [
+    "evidence/T001-baseline-verification.json",
+    "evidence/T002-fixture-verification.json"
+  ],
+  "assessment": "Test owner: explicit controlled fixtures, independent accepted-contract expectations and no concrete local defect needing refactor. Production owner: issuer handles issuance, lease handles use-time authority/lifetime, exact source/purpose rechecks, held-root identity and deadline/cancellation; final-shape safety recheck added and final GREEN confirmed. Root inspection confirms the shared file references Core/source contracts only and has no JDT class import; integrated 18.1 public issuer/context/functions were not edited.",
+  "checkpoint_scope": "Identifiable JDT-independent trusted workspace seam only. Story 18.3 consumption requires separately authorized integration and its own process/tool qualification. This checkpoint does not qualify JDT-LS or CodeGraph."
+}

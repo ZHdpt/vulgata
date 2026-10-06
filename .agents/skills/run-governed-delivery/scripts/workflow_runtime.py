@@ -274,6 +274,30 @@ def validate_event_evidence(event: dict, state: dict, read: Reader, *, current: 
         if kind == "extension":
             validate_recovery_extension(approval, decision_record, state, read,
                                         current=current, expected_head=expected_head)
+        elif kind == "human_counter_reset":
+            require_nondelegated_decision(decision_record)
+            recovery = state.get("recovery")
+            head = expected_head if expected_head is not None else state.get("transition_head")
+            if not isinstance(recovery, dict) or type(recovery.get("failed_results")) is not int or recovery["failed_results"] <= 0:
+                raise ValueError("counter reset requires an active recovery episode with failures")
+            boundary = {"story_key": state["bmad_story_key"],
+                        "episode_id": recovery["episode_id"],
+                        "count_from": recovery["failed_results"], "reset_to": 0,
+                        "recovery_before": recovery, "previous_head": head}
+            scope = digest(canonical_bytes({"stage": "recovery-counter-reset", **boundary}))
+            if (decision_record.get("kind") != "human-approval"
+                    or decision_record.get("stage") != "recovery-counter-reset"
+                    or decision_record.get("status") != "accepted"
+                    or not isinstance(decision_record.get("user_source"), str)
+                    or not decision_record["user_source"].strip()
+                    or not isinstance(decision_record.get("user_instruction"), str)
+                    or not decision_record["user_instruction"].strip()
+                    or decision.get("scope_sha256") != scope
+                    or any(decision.get(key) != value or decision_record.get(key) != value
+                           for key, value in boundary.items())
+                    or any(event.get(key) != value for key, value in boundary.items()
+                           if key != "story_key")):
+                raise ValueError("counter reset requires exact direct-human approval for this recovery boundary")
         else:
             require_nondelegated_decision(decision_record)
     if kind == "phase_complete":

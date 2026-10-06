@@ -1,0 +1,21 @@
+{
+  "status": "Pending direct human bounded authority decision; not adopted",
+  "trigger": "First-host-PATH Oracle Java parent is a junction. T046 forbids silently adding a new authority seam.",
+  "selectedAlias": "C:/Program Files/Common Files/Oracle/Java/javapath",
+  "physicalTarget": "C:/Program Files/Common Files/Oracle/Java/javapath_target_776515",
+  "proposal": [
+    "JDT-only first selected java.exe may resolve one explicitly approved junction to an explicitly approved physical executable directory.",
+    "Pin physical executable by existing no-follow identity/digest and retain original first-PATH selection/index.",
+    "Bind and recheck exact alias target before launch; no fallback or ordinary source traversal changes.",
+    "Keep separately pinned JDK27 runtime inputs and report Oracle registry delegation as residual."
+  ],
+  "files": [
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtProcessLauncher.cs",
+    "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+    "tests/Vulgata.Tests/AnalysisRuntime/PreparedJdtLsDedicatedQualificationTests.cs"
+  ],
+  "verification": "Focused controlled owned-junction behavioral RED/GREEN then actual native fixture definition/references/function/shutdown; affected controls/basic suite retained.",
+  "alternative": "Human selects direct JDK21+ first host PATH Java and restarts Codex; no machine PATH edits by agent.",
+  "scopeLimits": "No18.1/18.3 contract change, registry platform, source copies, later-PATH fallback, history reset or old task reactivation."
+}
