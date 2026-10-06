@@ -2,6 +2,8 @@
 
 This is a read/presentation model, not a database schema. OCT-BUSINESS owns shared identities, DTO definitions, acceptance and persistence. Terms below are responsibilities until its compiled checkpoint supplies exact types; no Explore equivalent may be minted.
 
+Initial imported type mapping (T001–T003 only): Core `Vulgata.Core.DomainServices.OctoberKnowledge.DocumentHandle` uses Guid batch/publication/logical/version identities and optional string SectionId. `ReadSelection` and `ContinuationToken` remain opaque owner records. `ContentPage` contains Status, DocumentSummary, Content, qualified Claims, Next and Coverage; `RelatedDocument` contains Kind, exact From/To and Meaning. Use Shared `ReadKnowledgeRequest`/`KnowledgeContentResponse` and `RelatedKnowledgeRequest`/`KnowledgeRelatedResponse` wrappers, never a parallel Knowledge model. The existing controlled fixture validates these shapes; production section hierarchy, byte-limited large-content splitting and final accumulated graph-disclosure semantics remain owner dependencies, as listed in the consumer boundary. None is implemented by this lane's import probes.
+
 ## Owner-supplied values
 
 | Value | Required fields/meaning | Relationships and validation |

@@ -2,6 +2,8 @@
 
 These are planned checks, not executed results or runtime permission. Implementation must first be authorized, B0 checkpoint supplied and feature code/tests delivered. All commands run from this assigned worktree. Never run the Web host against ambient/shared databases: startup migrates existing Identity/domain schemas.
 
+The guide below remains prospective for E0–E3; the bounded T001–T003 execution record at the end is actual controlled conformance evidence and overrides none of the later runtime prerequisites.
+
 ## Prerequisites
 
 - Same compiled B0 contracts/fixture consumed by all lanes; Business real store/live policy for real-data checks.
@@ -51,3 +53,51 @@ Use integration's approved host start/configuration command only after confirmin
 6. Show a bounded result with visible limits. Business graph may be sparse or edge-free: confirm no hidden CL structure or manufactured BL-to-BL links.
 
 Record code checkpoint, contract checkpoint, explicit publication, safe exact handles, permitted account roles, source-slice coverage, accepted-edge comparison and known limits. Keep credentials/raw source out of evidence. Distinguish controlled layout/policy tests, persisted reads and real generated cross-Repository usefulness. Integration owns final combined build/SelfContained and affected runtime checks; do not rerun unrelated native tools from Explore.
+
+## Initial contract import and acknowledgement — T001–T003
+
+Bounded preparation authorized by OCT-Integrator dispatch from chat `01a1109d-ec4c-7500-8b73-642a5e22f59b`: checkpoint planning, merge the exact integration commit, add initial lane conformance tests/inventory, run the isolated SelfContained launcher, commit and stop before T004. No full Wave 2 execution or other workflow/skill was invoked.
+
+- Planning checkpoint: `a4ab3157d8e7a2d25e121b274daa411109b6e97b` preserves the accepted specification/plan/F3 review/tasks as they stood before import.
+- Exact imported integration checkpoint: `3bcd815b09cfbac7418d6644a2a75816e0788ec0`; Business candidate `07c3fe4463e3228a6982fd106b58148ca87974bd`, documentation handoff `7a189c34aec625202f74846d4907ded787ccbdca`. Local merge: `8bc1903c5c88b7fcb76b8cb61432c25d270029b4`. Ancestry check returned 0, on `oct14/explore`; no reset/history rewrite or counterpart edit.
+- Actual symbols/limits are recorded in [consumer-boundary.md](contracts/consumer-boundary.md#imported-symbol-binding--initial-t001t003-preparation). Local links preserve all four Guid fields including LogicalDocumentId and string SectionId. Chat/integration route adoption remains pending, not inferred concurrence.
+- Separate `contract_test_author` authored only `tests/Vulgata.Tests/Explore/KnowledgeReadContractTests.cs` and its exact SelfContained inventory entry. Root owns documents, launcher and Git. No production-code owner was activated. No T004 ExploreFixtureHost or presentation code exists from this dispatch.
+
+### Exact verification
+
+```powershell
+pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.Explore.KnowledgeReadContractTests|FullyQualifiedName~Vulgata.Tests.October.Knowledge'
+```
+
+First attempt stopped during compilation with CS0121 at the new test's target-typed constructor in a validator call. `TestResults/isolation-e613651373fb406fa3318d4e45fdf7d6/build.log` records this failure; no tests ran and it is not behavioral RED. The test author corrected that call to explicit `RelatedKnowledgeRequest`, without changing imported production code or assertions.
+
+Corrected run: **SelfContained discovered 3,389; selected 60; passed 60; failed 0; skipped 0**. TRX inspection independently separated **10 Explore consumer cases** from **50 imported Business cases**. Evidence: `TestResults/isolation-e21f53e5007c4d4db3876da43971f8a0/results.trx`, `execution.log`, `discovery.log`, `build.log` and `guard-probes.log` in this worktree. Build reported 0 errors and 5,102 warnings, including an AD0001 analyzer exception; successful compilation is not a claim of a clean/full analyzer run. No analyzer configuration was relaxed. Repository policy checked 321 classified files; launcher outcome/timeout/cleanup/fixture guards passed. This is a focused selection, not a full SelfContained run.
+
+Corrected test SHA-256: `BE4AD15A69B3E2B03FA440354EC81BDD75D5E1F79994E75EF65F79E625D31B0F`. Independent reviewer `independent_plan_review` accepted the bounded T001–T003 changes conditional on the corrected run passing; that condition is satisfied. It confirmed canonical-only consumer types, meaningful ten-case coverage, exact single inventory addition and no T004/production implementation. These are conformance tests over existing imported behavior; no artificial RED/GREEN production cycle is claimed.
+
+### Inventory and ownership for later work
+
+Only the first row is added now; all future entries below are proposals for their owning task, not created code or advance permission. All paths are relative to `tests/Vulgata.Tests/`.
+
+| Path | Suite / disposition |
+| --- | --- |
+| `Explore/KnowledgeReadContractTests.cs` | SelfContained — added and verified now |
+| `Explore/ExploreFixtureHost.cs` | SelfContained — T004, not started |
+| `Explore/ExactReaderTests.cs` | SelfContained — T005 |
+| `Explore/ExactContentContinuationTests.cs` | SelfContained — T006 |
+| `Explore/ReaderComponentTests.cs` | SelfContained — T010 |
+| `Explore/ExploreCompositionTests.cs` | SelfContained — T012 |
+| `Explore/ExplorePersistedReaderTests.cs` | PostgreSql — T015 |
+| `Explore/KnowledgeGraphProjectionTests.cs` | SelfContained — T018 |
+| `Explore/KnowledgeGraphAuthorizationTests.cs` | SelfContained — T019 |
+| `Explore/KnowledgeGraphViewModelTests.cs` | SelfContained — T023 |
+| `Explore/KnowledgeGraphComponentTests.cs` | SelfContained — T024 |
+| `Explore/ExplorePublicationE2ETests.cs` | E2E, with owned PostgreSQL — T029 |
+
+### Consumer acknowledgement and remaining prerequisites
+
+**Explore acknowledges the imported candidate is usable for initial controlled E0 contract consumption.** This is not production B0, full E0 completion or global accepted-K designation; integration owns collecting all consumers' acknowledgements. Business real persistence/Identity policy, section hierarchy and large-content budget/splitting, protected cursor expiry/cancellation, GENERATED_FROM fixture coverage and graph-wide accumulated disclosure remain unqualified dependencies. The fixture has two small scripted chunks and a REFERENCES relationship; its mutable policy is not real Identity. UI cancellation/races and Chat footer wiring were not implemented or tested. No competing DTO/policy/schema compensates for missing seams.
+
+Integration still owns ordinary Web registration/navigation/selection and final runtime resources; Business owns the real store and all October migrations; Chat owns footer adoption. No database, migrations, host startup, provider calls, source Scan or native analysis tools ran. The standard SelfContained launcher's own local process/timeout guard probes ran as part of the approved launcher. No user/machine PATH/global settings or unrelated process was changed.
+
+Pause **before T004**. Only T001–T003's initial preparation is complete; the remainder stays unstarted. No push is performed. The final preparation commit identifies this record and its exact scoped changes; no self-referential commit hash is embedded here.
