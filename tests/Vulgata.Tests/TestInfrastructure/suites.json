@@ -158,6 +158,18 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Knowledge/KnowledgeRequestValidatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeFixtureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeContractProbeTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/OctoberPersistenceModelTests.cs": {
     "suite": "SelfContained"
   },
