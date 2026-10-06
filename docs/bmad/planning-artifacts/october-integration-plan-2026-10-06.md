@@ -20,7 +20,7 @@ to describe the broader plan, not this separately authorized checkpoint.
   `7a189c34aec625202f74846d4907ded787ccbdca`.
 - Integration merge: `3bcd815b09cfbac7418d6644a2a75816e0788ec0` on `oct14/main`.
 - Initial K/CP-K1 is accepted at `12d92d80339ea622cd26c593ebdb74da59401f91`.
-  Business is recording T006 closure from the merged consumer acknowledgements.
+  Business T001–T006 closure is recorded in `a836f359` and integrated.
 - Main current-source replay: `eng/test.ps1 -Filter
   'FullyQualifiedName~Vulgata.Tests.October.Knowledge'`, 50 selected/passed,
   zero failed/skipped, policy passed. Evidence:
@@ -49,11 +49,12 @@ Next parallel development boundaries after explicit implementation authorization
 | Business | B0a T007–T013, then B0b | Real persistence/reader services and schema remain unbuilt; Business alone owns schema. |
 | Scan | S1 T005–T012 | Native/source/provider resource execution requires scoped authority; real acceptance needs Business services. |
 | Explore | E0 T004–T013 using labelled controlled dependencies | Real publication qualification waits for Business, not controlled E0 authoring. |
-| Chat | Controlled feature-local C0 work after dependency-order clarification | W0 must be wired/verified before integrated C0 completion; D0/W1 still block live C1. |
+| Chat | Controlled feature-local C0 T003–T006 after T002 ownership setup | W0 must be wired/verified at T007 before integrated C0 completion; D0/W1 still block live C1. |
 
 Integration owns W0. Do not create a fake ready module or treat fixture tests as
-Web composition proof. Chat is clarifying the circular ordering between W0 and
-T006's feature-local registration handoff without changing C0 acceptance.
+Web composition proof. Chat's `b0e83069` clarification is integrated: K0 enables
+controlled T003–T006 authoring; W0 remains mandatory at T007. Its proposed API
+is not yet accepted or implemented. C0 acceptance is unchanged.
 
 Only Business owns shared Knowledge types and October schema/migrations.
 Integration serializes shared composition and test-inventory merges; consumers
