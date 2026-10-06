@@ -8,6 +8,38 @@ implementation_authorized: false
 
 # Integrate the four first deliverables
 
+## Current integration checkpoint — October 6
+
+The user assigned OCT-Integrator to import Business's initial checkpoint and
+prepare the other lanes for Wave 2. This authorizes the bounded integration and
+consumer-conformance work below, not the full later feature implementations or
+external runtime execution. The original planning-only front matter continues
+to describe the broader plan, not this separately authorized checkpoint.
+
+- Imported candidate: `07c3fe4463e3228a6982fd106b58148ca87974bd` plus handoff
+  `7a189c34aec625202f74846d4907ded787ccbdca`.
+- Integration merge: `3bcd815b09cfbac7418d6644a2a75816e0788ec0` on `oct14/main`.
+- Business T001–T005 are complete. T006 remains pending actual Scan, Chat and
+  Explore consumer acknowledgements; a merged candidate is not yet accepted K.
+- Main current-source replay: `eng/test.ps1 -Filter
+  'FullyQualifiedName~Vulgata.Tests.October.Knowledge'`, 50 selected/passed,
+  zero failed/skipped, policy passed. Evidence:
+  `TestResults/isolation-8e5356d9c6724a80821cccc36eabb4fc/results.trx`.
+  This is controlled contract/fixture evidence, not PostgreSQL, native tools,
+  providers, Web startup or full-suite qualification.
+- Scan is preparing T001–T004, Explore T001–T003 and Chat its K0 conformance.
+  Each imports the exact integration commit in its own worktree and preserves
+  its accepted planning artifacts. Each pauses before broader implementation.
+- Chat's integration-owned W0 Web composition seam is separate from K0 and is
+  not yet delivered. It must not block the other consumers' contract acceptance
+  or be silently marked complete by passing fixture tests.
+
+Only Business owns shared Knowledge types and October schema/migrations.
+Integration serializes shared composition and test-inventory merges; consumers
+may submit exact inventory additions with their lane-local probes. Missing owner
+contracts are resolved with that owner, never through parallel DTO/policy copies.
+No provider, native-tool, database or persistent-host execution is granted here.
+
 Reserve October 9-10 for this phase, with earlier merges on October 6-8. One
 integration owner is accountable; each feature owner fixes defects in its own
 area. This phase combines the [four briefs](october-delivery-plan-2026-09-30.md),

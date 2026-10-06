@@ -51,7 +51,12 @@ verification before reuse.
   minimum Knowledge foundation derived from its plan. Old 18.5 evidence remains
   historical and incomplete; resuming its held workflow is not a new prerequisite.
   Follow the revised briefs rather than copying the full original story matrices
-  or skipped tool tasks. No new feature, implementation or runtime was started.
+  or skipped tool tasks. Business's initial compiled Knowledge contract/controlled
+  fixture checkpoint is now integrated at `3bcd815b` (candidate `07c3fe44`, handoff
+  `7a189c34`). Its focused integration replay passed 50/50 SelfContained tests,
+  zero skips. Consumer conformance and Business T006 acceptance remain pending;
+  this is not the real B0 store, Scan, Chat or runtime qualification. See the
+  integration plan's current checkpoint below before starting dependent work.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
