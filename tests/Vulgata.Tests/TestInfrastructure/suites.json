@@ -167,6 +167,9 @@
   "OctoberScan/OctoberScanBoundaryProbes.cs": {
     "suite": "SelfContained"
   },
+  "October/Chat/OctoberChatKnowledgeConformanceTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/KnowledgeRequestValidatorTests.cs": {
     "suite": "SelfContained"
   },
