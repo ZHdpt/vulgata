@@ -1,5 +1,7 @@
 # OCT-BUSINESS future validation guide
 
+**Current checkpoint status (2026-10-06)**: T001–T006 complete; initial K/CP-K1 accepted at `12d92d80339ea622cd26c593ebdb74da59401f91`. Paused before T007. Earlier pending-import/acknowledgement notes below are historical; the final acceptance record supersedes those statuses only.
+
 Planning-only guide. These commands have not been run for this feature. Do not run hosts, migrations, provider calls or resource suites until implementation and owned runtime targets are authorized.
 
 ## Prerequisites
@@ -90,3 +92,21 @@ Local compiled contract/fixture candidate: **`07c3fe4463e3228a6982fd106b58148ca8
 ### Integration import verified — 2026-10-06
 
 Verified locally that `oct14/main` includes integration merge **`3bcd815b09cfbac7418d6644a2a75816e0788ec0`**, whose parents are planning baseline `fad7f11c` and Business handoff `7a189c34`; it contains exact candidate `07c3fe4463e3228a6982fd106b58148ca87974bd`. The clean assigned `oct14/business` worktree fast-forwarded to that exact integration commit with no tree-content changes. This verifies integration import only. The integration owner's reported replay remains unverified here while running; Scan, Chat and Explore compiled consumer acknowledgements remain pending. T006 stays unchecked and accepted K is not yet established. Preserve the pause before T007; no production, migration, runtime or cross-chat dispatch is authorized by this status update.
+
+### Initial K/CP-K1 accepted — T006 closure, 2026-10-06
+
+Integration owner chat `01a1109d-ec4c-7500-8b73-642a5e22f59b` explicitly accepted initial K at **`12d92d80339ea622cd26c593ebdb74da59401f91`** and requested documentation closure while preserving the pause. Business verified that exact combined source commit is included in `oct14/main`, includes `fad7f11` and its prior `379d9ee5` handoff, and fast-forwarded only the clean assigned `oct14/business` worktree to it. Git comparison confirms no changes to Business Core/Shared contract sources, validators or Knowledge fixture/tests since candidate **`07c3fe4463e3228a6982fd106b58148ca87974bd`**.
+
+Consumer acknowledgements were read from the imported commit, not inferred from dispatch:
+
+| Consumer | Exact acknowledgement commit | Verified acknowledgement record | Initial controlled probes |
+| --- | --- | --- | --- |
+| Scan | `0f6728911820884edf3517c9d4abd2a0b98e16de` | [conformance-c0.md](../20-1-Oct14-scan/conformance-c0.md), T001–T004 complete; imported completion/guard/scope and F1/F2/F5 compatibility | 19 |
+| Explore | `aa63ca157dc20f0047999b8ae53663425a0fb504` | [quickstart.md](../20-1-Oct14-explore/quickstart.md), T001–T003 initial canonical read-handle/DTO compatibility | 10 |
+| Chat | `6b4153d5fe31b25c734fe4e2f77fde5d971d7456` | [quickstart.md](../20-1-Oct14-chat/quickstart.md) and [imported-k0-and-w0.md](../20-1-Oct14-chat/contracts/imported-k0-and-w0.md), explicit K0 acknowledgement; W0 remains separate | 10 |
+
+Integration reported a current-source isolated replay at this exact checkpoint, with 324 classified source files and passing launcher policy/guard checks. Business read the specifically supplied `G:/source/repos/vulgata/TestResults/isolation-248c5bd60813457c983eaf5b273842f6/results.trx` without modifying that checkout: **89 executed, 89 passed, 0 failed, 0 not-executed/skipped, 0 errors/timeouts/aborts**, independently grouped as 50 Business + 19 Scan + 10 Explore + 10 Chat. This is the combined focused SelfContained selection, not the full suite. No redundant test run was needed for this documentation-only closure.
+
+**T006 is complete and K is the exact combined source hash above.** Acceptance covers initial compiled contracts and controlled consumer compatibility only. Real B0 producer validation/atomic storage/publication, Identity/all-contributor authorization, secure cursor expiry/large-content splitting, actual Scan guard/scope/transport settlement, Web composition and runtime/provider usefulness remain unqualified and belong to their later tasks. The consumers' documented model limitations remain obligations, not waivers or permission for competing contracts/schemas. Business remains the sole Knowledge contract/persistence/October migration owner; integration owns shared Web composition. No tool, Scan-strategy or PRD scope expansion is adopted by this closure.
+
+Stop remains **before T007**: no B0 implementation, migrations, application host, provider, database or other external runtime authorization. Only this existing quickstart and tasks.md were edited after import. No outbound chat message or push was performed; the final response supplies the documentation commit for integration to import.
