@@ -1,0 +1,64 @@
+# OCT-BUSINESS data model
+
+Design only. Extend the existing OctoberDbContext (`october` schema and existing migration history); names below are proposed owned additions. Business serializes all migrations/snapshot changes. No schema is applied by this document.
+
+## Exact binding and immutable Knowledge
+
+| Record | Required fields and keys | Rules |
+| --- | --- | --- |
+| KnowledgeOperation | BatchId, Kind, OperationId, PayloadDigest, CommittedResultJson, CommittedAtUtc; unique first three fields | Result recorded in the same transaction as its mutation. Digest mismatch conflicts; durable lookup resolves lost acknowledgement. |
+| AcceptedFileManifest | ManifestId, BatchId, AdmissionId, RepositoryId, RootBindingIdentity, RelativePath, SourceDigest, ProposalDigest, CoverageDisposition, UnitCount, accepted operation | Unique batch/admission; complete exact result only, zero units explicitly supported. No model-supplied permanent identity. |
+| OctoberCodeUnit | UnitId, BatchId, RepositoryId, root/file binding, SemanticSelector, ParentUnitId | Unique bound semantic key. Validate parent exists in manifest and acyclic nesting. Overlapping/nested source ranges are allowed. |
+| OctoberLogicalDocument | LogicalDocumentId, BatchId, Kind, OwnerUnitId or LogicalFlowId | Exactly one CL per Code Unit / BL per Logical Flow. No mutable CurrentVersionId needed. |
+| OctoberDocumentVersion | VersionId, BatchId, LogicalDocumentId, SchemaVersion, ContentJson, ContentDigest, OriginManifestId or FlowGroupVersionId, CreatedAtUtc | Canonical immutable JSON (`jsonb`); restrictive FKs. Never legacy ScanRun/Git placeholders. New history requires new rows, no overwrite/delete. |
+| OctoberDocumentSection | VersionId, SectionId, Ordinal, derived SearchText/ReadingProjection | Unique version/section and stable ordinal. Projections derive from immutable JSON and are replaceable only equivalently, never independent content authority. |
+| QualifiedClaimGroup | VersionId, SectionId, ClaimGroupId, text, qualification, exact source/context/input-group references, conflicts/limitations | Required at material statement-group granularity. Split or attribute mixed support; derived projections preserve qualifications. BL groups map to exact qualified CL/input groups, never silently upgrade advisory assertions. |
+| KnowledgeContributor | OwnerKind/OwnerVersionId, source/advisory kind, RepositoryId/SystemId as applicable, RootBindingIdentity or context RecordId, snapshot/content digest | Complete transitive provenance. Used for authority even when not cited or visible in Business projection. |
+| CommunicationObservation | ObservationId, ManifestId, UnitId, role, mechanism, operation, literals/expressions, namespace, evidence status, SourceAnchors | Qualified source observations, not accepted relationships. Unknown mechanism remains explicit. |
+| SourceAnchor | Owning version/observation, RepositoryId, root binding, relative path, source digest, exact range | Validated against trusted source metadata; no host paths/Git fiction. |
+
+## Fixed resolution, rooted BL and publication
+
+| Record | Required fields and keys | Rules |
+| --- | --- | --- |
+| CorpusSelection | CorpusId, BatchId, CorpusDigest, exact ordered manifests/versions, admission outcomes, bounds/policy, contributors | Immutable target for one bounded finalization. Root input inventory must account for all selected files. Graceful operator stop closes dispatch, settles writes and records accepted/zero-unit/failed/cancelled/unprocessed-with-reason outcomes; only the settled accepted subset enters the corpus. Paused/unsettled/indeterminate blocks synthesis. |
+| ResolutionItem | CorpusId, ItemId, QuestionDigest, CandidateEvidenceDigest, PolicyVersion, Outcome, supporting/opposing evidence, limitations | Unique inquiry fingerprint. Outcome supported/unresolved/failed/not-evaluated; all selected items disposed before affected BL. Scope reduction cannot disprove accepted facts. |
+| RelationshipVersion | RelationshipVersionId, BatchId, typed directed exact endpoints, ResolutionItemId, evidence, qualification | REFERENCES reflects accepted linkage; GENERATED_FROM records actual BL dependencies. Unresolved external targets are Uncertainties, not dummy Document FKs. |
+| UncertaintyVersion | Id, BatchId, owner/root/input versions, missing/ambiguous/contradictory claim, known identifiers, supporting/opposing evidence, limitations | Immutable accepted qualification, published explicitly. Business uses a safe narrative projection. |
+| LogicalFlow | LogicalFlowId, BatchId, RootUnitId, root kind/selector, home RepositoryId | Unique source-backed root identity; no connected-component identity or pair eligibility rule. |
+| FlowGroupVersion | GroupVersionId, LogicalFlowId, CorpusId, exact member/root versions, directed relationships, uncertain frontiers, bounds | Immutable finite slice. Distinct roots can share members without merging. |
+| BLDependency | BLVersionId, dependency kind/exact ID and digest | Includes every supplied/read CL, relationship/Uncertainty and advisory input. Internal union authorizes entire prose. No direct-source dependency in this document-first slice. |
+| KnowledgePublication | PublicationId, BatchId, binding/CorpusDigest, operation key, CreatedAtUtc, status Published | Insert only after validation and in atomic publication transaction. No mutable latest slot. |
+| PublicationMember | BatchId, PublicationId, VersionId, LogicalDocumentId, ordinal | Unique publication/logical document and publication/version; exact batch-qualified FKs prevent cross-batch references. |
+| PublicationEvidence | PublicationId, exact relationship/Uncertainty/flow/dependency selection | Visibility commits with content. Relationship/flow/BL sets may be empty for early nonempty CL-only S2/B0 publication, without B1/B2. B0 CL-only and B2 CL+BL are different immutable selections. |
+| PublicationCoverage | PublicationId, exact admission/manifest dispositions and qualified gaps | Separate honest analysis coverage from reader visibility. Exclude restricted metadata in projection. |
+
+An operation may accept files without publication; ordinary read queries must join explicit PublicationMember/Evidence. Private producer read selection may use a pinned accepted corpus under live operator and all-contributor checks; this never exposes drafts or opens ordinary readers to staged content.
+
+All new child rows use restrictive deletion behavior where accepted history is involved. Existing setup cascade mappings require a guard: deny deletion of a batch/setup parent that owns accepted Knowledge rather than cascade through immutable history. No general cleanup service is added. PostgreSQL integration checks must prove both attempted parent deletion protection and cross-batch FK rejection.
+
+## Chat's serialized schema contribution
+
+Chat remains the semantic owner; Business owns mappings and migrations. Before adding these tables, agree the concrete DTO types and required lengths/bounds with Chat, reusing this minimum rather than designing unrelated conversation features.
+
+- `OctoberConversation`: ConversationId, OwnerSubjectId, BatchId, PublicationId, Mode, canonical ScopeJson/digest, CreatedAtUtc. Scope/mode/publication are immutable; changing them creates a new conversation.
+- `OctoberTurn`: ConversationId, TurnId, Sequence, InputText, State (Running/Completed/Interrupted/Failed), StartedAtUtc, FinishedAtUtc, OutcomeDigest, OutputText, sanitized FailureCode. Unique conversation/turn and conversation/sequence; partial unique index enforces one Running turn. Chat supplies bounded input/output sizes at the checkpoint, within provider context budgets.
+- `OctoberTurnReference`: ConversationId, TurnId, exact DocumentVersionId/SectionId plus BatchId/PublicationId and read-ledger identity. Exact membership FKs; no arbitrary model-generated link. Reference titles are reauthorized/derived when displayed, not cached permission.
+- One transaction commits terminal outcome plus references and releases the active-turn constraint. Identical terminal outcome replays; changed digest conflicts. Lookup does not rerun generation. Owner/publication/mode/scope and all history contributors remain subject to live authority. Partial text is not Completed history.
+
+A migration for Knowledge can ship before Chat's contribution; later additive Chat migration is serialized by Business. Missing Chat details block that contribution only, not B0. No second context/snapshot and no Schema-per-consumer design.
+
+## State and transaction boundaries
+
+- Process-local analysis state: Running -> Completed(digest) OR Failed/Stopped. Completed preserves proof of analysis only. Separate attempt eligibility becomes irreversibly Fenced on drain expiry/hard stop/authority failure; a Completed attempt may therefore be fenced before writing. Scan owns this state and the shared commit guard; no new database table or durable receipt workflow.
+- Commit state: eligible transaction staging -> guarded fresh authority/fence/deadline check -> CommitInFlight at commit submission -> committed, confirmed rolled-back/not-submitted, or indeterminate. Pre-submission fence rejects/rolls back; already-submitted commits require database settlement/lookup even after cancellation. Operation result and accepted Knowledge commit atomically; a temporarily absent row cannot resolve an in-flight commit.
+- Process-local Business provider attempt: waiting -> host-admitted/reserved -> provider active -> settled/accounted/disposed. Host owns the same configured cap, provider request/rate admission and remaining budgets used by file Workers; Business requests every matching/synthesis attempt through it. Record actual or unknown usage and terminal reason once. Hard stop denies waiting/new calls and cancels active calls; no new persistence schema for permits/accounting is introduced.
+- Accepted file: absent -> fully committed manifest and exact durable operation result. Replays never mutate it.
+- Corpus freeze: natural finish or graceful analysis stop -> closed admission -> bounded drain then fence -> settled submitted writes and explicit coverage dispositions -> fixed accepted subset. Whole-run abort/lost authority grants no finalization/provider permission.
+- Resolution: pinned -> all selected items supported/unresolved/failed/not-evaluated. No recursive investigation triggered by publication.
+- BL: private draft -> validated exact dependencies -> immutable publication; failure remains invisible. Completed independent flows may publish with failed-flow coverage gaps.
+- Read selection: created for exact publication -> live checked on each call -> expiry/unavailable. Token revocation machinery is unnecessary because it grants no durable permission.
+- PostgreSQL transactions and unique constraints decide concurrency. Commit ambiguity produces lookup/indeterminate, not a provider retry.
+
+
+
