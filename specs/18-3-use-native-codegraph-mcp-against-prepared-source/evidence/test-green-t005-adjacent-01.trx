@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="89d02711-b5d7-493c-8ffb-ce6b8d17248a" name="13728@ZHDPT-ASUS-5 2026-09-29 19:05:30" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-29T19:05:30.5816217+08:00" queuing="2026-09-29T19:05:30.5816218+08:00" start="2026-09-29T19:05:27.0675872+08:00" finish="2026-09-29T19:05:53.8515695+08:00" />
+  <TestSettings name="default" id="9de79af0-e4d7-4db7-a5c9-6ba1adacaa1f">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-09-29_19_05_30" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="baa876b8-ea77-4964-8d38-3319a3496933" testId="478760b7-4c58-51b3-0e65-d2b1891f3480" testName="Vulgata.Tests.AnalysisRuntime.CodeGraphCliQualificationTests.InstalledBundle_HealthProbeIsReady_AndDoesNotCreateIndex" computerName="ZHDPT-ASUS-5" duration="00:00:00.3192462" startTime="2026-09-29T19:05:28.9152590+08:00" endTime="2026-09-29T19:05:29.2039075+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="baa876b8-ea77-4964-8d38-3319a3496933" />
+    <UnitTestResult executionId="a8d11f61-9c5d-4084-bf94-2ff7beee949e" testId="4ccb9188-8f0a-fa17-ab92-cccb796e177d" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_ReportsIncompleteNativeResultDistinctFromNoMatch" computerName="ZHDPT-ASUS-5" duration="00:00:05.4321509" startTime="2026-09-29T19:05:48.3300372+08:00" endTime="2026-09-29T19:05:53.7610893+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a8d11f61-9c5d-4084-bf94-2ff7beee949e" />
+    <UnitTestResult executionId="9d908903-00ef-4e53-92a1-ceb077eb8876" testId="22248771-1e0d-0bd5-5325-5945fbd91910" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_DiscoveryReportsMissingToolAndChangedSchemaSeparately(scenario: &quot;changed-schema&quot;, expectedStatus: DiscoveryFailed, expectedIssue: SchemaChanged)" computerName="ZHDPT-ASUS-5" duration="00:00:05.6358441" startTime="2026-09-29T19:05:28.9141268+08:00" endTime="2026-09-29T19:05:34.5270332+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9d908903-00ef-4e53-92a1-ceb077eb8876" />
+    <UnitTestResult executionId="7813580e-c7e2-446a-8eee-2c8d4e5f29a3" testId="2f1c2e10-5ff9-cb5c-fc38-59648ec72dc3" testName="Vulgata.Tests.AnalysisRuntime.CodeGraphCliQualificationTests.RealCli_AllAllowedJsonOperations_ReturnTypedBoundedEvidence" computerName="ZHDPT-ASUS-5" duration="00:00:13.4907866" startTime="2026-09-29T19:05:29.2192938+08:00" endTime="2026-09-29T19:05:42.6961564+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7813580e-c7e2-446a-8eee-2c8d4e5f29a3" />
+    <UnitTestResult executionId="8923b4c6-0530-4f9d-bf16-f1513636dda1" testId="7fb8490b-4722-7bb0-6029-8ebd3529f0b5" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_DiscoveryReportsMissingToolAndChangedSchemaSeparately(scenario: &quot;missing-tool&quot;, expectedStatus: DiscoveryFailed, expectedIssue: ToolMissing)" computerName="ZHDPT-ASUS-5" duration="00:00:06.8549257" startTime="2026-09-29T19:05:34.5410166+08:00" endTime="2026-09-29T19:05:41.3828601+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8923b4c6-0530-4f9d-bf16-f1513636dda1" />
+    <UnitTestResult executionId="1172f1f2-16af-47ae-b0a4-42ee211fc182" testId="401ffd91-ece2-f0c8-b02e-d8f2bef7feac" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_UsesNativeDiscoveryAndExploreAgainstOwnedPreparedFixture" computerName="ZHDPT-ASUS-5" duration="00:00:06.9455463" startTime="2026-09-29T19:05:41.3872391+08:00" endTime="2026-09-29T19:05:48.3284512+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1172f1f2-16af-47ae-b0a4-42ee211fc182" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_UsesNativeDiscoveryAndExploreAgainstOwnedPreparedFixture" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="401ffd91-ece2-f0c8-b02e-d8f2bef7feac">
+      <Execution id="1172f1f2-16af-47ae-b0a4-42ee211fc182" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests" name="NativeMcpClient_UsesNativeDiscoveryAndExploreAgainstOwnedPreparedFixture" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_DiscoveryReportsMissingToolAndChangedSchemaSeparately(scenario: &quot;changed-schema&quot;, expectedStatus: DiscoveryFailed, expectedIssue: SchemaChanged)" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="22248771-1e0d-0bd5-5325-5945fbd91910">
+      <Execution id="9d908903-00ef-4e53-92a1-ceb077eb8876" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests" name="NativeMcpClient_DiscoveryReportsMissingToolAndChangedSchemaSeparately" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_DiscoveryReportsMissingToolAndChangedSchemaSeparately(scenario: &quot;missing-tool&quot;, expectedStatus: DiscoveryFailed, expectedIssue: ToolMissing)" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="7fb8490b-4722-7bb0-6029-8ebd3529f0b5">
+      <Execution id="8923b4c6-0530-4f9d-bf16-f1513636dda1" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests" name="NativeMcpClient_DiscoveryReportsMissingToolAndChangedSchemaSeparately" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.CodeGraphCliQualificationTests.RealCli_AllAllowedJsonOperations_ReturnTypedBoundedEvidence" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="2f1c2e10-5ff9-cb5c-fc38-59648ec72dc3">
+      <Execution id="7813580e-c7e2-446a-8eee-2c8d4e5f29a3" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.CodeGraphCliQualificationTests" name="RealCli_AllAllowedJsonOperations_ReturnTypedBoundedEvidence" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.CodeGraphCliQualificationTests.InstalledBundle_HealthProbeIsReady_AndDoesNotCreateIndex" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="478760b7-4c58-51b3-0e65-d2b1891f3480">
+      <Execution id="baa876b8-ea77-4964-8d38-3319a3496933" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.CodeGraphCliQualificationTests" name="InstalledBundle_HealthProbeIsReady_AndDoesNotCreateIndex" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests.NativeMcpClient_ReportsIncompleteNativeResultDistinctFromNoMatch" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="4ccb9188-8f0a-fa17-ab92-cccb796e177d">
+      <Execution id="a8d11f61-9c5d-4084-bf94-2ff7beee949e" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphMcpClientTests" name="NativeMcpClient_ReportsIncompleteNativeResultDistinctFromNoMatch" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="478760b7-4c58-51b3-0e65-d2b1891f3480" executionId="baa876b8-ea77-4964-8d38-3319a3496933" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4ccb9188-8f0a-fa17-ab92-cccb796e177d" executionId="a8d11f61-9c5d-4084-bf94-2ff7beee949e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="22248771-1e0d-0bd5-5325-5945fbd91910" executionId="9d908903-00ef-4e53-92a1-ceb077eb8876" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2f1c2e10-5ff9-cb5c-fc38-59648ec72dc3" executionId="7813580e-c7e2-446a-8eee-2c8d4e5f29a3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7fb8490b-4722-7bb0-6029-8ebd3529f0b5" executionId="8923b4c6-0530-4f9d-bf16-f1513636dda1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="401ffd91-ece2-f0c8-b02e-d8f2bef7feac" executionId="1172f1f2-16af-47ae-b0a4-42ee211fc182" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="6" executed="6" passed="6" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.17]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.25]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.28]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:26.18]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-09-29T19:05:53.8245283+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

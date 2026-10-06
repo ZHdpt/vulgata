@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-06 (Story 18.4 completion and Story 18.2 immediate-objective checkpoint integrated; qualification remains scoped to their recorded evidence).
+Updated: 2026-10-06 (Story 18.4 completion and the narrowed Story 18.2/18.3 checkpoints integrated into oct14/main; runtime qualification retains its recorded scope).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -40,57 +40,39 @@ verification before reuse.
   adding October Epics 18–20 and their 17 definitions (12/3/2) to that tracker on
   September 27; [October release epics](../bmad/planning-artifacts/october-release-epics.md)
   owns their scoped requirements and definitions, routed from the canonical epic index.
-  Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
-  done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
-  Story 18.4 is the only feature activated in this assigned checkout, on
-  `oct14/story-18-4`, mapped to `specs/017-october-batch-setup`.
-  Independent batch execution retains source18.1 authority/context lifetime,
-  isolation, context provenance and explicit provider binding. Ordinary Web uses
-  only startup DefaultConnection, with normal migrations/roles/browser/provider
-  administration and no October mode, batch, setup operator or generator provider
-  prerequisite. Plan-review15/definition-review14 and scoped approvals06/08 remain
-  current; retained definition owner is Astra/medium. Historical special-Web
-  evidence is not current qualification.
-  All30 original tasks now have verified completion markers. Current controlled
-  October checks pass174/174, full SelfContained2149/2149 with zero skips and Web
-  build zeroerrors/35existing package-feed/source-mapping/EF-conflict warnings.
-  Owned PostgreSQL and actual generator/Web A/B process qualification pass,
-  including separate generator Identity, ordinary startup before October setup,
-  normal browser authorization and synthetic provider CRUD/encryption. No paid
-  provider calls or later generation/native-tool qualification is claimed. Exact
-  run-owned resource cleanup is verified. See the feature's
-  `evidence/ordinary-web-runtime-qualification-final-green-01.json` and
-  `evidence/t030-implementation-prerequisites-01.json`.
-  The human approved finite recovery7-to8 after the recurring role-order fixture
-  defect; count7 is retained, delegate ceiling7 unchanged, holds empty. Transition127
-  records the passing exact configured build; convergence01 is independently clean.
-  The corrected full-suite environment adds only the hash-verified existing npm
-  prefix for an unchanged static integrity lookup, not CodeGraph launch or scope.
-  Recovery entered independent gates at7/8; final closure is proved only by the
-  accepted/verified feature state. A counted failure8
-  needs a fresh human decision. Convergence, lookback, quality review, conditional
-  E2E decision and pinned final verification are recorded in feature state; tests
-  alone never prove completion. No merge/push/history
-  rewrite or next-story work is authorized. Unrelated activation draft and historical
-  dirty evidence are preserved. Status in other worktrees must be verified there.
+  Tracker refreshes require both epic files. Story 13.1 and October Stories 18.1
+  and 18.4 are done. The narrowed 18.2 and 18.3 slices are integrated; their original
+  full-story requirements remain incomplete and skipped, not silently completed.
+  Integration does not activate another story or resume the frozen tool workflows.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
-Story 18.4 is the only feature activated in this checkout after the workflow
-installation. Its `specs/017-october-batch-setup` state retains the Astra-medium
-recovery author and history of the7/8 episode; formal closure is in feature state.
-Affected authority/composition tasks were
-reopened; unchanged completed work and historical evidence remain. Expected TDD
-RED and ordinary first-pass development build failures do not consume recovery
-allowance; independent negative review/convergence and recurrent defects after
-repair remain counted. The bounded console testability correction preserves
-authentication policy; controlled terminal tests are not native-terminal proof. Runtime
-PostgreSQL/process qualification now has an explicit fresh owned-resource grant in
-`runtime-qualification-resource-authorization-01.json`; this grants no revised-plan
-approval, recovery extension or waiver. Workflow
-installation itself activated no story; verify current runner ownership and its
-assigned checkout before interpreting the integration tracker. Story 13.1's
+Story 18.4 is integrated from `7e19bf69`; its
+`specs/017-october-batch-setup/workflow-state.json` records completion and closed
+recovery. Independent batch setup preserves source authority, context provenance,
+isolation and explicit provider binding. Ordinary Web uses startup
+`DefaultConnection`, normal migrations/roles/browser/provider administration and
+no October mode or generator prerequisite. Its retained evidence records 174
+focused and 2,149 SelfContained passes, a successful Web build, and owned
+PostgreSQL/generator/Web process qualification; this is not later Scan or paid
+provider qualification. See `evidence/verify-aggregate-01.json` and
+`evidence/ordinary-web-runtime-qualification-final-green-01.json` in that feature.
+
+Story 18.2 is integrated from `9be46d6a` and Story 18.3 from `870dc49a` under the
+user's narrowed direct-SpecKit targets. Their original governed workflows remain
+frozen; prior approvals and skipped tasks are historical, not new execution gates.
+The JDT slice has independent dedicated-root startup/navigation/lifetime evidence
+in `specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/immediate-lifetime-verification-01.json`.
+The CodeGraph slice prepares in place and returns the descriptor actually used
+for native MCP discovery/invocation; its bounded process-exit correction is in
+`specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/process-exit-correction-01.json`.
+Neither narrow slice proves customer Repository qualification, mixed-root JDT and
+CodeGraph coexistence, or the deferred ordinary-reader integration. The trusted
+native profiles do not establish preventive filesystem/network isolation.
+
+Workflow installation itself activated no story. Verify current runner ownership
+and its assigned checkout before interpreting the integration tracker. Story 13.1's
 `specs/015-retained-source-access` plan, state and evidence are completed history;
 Story 13.2 remains backlog and requires deliberate activation. Specs 001–014 also
 retain historical scope. The agent-context extension targets root AGENTS; pass the
@@ -148,7 +130,7 @@ runtime workflow:
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
 | Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
-| CodeGraph/LSP | Historical CodeGraph 1.5 integration is CLI/JSON, not native MCP. October Story 18.2 in its assigned branch has 121 controlled JDT LocalTools passes (including bounded authority waits and public disposal uncertainty) and a passing real pinned JDT1.58 fixture under application-supplied JDK21: definition/reference function results, bounded shutdown, owned cleanup and unchanged source bytes. Final basic SelfContained passes 2063/2063 and excludes JDT/native LocalTools. Prepared Repository, existing JDT-filter metadata, mixed roots and integrated producer handoff remain unqualified. Historical failures remain recorded; no universal filesystem/network isolation is claimed. Old unfinished tasks/workflow are preserved and stopped. See the [18.2 development record](../bmad/implementation-artifacts/18-2-navigate-prepared-java-source-with-restricted-jdt-ls.md). |
+| CodeGraph/LSP | Integrated narrow adapters: 18.2 records 121 controlled JDT checks, real pinned JDT 1.58 navigation under application-supplied JDK 21, and 2,063 SelfContained passes. 18.3 records actual returned-descriptor native MCP use, process-exit corrections and 2,019 SelfContained passes. These are separate branch/owned-fixture results, not combined-root or customer-Repository qualification. General source-authority/reader integration remains unfinished; no preventive OS filesystem/network isolation is claimed. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |
 | Chat | Provider SSE is ingested but the current answer path buffers strict candidates and reveals accepted text in the UI. Pair-bound scope and process-local dialogue/publication are not genuine generic streaming/durable reattachment or Business BL-only behavior. |

@@ -1,0 +1,74 @@
+{
+  "initialize": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {
+        "tools": {}
+      },
+      "serverInfo": {
+        "name": "codegraph",
+        "version": "1.5.0"
+      },
+      "instructions": "# Codegraph \u2014 code intelligence over an indexed knowledge graph\n\nCodegraph is a SQLite knowledge graph of every symbol, edge, and file in\nthe workspace \u2014 pre-computed structure you would otherwise re-derive by\nreading files (cached intelligence: thousands of parse/trace decisions you\ndon't pay to re-reason each run). Reads are sub-millisecond; the index lags\nwrites by ~1s through the file watcher. Reach for it BEFORE *and* while\nwriting or editing code \u2014 not just for questions: one call returns the\nverbatim source PLUS who calls it and what it affects, so you edit with the\nblast radius in view. More accurate context, in far fewer tokens and\nround-trips than reading files yourself.\n\n## One tool: codegraph_explore \u2014 use it instead of reading files\n\nThere is a single tool, `codegraph_explore`, and it is Read-equivalent. It\ntakes either a natural-language question or a bag of symbol/file names and\nreturns the **verbatim, line-numbered source** of the relevant symbols\ngrouped by file \u2014 the same `<n>\\t<line>` shape `Read` gives you, safe to\n`Edit` from \u2014 PLUS the call path among them (including dynamic-dispatch hops\nlike callbacks, React re-render, and JSX children that grep can't follow) and\na blast-radius summary of what depends on them.\n\nWhether you're answering \"how does X work\" or implementing a change (fixing a\nbug, adding a feature), call `codegraph_explore` before you Read. ONE call\nusually answers the whole question. Codegraph IS the pre-built search index \u2014\nso running your own grep + read loop, or delegating the lookup to a separate\nfile-reading sub-task/agent, repeats work codegraph already did and costs more\nfor the same answer. A direct codegraph answer is typically one to a few\ncalls; a grep/read exploration is dozens.\n\n## How to query\n\n- **Almost any question \u2014 \"how does X work\", architecture, a bug, \"what/where is X\", or surveying an area** \u2192 `codegraph_explore` with a natural-language question or the relevant names. ONE capped call returns the verbatim source grouped by file; most often the ONLY call you need.\n- **\"How does X reach/become Y? / the flow / the path from X to Y\"** \u2192 `codegraph_explore`, naming the symbols that span the flow (e.g. `mutateElement renderScene`) \u2014 it surfaces the call path among them, riding dynamic-dispatch hops, and returns their source.\n- **Reading or editing a file/symbol you can name** \u2192 put its name or file path in the `codegraph_explore` query \u2014 it returns that current line-numbered source (safe to `Edit` from) with the call path and blast radius attached, so you don't Read it separately. For an overloaded name it returns every matching definition's body in one call.\n- **Need more?** Call `codegraph_explore` again with more specific names \u2014 treat the source it returns as already Read.\n\n## Anti-patterns\n\n- **Trust codegraph's results \u2014 don't re-verify them with grep.** They come from a full AST parse; re-checking with grep is slower, less accurate, and wastes context.\n- **Don't grep or Read first** to find or understand indexed code \u2014 ONE `codegraph_explore` returns the relevant symbols' source together in a single round-trip. Reach for raw `Read`/`Grep` only to confirm a specific detail codegraph didn't cover, or for what codegraph doesn't index (configs, docs).\n- **Don't reconstruct a flow by hand** \u2014 name the endpoints in one `codegraph_explore` and it surfaces the path between them, dynamic-dispatch hops included.\n- **After editing, check the staleness banner.** When a tool response starts with \"\u26a0\ufe0f Some files referenced below were edited since the last index sync\u2026\", the listed files are pending re-index \u2014 Read those specific files for accurate content. Every file NOT in that banner is fresh, so still trust codegraph. A different, rarer banner \u2014 \"\u26a0\ufe0f CodeGraph auto-sync is DISABLED\u2026\" \u2014 means live watching stopped entirely (the whole index is frozen, not just a few files); until it's resolved, Read files directly to confirm anything that may have changed.\n\n## Limitations\n\n- If a tool reports a project isn't indexed (no `.codegraph/`), stop calling codegraph tools for that project for the rest of the session and use your built-in tools there instead. Indexing is the user's decision \u2014 mention they can run `codegraph init` if it comes up, but don't run it yourself.\n- Index lags file writes by ~1 second.\n- Cross-file resolution is best-effort name matching; ambiguous calls may return multiple candidates.\n- No live correctness validation \u2014 that's still the TypeScript compiler / test suite / linter's job. Codegraph supplements those with structural context they don't have.\n"
+    }
+  },
+  "initialize_other": [],
+  "tools_list": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": {
+      "tools": [
+        {
+          "name": "codegraph_explore",
+          "description": "PRIMARY TOOL \u2014 call FIRST for almost any question OR before an edit: how does X work, architecture, a bug, where/what is X, surveying an area, or the symbols you are about to change. Returns the verbatim source of the relevant symbols grouped by file in ONE capped call (Read-equivalent \u2014 treat the shown source as already Read; do NOT re-open those files), plus the call path among them. Query can be a natural-language question OR a bag of symbol/file names. Usually the ONLY call you need \u2014 more accurate context, in far fewer tokens and round-trips than a search/Read/Grep loop. Budget: make at most 1 calls for this project (2 files indexed).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Symbol names, file names, or short code terms to explore (e.g., \"AuthService loginUser session-manager\", \"GraphTraverser BFS impact traversal.ts\"). For a flow question, name the symbols spanning the flow (e.g. \"mutateElement renderScene\"). A natural-language question works too \u2014 no prior codegraph_search needed."
+              },
+              "maxFiles": {
+                "type": "number",
+                "description": "Maximum number of files to include source code from (default: 12)",
+                "default": 12
+              },
+              "projectPath": {
+                "type": "string",
+                "description": "Absolute path to the project to query (or any directory inside it) \u2014 codegraph uses the nearest .codegraph/ index at or above that path. Omit to use this session's default project. Pass it to query a second codebase, or when the server root has no index of its own (e.g. a monorepo where only sub-projects are indexed, so there is no default project)."
+              }
+            },
+            "required": [
+              "query"
+            ]
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      ]
+    }
+  },
+  "list_other": [],
+  "tool_names": [
+    "codegraph_explore"
+  ],
+  "call": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "**Exploration: Calc.Add Caller.Run**\n\nFound 4 symbols across 2 files.\n\n**Blast radius \u2014 what depends on these (update/verify before editing)**\n\n- `Add` (Calc.cs:1) \u2014 1 caller in `Caller.cs`; \u26a0\ufe0f no covering tests found\n\n**Source Code**\n\n> The code below is the **verbatim, current on-disk source** of these files \u2014 re-read from disk on this call and line-numbered, byte-for-byte identical to what the Read tool returns. It is NOT a summary, outline, or stale cache. Treat each block as a Read you have already performed: do not Read a file shown here.\n\n**`Calc.cs`** \u2014 Calc(class), Add(method)\n\n```csharp\n1\tpublic static class Calc { public static int Add(int a, int b) => a + b; }\r\n```\n\n**`Caller.cs`** \u2014 Run(method), Caller(class)\n\n```csharp\n1\tpublic static class Caller { public static int Run() => Calc.Add(2, 3); }\r\n```\n"
+        }
+      ]
+    }
+  },
+  "call_other": []
+}

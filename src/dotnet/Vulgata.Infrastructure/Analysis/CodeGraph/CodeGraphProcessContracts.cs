@@ -127,7 +127,10 @@ internal sealed class CodeGraphProcessRequest
         string workingDirectory,
         TimeSpan timeout,
         int standardOutputByteLimit,
-        int standardErrorByteLimit)
+        int standardErrorByteLimit,
+        IReadOnlyDictionary<string, string>? environmentVariables = null,
+        bool closeStandardInput = false,
+        bool inheritEnvironmentVariables = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentNullException.ThrowIfNull(arguments);
@@ -143,6 +146,12 @@ internal sealed class CodeGraphProcessRequest
         Timeout = timeout;
         StandardOutputByteLimit = standardOutputByteLimit;
         StandardErrorByteLimit = standardErrorByteLimit;
+        EnvironmentVariables = new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(
+            environmentVariables is null
+                ? new Dictionary<string, string>(StringComparer.Ordinal)
+                : new Dictionary<string, string>(environmentVariables, StringComparer.Ordinal));
+        CloseStandardInput = closeStandardInput;
+        InheritEnvironmentVariables = inheritEnvironmentVariables;
     }
 
     public string FileName { get; }
@@ -151,6 +160,9 @@ internal sealed class CodeGraphProcessRequest
     public TimeSpan Timeout { get; }
     public int StandardOutputByteLimit { get; }
     public int StandardErrorByteLimit { get; }
+    public IReadOnlyDictionary<string, string> EnvironmentVariables { get; }
+    public bool CloseStandardInput { get; }
+    public bool InheritEnvironmentVariables { get; }
 }
 
 internal sealed record CodeGraphProcessResult(
@@ -181,37 +193,39 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
             throw new InvalidOperationException("codegraph process failed to start");
         }
 
-        Task<byte[]> stdout = ReadBoundedAsync(
-            process.StandardOutput.BaseStream,
-            request.StandardOutputByteLimit,
-            cancellationToken);
-        Task<byte[]> stderr = ReadBoundedAsync(
-            process.StandardError.BaseStream,
-            request.StandardErrorByteLimit,
-            cancellationToken);
         using CancellationTokenSource timeout = new(request.Timeout);
         using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             timeout.Token);
-
+        Task<byte[]> stderr = Task.FromResult(Array.Empty<byte>());
         try
         {
+            if (request.CloseStandardInput)
+            {
+                process.StandardInput.Close();
+            }
+
+            Task<byte[]> stdout = ReadBoundedAsync(
+                process.StandardOutput.BaseStream,
+                request.StandardOutputByteLimit,
+                cancellationToken);
+            stderr = ReadBoundedAsync(
+                process.StandardError.BaseStream,
+                request.StandardErrorByteLimit,
+                cancellationToken);
+
             await process.WaitForExitAsync(linked.Token);
-            return new CodeGraphProcessResult(
-                process.ExitCode,
-                await stdout,
-                await stderr,
-                TimedOut: false);
+            return new CodeGraphProcessResult(process.ExitCode,
+                await stdout, await stderr, TimedOut: false);
         }
         catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
-            KillProcessTree(process);
-            await process.WaitForExitAsync(CancellationToken.None);
+            await KillAndWaitForExitAsync(process);
             return new CodeGraphProcessResult(-1, [], await IgnoreReadFailureAsync(stderr), TimedOut: true);
         }
         catch
         {
-            KillProcessTree(process);
+            await KillAndWaitForExitAsync(process);
             throw;
         }
     }
@@ -226,6 +240,7 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = request.CloseStandardInput,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
         };
@@ -241,6 +256,16 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
         foreach (string argument in request.Arguments)
         {
             startInfo.ArgumentList.Add(argument);
+        }
+
+        if (!request.InheritEnvironmentVariables)
+        {
+            startInfo.Environment.Clear();
+        }
+
+        foreach ((string name, string value) in request.EnvironmentVariables)
+        {
+            startInfo.Environment[name] = value;
         }
 
         return startInfo;
@@ -282,11 +307,13 @@ internal sealed class CodeGraphProcessRunner : ICodeGraphProcessRunner
         }
     }
 
-    private static void KillProcessTree(Process process)
+    private static async Task KillAndWaitForExitAsync(Process process)
     {
         if (!process.HasExited)
         {
             process.Kill(entireProcessTree: true);
         }
+
+        await process.WaitForExitAsync(CancellationToken.None);
     }
 }

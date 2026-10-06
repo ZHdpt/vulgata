@@ -1,4 +1,7 @@
 {
+  "Agents/CodeGraphFunctionsTests.cs": {
+    "suite": "SelfContained"
+  },
   "AdministratorRoleAssignmentTests.cs": {
     "suite": "SelfContained"
   },
@@ -348,6 +351,18 @@
     "suite": "SelfContained"
   },
   "AnalysisRuntime/CodeGraphCliQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "AnalysisRuntime/NativeCodeGraphMcpClientTests.cs": {
+    "suite": "LocalTools"
+  },
+  "AnalysisRuntime/PreparedCodeGraphConnectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/PreparedCodeGraphConnectionQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "AnalysisRuntime/NativeCodeGraphSessionOutcomeTests.cs": {
     "suite": "LocalTools"
   },
   "AnalysisRuntime/InMemoryFileSystemDouble.cs": {
