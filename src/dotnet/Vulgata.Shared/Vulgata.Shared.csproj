@@ -10,4 +10,8 @@
     <PackageReference Include="FluentValidation.AspNetCore" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Vulgata.Core\Vulgata.Core.csproj" />
+  </ItemGroup>
+
 </Project>
