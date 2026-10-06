@@ -54,8 +54,9 @@ verification before reuse.
   or skipped tool tasks. Business's initial compiled Knowledge contract/controlled
   fixture checkpoint is now integrated at `3bcd815b` (candidate `07c3fe44`, handoff
   `7a189c34`). Its focused integration replay passed 50/50 SelfContained tests,
-  zero skips. Consumer conformance and Business T006 acceptance remain pending;
-  this is not the real B0 store, Scan, Chat or runtime qualification. See the
+  zero skips. Initial K/CP-K1 is accepted at `12d92d80` after all three consumer
+  acknowledgements and a combined 89/89 SelfContained replay, zero skips.
+  This is not the real B0 store, Scan, Chat or runtime qualification. See the
   integration plan's current checkpoint below before starting dependent work.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
