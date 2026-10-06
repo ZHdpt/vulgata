@@ -2,6 +2,12 @@
 
 This is a future validation guide, not executed evidence. No Generate implementation or new tests are present from this planning request. Follow [plan.md](plan.md) stop conditions and [contracts/scan-boundaries.md](contracts/scan-boundaries.md).
 
+Subsequent bounded preparation imports integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0` and permits only T001–T004 controlled consumer probes using the imported Core/Shared types and fixture. See `conformance-c0.md` for actual results; all feature/runtime scenarios below remain future work. Final CP-K1 acceptance is integration-owned. This local probe command selects only SelfContained tests and provisions no database/provider/tool runtime:
+
+```powershell
+pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.OctoberScan|FullyQualifiedName~Vulgata.Tests.October.Knowledge'
+```
+
 ## Prerequisites
 
 1. Explicit post-review tool/Scan planned-change approval and implementation authority. F1/F2/F5 semantics are adopted against Business contract SHA-256 `F449357B5273D009C3262277912A797886E385AA883E5A5A149A887946EA3D36`; this is not a compiled checkpoint. Business first publishes an initial compiling contract/fixture commit, integration imports it, and minimal consumer compile/conformance probes validate CP-K1/C0 before dependent production. Completed consumer implementations are not probe prerequisites. S2 needs accepted checkpoint plus B0 acceptance/CL publication/exact reads; S3 adds B1/B2 and actual scope conformance. No probe/code/runtime execution is authorized by this guide.

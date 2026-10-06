@@ -6,6 +6,8 @@
 
 **Status**: Definition/design only; independent review recorded separately. Neither review acceptance nor this plan authorizes tasks, implementation, native execution or provider spending.
 
+**Bounded preparation dispatch**: Subsequent coordinator authorization permits only T001–T004 import/conformance and commits, stopping before T005. Exact integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0` (Business candidate `07c3fe4463e3228a6982fd106b58148ca87974bd`, handoff `7a189c34aec625202f74846d4907ded787ccbdca`) is now imported. Concrete symbol mapping and controlled-fixture limits are in `contracts/scan-boundaries.md`; verification/consumer acknowledgement belongs in `conformance-c0.md`. This supersedes the initial-commit-unavailable statement below for this import only, not the requirement for final integration-owned CP-K1 acceptance or separate Wave 2 authority. No product implementation is claimed.
+
 **Cross-lane concurrence, 2026-10-06**: Adopt Business F1 serialized commit-submission eligibility and F2 Scan-owned execution scope, preserving F5 CL-only behavior, against canonical `knowledge-contract.md` SHA-256 `F449357B5273D009C3262277912A797886E385AA883E5A5A149A887946EA3D36` verified in the supplied Business checkout. See `contracts/scan-boundaries.md` for exact scope/probes. Earlier review holds remain historical; semantic concurrence does not prove compiled conformance or authorize implementation.
 
 ## Summary

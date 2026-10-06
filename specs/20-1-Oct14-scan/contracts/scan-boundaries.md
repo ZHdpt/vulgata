@@ -1,6 +1,28 @@
 # OCT-SCAN boundary requirements
 
-**Checkpoint C0: pending, no compiling owner contract commit verified in this checkout.**
+**Checkpoint C0 status**: exact initial owner contract/fixture imported for bounded T001–T004 consumer conformance. Scan's compiled acknowledgement is recorded in `conformance-c0.md` when verified; final shared CP-K1 acceptance remains integration-owned and does not precede these probes.
+
+## Imported initial contract — bounded preparation
+
+Authorized integration checkpoint: `3bcd815b09cfbac7418d6644a2a75816e0788ec0`, containing Business candidate `07c3fe4463e3228a6982fd106b58148ca87974bd` and handoff `7a189c34aec625202f74846d4907ded787ccbdca`. This lane preserved its planning in `23ca0883` and merged the exact integration commit at `5d98ee54`. Both the supplied integration checkpoint and `fad7f11` are ancestors. No reset, history rewrite or other-checkout edit occurred.
+
+Imported owner Markdown contract SHA-256: `719C5AF610E5A84EEA99CA03A6487015DEE79A052D94B0E0902185BA363D4568`. The earlier `F449...` below identifies the historical planning review, not the imported compiled boundary. The compiled candidate makes the accepted submission timing concrete: `Func<CancellationToken, SubmittedCommit>` synchronously invokes commit before returning its settlement task; callback invocation alone is not submission. No deferred Task.Run/async preamble/queued action may move the commit outside the guard.
+
+| Required meaning | Actual imported owner symbols |
+| --- | --- |
+| Exact binding and prepared provenance | `Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeBinding`, `PublicationBinding`, `PreparedOrigin`, `DocumentVersionReference`, `DocumentHandle`, `OperationKey` |
+| Whole-file proposal/analysis proof | `CompletedFileProposal`, `CompletedFileProof`, `CompletedFileSubmission`, `IOctoberFileAcceptanceAuthority`, `AcceptedFile`, `FileCoverage` |
+| F1 entry/submission/settlement | `IOctoberCommitSubmissionGuard.CheckBeforeTransactionAsync` / `SubmitAsync`, `CommitAttempt`, `SubmittedCommit`, `CommitGuardResult`, `CommitEligibilityStatus`, `CommitSubmissionStatus`, `CommitSettlement` |
+| Acceptance/lookup/freeze/CL publication | `IOctoberKnowledgeWriter.AcceptCompletedFileAsync`, `LookupOperationAsync`, `FreezeCorpusAsync`, `PublishSelectionAsync`; `CorpusFreezeRequest`, `CorpusHandle`, `PublicationRequest`, `KnowledgeWriteResult` |
+| F2 per-attempt host scope | `IOctoberExecutionScope.AcquireProviderAttemptAsync`, `ProviderAttemptRequest`, `ProviderAdmission`, `IOctoberProviderAttemptLease.CheckBeforeSendAsync` / `SettleAsync` / `DisposeAsync`, `ProviderAttemptUsage` |
+| S3 finalization consumer boundary | `IOctoberBusinessFinalizer.FinalizeAsync`, `FinalizationRequest`, `BusinessFinalizationResult`, `BusinessFinalizationStatus` (Published, PublishedPartial, NoContent, Failed, Denied, AuthorityUnavailable, HardStopped, CommitIndeterminate) |
+| Exact ordinary reads/authority | `IOctoberKnowledgeReader`, `IOctoberKnowledgeDisclosurePolicy`, `ReadSelectionRequest`, `ReadSelection`, `KnowledgeSearchRequest`, `ExactReadRequest`, `RelatedReadRequest` and owner page/status records |
+| Shared transport validation | `Vulgata.Shared.OctoberKnowledge` selection/search/read/related DTOs and their FluentValidation validators in `KnowledgeDtos.cs` / `KnowledgeRequestValidators.cs` |
+| Controlled fixture | `tests/Vulgata.Tests/October/Knowledge/OctoberKnowledgeFixture.cs`: labelled synthetic data plus `ControlledCommitGuard`, `ControlledKnowledgeWriter`, `ControlledExecutionScope`, `ControlledKnowledgeReader`, `ControlledDisclosurePolicy` and `ControlledFinalizer`; these are owner-provided test models, not production services |
+
+Consume these names directly. In particular, use `IOctoberProviderAttemptLease` rather than inventing a Scan provider permit contract; the future host supplies its implementation. `ProviderAttemptRequest.BusinessWorkKind` describes Business Resolution/Synthesis; file Workers share future host accounting without inventing a parallel Knowledge DTO. `FinalizationRequest` carries the same execution-scope instance and exact corpus/digest; explicit owner finalization status maps to the lane's planned CLI outcome, never inferred from a non-null publication alone.
+
+Scope ends at initial controlled consumer conformance. Real transactional writer, producer validation/Identity authority, durable lookup, freeze/publication enforcement, actual host guard/scheduler/rate/transport lifetime, tool integration and ordinary Web composition are later production prerequisites. No T005/native/provider/database/startup work is authorized here. Fixture-script coverage must not be presented as those implementations or full CP-K1 acceptance by all lanes.
 
 **Cross-lane concurrence (2026-10-06): Scan adopts F1/F2/F5 against Business's canonical `contracts/knowledge-contract.md`, SHA-256 `F449357B5273D009C3262277912A797886E385AA883E5A5A149A887946EA3D36`, verified in `C:/Users/13728/.codex/worktrees/f081/vulgata/specs/20-1-Oct14-business`.** This is planning-semantic agreement, not compiled conformance or implementation approval. Business owns the shared types. CP-K1 and local C0 denote the same checkpoint; no competing contract/gate is introduced. Earlier unresolved review entries remain historical.
 

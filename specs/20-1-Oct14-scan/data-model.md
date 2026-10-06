@@ -2,6 +2,8 @@
 
 Planning model only. Names below describe roles; they are not proposed competing Knowledge DTOs or tables. OCT-BUSINESS selects all shared persistent shapes at C0 and owns OctoberDbContext/migrations/snapshot.
 
+The initial owner candidate is now imported at integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0`; actual symbols are mapped in `contracts/scan-boundaries.md`. `CompletedFileProof` seals analysis; `CommitAttempt` and `IOctoberCommitSubmissionGuard` carry eligibility/submission; `SubmittedCommit` wraps settlement only after synchronous commit invocation. `IOctoberProviderAttemptLease` owns pre-send recheck/accounting/settled release; `BusinessFinalizationResult.Status` explicitly distinguishes published/partial/no-content/failure/denied/authority-unavailable/hard-stop/indeterminate. These refine names without changing the accepted lifecycle or introducing lane-owned shared records. Only controlled conformance is authorized now.
+
 F1/F2/F5 semantics are adopted from the verified Business canonical contract SHA-256 `F449357B5273D009C3262277912A797886E385AA883E5A5A149A887946EA3D36`. This is a planning model referencing Business-owned types, not compiled conformance or a schema change.
 
 ## Scan-owned process-local state
