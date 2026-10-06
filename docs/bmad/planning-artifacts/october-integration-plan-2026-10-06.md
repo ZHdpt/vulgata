@@ -34,6 +34,15 @@ to describe the broader plan, not this separately authorized checkpoint.
   not yet delivered. It must not block the other consumers' contract acceptance
   or be silently marked complete by passing fixture tests.
 
+Scan's import-only handoff `e62532d624400d547e7f7a113f9d04113189f3cb`
+records T001 complete, T002–T004 incomplete and zero consumer tests executed.
+Its approval layer rejected test authoring because an earlier direct user
+instruction stopped that lane before implementation. The coordinator did not
+bypass that rejection. The user must explicitly supersede that stop for the
+bounded conformance tasks in the Scan chat; this is not a failed contract test.
+Until its acknowledgement is available, T006 and accepted K remain incomplete.
+Chat and Explore's bounded preparation dispatches are still in progress.
+
 Only Business owns shared Knowledge types and October schema/migrations.
 Integration serializes shared composition and test-inventory merges; consumers
 may submit exact inventory additions with their lane-local probes. Missing owner
