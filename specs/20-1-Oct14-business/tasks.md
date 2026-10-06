@@ -2,7 +2,7 @@
 
 **Input**: [plan.md](plan.md), [spec.md](spec.md), [data-model.md](data-model.md), [canonical contract](contracts/knowledge-contract.md), [fixture cases](contracts/fixture-cases.md), [research.md](research.md), [quickstart.md](quickstart.md).
 **Branch/worktree**: `oct14/business`, `C:/Users/13728/.codex/worktrees/f081/vulgata`; baseline `fad7f11c9d6bc9ed3da1b371b24beb9f5c09db5d`.
-**Status**: Paused at the requested phase-2 boundary. T001–T005 complete; T006 local candidate prepared, external integration import and consumer acknowledgements pending. No phase-3 work.
+**Status**: Paused at the requested phase-2 boundary. T001–T005 complete; T006 local candidate imported by integration; consumer acknowledgements pending. No phase-3 work.
 
 ## Authority and technical checkpoints
 
