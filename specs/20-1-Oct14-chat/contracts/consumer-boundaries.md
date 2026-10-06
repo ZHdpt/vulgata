@@ -1,10 +1,10 @@
 # OCT-CHAT consumer boundaries and checkpoint
 
-Status: proposed consumer requirements, not a competing shared schema or claim that B0 APIs exist. OCT-BUSINESS chooses final compiling Knowledge and persistence types. Chat owns only conversation/events and wiki adapter semantics. Integration owns composition and shared provider admission; Explore owns exact reader routing.
+Status: consumer requirements mapped to the imported K0 declarations/controlled fixture in [imported-k0-and-w0.md](imported-k0-and-w0.md). Production Knowledge services and dialogue persistence are not delivered by that import. OCT-BUSINESS owns canonical Knowledge and persistence types. Chat owns only conversation/events and wiki adapter semantics. Integration owns composition and shared provider admission; Explore owns exact reader routing.
 
 ## K0 — required compiled contract checkpoint
 
-Before dependent production implementation, pin one integration commit containing the Business-owned Core interfaces/DTOs and shared labelled fixture. Record its commit, exported type/member names, fixture identity and owner acknowledgement in this feature's review/handoff. No checkpoint is delivered at the inspected baseline; implementation of dependent contracts is stopped until it exists. Planning acceptance does not accept K0 on another lane's behalf.
+Before dependent production implementation, pin one integration commit containing the Business-owned Core interfaces/DTOs and shared labelled fixture. The bounded preparation imports `3bcd815b09cfbac7418d6644a2a75816e0788ec0`, containing Business candidate `07c3fe4463e3228a6982fd106b58148ca87974bd` and handoff `7a189c34aec625202f74846d4907ded787ccbdca`. Exact symbols, controlled conformance and the independent W0 dependency are recorded in [imported-k0-and-w0.md](imported-k0-and-w0.md); integration still owns aggregate checkpoint acceptance. This acknowledgement does not accept K0 on another lane's behalf or authorize production implementation.
 
 K0 must demonstrate these semantics with the common fixture:
 

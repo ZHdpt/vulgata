@@ -1,6 +1,6 @@
-# OCT-CHAT validation guide (planned, not executed)
+# OCT-CHAT validation guide and bounded K0 preparation evidence
 
-Run only after implementation and scoped resource authorization. This document is a verification plan, not proof that commands/tests already exist or pass. Source artifacts and common fixture identities must be pinned when K0 arrives.
+The feature-verification scenarios below remain planned, not executed. Only the explicitly authorized initial K0 consumer preparation recorded at the end has run; it is not Chat implementation/runtime qualification. Source artifacts and common fixture identities must be pinned for each claimed boundary.
 
 ## Preconditions
 
@@ -73,3 +73,25 @@ Separate retrieval completeness, generated-document quality, answer usefulness a
 Provide the integration owner the feature commit, K0/extension pins, registration entry point, required configuration source, test results and remaining limits. The integration owner performs the final combined Web build and complete SelfContained run after final fixes, plus affected runtime checks. Do not repeat broad suites absent changed behavior or an unresolved concern. No original 19.x/full PRD closure is implied.
 
 This planning request stops before all commands above except document/Git validation. No model calls, migrations, application startup or runtime tests were executed to author it.
+
+## Subsequent bounded K0 preparation — 2026-10-06
+
+OCT-Integrator's later explicit dispatch authorized the initial contract import, conformance tests, exact suite classification and bounded commits. The earlier planning stop remains applicable to the other feature tasks. See [canonical symbol map and proposed W0](contracts/imported-k0-and-w0.md) for scope and ownership.
+
+Imported integration checkpoint: **`3bcd815b09cfbac7418d6644a2a75816e0788ec0`**, containing Business candidate **`07c3fe4463e3228a6982fd106b58148ca87974bd`** and handoff **`7a189c34aec625202f74846d4907ded787ccbdca`**. Planning was preserved at `4fad5314`, then imported via merge `f8127cb9`, with no reset/history rewrite. K0 compiled read-handle/DTO/fixture conformance is acknowledged by this lane; integration owns aggregate T006/accepted-K disposition and the other lanes' acknowledgements. **W0 remains unsatisfied and does not block this K0 acknowledgement.**
+
+Executed command, twice due to a new probe assertion correction:
+
+```powershell
+pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.October.Chat.OctoberChatKnowledgeConformanceTests|FullyQualifiedName~Vulgata.Tests.October.Knowledge'
+```
+
+- First run: `TestResults/isolation-c3535e5d1e1d401fb447f24baa4b755c/results.trx`, 60 selected, 59 passed, 1 failed, 0 skipped. The new related-result test compared whole record equality across separately allocated immutable arrays. Replaced that assertion with exact key, explanation, source-evidence and limitation comparisons. No owner code/fixture or behavior was changed; this is a test assertion correction, not product RED/GREEN evidence.
+- Final current-source run: `TestResults/isolation-fac1f9c98be242fcad2914f297f89695/results.trx`, **60 selected, 60 passed, 0 failed, 0 skipped**: 10 Chat consumer cases and 50 imported Knowledge cases. Launcher discovery: 3,389; these counts do not claim the full SelfContained suite ran.
+- The launcher rebuilt current sources, classified 321 source files and passed its policy/outcome/timeout/cleanup/fixture-guard checks. Build succeeded with warnings; no warning policy was changed. Build and execution logs are beside the final TRX.
+- PostgreSql, LocalTools, External, E2E and HistoricalBoundary were excluded and are **not qualified**. No database/migration, provider, source/native-tool suite or Web startup was invoked. Launcher-owned compiler/test/guard processes and output directories are the only executed preparation resources.
+- Tests use actual `IOctoberKnowledgeReader`/`IOctoberKnowledgeDisclosurePolicy`, Core records and Shared DTOs/validators against `OctoberKnowledgeFixture`/`ControlledKnowledgeReader`/`ControlledDisclosurePolicy`. There is no new Knowledge DTO, policy or production test-data fallback.
+
+Task accounting: **T001 K0 subpart done; T001 as a whole still open for W0. T002 prep-file classification done; broader future inventory/author assignments still open. T003–T038 not executed.** No checkboxes imply C0 completion. Added only `October/Chat/OctoberChatKnowledgeConformanceTests.cs` to suites.json as SelfContained under this dispatch's explicit authority.
+
+Remaining prerequisites: integration-owned W0 context/entry composition as proposed, Business production read/disclosure services, D0 dialogue declarations/implementation/schema, W1 selected Chat provider/credentials/Web permits, E0 exact reader and eventual I0 real data. Imported generator `IOctoberExecutionScope` is not Web Chat admission. Large-document/section, expiry/cryptographic cursor, Mixed streamed-answer/history and real authority/storage/streaming qualifications remain later work. Stop after this bounded preparation commit; do not begin C0/full Wave 2 or send an outbound reply.

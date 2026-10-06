@@ -4,6 +4,8 @@
 **Input**: `C:\Users\13728\.codex\worktrees\c1c7\vulgata\specs\20-1-Oct14-chat\spec.md`
 **Status**: Proposed for independent review; planning only. No tasks or implementation authorized.
 
+**Subsequent scoped preparation**: After accepted review and separately authorized task generation, OCT-Integrator authorized import/conformance only. See [imported K0 and proposed W0](contracts/imported-k0-and-w0.md) for exact `3bcd815b09cfbac7418d6644a2a75816e0788ec0` symbols, test boundary and remaining W0/D0/W1 dependencies. No C0/full Wave 2 implementation is authorized by that preparation. Earlier review hashes describe the earlier accepted text, not this import-status annotation.
+
 ## Summary
 
 Replace the October Chat execution path's fixed-pair/candidate-buffering assumptions with bounded MAF wiki-tool conversations, immediate authorized text, exact current-turn references and durable dialogue. Preserve the existing Chat UI shell and historical contracts. Consume OCT-BUSINESS B0's shared fixed-publication reads, live authority and persistence; OCT-EXPLORE supplies the reader and the integration owner composes Web/provider/admission. First prove a useful fixture-backed vertical slice, then real generated Knowledge and provider behavior.
@@ -81,7 +83,7 @@ Proposed new paths below are feature ownership allocations, not claims that file
 
 ## Required contracts and checkpoint
 
-[K0 requirements](contracts/consumer-boundaries.md#k0--required-compiled-contract-checkpoint) specify consumer needs. At this baseline B0 does not yet export the new compiled contracts. K0 must pin the Business-owned integration commit, actual type signatures, common fixture and owner acknowledgement before dependent implementation. Chat must not publish lookalike Knowledge records while waiting.
+[K0 requirements](contracts/consumer-boundaries.md#k0--required-compiled-contract-checkpoint) specify consumer needs. The original planning baseline had no new compiled contracts; bounded preparation now imports the owner-issued declarations/fixture at the exact commit above. The [symbol map and W0 proposal](contracts/imported-k0-and-w0.md) distinguish initial consumer conformance from production services and final integration acceptance. Chat must not publish lookalike Knowledge records while dependencies remain.
 
 Required ports are stable published selection, bounded discovery/content/related reads, exact version/section handles, live contributor authorization and Chat dialogue begin/fence/history/save/lookup/orphan operations. Conceptual labels are not invented public APIs. Chat owns its event types and tool adapter behavior. Business implements data-model.md through its October persistence. Explore agrees the exact reader projection; integration agrees Web profile source and shared admission. Dialogue/reader extension checkpoints may follow K0, but each dependent increment stops until its specific owner-issued port is present.
 

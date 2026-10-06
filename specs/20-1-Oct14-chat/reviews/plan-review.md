@@ -82,3 +82,13 @@ This is a focused independent document review, not full implementation requalifi
 | contracts/consumer-boundaries.md | 98D9585BC11708A693C614DF01FADA8D8A9C46C87AD3A063941909CEC0726765 |
 | quickstart.md | 8BE07EE2AD3D257A52B7B612713ABC28F27AE8EFB92AB2B2418BD329CFE4FA77 |
 | checklists/requirements.md | 21E8267FC52F170B01520220B162BD1C6B393930BEAA0D97BDF89C97948C93EF |
+
+## Bounded K0 preparation review — accepted 2026-10-06
+
+Root record of the retained independent reviewer's read-only assessment of the imported-contract preparation. This is not a new feature implementation approval or a claim that earlier planning hashes describe the later import annotations.
+
+Reviewer found no actionable findings in the Chat-owned conformance tests, one exact suite classification and lane-local K0/W0 mapping/proposal. Tests consume actual canonical Core/Shared types/validators and the imported Business fixture, with no duplicate contract/policy. The documented limit to controlled conformance is accurate. K0 can be acknowledged independently of W0; T001 remains open overall. W0 stays integration-owned and unimplemented, and D0/W1 continue to block live C1.
+
+Acceptance was conditional on the corrected SelfContained run passing. Root verified the persisted final TRX at `TestResults/isolation-fac1f9c98be242fcad2914f297f89695/results.trx`: 60 selected, 60 passed, 0 failed/skipped, including 10 Chat and 50 Knowledge cases. That condition is satisfied. The first run's record-equality assertion correction is explained in quickstart.md; no product RED/GREEN is claimed. Reviewer made no file changes or runtime calls.
+
+Verified test-file SHA-256: `41EE10241BD0CEB1E0D604605F6BB5252CF7F85076B545E97D6FD2FF8259298E` for `tests/Vulgata.Tests/October/Chat/OctoberChatKnowledgeConformanceTests.cs`. Imported integration source: `3bcd815b09cfbac7418d6644a2a75816e0788ec0`. Historical review rounds are retained verbatim. No other lane or aggregate accepted-K decision is made by this review.

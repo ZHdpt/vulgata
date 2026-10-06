@@ -3,6 +3,8 @@
 **Input**: spec.md, plan.md, research.md, data-model.md, contracts/consumer-boundaries.md and quickstart.md in this directory; independent plan review round 3.
 **Date**: 2026-10-06. **Branch**: `oct14/chat`. **Status**: task definition only; all tasks below remain unexecuted.
 
+**Bounded preparation update**: The later OCT-Integrator dispatch authorizes only T001's K0 import/conformance subpart and T002's exact prep-file inventory, plus scoped tests/commit. See [imported-k0-and-w0.md](contracts/imported-k0-and-w0.md). T001 remains unchecked because W0 is unresolved; T002 remains unchecked because later test/production ownership/inventory work is not complete. T003–T038 and C0 implementation have not begun. This narrow authority supersedes the earlier no-commit/no-task-execution wording only for the recorded preparation.
+
 ## Authority, organization and execution boundary
 
 The user's current instruction explicitly authorizes `speckit-tasks` and an independent, read-only `speckit-analyze`, superseding the earlier stop before task generation in the accepted planning artifacts. It does not authorize implementation or runtime. The accepted wiki-tool design is the scope of this task breakdown; no new tool, Scan strategy or PRD change is introduced. Earlier review history and its hashes remain unchanged.
@@ -13,7 +15,7 @@ All paths below are repository-relative to `C:/Users/13728/.codex/worktrees/c1c7
 
 ## Shared commit prerequisites and ownership
 
-No compiled shared-contract commit SHA is currently pinned by this feature. **Do not substitute `fad7f11`**, a draft contract, a fixture invented by Chat or a different lane's title for that prerequisite. The labels below identify required owner-issued commits, not fabricated commit IDs. T001/T022/T031/T032 record the exact supplied SHAs, exported members, compatible schema/fixture identity and verification evidence in the existing quickstart handoff when available. A shared commit must be integrated into this assigned checkout through separately authorized Git work before compiling consumers; these tasks do not authorize merging.
+The initial K0 candidate is now imported from integration commit **`3bcd815b09cfbac7418d6644a2a75816e0788ec0`**, with Business candidate `07c3fe4463e3228a6982fd106b58148ca87974bd`; the bounded consumer acknowledgement is recorded separately from unresolved W0. **Do not substitute `fad7f11`**, a draft contract or a Chat-invented fixture for that prerequisite. Other labels below still identify required owner-issued commits, not fabricated IDs. T001/T022/T031/T032 record actual supplied SHAs, exported members and verification in quickstart.md when available. Only the exact initial import was authorized by the preparation dispatch; no further merge is implied.
 
 | Checkpoint | Required owner-issued commit prerequisite | Owned files / external boundary | Verification before checkpoint completion |
 | --- | --- | --- | --- |

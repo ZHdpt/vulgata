@@ -2,6 +2,8 @@
 
 These are Chat domain requirements supplied to OCT-BUSINESS, the sole October persistence/migration owner. They are not SQL, a second DbContext, or final shared Knowledge type definitions. Exact B0 types and storage mapping are accepted at checkpoint K0 in [plan.md](plan.md).
 
+Bounded K0 import now maps Knowledge identities/selection/qualification/continuation to the actual canonical symbols in [imported-k0-and-w0.md](contracts/imported-k0-and-w0.md). In particular, `ContentPage.Next` signals remaining content; `CoverageProjection.IsPartial` describes corpus coverage and does not replace the future Chat consumed-content ledger. No dialogue persistence interface or implementation is supplied by the imported checkpoint; D0 remains separately unresolved.
+
 ## Conversation
 
 Fields: server-issued ConversationId; authenticated SubjectId; immutable Mode; canonical authorized Repository selection (one/several/standalone allowed); exact BatchId and PublicationId from Knowledge; context identity; created UTC time; next ordered turn sequence; optional active turn identity/fence.
