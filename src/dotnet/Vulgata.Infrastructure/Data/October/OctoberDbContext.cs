@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Vulgata.Core.Entities.OctoberKnowledge;
+using Vulgata.Infrastructure.Data.October.Knowledge;
 
 namespace Vulgata.Infrastructure.Data.October;
 
@@ -22,6 +24,74 @@ public sealed class OctoberDbContext : DbContext
     public DbSet<OctoberPreparedSourceApprovalRecord> PreparedSourceApprovals =>
         Set<OctoberPreparedSourceApprovalRecord>();
 
+    public DbSet<KnowledgeOperation> KnowledgeOperations => Set<KnowledgeOperation>();
+    public DbSet<AcceptedFileManifest> AcceptedFileManifests => Set<AcceptedFileManifest>();
+    public DbSet<CodeUnit> CodeUnits => Set<CodeUnit>();
+    public DbSet<LogicalDocument> LogicalDocuments => Set<LogicalDocument>();
+    public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
+    public DbSet<DocumentSectionRecord> DocumentSections => Set<DocumentSectionRecord>();
+    public DbSet<QualifiedClaimGroupRecord> ClaimGroups => Set<QualifiedClaimGroupRecord>();
+    public DbSet<KnowledgeContributorRecord> KnowledgeContributors => Set<KnowledgeContributorRecord>();
+    public DbSet<CommunicationObservationRecord> CommunicationObservations => Set<CommunicationObservationRecord>();
+    public DbSet<KnowledgeUncertaintyRecord> KnowledgeUncertainties => Set<KnowledgeUncertaintyRecord>();
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        ValidateKnowledgeChanges();
+        foreach (var batch in ChangedSetupBatches())
+            if (KnowledgeOperations.Any(x => x.BatchId == batch))
+                throw new InvalidOperationException("Accepted October setup is immutable.");
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        ValidateKnowledgeChanges();
+        foreach (var batch in ChangedSetupBatches())
+            if (await KnowledgeOperations.AnyAsync(x => x.BatchId == batch, cancellationToken))
+                throw new InvalidOperationException("Accepted October setup is immutable.");
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private void ValidateKnowledgeChanges()
+    {
+        ChangeTracker.DetectChanges();
+        if (ChangeTracker.Entries().Any(x => x.Entity is IOctoberKnowledgeRecord &&
+            x.State is EntityState.Modified or EntityState.Deleted))
+            throw new InvalidOperationException("Accepted October Knowledge is append-only.");
+        var added = ChangeTracker.Entries().Where(x => x.State == EntityState.Added).Select(x => x.Entity).ToArray();
+        foreach (var child in added.OfType<IOctoberKnowledgeRecord>())
+        {
+            bool hasNewParent = child switch
+            {
+                KnowledgeOperation => true,
+                AcceptedFileManifest row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
+                CodeUnit row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
+                LogicalDocument row => added.OfType<CodeUnit>().Any(x => x.BatchId == row.BatchId && x.UnitId == row.UnitId),
+                DocumentVersion row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
+                DocumentSectionRecord row => added.OfType<DocumentVersion>().Any(x => x.BatchId == row.BatchId && x.VersionId == row.VersionId),
+                QualifiedClaimGroupRecord row => added.OfType<DocumentSectionRecord>().Any(x => x.BatchId == row.BatchId && x.VersionId == row.VersionId && x.SectionId == row.SectionId),
+                KnowledgeContributorRecord row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
+                CommunicationObservationRecord row => added.OfType<CodeUnit>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId && x.UnitId == row.UnitId),
+                KnowledgeUncertaintyRecord row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
+                _ => false
+            };
+            if (!hasNewParent) throw new InvalidOperationException("Cannot extend committed October Knowledge.");
+        }
+    }
+
+    private IEnumerable<Guid> ChangedSetupBatches() => ChangeTracker.Entries()
+        .Where(x => x.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+        .Select(x => x.Entity switch
+        {
+            OctoberBatchRecord row => row.BatchId,
+            OctoberRepositoryRecord row => row.BatchId,
+            OctoberContextReferenceRecord row => row.BatchId,
+            OctoberAdvisoryEntryRecord row => row.BatchId,
+            OctoberContextDifferenceRecord row => row.BatchId,
+            _ => Guid.Empty
+        }).Where(x => x != Guid.Empty).Distinct();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         bool alternateProviderSelected = optionsBuilder.Options.Extensions.Any(extension =>
@@ -41,6 +111,8 @@ public sealed class OctoberDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("october");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OctoberDbContext).Assembly,
+            type => type.Namespace == typeof(KnowledgeOperationConfiguration).Namespace);
 
         modelBuilder.Entity<OctoberBatchRecord>(batch =>
         {

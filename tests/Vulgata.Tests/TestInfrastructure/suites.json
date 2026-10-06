@@ -182,6 +182,24 @@
   "October/Knowledge/OctoberKnowledgeContractProbeTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Knowledge/OctoberKnowledgeAcceptanceFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFileAcceptanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeLogTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFileAcceptancePostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberKnowledgeLogLocalToolsTests.cs": {
+    "suite": "LocalTools"
+  },
   "October/OctoberPersistenceModelTests.cs": {
     "suite": "SelfContained"
   },
