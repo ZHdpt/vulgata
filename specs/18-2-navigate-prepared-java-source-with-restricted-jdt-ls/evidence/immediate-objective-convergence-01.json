@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-06",
+  "scope": "Immediate IO-R01-IO-R08 only; current implementation assessed against present spec/plan/tasks/constitution.",
+  "implementationCheckpoint": "7a02ac7f5ac4fc81e9c6fa42740020758db0360d",
+  "outcome": "tasks_appended",
+  "metrics": {
+    "high": 2,
+    "constitutionPrinciples": 5,
+    "immediateRequirements": 8,
+    "completedActiveTasks": 11,
+    "planObligations": 12,
+    "findings": 2,
+    "partial": 2
+  },
+  "findings": [
+    {
+      "evidence": "Factory performs initial/final lease checks with caller token outside/without the initialization deadline. Navigation checks and mapping use caller token rather than bounded request token. Shared lease gate waits are unbounded and verifiers may ignore tokens.",
+      "severity": "HIGH",
+      "type": "partial",
+      "id": "F1",
+      "task": "T048",
+      "source": "IO-R04/IO-R05; T040/T044; plan essential bounded lifetime",
+      "files": [
+        "PreparedJavaNavigationContextFactory.cs",
+        "PreparedJdtLsNavigationContext.cs"
+      ]
+    },
+    {
+      "evidence": "Public context DisposeAsync waits on gate without deadline and ignores false retirement result. Native test currently consults private slot quarantine to discover unconfirmed cleanup.",
+      "severity": "HIGH",
+      "type": "partial",
+      "id": "F2",
+      "task": "T049",
+      "source": "IO-R05; T045; dedicated-jdt-navigation session/process ownership",
+      "files": [
+        "PreparedJdtLsNavigationContext.cs"
+      ]
+    }
+  ],
+  "preservedEvidence": "Existing actual factory/function JDK21 fixture1/1; controlled112 with affected2/14; basic2063. These do not cover newly observed blocked authority/disposal paths.",
+  "tasks": {
+    "afterSha256": "0911BFD903EAB55201984E3124C610A2251DF65635517C00D72B0EF2582DE241",
+    "phase": 16,
+    "priorBytesUnchanged": true,
+    "appended": [
+      "T048",
+      "T049"
+    ],
+    "beforeSha256": "D6F4F60F8F4F88574E9536B4709E622CD319EE596452524510E77398EE9E0E15"
+  },
+  "limits": "No full-story/shared18.3/mixed-root/customer integration assessment. Source-metadata variants remain explicitly unqualified under the existing trusted-child/fixture boundary; no source protection platform or new authority is introduced.",
+  "implementation": "User authorizes fixing these immediate gaps; retain separate test/production owners and current models, expected RED uncounted, old workflow/recovery frozen.",
+  "hooks": "No before_converge or after_converge hooks registered."
+}
