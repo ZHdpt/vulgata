@@ -1,4 +1,7 @@
 {
+  "Explore/KnowledgeReadContractTests.cs": {
+    "suite": "SelfContained"
+  },
   "Agents/CodeGraphFunctionsTests.cs": {
     "suite": "SelfContained"
   },
