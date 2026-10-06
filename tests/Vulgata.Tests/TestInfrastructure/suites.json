@@ -1,4 +1,19 @@
 {
+  "Explore/ReaderComponentTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/ExploreCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/ExactContentContinuationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/ExploreFixtureHost.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/ExactReaderTests.cs": {
+    "suite": "SelfContained"
+  },
   "Explore/KnowledgeReadContractTests.cs": {
     "suite": "SelfContained"
   },

@@ -1,0 +1,76 @@
+@page "/knowledge/documents"
+@attribute [Authorize]
+@layout MainLayout
+@implements IDisposable
+@using Vulgata.Core.DomainServices.OctoberKnowledge
+@using Vulgata.Web.Components.Explore
+@using Vulgata.Web.Explore
+@using Vulgata.Web.ViewModels.Explore
+@inject IServiceProvider Services
+
+<PageTitle>文档列表</PageTitle>
+<div class="explore-documents" data-theme="@(_viewModel?.Mode == KnowledgeMode.IT ? "dark" : "light")">
+    <h1>文档列表</h1>
+    @if (_viewModel?.IsControlledFixture == true)
+    {
+        <p class="controlled-label">受控测试数据（非真实生成）</p>
+    }
+    @if (_viewModel is null)
+    {
+        <ExploreStatus LoadState="LoadState.Error" StatusText="文档列表暂不可用。" />
+    }
+    else
+    {
+        <ExploreStatus LoadState="@_viewModel.LoadState" StatusText="@_viewModel.StatusText" />
+        @if (_viewModel.Page is { } page)
+        {
+            <ul class="document-list" aria-label="可读取的文档">
+                @foreach (var document in page.Documents)
+                {
+                    <li><a href="@ExactDocumentLinkBuilder.Build(document.Handle)">@document.Title</a></li>
+                }
+            </ul>
+        }
+        <div class="browse-actions" aria-label="列表操作">
+            <FluentButton OnClick="NextAsync" Disabled="@(!_viewModel.CanContinue)">下一页</FluentButton>
+            <FluentButton OnClick="ReloadAsync" Disabled="@(_viewModel.LoadState == LoadState.Loading)">重新加载</FluentButton>
+            @if (_viewModel.LoadState == LoadState.Loading)
+            {
+                <FluentButton OnClick="Cancel">取消</FluentButton>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private DocumentBrowseViewModel? _viewModel;
+    private bool _disposed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _viewModel = Services.GetService<DocumentBrowseViewModel>();
+        if (_viewModel is not null)
+        {
+            _viewModel.Changed += OnChanged;
+            await _viewModel.LoadAsync();
+        }
+    }
+
+    private Task NextAsync() => _viewModel?.NextAsync() ?? Task.CompletedTask;
+    private Task ReloadAsync() => _viewModel?.LoadAsync() ?? Task.CompletedTask;
+    private void Cancel() => _viewModel?.Cancel();
+    private void OnChanged()
+    {
+        if (!_disposed) { _ = InvokeAsync(() => { if (!_disposed) { StateHasChanged(); } }); }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        if (_viewModel is not null)
+        {
+            _viewModel.Changed -= OnChanged;
+            _viewModel.Dispose();
+        }
+    }
+}

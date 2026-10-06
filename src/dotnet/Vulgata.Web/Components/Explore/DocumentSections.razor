@@ -1,0 +1,80 @@
+@using Vulgata.Core.DomainServices.OctoberKnowledge
+@using Vulgata.Web.Explore
+
+@if (Page is { Status: KnowledgeReadStatus.Success, Document: not null })
+{
+    <section class="document-sections" aria-label="文档内容">
+        @if (Page.Document.Handle.SectionId is { } section)
+        {
+            <h2 id="@ExactDocumentLinkBuilder.GetSectionAnchor(section)" tabindex="-1" @ref="_sectionHeading">章节：@section</h2>
+        }
+        <p class="document-content">@Page.Content</p>
+        @foreach (var claim in Page.Claims)
+        {
+            <article class="qualified-claim">
+                <p class="qualification">@QualificationLabel(claim.Qualification)</p>
+                <p class="claim-text">@claim.Text</p>
+                @if (Mode == KnowledgeMode.IT)
+                {
+                    @foreach (var evidence in claim.Evidence)
+                    {
+                        @if (evidence.Source is { } source)
+                        {
+                            <p class="source-reference">来源：@(source.Origin.RelativePath)，第 @(source.StartLine)–@(source.EndLine) 行</p>
+                        }
+                    }
+                }
+                @if (!claim.Limitations.IsEmpty)
+                {
+                    <ul aria-label="适用限制">
+                        @foreach (var limitation in claim.Limitations)
+                        {
+                            <li>@limitation</li>
+                        }
+                    </ul>
+                }
+            </article>
+        }
+        @if (Page.Coverage is { PermittedGaps.IsDefaultOrEmpty: false } coverage)
+        {
+            <ul aria-label="已披露的覆盖限制">
+                @foreach (var gap in coverage.PermittedGaps)
+                {
+                    <li>@gap</li>
+                }
+            </ul>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public ContentPage? Page { get; set; }
+    [Parameter] public KnowledgeMode? Mode { get; set; }
+    private ElementReference _sectionHeading;
+    private ContentPage? _previousPage;
+    private bool _focusPending;
+
+    protected override void OnParametersSet()
+    {
+        _focusPending = !ReferenceEquals(_previousPage, Page) && Page?.Document?.Handle.SectionId is not null;
+        _previousPage = Page;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusPending) { return; }
+        _focusPending = false;
+        try { await _sectionHeading.FocusAsync(); }
+        catch (JSDisconnectedException) { }
+    }
+
+    private static string QualificationLabel(ClaimQualification qualification) => qualification switch
+    {
+        ClaimQualification.SourceSupported => "源代码支持",
+        ClaimQualification.Advisory => "参考上下文",
+        ClaimQualification.Hypothesis => "假设",
+        ClaimQualification.Uncertain => "不确定",
+        ClaimQualification.Mixed => "混合证据",
+        _ => "资格信息不可用",
+    };
+}

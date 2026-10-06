@@ -4,7 +4,9 @@
 
 **Input**: `specs/20-1-Oct14-explore/spec.md`
 
-**Status**: Design ready for independent review; no tasks or implementation authorized.
+**Status**: Controlled E0 T004–T013 implemented and verified against CP-K1; E1 and graph remain unstarted. Historical definition acceptance is retained in review records; current execution evidence is in quickstart.md.
+
+**Current execution scope**: User explicitly authorized Controlled E0 T004–T013 after initial consumer acknowledgement. CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91` is imported. Implementation follows direct `speckit-implement` restricted to E0, with separate test/production ownership and independent review. Older stage-specific authorization text is historical; no E1/graph/shared host composition or production B0 runtime is authorized by this instruction.
 
 **Bounded preparation update**: Original review/authorization wording above records the definition stage. The later integration dispatch authorizes only T001–T003 import/conformance, scoped planning checkpoint/merge/test commits and the isolated SelfContained launcher. Exact integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0` (Business candidate `07c3fe4463e3228a6982fd106b58148ca87974bd`, handoff `7a189c34aec625202f74846d4907ded787ccbdca`) is imported. See [canonical symbol binding and limits](contracts/consumer-boundary.md#imported-symbol-binding--initial-t001t003-preparation). This is the initial compiling contract, not the real B0 store. Stop before T004; later feature implementation remains unauthorized.
 
