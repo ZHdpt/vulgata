@@ -17,10 +17,12 @@ public sealed class OctoberKnowledgeWriter : IOctoberKnowledgeWriter
     private readonly IOctoberCommitSubmissionGuard _guard;
     private readonly IOctoberKnowledgeOperationLog _log;
     private readonly OctoberKnowledgeOperationStore _operations;
+    private readonly OctoberCorpusSelectionStore _corpora;
+    private readonly OctoberKnowledgePublicationStore _publications;
 
     public OctoberKnowledgeWriter(IDbContextFactory<OctoberDbContext> contexts, IOctoberFileAcceptanceAuthority authority,
         IOctoberKnowledgeSourceVerifier sourceVerifier, IOctoberKnowledgeProducerAuthorization authorization,
-        IOctoberCommitSubmissionGuard guard, IOctoberKnowledgeOperationLog log)
+        IOctoberCommitSubmissionGuard guard, IOctoberKnowledgeOperationLog log, IOctoberCorpusFreezeAuthority freezeAuthority)
     {
         _contexts = contexts ?? throw new ArgumentNullException(nameof(contexts));
         _authority = authority ?? throw new ArgumentNullException(nameof(authority));
@@ -28,7 +30,10 @@ public sealed class OctoberKnowledgeWriter : IOctoberKnowledgeWriter
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _guard = guard ?? throw new ArgumentNullException(nameof(guard));
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        ArgumentNullException.ThrowIfNull(freezeAuthority);
         _operations = new(contexts);
+        _corpora = new(contexts, authorization, guard, log, freezeAuthority);
+        _publications = new(contexts, authorization, guard, log);
     }
 
     public async Task<KnowledgeWriteResult> AcceptCompletedFileAsync(CompletedFileSubmission submission, CancellationToken cancellationToken = default)
@@ -91,6 +96,8 @@ public sealed class OctoberKnowledgeWriter : IOctoberKnowledgeWriter
                 if (!await BindingMatchesAsync(context, proposal.Binding, cancellationToken) ||
                     !await SourceSetupMatchesAsync(context, proposal, cancellationToken))
                     return new(KnowledgeWriteStatus.Denied, operation);
+                if (await context.CorpusSelections.AnyAsync(x => x.BatchId == operation.BatchId, cancellationToken))
+                    return new(KnowledgeWriteStatus.StaleOrFenced, operation);
                 if (await context.AcceptedFileManifests.AnyAsync(x => x.BatchId == operation.BatchId && x.AdmissionId == proposal.AdmissionId, cancellationToken))
                 {
                     await transaction.RollbackAsync(CancellationToken.None);
@@ -165,9 +172,9 @@ public sealed class OctoberKnowledgeWriter : IOctoberKnowledgeWriter
     }
 
     public Task<KnowledgeWriteResult> FreezeCorpusAsync(CorpusFreezeRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromResult(new KnowledgeWriteResult(KnowledgeWriteStatus.StorageUnavailable, request.Operation));
+        _corpora.FreezeAsync(request, cancellationToken);
     public Task<KnowledgeWriteResult> PublishSelectionAsync(PublicationRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromResult(new KnowledgeWriteResult(KnowledgeWriteStatus.StorageUnavailable, request.Operation));
+        _publications.PublishAsync(request, cancellationToken);
 
     private async Task<KnowledgeWriteResult> DiscloseAsync(KnowledgeBinding binding, OperationKey operation, string digest,
         KnowledgeOperation stored, CancellationToken cancellationToken, bool knownNewCommit = false, CompletedFileProposal? proposal = null)

@@ -200,6 +200,24 @@
   "October/Knowledge/OctoberKnowledgeLogLocalToolsTests.cs": {
     "suite": "LocalTools"
   },
+  "October/Knowledge/OctoberPublicationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeReadTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeAuthorizationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeWebTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgePublicationFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberPublicationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
   "October/OctoberPersistenceModelTests.cs": {
     "suite": "SelfContained"
   },

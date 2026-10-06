@@ -21,7 +21,7 @@ public interface IOctoberKnowledgeOperationLog
 /// Host-owned log.md. No model or browser selects the path. An exclusive file handle
 /// serializes cooperating writers across processes; the log never authorizes a mutation.
 /// </summary>
-public sealed class OctoberKnowledgeOperationLog : IOctoberKnowledgeOperationLog
+public sealed class OctoberKnowledgeOperationLog : IOctoberKnowledgeOperationLog, IOctoberKnowledgeReadLog
 {
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan LockRetryDelay = TimeSpan.FromMilliseconds(20);
@@ -58,6 +58,11 @@ public sealed class OctoberKnowledgeOperationLog : IOctoberKnowledgeOperationLog
         // No raw target/database text, selection digest, content, exception message or host path.
         string line = string.Create(CultureInfo.InvariantCulture,
             $"- {_clock.GetUtcNow().ToUniversalTime():O} batch={entry.Operation.BatchId:D} operation={entry.Operation.OperationId:D} kind={entry.Operation.Kind} target-sha256={Token(entry.Binding.TargetId)} database-sha256={Token(entry.Binding.CanonicalDatabaseIdentity)} outcome={entry.Status}\n");
+        return await AppendLineAsync(line, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> AppendLineAsync(string line, CancellationToken cancellationToken)
+    {
         byte[] bytes = Encoding.UTF8.GetBytes(line);
         var elapsed = Stopwatch.StartNew();
 
@@ -139,6 +144,20 @@ public sealed class OctoberKnowledgeOperationLog : IOctoberKnowledgeOperationLog
         }
 
         return false;
+    }
+
+    public Task<bool> AppendAsync(KnowledgeReadLogEntry entry, CancellationToken cancellationToken = default)
+    {
+        if (entry?.Publication?.Knowledge is not { } binding || binding.BatchId == Guid.Empty ||
+            entry.Publication.PublicationId == Guid.Empty || entry.CorrelationId == Guid.Empty ||
+            !Enum.IsDefined(entry.Operation) || !Enum.IsDefined(entry.Status) ||
+            string.IsNullOrWhiteSpace(binding.TargetId) || string.IsNullOrWhiteSpace(binding.CanonicalDatabaseIdentity) ||
+            cancellationToken.IsCancellationRequested)
+            return Task.FromResult(false);
+
+        string line = string.Create(CultureInfo.InvariantCulture,
+            $"- {_clock.GetUtcNow().ToUniversalTime():O} batch={binding.BatchId:D} publication={entry.Publication.PublicationId:D} correlation={entry.CorrelationId:D} read={entry.Operation} target-sha256={Token(binding.TargetId)} database-sha256={Token(binding.CanonicalDatabaseIdentity)} outcome={entry.Status}\n");
+        return AppendLineAsync(line, cancellationToken);
     }
 
     private static string Token(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));

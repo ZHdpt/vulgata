@@ -58,6 +58,9 @@ public sealed class DocumentVersionConfiguration : IEntityTypeConfiguration<Docu
     {
         b.ToTable("OctoberDocumentVersions");
         b.HasKey(x => new { x.BatchId, x.VersionId });
+        // Preserve the foundation index explicitly: the publication identity key now
+        // covers this prefix and otherwise suppresses EF's convention-created index.
+        b.HasIndex(x => new { x.BatchId, x.ManifestId });
         b.Property(x => x.ContentJson).IsRequired().HasColumnType("jsonb");
         b.Property(x => x.AnchorsJson).IsRequired().HasColumnType("jsonb");
         b.HasOne<LogicalDocument>().WithMany().HasForeignKey(x => new { x.BatchId, x.LogicalDocumentId }).OnDelete(DeleteBehavior.Restrict);

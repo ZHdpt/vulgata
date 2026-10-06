@@ -35,12 +35,24 @@ public sealed class OctoberDbContext : DbContext
     public DbSet<CommunicationObservationRecord> CommunicationObservations => Set<CommunicationObservationRecord>();
     public DbSet<KnowledgeUncertaintyRecord> KnowledgeUncertainties => Set<KnowledgeUncertaintyRecord>();
 
+    public DbSet<CorpusSelectionRecord> CorpusSelections => Set<CorpusSelectionRecord>();
+    public DbSet<CorpusManifestRecord> CorpusManifests => Set<CorpusManifestRecord>();
+    public DbSet<CorpusDocumentRecord> CorpusDocuments => Set<CorpusDocumentRecord>();
+    public DbSet<CorpusCoverageRecord> CorpusCoverage => Set<CorpusCoverageRecord>();
+    public DbSet<KnowledgePublicationRecord> KnowledgePublications => Set<KnowledgePublicationRecord>();
+    public DbSet<PublicationMemberRecord> PublicationMembers => Set<PublicationMemberRecord>();
+    public DbSet<PublicationCoverageRecord> PublicationCoverage => Set<PublicationCoverageRecord>();
+    public DbSet<PublicationUncertaintyRecord> PublicationUncertainties => Set<PublicationUncertaintyRecord>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         ValidateKnowledgeChanges();
         foreach (var batch in ChangedSetupBatches())
             if (KnowledgeOperations.Any(x => x.BatchId == batch))
                 throw new InvalidOperationException("Accepted October setup is immutable.");
+        foreach (var batch in NewAcceptanceBatches())
+            if (CorpusSelections.Any(x => x.BatchId == batch))
+                throw new InvalidOperationException("Cannot accept files after corpus freeze.");
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
@@ -50,6 +62,9 @@ public sealed class OctoberDbContext : DbContext
         foreach (var batch in ChangedSetupBatches())
             if (await KnowledgeOperations.AnyAsync(x => x.BatchId == batch, cancellationToken))
                 throw new InvalidOperationException("Accepted October setup is immutable.");
+        foreach (var batch in NewAcceptanceBatches())
+            if (await CorpusSelections.AnyAsync(x => x.BatchId == batch, cancellationToken))
+                throw new InvalidOperationException("Cannot accept files after corpus freeze.");
         return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
@@ -74,11 +89,22 @@ public sealed class OctoberDbContext : DbContext
                 KnowledgeContributorRecord row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
                 CommunicationObservationRecord row => added.OfType<CodeUnit>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId && x.UnitId == row.UnitId),
                 KnowledgeUncertaintyRecord row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
+                CorpusSelectionRecord row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
+                CorpusManifestRecord row => added.OfType<CorpusSelectionRecord>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId),
+                CorpusDocumentRecord row => added.OfType<CorpusManifestRecord>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.ManifestId == row.ManifestId),
+                CorpusCoverageRecord row => added.OfType<CorpusSelectionRecord>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId),
+                KnowledgePublicationRecord row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
+                PublicationMemberRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
+                PublicationCoverageRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
+                PublicationUncertaintyRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
                 _ => false
             };
             if (!hasNewParent) throw new InvalidOperationException("Cannot extend committed October Knowledge.");
         }
     }
+
+    private IEnumerable<Guid> NewAcceptanceBatches() => ChangeTracker.Entries<AcceptedFileManifest>()
+        .Where(x => x.State == EntityState.Added).Select(x => x.Entity.BatchId).Distinct();
 
     private IEnumerable<Guid> ChangedSetupBatches() => ChangeTracker.Entries()
         .Where(x => x.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)

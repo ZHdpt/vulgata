@@ -30,6 +30,7 @@ internal sealed class OctoberKnowledgeAcceptanceFixture : IAsyncDisposable
     public TestProducerAuthorization Authorization { get; } = new();
     public TestAcceptanceGuard Guard { get; } = new();
     public TestKnowledgeLog Log { get; } = new();
+    public TestCorpusFreezeAuthority FreezeAuthority { get; } = new();
     public static Guid Id(int id) => Guid.Parse($"00000000-0000-0000-0000-{id:000000000000}");
     public KnowledgeBinding Binding { get; } = new("ControlledFixture/b0a", "b0a-owned-target", Id(301), new string('a', 64));
     public PreparedOrigin Origin { get; } = new(Id(302), "prepared-b0a-root", "src/Order.cs", new string('b', 64), "prepared-source-v1");
@@ -65,7 +66,7 @@ internal sealed class OctoberKnowledgeAcceptanceFixture : IAsyncDisposable
         proposal = proposal with { CanonicalProposalDigest = OctoberKnowledgePolicy.ComputeProposalDigest(proposal) };
         return new(new(proposal.Binding.BatchId, OperationKind.AcceptFile, operationId ?? Id(306)), proposal, new TestCompletedFileProof(proposal));
     }
-    public OctoberKnowledgeWriter Writer() => new(Factory, Completion, Source, Authorization, Guard, Log);
+    public OctoberKnowledgeWriter Writer() => new(Factory, Completion, Source, Authorization, Guard, Log, FreezeAuthority);
     public static async Task<OctoberKnowledgeAcceptanceFixture> CreateSqliteAsync()
     {
         string directory = Path.Combine(Path.GetTempPath(), "vulgata-knowledge-b0a-" + Guid.NewGuid().ToString("N"));
@@ -208,5 +209,27 @@ internal sealed class TestTransactionCounter : DbTransactionInterceptor
     {
         Interlocked.Increment(ref _starts);
         return ValueTask.FromResult(result);
+    }
+}
+
+/// <summary>Explicit test-only Scan terminal-inventory attestation; no request is eligible until approved by fixture setup.</summary>
+internal sealed class TestCorpusFreezeAuthority : IOctoberCorpusFreezeAuthority
+{
+    private CorpusFreezeRequest? _approved;
+    public CorpusFreezeEligibility Eligibility { get; set; } = CorpusFreezeEligibility.Unsettled;
+    public int Calls { get; private set; }
+    public void Approve(CorpusFreezeRequest request)
+    {
+        _approved = request;
+        Eligibility = CorpusFreezeEligibility.Eligible;
+    }
+    public Task<CorpusFreezeEligibility> VerifyAsync(CorpusFreezeRequest request, CancellationToken cancellationToken = default)
+    {
+        Calls++;
+        if (Eligibility != CorpusFreezeEligibility.Eligible) return Task.FromResult(Eligibility);
+        bool exact = _approved is not null && _approved.Operation == request.Operation && _approved.Binding == request.Binding &&
+            _approved.CanonicalPayloadDigest == request.CanonicalPayloadDigest &&
+            OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(request) == _approved.CanonicalPayloadDigest;
+        return Task.FromResult(exact ? CorpusFreezeEligibility.Eligible : CorpusFreezeEligibility.Denied);
     }
 }

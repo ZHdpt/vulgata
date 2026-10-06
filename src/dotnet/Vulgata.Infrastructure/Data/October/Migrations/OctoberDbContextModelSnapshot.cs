@@ -198,6 +198,7 @@ public sealed class OctoberDbContextModelSnapshot : ModelSnapshot
             b.Property<string>("AnchorsJson").IsRequired().HasColumnType("jsonb");
             b.Property<DateTimeOffset>("CreatedAtUtc").HasColumnType("timestamp with time zone");
             b.HasKey("BatchId", "VersionId");
+            b.HasAlternateKey("BatchId", "ManifestId", "LogicalDocumentId", "VersionId");
             b.HasIndex("BatchId", "LogicalDocumentId");
             b.HasIndex("BatchId", "ManifestId");
             b.ToTable("OctoberDocumentVersions", "october");
@@ -329,6 +330,179 @@ public sealed class OctoberDbContextModelSnapshot : ModelSnapshot
         {
             b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.AcceptedFileManifest", null).WithMany()
                 .HasForeignKey("BatchId", "ManifestId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusSelectionRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<int>("OperationKind").HasColumnType("integer");
+            b.Property<Guid>("OperationId").HasColumnType("uuid");
+            b.Property<string>("CorpusDigest").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+            b.Property<string>("ContributorsJson").IsRequired().HasColumnType("jsonb");
+            b.Property<DateTimeOffset>("CreatedAtUtc").HasColumnType("timestamp with time zone");
+            b.HasKey("BatchId", "CorpusId");
+            b.HasIndex("BatchId").IsUnique();
+            b.HasIndex("BatchId", "OperationKind", "OperationId");
+            b.ToTable("OctoberCorpusSelections", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusManifestRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<Guid>("ManifestId").HasColumnType("uuid");
+            b.HasKey("BatchId", "CorpusId", "ManifestId");
+            b.HasIndex("BatchId", "ManifestId");
+            b.ToTable("OctoberCorpusManifests", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusDocumentRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<Guid>("ManifestId").HasColumnType("uuid");
+            b.Property<Guid>("LogicalDocumentId").HasColumnType("uuid");
+            b.Property<Guid>("VersionId").HasColumnType("uuid");
+            b.Property<int>("Ordinal").HasColumnType("integer");
+            b.HasKey("BatchId", "CorpusId", "LogicalDocumentId");
+            b.HasAlternateKey("BatchId", "CorpusId", "LogicalDocumentId", "VersionId");
+            b.HasIndex("BatchId", "CorpusId", "VersionId").IsUnique();
+            b.HasIndex("BatchId", "CorpusId", "Ordinal").IsUnique();
+            b.HasIndex("BatchId", "CorpusId", "ManifestId");
+            b.HasIndex("BatchId", "ManifestId", "LogicalDocumentId", "VersionId");
+            b.ToTable("OctoberCorpusDocuments", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusCoverageRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<Guid>("AdmissionId").HasColumnType("uuid");
+            b.Property<Guid>("RepositoryId").HasColumnType("uuid");
+            b.Property<string>("CoverageJson").IsRequired().HasColumnType("jsonb");
+            b.Property<string>("ContributorsJson").IsRequired().HasColumnType("jsonb");
+            b.HasKey("BatchId", "CorpusId", "AdmissionId");
+            b.HasIndex("BatchId", "RepositoryId");
+            b.ToTable("OctoberCorpusCoverage", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.KnowledgePublicationRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("PublicationId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<string>("CorpusDigest").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+            b.Property<int>("OperationKind").HasColumnType("integer");
+            b.Property<Guid>("OperationId").HasColumnType("uuid");
+            b.Property<string>("ContributorsJson").IsRequired().HasColumnType("jsonb");
+            b.Property<DateTimeOffset>("CreatedAtUtc").HasColumnType("timestamp with time zone");
+            b.HasKey("BatchId", "PublicationId");
+            b.HasAlternateKey("BatchId", "PublicationId", "CorpusId");
+            b.HasIndex("BatchId", "CorpusId");
+            b.HasIndex("BatchId", "OperationKind", "OperationId");
+            b.ToTable("OctoberKnowledgePublications", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.PublicationMemberRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("PublicationId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<Guid>("LogicalDocumentId").HasColumnType("uuid");
+            b.Property<Guid>("VersionId").HasColumnType("uuid");
+            b.Property<int>("Ordinal").HasColumnType("integer");
+            b.HasKey("BatchId", "PublicationId", "LogicalDocumentId");
+            b.HasIndex("BatchId", "PublicationId", "VersionId").IsUnique();
+            b.HasIndex("BatchId", "PublicationId", "Ordinal").IsUnique();
+            b.HasIndex("BatchId", "PublicationId", "CorpusId");
+            b.HasIndex("BatchId", "CorpusId", "LogicalDocumentId", "VersionId");
+            b.ToTable("OctoberPublicationMembers", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.PublicationCoverageRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("PublicationId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<Guid>("AdmissionId").HasColumnType("uuid");
+            b.Property<Guid>("RepositoryId").HasColumnType("uuid");
+            b.Property<string>("CoverageJson").IsRequired().HasColumnType("jsonb");
+            b.Property<string>("ContributorsJson").IsRequired().HasColumnType("jsonb");
+            b.HasKey("BatchId", "PublicationId", "AdmissionId");
+            b.HasIndex("BatchId", "PublicationId", "CorpusId");
+            b.HasIndex("BatchId", "CorpusId", "AdmissionId");
+            b.HasIndex("BatchId", "RepositoryId");
+            b.ToTable("OctoberPublicationCoverage", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.PublicationUncertaintyRecord", b =>
+        {
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("PublicationId").HasColumnType("uuid");
+            b.Property<Guid>("CorpusId").HasColumnType("uuid");
+            b.Property<Guid>("ManifestId").HasColumnType("uuid");
+            b.Property<string>("Key").IsRequired().HasColumnType("text");
+            b.HasKey("BatchId", "PublicationId", "ManifestId", "Key");
+            b.HasIndex("BatchId", "PublicationId", "CorpusId");
+            b.HasIndex("BatchId", "CorpusId", "ManifestId");
+            b.HasIndex("BatchId", "ManifestId", "Key");
+            b.ToTable("OctoberPublicationUncertainties", "october");
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusSelectionRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgeOperation", null).WithMany().HasForeignKey("BatchId", "OperationKind", "OperationId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusManifestRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.CorpusSelectionRecord", null).WithMany().HasForeignKey("BatchId", "CorpusId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.AcceptedFileManifest", null).WithMany().HasForeignKey("BatchId", "ManifestId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusDocumentRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.CorpusManifestRecord", null).WithMany().HasForeignKey("BatchId", "CorpusId", "ManifestId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.DocumentVersion", null).WithMany().HasForeignKey("BatchId", "ManifestId", "LogicalDocumentId", "VersionId")
+                .HasPrincipalKey("BatchId", "ManifestId", "LogicalDocumentId", "VersionId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.CorpusCoverageRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.CorpusSelectionRecord", null).WithMany().HasForeignKey("BatchId", "CorpusId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Infrastructure.Data.October.OctoberRepositoryRecord", null).WithMany().HasForeignKey("BatchId", "RepositoryId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.KnowledgePublicationRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.CorpusSelectionRecord", null).WithMany().HasForeignKey("BatchId", "CorpusId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgeOperation", null).WithMany().HasForeignKey("BatchId", "OperationKind", "OperationId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.PublicationMemberRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgePublicationRecord", null).WithMany().HasForeignKey("BatchId", "PublicationId", "CorpusId")
+                .HasPrincipalKey("BatchId", "PublicationId", "CorpusId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.CorpusDocumentRecord", null).WithMany().HasForeignKey("BatchId", "CorpusId", "LogicalDocumentId", "VersionId")
+                .HasPrincipalKey("BatchId", "CorpusId", "LogicalDocumentId", "VersionId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.PublicationCoverageRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgePublicationRecord", null).WithMany().HasForeignKey("BatchId", "PublicationId", "CorpusId")
+                .HasPrincipalKey("BatchId", "PublicationId", "CorpusId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.CorpusCoverageRecord", null).WithMany().HasForeignKey("BatchId", "CorpusId", "AdmissionId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Infrastructure.Data.October.OctoberRepositoryRecord", null).WithMany().HasForeignKey("BatchId", "RepositoryId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+        });
+
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberKnowledge.PublicationUncertaintyRecord", b =>
+        {
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgePublicationRecord", null).WithMany().HasForeignKey("BatchId", "PublicationId", "CorpusId")
+                .HasPrincipalKey("BatchId", "PublicationId", "CorpusId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.CorpusManifestRecord", null).WithMany().HasForeignKey("BatchId", "CorpusId", "ManifestId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgeUncertaintyRecord", null).WithMany().HasForeignKey("BatchId", "ManifestId", "Key").OnDelete(DeleteBehavior.Restrict).IsRequired();
         });
 
     }
