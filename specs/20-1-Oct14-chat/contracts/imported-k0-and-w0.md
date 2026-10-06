@@ -59,7 +59,11 @@ Static inspection: `Program.cs` composes services through `VulgataWebComposition
 
 ## Task accounting and stop
 
-- T001: **K0 import/conformance subpart only** can be acknowledged after passing probes; W0 remains missing, so T001 remains unchecked as a whole.
+- T001: after the authorized ordering clarification, this task is **K0-only and complete** from prior passing preparation. W0 verification moves to T007, where it still blocks integrated C0 completion. This accounting change does not start T003–T006.
 - T002: exact prep test inventory classified under this dispatch; broader test/production ownership and later-file inventory remain unexecuted, so T002 remains unchecked.
 - T003–T038: not executed; specifically no C0 Chat implementation or T007 UI checkpoint claim. The conformance test file is a bounded T001 consumer probe, not a replacement for future Chat behavior tests.
 - Pause after the preparation commit and local final report. No message back to the integrator, merge of this branch elsewhere or further Wave 2 work is implied.
+
+### Scheduling clarification (planning only)
+
+The integration owner's proposed correction is sound: requiring W0 before T006 would block the module author on the composition that must consume its registration entry point. K0 permits controlled feature-local T003–T006 after separate implementation authorization and T002 ownership/classification; those tasks consume canonical ports and harness inputs, not a presumed accepted W0 API. Integration then settles/wires W0; T007 verifies its actual commit/composition and unchanged C0 acceptance. The W0 interface above remains only a proposal, unimplemented and unaccepted until its owner settles it. Missing production readers, D0/W1 and runtime authority remain explicit boundaries. The reported integration checkpoint `12d92d80339ea622cd26c593ebdb74da59401f91` was not merged or independently qualified by this planning-only dispatch.
