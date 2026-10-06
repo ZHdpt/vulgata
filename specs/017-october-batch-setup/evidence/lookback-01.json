@@ -1,0 +1,36 @@
+{
+  "kind": "analysis",
+  "stage": "lookback",
+  "evidence_id": "18-4/lookback/1",
+  "record_path": "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+  "section_sha256": "4f4b141b1b4a4c52107c15982f13f801ade60e24a8749f94f0f87d1e8f978943",
+  "record_content_sha256": "87f62c5c00ccd0378ef22a927b6326f56c682477aa6daf4520dfe12fe9f68f17",
+  "convergence": {
+    "path": "specs/017-october-batch-setup/evidence/convergence-01.json",
+    "sha256": "cab01a7baf636dc2575fae709ee2299bc18bac56a22054805b60c4f44b0da2a6"
+  },
+  "output_hashes": {
+    "docs/project-lessons.md": "b35d3cb30b5d0a7a7a963202214d8dfde7a04e3c8169ebdb1723f591e6263b59",
+    "docs/agents/project-state.md": "9d362554cddbb59aac3c35bd5c8b2f98b52482700b2eaabb66545d8c94469a14",
+    "docs/bmad/planning-artifacts/october-release-epics.md": "dbb34ffbce21eaaa4b096c5a406f3d455678049989f4bf2fc8e097aa1d6d6d85",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md": "8fc7f350cb7df28f0112b39e08b48c020fed4a7920f999b885a17a89d7d9b4be"
+  },
+  "disposition": "no-new-lesson",
+  "authority_decisions": [
+    {
+      "path": "specs/017-october-batch-setup/evidence/plan-authorization-06.json",
+      "sha256": "4228332674232655c8526bcb601635fbb6fd65f02418b09d0cb3e7e826b9dc4a"
+    },
+    {
+      "path": "specs/017-october-batch-setup/evidence/implementation-approval-08.json",
+      "sha256": "8a25894695d292db359db9730caf36f1f998b2a92e1be9be8c81a311066410c9"
+    },
+    {
+      "path": "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-07.json",
+      "sha256": "b64fc7df4fe1d61ec979229499cc9b27cca04d9775b0bde359e9ce659014734a"
+    }
+  ],
+  "unresolved_blockers": [],
+  "follow_up_paths": [],
+  "summary": "Existing applicable lessons applied; explicit regression checks address local fixture errors. Approved ordinary Web/independent generator wording and project pointers synchronized. Existing build/feed warnings and unqualified later behavior remain explicit; no new authority decision."
+}

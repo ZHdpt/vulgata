@@ -1,0 +1,24 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20260930T052907Z-4d8c21",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "42a0ca056858577e96758cf921ec3e538186eea8",
+  "binding_status": "bound",
+  "commit_sha": "89b64395faaed39f804be91c746cf3ff42bbd49c",
+  "summary": "Verified T008/T009 trusted context, canonical v2 digest and management-authority continuity through Core and authorization-only Web. Later persistence, selected-data, generator and owned-resource qualification remain open.",
+  "paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-definition-02.json",
+    "specs/017-october-batch-setup/evidence/context-provenance-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-02.json",
+    "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupPolicy.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/OctoberSelectionDigest.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "tests/Vulgata.Tests/October/OctoberSetupPolicyTests.cs",
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs"
+  ]
+}

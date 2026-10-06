@@ -1,7 +1,7 @@
 ---
 title: Vulgata October release - requirements and epic breakdown
 created: 2026-09-27
-updated: 2026-09-29
+updated: 2026-10-02
 scope: october-14-release-only
 status: final
 stepsCompleted: [1, 2, 3, 4]
@@ -185,7 +185,7 @@ The primary source is the October proposal; section references below locate its 
 - **O-FR14 — Local and cross-Repository flow roots.** Accept supported local REFERENCES as well as cross-Repository links. Plan bounded directed evidence for distinct source-backed operation/handler/schedule/workflow/selected-unit roots, with branches and uncertain frontiers. Local-only flows qualify; shared helpers, folders and cycles do not merge business purposes or prove runtime execution order. (Simplified execution; A4)
 - **O-FR15 — Document-first BL.** Initially synthesize useful business conditions, alternatives, effects and gaps from accepted CL, relationship evidence, Uncertainties and selected context. Pin actual dependencies and preserve qualifications. Pass 2 neither rewrites CL nor creates authoritative links or recursively schedules scans. Source tools are conditional, not an initial dependency; see O-OPT03. (Pass 2)
 - **O-FR16 — Coherent structured publication.** Store canonical CL/BL as structured JSON with derived readable views. Validate identities, prepared origins, sections, anchors, relationship endpoints and actual BL dependencies; publish coherent records atomically with immutable exact Document Versions and replay-safe acceptance. Explicit published-dataset eligibility excludes drafts and requires no update/retirement/current-head competition across batches. (Isolated acceptance)
-- **O-FR17 — Exact database/batch selection.** Use one owned PostgreSQL database per batch with identical fixed schemas/models. Generator and October Web bind the same exact database plus batch ID at startup; switching requires host restart. Missing/mismatched selection fails visibly, with no latest-batch or earlier-wiki fallback. (Selected storage layout)
+- **O-FR17 — Exact database/batch selection.** Use one owned PostgreSQL database per batch with identical fixed schemas/models. The independent generator binds the exact database plus batch ID and rejects missing/mismatched selection without latest-batch or earlier-wiki fallback. Web uses ordinary startup with only its existing database configuration changed; it requires no October startup mode, batch ID, setup-operator credentials or generator provider binding. Database switching requires host restart, never a runtime switch. Exact batch identity remains persisted and validated by batch setup; this clarification does not implement later Knowledge read selection. (Selected storage layout; user decision 2026-10-02)
 - **O-FR18 — Valid shared setup and storage.** Both hosts use one October acceptance/publication implementation and valid Identity/System/Repository/context setup rules. Operator identity is real. No dummy pair records, forced ScanRun completion, raw legacy-content import, model-issued SQL or fabricated Administrator claim. Programmatic setup is allowed; new CRUD screens are not required. (Isolation)
 - **O-FR19 — Explicit provider binding.** Select one declared configuration source/precedence per process for endpoint/model/key, API type and Worker/Chat role profiles. A shared profile must be deliberate. Use user-instructed environment loading or implemented DB loading without silent field mixing/failover; normal provider administration stays unchanged. (Local LLM configuration)
 
@@ -716,8 +716,8 @@ So that generation and later readers address the intended data without polluting
 **And** only this story's setup records/mappings are introduced; no fake administrator, dummy pair/FlowGroup, forced ScanRun or new CRUD UI is used.
 
 **Given** two distinct owned batch databases with identical fixed schema names,
-**When** generator and October Web start with an exact database and batch ID,
-**Then** both bind the selected setup and reject missing/mismatched selection without previous/latest-batch fallback,
+**When** the independent generator binds an exact database and batch ID, and Web is separately started normally with only its database configuration changed,
+**Then** the generator validates the exact setup without previous/latest-batch fallback, while ordinary Web startup requires no October mode, batch ID, setup-operator credentials or generator provider configuration,
 **And** a switch requires restart; no read/write crosses into the other target.
 
 **Given** selected Global/System/Repository context and explicit provider configuration,
@@ -725,7 +725,7 @@ So that generation and later readers address the intended data without polluting
 **Then** actual context values/origins and conflicts are retained, and API type/Worker/Chat role profiles and configuration precedence are explicit,
 **And** no unspecified .env discovery, borrowed credentials, silent field mixing or automatic failover occurs; protected-row copying requires compatibility only if that route is used.
 
-**Given** October enabled versus ordinary startup,
+**Given** independent October batch setup versus ordinary Web startup,
 **When** mappings/migrations and registration are evaluated,
 **Then** the October persistence context, migration history and model snapshot are isolated; ordinary startup and the normal model remain unchanged,
 **And** setup emits sanitized diagnostics without claiming tool readiness, paid-provider readiness or completed Knowledge generation.

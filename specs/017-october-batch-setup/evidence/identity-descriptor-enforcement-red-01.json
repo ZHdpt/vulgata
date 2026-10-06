@@ -1,0 +1,42 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/identity-descriptor-enforcement-red/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "observed_at": "2026-10-01T20:09:11.4004442Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0102-generator-cli-nonexact-authority-expected-red.json",
+    "sha256": "dcdff0be1044ee365fad59021f8909421690ca01c1461dfcda81b1d20169cf13"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "5e44e52d4ae8affeb4b354cfaeb124eb6e26fd27fdc2e0a3a442e4c4f60fdb6e",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "453f6361bd0902cf4bb84e27ddcc7b7045d46298521fa603b38b0588f561cc57",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "e2fdc0b87d4a78f44580aa5af6c6800fb375d873c9ef32a047b9275b5a1d6e75",
+    "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs": "3f276eecae2c77f8d482ee13d8b23e1ea1888c5d35593e964f33b07f66829528"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_MismatchedOwnedIdentityDescriptorFailsClosedBeforeOctoberMigration'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-a59182ec11b5444092fd49380e1df3e6/results.trx",
+    "trx_sha256": "f87b3a4b3798874bae69eade85cd49581959f1dfe5c2a1b2b7639ec0f7fc3dd8",
+    "failure": "Assert.False() Failure\r\nExpected: False\r\nActual:   True",
+    "child_pid": 25868,
+    "child_exit": 0,
+    "seam": "Actual executable with valid real operator/provider; actual named Identity connection remains same owned database as correct data target. Independently declared Identity descriptor alone mismatched. Child0 and October schema observed present. Schema-absence assertion fails before nonzero assertion. No mandatory particular closed failure class assumed."
+  },
+  "cleanup": {
+    "run_id": "a59182ec11b5444092fd49380e1df3e6",
+    "database": "vulgata_story184_generator_58bf6937320445ae8573f65c4ea7502d",
+    "verified": true,
+    "evidence": "[]\nError response from daemon: get vulgata-test-data-a59182ec11b5444092fd49380e1df3e6: no such volume\n",
+    "owner_report": "TRX marks exact database/temp cleaned; owned container and volume removed."
+  },
+  "authority": "Accepted contracts/batch-setup-selection.md independent Identity descriptor and connected identity rule. Retained exclusive definition owner classified unfinished T018/T019 implementation in evidence/identity-descriptor-enforcement-gap-01.json; no new public interface, definition restart or external prerequisite.",
+  "scope": "First demonstrated missing unfinished implementation behavior, normal behavioral RED not independent negative review/convergence/recurrent completed repair. Recovery6/7 and approvals unchanged."
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "kind": "analysis",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "recorded_at": "2026-09-29T02:14:26.4999515Z",
+  "runner": {
+    "stable_chat_id": "01a0e728-b7cc-78f1-8a3d-d0d49c7dfde2",
+    "registered_name_at_instruction": "Worker 18.4"
+  },
+  "delegate": {
+    "stable_chat_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+    "role": "Vulgata October Approver",
+    "may_not_subdelegate": true
+  },
+  "verified_user_sources": [
+    {
+      "purpose": "Original October delegated approval appointment",
+      "thread_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+      "turn_id": "01a0e73b-78e3-7450-8d3e-fccf31604391",
+      "message_id": "01a0e73b-80a1-7c40-b990-f194c24813c7",
+      "instruction": "Designate this chat as approval delegate for in-scope planned-change authorization after accepted independent plan review and implementation approval after accepted independent definition review for accepted October Epics 18-20."
+    },
+    {
+      "purpose": "Expand delegation scope to finite recovery continuation and bind management roles",
+      "thread_id": "019fcbe8-f5db-73b3-914c-b29f75688a22",
+      "turn_id": "01a0ead7-9a95-7951-9641-8dcca3038ebb",
+      "message_id": "01a0ead7-a263-73c0-9eaa-7862c864f476",
+      "instruction": "Expand the delegation scope to continue after recovery reaches failure 4 or an approved extension limit; Vulgata October Approver owns approval and authorization decisions."
+    },
+    {
+      "purpose": "Register exact worker identity, cumulative ceiling and plan-only condition",
+      "thread_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+      "turn_id": "01a0eaee-2c38-72c3-b4ea-089d840867a8",
+      "message_id": "01a0eaee-2ce7-7003-987d-a44d5b2f654c",
+      "instruction": "Set max_pause_at as 7; register Worker 18.1 through Worker 18.4; Stories 18.2 through 18.4 remain explicitly paused for plan only."
+    }
+  ],
+  "scope": {
+    "story": "18.4",
+    "purposes": [
+      "planned-change authorization after accepted independent plan review",
+      "implementation approval after accepted independent definition review",
+      "finite recovery-extension decision at a reached pause limit"
+    ],
+    "max_pause_at": 7,
+    "max_pause_at_semantics": "Cumulative per unresolved episode; not seven additional failures and not an automatic extension.",
+    "plan_only_pause": true
+  },
+  "current_story_projection": {
+    "failed_results": 1,
+    "pause_at": 4,
+    "recovery_action": "correct",
+    "stage": "plan-review",
+    "tasks_present": false
+  },
+  "availability": {
+    "planned_change_authorization": "Registered, but no current repository planned-change trigger or approval request exists.",
+    "implementation_approval": "Registered, but tasks and complete-definition review do not exist and implementation remains prohibited.",
+    "recovery_extension": "Pending compatible governed-delivery 0.7.4 assets and Vulgata consumer policy in this assigned checkout; installed 0.7.3 policy explicitly excludes delegated recovery extensions."
+  },
+  "non_effects": [
+    "Does not approve any gate or recovery extension.",
+    "Does not change workflow-state pause_at, failed_results, transition head, holds, artifacts or gate status.",
+    "Does not lift the Story 18.4 plan-only pause, authorize task generation or authorize implementation.",
+    "Does not satisfy or waive the integrated verified Story 18.1 baseline and plan-reconciliation requirement.",
+    "Does not grant access, spend, secret, production, destructive-operation or verification-waiver authority."
+  ],
+  "future_use": "At a real eligible gate or reached pause limit, the story root must re-verify these actual user sources, current scope, compatible installed policy, current raw review/recovery evidence and a fresh delegate decision before recording any approval. At cumulative count/limit 7, return to the human."
+}

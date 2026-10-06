@@ -1,0 +1,24 @@
+{
+  "kind": "analysis",
+  "stage": "definition-review",
+  "evidence_id": "18-4-plan-review-authorization-boundary-01/diagnosis/1",
+  "observed_at": "2026-09-29T10:08:34Z",
+  "summary": "The third failed result disproved three task-authoring assumptions: existing Story 18.1 issuer/function behavior could supply an honest RED for the new October adapter, an early context-only migration would necessarily grow with later persisted entities, and an external two-host RED could precede explicit owned-resource authorization. The changed approach makes the missing October production verifier/binding the RED seam, assigns migration updates where setup and approval entities are added, and separates controlled host-composition RED from later authorized PostgreSQL/certificate qualification. The next check is retained-author task self-review, deterministic plan/task validation and a fresh complete-definition review against the unchanged accepted spec and plan.",
+  "failed_obligations": [
+    "Route behavioral RED to the new Story 18.4 production verifier and binding rather than already-correct Story 18.1 behavior.",
+    "Assign complete October schema and migration-history ownership after all persisted entities are defined.",
+    "Keep external PostgreSQL, Identity and certificate execution behind explicit root-established owned-resource authorization."
+  ],
+  "affected_assumptions": [
+    "A controlled verifier around the existing issuer/functions would necessarily fail before the October production adapter existed.",
+    "The initial October migration task implicitly covered entities introduced by later production tasks.",
+    "A process-level two-host RED could run before the task that establishes its external-resource prerequisite."
+  ],
+  "earliest_owner": "tasks",
+  "changed_approach": "Correct only tasks.md: target the missing October verifier/binding through controlled dependencies, attach migration updates and fresh-schema proof to the entity-owning production tasks, and keep controlled host RED distinct from explicitly authorized external qualification.",
+  "next_check": "Fresh tasks self-review, deterministic implementation-design validation, then repeat independent complete-definition review with the same reviewer.",
+  "failed_result": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-01.json",
+    "sha256": "565c5b05d6fb9f723335a009b99ccf171471fe1ccee6300659464c8642798e2a"
+  }
+}

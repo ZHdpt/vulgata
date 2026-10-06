@@ -1,0 +1,15 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~ExecuteAsync_PrepareRunsLocalAuthorityThenIdentityMigrationAndPolicy'",
+  "execution_mode": "approved outside-sandbox SelfContained launcher",
+  "exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0,
+  "trx_path": "TestResults/isolation-5dcec4715bd546a386e257ac51cb51d4/results.trx",
+  "build": {"errors": 0, "warnings": 4358, "source": "current test sources, not stale no-build-only evidence"},
+  "module_sha256": "c49f9d8e5d71b2dae5b6fc30ce88a147fac592103177099729323f6a1aca2342",
+  "red_evidence": "specs/017-october-batch-setup/evidence/independent-generator-module-red-01.json",
+  "assessment": "Restored production owner reviewed current ExecuteAsync: authenticates, holds/disposes operator session, authorizes exact selection, validates canonical identity/digest and invokes configured target; closed failures. No concrete local refactor needed. Previously written implementation retained unchanged during resumed focused verification.",
+  "test_owner_readiness": "Restored test owner completed explicit-path raw initialization, confirmed accepted gates/count6/7/no holds and current public module/test seams. Identified two accepted T018 coverage gaps: distinguish canonical request returned by authority from caller input, and cancellation after authorization prevents target/migration/write. Current code appears correct; root routes coherent test-only coverage without fabricated RED before final module/source checks.",
+  "remaining": "Independent final module and surrounding source/auth regressions; actual generator Program/Npgsql/source callback and selected Web startup composition remain pending T019. No host/PG qualification claimed.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

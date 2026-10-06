@@ -1,0 +1,39 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-success-configuration-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T19:18:21.1657786Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0099-generator-cli-target-expected-red.json",
+    "sha256": "f79c0a49a55bc8ce0f0c6448cd3687d566b6edc3fb4724de4608bd29612d83d5"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "c642d453b1265024626406d90f8a598a408238f5f05752da1d4045286745b53b",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "d88f73e0ef0ae7d3515b9564e779464916128909f9b20b4d9e68ee3b0c02ca40"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-4b9c59047c18432caf48d78bf8b6fb2e/results.trx",
+    "trx_sha256": "fb18a7336dfcb336a04b5969332a829f8974aa1c33fb7e60057308ef2928ab0e",
+    "failure": "The successful command should identify provider configuration as bound without exposing provider details.",
+    "child_pid": 53096,
+    "child_exit": 0,
+    "seam": "Actual CLI valid real complete provider/operator; Prepared and exact batch assertions pass, missing bound configuration state. Subsequent persistence assertions not reached."
+  },
+  "cleanup": {
+    "run_id": "4b9c59047c18432caf48d78bf8b6fb2e",
+    "database": "vulgata_story184_generator_570dba7b6d6046138f2244a4d0685b23",
+    "verified": true,
+    "evidence": "[]\nError response from daemon: get vulgata-test-data-4b9c59047c18432caf48d78bf8b6fb2e: no such volume\n",
+    "owner_report": "Exact owned database/temp cleanup and child exit recorded."
+  },
+  "scope": "FR010/T027/T028 expected development RED. No new public diagnostic protocol, no provider readiness claim. Recovery6/7 unchanged."
+}

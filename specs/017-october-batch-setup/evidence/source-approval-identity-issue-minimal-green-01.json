@@ -1,0 +1,29 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/source-approval-identity-issue-minimal-green/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/source-approval-identity-issue-red-01.json",
+    "sha256": "3269c211a5310fe9360a8343df979bf8df0831b38e8c8a2550ca82aa9b6e17dd"
+  },
+  "minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~IssueSourceApprovalAsync_DoesNotIssueWhenFreshIdentityDatabaseCannotBeConfirmed'",
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-6f5e2ef6e41449129f44852f51806f02/results.trx",
+    "trx_sha256": "f83323aa0286f8a0e0799e2f9f19f62d1c9851229b7f467145b7619e8bcbe7e9"
+  },
+  "source": {
+    "path": "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+    "sha256": "06765d0a65f2b5ab6ee3f18169d60e573eb453568d2b1d4f1ea19661426bf153",
+    "change": "Issue only reuses existing private Identity check before fresh subject read; mismatch Unavailable with no approval/expiry. Existing bounded token/awaited scope disposal preserved."
+  },
+  "assessment": "Retained production owner assessed Issue affectedmethod; no refactor needed. Verify/Revoke untouched. No final surrounding/group completion claim.",
+  "cleanup": "Owned A/B fixture disposal verifies absence. Root read [] container inspection and absent labeled named-volume receipts for6f5e2ef6e41449129f44852f51806f02.",
+  "limits": "Public test asserts closed non-Issued/nullpayload, not a required exactfailure label. Final affected-group regression still pending after Verify/Revoke slices.",
+  "workflow": "Recovery6/7 unchanged, accepted definition/approvals/source contracts retained."
+}

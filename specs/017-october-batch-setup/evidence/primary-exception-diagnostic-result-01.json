@@ -1,0 +1,99 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/primary-exception-diagnostic-result/1",
+  "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0113-primary-exception-current-tasks-self-review.json",
+    "sha256": "fa453504045e7c879a9f06b31c31b80b62b14e70d25512bffd4c52190a7f7234"
+  },
+  "raw_result": {
+    "status": "blocked",
+    "summary": "Authorized fourth diagnostic exposes original CredentialUnavailable before Web assertions; separate logger cleanup also fails. Exception masking corrected; full T029 is not GREEN. One approved invocation consumed; no additional runtime run.",
+    "run_id": "3e7d71f1722e4e1f9542da8c2475373a",
+    "primary": {
+      "type": "InvalidOperationException",
+      "message": "October provider configuration failed: CredentialUnavailable",
+      "location": "src/dotnet/Vulgata.Web/Program.cs:115",
+      "web_assertions_executed": false
+    },
+    "teardown": {
+      "message": "selected-web.log ERROR_SHARING_VIOLATION 0x80070020 after both factory disposals",
+      "owner_pid": 44008,
+      "after_test_process_exit": "owner gone and exact-file exclusive open succeeds; exact managed handle not proven"
+    },
+    "command": "C:\\Users\\13728\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~PostgreSqlSelectedWebStartup_UsesOwnedDatabaseFactoriesWithoutMigrationOrSeeding'",
+    "environment": "Process-local NLS1, telemetryoptout1, short PATH including verified launcher; no persistent changes",
+    "counts": {
+      "selected": 1,
+      "executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0
+    },
+    "root_verification": {
+      "observed_at": "2026-10-02T06:13:47.2080188Z",
+      "branch": "oct14/story-18-4",
+      "head": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+      "index": [],
+      "status": [
+        " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+        " M specs/017-october-batch-setup/workflow-state.json",
+        " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+        " M tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+        "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+        "?? specs/017-october-batch-setup/evidence/primary-exception-current-tasks-self-review-01.json",
+        "?? specs/017-october-batch-setup/evidence/primary-exception-diagnostic-authorization-01.json",
+        "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json",
+        "?? specs/017-october-batch-setup/evidence/transitions/transition-0112-primary-exception-diagnostic-authorized.json",
+        "?? specs/017-october-batch-setup/evidence/transitions/transition-0113-primary-exception-current-tasks-self-review.json"
+      ],
+      "counts": "<Counters total=\"1\" executed=\"1\" passed=\"0\" failed=\"1\" error=\"0\" timeout=\"0\" aborted=\"0\" inconclusive=\"0\" passedButRunAborted=\"0\" notRunnable=\"0\" notExecuted=\"0\" disconnected=\"0\" warning=\"0\" completed=\"0\" inProgress=\"0\" pending=\"0\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" />",
+      "hashes": {
+        "cleanup.log": "031ef642175e9f416df465750a438e4b8b6b1ab0aed128bb8f9ca1bf51c4aaa2",
+        "results.trx": "cd4d7838c6ac4145bac867b563098a1219cf93e0a0b60b51de3e3b0c837ecfce",
+        "execution.log": "576623942546618f5d9bc023c249b2c2d54c48dc39e41c52dc28971c286f06cf",
+        "owned-mounts.json": "073aaebc7409f16b18d307cf6917c14976c5679960e482d2fd91b01f4419d549",
+        "discovery.log": "397ce8957f4082543e4301d0421de22253146ad20c7016fcb59058107aa8f2c7",
+        "build.log": "d9ebc55010e6ad619088ed9f9482b4a77b0f381c2d1463d64476bb18bf1235a5",
+        "volume-absence.log": "6cbefb7125d5a9d5f075cfaa00475f93ed6fe7e1b951a14b97504948392fea4a"
+      },
+      "container_absent": true,
+      "volume_absent": true,
+      "roots": [
+        {
+          "path": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-tests\\story184-generator-3e7d71f1722e4e1f9542da8c2475373a-eefba222091045b6a7cacb8d591289b8",
+          "absent": true
+        },
+        {
+          "path": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-tests\\story184-generator-3e7d71f1722e4e1f9542da8c2475373a-26b8bfe0fc194418979415a8f539d282",
+          "absent": true
+        }
+      ],
+      "primary_visible": true,
+      "test_sha256": "b3a5a1136ca2c61a6bc7ad550b0ace3bb5cdc561b67b5cbf941684fe1d782e0f"
+    }
+  },
+  "static_diagnosis": {
+    "classification": "source-consistent WAF fixture protection-composition mismatch; not runtime-proven causal diagnosis",
+    "registration": "Program ConfigureServices reads DataProtection keyring/application name before Build; fixture supplies them through late WAF ConfigureAppConfiguration. Native generator/Web provide values in environment before builder construction.",
+    "purpose": "Fixture and actual SecretEncryptionService use existing Vulgata.LlmProviders.ApiKey purpose; both generator prepares already bound same fixture document successfully.",
+    "limits": "CredentialUnavailable covers other decryption errors too. Actual prior WAF callback timing/default provider and exact managed logger ownership were not proven. No personal/default keyring inspected or copied.",
+    "minimal_correction": "ConfigureTestServices removes IDataProtectionProvider and injects the real provider from fixture.Services, matching existing OctoberSelectedWebIdentityIntegrationTests precedent. No ISecretEncryptionService mock or production change."
+  },
+  "static_correction": {
+    "path": "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+    "tested_exception_capture_sha256": "b3a5a1136ca2c61a6bc7ad550b0ace3bb5cdc561b67b5cbf941684fe1d782e0f",
+    "current_corrected_sha256": "e959f22c2a4bd5717d589e209967eee7c21a2a3f3c318501bd0af22284a97c9f",
+    "assessment": "AddSingleton(instance) borrows real fixture-owned provider; fixture outlives both WAF factories. Product assertions, logger behavior, primary/teardown separation and cleanup failure semantics unchanged.",
+    "verification": "Static diff check only, normal LF/CRLF warnings. Corrected provider binding has no build/runtime verification."
+  },
+  "allowance": {
+    "authorization": "specs/017-october-batch-setup/evidence/primary-exception-diagnostic-authorization-01.json",
+    "actual_invocations": 4,
+    "approved_maximum": 4,
+    "prior_runs_preserved": true,
+    "next": "Fresh direction before one runtime qualification of this concrete corrected owned-key fixture; no automatic fifth run."
+  },
+  "workflow": "BLOCKED continuation does not increment/reset genuine recovery6/pause7. Same tasks/artifacts/owners/reviews/approvals; no source-contract or product-design change. All final delivery gates remain pending."
+}

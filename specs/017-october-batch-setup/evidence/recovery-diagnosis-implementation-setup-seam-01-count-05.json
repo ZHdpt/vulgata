@@ -1,0 +1,42 @@
+{
+  "kind": "analysis",
+  "summary": "The accepted setup-policy contract binds only context references, while T008/T009 require the policy boundary to validate and retain immutable context provenance. The next repair must make trusted selected context data explicit in the plan and contract before any behavioral test or production change.",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "at_count": 5,
+  "failed_obligation": {
+    "id": "I-18.4-CONTEXT-PROVENANCE-SEAM-01",
+    "source": "specs/017-october-batch-setup/evidence/implementation-context-provenance-seam-result-01.json",
+    "source_sha256": "c493e22bfce701c2ce11eaef16cc74ec8468976099a3eb68b75a0df4b9e341cb",
+    "description": "OctoberBatchSetupPolicy receives only context scope/record-ID references and no trusted context snapshots or reader. Its result exposes no selected context. It therefore cannot verify or retain value, origin, selection time, applicability or disagreement at the public seam required by FR-002/FR-003 and T008/T009."
+  },
+  "affected_assumption_and_owner": {
+    "assumption": "A request containing only applicable context record references plus a selection digest is sufficient for the Core setup policy itself to validate and preserve complete advisory context provenance.",
+    "finding": "The digest authenticates selection identity but does not supply the values or provenance to validate or persist. Existing management records are outside the current Core policy inputs and the fixed constructor has no reader port.",
+    "earliest_owner": "plan"
+  },
+  "failed_approaches": [
+    "The accepted exact construction fixed OctoberContextSelection to Scope and RecordId and left OctoberAuthorizedSelection without context snapshots.",
+    "The plan assigned value/origin/time/disagreement selection to the Core policy while also fixing its only dependency as IOctoberSetupWriter, leaving no data source for that responsibility.",
+    "Treating scope/record-ID forwarding as proof of retained context values would be a tautological test and was correctly rejected by the retained test owner."
+  ],
+  "next_repair": {
+    "owner": "plan",
+    "profile": "definition-author-recovery",
+    "changed_approach": "Keep the single Core setup policy and single writer, but explicitly model one trusted immutable selected-advisory-context payload sourced by the live Web management-authority adapter and carried into the policy/writer boundary. It must bind scope, origin record/authority, selected value, selection time, explicit applicability and disagreement while remaining advisory, and it must remain covered by the same canonical selection digest. Reconcile the exact request/authority records and T008/T009/T010-T013/T018-T019/T021-T022 as affected, without adding Core persistence access, a second policy, or changing Story 18.1 contracts.",
+    "design_constraint": "The recovery author must evaluate whether the trusted payload belongs in OctoberAuthorizedSelection or another already-approved input record and justify the choice in the plan. This diagnosis does not pre-approve the public record shape."
+  },
+  "verification_requirement": {
+    "definition": [
+      "Deterministic plan-content validation must pass with explicit implementation-design classification.",
+      "Independent plan review must verify the payload's trust source, digest binding, standalone Repository semantics, advisory/non-source distinction, writer transaction boundary and absence of a second policy or Story 18.1 change.",
+      "Affected tasks must be reconciled and complete-definition review plus renewed implementation approval must bind the corrected hashes before product edits."
+    ],
+    "implementation": [
+      "T008 must observe honest RED at OctoberBatchSetupPolicy.PrepareAsync for missing or invalid trusted provenance and for required retained values/disagreement.",
+      "T009 minimal/final GREEN must preserve exact subject, Repository/membership and digest checks and must not query management persistence from Core.",
+      "T010-T013 and T021-T022 must prove the selected immutable provenance is committed and later projected without flattening or rewriting."
+    ]
+  },
+  "authority_effect": "Delegated decision 18-4/recovery-extension/implementation-setup-seam-01/2 raises cumulative pause_at to 7 only. It does not approve this design, product scope, resources, Story 18.1 contracts or a verification waiver. T020/T029 remain held for explicitly authorized owned PostgreSQL, Identity and TLS resources.",
+  "next_guard": "After recording this diagnosis, validate the transition and dispatch only the retained definition-author-recovery at plan. Any authoritative failure increments the same episode; at count 7 stop for a human decision."
+}

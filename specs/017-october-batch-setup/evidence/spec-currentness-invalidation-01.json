@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "kind": "analysis",
+  "stage": "plan-review",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "recorded_at": "2026-09-29T09:11:43.5651093Z",
+  "owner": "spec",
+  "summary": "Plan reconciliation against the integrated Story 18.1 baseline established that spec.md still says Story 18.1 is unintegrated, unknown and a blocker to task generation. Baseline availability is now verified, while Story 18.4's own reconciled source-approval/binding definition and independent review remain pending. The stale currentness statements are an intent-level spec correction; valid batch-isolation, context, provider and ordinary-startup requirements remain unchanged.",
+  "evidence": {
+    "integration": "specs/017-october-batch-setup/evidence/story-18-1-baseline-integration-01.json",
+    "plan_self_review": "specs/017-october-batch-setup/evidence/plan-reconciliation-self-review-01.json",
+    "integrated_contract": "specs/016-contained-source-tools/contracts/prepared-source-tools.md"
+  },
+  "required_correction": [
+    "Replace only stale claims that Story 18.1 is unintegrated or its contracts are unknown.",
+    "Keep FR-011 and SC-006 as Story 18.4 obligations: exact adaptation to the accepted contract and current independent review are still required.",
+    "Preserve every independently accepted batch isolation, database selection, context provenance, provider-binding, ordinary-startup and later-story exclusion boundary."
+  ],
+  "workflow_effect": {
+    "event": "invalidation",
+    "earliest_owner": "spec",
+    "failed_results_unchanged": 1,
+    "pause_at_unchanged": 4,
+    "approval_granted": false
+  }
+}

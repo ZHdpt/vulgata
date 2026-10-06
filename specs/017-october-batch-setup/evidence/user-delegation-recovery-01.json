@@ -1,0 +1,11 @@
+{
+  "kind": "user-delegation",
+  "status": "accepted",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "gates": ["plan-review", "implementation-approval", "recovery-extension"],
+  "max_pause_at": 7,
+  "user_source": "thread 01a0e728-b7cc-78f1-8a3d-d0d49c7dfde2; delivery-resume instruction recorded in specs/017-october-batch-setup/evidence/delivery-resume-authorization-01.json",
+  "user_instruction": "Retain Vulgata October Approver 01a0e708-c489-7871-9f73-31413f20bf2c for Story 18.4 in-scope planned-change and implementation gates and finite recovery extensions, with cumulative per-episode max_pause_at=7 and a fresh decision at every reached limit.",
+  "scope": "Story 18.4 only; finite recovery allowance does not approve changed product scope, waive gates, authorize resources, permit destructive operations, or allow subdelegation."
+}

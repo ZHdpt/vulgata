@@ -1,0 +1,17 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "independent-final-green",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "tasks": ["T018", "T019"], "scope": "First Build-time capture slice only; full tasks remain open.",
+  "red": "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-red-01.json",
+  "minimal_green": "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-minimal-green-01.json",
+  "production_sha256": "b057c3a0a341614574c2ab124a77ecfa689fa5a4ca9fd02b1e58a851e73c75bf",
+  "test_at_verification_sha256": "353730c44b4ddfeca2f1c5a18649b9613fccc9b2314a0d6bacdec6256eb2d61d",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OrdinaryWebBuild_CapturesFinalDefaultConnectionBeforeFirstContext|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberPreparedSourceApprovalApiTests|FullyQualifiedName~LoginLogoutTests|FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberContextSelectionTests'",
+  "run": "TestResults/isolation-db3c929467e74555919664f86ee38f25",
+  "counts": { "discovered": 3085, "selected": 77, "passed": 77, "failed": 0, "skipped": 0 },
+  "trx_sha256": "a113e1f7b7621331f9c2943907922e50cd13549212f0e393ecc6a138774cbac5",
+  "build_log_sha256": "eafdf354f0be80b488d913f896a77bc8e4564ab9d949b368922b969a43636232",
+  "qualification": "Controlled WAF/SQLite and public composition configuration; not PostgreSQL/process qualification.",
+  "test_owner_assessment": "Independent public Build tracer, independent literals, no connection opened; adjacent host, retired-route, provider/context and ordinary login consumers protected. No concrete refactor required.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true }
+}

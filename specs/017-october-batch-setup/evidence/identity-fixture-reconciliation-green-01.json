@@ -1,0 +1,66 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/identity-fixture-reconciliation/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs": "ab89f6e57cd1f8552fa0a76358fa7b85631b4627195bfd7f98d0041c0affd113",
+    "tests/Vulgata.Tests/TestInfrastructure/OctoberOwnedIdentityFixture.cs": "8e7ebf2830fcb7ece10137e87205df1a923b97e9747256f7bdea7bf947499b63",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "78431a5a78feb0d9e5996430bc3fb4c94aa4a924831750d26c80b1131a4d9f46",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityShapeTests.cs": "667100d71765af64657814c44d061a044c41f13bb58b099b47c6a357843af055",
+    "tests/Vulgata.Tests/October/OctoberSelectedWebIdentityIntegrationTests.cs": "ba453b52e07c4af21edd07fe11cda8f35b9f6ae0ad909a3d60f010c2a6061511",
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "f889f9360c47c2f5332c27c9bc47cba0c4b2c3cc2ed531ca2742596b01128757",
+    "src/dotnet/Vulgata.Web/Program.cs": "773f913dfbfb151dfe0bf360741f0e88e635745418841e6b06c661b9ca21c85b",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "ae3152408b864d324f9f1aff56628e36c7e26e0bb11048d1f96fc5d55ec21cf7",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "729af1d48f13ee491b1b433f671dae5af709e69a331ba0508156e831cbd32adb",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "5aa2ea92d0b71dd0836e8bc3a416471e0af20d95be94ec137800c54f204aaa20"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberLocalSourceApprovalTests|FullyQualifiedName~OctoberPreparedSourceBindingTests'",
+      "exit_code": 0,
+      "selected": 90,
+      "passed": 90,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-8ccf4ed375e64f909ebfcebc30d21d4e/results.trx",
+      "trx_sha256": "b7595f333545c9c58ab75d9eb4e345c431a396c5d8a41a7cc8790461023b46bd"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberSelectedWebIdentityIntegrationTests'",
+      "exit_code": 0,
+      "selected": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-7b2b1283eb4d435d95211ed0e7954116/results.trx",
+      "trx_sha256": "f0038a3f712bdf3727e78469ba9a007f256b744a2a53caffdba2bd025c2b7303"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberLocalAuthorityShapeTests'",
+      "exit_code": 0,
+      "selected": 29,
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-807fe23497784e02aa96991d4d2cf2d0/results.trx",
+      "trx_sha256": "0da9914e69f13882501a27e914ba658580681c55a0639e288e7850f0c46a34d6"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+      "exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "child_exit_code": 0,
+      "trx_path": "TestResults/isolation-e0cee445eb10489b8f42646fd321f31f/results.trx",
+      "trx_sha256": "dc931683e162b51da63a9a755954b76243a36746b26ac5a71d4e486102700977"
+    }
+  ],
+  "cleanup": "Root read runner cleanup logs and []/named-volume-absence receipts for all three PostgreSql runs. Test owner reports exact successfully-created Identity databases dropped and absence checked; owned SQLite/DP/temp roots disposed, exception-safe fixture disposal retained.",
+  "development_corrections": "Preserved normal policy/compile/fixture corrections: cross-suite partial coupling removed and actual PG Identity consumers reclassified before execution; missing fixture argument corrected; owned Identity outage table schema/FK CASCADE corrected; E2E independent class, accepted headless Identity model seed, owned SQLite pooling off, PG identifier below63-byte limit and direct fixture October context registration. No product security assertions weakened, no model validation suppression. Expected development failures do not increment recovery.",
+  "final_shape": "Pure shape/parser tests standalone SelfContained. Real Identity authority/source/prepared-source consumers PostgreSql. Selected-Web WAF with real PG Identity retains original success/browser/API/provider order/reload freeze/exact-batch/missing-batch assertions. Bounded fixture/class extraction and exception-safe cleanup assessed; no further refactor required.",
+  "limits": "In-process WAF plus real PostgreSql Identity and explicitly controlled SQLite management/October translation, not actual Web listener or PostgreSql selected-data persistence. Positive actual CLI uses current Identity descriptor/connected-database check; source approval Issue/Verify/Revoke fresh-scope enforcement remains unfinished. No T020/T029/group/story completion claim.",
+  "workflow": "Retained accepted definition, approvals, owners, diagnosis, holds and recovery6/7. Follow-up behavioral RED at IssueSourceApprovalAsync; no checkpoint until coherent unfinished group verified."
+}

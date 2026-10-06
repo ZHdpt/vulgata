@@ -1,0 +1,25 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-denied-diagnostics-minimal-green/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T17:38:00Z",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/generator-cli-denied-diagnostics-red-01.json",
+    "sha256": "e8362744e5c5d308b488b7639103ee2fc8128aca6c5a587b62a653c5ea0ce457"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "01a449d2a29c8cdaebb85ff2155043dcb2b0b62a7d3299af47adae3deff57c10",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "1eda617a082c68b3c9ab1d0c31278e30b130cbe0ffb2746e89011d5d87a0b89d"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_InvalidProtectedOperatorPasswordIsSanitizedBeforeOctoberMigration'",
+  "exit_code": 0,
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-f07de96018e64e7a82a6e0b1b3f05119/results.trx",
+  "trx_sha256": "91e140e7d00e1b0216c464bc5930f776b1fb3cd453920a74496dcda6cfae31f1",
+  "cleanup": "Root verified labeled owned mount, exact database/temp cleanup, empty container inspection and absent named volume; no shared resource touched.",
+  "assessment": "Retained implementer assessed Main in context: fixed literal Denied output adds no input/exception disclosure; provider-first ordering, setup-session lifetime and exit policy unchanged. No refactor needed. Independent nine-case verification dispatched; remaining success/provider/unavailable/cancelled classifications remain open."
+}

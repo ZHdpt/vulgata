@@ -1,0 +1,51 @@
+{
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Reconciled the 30 retained Story 18.4 task IDs with the accepted first-batch bootstrap plan: authorization-only Web validates a grant without October data, generator prepare alone migrates a freshly owned empty target and creates its first batch, and selected-data modes bind only an exact existing batch.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "feature_directory": "specs/017-october-batch-setup",
+  "source_finding": "IA-18.4-BOOTSTRAP-01",
+  "source_decision": "specs/017-october-batch-setup/evidence/implementation-approval-clarification-01.json",
+  "source_plan_review": "specs/017-october-batch-setup/evidence/plan-review-06.json",
+  "source_transition": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0021-bootstrap-plan-review-accept.json",
+    "sha256": "126a9672cd1d58ddf4e710c459083fa2b5989fe68fdf6614ad111a81c6cb708b"
+  },
+  "input_hashes": {
+    "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+    "specs/017-october-batch-setup/plan.md": "ea6440181d7200de742a18ee419873c89039e701fbe178ec54e169b31015abb2",
+    "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "1b46d4785a70b6af47eed8a4a6b315a1a928fa5b9f95118f51efe472f1cc3b2b",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+    "specs/017-october-batch-setup/tasks.md": "ff7ae0fe6a09700ca703ae92f42fb15a868893b2cf758481223d484dd2dccdba"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/evidence/bootstrap-tasks-correction-self-review-01.json"
+  ],
+  "finding_dispositions": {
+    "IA-18.4-BOOTSTRAP-01": "T006/T007 establish an authorization-only Web composition from existing ordinary Identity/Data Protection, management authority and deployment target/certificate allowlists, exposing only grant issuance/validation and registering/opening/migrating no October context or selected-data/source-approval service. T003/T016/T017 distinguish first-batch PrepareAsync from existing-batch BindAsync. T018/T019 require live grant validation and read-only connected target identity before generator prepare alone migrates and atomically creates the first batch; select and selected-data Web require an existing exact batch and never migrate. T020/T029 require positive fresh-empty first-batch and negative forged/absent-authority empty/unmigrated target qualification, plus A/B isolation and ordinary startup checks. Dependencies now state this order explicitly."
+  },
+  "self_review": {
+    "task_order_and_coverage": "All existing T001-T030 IDs and four user-story phases remain. T012/T013 use a controlled exact existing-batch selection for source-approval route tests before actual selected-data host startup; no production batch is preseeded or bypassed. Every accepted R/I/S/A/F/L/T design ID remains on a checklist line.",
+    "verification_route": "SelfContained T018 supplies honest RED for missing host composition without external resources. After GREEN, T020/T029 perform direct actual-process/PostgreSQL/certificate qualification only on root-established authorized owned targets; no fabricated RED or another story's database/credentials are assumed.",
+    "scope_and_authority": "The correction uses the accepted two-route bootstrap and four-route selected-data boundary, exact batch isolation, Story 18.1 source contracts, provider/context and ordinary-startup constraints. No new Worker tool, Scan strategy, Knowledge/Chat work, implementation approval or resource permission is inferred.",
+    "project_lesson_precaution": "Callable bootstrap/selector/issuer seams remain explicit under the Story 18.1 public-seam lesson. Fresh owned PostgreSQL checks retain fixed history-schema placement, full post-approval schema proof, suite inventory and cleanup requirements."
+  },
+  "checks": {
+    "task_format": "30 sequential T001-T030 checklist lines, all story-phase lines labelled US1-US4, no malformed task line.",
+    "plan_task_design_content": "Installed validate_plan_implementation_design(plan, tasks, require_explicit=True) returned no errors; all accepted R/I/S/A/F/L/T IDs are covered and no alternative/consequence ID is a task citation.",
+    "whitespace": "Direct task whitespace scan and git diff --check returned no error; Git emitted only its normal LF-to-CRLF working-copy warning.",
+    "hooks": "The readable .specify/extensions.yml registers no before_tasks or after_tasks hook."
+  },
+  "authority_effect": {
+    "recovery_count_changed": false,
+    "pause_at_changed": false,
+    "approval_granted": false,
+    "workflow_state_changed_by_author": false,
+    "production_or_test_code_written": false
+  }
+}

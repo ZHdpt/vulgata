@@ -1,0 +1,23 @@
+{
+  "kind": "analysis",
+  "stage": "lookback",
+  "outcome": "additional-review-input-canonicalization",
+  "source_commit": "96bbd685dee6f3b453494d867513340fb6810091",
+  "formatting_only": true,
+  "current_inputs": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "current_sha256": "a436b4d3491f67daa4c5447e90bd046eadfde9aa99a0d13a83103b29dd719b3d",
+      "matches_committed_blob": true,
+      "crlf": 0
+    },
+    {
+      "path": "tests/Vulgata.Tests/Vulgata.Tests.csproj",
+      "current_sha256": "2f4aaed7cb2286bf82c5c4f6e12007f37c92293cbf05d2a55003aaecfe7d8fc9",
+      "matches_committed_blob": true,
+      "crlf": 0
+    }
+  ],
+  "git_source_changes": [],
+  "summary": "Two additional complete-quality-scope inputs were mechanically converted from CRLF to LF and now exactly match existing Git blobs. No dependency version, content, behavior or runtime authority changed. Required pinned final checks remain."
+}

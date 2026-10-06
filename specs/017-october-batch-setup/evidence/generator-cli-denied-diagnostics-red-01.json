@@ -1,0 +1,39 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-denied-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T17:33:00Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0090-october-model-snapshot-consistency-expected-red.json",
+    "sha256": "d81a46f0f776fc5063ec0a21019d0db038d33bef0a1583ae889b566605bb580d"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "1eda617a082c68b3c9ab1d0c31278e30b130cbe0ffb2746e89011d5d87a0b89d",
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_InvalidProtectedOperatorPasswordIsSanitizedBeforeOctoberMigration'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-e36c9a4d666a4cba83a5c11016e8cee7/results.trx",
+    "trx_sha256": "cc4f650d2bd4a96fb98a042fb97f5672aae3ffede499771b2ccfd5a7de648df0",
+    "failure": "Assert.Contains() Failure: Sub-string not found. Not found: \"Denied\"",
+    "seam": "Actual generator child CLI output after valid owned operator precondition and wrong protected password; existing exit1, no October schema and secret exclusions pass before missing Denied assertion.",
+    "child_pid": 38972
+  },
+  "cleanup": {
+    "run_id": "e36c9a4d666a4cba83a5c11016e8cee7",
+    "database": "vulgata_story184_generator_7565cc2b4f9946d09ffd3c4afdab702c",
+    "verified": true,
+    "mounts_sha256": "3d70768cb6d081223d0468ed37095d0e30ba1ed3aeec6e29c8f100b1de245295",
+    "inspect_sha256": "0a017a007ad221e5e5f084e9eaa9ee065f1db685cc6927cfdf420ea160acba41",
+    "volume_absence_sha256": "8c5219b3cfd5a4545b6656ddb9b6c30edff485f72c0a6ee93fafbb7a14884820"
+  },
+  "scope": "One T027/T028 FR010/ID-F01 expected behavioral RED. Minimal private CLI formatting correction under existing accepted approval; no new interface, resource grant, definition restart, independent negative review or repeated completed repair. Recovery6/pause7 unchanged."
+}

@@ -1,0 +1,47 @@
+{
+  "kind": "analysis",
+  "status": "passed",
+  "summary": "The explicitly authorized shared validator correction restores independent plan-review dispatch and ACCEPT recording after a fresh corrected plan advances recovery ownership to tasks, for both pre-production and post-production closing modes. It does not accept the review, authorize tasks or alter recovery authority.",
+  "authorization": {
+    "path": "specs/017-october-batch-setup/evidence/workflow-validator-shared-repair-authorization-02.json",
+    "sha256": "1bf9b841ee626f9d7a84cb372fdb7ceadecb3db2837016e3d9e54bd020781a90"
+  },
+  "changed_files": {
+    ".agents/skills/run-governed-delivery/scripts/decision_policy.py": "769cf8064c3add7a044165d242222fe517c07313966acfcf58fec8e168e7c45b",
+    ".agents/skills/run-governed-delivery/scripts/result_proofs.py": "17f4952a5698d7582a9d9526225897fbb076cac8fa8d012a85277bf3d35f807c",
+    ".governed-delivery/tests/test_plan_review_recovery.py": "8a8e367b37768923d25226b56f31d291d12b956299f7ae923ec7ec0bb6168244"
+  },
+  "verification": [
+    {
+      "command": "python -m unittest discover -s .governed-delivery/tests -p 'test_plan_review_recovery.py' -v",
+      "result": "passed 5/5"
+    },
+    {
+      "command": "python source compile for decision_policy.py and result_proofs.py",
+      "result": "syntax-ok"
+    },
+    {
+      "command": "python .agents/skills/run-governed-delivery/scripts/check_dependencies.py --target .",
+      "result": "ok=true, errors=[], warnings=[]"
+    },
+    {
+      "command": "python .agents/skills/run-governed-delivery/scripts/validate_workflow.py --repo . --story-state specs/017-october-batch-setup/workflow-state.json --next-stage plan-review --next-profile definition-reviewer --json",
+      "result": "ok=true, allowed=true, action=dispatch, errors=[]"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed; only existing line-ending conversion warnings were reported"
+    }
+  ],
+  "preserved_guards": [
+    "definition-reviewer role",
+    "architecture classification",
+    "action=correct and earliest_owner=tasks",
+    "closing_gate definition-review or verify",
+    "no holds and failed_results below pause_at",
+    "invalidated/revised gate for dispatch and accepted gate for ACCEPT recording",
+    "current plan hash and fresh transition ancestry",
+    "no later spec/plan invalidation",
+    "tasks and planned-change authorization remain separate downstream gates"
+  ]
+}

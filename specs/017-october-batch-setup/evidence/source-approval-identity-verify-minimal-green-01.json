@@ -1,0 +1,28 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/source-approval-identity-verify-minimal-green/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/source-approval-identity-verify-red-01.json",
+    "sha256": "ed19ebe9bedd7f580632ee908b0c08a6a04efd188ed298189bb866b06973a3df"
+  },
+  "minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~VerifySourceApprovalAsync_DoesNotReturnCurrentWhenFreshIdentityDatabaseChanges'",
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-7bd5ddb9dad040819c3fe62c63a4cba4/results.trx",
+    "trx_sha256": "2a9a7b6f78969f29a4ab48eacc0b0bb9bcf5e712088266aa185155cf56db0853"
+  },
+  "source": {
+    "path": "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+    "sha256": "2583ef0f25ead170353fecc84ceb07f6173b08954e9055ed8e25065ce0b0e727",
+    "change": "Verify only reuses existing private Identity check before fresh subjectread; failure Unavailable/noCurrentApproval. Existing bounded token/cancellation/awaitedscope preserved. Issue remains fixed; Revoke untouched."
+  },
+  "cleanup": "OwnedA/Bfixtures disposed and absencechecked (names not emitted thisrun); root read exactcontainer cleanup/[]/namedvolumeabsent for7bd5ddb9dad040819c3fe62c63a4cba4.",
+  "limits": "MinimalGREEN only; public assertions CurrentonA thennotCurrent/nullonB, no exactfailurelabelrequirement. Revoke/finalaffectedgroup still pending.",
+  "workflow": "Same accepted definition/approval/18.1contracts; recovery6/7 retained."
+}

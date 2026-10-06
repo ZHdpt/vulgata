@@ -1,0 +1,73 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "owned-postgresql-and-process-qualification-passed",
+  "source_commit": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+  "tasks": [
+    "T020",
+    "T029"
+  ],
+  "task_completion_claim": false,
+  "current_test_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "4a03942c8e4128ba6d7554dd961875e56f8c5a7f7e0fb91338561aea3ca8dbab",
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "897fcd1a09e6c463df70ab975af7ed02c4611e3108eaa4798c46ac65cb748248"
+  },
+  "qualification": [
+    {
+      "suite": "PostgreSql",
+      "run": "TestResults/isolation-e85a6d51eaa14db78db92bd74fa21cbb",
+      "passed": 95,
+      "failed": 1,
+      "reused": "95 unchanged passing authority/source/isolation cases; failed ordinary-Web method is replaced by affected current GREEN, never relabeled."
+    },
+    {
+      "suite": "PostgreSql",
+      "run": "TestResults/isolation-c4b298eae1a644d2a975d573f25f574b",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "trx_sha256": "ad4b700c42536c41e1e4ecc133c19a77e8c76eca443f2576bccc1e60ecd510b4",
+      "evidence": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-final-green-01.json",
+      "reuse": "Subsequent helper visibility private-to-internal supports reuse by the process test, not changed PG behavior. Cross-cutting build/regression remains required."
+    },
+    {
+      "suite": "E2E",
+      "run": "TestResults/isolation-2e524b0cd97246a88076c5f1ad1c43b4",
+      "passed": 20,
+      "failed": 1,
+      "trx_sha256": "60f7bc5f00fdf0b698cb45ebf199b947eb0711c3588b214f50a91b47b9008216",
+      "reuse": "20 unchanged passing process cases; newly added root-versus-scoped helper failed and was corrected, not product RED."
+    },
+    {
+      "suite": "E2E",
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.October.OctoberHostSelectionTests.OrdinaryWebProcess_RestartFromOwnedTargetAtoB_UsesOnlyDefaultConnection'",
+      "run": "TestResults/isolation-aa64a2bf25be4c498dba86341b4e68e7",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "trx_sha256": "94e17944e1a63cc69fe0e02b5137211458228ec24656a0868d8e06c028e71500",
+      "build_log_sha256": "2601dafbb283553f491c21c1ceff73b8e8295de857cc66d4f135666012ed4f25"
+    }
+  ],
+  "observations": [
+    "Generator prepare/select runs independently with Web stopped; A prepare uses separately owned B Identity database with synthetic fixture account, not production user copying.",
+    "Ordinary Web starts before October exists using only DefaultConnection; A/B restart, no cross-target changes, fixed per-process selection, normal migrations/roles/browser authorization remain.",
+    "Synthetic Administrator performs real live-process browser login/provider create/list/update/delete, protected-key retention and admin-page checks; no provider connection or paid call.",
+    "Existing two host starts and all October snapshots/history/isolation assertions retained."
+  ],
+  "cleanup": {
+    "all_recorded_runs_exact_owned_resources_absent": true,
+    "latest_root_independently_verified": true,
+    "authorization": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json"
+  },
+  "test_owner_assessment": "Only test composition/coverage corrections; shared internal helper avoids duplicate provider-admin assertions. Proper scoped Identity services; no further concrete refactor needed.",
+  "not_claimed": [
+    "Later-story Worker dispatch/JDT-LS/CodeGraph/Knowledge/generation",
+    "Final governed verification or closure"
+  ],
+  "recovery": {
+    "failed_results": 7,
+    "pause_at": 8,
+    "closed": false
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests.AuthenticateAsync_UnsupportedTwoFactorStoreCapability_DeniesWithoutSession'",
+  "exit_code": 1, "discovered": 3043, "selected": 1, "passed": 0, "failed": 1, "skipped": 0,
+  "trx_path": "TestResults/isolation-7c0049b7c4fc441baa28c6c3d38a807c/results.trx",
+  "summary": "Real Identity managers and real EF-backed UserStore forwarding adapter omit only IUserTwoFactorStore. Valid existing account/password reaches UserManager.GetTwoFactorEnabledAsync; NotSupportedException escapes AuthenticateAsync instead of accepted Denied/null session. One new missing-behavior RED, no repair attempted, no retry, no secret output. No external resource or production edit.",
+  "test_sha256": "bc96ab9b58dc1d2f71a61e22b3c43e0daf45e5a7d540e3a9372dc5b57e1e07ad",
+  "source_sha256": "789c3cbbbcef15d89a2864f8ffae001c5012d6bf1765d12f6df64a1d6fd8f19e",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

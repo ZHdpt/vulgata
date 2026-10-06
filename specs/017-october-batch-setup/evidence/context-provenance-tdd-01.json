@@ -1,0 +1,77 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "task_ids": ["T008", "T009"],
+  "work_kind": "behavioral",
+  "summary": "The shared setup policy and authorization-only Web route now carry one immutable trusted advisory-context snapshot, canonical v2 digest and deployment-owned management-authority identity while preserving ordinary startup and the existing concrete certificate verifier.",
+  "accepted_definition": {
+    "definition_review": {
+      "path": "specs/017-october-batch-setup/evidence/definition-review-10.json",
+      "sha256": "0ef38cfd2cb9759f36afb8e4e991e29948c712c2e4d84f7dedbeb0893b4047a0"
+    },
+    "implementation_approval": {
+      "path": "specs/017-october-batch-setup/evidence/implementation-approval-04.json",
+      "scope_sha256": "37364a19944ad869cb3975bac400aa944bd4ce371cf36fc21c1e31406438465b"
+    }
+  },
+  "behavioral_red": [
+    {
+      "seam": "OctoberBatchSetupPolicy.PrepareAsync",
+      "trx": "TestResults/isolation-178a4784e293448ebcc10fba9227ee3a/results.trx",
+      "selected": 59,
+      "passed": 32,
+      "failed": 27,
+      "observation": "Missing trusted-context validation, semantic digest and immutable forwarding produced the expected policy failures."
+    },
+    {
+      "seam": "authorization-only Program host activation routes",
+      "trx": "TestResults/isolation-b20102f041d946158bde1f6d3597acff/results.trx",
+      "trx_sha256": "5f5051916e2b01ad85e15060e41e545a177db46beda59d0c57ca2f6c5dcd2f25",
+      "selected": 32,
+      "passed": 26,
+      "failed": 6,
+      "observation": "The old grant lacked selectedContext and accepted legacy v1, missing management identity, same-grant value change and colliding cross-authority validation."
+    }
+  ],
+  "minimal_green": [
+    {
+      "seam": "OctoberBatchSetupPolicy.PrepareAsync",
+      "trx": "TestResults/isolation-c8a83580b8f74aee82451a8eb60dc2c5/results.trx",
+      "trx_sha256": "0cb257f2874c4beefa7315332c2dca8220e0c0a4117af935ef09ce6d818f0a9a",
+      "result": "59/59 passed"
+    },
+    {
+      "seam": "authorization-only Program host activation routes",
+      "trx": "TestResults/isolation-d13d551770234901a45f0d0415565309/results.trx",
+      "result": "32/32 passed"
+    }
+  ],
+  "final_green": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberActivationApiTests'",
+      "execution": "outside sandbox with user authorization",
+      "selected": 32,
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-996af00a14bd4d3fb2e11987865aa2ef/results.trx",
+      "trx_sha256": "9bd9f6ab82b34e68ed8bfc239536f7229a35839a4432fba4d8cdddd8850212da"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~LoginLogoutTests'",
+      "execution": "outside sandbox with user authorization",
+      "selected": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-b655682aae454b1a96397eac96cbb1ac/results.trx",
+      "trx_sha256": "23e8a6643044227f51189ba042e55b93e6c2f3620cc1b9ac6f3b7f7ea56d95b1"
+    }
+  ],
+  "policy": "Both final launcher runs passed the 286-source suite inventory and policy checks.",
+  "test_owner_assessment": "The tests exercise public Core and actual Program-host seams with independent v2/context assertions, controlled SQLite/certificate/clock inputs and test-owned Data Protection keys. The retained A-to-B acceptance RED makes the cross-authority GREEN meaningful. No test refactor was needed.",
+  "production_owner_assessment": "Program owns frozen explicit-mode configuration; the activation service owns consistent live context capture, v2 protection and revalidation. Responsibilities remain localized and no post-GREEN refactor was justified.",
+  "remaining_scope": "Persistence, prepared-source approval, source adapter, selector, generator composition, provider binding, isolation diagnostics and owned-resource qualification remain assigned to later tasks. T020 and T029 remain held pending explicit owned resources."
+}

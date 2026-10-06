@@ -1,0 +1,6 @@
+{
+  "observed_after":{"path":"specs/017-october-batch-setup/evidence/transitions/transition-0042-bootstrap-config-timing-plan-self-review.json","sha256":"8bb6a3f4211c1323a5e0860df8d400f2498612665b0816aea24086f86d35b2f8"},
+  "kind":"review-boundary","gate":"plan-review","story_key":"18-4-prepare-an-owned-october-batch-with-valid-context-and-provid","source_finding":"I-18.4-BOOTSTRAP-CONFIG-TIMING-01","profile":"definition-author-recovery",
+  "artifacts":{"specs/017-october-batch-setup/spec.md":"09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc","specs/017-october-batch-setup/plan.md":"de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1","specs/017-october-batch-setup/contracts/batch-setup-selection.md":"e0c7287dec2e0562a35bfec98376981e805461af1585c8a42521cf1ad85af639","specs/017-october-batch-setup/contracts/provider-binding.md":"0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"},
+  "required_review":"Independently verify the deferred final-configuration container seam is executable on the configured .NET 10 host, preserves ordinary isolation and same-verifier policy, and introduces no new scope or resource permission."
+}

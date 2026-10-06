@@ -1,0 +1,37 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0008-plan-review-revise.json",
+    "sha256": "5ee1c6b3be1b1e86b76cb92d15c5aa2a2679dac542d14742086e63739271f4c1"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "plan",
+    "outcome": "passed",
+    "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+    "source_verdict": "specs/017-october-batch-setup/evidence/plan-review-03.json",
+    "summary": "Resolved plan-review-03 findings by requiring a minimal executable generator, fixing the callable Web authorization boundary, and aligning plan currentness with the corrected specification; repeat independent review remains required.",
+    "finding_resolutions": {
+      "P-18.4-02": "The plan now requires one minimal Vulgata.OctoberGenerator executable in this story. Its prepare/select startup modes call the same shared Core setup policy and Infrastructure selector as conditional October Web; actual two-host PostgreSQL selection and mismatch refusal are testable without implementing generation, Worker dispatch, JDT-LS, CodeGraph or Knowledge.",
+      "P-18.4-03": "The Constitution Check now acknowledges required APIs. The shared contract fixes four plural-resource POST routes, closed typed request/result fields, cookie/antiforgery operator proof, separate target-scoped mutual-TLS generator proof, current-authority mapping, cancellation/deadline and sanitized 400/401/403/503 ProblemDetails. The Story 18.1 verifier type and closed Worker functions remain unchanged.",
+      "P-18.4-04": "The plan now states that the current specification already reflects integrated Story 18.1; only repeat plan validation/review remains. It does not claim the Story 18.4 production approval adapter is qualified."
+    },
+    "input_hashes": {
+      "specs/017-october-batch-setup/plan.md": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821"
+    },
+    "artifact_manifest": {
+      "specs/017-october-batch-setup/plan.md": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821",
+      "specs/017-october-batch-setup/research.md": "a9eb13861f0e0099289f63c0e05abb20c549d7a08c99a576f46d5943d193636b",
+      "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+      "specs/017-october-batch-setup/quickstart.md": "7d839c62f1ab26797d665781ebc91a8b1ecf76f6f6fee8c12767722273382a7d",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "81acdf656815cfb5455b09b9cacbbae54ea0f4ccf4aa5a74058f985e4cc36557",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+    },
+    "feasibility": "No generator executable exists in the integrated source, so the new minimal .NET host is an in-scope deliverable for Story 18.4 acceptance. The existing Web Identity/Data Protection and API pipeline support the ordinary operator side; the plan now makes generator client-certificate validation and target allowlisting explicit rather than assuming the operator grant authenticates the process. Certificate and owned database provisioning are qualification prerequisites, not assumed resources.",
+    "invariants": "A Web-issued selection digest binds the full typed setup selection; Web recomputes it for generator validation and the shared policy compares it before writes. Generator and Web call one selector, never a latest-batch query. A source approval remains exact, live, revocable and separate from startup authorization; only Story 18.1's issuer grants a context. Internal API denial/unavailability cannot become cached allow or source-tool readiness.",
+    "migration_and_compatibility": "The new executable composes Core/Infrastructure without changing ordinary Web startup. October migration runs only in explicitly authorized prepare mode; select is read-only over setup metadata. Dedicated October schema/history/model and two owned PostgreSQL target tests remain required. Ordinary Identity/domain EF model, migrations and routes stay at their existing boundary.",
+    "constitution_and_architecture": "The revised API obeys Constitution III's plural-resource, validation, ProblemDetails and API 401/403 requirements and V's protected authority; Core/Infrastructure/Web/Agent ownership remains aligned with Constitution I and the architecture spine. The separate generator is only a setup/selection shell for O-FR17/O-FR18, not a Scan or Knowledge implementation.",
+    "test_seams_and_lessons": "Public-seam tests can call all four routes with controlled operator identity and owned generator certificates, then exercise the actual generator executable and conditional Web against two runner-owned PostgreSQL databases. This addresses the callable-seam lesson; tests/helpers require suites.json classification and the configured eng/test.ps1 runner. Hash-bound plan files retain canonical LF. No behavioral RED/GREEN or runtime result is claimed by this document correction.",
+    "implementation_design_shape": "One front-matter block retains architecture classification. Existing IDs remain valid; new ID-I06, ID-X04 and ID-C04 use exact required headings and syntax. The installed deterministic content validator returned no errors; git diff --check passed. The root owns path/hash-bound workflow validation after mapping.",
+    "planned_change_trigger_assessment": "The corrected generator/Web API and client-certificate boundary are architecture decisions requiring repeat independent plan review. They do not add, expose or materially change the accepted Story 18.1 Worker Agent functions, a Scan strategy, or a current PRD requirement, so no AGENTS.md planned-change trigger is established on this scope. The root must judge the accepted verdict and any separate architecture-authority conflict before tasks; this self-review is not approval."
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0028-setup-seam-plan-review-accept.json",
+    "sha256": "7c55e3da9e514728900051fd9fcbdf33706c273c3b75e43b93965d936981db0c"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "definition-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "385bae441b60225f81da3d9dddedcaafc18aaa15",
+    "reviewed_boundary": {
+      "base_commit": "385bae441b60225f81da3d9dddedcaafc18aaa15",
+      "candidate_commit": null,
+      "diff_sha256": "a94be0c6ab9752768366e486e8090af277aa405292ea932abf777929b2602a27",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "17abea835e9382e0b782be7307760ae92a7fb168bdcf9c32a24041112201e565",
+        "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+        "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+        "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "a935831e0f8da2af12564f5b944a12583880de6f482ac88df2bcddfabcad1607",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+        "specs/017-october-batch-setup/tasks.md": "daaba72756d94e5f855ee2cb696e7f985c6f7b03ffde74bbb82aebfb604beed2"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md",
+        "specs/017-october-batch-setup/tasks.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      "docs/agents/project-state.md",
+      "docs/agents/testing.md",
+      "docs/project-lessons.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/epics.md",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      ".specify/memory/constitution.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/tasks.md",
+      "specs/017-october-batch-setup/evidence/plan-review-07.json",
+      "specs/017-october-batch-setup/evidence/implementation-setup-seam-plan-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/implementation-setup-seam-tasks-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/definition-review-05.json",
+      "specs/017-october-batch-setup/evidence/plan-authorization-01.json",
+      "specs/017-october-batch-setup/evidence/implementation-approval-02.json",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs"
+    ],
+    "findings": [],
+    "summary": "Fresh complete-definition ACCEPT after transition-0028. The 30-task definition preserves every accepted FR and implementation-design ID. T003 first establishes declaration-only compiling Core types and the exact OctoberBatchSetupPolicy(IOctoberSetupWriter).PrepareAsync seam; T002 then requires genuine behavioral RED, and T003 completes GREEN. Missing-symbol compilation is not misrepresented as RED. T009 extends the same policy, T010-T011 implement its writer, and T019 accepts only matching Created/AlreadyIdentical committed identity. Negative outcomes expose neither identity nor selected capability; first-batch PrepareAsync remains separate from existing-batch BindAsync. Bootstrap, source-authority, context lifetime, isolation, provider, cancellation and owned-resource boundaries remain covered without altering Story 18.1 contracts or adding later-story scope. Prior P/D and bootstrap findings remain resolved. Read-only SpecKit prerequisites passed; deterministic plan/task design validation returned no errors, and workflow validation returned no errors. Existing planned-change and implementation approvals remain semantically applicable to this bounded callable-seam clarification, but corrected hashes and gate evidence must be rebound by the root; this verdict grants no approval or external-resource permission."
+  }
+}

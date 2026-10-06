@@ -1,0 +1,10 @@
+{
+  "kind": "analysis", "stage": "implement",
+  "source_commit": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+  "trx_path": "TestResults/isolation-a8a5035849714c978afdd970c4a09147/results.trx",
+  "exit_code": 1, "selected": 372, "passed": 354, "failed": 18, "skipped": 0,
+  "finding": "All 18 failed cases belong to OctoberPreparedSourceApprovalApiTests and fail before assertions because their superseded authorization-only/grant Web configuration is now rejected. The new selected-Web tracer separately passed 9/9. This broad run is non-success and is preserved, not represented as a passing regression run.",
+  "disposition": "Known unfinished accepted T018/T025 transport-test reconciliation: preserve historical raw evidence; retain current tuple/revocation/expiry/security coverage in direct-authority/actual-source suites and replace obsolete API success expectations with route absence. No restoration of obsolete transport or new plan decision.",
+  "verification_followup": "Test owner reruns current surrounding classes excluding only the superseded API class. That passing subset cannot close the remaining legacy-test reconciliation task or full-suite gate.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false, "reason": "Initial development regression run exposes known unfinished obsolete-test reconciliation, not a failed independent review/convergence or recurrence after an attempted repair"}
+}

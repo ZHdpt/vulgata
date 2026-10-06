@@ -1,0 +1,10 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "static-and-controlled-verification-passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "summary": "Accepted thin system binding implemented. Static inspection: actual Console redirection/Environment.UserInteractive; default source private adapter; Console.ReadKey uses supplied intercept only after KeyAvailable with cancellation before/after; cancellable Task.Delay waiting, no Task.Run/abandoned blocking read. Shared default-source semaphore serializes full entry across instances under exclusive application console-reader assumption. Injected terminal admission per source instance. Write receives only fixed prompts/separators; no handle ownership/stream close. This is static adapter verification plus controlled regressions, explicitly not native-terminal runtime evidence.",
+  "build": {"command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --verbosity quiet -clp:ErrorsOnly", "exit_code": 0, "errors": 0, "warnings": 423},
+  "regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests'", "exit_code": 0, "discovered": 3016, "selected": 39, "passed": 39, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-f017f69ff4c548f5b11cee5211f6b9e2/results.trx"},
+  "source_sha256": "9e9e62baace608615d69ab5028e06485ad5ab77a229d5f4e56aafd00a981fb8d",
+  "final_shape": "Production owner assessed cohesive shared entry algorithm/thin binding; no further local refactor required. Configuration/current-session/current-authority obligations and delivery gates remain open.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

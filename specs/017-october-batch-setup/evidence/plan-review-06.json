@@ -1,0 +1,73 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0020-bootstrap-plan-review-invalidation.json",
+    "sha256": "541ea0622d3327736c281789481d75c7c83bd82f19acb8f52360c8e94c0ef3c4"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "e57eb2c02e7fee1000e7ab132aea502d26c8b308",
+    "reviewed_boundary": {
+      "base_commit": "e57eb2c02e7fee1000e7ab132aea502d26c8b308",
+      "candidate_commit": null,
+      "diff_sha256": "990935080be48bc8dab2585d84f4d511360c5b623ae54d95298f00653bf2e546",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "ea6440181d7200de742a18ee419873c89039e701fbe178ec54e169b31015abb2",
+        "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+        "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+        "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "1b46d4785a70b6af47eed8a4a6b315a1a928fa5b9f95118f51efe472f1cc3b2b",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      "docs/agents/project-state.md",
+      "docs/agents/testing.md",
+      "docs/project-lessons.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/epics.md",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      ".specify/memory/constitution.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/evidence/plan-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-02.json",
+      "specs/017-october-batch-setup/evidence/plan-review-03.json",
+      "specs/017-october-batch-setup/evidence/plan-review-04.json",
+      "specs/017-october-batch-setup/evidence/plan-review-05.json",
+      "specs/017-october-batch-setup/evidence/definition-review-03.json",
+      "specs/017-october-batch-setup/evidence/plan-authorization-01.json",
+      "specs/017-october-batch-setup/evidence/implementation-approval-clarification-result-01.json",
+      "specs/017-october-batch-setup/evidence/implementation-approval-bootstrap-plan-self-review-result-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-06-boundary.json",
+      "specs/017-october-batch-setup/evidence/transitions/transition-0020-bootstrap-plan-review-invalidation.json",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/final-verification-01.json",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs"
+    ],
+    "findings": [],
+    "summary": "Fresh plan-only ACCEPT after transition-0020. IA-18.4-BOOTSTRAP-01 is resolved: authorization-only October Web starts with ordinary Identity/management authority and allowlists, exposes only grant issuance/validation, and never opens or migrates an October target. Generator prepare validates the live grant and connected identity before its sole authorized migration and atomic first-batch setup; it does not require BindAsync or a preseeded batch. Generator select and selected-data Web bind only an existing exact batch. Failed authorization leaves a fresh target empty, and the quickstart requires this fresh-empty and negative qualification. Prior plan findings P-18.4-01..04 remain resolved; integrated Story 18.1 approval, issuer, verifier, context and three closed functions remain unchanged. Architecture classification remains justified. This correction narrows mode availability and makes first-batch sequencing reachable within the user's already approved four-route, prepare/select and ordinary-startup-isolation scope; it adds no new Worker tool, Scan strategy or PRD change and does not require a fresh planned-change authorization on semantic scope. Deterministic plan-content and workflow validation returned no errors. Corrected hashes require downstream task reconciliation and complete-definition review; this verdict grants no implementation or resource approval."
+  }
+}

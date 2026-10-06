@@ -1,0 +1,20 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/source-approval-identity-enforcement-gap/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "source_sha256": "729af1d48f13ee491b1b433f671dae5af709e69a331ba0508156e831cbd32adb",
+  "authoritative_inputs": [
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+    "specs/017-october-batch-setup/tasks.md#T018",
+    "specs/017-october-batch-setup/tasks.md#T019",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs"
+  ],
+  "raw_result": {
+    "owner": "retained tdd-implementer Sol/medium whole-unit assessment",
+    "assessment": "The private descriptor/connected-database check is cohesive. Authentication and selection call it before scoped UserManager reads; connection open/query/close and scope disposal awaited under bounded token. No stylistic refactor needed. One concrete accepted-scope gap remains: IssueSourceApprovalAsync, VerifySourceApprovalAsync, RevokeSourceApprovalAsync create fresh scopes and read Identity through CheckCurrentSubjectAsync without new Identity database check. A previously valid session cannot make later fresh Identity reads implicitly trusted before approval disclosure. Local reuse/correction in existing authority class, not new public verifier or18.1 change.",
+    "earliest_owner": "implement"
+  },
+  "next": "After active fixture/test owner returns, behavioral evidence for affected source approval fresh Identity enforcement, then same production owner minimal reuse/correction and affected final verification. Do not message active owner.",
+  "scope": "Unfinished coherent implementation group whole-unit discovery, not independent negative review/convergence or recurrent completed repair. Preserve current definition/approvals/source contracts and recovery6/7."
+}

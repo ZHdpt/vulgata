@@ -1,0 +1,50 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0005-spec-currentness-invalidation.json",
+    "sha256": "0b4f50b91ec38ab68608cdcc4c0ce8823b7079f998ae90bd425ed794ca1cc4db"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "specify",
+    "outcome": "passed",
+    "summary": "Corrected stale Story 18.1 integration statements while retaining Story 18.4 source-binding validation and independent review obligations.",
+    "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+    "feature_directory": "specs/017-october-batch-setup",
+    "source_invalidation": "specs/017-october-batch-setup/evidence/spec-currentness-invalidation-01.json",
+    "integrated_baseline": "specs/017-october-batch-setup/evidence/story-18-1-baseline-integration-01.json",
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc"
+    },
+    "corrections": [
+      "Status and input now acknowledge the completed, integrated and verified Story 18.1 baseline while retaining pending Story 18.4 validation and independent review.",
+      "FR-011 now consumes the accepted 18.1 approval and contained read-only tool boundary, including current-authority checks before disclosure; Story 18.4 adaptation remains unreviewed.",
+      "Prepared Source Binding now identifies the existing Story 18.1 authority instead of claiming its contract is pending integration.",
+      "SC-006 distinguishes verified baseline availability from required complete assumption reconciliation, deterministic validation and independent review before tasks.",
+      "Assumptions no longer claim 18.1 is being implemented elsewhere or that its contracts are unknown; task progression remains subject to ordinary gates."
+    ],
+    "preserved_requirement_ids": [
+      "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006",
+      "FR-007", "FR-008", "FR-009", "FR-010", "FR-011", "FR-012",
+      "SC-001", "SC-002", "SC-003", "SC-004", "SC-005", "SC-006"
+    ],
+    "scope_self_review": {
+      "intent_and_acceptance": "All four user scenarios, their acceptance cases and edge cases remain intact; FR-011 and SC-006 retain an observable source-binding obligation rather than treating merge alone as completion.",
+      "terminology": "Story 18.1 source approval is distinct from source identity, Profiled Revision and Source Snapshot; System membership does not grant communication or source access.",
+      "preserved_boundaries": "Exact batch/database isolation, context provenance, explicit provider roles, ordinary-startup isolation, non-forgeable source approval and later-story exclusions remain unchanged.",
+      "placeholders": "No unresolved placeholder or clarification marker was introduced.",
+      "project_lesson_precaution": "Story 18.1's public-seam lesson applies to the pending plan and implementation review: use the accepted callable issuer, verifier, read-context and Worker-function shapes rather than inventing alternate seams.",
+      "hook_disposition": "The optional after-specify agent-context hook targets root AGENTS.md outside this dispatch's write boundary and was not run. No before-specify hook is registered."
+    },
+    "checks": {
+      "stale_integration_assertions": "none remain in spec.md",
+      "git_diff_check": "passed"
+    },
+    "authority_effect": {
+      "new_product_scope": false,
+      "planned_change_approval_inferred": false,
+      "implementation_approval_inferred": false,
+      "tasks_generated": false,
+      "workflow_state_changed_by_author": false
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "human-authorization",
+  "status": "accepted",
+  "authorized_at": "2026-09-30T10:16:31.7498874+08:00",
+  "user_source": "Current Story 18.4 chat; user reply: Approve, following the decision briefing that distinguished a shared workflow semantic correction from Story 18.4 development decisions.",
+  "authorized_scope": "Change Vulgata's shared installed governed-delivery validator so an independently reviewed corrected plan may proceed to plan-review after phase_complete(plan) advances recovery ownership to tasks, including post-production recovery with closing_gate=verify.",
+  "required_guards": [
+    "Authenticate current transition ancestry and current plan hash through a fresh successful plan self-review after the latest relevant invalidation.",
+    "Require action=correct, earliest_owner=tasks, no holds, failed_results below pause_at, required plan-review classification or gate status, and the definition-reviewer role.",
+    "Apply the same authenticated exception when recording the independent plan-review ACCEPT.",
+    "Keep tasks blocked until current plan-review and applicable planned-change authorization are accepted.",
+    "Retain recovery episode, count, pause limit, diagnosis, closing_gate, owners, approvals and every downstream gate."
+  ],
+  "excluded": [
+    "Any Story 18.4 product, architecture, API, database, provider or resource decision",
+    "Automatic plan acceptance, task authorization or implementation approval",
+    "Story-specific hard-coded bypass, state reset, hold clearance or history rewrite"
+  ],
+  "verification": "Focused pre-production, post-production, stale-proof, wrong-role, hold, pause and acceptance-recording regressions must pass before Story 18.4 resumes."
+}

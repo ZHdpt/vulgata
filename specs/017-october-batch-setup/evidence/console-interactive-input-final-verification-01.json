@@ -1,0 +1,12 @@
+{
+  "kind": "test-only-verification", "stage": "implement", "outcome": "passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberOperatorCredentialSourceTests'",
+  "exit_code": 0, "trx_path": "TestResults/isolation-31301a65dd17451b90751c7ae64e9be0/results.trx", "trx_sha256": "752f6c6f50352220efe986e70305eb16b9b18fb905648e1b15192a869fd3b459",
+  "counts": {"discovered": 3016, "selected": 28, "passed": 28, "failed": 0, "skipped": 0},
+  "summary": "Independent test owner expanded already-implemented console guards without fabricated RED: separate optional factors/both-factor denial, required input, Backspace/control keys, availability/read/write failure sanitization, cancellation during partial field, borrowed terminal lifetime and deterministic serialized overlap barrier. Same accepted concrete source, modeled echo, controlled keys and captured prompts. No native terminal/runtime claim.",
+  "auth_regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'", "exit_code": 0, "selected": 11, "passed": 11, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-244f458ffd0f452e81c6d6ccd1903666/results.trx", "trx_sha256": "c7eee57341e6c40ed9fd372e30fd090eb8ae8b28bfadda38ec57753fad1ff373"},
+  "hashes": {"tests/Vulgata.Tests/October/OctoberOperatorCredentialSourceTests.cs": "f6702de3ceecd7a2a974a4263d5d777be91699e59cf86ed15fc984ca3bbe8f0f", "src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs": "2ede62275feeda3e7aee0dd1115d019998b763aec0a659a47be99e83552fb5d1", "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "0ca9ecd4e007dc4d6f488a5dd19f4dd9858b05b12455dd73d8b1ae8c6bcbe61a"},
+  "final_shape": "Independent scenarios/literals and queue/barrier avoid implementation coupling or timing race; no concrete refactor needed. Native system binding and configuration/current-session/current-authority obligations remain later.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

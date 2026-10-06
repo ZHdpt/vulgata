@@ -1,0 +1,33 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+  "red_evidence": "specs/017-october-batch-setup/evidence/selected-web-startup-red-01.json",
+  "minimal_green_evidence": "specs/017-october-batch-setup/evidence/selected-web-startup-minimal-green-01.json",
+  "focused": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberPreparedSourceApprovalApiTests'",
+    "exit_code": 0, "selected": 17, "passed": 17, "failed": 0, "skipped": 0,
+    "trx_path": "TestResults/isolation-7ad7bc7b3075455e97507931aa04c795/results.trx"
+  },
+  "surrounding": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberPreparedSourceBindingTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~PreparedSourceCancellationBudgetTests|FullyQualifiedName~LoginLogoutTests|FullyQualifiedName~IdentityRegistrationTests'",
+    "exit_code": 0, "selected": 249, "passed": 249, "failed": 0, "skipped": 0,
+    "trx_path": "TestResults/isolation-1ef21385158f4e15a75055f5eea8dc82/results.trx"
+  },
+  "lockout": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~AuthorizeSelectionAsync_DeniesWhenIdentityAccountBecomesLockedOut'", "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-f5c7086d2bd14c3fae5edab87bee8ecd/results.trx"},
+  "test_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "0fb32abb63103b17f93f85e937f63a10a47149d7acaa476d4ca1f695b11e381f",
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs": "d5e17ece7038accdc50e8f14c5aab53af281499fbdd4cfafd677e41ff06b8a3d",
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceApprovalApiTests.cs": "419dd4cd47046dc238c32e7acd540eccfd377f48bf86eb7d83ba6367c6e9941f",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "de4bdb730d96505a75204254cb4f03712281fd220fd6e70669a86fb03171cc87"
+  },
+  "connection_proof": "Two separately owned SQLite targets A/B; only B seeded. Capture actual Application/Vulgata production Npgsql option callbacks including factory declarations before translation, execute against selected host provider and translate exact declared A/B to corresponding SQLite A/B. Assert final selected B and all resulting data sources. Deferred October adapter consumes production authority DataConnectionString; static Program inspection confirms direct UseNpgsql of that same property. Actual PostgreSQL connection/migration equivalence remains unqualified.",
+  "legacy_security_mapping": {
+    "authority_and_context": "OctoberLocalAuthorityTests AuthorizeSelectionAsync_PreparesOwnedSystemSelectionWithTrustedContext, AcceptsOnlyTheCanonicalCallerDigest, DeniesTargetBatchAndInnerRequestMismatchWithoutPayload, RejectsReferencesOutsideCurrentRepositoryScope, PreservesNullEmptyAndUnselectedContextProvenance, AllowsOnlyManagementAccessForStandaloneRepository, SelectsAnExistingExactBatchWithCurrentAuthority, DeniesBatchWrittenUnderCollidingForeignAuthority and current role/stamp/ownership/session-loss cases",
+    "approval_tuple_expiry_revocation": "OctoberLocalSourceApprovalTests IssueSourceApprovalAsync_IssuesExactApprovalForCommittedRepository; VerifySourceApprovalAsync_ReturnsCurrentIssuedApproval, RejectsExpiredApprovalWithoutPayload, RejectsApprovalAtSessionExpiryWithoutPayload, RejectsMismatchedTupleAndAuthorityWithoutPayload; current subject/admin revocation and unknown/non-owner denial",
+    "membership_root_binding": "OctoberPreparedSourceBindingTests PreparedSourceBinding_RealOctoberAuthorityLossBeforeIssueFailsClosed and PreparedSourceFunction_RealOctoberAuthorityLossBetweenCallsReturnsNoPayload membership/root-row cases and predisclosure checks",
+    "retired_transport": "Grant TTL/version/token, certificate fingerprint and HTTP DTO/status expectations belong to removed transport. Current actual WAF tests assert exact four route patterns absent and reject six obsolete mode/config inputs. Historical Git/raw evidence retained; no disabled dead test blocks remain."
+  },
+  "final_shape": "Retained production owner assessed startup units, no further refactor. Retained test owner corrected production-options fixture and elapsed wall-clock lockout setup, preserves Denied/no-payload assertions, and final focused/surrounding checks pass. No production authentication policy change.",
+  "limits": "Controlled in-process WAF and owned SQLite only. Actual independent generator entry point/Npgsql adapters, broader startup/provider/diagnostics tasks, PostgreSQL/process qualification and final governed gates remain incomplete. No whole-task completion inferred.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "changed": false}
+}

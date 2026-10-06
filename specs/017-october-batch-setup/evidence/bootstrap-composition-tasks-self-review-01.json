@@ -1,0 +1,48 @@
+{
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Reconciled the affected Story 18.4 tasks with plan-review-08's closed October Web startup selector and shared target-scoped generator-certificate verifier while preserving completed T001-T005 and all 30 task IDs.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "feature_directory": "specs/017-october-batch-setup",
+  "source_finding": "I-18.4-BOOTSTRAP-COMPOSITION-01",
+  "source_plan_review": "specs/017-october-batch-setup/evidence/plan-review-08.json",
+  "input_hashes": {
+    "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+    "specs/017-october-batch-setup/plan.md": "743239064fe6d6df63493eb5579bb33eec6388d72b8c78c541e62c4a331286bc",
+    "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "bae96c62f3b0060a6d96656b6647db76f302d020e23a7b495c165f4cabe88b98",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+    "specs/017-october-batch-setup/evidence/plan-review-08.json": "badfa5c73d49ad9335c6210fa8a579314df5176869882ac6bce2fbd4e99dbcf0",
+    "specs/017-october-batch-setup/evidence/implementation-bootstrap-composition-plan-self-review-01.json": "7955071ece29aa25acc3ba5fe0971dc0fa27bde17b728bbc5e9e75ed9dc3b502",
+    "specs/017-october-batch-setup/tasks.md": "047628b08698188ff7e4308fe7cf84c7328012e5d28c68a2e063d503f860f9eb"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/evidence/bootstrap-composition-tasks-self-review-01.json"
+  ],
+  "finding_disposition": {
+    "I-18.4-BOOTSTRAP-COMPOSITION-01": "T006 now exercises real Program selection through ConfigureAppConfiguration with the exact October:Web:Mode key, validates absent/ordinary, authorization-only and invalid/partial mode inputs, and substitutes only a controlled IOctoberAuthenticatedCertificateSource and deployment allowlist behind the unchanged OctoberGeneratorCertificateVerifier. T007 names OctoberWebStartupSelector.Resolve before composition/readiness/migration/routes and passes its immutable selection to the existing VulgataWebComposition in Program.cs; one verifier handles internal routes and production input is authenticated TLS identity, never header/cookie/body proof. T013 reuses it. T018/T019/T025/T026 use the same selector/composition for selected-data and three-mode behavior. T020/T029 retain explicit owned-resource real TLS/certificate, process and PostgreSQL qualification rather than treating controlled source tests as TLS evidence."
+  },
+  "self_review": {
+    "preserved_completions": "T001-T005 remain checked [X] with unchanged task text; no completed behavior was relabelled or reset. T006-T030 keep their identifiers and dependency order.",
+    "coverage_and_order": "The missing bootstrap composition and verifier shape is available before T006 behavioral RED. T006/T007 precede dependent host mode work; source approval routes reuse the same verifier. Invalid mode fails before serving. All accepted R/I/S/A/F/L/T implementation IDs remain checklist cited.",
+    "semantic_scope": "The change pins accepted mode/configuration/certificate seams; it adds no route, Worker tool, Scan strategy, database permission, source-access contract, JDT-LS, CodeGraph, Knowledge or later-story behavior. Human approvals and recovery are root-owned; this self-review grants none.",
+    "verification_limit": "Controlled WebApplicationFactory certificate identity checks prove verifier and route decisions, not real TLS. T020/T029 explicitly require separately authorized owned PostgreSQL/Identity/certificate resources and preserve real TLS proof."
+  },
+  "checks": {
+    "task_format": "30 sequential T001-T030 checklist IDs; exact checked set T001-T005; no malformed line or trailing whitespace.",
+    "plan_task_design_content": "Installed validate_plan_implementation_design(plan, tasks, require_explicit=True) returned no errors, with every accepted R/I/S/A/F/L/T ID covered.",
+    "git_diff_check": "passed; Git printed only the ordinary LF-to-CRLF working-copy warning",
+    "hooks": "Readable .specify/extensions.yml registers no before_tasks or after_tasks hook."
+  },
+  "authority_effect": {
+    "completed_tasks_reset": false,
+    "recovery_count_changed": false,
+    "approval_granted": false,
+    "workflow_state_changed_by_author": false,
+    "production_or_test_code_written_by_author": false
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Generated 30 ordered Story 18.4 tasks across shared setup, four independently testable user stories and final verification; every accepted R/I/S/A/F/L/T decision ID is cited on a task checklist line, with behavioral RED and production GREEN assigned to separate owners.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "feature_directory": "specs/017-october-batch-setup",
+  "source_plan_review": "specs/017-october-batch-setup/evidence/plan-review-05.json",
+  "source_transition": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0011-plan-review-accept.json",
+    "sha256": "83c9a0b21c613910206ff80a59de3603a2bda357f1cdb11e5845de54351a9988"
+  },
+  "input_hashes": {
+    "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+    "specs/017-october-batch-setup/plan.md": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821",
+    "specs/017-october-batch-setup/research.md": "a9eb13861f0e0099289f63c0e05abb20c549d7a08c99a576f46d5943d193636b",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "7d839c62f1ab26797d665781ebc91a8b1ecf76f6f6fee8c12767722273382a7d",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "81acdf656815cfb5455b09b9cacbbae54ea0f4ccf4aa5a74058f985e4cc36557",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+    "specs/017-october-batch-setup/tasks.md": "249917203ab30f12a308a8f3f34eec1b4ce04f2584d6fd8667484123721d7e08"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/evidence/tasks-self-review-01.json"
+  ],
+  "task_counts": {
+    "total": 30,
+    "setup": 1,
+    "foundational": 4,
+    "US1": 10,
+    "US2": 5,
+    "US3": 4,
+    "US4": 5,
+    "cross_cutting": 1
+  },
+  "self_review": {
+    "intent_and_coverage": "US1 covers real operator/target authority, atomic setup and Story 18.1 approval adaptation; US2 covers exact two-host selection; US3 covers scoped context and provider profiles; US4 covers ordinary startup and sanitized outcomes. FR-001 through FR-012 and SC-001 through SC-006 remain represented by the story tests, qualification and accepted plan.",
+    "source_seams": "Tasks use the existing PreparedSourceApproval, PreparedSourceGrantRequest, mandatory IPreparedSourceCurrentAuthorityVerifier, PreparedSourceContextIssuer, borrowed IPreparedSourceReadContext and exactly three PreparedSourceFunctions. No second source identity/tool contract, physical-path model argument or later Worker dispatcher is requested.",
+    "data_model": "Tasks carry the batch state, one database per batch, one immutable opaque root binding per (BatchId, RepositoryId), exact approval tuple, short expiry/revocation, context provenance/conflict and no durable live context/path/continuation constraints.",
+    "ownership_and_order": "Each changed behavior slice names a test owner RED before a separate production owner GREEN; project scaffolding and resource qualification use proportionate direct checks. Dependencies serialize shared Program.cs, setup store, suite inventory and PostgreSQL runner work.",
+    "resource_boundary": "T020 and T029 require root-established explicitly authorized owned PostgreSQL/certificate/Identity targets and runner cleanup. No other story's database, credentials or provider access is assumed.",
+    "scope": "The minimal generator is limited to prepare/select. JDT-LS, CodeGraph, Scan/Worker dispatch, paid provider execution, Knowledge generation/publication/reads and Chat remain outside.",
+    "project_lesson_precaution": "The completed Story 18.1 public-seam lesson is met by tasks against accepted callable issuer, verifier, Web route and selector shapes. PostgreSQL tasks use new owned targets and explicit migration-history placement; hash-bound artifacts retain their existing EOL policy."
+  },
+  "checks": {
+    "speckit_setup_tasks": "FEATURE_DIR matched specs/017-october-batch-setup; TASKS_TEMPLATE_CONTENT and AVAILABLE_DOCS were consumed from the selected PowerShell adapter.",
+    "task_format": "30 sequential T001-T030 checklist lines passed; all user-story phase lines have [US1]-[US4], and every task has an explicit path.",
+    "plan_task_design_content": "Installed validate_plan_implementation_design(plan, tasks, require_explicit=True) returned no errors; all accepted R/I/S/A/F/L/T IDs are covered and no X/C ID is cited as implementation work.",
+    "whitespace": "Direct whitespace scan passed; these new files are untracked, so the root must run git diff --cached --check after staging.",
+    "hooks": "No before_tasks or after_tasks hook is registered in the readable .specify/extensions.yml."
+  },
+  "authority_effect": {
+    "independent_definition_review_completed": false,
+    "implementation_approval_granted": false,
+    "production_or_test_code_written": false,
+    "workflow_state_changed_by_author": false
+  }
+}

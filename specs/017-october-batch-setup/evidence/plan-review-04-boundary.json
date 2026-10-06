@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "kind": "analysis",
+  "stage": "plan-review",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "summary": "The plan owner completed the correction for raw findings P-18.4-02, P-18.4-03 and P-18.4-04. The changed architecture boundary requires a fresh independent plan-only review before tasks. This invalidation changes neither the recovery count nor any approval.",
+  "owner": "plan",
+  "corrected_boundary": {
+    "self_review": "specs/017-october-batch-setup/evidence/plan-review-03-correction-self-review-result-01.json",
+    "plan_sha256": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821"
+  }
+}

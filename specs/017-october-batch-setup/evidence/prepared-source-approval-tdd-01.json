@@ -1,0 +1,55 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "passed-with-composition-pending",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "task_ids": ["T012", "T013"],
+  "work_kind": "behavioral",
+  "summary": "The production prepared-source approval routes, service and fixed-October approval persistence now pass controlled public-route tests for exact current authority, revocation and sanitized failure. Actual selected-data Program composition remains owned by T019, so T013 stays open until that route mapping is reachable only after BindAsync.",
+  "accepted_definition": {
+    "definition_review": {"path": "specs/017-october-batch-setup/evidence/definition-review-10.json", "sha256": "0ef38cfd2cb9759f36afb8e4e991e29948c712c2e4d84f7dedbeb0893b4047a0"},
+    "implementation_approval": {"path": "specs/017-october-batch-setup/evidence/implementation-approval-04.json", "scope_sha256": "37364a19944ad869cb3975bac400aa944bd4ce371cf36fc21c1e31406438465b"}
+  },
+  "behavioral_red": {
+    "trx": "TestResults/isolation-fdc3e68fe41046f4b64c27d7bf7c802e/results.trx",
+    "trx_sha256": "87258b1ba7f50b4ed07bc2462646fc92d57d6fcf2394326e2fd7251264737445",
+    "selected": 18,
+    "passed": 5,
+    "failed": 13,
+    "skipped": 0,
+    "observation": "Authorized route cases reached the production service and received its declaration-only 503 placeholder instead of created/current or definite-denial outcomes. Certificate gates, closed DTO rejection and authorization-only route absence already passed."
+  },
+  "minimal_green": {
+    "trx": "TestResults/isolation-12bf1583a7f242789a00bcec4a78fd53/results.trx",
+    "trx_sha256": "442ea6c0b1202c156d2bf8774b529b8e4907fb52bbc0ae6812ef0386312548ea",
+    "result": "18/18 approval-route tests passed before final migration and local shape corrections"
+  },
+  "final_green": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberPreparedSourceApprovalApiTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberPersistenceModelTests'",
+      "selected": 29,
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-72d235c8627d4a99b5c463d5dd5cffaa/results.trx",
+      "trx_sha256": "4a89f3d5aacd12b714e37d953019a458695f20c9d8cb18119217b25d08a16dad"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberActivationApiTests'",
+      "selected": 32,
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-40a03e9f5bd84e77ba3219bbbc287e4f/results.trx",
+      "trx_sha256": "15b3a3b716fc615d128cf9b15f3e43389db278165ac4a18e3ce4c383e087a1a2"
+    }
+  ],
+  "schema": "Adds october.OctoberPreparedSourceApprovals with opaque key, exact bound batch/Repository composite foreign key, WorkerSourceRead purpose check, expiry/revoked state and index; no activation token or physical path is persisted.",
+  "test_owner_assessment": "Tests use actual authorization-only Program route absence plus the production endpoint mapper/service with a controlled bound capability, concrete certificate verifier, real v2 activation grant and isolated October setup store. Exact tuple, expiry/revocation/role/membership/root failures and sanitized results are covered. No test refactor was needed.",
+  "production_owner_assessment": "Approval service owns bound identity, protected-grant and live Identity/Repository/target checks; OctoberDbContext owns the approval record mapping. Final-shape corrections made protected Repository comparison order-independent and retained selected origins with null values. No further local refactor was justified.",
+  "completion": {
+    "T012": "complete",
+    "T013": "service, route and persistence behavior complete; Program selected-data composition remains pending under T019 before T013 can be checked complete"
+  },
+  "qualification_limit": "Controlled SQLite/Web evidence only. No selected-data Program startup, live PostgreSQL, mutual TLS or physical-source qualification is claimed."
+}

@@ -1,0 +1,57 @@
+{
+  "kind": "analysis",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0117-ordinary-web-spec-diagnosis.json",
+    "sha256": "f4144f73617e57617754358a40266866e3a85c5661a65d157d7f994fe4e40630"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "specify",
+    "outcome": "passed",
+    "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+    "changed_paths": [
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/checklists/requirements.md"
+    ],
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864",
+      "specs/017-october-batch-setup/checklists/requirements.md": "51426be95392ca4f03b2dec1af2929718065eb3a46dee2ce8b5857282ee01dfd",
+      "specs/017-october-batch-setup/plan.md": "119a56fd62cc4f8750aa5d685d7ff34973ab1c3549600f6f252b19a770ddbfa3",
+      "specs/017-october-batch-setup/tasks.md": "3e05b708a6c2bab6f44f2aa651ef0ddf967ce510167f3bafafd816f5e390144c",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "f342a72f07794e8c480d9c683d6d1352dabb4d5f04f47afa6d356534a3d5e431",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "f9a6841712b17a0cbcf63ed6bcfcc2befeb03f03f8311d5c10cc2262e7e6d211",
+      "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json": "cc1be3203cf2fc4b4b00ae4fdeaed3713f7860e48ab1695fcb47f90a26c1108b",
+      "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json": "246bc9ef3ccbcb1ba98c6e84da681222cf292c0ee15b53eaeb1a475161338ec2"
+    },
+    "summary": "Reconciled the explicit human decision throughout the existing specification. Generator setup/select retains exact database/batch identity and operates with Web stopped. Web uses ordinary startup with only database configuration changed, requiring no October mode, batch ID, setup-operator credentials or generator provider configuration. Ordinary migrations, role seeding, browser Identity authorization and provider administration remain. Existing checklist readiness notes now reflect integrated Story 18.1 and the pending revised-plan gates.",
+    "self_review": {
+      "intent_and_acceptance": "User stories distinguish generator selection from ordinary Web database selection. Acceptance includes generator invalid/missing/mismatched selection rejection, ordinary Web without an October batch, A/B restart-only database changes, preserved ordinary operations and no cross-target access.",
+      "scope": "Authorized prepare may create its explicitly selected new batch; existing-batch selection cannot fabricate one. Removing Web startup coupling introduces no latest-batch inference or later Knowledge read-selection contract.",
+      "unchanged_obligations": "Real setup authority, shared context provenance/conflicts, generator provider binding, protected secrets, isolated October persistence and source authority remain. FR-011 and the integrated Story 18.1 contract retain source lifetime, cardinality, current verification, revocation and cancellation. No generation, JDT-LS, CodeGraph or later-story implementation is added.",
+      "structure": "All FR-001 through FR-012 and SC-001 through SC-006 IDs are preserved. Mandatory sections and four prioritized user stories remain. No unresolved clarification markers exist.",
+      "classification": "Not classified in this specify phase. The changed intent invalidates the previous plan classification; fresh classification belongs to the next root-authorized plan phase.",
+      "authority": "The exact human decision and root-reconciled O-FR17/Story 18.4 resolve the former special-Web conflict. No additional unresolved authority decision was identified."
+    },
+    "checks": [
+      {
+        "command": "pwsh -NoProfile -File .specify/scripts/powershell/resolve-template.ps1 spec-template -Json",
+        "result": "Resolved the installed template; retained the existing feature and section structure without recopying."
+      },
+      {
+        "command": "git diff --check -- specs/017-october-batch-setup/spec.md specs/017-october-batch-setup/checklists/requirements.md",
+        "result": "Passed with no output."
+      }
+    ],
+    "hooks": "No before_specify or mandatory after_specify hook is registered. The optional agent-context hook was identified and skipped because context writes are outside this phase and the existing plan awaits reconciliation.",
+    "affected_downstream_sections": [
+      "plan.md: Summary, Technical Context, Constitution Check; ID-R02, ID-I03, ID-I06, ID-S01, ID-S03, ID-S04, ID-T02, ID-T03; affected alternatives/consequences, coverage and trigger assessment.",
+      "contracts/batch-setup-selection.md: Exact deployment configuration; Generator and Web startup; Web references in verification and failure contract.",
+      "contracts/provider-binding.md: Web host scope, startup invocation and host verification paragraphs.",
+      "research.md, data-model.md and quickstart.md: special selected-data Web selection, startup operator/provider prerequisites, ordinary migration/seeding exceptions and A/B qualification assumptions.",
+      "tasks.md: affected T018-T020, T023-T026, T029-T030 and dependency/qualification prose; reconcile only after the revised plan and applicable gates."
+    ],
+    "remaining_conflicts": [],
+    "next_required_checks": "Root validates and hashes this specify result against transition 0117, then dispatches bounded planning with fresh classification. Affected independent reviews and authorization remain required before task reconciliation or implementation.",
+    "limits": "Only the specification and existing checklist changed. No plan, task, contract, production, test, canonical authority, state or Git edits; no build, runtime test or resource operation. Historical diagnostics remain failures for their recorded boundary."
+  }
+}

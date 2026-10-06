@@ -1,0 +1,40 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-prepared-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T17:42:36Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/generator-cli-denied-diagnostics-transition-proposal-01.json",
+    "sha256": "93adaf1e6d11a244c28e0174f6aa82425bcb65eb1505cd3cf99786f21393f84e"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "01a449d2a29c8cdaebb85ff2155043dcb2b0b62a7d3299af47adae3deff57c10",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "5f341951bce9217881f55e4572e0aa608c394675fa3cdb7ccb2776c84a921849"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-87af9278b2e3464a9c3aee14388c10d8/results.trx",
+    "trx_sha256": "602019f4b14afb91c116b22f5e2754901f578626c7560e9d6ee12558a0680ebd",
+    "failure": "The successful command should report Prepared and its exact batch ID.",
+    "child_pid": 43924,
+    "child_exit": 0,
+    "seam": "Actual approved generator CLI captured stdout/stderr. One format-agnostic assertion for Prepared/exact BatchId; existing secret exclusions, exit and persisted metadata checks preserved."
+  },
+  "cleanup": {
+    "run_id": "87af9278b2e3464a9c3aee14388c10d8",
+    "database": "vulgata_story184_generator_05d9861cd7214387b93a9d7aafa7fd85",
+    "verified": true,
+    "mounts_sha256": "2e3b99b13959393841eba8ea7c381d8e204dc3e78a801d80fd8890770907cd86",
+    "inspect_sha256": "14c9c45a00def81b482e34edee6ed9c1576cce91c901684b50ad46050ca9c7b6",
+    "volume_absence_sha256": "5aff641df2c18cb155793d7116568d6d2ce68f94d268a299269109b5e4060f41"
+  },
+  "scope": "Expected new success-reporting RED under T027/T028 FR010, not negative independent review/convergence or recurring completed repair. Recovery6/7 unchanged."
+}

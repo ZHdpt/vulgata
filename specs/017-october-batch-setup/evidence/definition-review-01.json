@@ -1,0 +1,107 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0011-plan-review-accept.json",
+    "sha256": "83c9a0b21c613910206ff80a59de3603a2bda357f1cdb11e5845de54351a9988"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "definition-review",
+    "verdict": "REVISE",
+    "reviewed_commit": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a",
+    "reviewed_boundary": {
+      "base_commit": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a",
+      "candidate_commit": null,
+      "diff_sha256": "27eb5023b42400be336158d4b40432ad2736fe424b53313a65734fae80335a66",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821",
+        "specs/017-october-batch-setup/research.md": "a9eb13861f0e0099289f63c0e05abb20c549d7a08c99a576f46d5943d193636b",
+        "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+        "specs/017-october-batch-setup/quickstart.md": "7d839c62f1ab26797d665781ebc91a8b1ecf76f6f6fee8c12767722273382a7d",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "81acdf656815cfb5455b09b9cacbbae54ea0f4ccf4aa5a74058f985e4cc36557",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+        "specs/017-october-batch-setup/tasks.md": "249917203ab30f12a308a8f3f34eec1b4ce04f2584d6fd8667484123721d7e08"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md",
+        "specs/017-october-batch-setup/tasks.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      "docs/agents/project-state.md",
+      "docs/agents/testing.md",
+      "docs/project-lessons.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/epics.md",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      ".specify/memory/constitution.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/tasks.md",
+      "specs/017-october-batch-setup/evidence/tasks-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-02.json",
+      "specs/017-october-batch-setup/evidence/plan-review-03.json",
+      "specs/017-october-batch-setup/evidence/plan-review-04.json",
+      "specs/017-october-batch-setup/evidence/plan-review-05.json",
+      "specs/017-october-batch-setup/evidence/transitions/transition-0011-plan-review-accept.json",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/final-verification-01.json",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs"
+    ],
+    "findings": [
+      {
+        "id": "D-18.4-01",
+        "severity": "HIGH",
+        "category": "Verification routing and new-adapter coverage",
+        "artifact": "specs/017-october-batch-setup/tasks.md",
+        "location": "T014–T015, User Story 1",
+        "affected_requirement": "FR-011; ID-I04, ID-I05, ID-S04, ID-T04; governed behavioral RED/GREEN",
+        "evidence": "T014 requires RED through the existing Story 18.1 issuer/functions with a controlled authority adapter, but the named status, three-function, cancellation and disposal behavior is already implemented and covered in tests/Vulgata.Tests/PreparedSource. T014 does not require instantiating the production OctoberPreparedSourceAuthorityVerifier or trusted binding composition that T015 introduces, so its assertions can pass before T015. That risks fabricated RED and leaves the new production adapter untested.",
+        "correction_outcome": "Make T014's expected missing behavior the new Story 18.4 production verifier/binding composition, exercised through the existing issuer with controlled Web, setup and root dependencies. Expect RED because that adapter is absent, then T015 supplies it. Reuse existing 18.1 tests as regression evidence; do not demand RED for their already-correct behavior.",
+        "earliest_owner": "tasks"
+      },
+      {
+        "id": "D-18.4-02",
+        "severity": "MEDIUM",
+        "category": "Migration task ownership",
+        "artifact": "specs/017-october-batch-setup/tasks.md",
+        "location": "T004–T005, T010–T013, T020 and T029",
+        "affected_requirement": "FR-001, FR-004, FR-009, FR-011; ID-S02, ID-S03; O-AR03",
+        "evidence": "T005 creates the separate October migration set/snapshot before T011 adds batch, Repository, context and root-binding persistence and T013 adds approval records. Neither later task explicitly updates the migrations for those added tables. T004 checks isolation rather than their schema; a context-only initial migration could pass while fresh PostgreSQL setup lacks the new tables.",
+        "correction_outcome": "Assign the setup-owned and approval-record migration updates to the production tasks that add those entities, and explicitly verify the resulting complete fixed schema/history against fresh owned PostgreSQL targets. Preserve ordinary-context exclusion.",
+        "earliest_owner": "tasks"
+      },
+      {
+        "id": "D-18.4-03",
+        "severity": "MEDIUM",
+        "category": "Owned-resource RED sequencing",
+        "artifact": "specs/017-october-batch-setup/tasks.md",
+        "location": "T018–T020 and Dependencies & Execution Order",
+        "affected_requirement": "FR-005, FR-006; ID-T02; docs/agents/testing.md owned-resource boundary",
+        "evidence": "T018 requests process-level RED for the actual generator/Web with certificate and database cases, while the explicit root-established owned PostgreSQL, ordinary Identity and certificate prerequisite appears at T020 after T019 GREEN. The global task preamble requires authorized resources, but the phase order does not say how T018 can observe an honest RED without them.",
+        "correction_outcome": "Place the owned-resource prerequisite before any external T018 RED, or separate a controlled self-contained host-composition RED from later process/PostgreSQL qualification. Keep suite classification and actual two-host evidence.",
+        "earliest_owner": "tasks"
+      }
+    ],
+    "summary": "REVISE at tasks ownership. The current spec and plan remain aligned with Story 18.4, and prior plan findings P-18.4-01 through P-18.4-04 are resolved. Architecture classification, Story 18.1 contract fidelity, public authorization seams, provider/context boundaries, ordinary-startup isolation and exclusions remain sound. All FR-001–FR-012 and accepted R/I/S/A/F/L/T design IDs have checklist references; no unresolved placeholders were found. Read-only SpecKit prerequisite selected the correct feature and tasks; deterministic plan/task content and workflow validation returned no errors. Semantic analysis found the three task routing/ordering gaps above. No current Worker tool, Scan strategy or PRD-change planned-change trigger is established. Complete-definition ACCEPT and implementation approval must wait for task correction and repeat independent review."
+  }
+}

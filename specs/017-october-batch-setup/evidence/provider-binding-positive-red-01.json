@@ -1,0 +1,36 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0079-source-composition-lifetime-definition-review-accept.json",
+    "sha256": "2ca848c32533ac13112906c8861d2590972523d5ea6a4a209082299d8e1621d3"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'",
+    "exit_code": 1,
+    "discovered": 3041,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-a40f2a7fe7f445fe8e26851520b2ded1/results.trx",
+    "trx_sha256": "9713dd9a53716ad98a5e5446785fd732eed77aeaa107a56a6794fcccd5906363",
+    "build_result": "Policy passed; compilation completed with0errors; accepted declarations constructible.",
+    "failure": "System.NotImplementedException : The method or operation is not implemented. at test line51 awaiting accepted BindAsync placeholder.",
+    "input_hashes": {
+      "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "c4054c70cb417821a45cb1dce768ae633a126b9796416b2e68050da652499dc8",
+      "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs": "7741dadfc0c91d6d1a487736c537c345a5315ce640e482fcbc2871dedc7dda89",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "6db4bd7992ff342bf778dbef3a396d0bddaecef10f544f8fe1d77c3c62043b9c"
+    },
+    "scope": "Single accepted positive atomic distinct Worker/Chat provider-binding seam, synthetic protected/plain inputs with controlled Core encryption; no provider/network/keyring/resource call. No extra matrix or host behavior.",
+    "test_final_shape": "One valid positive vertical slice; expectations from fixture literals and contract; fake only controls selected decryption and records fixed-purpose calls.",
+    "recovery": {
+      "failed_results": 6,
+      "pause_at": 7,
+      "incremented": false,
+      "reason": "Expected behavioral RED is normal development under user instruction, not workflow failure."
+    }
+  }
+}

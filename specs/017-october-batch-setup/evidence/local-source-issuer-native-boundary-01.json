@@ -1,0 +1,16 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "status": "outside-sandbox-focused-green",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedSourceBinding_UsesRealOctoberAuthorityAndKeepsRepositoriesIsolated'",
+  "restricted_run": {
+    "exit_code": 1, "selected": 1, "passed": 0, "failed": 1,
+    "trx_path": "TestResults/isolation-723bc6888e144855886b2e032afdb643/results.trx",
+    "assertion": "Expected Issued, actual RootUnavailable at IssueIntegratedContextAsync line483. Actual local authentication/issue/verify setup reached before native root open. No issuer guard matrix result claimed."
+  },
+  "outside_run": {"launcher": "same eng/test.ps1 including eng/test-native.ps1", "results_directory": "TestResults/isolation-3684447ad2a44aea8534d0b4dec64710", "invocation": "root-issued once after restricted reproduction", "result": "passed", "exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "permission_source": "Actual prior user instructions: Try running outside sandbox; Approve your request. Scope limited to the same approved owned-root test launcher, not PostgreSQL/container/host-service qualification.",
+  "test_sha256": "ab0394f3b3fe673e4363d52f78edb8e1c503b4a59caf4e6e2576d5c2800cc270",
+  "summary": "Documented restricted Windows ancestor/native handle boundary reproduced. Changed execution permission mode supplies qualifying new evidence; assertions and containment remain unchanged. Test owner stopped without blind retry. Not a product behavioral RED or failed workflow repair.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

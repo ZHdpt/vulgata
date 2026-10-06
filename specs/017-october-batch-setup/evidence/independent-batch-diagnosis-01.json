@@ -1,0 +1,5 @@
+{
+  "kind": "analysis",
+  "stage": "plan",
+  "summary": "Changed intent retires the previous context-provenance diagnosis. Failed assumption: central online Web management/Identity grant issuer and live HTTP verifier were treated as necessary for both executable hosts. User now authorizes independently runnable batch and Web database selection through startup config. Changed approach: move batch setup/current source authority to trusted application-held local/database adapters with no running Web requirement; preserve real subject/provenance, exact source approval tuple, live revocation/cancellation, isolation and startup immutability. Author must reconcile authority against constitution/ADR/PRD, name concrete callable seams before implementation, and identify any actual unresolved semantic conflict. Verification: deterministic plan validation, independent plan review, scoped authorization, corrected tasks and complete-definition review before renewed implementation approval. Existing count 6/7, holds and profile persist; invalidation is non-counting."
+}

@@ -1,0 +1,12 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "declarations-verified",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "summary": "Exact accepted terminal interface and borrowed/null-rejecting console overload compile; parameterless source uses thin system adapter availability and preserves cancellation/noninteractive guard. Interactive source/native key/write behavior remains explicit stub. Direct compile and existing guard regression are not interactive RED/GREEN or task completion.",
+  "build": {"command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --verbosity quiet -clp:ErrorsOnly", "exit_code": 0, "errors": 0, "warnings": 421},
+  "regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests'", "exit_code": 0, "discovered": 3004, "selected": 27, "passed": 27, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-e97c1634401b4094aacb4c13565c8772/results.trx"},
+  "original_technical_incident": {"exit_code": 1, "selected": 27, "passed": 27, "failed_product_assertions": 0, "trx_path": "TestResults/isolation-fd4010f2f8be428d803ee597837ecbe5/results.trx", "classification": "vstest-data-collector-socket-IOException-10054-after-TRX"},
+  "retry_provenance": "Production owner initiated one same-command technical retry before returning original failure to root. Preserve both runs and do not claim prior root-issued retry authorization. Actual invocations2, successful second exit0; no further transient retry authorized. This procedural deviation is not an independent negative review, convergence or recurring repaired product defect and does not increment workflow count. Future technical failures must return to root before retries.",
+  "source_sha256": "2a7d4fcc84a92e6932879067c52afb21c43fceaa3b77bcd5e108f3c3f4e9e215",
+  "final_shape": "Owner assessed exact accepted seam and thin system adapter declarations; no refactor needed. Interactive implementation awaits meaningful tracer RED.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

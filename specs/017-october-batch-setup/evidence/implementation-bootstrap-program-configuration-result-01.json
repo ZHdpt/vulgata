@@ -1,0 +1,24 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0037-bootstrap-definition-review-accept.json",
+    "sha256": "ec0a45a0239d17520c64f2d5eaaac36d5df4812cca448a5f41bc5923983e776e"
+  },
+  "raw_result": {
+    "kind": "analysis",
+    "stage": "implement",
+    "verdict": "REVISE",
+    "evidence_id": "18-4/implementation/bootstrap-program-configuration/1",
+    "summary": "The T007 GREEN attempt implements the accepted top-level OctoberWebStartupSelector.Resolve(builder.Configuration) before service registration, but WebApplicationFactory.ConfigureAppConfiguration is applied after that top-level read. The focused host therefore remains ordinary: no bootstrap routes or verifier registration, and both POSTs return 405. The accepted test/host seam is not executable with the specified timing.",
+    "finding": {
+      "id": "I-18.4-BOOTSTRAP-CONFIG-TIMING-01",
+      "earliest_owner": "plan",
+      "evidence": "Outside-sandbox focused run TestResults/isolation-d863d95605d347f28aa622dcfde3b609/results.trx compiled current production and selected 15 tests: 11 passed, 4 failed. AuthorizationOnlyProgram mapped zero October routes, verifier DI was null, and both expected ProblemDetails 401 calls returned 405. Current production DLL was newer than Program and endpoint sources. Existing repository tests demonstrate ConfigureAppConfiguration for configuration consumed after host construction, but this story reads the key during top-level statement execution.",
+      "required_outcome": "Define and independently review an executable production mode-selection seam whose configuration is available before conditional service registration and route mapping in both real startup and WebApplicationFactory, without environment inference, ambient static mutation, ordinary-mode October registration, test-only routes, or weakening the same-verifier certificate boundary."
+    },
+    "production_started": true,
+    "red_evidence": "TestResults/isolation-4087de333ae349bd818968c8f43517ab/results.trx",
+    "failed_green_evidence": "TestResults/isolation-d863d95605d347f28aa622dcfde3b609/results.trx",
+    "preserved_work": ["checkpoint e604aec4", "checkpoint 17211e7d", "selector/verifier 10/10 GREEN", "T006 route tests", "T007 fail-closed endpoint draft"],
+    "authority_effect": "This fourth result reaches pause_at=4. No further repair may be dispatched until a fresh finite recovery extension is accepted. External PostgreSQL/TLS resources remain unauthorized."
+  }
+}

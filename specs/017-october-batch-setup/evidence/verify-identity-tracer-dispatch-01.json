@@ -1,0 +1,30 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/verify-identity-tracer-dispatch/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "summary": "Clarify the current root-issued Verify-only test follow-up after a tool reviewer applied the superseded Issue-only dispatch. This is evidence of existing accepted Story18.4 implementation scope, not a new approval, resource grant or bypass of the rejection.",
+  "authority": [
+    "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
+    "specs/017-october-batch-setup/evidence/definition-review-13.json",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md:112",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md:177",
+    "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json"
+  ],
+  "previous_slice": "Issue-only dispatch completed minimalGREEN1/1. Its do-not-write-Verify-yet constraint applied to that completed turn. Root issued the next Verify-only test follow-up; Revoke and production still prohibited.",
+  "current_dispatch": {
+    "1_role_and_objective": "Retained tdd-test-author Luna/high: one VerifySourceApprovalAsync actual Identity A/B mismatch behavioral tracer.",
+    "2_authoritative_inputs": "Accepted plan/contracts/tasks, implementation-approval07 and raw Issue RED/minimalGREEN; existing test-local actualA/Bfixture.",
+    "3_workflow_boundary": "implement/fullStory18-4/feature017/HEAD ea7062a84abc74bd3609b1292159a27776530971/currenttransition104/source06765d0a65f2b5ab6ee3f18169d60e573eb453568d2b1d4f1ea19661426bf153/recovery6of7.",
+    "4_constraints_and_skills": "GovernedTDD/testing.md. Authenticate/select/issue on A before fresh Verify scope switches to real owned B with colliding identity. Assert public notCurrent/noCurrentApproval. No privateSQL, publicverifier,18.1orarchitecturechanges; preserveothers; no delegation.",
+    "5_write_boundary": "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs only, one Verify test/bounded existing privatefixture. No production/Revoke/definition/workflow/root-evidence/Git. Same apply_patch tool, not alternate editing route.",
+    "6_output_and_evidence": "Exactcommand/exit/count/TRXhash/currenttest/sourcehash/ownedA-Bnames/cleanup; preservepriorrawfailures.",
+    "7_completion_and_failure": "Stop at one meaningful Verify RED. If same editing-tool scope rejection repeats, stop and report exact rejection, do not route around it."
+  },
+  "tool_result": {
+    "classification": "tool scope denial, no file changed; no Verify RED",
+    "message": "adds a VerifySourceApprovalAsync scenario explicitly outside the dispatched first-issue-operation-only scope"
+  },
+  "root_verification": "Current accepted contract explicitly declares VerifySourceApprovalAsync and requires fresh current authority everycall at lines112/177. Accepted implementation-approval07 permits dependency-ready normal delivery through these seams. User expressly approved implementation/proceedstory, not just Issue. Scope unchanged.",
+  "workflow": "Normal test follow-up stays in current allowance. No recovery countreset/increment, gatewaiver, newresourcepermission or expandedproductionwrite."
+}

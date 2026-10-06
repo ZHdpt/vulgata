@@ -1,0 +1,33 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0109-hold-resolution-current-tasks-self-review.json",
+    "sha256": "f020d6b8054aa7defba94136b4e7aebcd7e0844465dcf715cdebd19f99e1f59f"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+    "test": "Vulgata.Tests.October.OctoberHostSelectionTests.SelectedWebProcess_RestartFromOwnedTargetAtoB_BindsEachBatchWithoutBrowserAuthority",
+    "run_id": "b23dde008da84a148ae0bed0ea8c7e0d",
+    "exit_code": 1,
+    "counters": {
+      "total": 1,
+      "executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0
+    },
+    "raw_output_path": "TestResults/isolation-b23dde008da84a148ae0bed0ea8c7e0d/results.trx",
+    "raw_output_sha256": "15de84e656927add501b91b1f076a558b435ed4e2fd542fa2146e7f212b9d565",
+    "execution_log_sha256": "902bf8f8fe94f501dc8feadc20a495226078ba052b03b4ea2f06d8f1513db999",
+    "input_hashes": {
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "a2c3fe2b8ce072ab28a5f2900469ddb83e18a5ba467248bfc116d17fc4e90b9b",
+      "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "905d38c9e35435e26235b96285aae7c2a05d0ba75eddacca0b140f85c70eb90f"
+    },
+    "summary": "Actual selected-Web reaches provider binding/authentication and October metadata queries, then CaptureCurrentContextAsync manually opens a serializable management transaction under NpgsqlRetryingExecutionStrategy. EF rejects user-initiated transaction outside strategy unit, selected-Web exits Unavailable before readiness. Prior owned SourceStorage fixture omission corrected; this is concrete product behavior RED, not that harness cause. Test assertions unchanged; no production repair yet. Reopen T019 private management snapshot implementation, keep T020/T029/T030 qualification pending.",
+    "accounting": "Initial implementation qualification discovers missing real-provider behavior: expected RED, no independent gate verdict or failed product repair. Recovery6/pause7 unchanged.",
+    "owner_raw_observation": "Concrete T020 product failure observed; stopping T020 retries and returning unchanged evidence for producer routing. In actual Web child startup, provider binding/authentication and initial Oct batch/repository/reference queries succeed, then live `OctoberLocalAuthority` management context fails against real PG with `NpgsqlRetryingExecutionStrategy does not support user-initiated transactions`; Web exits `October selected-data startup failed: Unavailable.` before listener readiness. This is the production selected-Web A/B startup path, not the prior fixture omission. Raw final failure: `TestResults/isolation-b23dde008da84a148ae0bed0ea8c7e0d/results.trx` (selected 1, failed 1); child output is captured there and contains no credentials/connection string/root path. Full-run c844... also failed this same new test while all 20 existing host-selection cases passed; its initial harness root-path omission was corrected before this definitive failure. Owned databases/source roots/processes were cleaned by the runner, container cleanup-inspect `[]`, volume absence confirmed. Test author will not modify/loosen this assertion or retry unchanged; T029 remains independent and I’ll proceed there.",
+    "verified_route": "eng/test.ps1, E2E with owned PostgreSQL; TRX selects the named actual-Web process test. Exact caller command will be supplied by retained test owner."
+  }
+}

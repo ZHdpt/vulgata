@@ -1,0 +1,66 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20261001T172157Z-8f93c2",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+    "specs/017-october-batch-setup/evidence/generator-cli-diagnostics-gap-01.json",
+    "specs/017-october-batch-setup/evidence/generator-host-coverage-green-01.json",
+    "specs/017-october-batch-setup/evidence/generator-loader-auth-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/generator-select-coverage-green-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-denial-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-isolation-coverage-green-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-14.json"
+  ],
+  "preserved_unstaged": [
+    " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "preflight": {
+    "identity": {
+      "branch": "oct14/story-18-4",
+      "head": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+      "root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+      "common_dir": "G:/source/repos/vulgata/.git",
+      "worktree": "C:/Users/13728/.codex/worktrees/d166/vulgata"
+    },
+    "git_identity_sha256": "8a540a95801384bab6324d6db399ef4eae8a20f7c73a8d14fb64a0e6a5bddc9b",
+    "status_sha256": "29af225a76750eab324d6e0fe316d377a376c0cc990b0b609def4d17e39c5ef3",
+    "porcelain": [
+      " M docs/agents/project-state.md",
+      " M docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+      " M specs/017-october-batch-setup/workflow-state.json",
+      " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+      " M tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+      " M tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+      "?? specs/017-october-batch-setup/evidence/generator-cli-diagnostics-gap-01.json",
+      "?? specs/017-october-batch-setup/evidence/generator-host-coverage-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/generator-loader-auth-final-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/generator-select-coverage-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-denial-final-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-isolation-coverage-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+    ],
+    "index": [],
+    "observed_at": "2026-10-01T17:21:57.584856Z"
+  },
+  "verification": "Controlled Web2/2, actual missing-batch denial1/1, composition22/22,262/262 surrounding. Actual generator final9/9, source hashes and exact owned DB/temp/container/volume cleanup verified. Both affected test units assessed; GREEN login-form targeting correction and scoped case refinements verified. Production source unchanged.",
+  "task_progress": "Same30IDs and19 complete markers retained; no whole host/diagnostics/runtime task completion claimed. Concrete accepted FR010 CLI output/classification gap remains for T027/T028 RED/GREEN, then final A/B qualification/gates.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

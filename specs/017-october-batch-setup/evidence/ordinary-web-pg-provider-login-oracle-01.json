@@ -1,0 +1,24 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "first-development-test-oracle-correction",
+  "source_commit": "2d438c6a11812dfeff2a662566c5a3345f383b00",
+  "observed_at": "2026-10-05T11:57:49.695Z",
+  "tasks": ["T029"],
+  "run": "TestResults/isolation-e85a6d51eaa14db78db92bd74fa21cbb",
+  "counts": { "passed": 95, "failed": 1, "skipped": 0 },
+  "failed_test": "OctoberPostgreSqlIsolationTests.PostgreSqlOrdinaryWebStartup_UsesOwnedDatabaseFactoriesWithoutOctoberMigration",
+  "summary": "New LoginAsync test helper wrongly required relative Location '/' while ordinary Identity returned absolute same-origin http://localhost/. Status and root destination are normal; compare resolved same-origin URI/path without weakening authentication/provider assertions. No startup/production/authority failure demonstrated. Preserve original failure; corrected affected PG case/class must pass before advancing.",
+  "classification_authority": "specs/017-october-batch-setup/evidence/development-failure-accounting-correction-01.json",
+  "trx_sha256": "fa1d9548041f825ca1f5af04d71b9f776762a289286fcf5b004737cd53ab7938",
+  "build_log_sha256": "8b8cc111b9431b35ae2ec3f77992f4909082aeefcea224ab2ff7d92c1dece7c9",
+  "owned_resources": {
+    "container": "vulgata-test-e85a6d51eaa14db78db92bd74fa21cbb",
+    "volume": "vulgata-test-data-e85a6d51eaa14db78db92bd74fa21cbb",
+    "ledger": "TestResults/isolation-e85a6d51eaa14db78db92bd74fa21cbb/owned-mounts.json",
+    "cleanup": "Owned databases/temp roots and logger release verified in failed-test stdout; runner container and volume removal/absence verified in cleanup/volume-absence logs. No shared resource touched."
+  },
+  "next": "Retained test owner corrects only login URI oracle and reruns affected PG case/class once;95 unchanged passing tests remain evidence for their frozen scope. Complete actual-process provider CRUD and E2E under existing grant.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "limits": "First normal development test defect, not an independent negative review/convergence or recurring failed repair; not fabricated RED, passing qualification, recovery extension or gate waiver."
+}

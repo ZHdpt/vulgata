@@ -1,0 +1,40 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0030-bootstrap-composition-revise.json",
+    "sha256": "e0b49ecec9f4b21605b92db15630829d995b73fccd0ddcd0c2865c9f1c3c58f5"
+  },
+  "raw_result": {
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_finding": "I-18.4-BOOTSTRAP-COMPOSITION-01",
+  "source_evidence": "specs/017-october-batch-setup/evidence/implementation-bootstrap-composition-discovery-01.json",
+  "summary": "Pinned one production Web startup selector and composition entrypoint, and one target-scoped generator-certificate verifier with a controlled authenticated-certificate input source. The ordinary, authorization-only and selected-data modes are closed and fail before serving on invalid configuration; controlled WebApplicationFactory tests exercise the same Program and verifier without a test route or simulated TLS claim.",
+  "input_hashes": {
+    "specs/017-october-batch-setup/plan.md": "743239064fe6d6df63493eb5579bb33eec6388d72b8c78c541e62c4a331286bc"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/plan.md",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+    "specs/017-october-batch-setup/evidence/implementation-bootstrap-composition-plan-self-review-01.json"
+  ],
+  "artifact_manifest": {
+    "specs/017-october-batch-setup/plan.md": "743239064fe6d6df63493eb5579bb33eec6388d72b8c78c541e62c4a331286bc",
+    "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "bae96c62f3b0060a6d96656b6647db76f302d020e23a7b495c165f4cabe88b98",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+  },
+  "finding_disposition": "ID-R02/I06/S03/L02/T01 now name OctoberWebStartupSelector.Resolve(IConfiguration), immutable OctoberWebStartupSelection, VulgataWebComposition.ConfigureServices(builder, selection), three exact mode values and selected-data host inputs, plus OctoberGeneratorCertificateVerifier.VerifyAsync with its source, allowlist and closed decision. T006/T007 can select authorization-only mode through host configuration and supply controlled certificate identity to the unchanged verifier.",
+  "feasibility": "Current Program already creates WebApplicationBuilder and calls VulgataWebComposition.ConfigureServices(builder), then resolves readiness, migrates and maps endpoints. Resolving mode before those actions and branching the existing composition/startup path is a local Web change. Existing WebApplicationFactory tests use ConfigureAppConfiguration; the same production host key is testable. The authorized bootstrap needs no October connection or preseeded batch.",
+  "invariants": "Absent mode preserves ordinary startup. Unknown, partial or conflicting explicit mode configuration fails before October registration, migration or request service; authorization-only has exactly the two grant routes and no October context/selector/source-approval. Selected-data requires exact target, batch, fresh protected grant and existing-batch BindAsync before serving. Certificate proof never derives from a request header, cookie, body or untrusted proxy claim; the same target-scoped verifier checks all internal routes. A valid certificate alone never substitutes for operator grant/current authority.",
+  "async_failure_retry": "The certificate source and concrete verifier forward cancellation and return only Authorized, Unauthenticated, Forbidden, AuthorityUnavailable or Cancelled. Missing/invalid certificate is 401, authenticated out-of-target identity is 403, authority/configuration outage is 503; no cached allow or mode fallback exists. Startup failure serves no October request. Fresh activation grant is still required on restart; immutable host selection does not become a reusable disclosure capability.",
+  "migration_compatibility": "The ordinary Web service, readiness, Identity/domain migration and endpoint path remains its default branch. Authorization-only uses ordinary Identity/Data Protection and management authority but never registers, opens or migrates an October target. Selected-data requires an already committed exact batch and never migrates; generator prepare alone retains empty-target migration after live authority and connected-target identity. No schema, source-tool, provider or later-story contract changes.",
+  "constitution_architecture": "Core setup and Story 18.1 source contracts remain unchanged; Web owns TLS/auth and Identity, Infrastructure owns October persistence. This preserves Constitution I/III/V, the accepted fixed-database October architecture and the PRD. The correction adds no Worker tool, Scan strategy, route, PRD change or external resource permission.",
+  "test_seam_and_limits": "A SelfContained WebApplicationFactory can supply the same October:Web:Mode key and controlled IOctoberAuthenticatedCertificateSource plus immutable target/fingerprint allowlist; it does not replace OctoberGeneratorCertificateVerifier or add a test endpoint. Such tests establish composition and authorization decisions only; T020/T029 still require separately authorized real TLS/certificate, process and PostgreSQL qualification.",
+  "implementation_design_shape": "Architecture classification, front matter, required headings and all existing design IDs are retained. The installed deterministic plan-content validator returned no errors and git diff --check passed. Root owns path/hash-bound lifecycle validation after mapping.",
+  "planned_change_and_gate": "This is a callable clarification of the already approved three-mode bootstrap and mTLS target-scope semantics, not a new trigger or substantive product choice. The existing plan-authorization-01 scope remains semantically applicable, but this self-review does not rebind approval to changed hashes, accept an independent review, restore implementation approval, change recovery counts or authorize tests/code/resources; root controls those gates."
+  }
+}

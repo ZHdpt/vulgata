@@ -102,7 +102,12 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) :
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("vulgata");
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(VulgataDbContext).Assembly);
+        string octoberNamespace = typeof(October.OctoberDbContext).Namespace!;
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(VulgataDbContext).Assembly,
+            type => type.Namespace is null ||
+                (type.Namespace != octoberNamespace &&
+                 !type.Namespace.StartsWith(octoberNamespace + ".", StringComparison.Ordinal)));
     }
 
     private void ValidateDurableScanTemporalBindings()

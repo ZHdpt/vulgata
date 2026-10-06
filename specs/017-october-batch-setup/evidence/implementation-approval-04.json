@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/4",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-09-30T04:33:00.4562650Z",
+  "scope_sha256": "37364a19944ad869cb3975bac400aa944bd4ce371cf36fc21c1e31406438465b",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread 01a0e708-c489-7871-9f73-31413f20bf2c; turn 01a0f095-b410-78b1-8616-99a4a0a8441a; message msg_0e55faeae43f1fb3016abc90eb322481968ed64a39e504bcb6",
+  "response_text": "APPROVE — 18-4/implementation-approval/4. Bound to canonical approval scope: 37364a19944ad869cb3975bac400aa944bd4ce371cf36fc21c1e31406438465b Verified definition-review-10 ACCEPT, review SHA-256 0ef38cfd2cb9759f36afb8e4e991e29948c712c2e4d84f7dedbeb0893b4047a0, all eight current artifact hashes, and transition head e161e242ec3c1a4cde5042e19d8bf83de5898c3be802f51873faa8a4ac19ba80. The correction makes advisory provenance and management-authority continuity explicit and testable through the existing single policy/writer. This authorizes dependency-ready implementation of the accepted definition only. Preserve all later gates and resource restrictions, including T020/T029. Recovery remains 6/7; another substantive negative requires a human decision, not further delegated allowance.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-10.json",
+    "sha256": "0ef38cfd2cb9759f36afb8e4e991e29948c712c2e4d84f7dedbeb0893b4047a0"
+  },
+  "summary": "The designated October Approver authorized dependency-ready implementation of the independently accepted corrected Story 18.4 definition. Recovery remains 6/7, T020/T029 remain resource-held and all downstream gates remain required."
+}

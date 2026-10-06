@@ -1,0 +1,45 @@
+{
+  "kind": "analysis",
+  "stage": "tasks",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0120-ordinary-web-plan-review-accepted.json",
+    "sha256": "2363a52e2c11e1ed2dda0eaedde7bb02d44d71ae0785da3a0b43120c6f671d16"
+  },
+  "summary": "Root reopens only T018/T025/T026 because their Web behavior/cleanup obligations changed. Preserve every other marker and all30 IDs; new count23done/7open. This is material-boundary invalidation, not a failed result or reset.",
+  "author_self_review": "specs/017-october-batch-setup/evidence/ordinary-web-tasks-self-review-01.json",
+  "reopened": [
+    {
+      "task": "T018",
+      "reason": "Changed ordinary Web startup and Build-time database capture require new public-host/composition behavioral evidence; previous selected-data checks do not qualify them."
+    },
+    {
+      "task": "T025",
+      "reason": "Revised ordinary isolation, inactive October settings, no batch prerequisite and preserved browser/provider behavior replace special-Web assertions."
+    },
+    {
+      "task": "T026",
+      "reason": "New residual cleanup removes unused Web selector/mode/binder/bound-setup types after T019 GREEN while preserving generator/source modules and the excluded draft."
+    }
+  ],
+  "preserved_completed": "T001-T017, T021/T022, generator-only T023/T024 and T027/T028 retain their unchanged semantic obligations and recorded evidence. Web provider removal moves to T018/T019; it does not require repeating completed generator binder declarations or RED/GREEN.",
+  "old_tasks_sha256": "3d272233aae4eddf5ad0b8eb164213d0c9ec3b92580f2940192f7d7c05d2b446",
+  "counts": {
+    "tasks": 30,
+    "before_completed": 26,
+    "after_completed": 23
+  },
+  "current_open": [
+    "T018",
+    "T019",
+    "T020",
+    "T025",
+    "T026",
+    "T029",
+    "T030"
+  ],
+  "no_semantic_text_changes": true,
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7
+  }
+}

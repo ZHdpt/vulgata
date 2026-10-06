@@ -1,0 +1,8 @@
+{
+  "kind": "analysis", "stage": "plan",
+  "summary": "Prior retained definition-owner session is unavailable in live team inventory. Restore the same exclusive definition-author-recovery Astra-medium responsibility from current raw authorities/plan set, ordered plan-review01-13 and definition-review01-12 history, prior corrections/decisions and current source-lifetime diagnosis. No new takeover/escalation or scope change; original profile/decision, 6/7 budget, holds and historical approvals preserved. Plan-only writes; tasks remain read-only until affected plan gate accepts.",
+  "retained_profile": "definition-author-recovery",
+  "retained_escalation_decision_id": "18-4/definition-escalation/1",
+  "boundary": "specs/017-october-batch-setup/evidence/source-composition-lifetime-boundary-01.json",
+  "diagnosis": "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json"
+}

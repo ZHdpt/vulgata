@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-09-29 (delegation policy; product evidence unchanged).
+Updated: 2026-10-05 (Story 18.4 all30 tasks verified and convergence01 clean; formal gate/completion status is in its feature state).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -40,23 +40,63 @@ verification before reuse.
   adding October Epics 18–20 and their 17 definitions (12/3/2) to that tracker on
   September 27; [October release epics](../bmad/planning-artifacts/october-release-epics.md)
   owns their scoped requirements and definitions, routed from the canonical epic index.
-  Tracker refreshes require both epic files. The September 27 planning baseline
-  recorded Story 13.1 done and all other stories backlog; that is not live status
-  for runners in separate worktrees. No feature was activated by sprint planning.
-  Its bounded retained-source
-  qualification does not prove the generic Scan workflow.
+  Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
+  done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
+  Story 18.4 is the only feature activated in this assigned checkout, on
+  `oct14/story-18-4`, mapped to `specs/017-october-batch-setup`.
+  Independent batch execution retains source18.1 authority/context lifetime,
+  isolation, context provenance and explicit provider binding. Ordinary Web uses
+  only startup DefaultConnection, with normal migrations/roles/browser/provider
+  administration and no October mode, batch, setup operator or generator provider
+  prerequisite. Plan-review15/definition-review14 and scoped approvals06/08 remain
+  current; retained definition owner is Astra/medium. Historical special-Web
+  evidence is not current qualification.
+  All30 original tasks now have verified completion markers. Current controlled
+  October checks pass174/174, full SelfContained2149/2149 with zero skips and Web
+  build zeroerrors/35existing package-feed/source-mapping/EF-conflict warnings.
+  Owned PostgreSQL and actual generator/Web A/B process qualification pass,
+  including separate generator Identity, ordinary startup before October setup,
+  normal browser authorization and synthetic provider CRUD/encryption. No paid
+  provider calls or later generation/native-tool qualification is claimed. Exact
+  run-owned resource cleanup is verified. See the feature's
+  `evidence/ordinary-web-runtime-qualification-final-green-01.json` and
+  `evidence/t030-implementation-prerequisites-01.json`.
+  The human approved finite recovery7-to8 after the recurring role-order fixture
+  defect; count7 is retained, delegate ceiling7 unchanged, holds empty. Transition127
+  records the passing exact configured build; convergence01 is independently clean.
+  The corrected full-suite environment adds only the hash-verified existing npm
+  prefix for an unchanged static integrity lookup, not CodeGraph launch or scope.
+  Recovery entered independent gates at7/8; final closure is proved only by the
+  accepted/verified feature state. A counted failure8
+  needs a fresh human decision. Convergence, lookback, quality review, conditional
+  E2E decision and pinned final verification are recorded in feature state; tests
+  alone never prove completion. No merge/push/history
+  rewrite or next-story work is authorized. Unrelated activation draft and historical
+  dirty evidence are preserved. Status in other worktrees must be verified there.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
-Workflow installation itself activated no story. Verify current runner ownership
-and its assigned checkout before interpreting the integration tracker. Story 13.1's
+Story 18.4 is the only feature activated in this checkout after the workflow
+installation. Its `specs/017-october-batch-setup` state retains the Astra-medium
+recovery author and history of the7/8 episode; formal closure is in feature state.
+Affected authority/composition tasks were
+reopened; unchanged completed work and historical evidence remain. Expected TDD
+RED and ordinary first-pass development build failures do not consume recovery
+allowance; independent negative review/convergence and recurrent defects after
+repair remain counted. The bounded console testability correction preserves
+authentication policy; controlled terminal tests are not native-terminal proof. Runtime
+PostgreSQL/process qualification now has an explicit fresh owned-resource grant in
+`runtime-qualification-resource-authorization-01.json`; this grants no revised-plan
+approval, recovery extension or waiver. Workflow
+installation itself activated no story; verify current runner ownership and its
+assigned checkout before interpreting the integration tracker. Story 13.1's
 `specs/015-retained-source-access` plan, state and evidence are completed history;
 Story 13.2 remains backlog and requires deliberate activation. Specs 001–014 also
 retain historical scope. The agent-context extension targets root AGENTS; pass the
 selected feature's actual plan path. Its no-argument auto-discovery chooses by
-modification time and must not select a historical plan. Optional after-specify
-refresh is inapplicable when that feature has no plan yet.
+modification time and must not select a historical plan. The optional context hook
+was not run for 18.4 because its author write boundaries excluded root AGENTS.
 
 Story definitions were accepted under explicit approval for 13.1–13.3 and a scoped
 confidence delegation for the rest. That completed planning delegation is not standing

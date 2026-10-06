@@ -1,0 +1,30 @@
+{
+  "kind": "implementation-evidence",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "route": "behavioral-red-minimal-green",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/generator-cli-target-diagnostics-red-01.json",
+    "sha256": "aa1b5d52ddd89b4c49745d8488906f7b99b8c31fac78bed91bee388cd9c93c1d"
+  },
+  "minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_MismatchedOwnedTargetDescriptorReportsTargetUnavailableBeforeOctoberMigration'",
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-8990973c3c7f4acc9de640a8b10d3ec2/results.trx",
+    "trx_sha256": "04ee25f65acbabd3619381971da585f03efb13dcd50e2aa611bdc61b118e21e0",
+    "source_path": "src/dotnet/Vulgata.OctoberGenerator/Program.cs",
+    "source_sha256": "c642d453b1265024626406d90f8a598a408238f5f05752da1d4045286745b53b",
+    "child_exit_code": 1
+  },
+  "disposition": "Fixed diagnostic for closed TargetUnavailable module status; provider/authentication ordering and nonzero exit preserved. No per-slice refactor needed; coherent-group final shape and test-owner focused/surrounding verification remain pending.",
+  "qualification_limit": "Descriptor comparison rejects before another target connection opens; no current_database mismatch claim, no final A/B Web qualification claim.",
+  "resources": {
+    "authorization": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+    "cleanup_evidence_directory": "TestResults/isolation-8990973c3c7f4acc9de640a8b10d3ec2",
+    "owner_report": "Exact owned database/temp cleanup recorded; container inspection empty and named volume absent. No shared resources."
+  },
+  "workflow": "Expected RED does not increment or close recovery; counts and approvals unchanged."
+}

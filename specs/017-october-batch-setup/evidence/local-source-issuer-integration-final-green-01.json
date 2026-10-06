@@ -1,0 +1,13 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "execution_mode": "same approved eng/test.ps1 SelfContained launcher outside sandbox after restricted root-open reproduction",
+  "focused": {"selected": 20, "passed": 20, "exit_code": 0, "trx_path": "TestResults/isolation-fdae7d3452e34c838218815a12543bd3/results.trx"},
+  "regression": {"selected": 344, "passed": 344, "exit_code": 0, "trx_path": "TestResults/isolation-eddfe0659b584ad5a949ce755e716bad/results.trx", "scope": "direct authority/approval, binding, all PreparedSource, credentials, selector, setup store/policy"},
+  "test_sha256": "ea95d57efdac91d509b7bc189e76fc1928f0376a3c3368d36d94d69e4e113140",
+  "assessment": "Retained test owner: no refactor needed. Actual Identity/local session/Issue/Verify, existing verifier, binding, issuer and three closed Worker functions. Two independently seeded Repositories and owned ephemeral roots. Live revoke isolates contexts. Before issuance/between calls checks role, ownership membership, stamp, expiry, persisted root version, session disposal, explicit revoke and store outage. Pre-disclosure revoke/outage and cancellation-settling barrier. Failed contexts/payloads/continuations absent; terminal state checked. Test-local after-check hooks occur after real verification; no production seam or algorithm replacement.",
+  "route": "Existing-correct behavior, truthful passing integration coverage; no fabricated RED. Source contracts and production files unchanged.",
+  "development_corrections": "Private Windows test-helper references and missing DI scope using corrected after compile-only observations. These ordinary development corrections do not increment workflow recovery. Restricted root run and outside focused pass retained in local-source-issuer-native-boundary-01.json.",
+  "unqualified": ["production generator direct composition", "Web startup wiring", "PostgreSQL", "actual generator/Web host processes"],
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

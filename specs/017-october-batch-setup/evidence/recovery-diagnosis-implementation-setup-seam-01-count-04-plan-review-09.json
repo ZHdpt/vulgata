@@ -1,0 +1,49 @@
+{
+  "kind": "analysis",
+  "summary": "The retained recovery-author correction replaces the premature top-level configuration read with an explicit DefaultServiceProviderFactory and deferred ConfigureContainer callback over final host configuration. It is coherent for independent plan review, but that review must verify the .NET 10 ordering and actual WebApplicationFactory proof remains required before production advancement.",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "at_count": 4,
+  "failed_obligation": {
+    "id": "I-18.4-BOOTSTRAP-CONFIG-TIMING-01",
+    "source": "specs/017-october-batch-setup/evidence/implementation-bootstrap-program-configuration-result-01.json",
+    "source_sha256": "19443961768b9a7e0798a5b794162dfcb95c5a9d10b0e190f22567b7bd782ddf",
+    "description": "The top-level Program read of builder.Configuration occurred before WebApplicationFactory.ConfigureAppConfiguration was replayed. The host retained Ordinary mode, omitted authorization-only routes and verifier registration, and returned 405 for the expected activation route requests."
+  },
+  "affected_assumption_and_owner": {
+    "assumption": "Resolving OctoberWebStartupSelector from builder.Configuration during top-level Program execution makes WAF-injected application configuration available before conditional composition.",
+    "finding": "That timing assumption is false for the configured .NET 10 minimal-host/WebApplicationFactory lifecycle.",
+    "earliest_owner": "plan"
+  },
+  "corrected_approach": {
+    "plan_sha256": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1",
+    "contract_sha256": "e0c7287dec2e0562a35bfec98376981e805461af1585c8a42521cf1ad85af639",
+    "summary": "The recovery author replaces the premature read with VulgataWebComposition.ConfigureOctoberHost(builder). It explicitly selects DefaultServiceProviderFactory while preserving Development provider-validation defaults, then schedules ConfigureContainer<IServiceCollection>. That deferred callback resolves final HostBuilderContext.Configuration once, adds one immutable OctoberWebStartupSelection, and conditionally registers only services for the resolved mode before provider creation. Program reads that same singleton after Build for startup and route decisions. Ordinary service registration remains early and occurs once; ordinary mode has no October operational services/routes. OctoberGeneratorCertificateVerifier remains the concrete verifier, and TryAdd allows only the authenticated certificate-source input to be controlled in tests. No temporary provider, ambient state, environment-based mode selection, test-only route, or test-supplied selection is introduced.",
+    "scope_effect": "This corrects the execution timing of the already accepted host-selection boundary. It does not change product behavior, authority, route scope, persistence model, Story 18.1 contracts, or resource permission. Existing approvals remain semantically applicable subject to independent acceptance and root-owned hash rebinding."
+  },
+  "failed_approaches": [
+    "The count-3 correction staged declarations before behavioral RED but left the top-level configuration timing untested.",
+    "The T007 implementation followed the accepted top-level selector design and used WebApplicationFactory.ConfigureAppConfiguration; the host still selected Ordinary mode, so authorization-only routes were absent and calls returned 405.",
+    "Selector/verifier unit tests passed but did not prove that the actual Program host consumed WAF-injected configuration."
+  ],
+  "verification_requirement": {
+    "next_gate": "Independent plan review of the corrected plan and contract at source commit 17211e7dc187b36a487afa29eed9452730da7fb2 and plan SHA-256 de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1.",
+    "review_must_prove": [
+      "Pinned .NET 10 host lifecycle sources support the explicit DefaultServiceProviderFactory plus deferred ConfigureContainer<IServiceCollection> ordering; builder.Host.ConfigureServices and implicit ConfigureContainer are not treated as deferred.",
+      "Final WAF application configuration is available in the deferred callback before conditional registrations and provider construction, while the same callback is usable by normal production startup.",
+      "The one immutable selection registered by that callback is the same value Program consumes after Build; ordinary mode preserves existing startup and registers no October operational services, contexts, selectors, migrations or routes.",
+      "Authorization-only and selected-data registrations remain closed and conditional; the production concrete certificate verifier remains in use and tests may replace only IOctoberAuthenticatedCertificateSource through the supported test-service seam.",
+      "No new authority, external resource permission, route, or product scope is introduced."
+    ],
+    "future_production_host_proof": [
+      "Using the actual WebApplicationFactory<Program>, ConfigureAppConfiguration selects authorization-only and supplies allowlists; the built provider contains exactly one matching immutable selection and the same production verifier resolves with the controlled certificate source.",
+      "The actual host exposes exactly the two bootstrap routes, produces API-shaped certificate denials, and has no October context, selector, source-approval or selected-data registration/access.",
+      "A separate ordinary host retains ordinary startup/routes and has no October operational registration; unknown or partial configuration fails before migrations or serving.",
+      "Configuration changes after Build cannot switch the captured selection or routes; focused ordinary-startup regressions pass."
+    ],
+    "status": "Plan self-review cites .NET 10 framework sources, but no production-host proof has been run for this correction. Do not resume implementation based on source inspection or self-review alone."
+  },
+  "owner": "plan",
+  "profile": "definition-author-recovery",
+  "authority_decision_required": false,
+  "next_guard": "Recovery remains open at failed_results=4 with pause_at=5, closing_gate=verify, and no holds. Independent plan review is the next check. Preserve the count and exclusive recovery-author ownership; any next authoritative failure reaches count 5 and requires a fresh finite extension decision. Reconcile tasks and obtain complete-definition review before production resumes. T020/T029 continue to require separately authorized owned PostgreSQL, Identity, and certificate resources."
+}

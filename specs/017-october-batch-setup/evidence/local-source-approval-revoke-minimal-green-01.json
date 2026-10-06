@@ -1,0 +1,10 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~RevokeSourceApprovalAsync_RevokesCurrentSubjectApproval'",
+  "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-165fa3d6366d4754a62bee29bdcc3344/results.trx",
+  "regression": {"filter": "FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests", "exit_code": 0, "selected": 156, "passed": 156, "trx_path": "TestResults/isolation-dbcda4da9482442f80433aa2b7046eb3/results.trx"},
+  "summary": "Direct revoke checks private current Identity/session/exact config authority and persisted batch/approval/binding/live membership. Subject or current Administrator only; unknown/foreign Denied. Existing flag AlreadyRevoked; conditional existing-row ExecuteUpdate acknowledgement returns Revoked, concurrent identical repeat rereads. Caller cancellation Cancelled; deadline/outage Unavailable. Positive tracer proves row flag and fresh VerifyRevoked/null, not full matrix.",
+  "source_sha256": "e2fdc0b87d4a78f44580aa5af6c6800fb375d873c9ef32a047b9275b5a1d6e75",
+  "production_final_shape": "Current reusable membership helper and one bounded revocation workflow. No further refactor at GREEN; foreign/admin/idempotency/cancellation/outage and independent final verification remain next. No new source contract or runtime proof.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

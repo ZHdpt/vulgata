@@ -1,0 +1,32 @@
+{
+  "kind": "human-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/2",
+  "status": "accepted",
+  "scope_sha256": "dc024516a55beb4efbad78a9d067e2240454feb60ffa3f813c3d9214f7d8474c",
+  "decided_at": "2026-09-29T11:22:29.4265806Z",
+  "user_instruction": "Approve implementation",
+  "user_source": {
+    "thread_id": "01a0e728-b7cc-78f1-8a3d-d0d49c7dfde2",
+    "turn_id": "01a0ece6-94fe-7d42-9a6f-c21cf773822a",
+    "message_id": "01a0ece6-95aa-72d2-9e2a-df68dd45edea"
+  },
+  "rebound_at": "2026-09-29T13:27:24.0715686Z",
+  "previous_scope_sha256": "724724bca7bfb3f57d82adf67512b590b4a3ff866938d4972616135ebab1853f",
+  "rebound_reason": "Independent definition-review-08 confirmed the Web mode/certificate seam and declaration-scaffold ordering remain within the user's approved implementation semantics, with no new resource or later-story authority.",
+  "previous_review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-06.json",
+    "sha256": "0cfd4b465720634a93ff115918486943d65459a6716eb6c40f36735af33c94c3"
+  },
+  "scope_material": "18-4/implementation-approval/2|18-4-prepare-an-owned-october-batch-with-valid-context-and-provid|implementation-approval|specs/017-october-batch-setup/evidence/definition-review-08.json|4ad47a48f281c85232415f1249c550b6f286d01c08ba97ac6e1f764b029c1814|794300e001f2ab64fbcc58d49468bcfef6f1d7e9|01a0ece6-95aa-72d2-9e2a-df68dd45edea",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-08.json",
+    "sha256": "4ad47a48f281c85232415f1249c550b6f286d01c08ba97ac6e1f764b029c1814"
+  },
+  "checkpoint_commit": "794300e001f2ab64fbcc58d49468bcfef6f1d7e9",
+  "approved_scope": "Implement and test the exact current Story 18.4 definition: authorization-only October Web, generator prepare/select, dedicated October persistence/migrations, exact database/batch selection, context provenance, provider binding, Story 18.1 approval/verifier/issuer composition, selected-data isolation and ordinary-startup isolation through the disclosed tasks T001-T030.",
+  "approval_permits": "Governed production and test changes for the accepted definition, using separate TDD test and production owners and all downstream review and verification gates.",
+  "approval_does_not_permit": "Creating or using external PostgreSQL, Identity or certificate resources; credentials or provider spending; destructive operations; JDT-LS, CodeGraph, Scan/Worker dispatch, Knowledge/Chat/later-story scope; recovery extensions; or verification waivers.",
+  "resource_hold": "T020 and T029 external qualification require a separate explicit owned-resource authorization and remain unavailable under this decision.",
+  "summary": "The user directly approved implementation after the corrected first-batch bootstrap definition received fresh independent plan and complete-definition acceptance."
+}

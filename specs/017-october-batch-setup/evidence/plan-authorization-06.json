@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "plan-review",
+  "decision_id": "18-4/plan-authorization/6",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-10-02T08:34:33.000Z",
+  "scope_sha256": "e60c08a91b7fe565c277463f7160f998180a8072e4511901da968fef8d2471a8",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread01a0e708-c489-7871-9f73-31413f20bf2c; turn01a0fbbe-bc5c-77e2-9e07-6c28cbd70146; message msg_0e55faeae43f1fb3016abf6c8d487481969909ecbfec81a33e",
+  "response_text": "APPROVE — 18-4/plan-authorization/6, for affected task reconciliation only. Verified: HEAD: cf45e4e0ca667466b58afd0cac0f14c529629392 Plan-review 15 ACCEPT, SHA-256: a5b2548f79711e489bc57536e45c82ad784533e8d15687b8d5b750c2e1cd2a7e Scope SHA-256: e60c08a91b7fe565c277463f7160f998180a8072e4511901da968fef8d2471a8 All twelve artifact hashes and the exact diff digest match. I independently verified the two user messages establishing ordinary Web startup. The revised plan follows that direction: database configuration only, restart-bound selection, normal migrations/seeding/authentication, and no October startup prerequisites. Independent batch authority remains intact. Reconcile affected tasks, then obtain complete-definition ACCEPT and separate implementation approval. Preserve historical failures without treating them as qualification of the revised behavior. Recovery remains 6/7. No implementation, diagnostic rerun, resource permission, extension, waiver or integration authority is granted. The story root alone records and validates this decision.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-15.json",
+    "sha256": "a5b2548f79711e489bc57536e45c82ad784533e8d15687b8d5b750c2e1cd2a7e"
+  },
+  "summary": "Fresh scope binding for the human-selected ordinary-Web boundary and accepted architecture plan15; affected task reconciliation only. Superseded plan05 remains historical evidence, retained in its original file/Git. No implementation, resources, recovery extension/reset, diagnostic rerun, integration or waiver."
+}

@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "plan-review",
+  "decision_id": "18-4/plan-authorization/2",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-09-30T02:35:18.2740135Z",
+  "scope_sha256": "077bbc60906f0bc0f51c519b1a8f7947719b9b554b1b869388e0a7713a651bec",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread 01a0e708-c489-7871-9f73-31413f20bf2c; turn 01a0f029-7527-7b13-8d70-5de57b38b11c; message msg_0e55faeae43f1fb3016abc7548608881969fe7d02b5a41be24",
+  "response_text": "APPROVE — Story 18.4 planned-change authorization for plan-review-09. Bound to reviewed base b072c4e915cdbaeee9ae9cf7742bf6c39dee156b, seven-artifact digest 1a7a7e01147dbee9412446a0cd113b1da423a6a36251a21688025a4fdf4ae53d, and review SHA-256 758b79362f82af59f0773a9407e1433f1f4cf9bf9156135448efe46fb5677afc. All seven current artifact hashes match. The correction addresses configuration timing while preserving ordinary-mode isolation, one immutable startup selection and the production certificate verifier. Authorize retained-author task reconciliation only. Actual Program-host proof, complete-definition review and implementation approval remain required. Recovery stays count 4 / limit 5; no resource permission, scope expansion or waiver is granted.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-09.json",
+    "sha256": "758b79362f82af59f0773a9407e1433f1f4cf9bf9156135448efe46fb5677afc"
+  },
+  "summary": "The designated October Approver authorized progression from the independently accepted corrected architecture plan to retained-author task reconciliation only. No implementation or resource authority is granted."
+}

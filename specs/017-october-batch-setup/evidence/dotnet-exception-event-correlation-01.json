@@ -1,0 +1,29 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "summary": "Bounded read-only Windows Application event1026 query for2026-10-02T03:20–03:36Z matched four d166 Vulgata.Web child exceptions. Three are owned-harness SourceStorage root omissions, one is observed selected-data startup Unavailable. These corroborate recorded test-child diagnostics; exact human popup count/PID matching is not established. They do not establish three telemetry CLR crashes or three independent workflow failures.",
+  "events": [
+    {
+      "record_id": 360118,
+      "time": "2026-10-02T03:34:39.7359481Z",
+      "exception": "System.InvalidOperationException: October selected-data startup failed: Unavailable."
+    },
+    {
+      "record_id": 360110,
+      "time": "2026-10-02T03:29:31.6785073Z",
+      "exception": "System.InvalidOperationException: source_configuration_invalid: RootPath is required."
+    },
+    {
+      "record_id": 360109,
+      "time": "2026-10-02T03:25:51.3599510Z",
+      "exception": "System.InvalidOperationException: source_configuration_invalid: RootPath is required."
+    },
+    {
+      "record_id": 360106,
+      "time": "2026-10-02T03:23:16.1343744Z",
+      "exception": "System.InvalidOperationException: source_configuration_invalid: RootPath is required."
+    }
+  ],
+  "query_scope": "Application log; event1026; bounded local11:20–11:36; message must contain worktrees\\d166\\vulgata. Only exception classification excerpts retained; no credentials/user unrelated logs."
+}

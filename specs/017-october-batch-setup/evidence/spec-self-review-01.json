@@ -1,0 +1,20 @@
+{
+  "kind": "self-review",
+  "stage": "specify",
+  "outcome": "passed",
+  "summary": "Acceptance scenarios and measurable outcomes cover owned setup, exact database/batch selection, context provenance, provider binding, and October/ordinary isolation. No placeholders remain.",
+  "input_hashes": {
+    "specs/017-october-batch-setup/spec.md": "5ef331c74a347962aaa783abbcbb274798837987199ed5084d85678a31a3e146"
+  },
+  "checklist": {
+    "path": "specs/017-october-batch-setup/checklists/requirements.md",
+    "sha256": "02a9d24d61400f26791de83a4004ad8957b8edee3ea4dd9e829e8847d64ed80f",
+    "result": "All items checked; no unresolved specification-quality finding."
+  },
+  "assumptions": "An authorized operator supplies owned database targets and explicitly declares the provider configuration source. Planning will determine concrete selection mechanics.",
+  "independently_ready_scope": "Batch setup, exact selection, context provenance/conflicts, provider-role binding, and persistence/startup isolation are specified for planning.",
+  "story_18_1_dependent_seams": "Prepared-source Repository/root identity, source grant, and contained read-only tool binding remain dependent on Story 18.1's accepted contracts.",
+  "blocker": "Task generation and later delivery require an integrated, verified 18.1 baseline in this worktree and reconciliation of the definition and plan against its actual contracts.",
+  "optional_preference_question": null,
+  "hook_disposition": "The optional after-specify agent-context hook was not run because the dispatch permitted writes only to the specification and checklist."
+}

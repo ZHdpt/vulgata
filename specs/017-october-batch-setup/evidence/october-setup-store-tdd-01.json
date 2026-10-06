@@ -1,0 +1,47 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "task_ids": ["T010", "T011"],
+  "work_kind": "behavioral",
+  "summary": "The concrete October setup writer now commits one complete immutable v2 setup snapshot atomically, retains first-commit UTC time across fresh equivalent authorization, and rejects changed retries without partial state.",
+  "accepted_definition": {
+    "definition_review": {"path": "specs/017-october-batch-setup/evidence/definition-review-10.json", "sha256": "0ef38cfd2cb9759f36afb8e4e991e29948c712c2e4d84f7dedbeb0893b4047a0"},
+    "implementation_approval": {"path": "specs/017-october-batch-setup/evidence/implementation-approval-04.json", "scope_sha256": "37364a19944ad869cb3975bac400aa944bd4ce371cf36fc21c1e31406438465b"}
+  },
+  "superseded_fixture_result": {
+    "trx": "TestResults/isolation-88534658ddd3474baf86c495e88065ab/results.trx",
+    "classification": "test-environment defect",
+    "resolution": "OctoberDbContext now preserves an explicitly supplied alternate controlled provider while retaining Npgsql fixed-history configuration."
+  },
+  "behavioral_red": {
+    "trx": "TestResults/isolation-8b6e23e07a824632afcbe70d76386f69/results.trx",
+    "trx_sha256": "490a53e2e32e40d7e0dad8b77ba4a2c95c8fa9666f36181291970583fce039d8",
+    "selected": 7,
+    "passed": 0,
+    "failed": 7,
+    "skipped": 0,
+    "observation": "All cases compiled, reached the concrete OctoberSetupStore through IOctoberSetupWriter and failed at the intentionally unimplemented CommitAsync."
+  },
+  "minimal_green": {
+    "trx": "TestResults/isolation-3e126bf14fc540dda6bed86b49dd2dd2/results.trx",
+    "trx_sha256": "fa684ec8aa0f9ea9f8e05ad5725fb473f293682e6b02b012cf60c9883c6f81c5",
+    "result": "7/7 store behavior tests passed before final migration and shape work"
+  },
+  "final_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberPersistenceModelTests'",
+    "execution": "outside sandbox with user authorization",
+    "selected": 11,
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-9122017211144270ab48df5c3b6f8c69/results.trx",
+    "trx_sha256": "d0d062ab6047f32dcb4ef67bc94819c76bebca812c119d5b48e94edbd703c53a",
+    "policy": "287 classified sources; build completed with zero errors"
+  },
+  "model_and_migration": "Static parity covers five fixed-october setup tables, keys, cascade foreign keys, one-selection and state constraints, and the separate October migrations history convention. No live PostgreSQL migration or provider-equivalence claim is made.",
+  "test_owner_assessment": "The public writer test uses an owned in-memory SQLite database, deterministic clock and complete two-Repository v2 snapshot. Retry uses newly materialized record/list/context objects with identical semantics, proving instance independence and original SelectedAtUtc. No further test refactor was needed.",
+  "production_owner_assessment": "The store localizes atomic write/replay/conflict reconciliation and persists only setup-owned metadata. The context localizes mappings and provider composition. Final-shape work tightened the pre-commit cancellation boundary and exact retained-batch reconciliation after uncertain failure; no further refactor was justified.",
+  "remaining_scope": "Prepared-source approvals, production source adapter, existing-batch selector, generator composition, context projection, provider binding, diagnostics and explicit owned-resource qualification remain open."
+}

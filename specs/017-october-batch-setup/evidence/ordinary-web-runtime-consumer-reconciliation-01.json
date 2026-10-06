@@ -1,0 +1,26 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "runtime-test-sources-reconciled-qualification-pending",
+  "source_commit": "9ec2a6fe17947a4cec9445f79255823ba6dfc1f1",
+  "tasks": ["T020", "T029"],
+  "test_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "bdafb0cde4243f49912de485f0e44958e1d15acc5b4d3b5732a2812818f00ccb",
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "bd45bc4a14d4169984105703dbaee70ce21b4705edbb1a2dc2566ad3c22db71e"
+  },
+  "source_unchanged": "Program.cs f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e; suites inventory205ca44f48f0ad298ee714cb52cd6825e2fc174320678e9353644f97b147a790",
+  "process_case": "Ordinary Web starts on batchless A, stops; independent generator prepares A/B with Web stopped; ordinary Web starts on B. StartWeb supplies no October mode/batch/authority/operator/provider settings. Existing anonymous denial/browser login/domain reads-writes/A-B isolation retained.",
+  "postgresql_case": "Ordinary WAF on batchless A then B after generator preparation; no October operational DI, exact Identity/domain/factory target, normal roles/browser denial, pinned ordinary migration histories and unchanged October state. Primary exceptions separate from teardown; owned-log release still required.",
+  "static_proof": "No remaining test consumers of retired Web selector/mode/binder/bound-setup types. Retained Core bound-setup references assert absence in ordinary Web or serve valid generator fixtures.",
+  "controlled_run": "TestResults/isolation-30e052e0232a4e318a0f09afa2a9efe1",
+  "controlled_counts": { "selected": 43, "passed": 43, "failed": 0, "skipped": 0, "build_errors": 0 },
+  "trx_sha256": "a285205f854ed9ec561a37574b78c027fe6a80ee4fb4b1915fd3fff8989bef69",
+  "build_log_sha256": "7ac84cf3563cfa5dc41e2213d6c760cee1e1e92cee4521e6fbf824f394757d36",
+  "actual_runtime_invocations": 0,
+  "remaining_accepted_obligations": [
+    "T020/ID-T02 positive generator process case with explicitly separate owned Identity database; existing negative descriptor cases do not prove success.",
+    "T029/T020/ID-T02 normal provider administration on actual PostgreSQL/ordinary host; existing LlmProviderConfigTests CRUD and local-mock connection cases are E2E SQLite/TestServer, not PG proof."
+  ],
+  "root_route": "Existing accepted T020/T029 cover these exact missing tests/resources. Retain test owner to author and qualify them after T026 unused-type cleanup. No new semantic/authority decision, task append, definition restart, external prerequisite or approval inferred.",
+  "resource_authority": "evidence/runtime-qualification-resource-authorization-01.json covers fresh PG17 A/B plus optional separate Identity, synthetic accounts/keys and run-owned processes/loopback; no shared resources or paid calls.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "next": "Retained production owner deletes genuinely unused three owned special-Web type files and verifies controlled regression. Then retained test owner completes existing runtime obligations; root explicitly dispatches qualification."
+}

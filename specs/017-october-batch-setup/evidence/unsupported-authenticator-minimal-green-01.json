@@ -1,0 +1,10 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberLocalAuthorityTests.AuthenticateAsync_UnsupportedAuthenticatorProvider_DeniesWithoutSession'",
+  "exit_code": 0, "trx_path": "TestResults/isolation-374c1f1ce83e4033b42629fa0aae9d8b/results.trx", "counts": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "summary": "Unsupported configured authenticator provider NotSupportedException is caught only at actual optional factor call and maps Denied/null, no fallback/2FA bypass/raw detail. DB/programming failures retain distinct handling. Supported invalid factor counters and successful resets preserved. Expected development RED resolved without workflow increment.",
+  "regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests'", "exit_code": 0, "discovered": 3029, "selected": 52, "passed": 52, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-d6a41ab3397345dda4e6282e1ad3c576/results.trx"},
+  "source_sha256": "7b2ef810ca7049a185f3a8055697b2d7c56a4724605e97e07ca55fb8de74920c",
+  "final_shape": "Owner assessed narrow factor exception boundary, no refactor needed. Session/current authority and task completion remain pending.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

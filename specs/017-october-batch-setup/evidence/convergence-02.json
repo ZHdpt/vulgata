@@ -1,0 +1,153 @@
+{
+  "kind": "analysis",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0128-convergence-accepted.json",
+    "sha256": "f6b157219f54de2822222bc104739940ca84a11e5ec11c7c9d80d48299e7cfad"
+  },
+  "reference_note": "Producer JSON pointers refer to the de-enveloped raw_result payload, as do governed readers; the full previous raw assessment remains unchanged.",
+  "raw_result": {
+    "stage": "converge",
+    "outcome": "converged",
+    "source_commit": "96bbd685dee6f3b453494d867513340fb6810091",
+    "previous_assessment": {
+      "path": "specs/017-october-batch-setup/evidence/convergence-01.json",
+      "sha256": "cab01a7baf636dc2575fae709ee2299bc18bac56a22054805b60c4f44b0da2a6",
+      "preserves_prior_full_hash_manifest": true
+    },
+    "raw_upstream_result": {
+      "path": "specs/017-october-batch-setup/evidence/convergence-01.json",
+      "sha256": "cab01a7baf636dc2575fae709ee2299bc18bac56a22054805b60c4f44b0da2a6",
+      "json_pointer": "/raw_upstream_result"
+    },
+    "checked_obligations": {
+      "path": "specs/017-october-batch-setup/evidence/convergence-01.json",
+      "sha256": "cab01a7baf636dc2575fae709ee2299bc18bac56a22054805b60c4f44b0da2a6",
+      "json_pointer": "/checked_obligations"
+    },
+    "findings": [],
+    "unchanged_findings": {
+      "path": "specs/017-october-batch-setup/evidence/convergence-01.json",
+      "sha256": "cab01a7baf636dc2575fae709ee2299bc18bac56a22054805b60c4f44b0da2a6",
+      "json_pointer": "/unchanged_findings"
+    },
+    "reused_task_ids": [],
+    "appended_task_ids": [],
+    "tasks_before": {
+      "path": "specs/017-october-batch-setup/evidence/convergence-tasks-preimage-01.md",
+      "sha256": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676"
+    },
+    "tasks_after": {
+      "path": "specs/017-october-batch-setup/tasks.md",
+      "sha256": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676"
+    },
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864",
+      "specs/017-october-batch-setup/plan.md": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd",
+      "specs/017-october-batch-setup/tasks.md": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676",
+      "specs/017-october-batch-setup/research.md": "2b40f5c16e07291237f32dcc93a5c05712184042c0c66a72b6635c45c112ef31",
+      "specs/017-october-batch-setup/data-model.md": "b7469b250c11bc5804e91e61b792d9c152e40a8927022bd8181bbf6bcf0d1e9f",
+      "specs/017-october-batch-setup/quickstart.md": "8e2dd5dc3161ab385ba9a5f989b390b3756aea54cd8cb81e347ba68df88a4189",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "1d16778a7326c24aab23873cf1eff9f76877d8b103a652a5d99ef0cbf07ff7d2",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "b65c05b8e1df568385095e92fd4030bb2e791d4e41acc3766668e07eed682c4b",
+      ".specify/memory/constitution.md": "a8c816c183242a98cfc6117e6969ab8159100c3b08e58edd49f63384272200c7",
+      "docs/bmad/planning-artifacts/october-release-epics.md": "80724e57f53ce09c7670ad0b5ca20571a8956532a899d7f5b65e10e72b41eddf",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "bc4318478f636398aeb921b5d5dc32f9aa1206fb02bc9c7faf147bd9bd87ba37",
+      "src/dotnet/Vulgata.Web/Program.cs": "03c3f40838af81c6ebbc36a10b7bdd3bfdedc3f248d7d6131ebe6982574ae9c5",
+      "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "86788949017d78a2c212e32ddd4dba98999dcf1b0ffe2ade606d6e60760d5381",
+      "src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs": "9e9e62baace608615d69ab5028e06485ad5ab77a229d5f4e56aafd00a981fb8d",
+      "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs": "3f276eecae2c77f8d482ee13d8b23e1ea1888c5d35593e964f33b07f66829528",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupPolicy.cs": "58d645a9a549060a221405ba84116c3a8ff99628b014ba445b23566044bf3c82",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs": "8c672306e2122add168bcf8f19098b689264fe95e22f1d0dc715db69b8878a62",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberLocalAuthorityContracts.cs": "fde65b9480563a82614a2644f83306dd9a89d5334d5e2d53971e00e937f78e0c",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs": "a970f27443c171a5ffa871bd2f49924151089750ded474507414031f09b111b8",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs": "39f149cbdecb7e172b0d43f33c68b47ea45b9be47f54a58d39455e51fa3ecc74",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs": "2df82e4626decdbcd2c81bd365eea4341ccb15ebfade3c700891b9af9c97342b",
+      "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "7b28f61339d57d819cfa1e9f6024c4ec0397faafde95f62706d67df1c6d67870",
+      "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs": "e638d7d92c053b5a54e861cdf976f8f59aaed7fa8a1cf3fac70ab626724b8e2e",
+      "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "5e44e52d4ae8affeb4b354cfaeb124eb6e26fd27fdc2e0a3a442e4c4f60fdb6e",
+      "src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs": "c49f9d8e5d71b2dae5b6fc30ce88a147fac592103177099729323f6a1aca2342",
+      "src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs": "3e3d8f494e7cd6b9e2868764616e49571f6bbd0cde5aeaf0a12f502590e9a742",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs": "20e1d5f554294e5163251b4e82dbd11d1714ff442af77249e7aa9a2ab368e1c7",
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "78c10a142e460281693021f7ef5f24ba8eb1c6f75f4efd485d92bb16b1fd04cf",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "4a03942c8e4128ba6d7554dd961875e56f8c5a7f7e0fb91338561aea3ca8dbab",
+      "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "897fcd1a09e6c463df70ab975af7ed02c4611e3108eaa4798c46ac65cb748248",
+      "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs": "ab89f6e57cd1f8552fa0a76358fa7b85631b4627195bfd7f98d0041c0affd113",
+      "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs": "fda917b8d3bbafbc7333b10d01a8f5846ed2b68a96e8c6a26a08dcd383e7985b",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "a4400da0e82609222ae1f015b699a7d2d94130e4b16eec2a3e0868009373ede4",
+      ".gitattributes": "853ba2414b30f016ecb4112bb9a999064f9274319a159aa42e2ead1ca8027165",
+      "specs/017-october-batch-setup/evidence/canonical-reviewed-inputs-01.json": "e9fed75f4da3da3433a458420ef31b0631fc57735f5e982e452bddb87b565596",
+      "specs/017-october-batch-setup/evidence/convergence-01.json": "cab01a7baf636dc2575fae709ee2299bc18bac56a22054805b60c4f44b0da2a6"
+    },
+    "owned_paths": [
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/tasks.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      ".specify/memory/constitution.md",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+      "src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs",
+      "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupPolicy.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberLocalAuthorityContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs",
+      "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs",
+      "src/dotnet/Vulgata.OctoberGenerator/Program.cs",
+      "src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs",
+      "src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+      "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+      "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs",
+      "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      ".gitattributes",
+      "specs/017-october-batch-setup/evidence/canonical-reviewed-inputs-01.json",
+      "specs/017-october-batch-setup/evidence/convergence-01.json"
+    ],
+    "formatting_proof": {
+      "canonical_record": {
+        "path": "specs/017-october-batch-setup/evidence/canonical-reviewed-inputs-01.json",
+        "sha256": "e9fed75f4da3da3433a458420ef31b0631fc57735f5e982e452bddb87b565596"
+      },
+      "gitattributes": {
+        "path": ".gitattributes",
+        "sha256": "853ba2414b30f016ecb4112bb9a999064f9274319a159aa42e2ead1ca8027165"
+      },
+      "verified_prior_assessment_overlaps": [
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md",
+        ".specify/memory/constitution.md",
+        "docs/bmad/planning-artifacts/october-release-epics.md",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+        "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+      ],
+      "verified_count": 11,
+      "verification": "Each listed current SHA-256 equals the canonical record’s after hash and the pinned HEAD blob; git check-attr reports exact-path eol=lf.",
+      "spec_plan_tasks_hashes_unchanged": true,
+      "semantic_assessment_unchanged": true,
+      "current_source_delta": "None in the assessed implementation/contract inputs; the 11 verified byte changes are canonical LF materializations."
+    },
+    "source_boundary": {
+      "branch": "oct14/story-18-4",
+      "source_commit": "96bbd685dee6f3b453494d867513340fb6810091"
+    },
+    "semantic_disposition": "The clean convergence assessment is unchanged; this refresh rebinds current bytes only."
+  }
+}

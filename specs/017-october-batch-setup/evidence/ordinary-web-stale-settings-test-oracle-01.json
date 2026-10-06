@@ -1,0 +1,17 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "evidenced-development-test-defect",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "task": "T018", "production_task": "T019",
+  "test": "OrdinaryProgram_IgnoresStaleOctoberSelectionAndUsesDefaultDatabase",
+  "red": "specs/017-october-batch-setup/evidence/ordinary-web-stale-settings-red-01.json",
+  "production_sha256": "f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e",
+  "test_sha256": "e864bdd1660bd930d442cb1c93f9ab9d4ef7bfefa6f1fdf93f291c5c4f2197bc",
+  "run": "TestResults/isolation-a2085a65b3a040c99da083432dbe645b",
+  "counts": { "selected": 2, "passed": 1, "failed": 1, "skipped": 0 },
+  "build_log_sha256": "5e95baa2a9b45bc5ce823126fe3a5086fcb767993d68d39076011f1b98e77688",
+  "trx_sha256": "4d07e0e45f91b7a2be4522b5f9826d90414ba66ecdd955a51caf3c5e34aa0f90",
+  "primary": "Startup/login assertion passed after removing special-Web branch. Later assertion expected owned SQLite DataSource path but compared DbConnection.Database, which is main for SQLite.",
+  "root_verification": "Read current test lines and raw TRX. All three target assertions use this mismatched pair. Correct observable property is connection DataSource or connection string identifying the exact owned fixture, not a weaker generic main database assertion.",
+  "disposition": "Normal evidenced test-oracle correction, not product repair failure or independent negative review/convergence. Preserve original selector RED, no assertion weakening. No minimal GREEN claimed yet. Production frozen; route exact property correction to retained test owner.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true }
+}

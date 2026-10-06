@@ -1,0 +1,15 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "source_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberOperatorCredentialSourceTests'",
+  "exit_code": 0,
+  "trx_path": "TestResults/isolation-0932c6edec1d437b9133d4e9e459e013/results.trx",
+  "counts": {"discovered": 3002, "selected": 15, "passed": 15, "failed": 0, "skipped": 0},
+  "summary": "Caller precancel propagates; redirected input/output or noninteractive environment returns static sanitized unavailable before input consumption. Interactive path remains NotImplementedException, not qualified or complete.",
+  "auth_regression": {"exit_code": 0, "selected": 10, "passed": 10, "trx_path": "TestResults/isolation-57bfc9be204f42f0bc8c336c6dbdef16/results.trx"},
+  "source_sha256": "a2b8ee483ac4d2dc44a2c1de2c6d329e82a324fcd00f067a16fca96d69d6ee62",
+  "final_shape": "Production owner assessed small public-seam guard; no refactor needed. Controlled interactive qualification is unavailable in redirected testhost. T006/T007 remain open.",
+  "recovery": {"classification": "expected-red-to-minimal-green", "failed_results": 6, "pause_at": 7}
+}

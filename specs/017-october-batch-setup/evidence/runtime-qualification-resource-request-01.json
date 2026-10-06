@@ -1,0 +1,7 @@
+{
+  "kind": "analysis", "stage": "implement", "status": "permission-granted-recorded",
+  "tasks": ["T020", "T029"],
+  "request_source": "current runner asynchronous user question; no response received at record creation",
+  "request_text": "For Story 18.4’s required PostgreSQL and independent-process qualification, do you authorize fresh runner-owned PostgreSQL 17 containers/volumes and A/B databases (plus an owned optional separate Identity target), synthetic accounts/credentials, test-owned protection keys/files/source roots, and run-owned generator/Web processes with isolated loopback ports? Cleanup will target only recorded run-owned resources. No shared database, real credentials, paid provider, unrelated process, merge or push will be used. This is resource permission, not a recovery extension.",
+  "summary": "Original unanswered request is preserved above. Actual subsequent user reply grants the fresh owned-resource scope in runtime-qualification-resource-authorization-01.json. No recovery extension, revised-plan approval or waiver is inferred. Pending affected definition gates still precede runtime dispatch. Tool accepted/displayed question/preselection alone was never permission."
+}

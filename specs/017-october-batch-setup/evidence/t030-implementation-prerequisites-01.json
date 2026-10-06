@@ -1,0 +1,65 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "all-current-tasks-verified",
+  "source_commit": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+  "completed_tasks": 30,
+  "total_tasks": 30,
+  "observations": [
+    "T018/T019/T025 controlled ordinary Web evidence preserved; source Program SHA unchanged.",
+    "T026 unused-type cleanup and consumer assessment preserved.",
+    "T020 actual process qualification and T029 PG qualification in ordinary-web-runtime-qualification-final-green-01.json.",
+    "T030 focused174/174, full2149/2149 with no skips; configured build35warnings0errors."
+  ],
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.October'",
+      "run": "TestResults/isolation-0b8e6c09e09b461ca7b488179d8120b0",
+      "passed": 174,
+      "failed": 0,
+      "skipped": 0,
+      "trx_sha256": "6e60cced4a09ab391b96798fd39a2cabb60d7213cd34d8501ef7b0dbd82f1cba",
+      "build_sha256": "fade794d3c85517ead6b660b9ecc37f4da12513b930de303ea2f3c630e25a290"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1",
+      "run": "TestResults/isolation-6d8bd79d056548599d155a02f763d009",
+      "passed": 2149,
+      "failed": 0,
+      "skipped": 0,
+      "trx_sha256": "bd4120151a924aff25257d5dd3d79f59b7a22eb66e3b9cfcdc33a7553ea1c56f",
+      "build_sha256": "404d15815c2ae23c053c8a05bd631ec7f74f82aa1a4d0ab01758347e6496ee6d"
+    },
+    {
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --verbosity quiet",
+      "raw_output_path": "TestResults/isolation-6d8bd79d056548599d155a02f763d009/web-project-build.log",
+      "sha256": "2e182c226b03990c3303f9c74543837a2c9240f886a9a149d356b73cc0ed20a2",
+      "exit_code": 0,
+      "warnings": 35,
+      "errors": 0
+    },
+    {
+      "exact_configured_command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+      "proof": "specs/017-october-batch-setup/evidence/t030-configured-build-accepted-01.json",
+      "exit_code": 0
+    }
+  ],
+  "environment": "Short native PATH plus only independently hash-verified G:/packages/npm/prefix for existing static CodeGraph integrity lookup; NLS=1/telemetryoptout1. No LocalTools launch.",
+  "technical_retry": {
+    "operation": {
+      "command": "pwsh -NoProfile -File eng/test.ps1",
+      "target": "T030 full SelfContained",
+      "cause": "short PATH omitted installed static integrity lookup directory"
+    },
+    "invocations": 2,
+    "maximum": 3,
+    "status": "repaired"
+  },
+  "recovery": {
+    "failed_results": 7,
+    "pause_at": 8,
+    "closed": false
+  },
+  "task_marker_reason": "Only mechanical completion of original30 IDs; semantic definition unchanged; accepted reviews/approvals preserved.",
+  "next": "Independent convergence then root lookback/quality/E2E decision/pinned final verification. This is prerequisite evidence, not final closure."
+}

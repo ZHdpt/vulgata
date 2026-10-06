@@ -1,0 +1,33 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "affected-runtime-final-green",
+  "source_commit": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+  "task": "T029",
+  "task_completion_claim": false,
+  "route": "Test-only fixture-order correction; no fabricated production RED or production edit.",
+  "authorization": "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-07.json",
+  "diagnosis": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-post-extension-diagnosis-01.json",
+  "test_path": "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+  "test_sha256": "f401655cd39460a2da327783d8e400b9562e54dc2b5a214ac98552d2bcbfc795",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.October.OctoberPostgreSqlIsolationTests.PostgreSqlOrdinaryWebStartup_UsesOwnedDatabaseFactoriesWithoutOctoberMigration'",
+  "run": "TestResults/isolation-c4b298eae1a644d2a975d573f25f574b",
+  "counts": { "selected": 1, "executed": 1, "passed": 1, "failed": 0, "skipped": 0 },
+  "trx_sha256": "ad4b700c42536c41e1e4ecc133c19a77e8c76eca443f2576bccc1e60ecd510b4",
+  "build_log_sha256": "b1e35db8f7cbedbd2529fa6907d490394bd252c140cef192a21f6f0335ec3a4a",
+  "observations": [
+    "Existing B ordinary startup precedes equivalent A/B ordinary-shape comparison; both existing hosts assert all normal seeded roles.",
+    "October before/after, migration histories, ordinary factories, nonseeding data invariance and cross-target isolation assertions remain.",
+    "Synthetic ordinary Administrator browser login and provider CRUD/encryption/page checks pass without paid provider calls.",
+    "No additional host startup, production change or definition change."
+  ],
+  "cleanup": {
+    "container": "vulgata-test-c4b298eae1a644d2a975d573f25f574b",
+    "volume": "vulgata-test-data-c4b298eae1a644d2a975d573f25f574b",
+    "container_absence": "cleanup-inspect.log ends with []",
+    "volume_absence": "volume-absence.log reports no such volume",
+    "root_independently_verified": true
+  },
+  "recovery": { "failed_results": 7, "pause_at": 8, "closed": false },
+  "next": "Qualify existing actual-process T020 coverage, cross-cutting verification and remaining independent gates."
+}

@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/3",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-09-30T02:54:51.1300525Z",
+  "scope_sha256": "e100d427f8292094b8892159b22f36fedfd5747ff505c4a6920f9dc2ed55d491",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread 01a0e708-c489-7871-9f73-31413f20bf2c; turn 01a0f03b-869e-78e1-940e-1a0ec825f3e2; message msg_0e55faeae43f1fb3016abc79ea14808196bc288d7cca99f58d",
+  "response_text": "APPROVE — Story 18.4 implementation gate following definition-review-09. Verified all eight artifact hashes, bound to: Reviewed base: cfa07a3d6526f52d2922930f9bddf5d8bf5087ee Artifact digest: 7c6f8254f4b7e785c1a23b2c130a305a544c11942c478fcda7a38ede70534dd9 Review SHA-256: 5df072d3585598a5cbd8154a7f7f33b1d2a085d0a82e68bbbad3def2913426c9 The corrected tasks preserve actual Program-host RED, require deferred-composition GREEN and ordinary-startup regressions, and retain the concrete certificate verifier. Resume dependency-ready governed implementation. T020/T029 remain resource-held. Recovery stays count 4 / limit 5; the next substantive failure requires a fresh extension decision. No resource permission, scope expansion or downstream verification waiver is granted.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-09.json",
+    "sha256": "5df072d3585598a5cbd8154a7f7f33b1d2a085d0a82e68bbbad3def2913426c9"
+  },
+  "summary": "The designated October Approver authorized resuming dependency-ready governed implementation of the independently accepted corrected Story 18.4 definition. Resource holds and all downstream gates remain."
+}

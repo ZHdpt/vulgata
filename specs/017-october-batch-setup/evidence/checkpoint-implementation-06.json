@@ -1,0 +1,21 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20260930T084425Z-3dc419",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "8ee8fe202dbc434ce7e99f25c72ed3bc7bd53370",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "summary": "Verified T016/T017 exact existing-batch selector, authority continuity and immutable historical-context capability in controlled tests.",
+  "paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-05.json",
+    "specs/017-october-batch-setup/evidence/october-batch-selector-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs",
+    "tests/Vulgata.Tests/October/OctoberBatchSelectorTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+  ]
+}

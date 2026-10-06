@@ -1,0 +1,41 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/selected-web-provider-utf8-loading-minimal-green/1",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "observed_at": "2026-10-01T13:25:21Z",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/selected-web-provider-utf8-loading-red-01.json",
+    "sha256": "ce875aa0443b64ce40d96154e3297452f2d130f441bb0fb2c8cd232c0dfe8d47"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.Web/Program.cs": "271d9a3be3b2106d9dfeba2947c1b0979bf10a25d6ee3af038713d46263c88ba",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "9b2c1efa915787dd709e1e81bfb9cca8faa7c670f130aeb19d2399f1034da593"
+  },
+  "raw_result": {
+    "owner": "retained tdd-implementer Sol/medium",
+    "change": "Strict UTF-8 decoding with existing BOM handling; DecoderFallbackException sanitized before credentials.",
+    "focused": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsMalformedOrUnreadableProviderDocumentBeforeCredentialWork'",
+      "exit_code": 0,
+      "selected": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-d3fb9435092e4811adcfdb8d8aa6a005/results.trx",
+      "trx_sha256": "e8c94a53eefd1c13f02a9472a6a0f0df536d89f66a2c2a9d2a006391a1e4ca18"
+    },
+    "surrounding": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant|FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication|FullyQualifiedName~SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically|FullyQualifiedName~SelectedDataStartup_RejectsDistinctProviderFileSelectorsBeforeCredentialWork|FullyQualifiedName~SelectedDataStartup_RejectsCompetingProviderSourceIdentityBeforeCredentialWork'",
+      "exit_code": 0,
+      "selected": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-a129095d3e744fa3b5d64af6e27f9f1c/results.trx",
+      "trx_sha256": "e7818fa279e50963a8801b946cd42cd8c8ae345ede242e948e818f72091b7668"
+    },
+    "assessment": "Loader remains cohesive; no local refactor needed; git diff --check passed."
+  },
+  "qualification": "Controlled startup checks only. Independent test-owner final verification, generator and real-runtime qualification remain pending. Expected RED is noncounting; recovery6/7 retained."
+}

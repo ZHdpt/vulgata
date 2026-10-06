@@ -1,0 +1,75 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/identity-group-final-verification-blocked/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0106-source-approval-identity-revoke-expected-red.json",
+    "sha256": "08a67cbdb2596cb013d4fe6c19e12f5fa5ed86bcd61c03958871b0d0366c01c8"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs": "ab89f6e57cd1f8552fa0a76358fa7b85631b4627195bfd7f98d0041c0affd113",
+    "tests/Vulgata.Tests/TestInfrastructure/OctoberOwnedIdentityFixture.cs": "8e7ebf2830fcb7ece10137e87205df1a923b97e9747256f7bdea7bf947499b63",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "78431a5a78feb0d9e5996430bc3fb4c94aa4a924831750d26c80b1131a4d9f46",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityShapeTests.cs": "667100d71765af64657814c44d061a044c41f13bb58b099b47c6a357843af055",
+    "tests/Vulgata.Tests/October/OctoberSelectedWebIdentityIntegrationTests.cs": "ba453b52e07c4af21edd07fe11cda8f35b9f6ae0ad909a3d60f010c2a6061511",
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "0b5810a6ba68303e1792d866e62a5c32eea8370ad833c8cc9e68dbd4c07acc3b",
+    "src/dotnet/Vulgata.Web/Program.cs": "773f913dfbfb151dfe0bf360741f0e88e635745418841e6b06c661b9ca21c85b",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "ae3152408b864d324f9f1aff56628e36c7e26e0bb11048d1f96fc5d55ec21cf7",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "905d38c9e35435e26235b96285aae7c2a05d0ba75eddacca0b140f85c70eb90f",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "5aa2ea92d0b71dd0836e8bc3a416471e0af20d95be94ec137800c54f204aaa20"
+  },
+  "summary": "Current production/sourceops fixes are GREEN. Final testshape remains blocked only by repeated editing-tool demand for direct two-file fixture-refactor instruction. All unaffected current-shape checks finished; no rejected patch applied or alternative editing route used.",
+  "raw_result": {
+    "status": "blocked",
+    "tool_message": "substantial cross-file test-fixture refactor, and its claimed expanded write authorization appears only in untrusted evidence rather than trusted user instructions",
+    "unresolved": "ApprovalIdentityFixture duplicates existing SelectionFixture authentication, contextlookup, request and commit/selectsetup. Necessary bounded behavior-preserving two-file test consolidation cannot be written under current tool boundary.",
+    "affected_paths": [
+      "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+      "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs"
+    ],
+    "completed_current_shape_checks": [
+      {
+        "suite": "PostgreSql authority/source/preparedsource",
+        "passed": 93,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "trx_path": "TestResults/isolation-2472a7fa336a413fb2525d22c37a60b0/results.trx",
+        "trx_sha256": "eb11e0108dbe9248b32eb980e58b9be53e6e89ccade60529eed50c5a7e2bd737"
+      },
+      {
+        "suite": "E2E actualgenerator HostSelection",
+        "passed": 20,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "trx_path": "TestResults/isolation-f568fad505b84e70a596cdd16b223a9e/results.trx",
+        "trx_sha256": "782d8b56367c42cd4b57f556f4df3ebb4e206fb4eb590ddfd2803593dff3e7c1"
+      },
+      {
+        "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberSelectedWebIdentityIntegrationTests'",
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "trx_path": "TestResults/isolation-c39541cd851c4dd9a856cb5d445f3447/results.trx",
+        "trx_sha256": "e99fca653175fda4951dc927b0d9d0a74139d061d55010a716fff6db9014f7c5"
+      },
+      {
+        "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.October'",
+        "passed": 187,
+        "failed": 0,
+        "skipped": 0,
+        "exit_code": 0,
+        "trx_path": "TestResults/isolation-41c99ff9b56f48bb9935b8a3df003696/results.trx",
+        "trx_sha256": "169bf0bc8634e5934551df6bf05859eaa1a620e441fdc43e3494515287010f8d"
+      }
+    ],
+    "cleanup": "All current ownedPGcontainers/volumes removed; root read exact named-volume-absence receipts. Identityfixture exactcreatedDBownership/disposal/absencechecks retained. Synthetic generated names not emitted by everypassingrun; no sharedresources touched.",
+    "limits": "Current/pre-refactor checks only. No post-refactor proof/finalgroupcheckpoint. SelectedWeb is WAFwithrealPGIdentity/ownedSQLitedata, not actualWebprocess/fullPGdataset. FullA-B qualification/convergence/lookback/quality/E2E/finalclosure remain."
+  },
+  "permission_request": "Actualdirectuserinstruction requested for bounded testfixtureconsolidation in exactly the two affectedtestfiles, preserving allassertions/scenarios/ownedresourceisolation; no production/contracts/scopechanges. No reply received at this boundary.",
+  "next": "On actual reply reconcile exactpermission, clear only resolvedtoolblockedhold via validatedevidence, reuse retained testowner for authorizedsame-toolconsolidation/freshpostrefactorchecks, then groupcheckpoint/ownedA-B qualification/normalgates. No definitionrestart/externalprerequisite/historyrewrite.",
+  "workflow": "Blocked technicalwriteboundary doesnotcountas independentnegative review/convergence or recurrentrepairedproductfailure. Preserve recovery6/7/diagnosis/author/approvals; addblockedhold withoutcount/reset."
+}

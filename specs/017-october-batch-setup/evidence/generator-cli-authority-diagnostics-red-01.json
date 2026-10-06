@@ -1,0 +1,51 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-authority-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T18:29:37Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0095-generator-cli-credential-expected-red.json",
+    "sha256": "7710f5e145ae5b473680d336b1b4788c4ad41502ccb9e422ba93d9490ac0b093"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "f6eaeed95fb3ded8e14286954506614147d56c6a32c0420b47838f0e075c3a35",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "ba5c22f191e4996cf239c9db0afcf9281653af1f62a704f301ee04d313c9ae51"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_UnavailableOwnedIdentityConnectionReportsAuthorityUnavailableBeforeOctoberMigration'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-162d83c77915464f92cb54a1f7a1d949/results.trx",
+    "trx_sha256": "7aadf402c0fe85ddf0ecbb825c9a8af1a9c85ee925f1fd9cd922dbf30352a8aa",
+    "failure": "Assert.Contains() Failure: Sub-string not found\r\nString:    \"An issue was encountered verifying worklo\"···\r\nNot found: \"AuthorityUnavailable\"",
+    "seam": "Actual CLI after valid owned operator/provider preconditions. Same owned DB endpoint with synthetic invalid DB password yields authentication store Unavailable; child1/redaction/noOct checks pass before missing AuthorityUnavailable output."
+  },
+  "credential_verification": {
+    "minimal_green": {
+      "trx_path": "TestResults/isolation-ff4e0222d6d640bda6d8245428bba68c/results.trx",
+      "trx_sha256": "657c89ec114e2928f4533679e97ddcb7cf54ff9f42cf3c69a5c28def9b013b86",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "independent_final_green": {
+      "trx_path": "TestResults/isolation-44cfc4f4ba1b498c838dc77d9a9bac6c/results.trx",
+      "trx_sha256": "03b10bdd1bac744b97e6d84ba6e18f4ee3190d1ca7e2859f2fe041eb473da56c",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "reported_hash_correction": "Owner returned prior malformed-run hash 942ab3e96e317eeb881b9a40ae31b251dd1c3b9b4df849ba89d7dc70d437f3f3 for this fresh credential run. Root hashed actual named file; the above measured hash is authoritative. Original owner report retained in chat, no raw result modified.",
+    "assessment": "Retained implementer assessed safe fixed closed credential class branch; no refactor, no secrets/ordering changes. Independent focused final verification passed."
+  },
+  "cleanup": {
+    "run_id": "162d83c77915464f92cb54a1f7a1d949",
+    "verified": true,
+    "evidence": "TRX records exact database/temp cleanup; labeled owned mount, empty container inspection and absent named volume inspected."
+  },
+  "scope": "Expected CLI module-failure classification RED, not independent negative review/convergence or recurring completed repair. A rejected owned DB password is not a claim of external outage. Recovery6/7 unchanged."
+}

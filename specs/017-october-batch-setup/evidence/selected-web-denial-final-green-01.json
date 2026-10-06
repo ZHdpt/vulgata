@@ -1,0 +1,69 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/selected-web-denial-final-green/1",
+  "source_commit": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+  "observed_at": "2026-10-01T16:57:59.251853Z",
+  "verification_route": "Test-only actual WAF startup denial after valid provider binding and bounded GREEN test-helper refactor. No production correction or fabricated RED.",
+  "prior_green": "specs/017-october-batch-setup/evidence/selected-web-isolation-coverage-green-01.json",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "d47e625bb4fb49ab60cc391073f47b6075636a6e9f0251cd9a545666ff1875cd",
+    "src/dotnet/Vulgata.Web/Program.cs": "271d9a3be3b2106d9dfeba2947c1b0979bf10a25d6ee3af038713d46263c88ba",
+    "src/dotnet/Vulgata.Web/Data/OctoberSelectedDataStartupBinder.cs": "6aafe069a264376d3f6eaa0e773d564a0aff16e2376564d9f0d31b24093500ea"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests.SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant'",
+      "exit_code": 0,
+      "selected": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-4f336cb9e1d74b0cbbb07ab388053a9a/results.trx",
+      "trx_sha256": "9c0c1742d23d6eba51a175fc5178b9905a2c1c84cd1f4e2ff2f7145eedd8b284"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests.SelectedDataStartup_MissingBatchAfterValidProviderBinding_ReportsSanitizedDeniedStatus'",
+      "exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-f41b540e83da43a09c83c44f9c0599f2/results.trx",
+      "trx_sha256": "a87a72757ee5c26bb22347c2ca732ba3c70e7aef75842652200c838ff3695bee"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests'",
+      "exit_code": 0,
+      "selected": 22,
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-237eeb29aba848a59d4d89df69926fef/results.trx",
+      "trx_sha256": "c940a111585047b35a0bb2510f5d1cf097848998d49b8ad4a119caf7ef8f62a0"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~OctoberPersistenceModelTests|FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberPreparedSourceApprovalApiTests|FullyQualifiedName~LoginLogoutTests'",
+      "exit_code": 0,
+      "selected": 262,
+      "passed": 262,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-3e5b23f12b754f4a9c7e6c4949c7e3ac/results.trx",
+      "trx_sha256": "0206e53f15802d4e3c6a370b3f1c1a2e33059b6ad4688f9442abf82d3c7e09d7"
+    }
+  ],
+  "raw_result": {
+    "owner": "retained tdd-test-author Luna/high",
+    "outcome": "passed",
+    "coverage": "Valid provider document decrypts both selected roles. Seeded password and SystemOwner role verified through UserManager. Actual configured missing batch produces Program-level Denied exception, excluding credential/provider/connection/selected-identity/context/source-root canaries. Owned SQLite snapshot unchanged.",
+    "assessment": "Existing guarded WAF fixture; named login form/action targeting with all named/hidden inputs corrects documented concrete helper risk while GREEN. Original positive selection/Identity/browser/factory/reload/provider assertions preserved; final focused/surrounding verification passed. No new fixture/API/inventory or production change.",
+    "limitation": "Actual Denied wrapper only; separate Unavailable/Cancelled wrapper cases and PostgreSQL migration/no-attempt predicates not claimed."
+  },
+  "intermediate_fixture_correction": {
+    "path": "TestResults/isolation-fccf19514caf49c7b03327488cc5b2d4/results.trx",
+    "sha256": "a19e2d37ff67a81777e232cb11f810028cf90870e33419ad8c7c20408e46807a",
+    "reason": "xUnit ImmutableArray comparison lacked sequence conversion despite matching displayed snapshots. Test-only conversion to arrays preserves expected state equality. No product RED or workflow failure."
+  },
+  "root_disposition": "Continue generator-specific rejection and invalid-authentication checks, then final owned A/B qualification after accepted host prerequisites. No task markers or new scope decision. Recovery6/7, approvals/holds/diagnosis/owners retained."
+}

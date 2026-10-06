@@ -1,0 +1,33 @@
+{
+  "kind": "implementation-evidence",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "route": "behavioral-red-minimal-green",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/generator-cli-startup-predicates-diagnostics-red-01.json",
+    "sha256": "ed3a073b1c103b018f5424f76baa42b6424d3fc48e78f905b11d77743cc16409"
+  },
+  "minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_InvalidStartupConfigurationPredicatesReportInvalidConfigurationBeforeOctoberMigration'",
+    "exit_code": 0,
+    "selected": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-eaa20c1a153c4e17a71772d21e6bad88/results.trx",
+    "trx_sha256": "521d7dac67f88865148bc0c4d62841f5a782beceace6b054662f5e3324b8ed6a",
+    "source_sha256": "9d99d852f6f00ab4aecf4e15800b2635021ae265ad9348395a680636ecae8230",
+    "child_exits": [
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "disposition": "Phase-bounded startup command/authority/protection-setting/credential-source validation reports fixed InvalidConfiguration. Does not enclose later module authentication/storage work. No per-slice private refactor needed; whole group final assessment/verification pending.",
+  "resources": {
+    "raw_evidence_directory": "TestResults/isolation-eaa20c1a153c4e17a71772d21e6bad88",
+    "owner_report": "Each child exited1 and exact owned database/temp cleanup recorded; container inspection empty, named volume absent."
+  },
+  "qualification_limit": "No actual CLI interrupt/cancellation protocol proof and no final A/B Web runtime qualification.",
+  "workflow": "Expected development RED noncounting; recovery6/7 and approvals unchanged."
+}

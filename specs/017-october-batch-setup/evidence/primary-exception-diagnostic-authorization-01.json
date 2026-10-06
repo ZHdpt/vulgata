@@ -1,0 +1,41 @@
+{
+  "kind": "human-approval",
+  "stage": "implement",
+  "evidence_id": "18-4/primary-exception-diagnostic/1",
+  "decision_id": "18-4/primary-exception-diagnostic/1",
+  "status": "accepted",
+  "scope_sha256": "631ff6ddd6f0b12ead8ac76f2d7215e1c9835d341e883db27cc7c8d704bbf13d",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+  "observed_at": "2026-10-02T05:50:57.5079617Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0111-postgresql-log-lifetime-blocked.json",
+    "sha256": "dcd649ab85c4788fbc8e21596c171849ec9940b114f9986db3c26f96477287c9"
+  },
+  "user_source": {
+    "kind": "current-chat-direct-user-message",
+    "instruction": "Approve",
+    "locator": "Direct reply to root's request after checkpoint cf45e4e0: one additional diagnostic run after correcting fixture to preserve original exception"
+  },
+  "request_context": "The installed run-governed-delivery bounded diagnostic limit is reached. Do you approve one additional diagnostic run after correcting the fixture to preserve the original exception? Design and resource scope stay unchanged.",
+  "scope": {
+    "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+    "purpose": "preserve-primary-exception-and-one-additional-diagnostic",
+    "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+    "write_paths": [
+      "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs"
+    ],
+    "technical_actual_invocations_before": 3,
+    "technical_actual_invocations_maximum": 4,
+    "blocked_head": {
+      "path": "specs/017-october-batch-setup/evidence/transitions/transition-0111-postgresql-log-lifetime-blocked.json",
+      "sha256": "dcd649ab85c4788fbc8e21596c171849ec9940b114f9986db3c26f96477287c9"
+    }
+  },
+  "raw_result": {
+    "status": "resolved",
+    "summary": "Actual human approves the requested changed fixture diagnostic route. One additional actual standard runner invocation only (cumulative fourth); earlier three actual runs and distinct pre-launch error remain recorded. Preserving exception changes only diagnostic fixture behavior; no proof that original failure or logger leak is fixed."
+  },
+  "summary": "Resolves only the paused diagnostic-continuation blocked hold; no production, architecture, source contract, PRD, resource, paid-provider or authority expansion. Existing resource authorization applies; all formal gates and owner/model strategy remain.",
+  "unchanged": "Governed recovery6/pause7/diagnosis/history/definition ownership/accepted plan+definition and implementation approvals; no waiver, merge, push, history rewrite or new story."
+}

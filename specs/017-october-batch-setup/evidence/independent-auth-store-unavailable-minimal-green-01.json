@@ -1,0 +1,11 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberLocalAuthorityTests.AuthenticateAsync_UnavailableIdentityStore_ReturnsUnavailableWithoutSession'",
+  "exit_code": 0, "trx_path": "TestResults/isolation-5c2a04d06c35478c9142761e2e40b7cc/results.trx", "counts": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "summary": "Actual scoped Identity database failures DbException/DbUpdateException/TimeoutException map to sanitized Unavailable/null without retry or log. Input format/InvalidOperationException catches localized to credential ReadAsync so unrelated programming errors are not suppressed. Caller cancellation remains Cancelled. Raw store RED retained.",
+  "regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests'", "exit_code": 0, "discovered": 3004, "selected": 27, "passed": 27, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-5be231bbabb7404e9fde1ed87d83c288/results.trx"},
+  "source_sha256": "0ca9ecd4e007dc4d6f488a5dd19f4dd9858b05b12455dd73d8b1ae8c6bcbe61a",
+  "final_shape": "Production owner assessed localized input and DB failure responsibilities; no further local refactor needed for this slice. T006/T007 remain open.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "classification": "expected-development-red-to-green"}
+}

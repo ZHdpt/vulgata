@@ -1,0 +1,20 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "bounded-nonbehavioral-cleanup-green",
+  "source_commit": "9ec2a6fe17947a4cec9445f79255823ba6dfc1f1",
+  "task": "T026", "verification_route": "Unused-code removal with consumer/compile checks and before-after controlled regression; no fabricated RED.",
+  "deleted_paths": ["src/dotnet/Vulgata.Web/Data/OctoberSelectedDataStartupBinder.cs", "src/dotnet/Vulgata.Web/Data/OctoberSelectedDataBoundSetup.cs"],
+  "partially_cleaned": { "path": "src/dotnet/Vulgata.Web/Data/OctoberGeneratorCertificateVerifier.cs", "sha256": "6e6cab5d4c342bf9a4a1ed1f52b9dcb3b3878a76d4ac1530f8d77e78e25c1f04", "removed": "Only unused OctoberWebMode/OctoberWebStartupSelection/OctoberWebStartupSelector block (53 lines)." },
+  "safe_boundary": "Remaining OctoberWebTargetAllowlist/certificate verifier/result types have tracked legacy service/endpoint consumers and the protected unrelated activation draft. Retain them; do not claim third file deleted. Former endpoints remain unmapped under existing controlled route-absence checks.",
+  "consumer_check": "No retired selected-Web type names remain across assigned src/tests after cleanup. Headless Identity/current authority, generator/provider/source adapters and Core/persistence contracts unchanged.",
+  "owner_tool_note": "Owner reported apply_patch deletion failed twice for the two exact tracked files, then used verified exact nonrecursive Remove-Item -LiteralPath. Record this tool-method deviation truthfully; no broader deletion/waiver. Both files are recoverable from Git.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~LlmProviderConfigTests|FullyQualifiedName~SystemLlmProviderOverrideTests|FullyQualifiedName~RoleSeedingAndAuthorizationTests|FullyQualifiedName~LoginLogoutTests'",
+  "environment": "Short process-local native pwsh/Windows/System32/Windows/dotnet/Docker/Git PATH; DOTNET_SYSTEM_GLOBALIZATION_USENLS=1; telemetry optout=1.",
+  "run": "TestResults/isolation-bc11344c69a04627881e0eabf11decd5",
+  "counts": { "discovered": 3076, "selected": 43, "passed": 43, "failed": 0, "skipped": 0 },
+  "build_log_sha256": "6933a6ee09d669ef9306ff9f748e77df3fa730e84985708f53f4062e3d8daa43",
+  "trx_sha256": "ca24a6acbaeca02d54c699dac3ac1cc35f3630a88d9dcadb99320e2428a1b554",
+  "diff": { "paths": 3, "insertions": 0, "deletions": 168, "diff_check_exit": 0 },
+  "production_owner_assessment": "Removed obsolete selected-Web startup state/binder only; preserved actual adjacent consumers and authority/generator/source responsibilities. No concrete further local refactor within assigned boundary.",
+  "not_qualified": "No PostgreSQL/process/provider-administration runtime execution. Compiled runtime-test reconciliation remains unexecuted; positive separate-Identity and PG provider-admin coverage gaps remain under accepted tasks.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true }
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "first-development-test-fixture-failure",
+  "source_commit": "fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+  "task": "T020",
+  "run": "TestResults/isolation-2e524b0cd97246a88076c5f1ad1c43b4",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.October.OctoberHostSelectionTests'",
+  "counts": { "selected": 21, "passed": 20, "failed": 1, "skipped": 0 },
+  "trx_sha256": "60f7bc5f00fdf0b698cb45ebf199b947eb0711c3588b214f50a91b47b9008216",
+  "build_log_sha256": "1fc0fd630e6d2be719a78286acc23203f4e34da1140aea776bf0c8fc787bc826",
+  "test_sha256": "09059fdb73394617ffa243e86fd19658e8df75eaf6a00aeb1dfe12cfdb628659",
+  "summary": "The newly added process provider-administration helper passes the fixture root ServiceProvider to CreateProviderAdministratorAsync, which resolves scoped RoleManager. Scope validation correctly rejects that test call. The ordinary Web process itself started, migrated, seeded roles and passed preceding browser/domain checks. This is distinct from the corrected role-order defect, and is its first development failure, not a failed repair or independent review/convergence result.",
+  "correction": "Create one AsyncServiceScope for the helper and use its scoped ServiceProvider for synthetic account creation, database reads and account deletion. Preserve the actual HTTP/browser assertions and existing host count. Rerun the affected A/B process case only; retain 20 passing cases for unchanged scope.",
+  "accounting": { "counted": false, "authority": "specs/017-october-batch-setup/evidence/development-failure-accounting-correction-01.json", "failed_results": 7, "pause_at": 8 },
+  "cleanup": { "container_absent": true, "volume_absent": true, "root_independently_verified": true },
+  "qualification_claim": false
+}

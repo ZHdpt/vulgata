@@ -1,0 +1,29 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-diagnostics-gap/1",
+  "source_commit": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+  "observed_at": "2026-10-01T17:08:14.492383Z",
+  "summary": "Concrete unfinished T027/T028 obligation: FR010 requires sanitized setup outcomes and failure classification. Actual CLI emits no outcome, discards closed module classes and catches every exception as exit1. Safe nonzero exit is not classification. Existing public executable seam and approval permit ordinary behavioral RED/minimal GREEN; no plan restart, external prerequisite or new architecture/resource permission.",
+  "authoritative_inputs": [
+    "specs/017-october-batch-setup/spec.md#FR-010",
+    "specs/017-october-batch-setup/plan.md#ID-F01",
+    "specs/017-october-batch-setup/tasks.md#T027",
+    "specs/017-october-batch-setup/tasks.md#T028",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md"
+  ],
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3",
+    "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+    "specs/017-october-batch-setup/plan.md": "119a56fd62cc4f8750aa5d685d7ff34973ab1c3549600f6f252b19a770ddbfa3"
+  },
+  "raw_result": {
+    "owner": "retained tdd-implementer Sol/medium",
+    "outcome": "unfinished-diagnostics-behavior",
+    "assessment": "FR-010 is not fulfilled at the actual generator CLI. It requires sanitized selection/configuration outcomes and failure classifications; Story 4 also says diagnostics identify selected batch/configuration state. Main emits no setup outcome, collapses provider failure and every module status to exit1, and catches all exceptions into the same exit. Existing executable tests capture stdout/stderr but assert only secret exclusion and exitcode.",
+    "scope": "Smallest in-scope CLI outcome is Prepared/Selected with exact batch and target/configuration state; distinguish invalid startup/provider configuration or credential binding from module closed Denied/AuthorityUnavailable/TargetUnavailable/Cancelled. No connection strings, credential references, paths, raw context/source or tool/paid-provider/Knowledge readiness. Factor detail unavailable in module must not be invented. Accepted executable seam and T027/T028 already permit RED/private formatting correction, no new public formatter/architecture/approval/resource prerequisite. No changes or runs."
+  },
+  "next": "Allow current retained test owner to complete parser/auth coverage. Then one public CLI diagnostic RED, retained production owner minimal approved correction, both final-shape assessments and focused/surrounding GREEN before final qualification.",
+  "recovery": "Known unfinished approved behavior, not independent negative review/convergence or recurrent failed completed repair. Count6/pause7, owner/diagnosis/holds/approvals unchanged.",
+  "technical_read": "Read-only authority text check first hit automatic permission-review deadline before process creation; exactly one permitted retry succeeded. No mutation, test result or workflow failure inferred."
+}

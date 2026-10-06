@@ -1,0 +1,21 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "summary": "Retained test owner explicitly paused all writes/builds after static handoff; producer can perform one-file minimal GREEN. Exact initial RED invocation now confirmed by owner. No new plan/authority/resource decision; recovery6/7 unchanged.",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/selected-web-management-retry-transition-proposal-01.json",
+    "sha256": "cddeec5b79d531a0718b281b2c4e34d8c0ba7747d8619b6c7e4a71147e6fc821"
+  },
+  "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "test_boundary": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "143038c1b4cd2aedee2b7becbe9bc10bae02e356ecfc7e01159c5533e14a63b8",
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "75f62e470f18124841dd820231957e9c3670a1c344c499aeeb106f5cbbb0180e",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "3fb530cc3df140c01b487097176431e4b0142fa60bf8d6f7836857f8182c7faa"
+  },
+  "exact_red_command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~SelectedWebProcess_RestartFromOwnedTargetAtoB_BindsEachBatchWithoutBrowserAuthority'",
+  "raw_production_diagnosis": "Read-only diagnosis complete (no edits/build/tests). Route: changed production behavior, so keep the supplied actual-process RED and require minimal GREEN. `Program.cs:503` registers `IDbContextFactory<VulgataDbContext>` using Npgsql `EnableRetryOnFailure(3)`; selected startup invokes binder at `Program.cs:120`. `OctoberLocalAuthority.CaptureCurrentContextAsync` begins `IsolationLevel.Serializable` user transaction at line 597, then performs EF management queries within it and commits at 701. Actual `execution.log` shows successful Identity/auth and October metadata SQL, followed by EF query `NpgsqlRetryingExecutionStrategy` rejecting that manually opened transaction; Program exits `selected-data startup failed: Unavailable` before HTTP readiness. Proposed one-file production fix: in `CaptureCurrentContextAsync`, create `management.Database.CreateExecutionStrategy()` and execute the entire existing serializable transaction, all management reads/context projection, and commit inside its `ExecuteAsync` delegate, propagating the existing cancellation token and returning the same nullable snapshot. This keeps serializable coherent capture and ordinary Npgsql retries; no registration/configuration/public contract changes. Assess callers `AuthorizeSelectionAsync` and `IssueSourceApprovalAsync` because both use this method. Focused post-write command when root authorizes: `pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~SelectedWebProcess_RestartFromOwnedTargetAtoB_BindsEachBatchWithoutBrowserAuthority'`, then surrounding authority/host suites per task. The prior SourceStorage root harness issue is separate. No consequential design decision appears necessary.",
+  "verification_route": "Behavioral RED/minimal GREEN/final surrounding GREEN; assertion and schema/authority/serializable snapshot preserved.",
+  "permitted_write": "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+  "unrelated": "OctoberBatchActivationService.cs is preserved unregistered dirty draft, not owned correction.",
+  "cleanup_interpretation": "Prior raw owner message said cleanup-inspect[]; root observes pre-removal label/mount JSON in that file. Actual absence is established by later volume-absence logs/live exact-container inspection, not by cleanup-inspect."
+}

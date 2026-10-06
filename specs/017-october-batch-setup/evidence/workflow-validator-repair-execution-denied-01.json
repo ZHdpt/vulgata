@@ -1,0 +1,27 @@
+{
+  "kind": "analysis",
+  "status": "blocked",
+  "summary": "The user authorized the bounded validator correction and the test owner produced honest public-seam RED coverage, including the live post-production closing_gate=verify boundary. The execution approval layer nevertheless rejected the exact one-line production-boundary predicate twice as a workflow-sequencing expansion and explicitly prohibited workaround or indirect execution. The partial pre-production candidate was removed; installed validator scripts are unchanged. Story delivery cannot safely dispatch plan review or tasks without an accepted workflow repair.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "authorization": {
+    "path": "specs/017-october-batch-setup/evidence/workflow-validator-repair-authorization-01.json",
+    "sha256": "5e0691063e8e452b73d5621a636f8dac63399b846a3a26df82a0373aa668f16e"
+  },
+  "regression_test": {
+    "path": ".governed-delivery/tests/test_plan_review_recovery.py",
+    "sha256": "ec14737786e7a8957fc6a25ee88b98eb1d21bf5cb6aaa0d9f2f40024d06f0e21",
+    "command": "python -m unittest discover -s .governed-delivery/tests -p 'test_plan_review_recovery.py' -v",
+    "result": "4 tests: 2 expected behavioral RED failures for pre-production and post-production plan-review dispatch; 2 restriction/freshness counterexamples pass"
+  },
+  "denied_change": "Permit the existing fresh-plan plan-review recovery exception when closing_gate is either definition-review or verify, while retaining action=correct, earliest_owner=tasks, no holds, count below pause_at, architecture classification, invalidated/revised plan gate, definition-reviewer role and authenticated current plan ancestry.",
+  "preserved": {
+    "failed_results": 4,
+    "pause_at": 5,
+    "earliest_owner": "tasks",
+    "closing_gate": "verify",
+    "definition_author_profile": "definition-author-recovery",
+    "story_implementation_resumed": false,
+    "validator_scripts_modified": false
+  },
+  "required_resolution": "An approved installed-workflow update must implement and independently verify this exact post-production recovery route. Until then, do not bypass the targeted guard, alter closing_gate, reset recovery, dispatch the reviewer directly or authorize tasks."
+}

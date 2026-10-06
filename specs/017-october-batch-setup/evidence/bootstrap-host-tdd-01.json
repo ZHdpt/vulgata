@@ -1,0 +1,44 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "task_ids": ["T006", "T007"],
+  "work_kind": "behavioral",
+  "summary": "The corrected actual Program host now resolves final application configuration through the accepted explicit-factory deferred container callback, reuses one immutable selection after Build, preserves ordinary isolation and provides authenticated activation-grant issuance/validation through the concrete certificate verifier.",
+  "accepted_definition": {
+    "definition_review": {"path": "specs/017-october-batch-setup/evidence/definition-review-09.json", "sha256": "5df072d3585598a5cbd8154a7f7f33b1d2a085d0a82e68bbbad3def2913426c9"},
+    "implementation_approval": {"path": "specs/017-october-batch-setup/evidence/implementation-approval-03.json", "scope_sha256": "e100d427f8292094b8892159b22f36fedfd5747ff505c4a6920f9dc2ed55d491"}
+  },
+  "behavioral_red": {
+    "timing_failure": {"path": "specs/017-october-batch-setup/evidence/implementation-bootstrap-program-configuration-result-01.json", "sha256": "19443961768b9a7e0798a5b794162dfcb95c5a9d10b0e190f22567b7bd782ddf", "observation": "Actual WebApplicationFactory host remained Ordinary under the premature top-level configuration read; four bootstrap assertions failed."},
+    "grant_failure": {"trx": "TestResults/isolation-a3b522dfd6564e5ea02407b3bc23a3d9/results.trx", "observation": "Authenticated ManagementAccess issuance returned 503 placeholder instead of 201 Created."}
+  },
+  "minimal_green": [
+    {"trx": "TestResults/isolation-406a0afc8e24480dacc4f95b5f572b2e/results.trx", "result": "15/15 actual-host activation tests passed after deferred composition"},
+    {"trx": "TestResults/isolation-1b55fcb8f99049c092446fa85ecd3bca/results.trx", "result": "1/1 authenticated grant issue/validate test passed"}
+  ],
+  "final_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~LoginLogoutTests'",
+    "execution": "outside sandbox with user authorization",
+    "selected": 35,
+    "passed": 35,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-12773bd3bb834b239b12b582647b3dd3/results.trx",
+    "trx_sha256": "bcee86b039a9faf34ddf041a116c76cb2118912fc7f5a251f4f0e1986fcda04e",
+    "build_log_path": "TestResults/isolation-12773bd3bb834b239b12b582647b3dd3/build.log",
+    "build_log_sha256": "d56a67b4f10df439f39898e0a9ed5b8211559153ea5d957f3c2b50b3a10790b6",
+    "policy": "286 classified source files; guarded traits and helper checks passed"
+  },
+  "changed_files": {
+    "src/dotnet/Vulgata.Web/Program.cs": "833f88cd863d48faf83a16e9a1217a1f31ca2b056870c0e3382d672855969be6",
+    "src/dotnet/Vulgata.Web/Data/OctoberGeneratorCertificateVerifier.cs": "17157362bf86bac29cd26901b8c63f0086375559386ddb88374a7442fe0bf429",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationEndpoints.cs": "7f929c99ca6b77369906ea1305d9d187adbbd16b49115b790cd1635fa0e09bbd",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs": "c093bdd94725af2bb04b8a217cb2343c637bba5d1e3664d58539f57a553500a8",
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs": "8114751aebbd07d79b370ed1f546139797f5ae7763c44b6ae3e25a200bcbb1a5"
+  },
+  "test_owner_assessment": "The final tests use the actual Program WebApplicationFactory path, assert selection identity/config stability, invalid configuration failure, controlled certificate-source invocation, real cookie authentication/antiforgery and authenticated issue/validate behavior. A stale pre-login antiforgery token and stale forged-grant 503 expectation were corrected without weakening production security.",
+  "production_owner_assessment": "Program has one deferred composition entrypoint and one post-Build selection consumer; endpoints remain thin and the scoped activation service owns live Identity/Repository/context checks and purpose-bound five-minute Data Protection grants. The concrete verifier remains the single certificate gate. No local refactor was justified after GREEN.",
+  "remaining_scope": "Selected-data composition, generator prepare/select, October database runtime qualification and real TLS/PostgreSQL evidence remain later tasks. No external resource qualification is claimed."
+}

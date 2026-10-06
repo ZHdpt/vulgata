@@ -1,0 +1,44 @@
+{
+  "kind": "human-approval",
+  "stage": "recovery-extension",
+  "status": "accepted",
+  "decision_id": "18-4/recovery-extension/implementation-setup-seam-01/3",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "pause_at": 8,
+  "scope_sha256": "98ab5af7cd80d94d27f84ff53a9059d4832d3afad59c5af425c9e0bb959b839f",
+  "recovery_boundary": {
+    "episode_id": "18-4-implementation-setup-seam-01",
+    "failed_results": 7,
+    "pause_at": 7,
+    "last_result": {
+      "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-recurring-failure-01.json",
+      "sha256": "2b5294b9b540da91da2f7b93f5538583e6db543a8e077b0356b0ba593ebb667e"
+    },
+    "transition_head": {
+      "path": "specs/017-october-batch-setup/evidence/transitions/transition-0124-ordinary-web-pg-role-order-diagnosed.json",
+      "sha256": "3b47b44d3709828dff99e05512ca6780b39f209a6d7f30e65c81d3e12461de14"
+    },
+    "artifacts": {
+      "plan": {
+        "path": "specs/017-october-batch-setup/plan.md",
+        "sha256": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd"
+      },
+      "spec": {
+        "path": "specs/017-october-batch-setup/spec.md",
+        "sha256": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864"
+      },
+      "tasks": {
+        "path": "specs/017-october-batch-setup/tasks.md",
+        "sha256": "e49c76e9c2e24da858d6afd055b979f7e66ae4710d096d60d365264281d44f4c"
+      }
+    }
+  },
+  "changed_approach": "Correct only T029 fixture ordering: run existing ordinary Web startup for B before comparing equivalent ordinary snapshots, assert seeded roles after each startup, preserve October/history/non-seeding/A-B isolation checks without another host. Recheck affected PostgreSQL qualification, then continue existing delivery gates; no production or definition redesign, new resources or test weakening.",
+  "decided_at": "2026-10-05T12:29:07.622Z",
+  "user_source": "Current assigned runner chat; latest direct human reply 'Approve' to root's finite7-to8 role-order correction request following checkpoint22 fb2d0131780932ff46d76a0a44526b7d9ad15f89",
+  "user_instruction": "Approve",
+  "approved_request": "Approve a finite extension7-to8 to correct the test ordering, rerun the affected check, and continue the remaining gates? No test weakening, redesign or new resource permission is requested.",
+  "summary": "Human approves exactly one finite cumulative limit increase7-to8 for the diagnosed T029 fixture-order correction; count7, holds/owners/model strategy/accepted artifacts remain. Pause again at8. Existing delegate ceiling7 is not enlarged.",
+  "unchanged": "Existing owned-resource grant, accepted plan/implementation authority and every downstream gate. No production/design/source contract change, new story, merge/push/history rewrite or waiver."
+}

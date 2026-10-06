@@ -1,0 +1,44 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "checkpoint_id": "bmad-18-4-implement-20261005T120840Z-c1af22",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "expected_parent": "2d438c6a11812dfeff2a662566c5a3345f383b00",
+  "summary": "Evidence-only safe pause after one same RoleCount fixture failure recurred after attempted repair. Count7/limit7, current diagnosis and test owner retained. Initial development failures noncounting;95 PG passes retained. All owned runtime resources cleaned; no failing test code committed.",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-pg-provider-login-oracle-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-recurring-failure-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-diagnosis-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0123-ordinary-web-pg-role-order-recurring-failure.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0124-ordinary-web-pg-role-order-diagnosed.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-22.json"
+  ],
+  "unverified_test_edits_preserved_unstaged": [
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs"
+  ],
+  "excluded_unrelated": [
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "preserved": {
+    "completed_tasks": 23,
+    "total_tasks": 30,
+    "failed_results": 7,
+    "pause_at": 7,
+    "holds": [],
+    "definition_profile": "definition-author-recovery",
+    "definition_review": "accepted14",
+    "plan_review": "accepted15",
+    "approvals": "06/08 unchanged",
+    "production": "unchanged"
+  },
+  "next_decision": "Human-only fresh finite recovery extension7-to8 for explicit test ordering correction and affected PG rerun; no extra host, production/definition change, new permissions or waived gates. Pause again at8. Delegate ceiling7 unchanged.",
+  "workers": "All idle; no further edits/runs without fresh reached-limit decision.",
+  "no_merge_push_rewrite": true
+}

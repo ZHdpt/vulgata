@@ -1,0 +1,67 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-executable-prepare-red/1",
+  "source_commit": "eaa8842a2b2d873ba166720020d8793dfa825d24",
+  "observed_at": "2026-10-01T14:11:43Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0088-selected-web-provider-utf8-loading-expected-red.json",
+    "sha256": "7cf4928765cf52b46b9c2231270861926264a7e9060b8dd2dea087361e75fd38"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "dec0c301025fd9605d75c76db3b071e8ba7f425f8b80ccd034b52e5a95e9d930",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "38a176e8d8b1c0d34f5f417b488b4f27404a8e52f2cc694ed59b3e6aac6b9152",
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "586d3fc18f0b733d53a24e49eee633563b1014f8e9b13c4bf6ad91745b70db50",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberConfiguredTarget.cs": "7bb6c5a79521c858bea6f99cdf7136e028b4d042322f98a10da22c6e46a231a5"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "discovered": 3089,
+    "build_errors": 0,
+    "trx_path": "TestResults/isolation-60d9a771f5db4f759359428ef0941ef7/results.trx",
+    "trx_sha256": "9e9022fe1dbcf3af3f5e63043e90718d6586fc5c959e2638dce2330eb9aeeab2",
+    "child_exit_code": 1,
+    "failure": "Expected-success assertion after secret/connection/path guards; real child Main stub returns1.",
+    "fixture_precondition": "Actual owned PG OctoberLocalAuthority authenticated seeded operator and authorized prepare request; October schema still absent. Fixture session disposed before child start."
+  },
+  "resources": {
+    "boundary": "specs/017-october-batch-setup/evidence/generator-executable-development-resource-boundary-01.json",
+    "run_id": "60d9a771f5db4f759359428ef0941ef7",
+    "container": "vulgata-test-60d9a771f5db4f759359428ef0941ef7",
+    "volume": "vulgata-test-data-60d9a771f5db4f759359428ef0941ef7",
+    "database": "vulgata_story184_generator_b79750d3bac346da9338fe4d94f3285f",
+    "temp_root": "C:/Users/13728/AppData/Local/Temp/vulgata-tests/story184-generator-60d9a771f5db4f759359428ef0941ef7-f28637207cfa4e5aa6af212e0a001e5c",
+    "child_pid": 50128,
+    "cleanup": "TRX confirms exact recorded database/temp removed; root verified exact container label, only expected volume mount and volume absence.",
+    "cleanup_proofs": [
+      {
+        "path": "TestResults/isolation-60d9a771f5db4f759359428ef0941ef7/cleanup-inspect.log",
+        "sha256": "b779e16ee7dc23df6e99bc4ade9c65e02f5b50ce9b2a864f4114f6b49a0f0eb1"
+      },
+      {
+        "path": "TestResults/isolation-60d9a771f5db4f759359428ef0941ef7/owned-mounts.json",
+        "sha256": "9c92b3ab26238269f4de7806dd0d073d552f524369aa5b7ae5878441759c9620"
+      },
+      {
+        "path": "TestResults/isolation-60d9a771f5db4f759359428ef0941ef7/volume-absence.log",
+        "sha256": "c1354d0dc457a18d7b7c46166b48e04e50f4d3eb1776c25a2ff7e56f0daff9a1"
+      }
+    ]
+  },
+  "ordinary_development_corrections": {
+    "username": "Root correction analysis generator-executable-fixture-correction-01.json; original TRX c5cb17 unchanged. Corrected fixture now proves valid real operator. Not a workflow failure.",
+    "initial_compile": {
+      "classification": "Test-only xUnit assertion overload CS1503; no test fixture/database ran. Runner container/volume cleaned; not behavioral RED and noncounting.",
+      "path": "TestResults/isolation-12979c0ffb5f420e99bae472cc19c6a4/build.log",
+      "sha256": "1ae1cb5b0922cd16c0ab06f0477afadba834e0d01fbd4255159a54befa1da586"
+    }
+  },
+  "qualification": "One accepted executable-seam development RED only, not final T020/T029 qualification. Production correction next under current approval. Expected RED does not increment/reset recovery6/pause7 or waive gates."
+}

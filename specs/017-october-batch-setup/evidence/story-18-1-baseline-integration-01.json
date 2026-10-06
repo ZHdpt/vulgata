@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "kind": "analysis",
+  "stage": "plan-review",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "recorded_at": "2026-09-29T08:42:56.1193199Z",
+  "summary": "The authorized merge brings the completed Story 18.1 baseline into the Story 18.4 branch. This satisfies baseline availability only; Story 18.4's deferred prepared-source assumptions must now be reconciled by the plan owner and independently reviewed before tasks.",
+  "merge_authorization": {
+    "source_thread_id": "01a0e5e1-ee94-7362-9b1f-2c61e2c5d536",
+    "turn_id": "01a0ec4e-f553-7cc3-b117-15f7d39a0f80",
+    "message_id": "01a0ec4e-f604-7090-88ce-ea8b840d7539",
+    "text": "Approve merge-in-place",
+    "scope": "Merge pinned oct14/main into Stories 18.2 through 18.4 only; this is not planned-change or implementation approval."
+  },
+  "integration": {
+    "story_branch": "oct14/story-18-4",
+    "story_tip_before_merge": "dd48172477b8ed29e299f841298d6fdad8813346",
+    "pinned_main": "f7a80cad6ac5b73a2a02ae015e4347590b6200ff",
+    "merge_base": "5e5553374b342fb658776fbfcb86c6e06513832a",
+    "story_18_1_completion_commit": "3632b2cc5e0752b66162e71ec4da95628fe3efcd",
+    "story_18_1_completion_is_ancestor_of_pinned_main": true,
+    "history_preserved": true
+  },
+  "verified_story_18_1_boundary": {
+    "status": "done",
+    "feature_directory": "specs/016-contained-source-tools",
+    "workflow_state": "specs/016-contained-source-tools/workflow-state.json",
+    "accepted_contract": "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+    "core_contract": "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+    "issuer": "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs",
+    "worker_functions": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+    "final_verification": "specs/016-contained-source-tools/evidence/final-verification-01.json",
+    "contract_summary": [
+      "Trusted composition supplies PreparedSourceGrantRequest with an application-held physical root and exact PreparedSourceApproval tuple.",
+      "PreparedSourceContextIssuer requires IPreparedSourceCurrentAuthorityVerifier and returns a bounded IPreparedSourceReadContext.",
+      "Current authority is rechecked through issuance and disclosure; revocation, change or unavailability fails closed and invalidates continuations.",
+      "PreparedSourceFunctions borrows one issued context and exposes exactly list_prepared_source, read_prepared_source and search_prepared_source with closed schemas.",
+      "Repository-relative results, cancellation, disposal, budgets and truthful limited or denied outcomes are part of the accepted boundary."
+    ]
+  },
+  "conflict_resolutions": [
+    "docs/bmad/implementation-artifacts/sprint-status.yaml keeps Story 18.1 done and Story 18.4 in-progress.",
+    "docs/agents/project-state.md keeps current workflow and test policy, the completed integrated Story 18.1 baseline, and Story 18.4's plan-only reconciliation hold."
+  ],
+  "required_plan_reconciliation": [
+    "Replace the deferred ID-I04 association with an explicit adapter to PreparedSourceApproval, PreparedSourceGrantRequest, PreparedSourceContextIssuer and IPreparedSourceCurrentAuthorityVerifier without exposing PhysicalRootPath or authority selectors to model arguments.",
+    "Define how the selected October batch, Repository membership, operator subject, Worker-source-read purpose, approval identity and root-binding identity populate and refresh the exact Story 18.1 approval tuple.",
+    "Define ownership and lifetime for the issued IPreparedSourceReadContext and PreparedSourceFunctions, including revocation, authority unavailability, cancellation, disposal and continuation invalidation.",
+    "Reconcile data-model cardinality and persistence so Story 18.4 stores only durable selection or opaque binding references and never treats a physical root, live context or continuation as durable authority.",
+    "Replace provisional ID-T04 wording with tests against the actual issuer, current-authority verifier and three-function contract, while preserving Story 18.1's DB-free direct qualification and avoiding duplicate source-access contracts.",
+    "Reassess FR-011, SC-006, implementation-design IDs and the planned-change trigger, then rerun deterministic plan validation and independent plan-only review before any task generation."
+  ],
+  "workflow_effect": {
+    "event": "invalidation",
+    "owner": "plan",
+    "failed_results_unchanged": 1,
+    "pause_at_unchanged": 4,
+    "plan_only_hold_retained": true,
+    "tasks_present": false,
+    "approval_granted": false,
+    "implementation_authorized": false
+  }
+}

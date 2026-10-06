@@ -1,0 +1,28 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/source-approval-identity-verify-red/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0104-source-approval-identity-issue-expected-red.json",
+    "sha256": "b5c57efc8b18f3ca9bc155c0bfb928330316e4c7e06fec9a47c1b23cbfde3028"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "4fe0660dd8a5904d771fd1aeb973e5047da9db053b887466d260c1a087a46f91",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "06765d0a65f2b5ab6ee3f18169d60e573eb453568d2b1d4f1ea19661426bf153"
+  },
+  "raw_result": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~VerifySourceApprovalAsync_DoesNotReturnCurrentWhenFreshIdentityDatabaseChanges'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-f775a11f07704f77b356fcfea703bede/results.trx",
+    "trx_sha256": "5dba605c985e5a40625023af059cf30b8afd326896dafcb6f9387ed6099bc803",
+    "failure": "Approval issued and verified Current on A before switch to actual fresh scoped B with matching synthetic subject/stamp/role. Verify after switch returned Current; expected notCurrent. Later nullpayload assertion notrun.",
+    "seam": "IOctoberLocalAuthority.VerifySourceApprovalAsync, accepted fresh current-authority source approval verification.",
+    "cleanup": "Fixture drops successfully created owned A/B with absence checks; generated names not emitted in thisrunTRX/logs (honest receipt limitation, no rerun). Root read cleanup and []/named-volume-absence receipts forf775a11f07704f77b356fcfea703bede."
+  },
+  "scope": "Expected RED for unfinished Verify slice after Issue minimalGREEN, noncounting. Same-tool clarified Verify dispatch accepted after earlier stale-slice scope rejection; no alternative edit route. No Revoke/production changes yet."
+}

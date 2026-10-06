@@ -1,0 +1,42 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0086-selected-web-provider-selector-conflict-expected-red.json",
+    "sha256": "f508dfb9421fe43970247d28f2c59b5b5a53d44885721e7cca1b100120b9ce82"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsCompetingProviderSourceIdentityBeforeCredentialWork'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-51c4fa8667264fb2990186f0559e0f45/results.trx",
+    "trx_sha256": "97b0823a44417aca307899f7c339c207df59097fa828a733ef955f6dd73bdf30",
+    "independent_prior_green": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant|FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication|FullyQualifiedName~SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically|FullyQualifiedName~SelectedDataStartup_RejectsDistinctProviderFileSelectorsBeforeCredentialWork'",
+      "exit_code": 0,
+      "selected": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-fdcad5f1ef6c4dc3bb02b79c57365b3c/results.trx",
+      "trx_sha256": "7a8cf3763452473e69e629b75f7004b95b3e503c5c90f979629627d2a7c5d6e7"
+    },
+    "input_hashes": {
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "e9424a62a26df9391094a5ce42c528738f724404c43bf9ef3c22483699a73239",
+      "src/dotnet/Vulgata.Web/Program.cs": "851e9c89a23fca1c844d81fc01491fe020787dfb26f0950090dbfb4fc9bdeae8"
+    },
+    "failure": "Otherwisevalid completeJSON plus distinct October:Providers:SourceIdentity input. Atomicityguard observes2decryptions/1credentialRead; later sanitized-failure assertions NOT reached. Build0errors; no broader regression/productionchanges.",
+    "scope": "One actualWAF competing provider-source input rejection, no ordinaryproviderregistry/reload/generator/runtime proof.",
+    "recovery": {
+      "failed_results": 6,
+      "pause_at": 7,
+      "incremented": false,
+      "reason": "Expected development RED is noncounting."
+    }
+  }
+}

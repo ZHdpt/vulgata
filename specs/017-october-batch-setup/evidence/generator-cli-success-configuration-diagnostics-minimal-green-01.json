@@ -1,0 +1,25 @@
+{
+  "kind": "implementation-evidence",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "route": "behavioral-red-minimal-green",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/generator-cli-success-configuration-diagnostics-red-01.json",
+    "sha256": "dc63103040e1d7b60e0d967dae87b0394cec1f96ba1f2fb9f69f4691438b2d8d"
+  },
+  "minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-ceb433af8342479384848eca23bc9ca3/results.trx",
+    "trx_sha256": "4c9224df7a407ec67486b4a927f3e4198923a30adbf6de3b4bd5304745ebc66a",
+    "source_sha256": "6c878644d93dfb20d77e3b878a8cccfe006def18f70045e85e8e9f2ff5cd70fd",
+    "child_exit": 0
+  },
+  "disposition": "Fixed provider configuration Bound line emitted only after complete successful binding. No provider details or paid/tool/generation readiness. Minimal GREEN only; coherent-group final checks pending.",
+  "resource_evidence": "TestResults/isolation-ceb433af8342479384848eca23bc9ca3",
+  "cleanup_owner_report": "Exact owned database/temp cleanup recorded; container inspection empty, named volume absent.",
+  "workflow": "Recovery6/7 and unchanged approvals retained."
+}

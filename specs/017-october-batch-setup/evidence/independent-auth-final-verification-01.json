@@ -1,0 +1,36 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+  "summary": "Independent final verification: authentication tracers2/2 PASS, IdentityRegistration16/16 PASS. LoginLogout run aborted inside CLR reflection/EF model construction with0x80131506, not an assertion failure. Cause unknown; test active at crash may not be cause. Bounded nondeterminism isolation permitted: one fresh-process exact active test, then class once only if isolation passes. Original class attempt1 plus at most two diagnostic invocations; no unchanged blind retry, code/config/assertion changes or substantive count increment.",
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'",
+      "exit_code": 0,
+      "selected": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-68ee2eb54010430eb63d016b3ac7a06d/results.trx"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~IdentityRegistrationTests'",
+      "exit_code": 0,
+      "selected": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-7b6f72bfa9ad4a7ca37ccbe7d77b96d7/results.trx"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~LoginLogoutTests'",
+      "exit_code": 1,
+      "outcome": "test-host-aborted",
+      "assertion_failures": 0,
+      "trx_path": "TestResults/isolation-321525bd95f64ba688649f63deb0267c/results.trx",
+      "execution_log": "TestResults/isolation-321525bd95f64ba688649f63deb0267c/execution.log"
+    }
+  ],
+  "final_shape": "Test owner assessed public production seam fixtures, real Identity manager APIs, owned SQLite, controlled inputs/time, independent expectations, session disposal; no local defect found.",
+  "remaining": "Authenticator positive path and broader auth/failure/session/credential matrix; selection/approval/host/runtime qualification. No T006/T007 completion."
+}

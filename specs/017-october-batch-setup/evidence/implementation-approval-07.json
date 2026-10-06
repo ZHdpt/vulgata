@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/7",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-10-01T10:40:48Z",
+  "scope_sha256": "a5cc0f474dda3b2e1cef7d39079a4c881ba67b71e11276c0b70d50ab43e5f9f1",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread01a0e708-c489-7871-9f73-31413f20bf2c; turn01a0f70c-3170-7260-80eb-271750fdce72; message msg_0e55faeae43f1fb3016abe389e4ee081969b0682e388f87227",
+  "response_text": "APPROVE — 18-4/implementation-approval/7. Approval binds to: HEAD: af9872a62fa5805bc4f9b590f54d467da8247b07 Definition review 13 ACCEPT, SHA-256: f798079c4a751f32c184cf799b46218f1d8fb5789cfa6ef25479212c4f925629 Exact eight-path diff SHA-256: 9ec8adf35228160a119a92863f537c660db73bebb368be298d771ab5fd769207 All eight current artifact hashes match. The corrected definition separates setup-session disposal from source-adapter qualification and establishes executable provider declaration → behavioral RED/GREEN → host-wiring dependencies without a qualification cycle. Proceed with dependency-ready implementation and normal delivery within this accepted Story 18.4 boundary. Preserve completed work, current owners/model strategy, verification routing and all remaining review, convergence, lookback, E2E and final-verification gates. Recovery remains 6/7, with no holds. This grants no reset, extension, waiver or runtime-resource permission; qualification must use the separately authorized resources. Later generation, Worker dispatch, JDT-LS, CodeGraph and Knowledge/Chat remain excluded. The story root alone records and validates this decision before advancing.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-13.json",
+    "sha256": "f798079c4a751f32c184cf799b46218f1d8fb5789cfa6ef25479212c4f925629"
+  },
+  "summary": "Fresh corrected-definition implementation binding; dependency-ready normal Story18.4 delivery within accepted source-adapter/setup/provider/isolation boundaries. No reset/extension/waiver/resource grant. Superseded early plan1 pointer leaves compact snapshot only; durable files/Git/prior decisions/counts preserved."
+}

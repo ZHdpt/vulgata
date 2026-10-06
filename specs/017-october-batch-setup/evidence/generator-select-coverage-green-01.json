@@ -1,0 +1,48 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-select-coverage-green/1",
+  "source_commit": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+  "observed_at": "2026-10-01T15:35:11Z",
+  "verification_route": "Test-only coverage of already implemented actual generator select; no production write or fabricated RED.",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "b43acc636370d1570beef050bfde781ac101c4b0691c08c4fa1ea434088be52d",
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberConfiguredTarget.cs": "7bb6c5a79521c858bea6f99cdf7136e028b4d042322f98a10da22c6e46a231a5",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs": "c49f9d8e5d71b2dae5b6fc30ce88a147fac592103177099729323f6a1aca2342"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorSelect_WithWebStopped_ReturnsExistingBatchWithoutChangingCommittedState'",
+      "exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0,
+      "trx_path": "TestResults/isolation-1271f6f8d03d49178089fe41ae32b53b/results.trx",
+      "trx_sha256": "efc0af6b16928a1f3db62ea79355dd58d9f419e80b94dc00d4f4157205bede9a"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+      "exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0,
+      "trx_path": "TestResults/isolation-3874518b80444b4a967ae15e8a01760a/results.trx",
+      "trx_sha256": "65164517b3c3dc8237f9b36408b57a4ad0bee7d316b0875e5362b36982c0f4c4"
+    }
+  ],
+  "owned_runtime": {
+    "authorization": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+    "select_run": "1271f6f8d03d49178089fe41ae32b53b",
+    "database": "vulgata_story184_generator_3047afe0910049f7857592fb84b68891",
+    "children": [{"mode": "prepare", "pid": 5072, "exit_code": 0}, {"mode": "select", "pid": 40392, "exit_code": 0}],
+    "cleanup": [
+      {"path": "TestResults/isolation-1271f6f8d03d49178089fe41ae32b53b/cleanup-inspect.log", "sha256": "220a4bca0cd161ebbe678389071e2530a630fe22104be8e5dcd594ff84aca4e5"},
+      {"path": "TestResults/isolation-1271f6f8d03d49178089fe41ae32b53b/owned-mounts.json", "sha256": "c21950d5bf759977a58629f2e94b3a7530fb58a1f379a07836c56f2838366aab"},
+      {"path": "TestResults/isolation-1271f6f8d03d49178089fe41ae32b53b/volume-absence.log", "sha256": "f6f4fbb615d6070764051929281616ebc0b1d379bc03f6fa5af6ec12944b2e87"}
+    ],
+    "cleanup_verified": "Both TRXs record exact successfully created database/temp cleanup. Fresh launcher-owned container/volume labels and recorded mounts; exact volume absent. No Web process/listener, shared database, credential or paid provider."
+  },
+  "raw_result": {
+    "owner": "retained tdd-test-author Luna/high",
+    "outcome": "passed",
+    "coverage": "Separate prepare/select children against same fresh owned PostgreSQL17 with Web stopped; select supplies no SetupRequestJson. Public bound snapshot including digest/context/original UTC time equals preselect snapshot. Applied migration IDs, table/column/constraint/index catalog and row counts remain unchanged.",
+    "limitation": "Observed state stability does not establish whether a migration attempt occurred.",
+    "assessment": "Original prepare assertions preserved; real CLI/public selection and owned resource guards. Existing E2E inventory. No concrete test-unit refactor needed."
+  },
+  "root_disposition": "Continue coherent actual-generator host coverage with one provider-denial scenario. Production unchanged, no whole task or final qualification claim; recovery6/7 and accepted gates retained."
+}

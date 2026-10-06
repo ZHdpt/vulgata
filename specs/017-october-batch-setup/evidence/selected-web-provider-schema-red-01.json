@@ -1,0 +1,32 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0084-selected-web-provider-document-expected-red.json",
+    "sha256": "0a42dafc1f33d9a241640fa621e6b2632584453efab837511c6c3a105dede4a0"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically|FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication'",
+    "exit_code": 1,
+    "selected": 5,
+    "passed": 1,
+    "failed": 4,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-ab18af5535f343ff800ddc01f712a225/results.trx",
+    "trx_sha256": "30d8e8d4f97339bdaad53aeb2ffded3d0f1d561265e2d0913eaccaa29ea7012e",
+    "input_hashes": {
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "37270bc8d0562e7101aa475a21dba7b36208cee01fe53a29e981024d2b47b889",
+      "src/dotnet/Vulgata.Web/Program.cs": "3115ef1fae23830392b36a4aa776b0414e9362cee2e798a87ce20e1a62a52bdb"
+    },
+    "failure": "Duplicate/unknown root and duplicate/unknown profile variants each failed count-only atomicity guard: decryptions=2, credentialReads=1. Later sanitized-failure assertions NOT reached. Unknown-API control passed. Build0errors, no ciphertext reported.",
+    "scope": "One actualWAF strict-property ambiguity rejection; otherwisevalidcompleteJSON/ownedprotectedkeys/realencryption/seededSQLite. No production changes, resources or broader regression.",
+    "recovery": {
+      "failed_results": 6,
+      "pause_at": 7,
+      "incremented": false,
+      "reason": "Expected development RED is noncounting."
+    }
+  }
+}

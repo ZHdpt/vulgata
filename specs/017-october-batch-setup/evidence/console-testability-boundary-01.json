@@ -1,0 +1,10 @@
+{
+  "kind": "analysis",
+  "stage": "plan",
+  "outcome": "changed-boundary",
+  "owner": "plan",
+  "summary": "First implementation discovery, not independent negative review or recurring failed repair: accepted interactive no-echo console behavior has only a parameterless static-console seam, while T006 requires controlled console tests without a real terminal. Console.SetIn cannot provide ReadKey events or interactive availability. Retained definition owner proposes preserving parameterless construction and narrowly exposing injected terminal availability/cancellable key input/no-echo choice/prompt output for same concrete-source verification. Proposal not yet accepted. Return only affected plan/contracts/task descriptions to retained owner; no new scope, policy/resource or Story18.1 changes.",
+  "evidence": ["specs/017-october-batch-setup/evidence/console-operator-input-red-01.json", "specs/017-october-batch-setup/evidence/console-operator-input-minimal-green-01.json"],
+  "preserved": "Unchanged specification/plan decisions, authentication/protected-file code/tests/evidence and applicable approvals. Historical count6/limit7, diagnosis/holds, profile and extension remain. Independent batch and startup-only Web selection remain. No user recovery allowance request is needed for this first design discovery.",
+  "required": "Bounded console seam correction, deterministic validation, independent affected plan review, task reconciliation and complete-definition review before adopting a new production seam. Root verifies approval continuity against unchanged semantic scope."
+}

@@ -1,0 +1,35 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0065-independent-batch-definition-review-accept.json",
+    "sha256": "729e1ec6c4d3789d5621ac1f099cc22704dc047c655ee3760b5f7d21d964c7bb"
+  },
+  "raw_result": {
+    "kind": "command",
+    "stage": "implement",
+    "outcome": "failed",
+    "source_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+    "command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --verbosity quiet",
+    "exit_code": 1,
+    "parent_command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'",
+    "parent_exit_code": null,
+    "raw_output_path": "TestResults/isolation-3e78c07ce9a249cea957993c70de1caf/build.log",
+    "raw_output_sha256": "298f045785a92c3cbb071709c24233dfed1b5d05775fb56133d437eca4d858db",
+    "summary": "Launcher stopped at build; captured Exception: dotnet failed (exit=1). No behavioral test executed or TRX. New generator-to-Web reference exposes two global Program types; existing WebApplicationFactory consumers fail CS0433. Local missing SuiteFact using was fixed after the run without rebuilding. Parent launcher numeric exit was not preserved; inner build exit1 is observed.",
+    "compiler_errors": 44,
+    "diagnostic": "CS0433: The type 'Program' exists in both 'Vulgata.OctoberGenerator, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null' and 'Vulgata.Web, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null'",
+    "input_hashes": {
+      "specs/017-october-batch-setup/quickstart.md": "d1b1a7cfc492b866c9df533deb6368478e63040496a5503e10ca3a9793fc1a1a",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "c4b01af7c972e11a3f8ad55c10711c8bc740e41525a8b097b84919553248900d",
+      "specs/017-october-batch-setup/research.md": "bd5fc9103c3fdd7b9a5d2558cdb60d551c33264be642c0abf4a238378e13c66c",
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+      "specs/017-october-batch-setup/data-model.md": "277b3b5802394d615eb4494a16e07f13db42c33375b8724adb5fe08e7f5fb766",
+      "specs/017-october-batch-setup/plan.md": "6c494db99fef0d4cca57d0082536d9433301fdf6b594a19e463ff28cfc6e7907",
+      "specs/017-october-batch-setup/tasks.md": "7cfea67d9e3be5115a4a4d4096951ab09fb7ff5914f7dae096144460b5de955b"
+    },
+    "test_hashes": {
+      "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "3b7932f8327e94ae66d13bd0b21e0bfea44a3a55644e7b65c406294530fff4b6",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "36c03bf4631c01875d142a61cc0950853514237296d9cba78dbf9b954914a772"
+    }
+  }
+}

@@ -155,6 +155,54 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberPersistenceModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberActivationApiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberSetupPolicyTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberSetupStoreTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberPreparedSourceApprovalApiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberPreparedSourceBindingTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/OctoberBatchSelectorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberContextSelectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberHostCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberHostSelectionTests.cs": {
+    "suite": "E2E"
+  },
+  "October/OctoberPostgreSqlIsolationTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/OctoberLocalAuthorityTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/OctoberLocalAuthorityShapeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberLocalSourceApprovalTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/OctoberOperatorCredentialSourceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberProviderBindingTests.cs": {
+    "suite": "SelfContained"
+  },
   "Pass1JobIdentityTests.cs": {
     "suite": "SelfContained"
   },
@@ -854,6 +902,9 @@
     "suite": "SelfContained"
   },
   "PostgreSqlHeavyCollection.cs": {
+    "suite": "PostgreSql"
+  },
+  "TestInfrastructure/OctoberOwnedIdentityFixture.cs": {
     "suite": "PostgreSql"
   }
 }

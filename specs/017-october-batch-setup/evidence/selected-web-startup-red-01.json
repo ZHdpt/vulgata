@@ -1,0 +1,12 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red",
+  "source_commit": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests'",
+  "exit_code": 1, "selected": 9, "passed": 8, "failed": 1, "skipped": 0,
+  "trx_path": "TestResults/isolation-bcfbbc7b9d7740c6a0f7f2f8d4efc771/results.trx",
+  "test_path": "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+  "test_sha256": "cfdb05dda032af85c1efbffefcf1b5e1631d851683ceaa8a5e7cdf53942c5e96",
+  "failure": "InvalidOperationException: Invalid October Web startup selection. OctoberWebStartupSelector.Resolve rejects accepted no-grant configuration before serving (OctoberGeneratorCertificateVerifier.cs:50, deferred Program.cs:235 callback).",
+  "scope": "In-process WAF startup with owned SQLite, real Identity/management records, policy/store-created batch, controlled credentials and final-configuration connection mapping. No PostgreSQL, native terminal or standalone process qualification claimed.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false, "reason": "Expected behavioral RED and corrected initial compile alias are normal development, not workflow failures"}
+}

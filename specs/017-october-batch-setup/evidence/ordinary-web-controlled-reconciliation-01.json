@@ -1,0 +1,27 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "bounded-controlled-green-with-known-remaining-test-reconciliation",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "tasks": ["T018", "T025"],
+  "production_sha256": "f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e",
+  "owned_changes": {
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "250681f27aa416457e2f759ae1c79361b16b5f0b6c915ace9fa7e9097302e4d9",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "205ca44f48f0ad298ee714cb52cd6825e2fc174320678e9353644f97b147a790",
+    "tests/Vulgata.Tests/October/OctoberSelectedWebIdentityIntegrationTests.cs": "deleted-obsolete-Web-only-tests"
+  },
+  "preserved_coverage": "Generator module tests in HostComposition; actual generator prepare/select in HostSelection; direct Identity/current authority in OctoberLocalAuthorityTests. Deleted integration file contained only obsolete special-Web cases and their Web-only fixture; history remains in Git and raw evidence.",
+  "current_coverage": "Public Build-time capture, actual Program final ConfigureAppConfiguration override and production Npgsql declarations before SQLite substitution, reload resistance, ordinary login/role seeding, missing/blank DefaultConnection static rejection. Existing route/provider binder/context/login consumers included.",
+  "fixture_attempt": { "run": "TestResults/isolation-d9a199f78c2c4d36b7d37791916aad49", "selected": 64, "passed": 63, "failed": 1, "classification": "initial-development-SQLite-fixture-warning", "primary": "PendingModelChangesWarning from SQLite-substituted Identity migration" },
+  "fixture_correction": "Same established test-only SQLite warning configuration used by existing ordinary factory, applied only to controlled SQLite substitutions. Program migrations remain unconditional; real PostgreSQL qualification must not suppress model/migration failures.",
+  "final_run": "TestResults/isolation-dca9624f8a6742e681d12f55731d9493",
+  "counts": { "selected": 64, "passed": 64, "failed": 0, "skipped": 0 },
+  "trx_sha256": "a9afac3d8824afb408edcce8a33a067b06a160848d59fd4c1810419014f2ac2e",
+  "diff_check_exit": 0,
+  "qualification": "Controlled WAF/SQLite with captured actual production Npgsql option declarations; not PostgreSQL migrations or real process/listener qualification.",
+  "known_remaining": [
+    "Adjacent read-only ActivationApi obsolete-setting failure theory contradicts revised accepted intent; same test owner now authorized to reconcile it.",
+    "Explicit retained October operational service absence and ordinary provider/browser surrounding selection finish next controlled turn.",
+    "Runtime consumer reconciliation and T026 residual cleanup, T029/T020 fresh owned runtime qualification, T030/full governed gates remain."
+  ],
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "task_markers_unchanged": true
+}

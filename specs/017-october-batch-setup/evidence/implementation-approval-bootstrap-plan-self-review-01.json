@@ -1,0 +1,38 @@
+{
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_finding": "IA-18.4-BOOTSTRAP-01",
+  "source_decision": "specs/017-october-batch-setup/evidence/implementation-approval-clarification-01.json",
+  "observed_transition": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0018-implementation-approval-clarification.json",
+    "sha256": "a22d8db70c4992892ce4a2aa1c8651d1b01872ea4afa8aa50152f035dea68ded"
+  },
+  "summary": "Resolved the first-batch bootstrap cycle in the architecture plan: an explicit authorization-only October Web composition validates a real grant without opening an October database; generator prepare then verifies and migrates the owned empty target and creates the first batch; selected-data modes require the exact existing batch. Independent review and approval reconciliation remain root-owned.",
+  "input_hashes": {
+    "specs/017-october-batch-setup/plan.md": "ea6440181d7200de742a18ee419873c89039e701fbe178ec54e169b31015abb2"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/plan.md",
+    "specs/017-october-batch-setup/research.md",
+    "specs/017-october-batch-setup/quickstart.md",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+    "specs/017-october-batch-setup/evidence/implementation-approval-bootstrap-plan-self-review-01.json"
+  ],
+  "artifact_manifest": {
+    "specs/017-october-batch-setup/plan.md": "ea6440181d7200de742a18ee419873c89039e701fbe178ec54e169b31015abb2",
+    "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "1b46d4785a70b6af47eed8a4a6b315a1a928fa5b9f95118f51efe472f1cc3b2b",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+  },
+  "finding_disposition": "The accepted plan's first-batch dependency is no longer circular. Bootstrap Web needs only existing ordinary Identity/Data Protection and management authorization reads plus deployment-owned target/certificate allowlists; it exposes only the two closed grant/validation routes and cannot reach October data. Generator prepare uses that live authority, performs a read-only connected-target identity check before the sole authorized October migration, and commits first-batch setup atomically. Generator select and selected-data Web then bind an exact existing batch; neither may migrate or fall back.",
+  "feasibility": "The ordinary Identity and management source of operator/Repository/context authority exists independently of an October database. The existing protected grant and mutual-TLS route contracts can therefore validate the first request before any October schema exists. The generator can connect to a specifically authorized empty PostgreSQL target for identity verification and migration without invoking a selector that requires a pre-existing batch.",
+  "invariants": "Default ordinary Web remains without October routes/context/migration. Bootstrap mode has no October connection, selector, source approval or selected-data service; failed authority leaves the empty target unmigrated. Generator prepare never uses a preseeded batch, fake subject, cached allow, caller connection string or alternate target. If a later migration/setup step fails, no selectable partial batch is published. Selected-data modes reject missing/mismatched target and batch before downstream access.",
+  "migration_and_compatibility": "Only generator prepare, after live authorization and connected target identity verification, applies the fixed October migration set to an explicitly owned target. Bootstrap and selected-data Web retain ordinary Identity/domain startup and never apply October migrations. October model/history stay separate; normal Web startup behavior remains unchanged. No JDT-LS, CodeGraph, Scan/Worker dispatch or Knowledge generation is added.",
+  "test_seam": "The revised ID-T02 and quickstart require a fresh runner-owned empty PostgreSQL target: start bootstrap Web first, prove zero October connection/migration/selected-data route, obtain a real grant, run generator prepare to create the first batch, then start selected-data Web and generator select. Negative forged/missing grant cases must leave another fresh target empty; A/B mismatch and ordinary-startup regression remain. External database/certificate/runtime resources require separate explicit authority.",
+  "implementation_design_shape": "Architecture classification, one document-level front matter block, exact headings and all existing design IDs are retained. No new design ID is needed because ID-R02/I02/I05/I06/S03/T01/T02/L02/C02 now express the bootstrap distinction. The installed plan-content validator returned no errors; git diff --check passed. Root owns authoritative path/hash-bound workflow validation after mapping.",
+  "authority_and_gate": "Implementation approval remains withheld. The bootstrap correction changes the previously reviewed architecture boundary; the root must reconcile affected tasks, repeat independent review, and evaluate whether prior planned-change authorization remains applicable to corrected semantic scope. This self-review grants no approval or resource permission and does not alter the active recovery count or pause limit."
+}

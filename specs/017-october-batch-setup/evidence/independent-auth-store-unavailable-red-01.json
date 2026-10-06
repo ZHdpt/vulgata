@@ -1,0 +1,14 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberLocalAuthorityTests.AuthenticateAsync_UnavailableIdentityStore_ReturnsUnavailableWithoutSession'",
+  "exit_code": 1,
+  "trx_path": "TestResults/isolation-a4ed55c1c39a4a0a849079fcd1c462ef/results.trx",
+  "trx_sha256": "9ea3854bb7d3784810d2707c36521923022061a62678dae5de8e42e168051583",
+  "counts": {"discovered": 3004, "selected": 1, "passed": 0, "failed": 1, "skipped": 0},
+  "summary": "Real owned SQLite Identity seeded with supported managers, then only owned AspNetUsers table dropped to model unavailable store. DDL succeeds; SqliteException propagates from actual UserManager.FindByNameAsync instead of public AuthenticateAsync returning Unavailable/null and one input read. Expected development RED, noncounting. No external resource or invented seam.",
+  "test_sha256": "b456dd507d39e948d2d5cf3b653724977db6024169a8246fd78528ec000f0b9c",
+  "source_sha256": "1733c4216c783ab446a4b130f93d64edf4b7d9e542087b210222bede83811e2b",
+  "source_coverage": {"selected": 16, "passed": 16, "failed": 0, "skipped": 0, "exit_code": 0, "trx_path": "TestResults/isolation-8c7fff9e388e424ea03a0cc9348a3457/results.trx", "test_sha256": "b43fcd5f964eb4081463fba869e08a67cf8feaf01d17a002117f01c250a40b65"},
+  "fixture_portability": "Console noninteractive precondition broadened from input-redirected alone to input-or-output redirected; runner guarantees stdout redirection and inherits stdin. Accepted sanitized rejection unchanged; original RED retained. Separate caller precancel coverage is already-correct passing work.",
+  "pending": "Minimal GREEN pending retained production owner after affected console plan gates. No count or resource authority change."
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "summary": "Exact existing-batch select tracer passes through actual local authority and real SQLite setup store. Test owner corrected only ImmutableArray reference-equality overconstraint to complete element-wise ManagementAuthorityId/repository/entry/difference value assertions; all original behavioral status/request/digest/subject assertions preserved. Original meaningful select RED retained. Follow-on select matrix, command bounds and runtime qualification remain open.",
+  "checks": [
+    {"filter": "FullyQualifiedName~OctoberLocalAuthorityTests.AuthorizeSelectionAsync_SelectsAnExistingExactBatchWithCurrentAuthority", "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-d12e983890614d5580cc1a61ef39b56b/results.trx"},
+    {"filter": "FullyQualifiedName~OctoberLocalAuthorityTests", "exit_code": 0, "selected": 39, "passed": 39, "trx_path": "TestResults/isolation-50d885e0553f415fb286befc39632f32/results.trx"},
+    {"filter": "FullyQualifiedName~OctoberOperatorCredentialSourceTests", "exit_code": 0, "selected": 28, "passed": 28, "trx_path": "TestResults/isolation-fe563253d9c74a7c981bd48b6e07d1a5/results.trx"},
+    {"filter": "FullyQualifiedName~OctoberSetupPolicyTests", "exit_code": 0, "selected": 59, "passed": 59, "trx_path": "TestResults/isolation-7bd7604d44ae45d38e95ccd0131b34e9/results.trx"}
+  ],
+  "launcher": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter <filter>",
+  "source_sha256": "7786fa4571f3adbe12a411a96d8fc21a95097c447431385f6b334407297a8aa2",
+  "test_sha256": "2836c809a2399ba2d7b48724b623545ecd3c937b072481c5aa0f92f9fec71396",
+  "test_final_shape": "Ordered element-wise context assertions preserve complete provenance semantics and fresh-copy requirement. No weakening of product assertions or caching requirement. Scoped diff check passed.",
+  "production_final_shape": "Retained owner assessed fresh Identity checks before exact metadata lookup; stored state/target/subject/database/authority match before repository/reference reads; no historical text read by local authority; copied request and transactional live context capture; final Identity/cancellation/expiry recheck. Helper cohesive, no immediate refactor. Immutable atomic metadata plus downstream selector revalidation; transaction absence not currently evidenced defect. Production selected October context registration remains T019; select matrix remains pending.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

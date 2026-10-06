@@ -1,0 +1,10 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~VerifySourceApprovalAsync_ReturnsCurrentIssuedApproval'",
+  "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-0890786652b94f0a9a73161ea3d03db3/results.trx",
+  "regression": {"filter": "FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests", "exit_code": 0, "selected": 155, "passed": 155, "trx_path": "TestResults/isolation-3886120ca50643eeaa9c186b1b6f4217/results.trx"},
+  "summary": "Direct Verify propagates supplied cancellation OCE, fresh bounded scope checks private current session/exact target-batch-subject-purpose, current Identity stamp/role/eligibility, stored management authority/repository binding, exact seven-field row/expiry/revoked and live organization membership. New CurrentApproval constructed from row only after late current check; mismatch Revoked/null, outage/operation timeout Unavailable/null. No historical text refresh, HTTP or source-contract change.",
+  "source_sha256": "8981dedd106602ca3e8e429a276ad20ce27cdd7e15f4b0d6e6d84e16b9b99024",
+  "production_final_shape": "Bounded reusable HasCurrentRepositoryAuthorityAsync captures member/standalone permission rule; no further refactor at GREEN. Final independent verification, failure matrix, revocation and native/runtime integration pending.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

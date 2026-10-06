@@ -1,0 +1,21 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+  "red_evidence": "specs/017-october-batch-setup/evidence/selected-web-startup-red-01.json",
+  "minimal_green_evidence": "specs/017-october-batch-setup/evidence/selected-web-startup-minimal-green-01.json",
+  "focused": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests'",
+    "exit_code": 0, "selected": 9, "passed": 9, "failed": 0, "skipped": 0,
+    "trx_path": "TestResults/isolation-d7df9b3e38104b2f8e469efef36eeb83/results.trx"
+  },
+  "surrounding": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedSourceCancellationBudgetTests|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~LoginLogoutTests|FullyQualifiedName~IdentityRegistrationTests'",
+    "exit_code": 0, "selected": 234, "passed": 234, "failed": 0, "skipped": 0,
+    "trx_path": "TestResults/isolation-696722ef5f7949679d57035671052305/results.trx"
+  },
+  "test_sha256": "cfdb05dda032af85c1efbffefcf1b5e1631d851683ceaa8a5e7cdf53942c5e96",
+  "final_shape": "Both retained owners assessed affected units. Test owner found no defect requiring edits/refactor: actual final-config WAF seam, owned SQLite, real Identity/managers/context data, controlled credentials, exact batch binding and context/factory datasource assertions. Production hash manifest is in minimal-GREEN evidence.",
+  "scope": "First selected-Web binding/startup tracer only. Controlled TestServer/SQLite, not PostgreSQL or native process qualification. Root final inspection found that SQLite options replacement masks production connection declarations; production context/factory selection is not proved by this result. Retained test owner is correcting that fixture within T018. No full task completion claimed.",
+  "pending_legacy_test_disposition": "specs/017-october-batch-setup/evidence/selected-web-legacy-regression-disposition-01.json",
+  "recovery": {"failed_results": 6, "pause_at": 7, "changed": false}
+}

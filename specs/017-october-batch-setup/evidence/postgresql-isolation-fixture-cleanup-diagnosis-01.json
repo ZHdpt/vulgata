@@ -1,0 +1,36 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "diagnosis-in-progress-no-retry",
+  "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "operation": "focused OctoberPostgreSqlIsolationTests standard PostgreSql qualification",
+  "target": "owned selected-Web WAF fixture log lifetime",
+  "failure": "selected-web.log still open when exact owned fixture root is deleted",
+  "observed_invocations": [
+    { "ordinal": 1, "run_id": "4427ef1ad9f541b9991ae2ee63609240", "outcome": "2 passed, 1 cleanup failure" },
+    { "ordinal": 2, "run_id": "8589acffc9604a3a8ccba080c0f94909", "change": "await WAF async disposal", "outcome": "2 passed, same cleanup failure" }
+  ],
+  "technical_maximum": 3,
+  "next_invocation": "Not dispatched. First identify actual retained handle ownership or qualifying diagnostic evidence. No third unchanged run.",
+  "falsified_hypothesis": "Awaiting WAF asynchronous disposal alone does not release the file. Do not claim it is a causal fix.",
+  "retained_owner": "tdd-test-author; read-only installed factory/host/logger and fixture lifetime diagnosis",
+  "constraints": "No logging disable, weakened assertion, deletion retry, unowned process cleanup, production edit or speculative new contract.",
+  "root_verification": {
+    "observed_at": "2026-10-02T05:04:19.4932495Z",
+    "branch": "oct14/story-18-4",
+    "index_empty": true,
+    "counts": { "total": 3, "executed": 3, "passed": 2, "failed": 1, "skipped": 0 },
+    "trx_sha256": "bbe52f745811a7150f6100611ecca0d6c0e2f414804d7e2b7a12345abeb90205",
+    "execution_sha256": "30dc52445e8902b90b8be4b363b8adf720a769724b5a87a6577cdc863e8d494c",
+    "build_sha256": "7663cd136a4e067e62c5815a67dd10e4d1020039c3f2e3c9fded5579218574ea",
+    "discovery_sha256": "397ce8957f4082543e4301d0421de22253146ad20c7016fcb59058107aa8f2c7",
+    "mounts_sha256": "a13bd5d07ea96b75a7bbace07280870889d92c87ab670546898bdbe926117385",
+    "cleanup_sha256": "20a0b920ca09f845f2cbaf4f50344a33a6e81fe5c56ea22e79014752cd78d7d2",
+    "volume_absence_sha256": "6d2139f2ead0f0b5e61877112796beff0d2991b31bb3beed4eb7c46a2575b843",
+    "container_absent": "vulgata-test-8589acffc9604a3a8ccba080c0f94909",
+    "volume_absent": "vulgata-test-data-8589acffc9604a3a8ccba080c0f94909",
+    "exact_run_temp_roots_remaining": 0
+  },
+  "governed_recovery": { "failed_results": 6, "pause_at": 7, "changed": false },
+  "qualification": "T029 remains incomplete. This is a fixture cleanup defect, not product assertion GREEN or an independent negative review/convergence verdict."
+}

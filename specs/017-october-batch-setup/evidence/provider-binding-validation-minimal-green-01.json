@@ -1,0 +1,19 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "source_commit": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
+  "red_path": "specs/017-october-batch-setup/evidence/provider-binding-validation-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'",
+  "exit_code": 0,
+  "selected": 26,
+  "passed": 26,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-5abd8602404a4131b32c269d4ec3a5d0/results.trx",
+  "trx_sha256": "efffee61eb2fca4ba2f733aa469be0d49589140ad1cd2117dac008cffa1d46bc",
+  "production_sha256": "c189bccad5d28fdc337b775ebc8f5d28c7884f7632bf37223d676f3ae1ffc8f",
+  "owner_reply": "T023's atomic invalid-input slice is GREEN. The exact focused command passed 26/26 with exit 0. Only OctoberProviderBinder.cs changed. It now validates the full selected configuration before any decryption, returning InvalidConfiguration with no binding for invalid inputs. The earlier positive case still passes. The affected method remains cohesive; no refactor was needed. Decryption failures, cancellation after awaits, real Data Protection, and host wiring remain for later slices. T023/T024 are not complete.",
+  "final_shape": "No refactor needed for this slice; independent test verification and coherent-group final assessment remain required.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

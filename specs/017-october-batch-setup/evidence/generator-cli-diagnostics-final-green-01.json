@@ -1,0 +1,75 @@
+{
+  "kind": "implementation-evidence",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T19:57:15.5920203Z",
+  "route": "behavioral-red-minimal-green-final-green",
+  "red_history": [
+    "specs/017-october-batch-setup/evidence/generator-cli-authority-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-binder-configuration-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-configuration-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-credential-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-denied-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-nonexact-authority-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-prepared-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-selected-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-startup-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-startup-predicates-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-success-configuration-diagnostics-red-01.json",
+    "specs/017-october-batch-setup/evidence/generator-cli-target-diagnostics-red-01.json"
+  ],
+  "latest_minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_InvalidStartupConfigurationPredicatesReportInvalidConfigurationBeforeOctoberMigration'",
+    "exit_code": 0,
+    "selected": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-995a3e8f089c440599e3932047025fdc/results.trx",
+    "trx_sha256": "2ee5e448cc8b5891632ec3c01bfabdae8fc7ab79fa6622be0bd4ed5c2e4d2182",
+    "change": "Startup-validation ArgumentException catch only; existing exact identity rule preserved."
+  },
+  "final_focused": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberHostSelectionTests'",
+    "exit_code": 0,
+    "selected": 19,
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-1fcb8f28e96946d8898259d12982092c/results.trx",
+    "trx_sha256": "9d3696b69d231fc4f03c4513d814aa3302366462e5eaaa0c6bee265856dada3e"
+  },
+  "final_surrounding": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberContextSelectionTests|FullyQualifiedName~OctoberPreparedSourceBindingTests|FullyQualifiedName~OctoberPersistenceModelTests'",
+    "exit_code": 0,
+    "selected": 272,
+    "passed": 272,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-167b7de4856b4d20b14ff86f49faf113/results.trx",
+    "trx_sha256": "d09abf8b4e8b3d25e9f9efec4b4002902ee1e99dc277a882c47f7fb87f6c139f"
+  },
+  "source_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "5e44e52d4ae8affeb4b354cfaeb124eb6e26fd27fdc2e0a3a442e4c4f60fdb6e",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "1350e1c01230274bf8e974ff2b4e7ad4a2405b3e01692c611a82c0546f5fec01"
+  },
+  "final_shape": {
+    "production": "Whole Main unit phase-bounded and sanitized. Constructor ArgumentException discovery reproduced/corrected, no private refactor needed. Operational module authority/storage remains outside startup-validation catch.",
+    "tests": "Whole affected test unit cohesive around real CLI and owned fixture; existing provider/operator preconditions, redaction, exact outcomes and noOctober assertions preserved. No further refactor required."
+  },
+  "diagnostics": "Fixed Prepared/Selected plus exact batch identity, provider configuration Bound state, InvalidConfiguration/CredentialUnavailable/Denied/AuthorityUnavailable/TargetUnavailable without provider/connection/source credentials or readiness claims.",
+  "resources": {
+    "authorization": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+    "run": "1fcb8f28e96946d8898259d12982092c",
+    "cleanup_log_sha256": "b873795fd26c24bd063c0dbc7020d786ff65affdf962e89a31b36a5884eb2f29",
+    "volume_absence_sha256": "81c8f0da5265747a244af7ef2f7ca723a3546455812734161dfb2b2023e35d14",
+    "owner_report": "All19 owned database/temp cleanup markers; labeled container/volume removed, absent volume verified."
+  },
+  "limits": [
+    "Caller cancellation covered at existing binder/authority/selector/module seams; Main accepts no cancellation token, no actual CLI interruption claim.",
+    "Focused development evidence only; Identity descriptor enforcement, Web binding retention and final T020/T029 qualification/gates remain.",
+    "No whole host or diagnostic task completion marker changed; same30taskIDs and19completed retained."
+  ],
+  "workflow": "Normal expectedRED and concrete ordinary development findings noncounting. Recovery6/7 remains open until final verify; approvals/owners unchanged."
+}

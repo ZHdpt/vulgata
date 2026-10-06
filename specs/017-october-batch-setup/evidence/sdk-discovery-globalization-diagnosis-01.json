@@ -1,0 +1,89 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "resolved-for-bounded-continuation",
+  "summary": "Owned PG qualification build succeeded but discovery failed natively in SDK/MSBuild IcuStartsWith before any product test. Exact run resources were cleaned. Minimized property evaluation passes with default ICU and NLS, so cause is not established and no default ICU fix claimed. Actual same discovery-only seam passes with documented process-local NLS, providing qualifying changed-environment evidence for one bounded standard-runner PG attempt. No product assertion, gate/count waiver, persistent SDK/OS/repo change, or external prerequisite.",
+  "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/selected-web-management-retry-transition-proposal-01.json",
+    "sha256": "cddeec5b79d531a0718b281b2c4e34d8c0ba7747d8619b6c7e4a71147e6fc821"
+  },
+  "fatal_run": {
+    "run_id": "7e38dd6552d54796b12cb672131facaf",
+    "exit_code": -1073741819,
+    "classification": "SDK discovery native0xC0000005; no product tests executed",
+    "discovery_log_sha256": "0131251b48a37b0ce292e05163320eea15c5b2f81f9456ea9117076ff2e5147c",
+    "build_log_sha256": "b718748cff7290684daef0fab8a6fbe2fc39eba5146e07d91ed739292b2d9702",
+    "volume_absence_sha256": "3572477497ad2e4b6926108c624d951a49905ea2cd0780aa8df1617078374d29",
+    "container": "vulgata-test-7e38dd6552d54796b12cb672131facaf",
+    "volume": "vulgata-test-data-7e38dd6552d54796b12cb672131facaf",
+    "cleanup": "Owner verified exact container/sole mounted volume absent. Root will verify raw cleanup before checkpoint."
+  },
+  "diagnosis": {
+    "feedback_loop": "Original captured standard discovery fatal; bounded no-resource SDK property comparison, then same dotnet test --list-tests seam only under changed supported backend.",
+    "ranked_hypotheses": [
+      "ICU globalization native path (exact captured stack); NLS predicts no IcuStartsWith branch.",
+      "Reused MSBuild process state; an isolated node would predict no stale-state crash.",
+      "Project-specific evaluation trigger; another project would predict different behavior."
+    ],
+    "baseline_property_probe": {
+      "probe": "test-project SDK property evaluation",
+      "globalization_nls": null,
+      "command": "dotnet msbuild tests/Vulgata.Tests/Vulgata.Tests.csproj -getProperty:TargetFramework -nologo",
+      "result": {
+        "ExitCode": 0,
+        "Output": "net10.0",
+        "Error": ""
+      },
+      "time": "2026-10-02T04:46:05.3979277Z"
+    },
+    "nls_property_probe": {
+      "probe": "same test-project evaluation with process-local NLS",
+      "command": "dotnet msbuild tests/Vulgata.Tests/Vulgata.Tests.csproj -getProperty:TargetFramework -nologo",
+      "changed_variable": "DOTNET_SYSTEM_GLOBALIZATION_USENLS=1",
+      "result": {
+        "ExitCode": 0,
+        "Output": "net10.0",
+        "Error": ""
+      },
+      "time": "2026-10-02T04:47:06.6970012Z"
+    },
+    "nls_discovery_probe": {
+      "probe": "SDK discovery only; no suite opt-in/test/resource execution",
+      "exit_code": 0,
+      "discovered": 3084,
+      "changed_variable": "DOTNET_SYSTEM_GLOBALIZATION_USENLS=1",
+      "raw_output_path": "TestResults/sdk-discovery-nls-18-4-01.log",
+      "raw_output_sha256": "41463b5b67aca83134f1f43e94a004a70921a367c0f88a734cb789af2ee7d017",
+      "error_excerpt": "",
+      "time": "2026-10-02T04:48:34.7529993Z"
+    },
+    "conclusion": "NLS discovery availability established; intermittent crash cause/defaultICU stability not proven. Do not declare a causal fix or erase prior fatal evidence."
+  },
+  "supporting_primary_source": "https://learn.microsoft.com/en-us/dotnet/core/runtime-config/globalization",
+  "next_check": "One standard owned PostgreSqlIsolation run with process-local DOTNET_SYSTEM_GLOBALIZATION_USENLS=1, shortPATH, telemetryoptout. Actual qualification result required; stop on any fatal exception or unchanged failure. All later test/build/E2E evidence must identify NLS environment, not imply default ICU qualification.",
+  "technical_allowance": {
+    "operation": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --settings tests/Vulgata.Tests/explicit-suites.runsettings --list-tests --filter Suite!=__unclassified__",
+    "target": "tests/Vulgata.Tests/Vulgata.Tests.csproj",
+    "cause": "SDK/MSBuild native ICU StartsWith AV",
+    "observed_discovery_invocations": [
+      {
+        "ordinal": 1,
+        "run": "7e38dd6552d54796b12cb672131facaf",
+        "result": "fatal; unchanged retry stopped"
+      },
+      {
+        "ordinal": 2,
+        "log": "TestResults/sdk-discovery-nls-18-4-01.log",
+        "result": "passed with qualifying changed NLS environment; diagnostic only, no product test"
+      }
+    ],
+    "maximum": 3,
+    "next_qualification_discovery_ordinal": 3
+  },
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

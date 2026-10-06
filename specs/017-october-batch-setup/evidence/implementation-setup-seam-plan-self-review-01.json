@@ -1,0 +1,38 @@
+{
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_finding": "I-18.4-SETUP-SEAM-01",
+  "source_evidence": "specs/017-october-batch-setup/evidence/implementation-setup-seam-discovery-01.json",
+  "observed_transition": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0026-implementation-setup-seam-revise.json",
+    "sha256": "c28a3d80a26b166596245fabee53687c87e60b8965efc8f8ad926bc5a429d16c"
+  },
+  "summary": "Pinned one callable Core OctoberBatchSetupPolicy constructor and PrepareAsync method, exact request/authority record construction, a subordinate writer port and closed OctoberPrepareResult statuses. Only Created/AlreadyIdentical return an exact committed selectable identity; every negative outcome returns no identity or capability. First-batch prepare remains separate from existing-batch BindAsync.",
+  "input_hashes": {
+    "specs/017-october-batch-setup/plan.md": "17abea835e9382e0b782be7307760ae92a7fb168bdcf9c32a24041112201e565"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/plan.md",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+    "specs/017-october-batch-setup/evidence/implementation-setup-seam-plan-self-review-01.json"
+  ],
+  "artifact_manifest": {
+    "specs/017-october-batch-setup/plan.md": "17abea835e9382e0b782be7307760ae92a7fb168bdcf9c32a24041112201e565",
+    "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "a935831e0f8da2af12564f5b944a12583880de6f482ac88df2bcddfabcad1607",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+  },
+  "finding_disposition": "The plan and shared contract name exactly one caller-facing Core setup policy, OctoberBatchSetupPolicy(IOctoberSetupWriter).PrepareAsync(OctoberSetupRequest, OctoberAuthorizedSelection, CancellationToken). The contract fixes its constructor, subordinate writer method, positional input records, OctoberPrepareStatus enum, OctoberCommittedBatch and OctoberPrepareResult. A test owner can construct the policy with a controlled writer and invoke the public method without inventing names, fields or a constructor.",
+  "feasibility": "The concrete Core policy validates exact request/authority target, batch, Repository set and selection digest before the accepted Infrastructure writer may open the selected owned database. The writer remains the sole persistence owner and commits all setup-owned rows atomically; no additional setup policy, host route, tool or storage capability is introduced.",
+  "invariants": "Created and AlreadyIdentical are successful only with a nonnull committed selectable identity matching request target/batch/digest and authorized canonical database identity. Conflict, Denied, AuthorityUnavailable, Cancelled and StorageFailure carry null identity and grant no selected-data capability. An exact identical retry observes the committed row without overwrite; a conflict never changes it. Cancellation before commit leaves no selectable batch, and acknowledged commit is not relabeled failure.",
+  "bootstrap_and_selector": "Authorization-only Web still issues/validates a real grant without opening an October database. Generator prepare may invoke PrepareAsync after live validation and authorized empty-target migration without calling BindAsync. PrepareAsync does not issue a bound selected-data capability; generator select or selected-data Web calls the already accepted IOctoberBatchSelector.BindAsync only after an exact batch exists.",
+  "migration_and_compatibility": "No change to fixed October schema, ordinary Web/Identity migration boundary, prepared-source approval tuple, Story 18.1 functions, provider binding or later-story exclusions. The new result is a Core contract shape, not implementation or database qualification.",
+  "constitution_and_architecture": "The Core policy remains domain-only; the subordinate Infrastructure writer owns EF and transactions. The one shared policy avoids separate generator/Web setup rules and follows Constitution I/II/III and the accepted O-FR17/O-FR18 isolation spine without changing the PRD or adding a Worker tool/Scan strategy.",
+  "test_seam": "A controlled writer can observe zero calls on denied/mismatched request or cancellation and return committed, conflict, unavailable or storage outcomes. T002's test author can name the exact policy constructor, input records and closed result; root must reconcile any task sequencing needed for a compilable behavioral RED rather than counting absent symbols as RED. Existing T001 work and external resource permissions are preserved.",
+  "implementation_design_shape": "Architecture classification, single front-matter block, exact headings and existing design IDs are retained; ID-I01, ID-F02 and ID-T01 carry the narrow clarification. The installed deterministic plan-content validator returned no errors and git diff --check passed. Root owns state/path/hash-bound validation after mapping.",
+  "authority_and_gate": "This plan correction does not itself restore suspended implementation approval or alter recovery count/pause. Root must repeat affected independent review and bind any applicable approval to corrected hashes before resuming implementation."
+}

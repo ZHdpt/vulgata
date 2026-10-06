@@ -1,0 +1,52 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/selected-web-isolation-coverage-green/1",
+  "source_commit": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+  "observed_at": "2026-10-01T16:27:36.664469Z",
+  "verification_route": "Test-only controlled actual Web optional Identity override, ordinary operational service absence and anonymous/permitted browser access; no production write/fabricated RED.",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "dd5f0f02814fca0b9a33f1a7b1dd3482e225e61c3a2b83d3234c6bb8e505f9dc",
+    "src/dotnet/Vulgata.Web/Program.cs": "271d9a3be3b2106d9dfeba2947c1b0979bf10a25d6ee3af038713d46263c88ba"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests.SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant'",
+      "exit_code": 0,
+      "selected": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-6e309c0e76dd4d42968d454178a86ae8/results.trx",
+      "trx_sha256": "4f9fb1f0a6a3f936a9a108b3935123ebbed1bde1d81ccb88414109378ef284b5"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests'",
+      "exit_code": 0,
+      "selected": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-5c0a4440a6584d48816a6321ec843156/results.trx",
+      "trx_sha256": "71bbacb2aa9c1b94638207a4456cb70345c5d08f03885cdf10d4ea4e48493b14"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~OctoberPersistenceModelTests|FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberPreparedSourceApprovalApiTests|FullyQualifiedName~LoginLogoutTests'",
+      "exit_code": 0,
+      "selected": 261,
+      "passed": 261,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-7cc647942b8141b091fc4515500684b8/results.trx",
+      "trx_sha256": "7261c751bb98cd7543386831e7aa5cdf22fe88040650a1a887af97b8cbe0cdae"
+    }
+  ],
+  "raw_result": {
+    "owner": "retained tdd-test-author Luna/high",
+    "outcome": "passed",
+    "assessment": "Reuses existing WAF fixture with supported synthetic Identity replica. Captures actual Npgsql declarations before exact owned SQLite translation; split Identity uses owned A, domain/October/domain factory remain selected B. Ordinary operational services/routes absent. Cookie-free protected API401 despite startup operator; supported normal cookie login grants permitted API200. No inventory/new fixture/API needed.",
+    "intermediate_corrections": "Auto-redirect obscured expected login response/cookie; existing repository no-auto-redirect/cookie options corrected probe. Namespace qualification compile error corrected. Not product RED or workflow failures; raw runs075d96d0,27e38ec4,8068f9bf and ca30c4d8 build log retained."
+  },
+  "remaining": "Actual Web Program non-Bound startup-error branch after valid provider binding remains uncovered; lower-level status tests do not prove it. Separate generator parser still needs rejection coverage beyond malformed JSON. No PostgreSQL migration or final A/B runtime claim.",
+  "root_disposition": "Retained test owner dispatched GREEN targeted login-form helper correction and one actual missing-batch startup-denial/diagnostic case. No task markers or semantic/gate/owner/hold/count changes; recovery6/7 retained."
+}

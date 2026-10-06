@@ -1,0 +1,75 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0108-test-fixture-write-authorization-resolved.json",
+    "sha256": "d43886e8efa0c11ad42f391e2f3931af6f4f477b47e164f9eb0dfba3dd70243e"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+    "classification": "architecture",
+    "changed_paths": [],
+    "summary": "Completed bounded read-only tasks self-review at transition 0108. Existing tasks cover fresh Identity enforcement on source approval operations and the authorized two-file behavior-preserving fixture refactor. No concrete semantic, authority, coverage or ordering defect requires definition changes. All 30 task IDs and 19 completed markers remain unchanged. Current task semantics equal accepted checkpoint 495309a72e31aea1ad30d93153de0903e3c6d123 after normalizing completion checkboxes. Plan-review-14, definition-review-13, plan-authorization-05 and implementation-approval-07 remain applicable to this unchanged scope; the direct-user authorization resolves only the recorded fixture-write hold.",
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+      "specs/017-october-batch-setup/plan.md": "119a56fd62cc4f8750aa5d685d7ff34973ab1c3549600f6f252b19a770ddbfa3",
+      "specs/017-october-batch-setup/tasks.md": "431f367cea058a8d283024656e54f8f93df9cc35e10d953a3b332f024053fb0d",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "f342a72f07794e8c480d9c683d6d1352dabb4d5f04f47afa6d356534a3d5e431",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "f9a6841712b17a0cbcf63ed6bcfcc2befeb03f03f8311d5c10cc2262e7e6d211",
+      "specs/017-october-batch-setup/research.md": "328ca6131748f882e3a941326b441355339117a3f72e976252a429fb472263e5",
+      "specs/017-october-batch-setup/data-model.md": "993ef477c7c19898980a054ca4358410f83176d104bf8a0543805146fd9f8c15",
+      "specs/017-october-batch-setup/quickstart.md": "3aa0dc173544e8bd708d7a2c76e72470a6d4a70b1c6effdd0b20ff3f5b40cb4e",
+      "specs/017-october-batch-setup/workflow-state.json": "9876bfa750339dab1423419251ed395d6e874ea6f4dc57297980d1bdc62ac4dc"
+    },
+    "self_review": {
+      "intent_and_scope": "Independent prepare/select and startup-configured Web remain the accepted boundary. No generation, JDT-LS, CodeGraph, Knowledge, new source contract or Story 18.1 change is introduced.",
+      "coverage": "T012/T013 cover current Identity/management/target checks for IssueSourceApprovalAsync, VerifySourceApprovalAsync and RevokeSourceApprovalAsync; T006-T009 and T018/T019 cover authentication, selection and host composition. ID-I05, ID-F01 and the shared contract require fresh current authority. Reusing the existing private Identity database check implements this obligation without creating a new public seam.",
+      "verification_routing": "The three changed source-approval behaviors retain their separate recorded behavioral RED/minimal-GREEN evidence. The requested fixture consolidation uses before/after regression and preserved assertions, scenarios and owned-resource isolation; no fabricated RED or additional task is needed.",
+      "feasibility_and_order": "Compiling provider declarations precede behavioral tests; host/provider wiring precedes final T020/T029 qualification. Controlled source integration retains context-before-session disposal. Fresh post-refactor group checks remain necessary before checkpoint.",
+      "history_and_lessons": "Read ordered raw plan-review-01 through 14 and definition-review-01 through 13 findings, current accepted verdicts, diagnosis, accounting correction and source-identity evidence. Callable-seam, owned PostgreSQL isolation and native-permission precautions remain preserved. Historical task-phase status prose is contextual; current root-owned checkboxes and workflow state record progress.",
+      "classification": "Architecture remains justified by the accepted shared authority, host composition and persistence boundaries. This verification-only phase invalidates neither intent nor classification."
+    },
+    "validation": {
+      "dispatch": {
+        "command": "python .agents/skills/run-governed-delivery/scripts/validate_workflow.py --repo . --story-state specs/017-october-batch-setup/workflow-state.json --next-stage tasks --next-profile definition-author-recovery --json",
+        "environment": "PYTHONDONTWRITEBYTECODE=1",
+        "exit_code": 0,
+        "result": {
+          "decision": {
+            "action": "dispatch",
+            "allowed": true,
+            "reason": "recovery permits dispatch; required lifecycle gates still apply"
+          },
+          "errors": [],
+          "ok": true
+        }
+      },
+      "mapped_plan_tasks": {
+        "command": "python -B -c 'import sys,json,pathlib; sys.path.insert(0,\".agents/skills/run-governed-delivery/scripts\"); import validate_workflow as v; r=pathlib.Path(\".\"); s=json.loads((r/\"specs/017-october-batch-setup/workflow-state.json\").read_text(encoding=\"utf-8\")); errors=v.validate_state_plan_content(s,r); print(json.dumps({\"errors\":errors,\"ok\":not errors})); sys.exit(bool(errors))'",
+        "exit_code": 0,
+        "result": {
+          "errors": [],
+          "ok": true
+        }
+      },
+      "coverage": {
+        "task_count": 30,
+        "unique_task_ids": 30,
+        "completed_markers": 19,
+        "implementation_design_ids": 23,
+        "uncovered_ids": [],
+        "unknown_references": [],
+        "checkbox_normalized_equal_to_accepted_checkpoint": true
+      }
+    },
+    "findings": [],
+    "remaining_conflicts": [],
+    "next_required_checks": [
+      "Root validates and records this result against transition 0108 before any lifecycle advancement.",
+      "Retained test owner performs the explicitly authorized two-file fixture consolidation, preserves behavioral assertions and resource isolation, then completes fresh focused and surrounding verification.",
+      "Root continues dependency-ready implementation and existing qualification/review gates; preserve recovery count 6, pause limit 7 and exclusive recovery-author ownership."
+    ],
+    "limitations": "No files, tests, production code, workflow state or Git history were changed. No runtime tests were executed by this self-review. Recorded pre-refactor GREEN is not post-refactor verification, whole-story completion or full A/B host qualification."
+  }
+}

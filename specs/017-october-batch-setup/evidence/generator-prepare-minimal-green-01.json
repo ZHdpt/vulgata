@@ -1,0 +1,45 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-prepare-minimal-green/1",
+  "source_commit": "eaa8842a2b2d873ba166720020d8793dfa825d24",
+  "observed_at": "2026-10-01T15:12:42Z",
+  "summary": "Actual independent generator prepare with Web stopped reaches GREEN after correcting frozen October model metadata. This is minimal development GREEN, not final coherent-group verification, runtime A/B qualification or whole-task completion. Independent test-owner checks and bounded final-shape disposition remain pending.",
+  "verification_route": "Behavioral executable RED to minimal GREEN plus public EF metadata regression RED to GREEN; no warning suppression or new DDL.",
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberNpgsqlTargetDependencies.cs": "55773a75697e3de4db625192abb658dfa1cd49990393ca0198f178917184f262",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs": "7b6a685dc98d78bd30fe6271d17783e00e1c8fe92c84c018e25d40881ed81cbf",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930000000_InitialOctoberSetup.cs": "1b32b3c37597974809779af1dd8304b6cda63367ae657f78a70d435f3b5b6539",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930010000_AddOctoberPreparedSourceApprovals.cs": "d45671dd0d885bb94dac94931a4aafc69438a8450b7ed06abc2f9ebd0168daea",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "dec0c301025fd9605d75c76db3b071e8ba7f425f8b80ccd034b52e5a95e9d930",
+    "tests/Vulgata.Tests/October/OctoberPersistenceModelTests.cs": "fecae64a3ad4b377e110edf49968ee70307bb7bb1d477a500c9e3df3e9b63108"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberPersistenceModelTests'",
+      "exit_code": 0,
+      "selected": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-e09d9062045348bc86c6d60acc6d2197/results.trx",
+      "trx_sha256": "6b2b182b23b62e29ce048e4b2de8f261e6515c7a0613af898d147afa15e5ae9c"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+      "exit_code": 0,
+      "child_exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-817de783ba9a4ec295d6826e259433ce/results.trx",
+      "trx_sha256": "0916cd561a78d0ceaa48e75d10b960003a104ebb6978108bb0019b1fed457ab1"
+    }
+  ],
+  "metadata_correction": "Explicit preexisting CLR properties, required foreign keys, approval composite index and provider model annotations now represented in frozen snapshot/phase-appropriate target models. Initial five tables, approval six. Root verified migration Up/Down unchanged. Runtime context unchanged. Prior static complete-properties claim was disproved by raw EF model-differ diagnostics; raw history preserved.",
+  "development_accounting": "Two intermediate metadata4/5 checks before any claimed GREEN and temporary generator diagnostic probes remain normal development evidence, not failed independent review/convergence or repeated failed completed repairs. Intermediate probe source hashes were not captured and remain unknown. Recovery6/7, diagnosis/holds/owner/approvals unchanged.",
+  "production_final_shape": "Retained production owner assessed whole Main/adapter/metadata and then checked the bootstrap concern against actual registration/disposal. Bootstrap provider spans binding and credential reading; host and scope dispose first. Same explicit protection configuration. No required local refactor or demonstrated parser semantic divergence remains; optional shared extraction deferred. Fixed metadata is phase appropriate; Up/Down unchanged. Negative identity/endpoint cases still require qualification, not assumed correct.",
+  "root_disposition": "Independent final verification dispatched to retained test owner; no production refactor is required by the evidence. Full generator selection/denial and A/B Web startup qualification remain open. Recovery6/7 and all accepted gates remain unchanged."
+}

@@ -1,0 +1,73 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "495309a72e31aea1ad30d93153de0903e3c6d123",
+  "task_ids": [
+    "T015",
+    "T018"
+  ],
+  "verification_route": "test-only existing behavior and fixture correction; no fabricated behavioral RED",
+  "summary": "Final focused2/2 and surrounding267/267 passed with zero skips after elapsed lockout fixture and collection-assertion corrections. Real-authority module tracer retrieves committed snapshot through actual selector. T015 adapter final-shape assessment and current regression complete its bounded obligation; T018 remains partial. Controlled SQLite/SelfContained, not PostgreSQL or actual entrypoint qualification.",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "9ba5e3580f78736321ddde74cd12a84572e00963186c7ee41dbde5290e0d80c2",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "1ea6b2b4de1f36cabceec5c2874247e2b962164db7c1b10a782bb5dff07cfaf8",
+    "specs/017-october-batch-setup/tasks.md": "8170a762b247c76b8003366d597f32d52c3d8112eeb67051f7491d175e2ac361"
+  },
+  "focused": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~VerifySourceApprovalAsync_RevokesWhenIdentityAccountIsLockedOut|FullyQualifiedName~GeneratorModule_PreparesOwnedBatchThroughCurrentLocalAuthority'",
+    "exit_code": 0,
+    "discovered": 3040,
+    "selected": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "trx": {
+      "path": "TestResults/isolation-2b5d0c5f544f45b19ce1119663130568/results.trx",
+      "sha256": "17f13e45687a80b64d803fb0858f0695fead504206d64e90974bad6bbd3a8ddc"
+    }
+  },
+  "surrounding": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberPreparedSourceBindingTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~PreparedSourceCancellationBudgetTests|FullyQualifiedName~LoginLogoutTests|FullyQualifiedName~IdentityRegistrationTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberPreparedSourceApprovalApiTests'",
+    "exit_code": 0,
+    "discovered": 3040,
+    "selected": 267,
+    "passed": 267,
+    "failed": 0,
+    "skipped": 0,
+    "trx": {
+      "path": "TestResults/isolation-39fe74a769ce4226ab802daa5b1971d2/results.trx",
+      "sha256": "f2312d770fdcf1e52605d2a550cafc1d1ccdf1b0db2ad192c4a836bd2b6c4624"
+    }
+  },
+  "development_assertion_correction": {
+    "classification": "ordinary first development test-assertion defect, noncounting; not product failure/expected RED",
+    "command": "same focused two-test filter",
+    "exit_code": 1,
+    "selected": 2,
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "trx": {
+      "path": "TestResults/isolation-a2e106746b1e4e4b8309c2e3aefff68c/results.trx",
+      "sha256": "2d1ab2b43b8891e96fe767f316595bf2440105ed4e052b7b8f4ccdf268fc6837"
+    },
+    "raw_failure_excerpt": "Assert.Equal() Failure: Collections differ; expected/actual displayed identical OctoberRepositorySelection records.",
+    "correction": "Compare three context collections via ToArray rather than ImmutableArray backing-array equality; no weakened value expectations."
+  },
+  "fixture_correction": "Real Identity lockout expiration set DateTimeOffset.UtcNow.AddMinutes(10), with IsLockedOutAsync precondition; unchanged Revoked/null disclosure assertions.",
+  "final_shape": {
+    "test_owner": "no further refactor needed; actual selector/public persistence seam, observer delegates real authority/writer, controlled external identity/migration explicit, no prior October schema",
+    "production_owner": "T015 adapters conform/no-refactor-needed; separate source-adapter-t015-final-shape-01.json"
+  },
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  },
+  "limitations": [
+    "No PostgreSQL qualification",
+    "No actual generator Program/entrypoint qualification",
+    "No T018/T019 whole-task completion",
+    "Provider wiring remains absent"
+  ]
+}

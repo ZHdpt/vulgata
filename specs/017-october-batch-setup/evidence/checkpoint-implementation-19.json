@@ -1,0 +1,46 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "checkpoint_id": "bmad-18-4-implement-20261002T103043Z-33bea9",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "expected_parent": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "summary": "Verified bounded ordinary-Web controlled implementation checkpoint, not completed tasks or final candidate. DefaultConnection captured at final Build; special Web startup removed; controlled tests reconciled. Remaining runtime consumers/type cleanup/qualification and all final gates remain.",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberSelectedWebIdentityIntegrationTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-development-attempts-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-red-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-tracer-dispatch-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-controlled-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-controlled-launcher-failure-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-controlled-reconciliation-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-program-final-shape-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-stale-settings-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-stale-settings-red-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-stale-settings-test-oracle-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-19.json"
+  ],
+  "current_proof": "specs/017-october-batch-setup/evidence/ordinary-web-controlled-final-green-01.json",
+  "counts": {
+    "completed": 23,
+    "total": 30,
+    "failed_results": 6,
+    "pause_at": 7
+  },
+  "excluded_unrelated": [
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "owned_provisional_excluded": "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+  "no_merge_push_rewrite": true
+}

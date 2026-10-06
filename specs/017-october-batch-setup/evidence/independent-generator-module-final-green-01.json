@@ -1,0 +1,12 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "execution_mode": "same approved outside-sandbox eng/test.ps1 SelfContained launcher",
+  "focused": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests'", "exit_code": 0, "selected": 8, "passed": 8, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-3ea0c27cc20c4518baa96c2b6524874f/results.trx"},
+  "regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedSource|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests'", "exit_code": 0, "selected": 344, "passed": 344, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-f28d68e2836c45e68d2127dee881a8db/results.trx"},
+  "hashes": {"src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs": "c49f9d8e5d71b2dae5b6fc30ce88a147fac592103177099729323f6a1aca2342", "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "072af23af6f26b690e8e819c6afcc7091ad77873df9c08dee2bf179cce44286c"},
+  "assessment": "Restored test owner verified final module/test shape. Existing prepare test now distinguishes empty caller digest from authority's canonical digest and observes writer input. One added cancellation-after-authorize case proves closed Cancelled/null outcomes, no target/migration/write/selector and session disposal. Earlier broad negative assertions strengthened to exact TargetUnavailable and Denied statuses. Public-seam event/count assertions and local bounded fixtures; no further refactor needed. Production owner assessed cohesive orchestration and owned session lifetime without refactor.",
+  "route": "Original missing module behavior had genuine RED and minimal GREEN. New canonical-request/cancellation coverage proves already-correct behavior; no RED manufactured or historical evidence changed.",
+  "remaining": "Actual Identity-to-module integration, direct selected Web WAF, generator Program/Npgsql/source callback composition, provider/ordinary startup/diagnostic work, PostgreSQL/process qualification and all final lifecycle gates remain incomplete.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

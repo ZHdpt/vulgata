@@ -1,0 +1,21 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-denied-diagnostics-final-green/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T17:42:36Z",
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "01a449d2a29c8cdaebb85ff2155043dcb2b0b62a7d3299af47adae3deff57c10",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "1eda617a082c68b3c9ab1d0c31278e30b130cbe0ffb2746e89011d5d87a0b89d"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberHostSelectionTests'",
+  "exit_code": 0,
+  "selected": 9,
+  "passed": 9,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-f70a8478bc8c4b6e8ef1e4cb48097803/results.trx",
+  "trx_sha256": "8cd53e33cf3533cc76bf799ce88887e0f095fcab70e7442f5dea21dae713eaea",
+  "cleanup": "Nine fresh owned cases verified; exact labeled container/volume removed, database/temp cleanup recorded, [] and volume absent.",
+  "assessment": "Independent retained test-owner regression before the next Prepared assertion. Denied class observable, all original prepare/select/provider rejection/secret exclusion assertions preserved; no test refactor required. T027/T028 incomplete."
+}

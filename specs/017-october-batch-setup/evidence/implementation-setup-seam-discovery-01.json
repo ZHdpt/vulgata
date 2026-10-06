@@ -1,0 +1,25 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "verdict": "REVISE",
+  "evidence_id": "18-4/implementation/setup-seam/1",
+  "summary": "Implementation discovery found that the accepted definition names PrepareAsync(OctoberSetupRequest, OctoberAuthorizedSelection, CancellationToken) but does not name its declaring public contract or closed result shape. Governed TDD cannot author a public-seam behavioral test without inventing that API, so the definition returns to plan while completed T001 remains preserved.",
+  "finding": {
+    "id": "I-18.4-SETUP-SEAM-01",
+    "earliest_owner": "plan",
+    "evidence": "T003 and ID-R01/I01 define the setup behavior and parameters but not the declaring interface/class, the closed setup result type/statuses, or the success capability invariant. The test owner verified no existing October setup contract exists in source.",
+    "required_outcome": "Name one callable Core setup policy/port and a closed prepare result/status contract, including the success/committed batch identity invariant, denial/unavailable/cancelled/conflict outcomes, and the relation between first-batch PrepareAsync and existing-batch IOctoberBatchSelector.BindAsync. Preserve the already accepted request parameter types and bootstrap/isolation scope."
+  },
+  "production_started": true,
+  "preserved_work": {
+    "task": "T001",
+    "paths": [
+      "src/dotnet/Vulgata.OctoberGenerator/Vulgata.OctoberGenerator.csproj",
+      "src/dotnet/Vulgata.OctoberGenerator/Program.cs",
+      "Vulgata.slnx"
+    ],
+    "verification": "Generator project restore passed with source/audit warnings; build passed with zero errors; entry point fails closed and contains no analysis or dispatch behavior."
+  },
+  "test_discovery": "T002/T004 test owner made no edits because the declaring setup seam is underspecified. Missing-symbol compile failure is not being mislabeled as behavioral RED.",
+  "authority_effect": "Implementation approval is suspended for the affected definition. No external resource permission is inferred and no production work beyond completed T001 may proceed until corrected review and approval gates are satisfied."
+}

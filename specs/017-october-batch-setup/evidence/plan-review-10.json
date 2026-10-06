@@ -1,0 +1,95 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0054-context-provenance-plan-self-review.json",
+    "sha256": "18156b86ad6cced76390ac55a6a67dd4b1542c429dad40c2a9580204a2fa7015"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "REVISE",
+    "reviewed_commit": "012d41ac0e5a20f2d16ba62904d28df6eb836d26",
+    "reviewed_boundary": {
+      "base_commit": "012d41ac0e5a20f2d16ba62904d28df6eb836d26",
+      "candidate_commit": null,
+      "diff_sha256": "a7d3f50ce2484e38b42e1f01f9ff397bce6e315348c7b7176a6fe9f3569523bc",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "60845ded3eb3177dfbfa13e2df43a86babe5a8c189e80544551e96b9bfca6638",
+        "specs/017-october-batch-setup/research.md": "1324ddd88aad7a11e20de6ca22e20b02b01dc4834ff04ba78816c7b3f9b414f0",
+        "specs/017-october-batch-setup/data-model.md": "4aa09af49a520ec4118b5cca835fe742766cf1bef2bdd263452d18353062b7ca",
+        "specs/017-october-batch-setup/quickstart.md": "3c76762b5c995788ac3abb769db460a0810e702a04575d689d229257e8f47ede",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "f7ffaa08247559a0f5a3be6853bdcda77a5da1b983ea1a67b88d53c219f99466",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      ".specify/memory/constitution.md",
+      "docs/agents/project-state.md",
+      "docs/agents/development.md",
+      "docs/agents/testing.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/evidence/implementation-context-provenance-seam-result-01.json",
+      "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-05.json",
+      "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-05.json",
+      "specs/017-october-batch-setup/evidence/context-provenance-plan-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/bootstrap-host-tdd-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-02.json",
+      "specs/017-october-batch-setup/evidence/plan-review-03.json",
+      "specs/017-october-batch-setup/evidence/plan-review-04.json",
+      "specs/017-october-batch-setup/evidence/plan-review-05.json",
+      "specs/017-october-batch-setup/evidence/plan-review-06.json",
+      "specs/017-october-batch-setup/evidence/plan-review-07.json",
+      "specs/017-october-batch-setup/evidence/plan-review-08.json",
+      "specs/017-october-batch-setup/evidence/plan-review-09.json",
+      "specs/017-october-batch-setup/evidence/definition-review-01.json",
+      "specs/017-october-batch-setup/evidence/definition-review-02.json",
+      "specs/017-october-batch-setup/evidence/definition-review-03.json",
+      "specs/017-october-batch-setup/evidence/definition-review-04.json",
+      "specs/017-october-batch-setup/evidence/definition-review-05.json",
+      "specs/017-october-batch-setup/evidence/definition-review-06.json",
+      "specs/017-october-batch-setup/evidence/definition-review-07.json",
+      "specs/017-october-batch-setup/evidence/definition-review-08.json",
+      "specs/017-october-batch-setup/evidence/definition-review-09.json",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupPolicy.cs",
+      "src/dotnet/Vulgata.Web/Program.cs"
+    ],
+    "findings": [
+      {
+        "id": "P-18.4-05",
+        "severity": "HIGH",
+        "category": "authority-continuity",
+        "artifact": "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "location": "Trusted advisory context at the policy and writer seam, especially lines 178–190",
+        "affected_requirement": "FR-001, FR-002, FR-005, FR-012; ID-I02 and ID-S02",
+        "evidence": "The new ManagementAuthorityId is deployment-owned, included in digest v2 and persisted with the batch. Existing-batch read-only binding compares target, organizational membership, root bindings and context references while allowing the fresh grant's current advisory-content digest to differ, but it does not require the current grant's ManagementAuthorityId to equal the batch's stored authority ID. A different management deployment with colliding Repository and context record IDs could therefore bind historical context selected under the previous authority.",
+        "correction_outcome": "Require exact stored-versus-current ManagementAuthorityId equality for existing-batch BindAsync before exposing capability or retained context, while permitting ordinary text edits under the same authority. Require grant validation to compare live authority identity with the protected v2 snapshot and add a controlled cross-authority/colliding-ID denial seam. Preserve first-commit SelectedAtUtc outside the semantic digest and unchanged historical context behavior.",
+        "earliest_owner": "plan"
+      }
+    ],
+    "summary": "Plan-only REVISE for P-18.4-05. The trusted SelectedContext placement, immutable copied inputs, v2 canonical digest, standalone applicability, differences, atomic retention, cancellation and writer-owned first-commit SelectedAtUtc are coherent. Fresh-grant read-only selection may preserve historical advisory text, but it must preserve management-authority identity across that boundary. Earlier findings remain resolved. Architecture classification remains required. No new Worker tool, Scan strategy or PRD change is apparent; planned-change applicability must be reassessed after correction and ACCEPT. Deterministic checks passed. This verdict authorizes no tasks, implementation or resources."
+  }
+}

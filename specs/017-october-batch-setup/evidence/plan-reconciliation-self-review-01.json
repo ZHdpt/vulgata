@@ -1,0 +1,40 @@
+{
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "base_merge_checkpoint": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a",
+  "integrated_story_18_1_completion": "3632b2cc5e0752b66162e71ec4da95628fe3efcd",
+  "input_hashes": {
+    "specs/017-october-batch-setup/plan.md": "30b696387315e87882fdce8034c9994ab0c97dca1f6627b4339e901e1ad072ff"
+  },
+  "summary": "Reconciled the architecture plan set with the completed Story 18.1 callable approval, issuer, current-authority, read-context and closed Worker-function contracts. The plan remains subject to root hash mapping, deterministic validation and independent review; the ordinary definition owner must correct stale 18.1-unintegrated wording in spec.md before that review.",
+  "artifact_manifest": {
+    "specs/017-october-batch-setup/plan.md": "30b696387315e87882fdce8034c9994ab0c97dca1f6627b4339e901e1ad072ff",
+    "specs/017-october-batch-setup/research.md": "05b131cf9726f106efdcd2b561d80dc5f803c8d9d96eca6f8649dc7201db9198",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "5d3f7aa5c381344b7402322289ba80816361bdf6f7058359a8b110b05ce41bea",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "f3bcff7a82aa63c8c253b4db2feb79bb1e490505967e8971bdcbbe77f2e17faf",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+  },
+  "source_boundary": {
+    "contract": "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+    "core_types": "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+    "issuer": "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs",
+    "worker_functions": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+    "verification": "specs/016-contained-source-tools/evidence/final-verification-01.json"
+  },
+  "feasibility": "The existing concrete issuer accepts PreparedSourceGrantRequest and a mandatory IPreparedSourceCurrentAuthorityVerifier. Story 18.4 can supply the production verifier and trusted binding composition without changing the 18.1 Core or Agent tool public seams. Ordinary Web Identity can issue the initial startup grant without opening an October database; only October-enabled Web accesses selected setup and current source approval records.",
+  "invariants": [
+    "Exactly one immutable opaque root binding per selected (BatchId, RepositoryId); a generator deployment mapping is keyed by exact target, batch, Repository and binding version and never persists PhysicalRootPath in October data.",
+    "PreparedSourceApproval binds exact batch, Repository, real subject, WorkerSourceRead purpose, current approval identity, root-binding identity and label; startup authorization is not standing disclosure authority.",
+    "The generator-side current-authority verifier checks live Web approval and local root mapping at issuance and before every disclosure; revocation/change/unavailability closes the Story 18.1 context and invalidates continuations.",
+    "Trusted caller owns IAsyncDisposable context lifetime; PreparedSourceFunctions borrows it and exposes exactly three existing closed functions. Story 18.4 does not implement later Worker dispatch."
+  ],
+  "migration_and_compatibility": "The new binding/approval records live only in the dedicated fixed-schema October context selected by target and batch. Normal Web's Identity/domain model, migrations and routes stay separate. Two owned PostgreSQL targets and ordinary-startup regression remain required verification, not claimed results.",
+  "constitution_and_architecture": "Core policy, Infrastructure persistence/source adapter, Web Identity exception and Agent Execution's injected capability retain Constitution I/V and the architecture spine's owner boundaries. Source labels remain distinct from Git Profiled Revisions and Source Snapshots; no Scan, CodeGraph, JDT-LS or Knowledge generation is absorbed.",
+  "test_seams": "Direct public-seam checks cover current/foreign/revoked/unavailable approval, exact tuple and root version, successful issuance, cancellation/disposal, and the borrowed three-function facade. Story 18.1's existing 119 prepared-source checks remain its own containment/schema regression; Story 18.4 tests must follow docs/agents/testing.md suite classification and owned PostgreSQL resources.",
+  "implementation_design_shape": "One front-matter block, architecture classification, exact required headings and unique preserved IDs plus new ID-S04. The installed content validator returned no errors; git diff --check passed. The root owns authoritative state/path/hash-bound validation.",
+  "planned_change_trigger_assessment": "No new or materially changed Worker Agent tool, Scan strategy or PRD requirement is proposed. Architecture classification and early independent plan review remain required. If review finds that production composition exposes or changes the tool surface, the root must apply AGENTS.md planned-change authorization before tasks.",
+  "follow_up": "The current spec.md still says Story 18.1 is unintegrated and tasks are held pending integration. This is a spec-owner currentness defect, not authority for this plan author to edit spec.md; route it to the retained ordinary definition owner and re-review the corrected definition."
+}

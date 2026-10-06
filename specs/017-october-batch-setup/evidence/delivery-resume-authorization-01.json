@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "kind": "user-authority",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "recorded_at": "2026-09-29T08:59:13.6937986Z",
+  "source": {
+    "thread_id": "01a0e728-b7cc-78f1-8a3d-d0d49c7dfde2",
+    "turn_id": "01a0ec61-ef9c-7ec0-8a81-eb357a155a57",
+    "message_id": "01a0ec61-f0bd-76a1-99c9-8210996b0e00",
+    "instruction_summary": "Resume Story 18.4 through normal governed delivery to completion, lifting the earlier plan-only and merge-only restrictions while retaining every review, approval and verification gate."
+  },
+  "verified_resume_boundary": {
+    "branch": "oct14/story-18-4",
+    "merge_checkpoint": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a",
+    "feature_directory": "specs/017-october-batch-setup",
+    "story_18_1_completion_commit": "3632b2cc5e0752b66162e71ec4da95628fe3efcd",
+    "earliest_owner": "plan",
+    "episode_id": "18-4-plan-review-authorization-boundary-01",
+    "failed_results": 1,
+    "pause_at": 4
+  },
+  "delegation": {
+    "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+    "story_scope": "Story 18.4",
+    "purposes": [
+      "planned-change authorization after current independent plan ACCEPT when required",
+      "implementation approval after current complete-definition ACCEPT",
+      "finite recovery extension at a reached pause limit"
+    ],
+    "max_pause_at": 7,
+    "max_pause_at_semantics": "Cumulative per unresolved episode; every reached limit requires a fresh decision and the ceiling grants no automatic attempts."
+  },
+  "preserved_gates_and_limits": [
+    "This instruction is not advance approval of the revised plan.",
+    "Independent plan review, applicable planned-change authorization, task generation, complete-definition review and implementation approval remain ordered gates.",
+    "Recovery count, holds, diagnosis requirements, model strategy and historical evidence remain unchanged.",
+    "No access, database, credential, spend, production, destructive-operation or verification-waiver authority is granted.",
+    "Owned database, migration and runtime qualification require separately explicit authorized resources.",
+    "No main merge, push, history rewrite or another story is authorized."
+  ]
+}

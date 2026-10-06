@@ -1,0 +1,23 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "task": "T022",
+  "verification_route": "Read-only assessment of already implemented behavior; T021 combined projection test-only coverage remains required.",
+  "input_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs": "39f149cbdecb7e172b0d43f33c68b47ea45b9be47f54a58d39455e51fa3ecc74",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs": "2df82e4626decdbcd2c81bd365eea4341ccb15ebfade3c700891b9af9c97342b"
+  },
+  "public_seam": "OctoberBatchSelector.BindAsync returns IOctoberHistoricalBoundSetupData.Snapshot with stored request/authority/context/digest/originalUTCtime.",
+  "assessment": "Existing store atomically persists entries/origins/applicability/differences/firstcommit time; replay retains it. Units cohesive, no production refactor or semantic gap indicated. Planned filename OctoberContextSelectionStore.cs absent, not a reason to add a duplicate class.",
+  "prior_evidence": [
+    "specs/017-october-batch-setup/evidence/october-setup-store-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/october-batch-selector-tdd-01.json"
+  ],
+  "remaining": "T021 must verify combined two-Repository read projection: standalone NotApplicable, null/empty, historical differences after management edits. No tests run; T021/T022 not complete.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

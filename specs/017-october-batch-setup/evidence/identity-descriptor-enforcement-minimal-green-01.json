@@ -1,0 +1,31 @@
+{
+  "kind": "implementation-evidence",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/identity-descriptor-enforcement-red-01.json",
+    "sha256": "afbe227eaee59f8aa051931c288451a5130595ce700ab0d198599b07d5bf4892"
+  },
+  "minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_MismatchedOwnedIdentityDescriptorFailsClosedBeforeOctoberMigration'",
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-8484ce5beeef488fa9dcc721a44b22aa/results.trx",
+    "trx_sha256": "f11ebca10aec1f8d70e7daa29a4dfc0bc29d0919ebe539dae5330d17d01f1858",
+    "child_exit": 1,
+    "october_schema": "absent"
+  },
+  "production": {
+    "path": "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+    "sha256": "729af1d48f13ee491b1b433f671dae5af709e69a331ba0508156e831cbd32adb",
+    "change": "Private configured/effective Identity endpoint/database descriptor check and connected SELECT current_database on scoped Identity before authentication/current selection. Non-Npgsql fails closed; cancellation and scope disposal awaited. No public verifier/newhost/source contract. Registration unchanged."
+  },
+  "limits": "Negative child mismatch rejects before opening Identity, not positive connected SQL proof. Actual positive generator/selectedWeb and affected fixture/regression verification pending. Existing SQLite-controlled Identity fixtures now fail closed; test owner must reconcile honest fixture/classification, not production bypass.",
+  "resource_evidence": "TestResults/isolation-8484ce5beeef488fa9dcc721a44b22aa",
+  "cleanup_owner_report": "Exact database/temp removal recorded; container inspection empty and named volume absent.",
+  "workflow": "ExpectedRED noncounting; recovery6/7/diagnosis/holds/owners/approvals unchanged. No group checkpoint until affected final proof."
+}

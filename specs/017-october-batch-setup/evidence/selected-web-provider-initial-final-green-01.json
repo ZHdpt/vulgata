@@ -1,0 +1,58 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "verification_route": "Changed actual selected-Web invalid-input handling uses RED/minimal GREEN; valid actual startup is passing coverage of current implementation with corrected owned protection fixture.",
+  "focused": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication|FullyQualifiedName~SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant'",
+    "exit_code": 0,
+    "selected": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-bbbac8d59f30460b836f508949bab2e7/results.trx",
+    "trx_sha256": "206916762242d1f117b427a151a886fca72d79f5f84dc8224965b56ef400e7e6"
+  },
+  "surrounding": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests'",
+    "exit_code": 0,
+    "selected": 239,
+    "passed": 239,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-0a2a1d30259a41998db3fcd371772773/results.trx",
+    "trx_sha256": "f9c0b3cf9cbb80770c277f8013f708a1217e8d137e39bb444319f269316305c0"
+  },
+  "independent_invalid_baseline": {
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "trx_path": "TestResults/isolation-f0d18937193e4ef58e385db8ae2252bd/results.trx",
+    "trx_sha256": "d1372632c19b52088c7288ad87a77ae72cd0b289301274999efd0121aeeaaaf9"
+  },
+  "initial_fixture_failure": {
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "trx_path": "TestResults/isolation-87446d9fbcd243d3b080d29b26bdaaf4/results.trx",
+    "trx_sha256": "5f948a234d4ac8b717a458586704981e1b079da80ebee1d92bc9757a6fa9a08d",
+    "failure": "October provider configuration failed: CredentialUnavailable. at Program.cs:114",
+    "classification": "Noncounting ordinary fixture mismatch, not product RED: pre-encryption provider differed from WAF active provider. Corrected owned provider shared through existing test DI; actual SecretEncryptionService/lifetime retained."
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "b7f90d6b0a936816207872fda3f8907f2cc0b79a283f050536c65efa3f1c0874",
+    "src/dotnet/Vulgata.Web/Program.cs": "3115ef1fae23830392b36a4aa776b0414e9362cee2e798a87ce20e1a62a52bdb",
+    "src/dotnet/Vulgata.Web/Data/SecretEncryptionService.cs": "c5e8cc0df4c4e1f55d75ca57cc901045204a8dfc35965f2568da5deff0f14035",
+    "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "7b28f61339d57d819cfa1e9f6024c4ec0397faafde95f62706d67df1c6d67870"
+  },
+  "observed": "Two actual fixed-purpose decryptions precede operator credential access; exact selected-batch/finalcontext-factory assertions retained. Ordinary ignores invaliddocument; selected rejects beforecredentials.",
+  "test_final_shape": "Bounded fixture update supplies valid protected document, delegates real encryption, retains purpose/cipher observations only; Npgsql declaration capture and ownedSQLite translation preserved, owned keyring/document cleaned. No further refactor.",
+  "limitations": "Inprocess WAF only; strict duplicate/unknown/sourceconflict/frozen-provider checks, generator startup and PG/process qualification remain unfinished. T018/T023/T024 not complete.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

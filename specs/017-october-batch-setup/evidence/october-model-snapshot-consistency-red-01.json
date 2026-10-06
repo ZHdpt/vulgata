@@ -1,0 +1,35 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/october-model-snapshot-consistency-red/1",
+  "source_commit": "eaa8842a2b2d873ba166720020d8793dfa825d24",
+  "observed_at": "2026-10-01T14:34:41Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0089-generator-executable-prepare-expected-red.json",
+    "sha256": "6c164fa4353cd31759fb903cded1a4fa70175c32ba69cb807d6eb0c787025b47"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberPersistenceModelTests.cs": "b1cc3768022919b751ecd2fecaeb920f5d23420eb341face297a47a7f3aaecdc",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs": "a970f27443c171a5ffa871bd2f49924151089750ded474507414031f09b111b8",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs": "4c4b8b435d0a3028ad225a1a8c559a050aa78cf373ed0c05fccdda17dd6903e1"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberPersistenceModelTests'",
+    "exit_code": 1,
+    "selected": 5,
+    "passed": 4,
+    "failed": 1,
+    "skipped": 0,
+    "build_errors": 0,
+    "build_warnings": 4447,
+    "trx_path": "TestResults/isolation-148fda56c7064230b821e83406ecb5dc/results.trx",
+    "trx_sha256": "853f77332eb076cc40d81e94e5dfbb83ae8fddb2b5fd1a758135ec57eb92b181",
+    "failure": "OctoberModel_HasNoPendingModelChanges: The October model must match its migration snapshot.",
+    "seam": "Existing metadata-only OctoberDbContext Npgsql model/snapshot APIs. Database.HasPendingModelChanges() is true, accepted required outcome false. No connection opened/external resource."
+  },
+  "scope": "Existing accepted fixed-schema/provider model consistency ID-S03/T004/T005/T011/T019/T029. No missing symbols/new seam, no physical schema change justified by static inspection.",
+  "assessment": "Test owner: narrowly scoped, existing public model seam, no refactor required. Read-only production diagnosis: same approved six-table schema but handwritten snapshot lacks standard model/provider metadata; exact executable deltas being added to same assertion diagnostics before correction.",
+  "qualification": "Expected model regression RED, noncounting. No snapshot repair attempted, no independent negative review/convergence or repeated failed snapshot repair. Original raw RED immutable; generator unverified partial implementation preserved; recovery6/pause7 and retained diagnosis unchanged."
+}

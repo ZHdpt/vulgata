@@ -1,0 +1,20 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0077-source-composition-lifetime-plan-review-accept.json",
+    "sha256": "d9b89b66b8436dd837358a6ec197ea49511aa91775d9bdf37a2d9fb9c81cd14c"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "source_commit": "af9872a62fa5805bc4f9b590f54d467da8247b07",
+    "summary": "Reconciled existing source-adapter caller/lifetime tasks, concrete provider declaration/binder/host sequence, retained scoped GREEN, and final qualification dependencies against plan-review-14 and plan-authorization-05. Preserved all 30 IDs and exact completion markers. Deterministic plan/task validation returned no errors; all 23 implementation IDs covered without unknown references. Existing resource permission remains separate from pending complete-definition review and implementation approval.",
+    "input_hashes": {
+      "specs/017-october-batch-setup/tasks.md": "8170a762b247c76b8003366d597f32d52c3d8112eeb67051f7491d175e2ac361",
+      "specs/017-october-batch-setup/plan.md": "119a56fd62cc4f8750aa5d685d7ff34973ab1c3549600f6f252b19a770ddbfa3",
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "f342a72f07794e8c480d9c683d6d1352dabb4d5f04f47afa6d356534a3d5e431",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "f9a6841712b17a0cbcf63ed6bcfcc2befeb03f03f8311d5c10cc2262e7e6d211"
+    }
+  }
+}

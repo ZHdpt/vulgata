@@ -1,0 +1,32 @@
+{
+  "kind": "implementation-evidence",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "source_sha256": "9d99d852f6f00ab4aecf4e15800b2635021ae265ad9348395a680636ecae8230",
+  "test_sha256": "0e20ccc699659343703e0978d5407873a78967e461078588f9d188a721f1b6f4",
+  "focused": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberHostSelectionTests'",
+    "exit_code": 0,
+    "selected": 18,
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-fd49912aff5d4017bac8a9cd9ba15384/results.trx",
+    "trx_sha256": "91a0ff74a168a9a9d54ccdc9632bd3a9b2e9ad0ded9309bea38b98b5138cf711"
+  },
+  "surrounding": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberContextSelectionTests|FullyQualifiedName~OctoberPreparedSourceBindingTests|FullyQualifiedName~OctoberPersistenceModelTests'",
+    "exit_code": 0,
+    "selected": 272,
+    "passed": 272,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-7e2840bb2aaa488ea86d2e2ed3ddc224/results.trx",
+    "trx_sha256": "67608a3d3ab86d78e0c67dd08514e82457e0dcecbefbc536588dc92b43d43ae4"
+  },
+  "test_owner_assessment": "No refactor needed; existing shared owned fixture, real provider/operator preconditions, sanitized outcomes maintained. Cancellation covered at binder/authority/selector/module seams, not actual CLI interrupt.",
+  "production_owner_assessment": "Main phase classifications cohesive, no private refactor needed. Concrete remaining non-exact authority/target/database identity ArgumentException startup gap; ordinary implementation correction, not new architecture.",
+  "cleanup_owner_report": "18 cases exact database/temp cleanup; labeled container empty and owned volume absent.",
+  "limitations": "Current shape passing evidence retained. Group not checkpoint-ready pending concrete ArgumentException diagnostic correction and affected fresh final checks. Identity descriptor/Web binding lifetime/T020/T029/story closure remain open.",
+  "workflow": "Recovery6/7 unchanged; no independent negative review/convergence verdict."
+}

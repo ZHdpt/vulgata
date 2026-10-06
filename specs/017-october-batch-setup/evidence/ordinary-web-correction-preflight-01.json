@@ -1,0 +1,31 @@
+{
+  "kind": "analysis",
+  "stage": "specify",
+  "summary": "Current assigned worktree and separable path ownership verified before bounded ordinary-Web correction; no index changes, merges or rewrites.",
+  "branch": "oct14/story-18-4",
+  "head": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+  "repo_root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+  "git_common_directory": "G:/source/repos/vulgata/.git",
+  "worktree": "C:\\Users\\13728\\.codex\\worktrees\\d166\\vulgata",
+  "git_identity_sha256": "eb88a82e054b4cd2e37d077d5b88fa5a6392de0062148a827724494b4768d69f",
+  "status_sha256": "db4ff2f4dcbee25508c2556dd43e72f1e3172d8f57bbe1e5e2c06000251dd7cf",
+  "observed_at": "2026-10-02T08:01:44.9391686Z",
+  "porcelain": " M docs/agents/project-state.md\r\n M docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md\r\n M docs/bmad/planning-artifacts/october-release-epics.md\r\n M docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md\r\n M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json\r\n M specs/017-october-batch-setup/workflow-state.json\r\n M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs\r\n M tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs\r\n?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json\r\n?? specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json\r\n?? specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json\r\n?? specs/017-october-batch-setup/evidence/primary-exception-current-tasks-self-review-01.json\r\n?? specs/017-october-batch-setup/evidence/primary-exception-diagnostic-authorization-01.json\r\n?? specs/017-october-batch-setup/evidence/primary-exception-diagnostic-result-01.json\r\n?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json\r\n?? specs/017-october-batch-setup/evidence/transitions/transition-0112-primary-exception-diagnostic-authorized.json\r\n?? specs/017-october-batch-setup/evidence/transitions/transition-0113-primary-exception-current-tasks-self-review.json\r\n?? specs/017-october-batch-setup/evidence/transitions/transition-0114-primary-exception-qualification-stopped.json\r\n?? specs/017-october-batch-setup/evidence/transitions/transition-0115-ordinary-web-decision-resolves-old-path-hold.json\r\n?? specs/017-october-batch-setup/evidence/transitions/transition-0116-ordinary-web-spec-invalidation.json\r\n?? specs/017-october-batch-setup/evidence/transitions/transition-0117-ordinary-web-spec-diagnosis.json\r\n",
+  "staged_paths": [],
+  "checkpoints": {
+    "merge": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a",
+    "integrated18_1": "3632b2cc5e0752b66162e71ec4da95628fe3efcd",
+    "both_ancestral": true
+  },
+  "ownership": {
+    "retained_definition": "specification then phase-scoped plan/tasks only",
+    "root": "state/evidence/canonical approved decision synchronization/Git",
+    "retained_tests": "OctoberPostgreSqlIsolationTests.cs historical provisional fixture correction preserved, no current execution",
+    "unrelated": [
+      "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+      "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+      "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+      "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+    ]
+  }
+}

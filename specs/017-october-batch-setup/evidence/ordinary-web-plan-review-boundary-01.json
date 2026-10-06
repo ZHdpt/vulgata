@@ -1,0 +1,104 @@
+{
+  "kind": "analysis",
+  "stage": "plan-review",
+  "summary": "Pinned ordinary-Web corrected specification/plan and explicit human authority for independent plan-only review; tasks remain superseded read-only context.",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0119-ordinary-web-plan-self-reviewed.json",
+    "sha256": "8fc378f775a39d83d9376c3d74b809dedb6ea02fcce290f54de1f8615a8f0f2f"
+  },
+  "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+  "reviewed_boundary": {
+    "base_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+    "candidate_commit": null,
+    "diff_sha256": "f032848ff4ce4c111e9e04658366ed69227326ed3a1353fba291d240821ce686",
+    "artifact_hashes": {
+      "specs/017-october-batch-setup/spec.md": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864",
+      "specs/017-october-batch-setup/checklists/requirements.md": "51426be95392ca4f03b2dec1af2929718065eb3a46dee2ce8b5857282ee01dfd",
+      "specs/017-october-batch-setup/plan.md": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd",
+      "specs/017-october-batch-setup/research.md": "01fd06994ea52dcc2063c9b5ddb0c9109d02fb0b1a8eed359a47a8682dbcba79",
+      "specs/017-october-batch-setup/data-model.md": "69c2d395fae8f051f733e68d734e74f1965c9f4d6b4cd86a4e5b7dd977f8edf8",
+      "specs/017-october-batch-setup/quickstart.md": "c09e40f13dfc8eb8d88a2ee9998d5e9fa3f3e0bc380220c6977898ae6b09951c",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "12dd23f4cb98e833dc0cb8e4dc6883b64f50058f9b5b1b4e7ba304caa81383b0",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "67f57e05c66a6b5665b6dfa91829c888eaa5ca4c75fd81946d0502c6627104fa",
+      "docs/bmad/planning-artifacts/october-release-epics.md": "dbb34ffbce21eaaa4b096c5a406f3d455678049989f4bf2fc8e097aa1d6d6d85",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md": "8fc7f350cb7df28f0112b39e08b48c020fed4a7920f999b885a17a89d7d9b4be",
+      "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json": "cc1be3203cf2fc4b4b00ae4fdeaed3713f7860e48ab1695fcb47f90a26c1108b",
+      "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json": "246bc9ef3ccbcb1ba98c6e84da681222cf292c0ee15b53eaeb1a475161338ec2"
+    },
+    "owned_paths": [
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/checklists/requirements.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md",
+      "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json",
+      "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json"
+    ]
+  },
+  "prior_raw_verdicts": [
+    "specs/017-october-batch-setup/evidence/plan-review-01.json",
+    "specs/017-october-batch-setup/evidence/plan-review-02.json",
+    "specs/017-october-batch-setup/evidence/plan-review-03.json",
+    "specs/017-october-batch-setup/evidence/plan-review-04.json",
+    "specs/017-october-batch-setup/evidence/plan-review-05.json",
+    "specs/017-october-batch-setup/evidence/plan-review-06.json",
+    "specs/017-october-batch-setup/evidence/plan-review-07.json",
+    "specs/017-october-batch-setup/evidence/plan-review-08.json",
+    "specs/017-october-batch-setup/evidence/plan-review-09.json",
+    "specs/017-october-batch-setup/evidence/plan-review-10.json",
+    "specs/017-october-batch-setup/evidence/plan-review-11.json",
+    "specs/017-october-batch-setup/evidence/plan-review-12.json",
+    "specs/017-october-batch-setup/evidence/plan-review-13.json",
+    "specs/017-october-batch-setup/evidence/plan-review-14.json",
+    "specs/017-october-batch-setup/evidence/definition-review-01.json",
+    "specs/017-october-batch-setup/evidence/definition-review-02.json",
+    "specs/017-october-batch-setup/evidence/definition-review-03.json",
+    "specs/017-october-batch-setup/evidence/definition-review-04.json",
+    "specs/017-october-batch-setup/evidence/definition-review-05.json",
+    "specs/017-october-batch-setup/evidence/definition-review-06.json",
+    "specs/017-october-batch-setup/evidence/definition-review-07.json",
+    "specs/017-october-batch-setup/evidence/definition-review-08.json",
+    "specs/017-october-batch-setup/evidence/definition-review-09.json",
+    "specs/017-october-batch-setup/evidence/definition-review-10.json",
+    "specs/017-october-batch-setup/evidence/definition-review-11.json",
+    "specs/017-october-batch-setup/evidence/definition-review-12.json",
+    "specs/017-october-batch-setup/evidence/definition-review-13.json"
+  ],
+  "intended_verdict_path": "specs/017-october-batch-setup/evidence/plan-review-15.json",
+  "guards": {
+    "deterministic_plan_content": "passed",
+    "plan_review_current_profile": "allowed"
+  },
+  "integration_verification": {
+    "merge_checkpoint_ancestry_exit": 0,
+    "source_baseline_ancestry_exit": 0,
+    "source_stage": "complete",
+    "source_checkpoint": {
+      "binding_status": "pending",
+      "checkpoint_id": "bmad-18-1-complete-20260929T073650Z-4fb28c",
+      "commit_sha": null,
+      "stage": "complete"
+    },
+    "source_recovery": null,
+    "unchanged_contract_diff": [],
+    "source_completion_trailer_verified": true,
+    "completion_commit": "3632b2cc5e0752b66162e71ec4da95628fe3efcd",
+    "source_validator": "PASS"
+  },
+  "unchanged_recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "closing_gate": "verify"
+  },
+  "prohibited_paths": [
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ]
+}

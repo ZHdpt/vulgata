@@ -1,0 +1,30 @@
+{
+  "kind": "analysis",
+  "stage": "specify",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0116-ordinary-web-spec-invalidation.json",
+    "sha256": "049ed1740ae1682f8c8d4558e77dbb7799c936f4194998208f85a982ae49574a"
+  },
+  "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+  "summary": "Failure of intent alignment: spec FR-005/FR-007/FR-012 and User Story2 bind Web startup to generator batch selection, real setup credentials and provider configuration. The accepted special selected-data design was verified historically but the human now explicitly requires ordinary Web with only changed database configuration. Earliest invalid owner is spec. Correct only Web startup and downstream qualification assumptions, preserve standalone batch authorization/provider/source/context/isolation, reclassify plan and rerun affected independent reviews and scoped authorization before tasks/implementation. Verify ordinary Web startup with owned A/B databases under the revised gates; do not replay the exhausted old selected-data WAF diagnostic.",
+  "failed_approaches": [
+    {
+      "path": "specs/017-october-batch-setup/evidence/primary-exception-diagnostic-result-01.json",
+      "disposition": "Historical special-Web primary CredentialUnavailable and teardown log lock are preserved; removing this unrequested startup coupling is not a claim either diagnostic passed."
+    },
+    {
+      "path": "specs/017-october-batch-setup/evidence/plan-review-14.json",
+      "disposition": "Accepted old boundary; affected Web obligations superseded by exact user clarification."
+    }
+  ],
+  "decision": {
+    "path": "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json",
+    "sha256": "cc1be3203cf2fc4b4b00ae4fdeaed3713f7860e48ab1695fcb47f90a26c1108b"
+  },
+  "recovery": {
+    "episode_id": "18-4-implementation-setup-seam-01",
+    "failed_results": 6,
+    "pause_at": 7
+  },
+  "next_check": "Author spec self-review, fresh plan classification and deterministic validation, independent plan review, scoped planned-change authorization, affected tasks/full-definition review and implementation approval. Unchanged work remains reusable only for unchanged semantic obligations."
+}

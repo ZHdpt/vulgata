@@ -1,0 +1,52 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "task_ids": ["T014", "T015"],
+  "work_kind": "behavioral",
+  "summary": "The October current-authority adapter and generator-side trusted root binding now feed the unchanged Story 18.1 issuer with an exact approval and deployment-owned root, fail closed on revoked/unavailable authority, and preserve caller-owned context lifetime.",
+  "behavioral_red": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.October.OctoberPreparedSourceBindingTests'",
+    "execution": "outside sandbox after a superseded CS2012 output denial",
+    "selected": 15,
+    "passed": 0,
+    "failed": 15,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-44778cbac8cc4facb68efcd66197baea/results.trx",
+    "trx_sha256": "d2936af2c9e30b8197ef181650cdcdfcc2f216910d7db4f7ab3a317cc5c645b7",
+    "observation": "All cases reached the declaration-only verifier or binding shells; no test or environment defect remained."
+  },
+  "final_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.October.OctoberPreparedSourceBindingTests'",
+    "execution": "outside sandbox",
+    "selected": 15,
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-aee520d7f92d4c18a8195d3f122d1cc5/results.trx",
+    "trx_sha256": "f898301e4e252083790e15b5e89c8fb29128a103650e44e9e8548548c56fc680"
+  },
+  "story_18_1_regression": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'",
+    "sandbox_result": {
+      "selected": 119,
+      "passed": 31,
+      "failed": 88,
+      "classification": "documented restricted Windows ancestor-handle RootUnavailable boundary",
+      "trx_path": "TestResults/isolation-786f4e05b86a44408580249e211f5328/results.trx",
+      "trx_sha256": "0bf1cd7be170598786d9abe2b52f336140a9c60f91e57b294cf58dfd0c342bdd"
+    },
+    "outside_sandbox_result": {
+      "selected": 119,
+      "passed": 119,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-d916993bf6094df999ac13730effca96/results.trx",
+      "trx_sha256": "0629ced2bd23b1d1528b03e93e460d077d24c33ea88f2310277b97d686957a96"
+    }
+  },
+  "test_owner_assessment": "Tests use the actual verifier, generator binding, unchanged issuer/context and owned temporary roots. They cover exact target/batch/Repository/root-version mapping, Current/Revoked/Unavailable, separate Repository contexts, authority loss before disclosure, cancellation, settlement and caller disposal. Existing three-function schema tests remain unchanged. No refactor was needed.",
+  "production_owner_assessment": "Verifier forwards the exact approval and maps current authority without caching; binding resolves only its immutable exact tuple and supplies the physical root solely to the trusted issuer. No Story 18.1 contract or Worker tool changed. No post-GREEN refactor was justified.",
+  "qualification_limit": "Owned local prepared roots and controlled authority responses only; no production Web transport, mutual TLS or deployment root provisioning is claimed."
+}

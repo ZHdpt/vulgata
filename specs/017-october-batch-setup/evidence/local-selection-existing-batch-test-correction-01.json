@@ -1,0 +1,10 @@
+{
+  "kind": "analysis", "stage": "implement",
+  "summary": "Select implementation passes authorization/request/digest/subject assertions; remaining test Assert.Equal on SelectedContext record compares ImmutableArray backing-array identity, although accepted select returns fresh immutable copied current context. Route assertion correction to retained test owner, never cache/reuse context to fit test. Original meaningful select RED retained; corrected assertions must compare complete content, origin, classifications and differences. No passing result claimed until verification.",
+  "raw_runs": [
+    {"exit_code": 1, "trx_path": "TestResults/isolation-daae8b7b699a4174a4a8138d6ee89e58/results.trx", "classification": "ordinary-fixture-composition-development-failure", "cause": "Premature October context registration conflicted with SQLite fixture override; production owner removed that registration. Actual selected context registration remains later T019 responsibility."},
+    {"exit_code": 1, "selected": 1, "failed": 1, "trx_path": "TestResults/isolation-961c12f8c2c6464cb7430b99deaa3053/results.trx", "classification": "ordinary-test-assertion-correction", "cause": "Line762 record equality treats fresh ImmutableArray instances as unequal despite accepted content equivalence. Earlier behavioral authorization assertions passed."}
+  ],
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false},
+  "authority": "Current user excludes normal development RED/build and ordinary development correction from approval pauses; no recurring repaired product defect or negative independent review/convergence here. Preserve all raw evidence and existing allowance."
+}

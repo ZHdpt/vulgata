@@ -1,0 +1,15 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "at_count": 7,
+  "summary": "Observed CS0433 duplicate global Program is introduced by accepted generator-to-Web reference; generator-only declaration build passed but full test project compiles consumers of both assemblies and exposes the ambiguity. This is production entrypoint/build identity, not failed auth assertions,18.1 contracts, runtime database authority or sandbox denial. Test-local missing using corrected without rerun. Proposed bounded repair: give generator its own explicitly named/namespaced entrypoint while retaining Web Program identity and both entrypoint behavior, validate complete test-project compilation then resume existing T006 behavioral RED. No dependency move, plan/spec rewrite, new resources or test assertion weakening. Human-only finite extension from7 to8 is required before dispatch; all owners/reviews/approvals remain.",
+  "failure": {
+    "path": "specs/017-october-batch-setup/evidence/independent-auth-build-failure-01.json",
+    "sha256": "b8cbe75679e6c9c48ebf2914f11d04bae950492bf324ec3f4e2bc7cbcc8395b1"
+  },
+  "preserved_checkpoint": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+  "proposed_pause_at": 8,
+  "resource_permissions": "unchanged/not granted"
+}

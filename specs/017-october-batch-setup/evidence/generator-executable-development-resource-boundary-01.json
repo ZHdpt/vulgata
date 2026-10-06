@@ -1,0 +1,36 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-executable-development-resource-boundary/1",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "observed_at": "2026-10-01T13:30:09.712497Z",
+  "summary": "Root establishes only the narrow accepted executable generator prepare tracer under the existing explicit owned-resource grant. This is development RED/GREEN, not final T020/T029 qualification. No resources launched by this record.",
+  "authorization": {
+    "path": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+    "source": "Actual user answer to call_W54b5Io0ghPegfQrRwvUK253 question0: Authorize these owned test resources"
+  },
+  "prerequisites": {
+    "definition_review": "specs/017-october-batch-setup/evidence/definition-review-13.json",
+    "implementation_approval": "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
+    "scope": "T018/T019/T023/T024 explicitly permit narrow executable-seam development RED before final host qualification. Actual module, authority, store/selector and binder GREEN retained; executable Program remains unimplemented."
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+  "resources": {
+    "container": "Only eng/test.ps1 freshly creates vulgata-test-<new run GUID N>, labeled vulgata.test.run=<run>, PostgreSQL17-alpine, fresh volume vulgata-test-data-<run> with same exact label and recorded mounts; 127.0.0.1 random database port; no preexisting container.",
+    "databases": "One fresh unique test-owned A database created through validated TestResourceScope.RequireAdministrator; immediately RecordCreated after successful CREATE, validate before every fixture/child target connection. Initially seed only supported existing Identity/domain APIs/schema; no October schema. No ambient/shared database, credential copy or another story's instance.",
+    "fixtures": "Fresh run/test-owned temporary protection-key directory, synthetic account/operator password, purpose-protected credential file and complete synthetic provider document, optional owned source root. All created under uniquely resolved owned temp root; no actual source read or paid endpoint call.",
+    "processes": "Only recorded child generator dotnet process/tree with explicit per-child environment and bounded execution; no Web process/listener in this tracer. No shell interpolation or credentials in command arguments/output. Child working directory/config exact owned fixtures; no ambient secrets/config authority.",
+    "cleanup": "Dispose/await only owned child; delete only successful-created recorded database after validation and owned temp paths after absolute containment check. Launcher verifies exact container/volume labels and mounts, removes only its recorded IDs/names and confirms volume absence; restore environment. Cleanup failure is non-success."
+  },
+  "exclusions": [
+    "Web listener/process in development tracer",
+    "final runtime qualification claim",
+    "shared databases/keys/credentials",
+    "unrelated process stop",
+    "paid provider",
+    "18.1 source contract edits",
+    "source generation/Worker dispatch/JDT-LS/CodeGraph/Knowledge",
+    "scope/gate/recovery waiver"
+  ],
+  "recovery": "Expected stub behavioral RED noncounting; count6/pause7 retained. Concrete runtime prerequisite or ambiguous failure reports to root; normal fixture/build corrections are not authoritative workflow failures."
+}

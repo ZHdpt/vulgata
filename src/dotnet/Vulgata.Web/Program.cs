@@ -20,6 +20,7 @@ using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Infrastructure.Configuration;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Infrastructure.Git.BackupB;
@@ -93,7 +94,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 var app = builder.Build();
-
 IAnalysisRuntimeHealthProbe analysisHealthProbe =
     app.Services.GetRequiredService<IAnalysisRuntimeHealthProbe>();
 AnalysisRuntimeReadiness analysisReadiness =
@@ -184,9 +184,34 @@ static bool IsApiRequest(HttpRequest request) =>
 
 public static class VulgataWebComposition
 {
+    private sealed class DefaultConnectionSnapshot(string connectionString)
+    {
+        public string ConnectionString { get; } = connectionString;
+
+        public override string ToString() => nameof(DefaultConnectionSnapshot);
+    }
+
+    private static string GetContextConnection(IServiceProvider provider) =>
+        provider.GetRequiredService<DefaultConnectionSnapshot>().ConnectionString;
+
     public static FrameworkCatalog ConfigureServices(WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        bool validateServices = builder.Environment.IsDevelopment();
+        builder.Host.UseServiceProviderFactory(new DefaultServiceProviderFactory(
+            new ServiceProviderOptions
+            {
+                ValidateScopes = validateServices,
+                ValidateOnBuild = validateServices
+            }));
+        builder.Host.ConfigureContainer<IServiceCollection>((hostContext, services) =>
+        {
+            string? connection = hostContext.Configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrWhiteSpace(connection))
+                throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+            services.AddSingleton(new DefaultConnectionSnapshot(connection));
+        });
         builder.Services.AddOptions<ChatProviderReasoningOptions>()
             .Bind(builder.Configuration.GetSection(ChatProviderReasoningOptions.SectionName))
             .Validate(
@@ -227,24 +252,22 @@ public static class VulgataWebComposition
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
         }).AddIdentityCookies();
 
-        string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-                                  throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsqlOptions =>
+        builder.Services.AddDbContext<ApplicationDbContext>((provider, options) =>
+            options.UseNpgsql(GetContextConnection(provider), npgsqlOptions =>
             {
                 npgsqlOptions.MigrationsHistoryTable("__IdentityMigrationsHistory", "identity");
                 npgsqlOptions.EnableRetryOnFailure(3);
             }));
         builder.Services.AddDbContext<VulgataDbContext>(
-            options => options.UseNpgsql(connectionString, npgsqlOptions =>
+            (provider, options) => options.UseNpgsql(GetContextConnection(provider), npgsqlOptions =>
             {
                 npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
                 npgsqlOptions.EnableRetryOnFailure(3);
             }),
             contextLifetime: ServiceLifetime.Scoped,
             optionsLifetime: ServiceLifetime.Singleton);
-        builder.Services.AddDbContextFactory<VulgataDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsqlOptions =>
+        builder.Services.AddDbContextFactory<VulgataDbContext>((provider, options) =>
+            options.UseNpgsql(GetContextConnection(provider), npgsqlOptions =>
             {
                 npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
                 npgsqlOptions.EnableRetryOnFailure(3);

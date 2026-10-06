@@ -1,0 +1,12 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~IssueSourceApprovalAsync_IssuesExactApprovalForCommittedRepository'",
+  "exit_code": 1, "selected": 1, "passed": 0, "failed": 1, "skipped": 0,
+  "trx_path": "TestResults/isolation-bfc8190f8fb34cb58937a841bac7cb29/results.trx",
+  "summary": "Real private authenticated session/current selection -> actual OctoberBatchSetupPolicy/writer Created -> actual OctoberBatchSelector historical bound data -> direct IssueSourceApprovalAsync NotImplementedException at line648. Test requires exact seven fields, WorkerSourceRead, opaque identity, UTC expiry within10min/session and one matching committed nonrevoked row. No verify/revoke or fake authority.",
+  "declaration_reuse": "Test-only partial class declaration reuses existing private SelectionFixture, no fixture behavior/helper extraction/public production seam; compilation verified. Prior combined authority/selector59/59 baseline retained; later surrounding regression still required.",
+  "ordinary_build_failure": {"exit_code": 1, "build_log": "TestResults/isolation-dbe140a4501946869ba9064de5fb4fe8/build.log", "classification": "ordinary-test-build-not-red", "summary": "Missing test infrastructure using for SuiteFact caused CS0246; test owner added using before meaningful behavioral run."},
+  "hashes": {"tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "0590cfc83dbcf0cbb47d372a116cfc965731946a496ace0efa01a5708bcba3f3", "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "0a9e407f7ec9acf8727ae4ccf628ea653e7af069340aa6452509cc0266aa6eca", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "6232ad42bce118a29354db209270892baa39455045bcc8616f3ed2b3e10b0cd0", "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "7786fa4571f3adbe12a411a96d8fc21a95097c447431385f6b334407297a8aa2"},
+  "policy": "294 test sources and guard probes passed; new source SelfContained.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

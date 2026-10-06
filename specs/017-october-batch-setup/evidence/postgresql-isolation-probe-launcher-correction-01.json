@@ -1,0 +1,26 @@
+{
+  "kind": "development-launch-correction",
+  "stage": "implement",
+  "outcome": "verified-launcher-path; targeted fixture probe not yet executed",
+  "prior_dispatch": "specs/017-october-batch-setup/evidence/postgresql-isolation-log-lifetime-probe-dispatch-01.json",
+  "failed_launch": {
+    "error": "pwsh: The term 'pwsh' is not recognized",
+    "exit_code": 1,
+    "eng_test_script_invoked": false,
+    "build_started": false,
+    "fixture_executed": false,
+    "runtime_resources_created": false,
+    "reason": "temporary child PATH omitted the installed PowerShell directory"
+  },
+  "root_read_only_verification": {
+    "get_command_pwsh": "C:\\Users\\13728\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+    "exact_executable_exists": true,
+    "index_empty": true,
+    "diagnostic_test_sha256": "97a3d07cceb08fd6077e6c58adf7f2aa4a712afd937b93df8caec32b7424b7f9"
+  },
+  "bounded_correction": "Invoke the verified absolute PowerShell path once, with that executable directory included in process-local PATH. Same script/filter, diagnostic code, fresh owned resources and NLS environment. No further code edits. This is the still-unexecuted third fixture-check operation, not a fourth cleanup execution. The failed wrapper launch is preserved separately, not erased or reported as a test result.",
+  "fixture_check_allowance": { "actual_invocations_completed": 2, "next_actual_invocation": 3, "maximum": 3 },
+  "launcher_cause": "command resolution before runner start; distinct from retained log handle and SDK discovery failures",
+  "stop_condition": "If actual third fixture check is negative/fatal, stop with exact cleanup and raw diagnosis; no further execution or allowance reset.",
+  "governed_recovery": { "failed_results": 6, "pause_at": 7, "changed": false }
+}

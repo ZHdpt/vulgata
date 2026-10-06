@@ -1,0 +1,28 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0050-definition-review-09-accept.json",
+    "sha256": "4572a1b0a95c56c2ff8360605478452d2f65b5648506a60374c4ec1d43728177"
+  },
+  "raw_result": {
+    "kind": "analysis",
+    "stage": "implement",
+    "verdict": "REVISE",
+    "evidence_id": "18-4/implementation/context-provenance-seam/1",
+    "summary": "T008 discovery found that the accepted OctoberBatchSetupPolicy seam cannot express the context-provenance outcomes assigned to T008/T009. The request carries only context scope and record IDs, the trusted authority carries no context snapshots, the result exposes no context data, and the policy has no reader port. A behavioral test at this seam could only verify reference forwarding, not selection or retention of values, origin, time, applicability or disagreement.",
+    "finding": {
+      "id": "I-18.4-CONTEXT-PROVENANCE-SEAM-01",
+      "earliest_owner": "plan",
+      "evidence": "OctoberSetupRequest.ContextSelections is IReadOnlyList<OctoberContextSelection>, where OctoberContextSelection contains only Scope and RecordId. OctoberAuthorizedSelection contains target, batch, subject, canonical database identity, Repository IDs and selection digest. OctoberBatchSetupPolicy owns only IOctoberSetupWriter. Existing GlobalContext, System and Repository records contain context values and timestamps, but none are available at the policy seam. The retained test owner stopped without editing or manufacturing RED.",
+      "required_outcome": "Define one trusted, public setup-policy input for immutable selected advisory context that carries applicable scope, originating authority/record, value, selection time and explicit disagreement/nonapplicability. Keep the one Core policy and one writer, retain the server-derived subject and exact Repository/membership/digest checks, and preserve advisory text as non-source evidence. Reconcile the fixed contract and T008/T009 without introducing a second setup policy or flattening context provenance."
+    },
+    "production_started": true,
+    "preserved_work": [
+      "checkpoint 012d41ac0e5a20f2d16ba62904d28df6eb836d26",
+      "T001-T007 completed and verified",
+      "accepted Story 18.1 source contracts remain unchanged",
+      "T020/T029 owned-resource holds remain in force"
+    ],
+    "test_discovery": "The retained T008 test owner made no edits and ran no test because the accepted public seam cannot observe the required behavior. No missing-symbol failure or fabricated assertion is recorded as RED.",
+    "authority_effect": "This fifth substantive result reaches pause_at=5. The affected plan and downstream tasks/review/implementation approval must be reconciled after a fresh finite recovery extension. No database, credential, TLS, production, Story 18.1 contract or later-story permission is inferred."
+  }
+}

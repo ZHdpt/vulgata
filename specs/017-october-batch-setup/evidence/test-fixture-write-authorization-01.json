@@ -1,0 +1,40 @@
+{
+  "kind": "human-approval",
+  "stage": "implement",
+  "evidence_id": "18-4/test-fixture-write-authorization/1",
+  "decision_id": "18-4/test-fixture-write-authorization/1",
+  "status": "accepted",
+  "scope_sha256": "0c51ff69fa1a48ea32dbe5bbad82c4ee30d7bcb7a18ac4419e83c0fb7c929130",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "observed_at": "2026-10-02T02:18:36.9236524Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0107-identity-group-final-shape-tool-blocked.json",
+    "sha256": "e50ff10b5557a67958c2e614cb5862aa770e08cdd5de120c60ce99a06269ad7a"
+  },
+  "user_source": {
+    "kind": "current-chat-direct-user-message",
+    "locator": "2026-10-02 user reply immediately following root's final two-file fixture-refactor authorization request",
+    "instruction": "authorize    and proceed the story"
+  },
+  "request_context": "Root asked permission for bounded test-only fixture consolidation in OctoberLocalAuthorityTests.cs and OctoberLocalSourceApprovalTests.cs, preserving assertions/scenarios/owned-resource isolation; production/contracts unchanged and finalchecks rerun beforecheckpoint.",
+  "scope": {
+    "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+    "purpose": "bounded-behavior-preserving-test-fixture-consolidation",
+    "owned_paths": [
+      "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+      "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs"
+    ],
+    "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+    "blocked_head": {
+      "path": "specs/017-october-batch-setup/evidence/transitions/transition-0107-identity-group-final-shape-tool-blocked.json",
+      "sha256": "e50ff10b5557a67958c2e614cb5862aa770e08cdd5de120c60ce99a06269ad7a"
+    }
+  },
+  "summary": "Actual human reply explicitly authorizes the requested two-file bounded test-fixture consolidation and normal Story18.4 continuation. This resolves the missing direct-user write instruction, and only the blocked tool-boundary hold. It is not revised-plan approval, recovery extension, new resource access, waiver or new production scope.",
+  "raw_result": {
+    "status": "resolved",
+    "summary": "Direct human authorization received for exactly the previously requested two test files; actual user text retained above. The missing trusted-user instruction is now available to the restored test owner. Same-tool bounded refactor and fresh finalchecks may resume; any new tool rejection must be reported, not bypassed."
+  },
+  "unchanged": "Recovery6/pause7/diagnosis/history/exclusive Astra-medium definitionowner/currentacceptedplan+definition/implementationapproval/delegate/resourcegrant/18.1contracts; no merge/push/historyrewrite/newstory."
+}
