@@ -1,0 +1,140 @@
+# Tasks: OCT-EXPLORE — exact reader, then bounded Knowledge graph
+
+**Input**: Accepted spec/plan and F3 correction under `specs/20-1-Oct14-explore/`; see [plan-review-f3.md](plan-review-f3.md).
+
+**Authority**: The subsequent user instruction authorizes task generation and independent speckit-analyze only. It supersedes the earlier planning-session stop solely for these activities. Every implementation/test/runtime task below remains unchecked and unstarted. No implementation, merge, commit, push, root instruction update or resource use is authorized here.
+
+**Organization**: The plan's E0–E3 usable checkpoints are primary. E0 contains setup, foundation and US1 controlled reader; E1 completes US1 against real data; E2 contains sequential US2 and US3 sections; E3 contains combined qualification and cross-cutting closure. Checkpoints are verification/dependency boundaries, not recurring human approval gates.
+
+**Format**: `- [ ] Tnnn [P?] [USn?] action and exact file path`. Paths are repository-relative. `[P]` means disjoint files can proceed together only after stated prerequisites. For future work, resolve paths under this assigned worktree; never edit a counterpart checkout.
+
+## Shared-contract commit prerequisite and ownership
+
+**B0 contract commit: NOT SUPPLIED to this lane.** `fad7f11c9d6bc9ed3da1b371b24beb9f5c09db5d` is the verified planning baseline, not a compiled Knowledge checkpoint. T001 must record the actual full Business/integration-distributed commit SHA, symbol/fixture paths and conformance result before dependent production wiring. Do not invent a SHA or use another lane's draft as compiled evidence. Any later owner contract change requires a recorded compatible checkpoint shared by all consumers; no consumer DTO/schema fork.
+
+The same B0 commit (or recorded compatible successor) is required for every increment:
+
+| Increment | Additional prerequisite | Explore-owned files | Required verification |
+| --- | --- | --- | --- |
+| E0, T001–T013 | Owner-types compile/conformance, fixture and agreed route/link encoding. Minimal contract probes may establish initial B0 before production, once implementation/probe execution is separately authorized. | `Shared/Explore/`, `Web.ViewModels/Explore/`, `Web/Explore/` reader/facade/module/link files, `Web/Components/Pages/Explore/` reader/browse, `Web/Components/Explore/` sections/status, `tests/Vulgata.Tests/Explore/` reader tests; all full paths are in tasks below. | Controlled ordinary-user exactness/authorization, F3 continuation, races, safe rendering, keyboard/themes; focused SelfContained and Web build. |
+| E1, T014–T017 | E0; B0 real store/live authority, integration read composition and owned target; Scan real CL. Business B2 needed only for real BL portion. | Existing Explore facade/module and reader code only; Explore PostgreSQL tests and local quickstart evidence. | Actual persisted CL read, then BL; wrong-selection/revocation/outage, exact >64-KiB continuation and no-wiki startup. No fixture-as-generation claim. |
+| E2, T018–T027 | E0 plus B0 accepted-related read semantics/fixture; controlled work may overlap E1. Real graph proof waits for E1/Business accepted relationships. | Explore graph presentation DTOs/service/projector, ViewModel, Razor/scoped assets, graph tests. | Accepted direction/type/exact endpoints, caps and denied-record noninterference; pan/zoom/fit, accessible list, cancellation and coherent manual refresh. |
+| E3, T028–T032 | E1 including BL, E2, Business B1/B2 and Scan real publication, Chat exact footer integration, integration-owned shared composition/resources. | Explore E2E tests, owned corrections, feature quickstart. | Same real publication across Chat/reader/graph, supported Cross-Repository Edge and genuine Uncertainty; owned E2E/browser, independent code review and combined build/SelfContained evidence. |
+
+OCT-BUSINESS exclusively owns shared Core/Knowledge DTOs, policy, labelled shared fixture, `src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs`, its migrations/snapshot and read/store implementation. Explore requests missing semantics; it never implements a competing policy or queries producer internals.
+
+Integration exclusively owns `src/dotnet/Vulgata.Web/Program.cs`, `Components/Routes.razor`, `Components/Layout/MainLayout.razor`, `ManagementLayout.razor`, existing management Document/Graph placeholders, shared packages/configuration/theme and final publication/database selection. It serializes additions to `tests/Vulgata.Tests/TestInfrastructure/suites.json`; Explore provides exact proposed entries with every new test/helper. OCT-CHAT owns `Components/Pages/ChatPage*` and footer use of Explore's link destination; OCT-SCAN owns generation/source/tools. Cross-owner tasks below are handoff/consume/verify work, not authority to edit those files or send messages without authorization.
+
+## Testing and execution discipline (applies to every increment)
+
+- Behavioral work follows meaningful failing tests, minimal GREEN and surrounding regressions. A separate test author owns `tests/Vulgata.Tests/Explore/`; the production implementer owns Explore source files. Reviewer/verifier assesses the final shape independently. Do not manufacture RED for documentation, package-free registration metadata or already-passing integration behavior; capture actual baseline outcomes.
+- Every C# test/helper is classified in `tests/Vulgata.Tests/TestInfrastructure/suites.json` before build/discovery. Each test uses exactly one `Trait("Suite", ...)` and matching `SuiteFact`/`SuiteTheory`; no bare Fact/Theory or discovery/constructor resource acquisition. Proposed file paths below stay in the existing single test project.
+- Default/focused launcher: `pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Explore'`. New test namespaces must contain `Explore`. Zero-selected/all-skipped, unexpected skips, incomplete TRX, build/process or cleanup failures are non-success. SelfContained uses only controlled dependencies, not native tools, loopback listeners, providers or external DBs.
+- PostgreSQL: `pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~Explore'`. Combined E2E: `pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~Explore'`. Only explicit owned run resources and separately established runtime authority; no ambient/shared connection strings. Business owns October migrations; ordinary Web does not migrate October. Web startup still migrates/seeds existing Identity/domain contexts.
+- Record truthful RED/GREEN, discovery/TRX and resource results in the existing launcher outputs (`TestResults/isolation-*`) and concise links in this feature's `quickstart.md`; no new evidence framework. Browser observations and real generated data are distinct from fixture/SQLite/PostgreSQL structure checks. No provider/native-tool qualification is rerun by Explore merely to complete a checkbox.
+- Verification inside E0–E3 proceeds automatically when dependencies and existing authorization are satisfied. Pause only for missing prerequisites, actual runtime/resource authority, or a newly triggered Agent-tool/Scan-strategy/PRD-change approval. None is introduced by these tasks. The current user nevertheless explicitly stops this session before implementation.
+
+## E0 — exact reader with controlled data (T001–T013)
+
+### Phase 1: Setup
+
+- [ ] T001 Record the actual B0 shared-contract commit SHA, full owner type/fixture paths, compatibility and agreed link encoding in `specs/20-1-Oct14-explore/contracts/consumer-boundary.md`; verify its presence in the assigned checkout before dependent production work and distinguish the planning baseline from B0. If missing, report the dependency rather than create a local substitute.
+- [ ] T002 Prepare the Explore test/helper inventory entries for integration's serialized update of `tests/Vulgata.Tests/TestInfrastructure/suites.json` and record the proposed suite/path mapping in `specs/20-1-Oct14-explore/quickstart.md`; cover each named test/helper below before its first build, preserve other lanes' entries, and identify separate test/production owners. No project/package/global setting changes.
+
+### Phase 2: Foundation — contract probes, not a second Knowledge implementation
+
+- [ ] T003 Test owner-type compatibility/conformance in `tests/Vulgata.Tests/Explore/KnowledgeReadContractTests.cs` using the B0 shared fixture and only owner interfaces: exact membership/sections, Business metadata denial, live all-contributor entry/final disclosure checks, bounded browse/related reads and opaque 64-KiB continuation. These minimal probes may establish T001's initial checkpoint before dependent production; their execution needs subsequent authorization and their passing is not real-store proof.
+- [ ] T004 Provide controlled presentation harness glue in `tests/Vulgata.Tests/Explore/ExploreFixtureHost.cs` around the shared owner fixture and the existing WebApplicationFactory/component harness; classify it SelfContained, keep external acquisition inert, and isolate fixture registration from production. Pin ordinary non-manager subject/mode/purpose/selection and delayed responses without copying Knowledge DTOs or inventing authorization policy.
+
+### Phase 3: US1 — controlled browse and exact reader (Priority P1)
+
+**Goal / independent test**: An ordinary permitted IT user browses and opens exact CL/sections; Business sees BL or truthful empty states. An older exact reference never retargets. Oversized Documents and sections remain completely traversable through bounded owner continuation without needing graph/Chat production.
+
+- [ ] T005 [P] [US1] Author meaningful RED cases in `tests/Vulgata.Tests/Explore/ExactReaderTests.cs` for ordinary non-manager CL/BL, older version/section, wrong/unknown/unpublished/withdrawn targets, malformed inputs, Business CL denial without title/count leakage, unknown content schema, qualifications and injected markup; test fixed publication, safe failures and no GetCurrentAsync/legacy fallback (FR-001–006, FR-010–012; SC-001/002).
+- [ ] T006 [P] [US1] Author RED continuation/race cases in `tests/Vulgata.Tests/Explore/ExactContentContinuationTests.cs`: >64-KiB Document and >64-KiB single section, UTF-8 boundary bytes, ordered narrative without gaps/duplicates, repeated adjacent qualifiers, terminal-only completion, one request per click, cancellation/expiry/tampering/context changes and late responses clearing old chunks/cursors (FR-013, SC-007).
+- [ ] T007 [US1] Define presentation-only contracts and FluentValidation in `src/dotnet/Vulgata.Shared/Explore/ExplorePresentationModels.cs`, `IExplorePresentationService.cs` and `ExploreInputValidators.cs` after T003; wrap actual owner handles unchanged. Preserve model constraints verbatim: "bounded page size (default 20)", "at most 64 KiB UTF-8 per response", "only the current safe content chunk with its qualifications", and "No persisted content or shared cache". Do not redefine Knowledge identities, owner cursors or shared LoadState.
+- [ ] T008 [US1] Implement reader/browse facade and local exact link construction in `src/dotnet/Vulgata.Web/Explore/ExplorePresentationService.cs` and `ExactDocumentLinkBuilder.cs` to satisfy T005/T006: bind trusted subject/effective mode/purpose and explicit selection, delegate entry/final disclosure and continuation to B0, preserve exact version/optional section, reject unsafe/malformed destinations and never silently switch Business to IT or follow current versions. No direct EF, source reads or consumer-owned policy.
+- [ ] T009 [US1] Implement `src/dotnet/Vulgata.Web.ViewModels/Explore/DocumentReaderViewModel.cs` and `DocumentBrowseViewModel.cs` against Shared presentation ports to satisfy T005/T006: LoadState and generation captures, one outstanding next request, current chunk replacement, owner terminal/partial distinction, selection-bound browse continuation, cancellation cleanup and explicit same-target restart with fresh authority. Quote-preserved model constraint: "Content completeness is separate from `LoadState.Loaded`: a loaded chunk may be visibly partial." No chunk accumulation or auto-drain.
+- [ ] T010 [US1] Author component RED cases in `tests/Vulgata.Tests/Explore/ReaderComponentTests.cs` for ordinary `/knowledge/documents` and `/knowledge/documents/read`, exact section focus including oversized sections, Chinese partial/next/end/error states, safe structured rendering, qualification labels, keyboard actions and Business/light versus IT/dark. Include complete injected dependencies and existing harness conventions (FR-005/006/010/013; SC-005/007).
+- [ ] T011 [US1] Build ordinary authorized pages in `src/dotnet/Vulgata.Web/Components/Pages/Explore/DocumentsPage.razor`, `DocumentReaderPage.razor` and colocated code/scoped CSS, plus `src/dotnet/Vulgata.Web/Components/Explore/DocumentSections.razor` and `ExploreStatus.razor`, to pass T010. Use MainLayout without ManagementAccess, Razor-encoded content, exact validated section anchors and accessible `下一部分`; preserve text/qualifications and explicit missing-section failure without source viewing.
+- [ ] T012 [US1] Provide feature-local DI registration in `src/dotnet/Vulgata.Web/Explore/ExploreModule.cs` and update the registration/route handoff in `specs/20-1-Oct14-explore/contracts/consumer-boundary.md`; exercise production registrations with controlled owner services in `tests/Vulgata.Tests/Explore/ExploreCompositionTests.cs`. Verify missing wiki fails safely while login/admin stay usable; integration owns calls from Program/navigation and Chat owns footer adoption. Apply RED/GREEN to new behavior; use direct verification for metadata-only wiring.
+- [ ] T013 [US1] Verify E0 focused SelfContained via `eng/test.ps1`, build `src/dotnet/Vulgata.Web/Vulgata.Web.csproj`, review owned reader changes for security/correctness and refactor only with green regressions; record actual outcomes and fixture limitations in `specs/20-1-Oct14-explore/quickstart.md`. Do not label fixture CL as real generation; E0 is usable without E1–E3.
+
+## E1 — real CL, then BL reader (T014–T017; US1 continued)
+
+**Goal / independent test**: Read actual persisted CL as an ordinary user immediately; add real BL when Business supplies it. B2 is not a prerequisite to CL usefulness. Shared B0 commit remains mandatory, plus the real implementation/integration commit identities recorded here when available.
+
+- [ ] T014 [US1] Record real B0 read/store and integration composition commits, explicit owned database/publication and runtime-resource prerequisites in `specs/20-1-Oct14-explore/quickstart.md`; verify integration-owned `src/dotnet/Vulgata.Web/Program.cs` registration/selection consumes ExploreModule without October migration/operator credentials or legacy fallback. Hand off missing shared composition to its owner; do not modify shared files or start resources without authority.
+- [ ] T015 [US1] Author/classify `tests/Vulgata.Tests/Explore/ExplorePersistedReaderTests.cs` in PostgreSql and establish honest baseline evidence for exact persisted CL/BL, no-BL state, wrong batch/publication, real Identity/contributor revocation/outage, exact historical membership and >64-KiB Document/section continuation. Use owner acceptance/publication services and owned runner resources, not raw-row import or dummy ScanRun; existing passing integration behavior requires no fabricated RED.
+- [ ] T016 [US1] Wire/fix only `src/dotnet/Vulgata.Web/Explore/ExplorePresentationService.cs` and `ExploreModule.cs` (and owned reader ViewModels/pages if a reproduced defect requires it) against the recorded real B0 implementation, making T015 green while preserving controlled tests. Route any contract/policy/schema defect to Business, composition defect to integration; keep a usable CL path while real BL awaits B2.
+- [ ] T017 [US1] Run the owned PostgreSql reader selection via `eng/test.ps1` and the affected SelfContained regressions; open Scan's actual accepted CL, then Business's actual BL when available, and record code/publication handles and outcomes in `specs/20-1-Oct14-explore/quickstart.md`. Report CL-complete/BL-pending honestly until both portions pass; generated usefulness and real-data proof cannot be inferred from controlled persisted fixtures.
+
+## E2 — bounded graph and movement (T018–T027)
+
+### Phase 4: US2 — accepted graph projection (Priority P2)
+
+**Goal / independent test**: The shared fixture produces only accepted permitted exact-version nodes and directed Edges, each opening the E0 reader. E2 controlled work depends on E0/B0, not E1 completion; its real-data proof waits for the real publication.
+
+- [ ] T018 [P] [US2] Author RED projection tests in `tests/Vulgata.Tests/Explore/KnowledgeGraphProjectionTests.cs` for accepted REFERENCES/GENERATED_FROM identity/type/direction, exact node links, no invented helper-derived BL dependencies, cycles/self-loops/parallel edges, sparse/empty results, 39/40/41 nodes, 79/80/81 Edges, fixed one-hop/8-call/10-second acquisition and visible scope/incomplete indications (FR-002/006–008/011; SC-003/004).
+- [ ] T019 [P] [US2] Author RED non-disclosure tests in `tests/Vulgata.Tests/Explore/KnowledgeGraphAuthorizationTests.cs`: compare fixtures differing only in denied records; visible titles/counts/topology/tooltips/continuation/incomplete signals stay identical. Test Business BL-only, hidden CL provenance, contributor revocation between related reads and final disclosure, publication mismatch and owner outage (FR-003/004/007/008; SC-002/004).
+- [ ] T020 [US2] Extend `src/dotnet/Vulgata.Shared/Explore/ExplorePresentationModels.cs` and `ExploreInputValidators.cs` with derived graph request/results after T018/T019 RED; preserve model constraints "at most 40 nodes/80 accepted Edges", "displayed counts, safe qualifications and `Incomplete`", and "No domain Edge mutation or shared persistence". Exact endpoints and relationship semantics come from B0; no new Knowledge types or package.
+- [ ] T021 [US2] Implement `src/dotnet/Vulgata.Web/Explore/KnowledgeGraphProjector.cs` and graph methods in `ExplorePresentationService.cs`: bounded permitted seeds and one-hop owner related pages, at most 8 calls/10 seconds with owner limits tightened if smaller, exact endpoint intersection, no hidden placeholders/degrees, safe incompleteness and final owner revalidation. Make T018/T019 green without deriving accepted Edges from layout/CodeGraph/similarity.
+- [ ] T022 [US2] Verify projection/auth tests and reader regressions through `eng/test.ps1`, independently inspect exact Edge evidence/link mapping and record limits in `specs/20-1-Oct14-explore/quickstart.md`; do not claim a real-data graph until E3's actual publication comparison. No UI or owner-policy bypass to make expected counts pass.
+
+### Phase 5: US3 — accessible movement and coherent refresh (Priority P3)
+
+**Goal / independent test**: On the E2 permitted projection, users can pan/zoom/fit, select/open and manually refresh using pointer or keyboard, without mutating Edges or displaying mixed selections.
+
+- [ ] T023 [P] [US3] Author RED refresh/race cases in `tests/Vulgata.Tests/Explore/KnowledgeGraphViewModelTests.cs` for atomic result replacement, mode/scope/selection generations, cancellation and obsolete response suppression, clearing on denied/outage/timeout and fresh authorization after reattachment (FR-003/009/010; SC-004).
+- [ ] T024 [P] [US3] Author component RED cases in `tests/Vulgata.Tests/Explore/KnowledgeGraphComponentTests.cs` for keyboard node list/inspection/open, pan/zoom/fit controls, distinct direction/type labels including self/parallel Edges, safe Chinese empty/error/limit/Uncertainty feedback, both themes and viewport-only changes (FR-005/006/009/010; SC-005).
+- [ ] T025 [US3] Implement `src/dotnet/Vulgata.Web.ViewModels/Explore/KnowledgeGraphViewModel.cs` to pass T023 using LoadState and the model's "view generation plus mode/scope/selection, cancellation source and deadline". Cancel earlier requests and clear protected content before refresh; only matching successful captures replace the complete graph. Keep mode/subject authority server-owned.
+- [ ] T026 [US3] Implement `src/dotnet/Vulgata.Web/Components/Pages/Explore/GraphPage.razor`, its code/scoped CSS and `src/dotnet/Vulgata.Web/Components/Explore/KnowledgeGraph.razor` with colocated CSS and optional `KnowledgeGraph.razor.js` solely for viewport/pointer handling; satisfy T024 with deterministic bounded SVG, accessible list, exact reader actions and manual refresh. No JS Knowledge fetch/cache, domain editing, new library, graph expansion or live refresh engine.
+- [ ] T027 [US3] Run affected Explore SelfContained tests and Web build through `eng/test.ps1` and `src/dotnet/Vulgata.Web/Vulgata.Web.csproj`; inspect owned UI/projection changes independently for authorization, accessibility and bounds, then record controlled E2 results in `specs/20-1-Oct14-explore/quickstart.md`. Browser-dependent movement observations remain explicitly due at E3, not inferred from component fixtures.
+
+## E3 — combined qualification and cross-cutting closure (T028–T032)
+
+**Goal / independent test**: Real Scan/Business CL/BL, accepted Cross-Repository relationship and genuine Uncertainty are read by ordinary users through the same selected publication used by Chat and graph. Prerequisites are dependencies, not extra approval stages.
+
+- [ ] T028 Record the actual compatible B0, Business B1/B2, Scan, Chat and integration composition code/publication checkpoints plus owned resource/run instructions in `specs/20-1-Oct14-explore/quickstart.md`; verify Chat's footer consumes the agreed exact reader destination and integration owns navigation. Do not claim another lane's concurrence, generation or test success without evidence, and do not modify their files.
+- [ ] T029 Author/classify `tests/Vulgata.Tests/Explore/ExplorePublicationE2ETests.cs` for the combined ordinary-user Chat-reference/graph-node/reader path, exact version/section identity, no-wiki startup, revoked/denied metadata, coherent refresh and honest Uncertainty; establish actual failure/pass baselines before any new fixes. Use the E2E suite/owned PostgreSQL and the same real accepted publication or clearly labelled controlled cases; no direct fabricated Knowledge population.
+- [ ] T030 Run `eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~Explore'` and the browser scenarios in `specs/20-1-Oct14-explore/quickstart.md` under approved owned resources: real CL/BL and accepted-edge comparison, exact Chat/graph destinations, keyboard pan/zoom/fit/select/open/continuation, Chinese light/dark states, sparse/limited graph and revocation/context races. Fix reproduced defects only in owned Explore source with test-author RED/GREEN evidence; hand off others. Record explicit gaps if real inputs/resources are unavailable.
+- [ ] T031 Obtain independent code/security/test review of `src/dotnet/Vulgata.Web/Explore/`, `src/dotnet/Vulgata.Web/Components/Explore/`, `src/dotnet/Vulgata.Web/Components/Pages/Explore/`, `src/dotnet/Vulgata.Web.ViewModels/Explore/`, `src/dotnet/Vulgata.Shared/Explore/` and `tests/Vulgata.Tests/Explore/`; resolve owned findings with separate test/production ownership. After final corrections, coordinate one final combined Web build and full `eng/test.ps1 -Suite SelfContained` plus affected runtime suites at the integration checkpoint; reuse passing evidence only for the unchanged pinned boundary and record references in `specs/20-1-Oct14-explore/quickstart.md`.
+- [ ] T032 Complete `specs/20-1-Oct14-explore/quickstart.md` with verified start/stop/configuration/publication prerequisites, actual commands/outcomes, feature coverage and deferred work. Reconcile FR/SC coverage below against evidence; report fixtures, persisted reads and genuine integrated results separately. Preserve history/source-viewer/advanced-graph deferrals and original-story incompleteness; leave unmet tasks unchecked rather than treating missing upstream/runtime evidence as success.
+
+## Dependencies and parallel execution
+
+- E0: T001/T002 establish context/inventory; T003 may contribute conformance to the initial T001 checkpoint, so no circular requirement for an already-accepted contract before its minimal probe. T004 follows compatible owner types. T005/T006 run in parallel after T004; T007–T009 then satisfy their RED cases. T010 precedes T011; T012 composes the reader; T013 validates the whole increment. Tests needing initial compile shape may use minimal declarations, never hidden production behavior before RED.
+- E1: T014 -> T015 -> T016 -> T017. CL proof proceeds as soon as real CL exists; BL completion awaits B2. Pending BL does not block E2 fixture work.
+- E2 US2: after E0, T018/T019 can run together, then T020 -> T021 -> T022. US3: T023/T024 can run together against the defined projection seam, then T025 -> T026 -> T027. E2 is usable only after both US2/US3 sections. Where E1 and E2 both touch ExplorePresentationService/ExploreModule, serialize those writes under one owner; parallelism is for disjoint tests/UI work, not concurrent shared-file edits.
+- E3: T028 requires completed real E1/E2 and upstream inputs; T029 -> T030 -> T031 -> T032. A correction reruns affected checks; no routine repeated full suites without changed behavior/risk.
+- Examples: US1 test author can schedule T005 and T006 independently; US2 can schedule T018 and T019 independently; US3 can schedule T023 and T024 independently. All require prior shared helper/inventory setup. No production task is marked parallel with its still-incomplete RED task.
+
+## Requirement and success-criterion coverage
+
+| Requirement/outcome | Tasks |
+| --- | --- |
+| FR-001 ordinary reader | T005, T008, T011–T017 |
+| FR-002 exact selection | T003, T005, T008, T015, T018, T021, T029–T030 |
+| FR-003 live all-contributor authority | T003, T005–T009, T015–T016, T019, T021, T023, T025, T029–T031 |
+| FR-004 Business BL-only | T005, T008, T015, T019, T021, T029–T030 |
+| FR-005 structured qualified content | T005, T008, T010–T011, T024, T026 |
+| FR-006 shared exact reader destination | T001, T005, T008, T010–T012, T018, T024, T026, T028–T030 |
+| FR-007 accepted Edges only | T018–T022, T030 |
+| FR-008 bounded disclosure | T003, T007–T009, T018–T022, T024, T026 |
+| FR-009 movement/refresh | T023–T027, T030 |
+| FR-010 Chinese/theme/accessibility/states | T009–T011, T023–T027, T030 |
+| FR-011 Knowledge-owned read-only boundary | T001, T003, T008, T016, T020–T021, T031 |
+| FR-012 fixture versus real evidence | T004, T013–T017, T022, T027–T032 |
+| FR-013 bounded exact-content continuation | T003, T006–T011, T015–T017, T030 |
+| SC-001 exactness; SC-002 ordinary access/non-disclosure | T005, T013, T015, T017, T019, T022, T029–T031 |
+| SC-003 accepted graph/Chat identity | T018, T021–T022, T028–T030 |
+| SC-004 limits/coherence | T018–T027, T030 |
+| SC-005 keyboard/Chinese themes | T010–T013, T024–T027, T030 |
+| SC-006 real cross-Repository CL/BL/Edge/Uncertainty | T017, T028–T032 |
+| SC-007 lossless qualified continuation | T006, T008–T011, T013, T015–T017, T030 |
+
+## Implementation strategy and stopping point
+
+MVP is E0 followed by E1's real CL portion. Add BL when available; graph follows without waiting for broad batch coverage. E2 can use the same labelled B0 fixture while producers finish; E3 establishes actual combined delivery. Each checkpoint is a usable and verifiable result with its own prerequisites, not another human approval request.
+
+All 32 tasks are prospective. This session ends after independent `speckit-analyze`, before implementation. Shared B0 code has not been supplied/qualified here; no build, test run, database, provider, browser or native-tool operation is claimed. Existing plan/F3 acceptance remains historical and unchanged. No before/after-tasks hooks are registered in the inspected `.specify/extensions.yml`; agent-context hooks for other stages are not invoked.
