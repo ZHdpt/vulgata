@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="8619c7f6-d142-4162-8025-31e8ffb0992f" name="13728@ZHDPT-ASUS-5 2026-10-06 10:30:58" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-06T10:30:58.2930108+08:00" queuing="2026-10-06T10:30:58.2930110+08:00" start="2026-10-06T10:30:56.3290031+08:00" finish="2026-10-06T10:30:59.4665167+08:00" />
+  <TestSettings name="default" id="f5c7f840-b4f5-45b0-9361-7d83d9713b05">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-10-06_10_30_58" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="0df6579f-dd08-4291-9743-2edd43cc01f5" testId="80920202-61f5-59a0-f1e7-61b1c96c35f8" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound" computerName="ZHDPT-ASUS-5" duration="00:00:01.2218274" startTime="2026-10-06T10:30:58.1746970+08:00" endTime="2026-10-06T10:30:59.3828803+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0df6579f-dd08-4291-9743-2edd43cc01f5">
+      <Output>
+        <ErrorInfo>
+          <Message>DisposeAsync must bound its wait to enter a context held by an active request.</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 1541&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 1584&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 1584&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f4e697f6-0b04-4910-8e0e-b923944a6a4d" testId="b2ddeb1b-49d2-ebc7-919f-f319ae225c07" testName="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation" computerName="ZHDPT-ASUS-5" duration="00:00:00.0573052" startTime="2026-10-06T10:30:58.1293941+08:00" endTime="2026-10-06T10:30:58.1588190+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f4e697f6-0b04-4910-8e0e-b923944a6a4d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotEqual() Failure: Values are equal&#xD;
+Expected: Not Observed&#xD;
+Actual:       Observed</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 1642&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 1681&#xD;
+   at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation() in C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs:line 1681&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="b2ddeb1b-49d2-ebc7-919f-f319ae225c07">
+      <Execution id="f4e697f6-0b04-4910-8e0e-b923944a6a4d" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound" storage="c:\users\13728\.codex\worktrees\7535\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="80920202-61f5-59a0-f1e7-61b1c96c35f8">
+      <Execution id="0df6579f-dd08-4291-9743-2edd43cc01f5" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests" name="DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="80920202-61f5-59a0-f1e7-61b1c96c35f8" executionId="0df6579f-dd08-4291-9743-2edd43cc01f5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b2ddeb1b-49d2-ebc7-919f-f319ae225c07" executionId="f4e697f6-0b04-4910-8e0e-b923944a6a4d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.16]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.26]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.28]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.36]       Assert.NotEqual() Failure: Values are equal&#xD;
+[xUnit.net 00:00:01.36]       Expected: Not Observed&#xD;
+[xUnit.net 00:00:01.36]       Actual:       Observed&#xD;
+[xUnit.net 00:00:01.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.36]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(1642,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation()&#xD;
+[xUnit.net 00:00:01.36]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(1681,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation()&#xD;
+[xUnit.net 00:00:01.36]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(1681,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation()&#xD;
+[xUnit.net 00:00:01.36]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.59]       DisposeAsync must bound its wait to enter a context held by an active request.&#xD;
+[xUnit.net 00:00:02.59]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.59]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(1541,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound()&#xD;
+[xUnit.net 00:00:02.59]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(1584,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound()&#xD;
+[xUnit.net 00:00:02.59]         C:\Users\13728\.codex\worktrees\7535\vulgata\tests\Vulgata.Tests\AnalysisRuntime\JdtLsPreparedNavigationTests.cs(1584,0): at Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound()&#xD;
+[xUnit.net 00:00:02.59]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.59]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-06T10:30:58.1606472+08:00">
+        <Text>[xUnit.net 00:00:01.36]     Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.GetDefinitionAsync_WhenDisposeBeginsDuringBlockedReply_WithholdsLateLocation [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-10-06T10:30:59.3833592+08:00">
+        <Text>[xUnit.net 00:00:02.59]     Vulgata.Tests.AnalysisRuntime.JdtLsPreparedNavigationTests.DisposeAsync_WhenNavigationHoldsContextGate_ReturnsCleanupUnconfirmedWithinShutdownBound [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-10-06T10:30:59.4365681+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

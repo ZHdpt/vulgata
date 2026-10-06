@@ -20,7 +20,10 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
     private readonly PreparedWorkspaceBorrow? _sessionRegistration;
     private readonly PreparedJdtSessionSettlementProbe? _sessionProbe;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private int _disposalRequested;
     private int _disposed;
+    private int _slotReleased;
+    private int _deferredRetirementStarted;
     private bool _sessionSettled;
     private Task? _pendingSessionDisposal;
 
@@ -101,13 +104,38 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     : PreparedJavaNavigationOutcome.DeadlineExceeded);
             }
 
-            if (Volatile.Read(ref _disposed) != 0 || !ValidRequest(request))
+            if (Volatile.Read(ref _disposed) != 0 ||
+                Volatile.Read(ref _disposalRequested) != 0 || !ValidRequest(request))
             {
                 return Empty(operation, PreparedJavaNavigationOutcome.Denied);
             }
 
-            PreparedToolWorkspaceCheckStatus before =
-                await _workspaceLease.CheckCurrentAsync(cancellationToken);
+            PreparedToolWorkspaceCheckStatus before;
+            Task<PreparedToolWorkspaceCheckStatus>? pendingAuthority = null;
+            try
+            {
+                linked.Token.ThrowIfCancellationRequested();
+                pendingAuthority = _workspaceLease.CheckCurrentAsync(cancellationToken);
+                before = await pendingAuthority.WaitAsync(linked.Token);
+            }
+            catch (OperationCanceledException) when (linked.IsCancellationRequested)
+            {
+                if (pendingAuthority is { IsCompleted: false })
+                {
+                    _ = ObserveLateAuthorityCheckAsync(pendingAuthority);
+                }
+
+                return Empty(operation, cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOutcome.Cancelled
+                    : PreparedJavaNavigationOutcome.DeadlineExceeded);
+            }
+            if (linked.IsCancellationRequested)
+            {
+                return Empty(operation, cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOutcome.Cancelled
+                    : PreparedJavaNavigationOutcome.DeadlineExceeded);
+            }
+
             if (before != PreparedToolWorkspaceCheckStatus.Current)
             {
                 return Empty(operation, Map(before));
@@ -184,6 +212,14 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     : PreparedJavaNavigationOutcome.DeadlineExceeded);
             }
 
+            if (Volatile.Read(ref _disposalRequested) != 0)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? PreparedJavaNavigationOutcome.Denied
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
             PreparedJdtLsRawReply raw;
             Task<PreparedJdtLsRawReply>? pendingReply = null;
             try
@@ -233,6 +269,14 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
+            if (Volatile.Read(ref _disposalRequested) != 0)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? PreparedJavaNavigationOutcome.Denied
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
             if (linked.IsCancellationRequested)
             {
                 bool settled = await RetireSessionUnderGateAsync();
@@ -257,49 +301,90 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 ownershipView?.Status == PreparedCodeGraphOwnershipViewStatus.VerifiedOwned
                     ? ownershipView.Record : null;
             bool ownedEntryMatches = true;
-            PreparedToolWorkspaceCheckStatus mapping = await _workspaceLease.UseContainedRootAsync(
-                PreparedToolPurpose.JdtNavigation,
-                (scope, _) =>
-                {
-                    if (ownedRecord is not null)
+            PreparedToolWorkspaceCheckStatus mapping;
+            Task<PreparedToolWorkspaceCheckStatus>? pendingMapping = null;
+            try
+            {
+                linked.Token.ThrowIfCancellationRequested();
+                pendingMapping = _workspaceLease.UseContainedRootAsync(
+                    PreparedToolPurpose.JdtNavigation,
+                    (scope, _) =>
                     {
-                        ownedEntryMatches = scope.ObserveCodeGraphEntryIdentity() ==
-                            ownedRecord.StateEntryObjectIdentity;
-                        if (!ownedEntryMatches)
+                        if (linked.IsCancellationRequested)
                         {
                             return ValueTask.CompletedTask;
                         }
-                    }
 
-                    foreach (PreparedJdtLsRawLocation location in raw.Locations.Take(request.MaximumLocations))
-                    {
-                        if (location is not null &&
-                            scope.TryMapContainedFileUri(location.RawProtocolUri, out PreparedSourceLocation? source) &&
-                            source is not null &&
-                            ValidRange(location))
+                        if (ownedRecord is not null)
                         {
-                            if (ownedRecord is not null && source.RelativePath.StartsWith(
-                                    ".codegraph/", StringComparison.OrdinalIgnoreCase))
+                            ownedEntryMatches = scope.ObserveCodeGraphEntryIdentity() ==
+                                ownedRecord.StateEntryObjectIdentity;
+                            if (!ownedEntryMatches)
                             {
-                                continue;
+                                return ValueTask.CompletedTask;
+                            }
+                        }
+
+                        foreach (PreparedJdtLsRawLocation location in raw.Locations.Take(request.MaximumLocations))
+                        {
+                            if (linked.IsCancellationRequested)
+                            {
+                                break;
                             }
 
-                            locations.Add(new PreparedJavaLocation(
-                                source,
-                                location.StartLine,
-                                location.StartCharacter,
-                                location.EndLine,
-                                location.EndCharacter));
-                        }
-                        else
-                        {
-                            limitations.Add(new PreparedJavaLimitation("UnmappableLocation", null));
-                        }
-                    }
+                            if (location is not null &&
+                                scope.TryMapContainedFileUri(location.RawProtocolUri, out PreparedSourceLocation? source) &&
+                                source is not null &&
+                                ValidRange(location))
+                            {
+                                if (ownedRecord is not null && source.RelativePath.StartsWith(
+                                        ".codegraph/", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
 
-                    return ValueTask.CompletedTask;
-                },
-                cancellationToken);
+                                locations.Add(new PreparedJavaLocation(
+                                    source,
+                                    location.StartLine,
+                                    location.StartCharacter,
+                                    location.EndLine,
+                                    location.EndCharacter));
+                            }
+                            else
+                            {
+                                limitations.Add(new PreparedJavaLimitation("UnmappableLocation", null));
+                            }
+                        }
+
+                        return ValueTask.CompletedTask;
+                    },
+                    cancellationToken);
+                mapping = await pendingMapping.WaitAsync(linked.Token);
+            }
+            catch (OperationCanceledException) when (linked.IsCancellationRequested)
+            {
+                if (pendingMapping is { IsCompleted: false })
+                {
+                    _ = ObserveLateAuthorityCheckAsync(pendingMapping);
+                }
+
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOutcome.Cancelled
+                        : PreparedJavaNavigationOutcome.DeadlineExceeded
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+            if (linked.IsCancellationRequested)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOutcome.Cancelled
+                        : PreparedJavaNavigationOutcome.DeadlineExceeded
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
             if (mapping != PreparedToolWorkspaceCheckStatus.Current)
             {
                 bool settled = await RetireSessionUnderGateAsync();
@@ -314,8 +399,38 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
-            PreparedToolWorkspaceCheckStatus disclosure =
-                await _workspaceLease.CheckCurrentAsync(cancellationToken);
+            PreparedToolWorkspaceCheckStatus disclosure;
+            Task<PreparedToolWorkspaceCheckStatus>? pendingDisclosure = null;
+            try
+            {
+                linked.Token.ThrowIfCancellationRequested();
+                pendingDisclosure = _workspaceLease.CheckCurrentAsync(cancellationToken);
+                disclosure = await pendingDisclosure.WaitAsync(linked.Token);
+            }
+            catch (OperationCanceledException) when (linked.IsCancellationRequested)
+            {
+                if (pendingDisclosure is { IsCompleted: false })
+                {
+                    _ = ObserveLateAuthorityCheckAsync(pendingDisclosure);
+                }
+
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOutcome.Cancelled
+                        : PreparedJavaNavigationOutcome.DeadlineExceeded
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+            if (linked.IsCancellationRequested)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOutcome.Cancelled
+                        : PreparedJavaNavigationOutcome.DeadlineExceeded
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
             if (disclosure != PreparedToolWorkspaceCheckStatus.Current)
             {
                 bool settled = await RetireSessionUnderGateAsync();
@@ -365,6 +480,14 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
+            if (Volatile.Read(ref _disposalRequested) != 0)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? PreparedJavaNavigationOutcome.Denied
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
             bool locationLimited = raw.LimitReached || raw.Locations.Count > request.MaximumLocations;
             bool capabilityLimited = !string.IsNullOrWhiteSpace(raw.CapabilityLimitation);
             if (capabilityLimited)
@@ -399,6 +522,19 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         request.Line > 0 && request.Character > 0 &&
         request.MaximumLocations is > 0 and <= 100;
 
+    private static async Task ObserveLateAuthorityCheckAsync(
+        Task<PreparedToolWorkspaceCheckStatus> pendingAuthority)
+    {
+        try
+        {
+            _ = await pendingAuthority;
+        }
+        catch (Exception)
+        {
+            // A late authority result cannot authorize or disclose this request.
+        }
+    }
+
     private static bool ValidRange(PreparedJdtLsRawLocation location) =>
         location.StartLine > 0 && location.StartCharacter > 0 &&
         location.EndLine >= location.StartLine &&
@@ -425,10 +561,66 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
 
     public async ValueTask DisposeAsync()
     {
+        if (!_dedicated)
+        {
+            await _gate.WaitAsync();
+            try
+            {
+                _ = await RetireSessionUnderGateAsync();
+            }
+            finally
+            {
+                _gate.Release();
+            }
+
+            return;
+        }
+
+        Volatile.Write(ref _disposalRequested, 1);
+        using var deadline = new CancellationTokenSource(_shutdownTimeout);
+        try
+        {
+            await _gate.WaitAsync(deadline.Token);
+        }
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+        {
+            _sessionProbe?.MarkUnknown();
+            ReleaseSlotOnce(cleanupConfirmed: false);
+            StartDeferredRetirement();
+            throw new TimeoutException("jdt_cleanup_unconfirmed");
+        }
+
+        try
+        {
+            if (!await RetireSessionUnderGateAsync(disposalDeadline: deadline.Token))
+            {
+                throw new TimeoutException("jdt_cleanup_unconfirmed");
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private void StartDeferredRetirement()
+    {
+        if (Interlocked.Exchange(ref _deferredRetirementStarted, 1) == 0)
+        {
+            _ = RetireAfterGateAsync();
+        }
+    }
+
+    private async Task RetireAfterGateAsync()
+    {
         await _gate.WaitAsync();
         try
         {
             _ = await RetireSessionUnderGateAsync();
+        }
+        catch (Exception)
+        {
+            // The earlier public result remains cleanup-unconfirmed.
         }
         finally
         {
@@ -454,7 +646,9 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         }
     }
 
-    private async Task<bool> RetireSessionUnderGateAsync(bool protocolSettled = true)
+    private async Task<bool> RetireSessionUnderGateAsync(
+        bool protocolSettled = true,
+        CancellationToken disposalDeadline = default)
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
         {
@@ -465,7 +659,14 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         try
         {
             disposal = _session.DisposeAsync().AsTask();
-            await disposal.WaitAsync(_shutdownTimeout);
+            if (disposalDeadline.CanBeCanceled)
+            {
+                await disposal.WaitAsync(disposalDeadline);
+            }
+            else
+            {
+                await disposal.WaitAsync(_shutdownTimeout);
+            }
             _sessionSettled = protocolSettled;
             if (_sessionSettled)
             {
@@ -496,7 +697,15 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         }
         finally
         {
-            _releaseSlot(_sessionSettled);
+            ReleaseSlotOnce(_sessionSettled);
+        }
+    }
+
+    private void ReleaseSlotOnce(bool cleanupConfirmed)
+    {
+        if (Interlocked.Exchange(ref _slotReleased, 1) == 0)
+        {
+            _releaseSlot(cleanupConfirmed);
         }
     }
 

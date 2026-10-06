@@ -1,0 +1,12 @@
+{
+  "retry": "One standard launcher retry with unchanged sources and same approved runtime; no policy bypass or machine environment change.",
+  "exitCode": -1073741819,
+  "output": [
+    "Fatal error.",
+    "0xC0000005"
+  ],
+  "settled": "exec session 16902 returned terminated exit; no test result inferred.",
+  "result": "Launcher host terminated before policy/build/discovery/TRX; no product test executed and no new isolation directory created.",
+  "command": "pwsh -NoProfile -File eng/test.ps1",
+  "date": "2026-10-06"
+}

@@ -1,0 +1,78 @@
+{
+  "controlled": {
+    "selected": 121,
+    "suite": "LocalTools",
+    "durable": "immediate-lifetime-controlled-green-01.trx",
+    "failed": 0,
+    "passed": 121,
+    "coverage": "All7T048 and3T049 cases; preserved guarded cleanup/quarantine retry; repeated confirmed disposal once-only; functions/composition/protocol.",
+    "raw": "TestResults/isolation-25df3dc57a624f65a36dd61d909033a2/results.trx",
+    "skipped": 0
+  },
+  "unchanged": [
+    "Shared18.1ordinaryreaders",
+    "Shared18.3lease/interface/sourcefilter",
+    "Core/functiontoolshape",
+    "DefaultWebfile-only",
+    "Featuremapping",
+    "Historicalworkflowstate/recovery/owners/models/reviews"
+  ],
+  "production": [
+    "PreparedJavaNavigationContextFactory.cs",
+    "PreparedJdtLsNavigationContext.cs"
+  ],
+  "preservedFailures": [
+    "T0487genuineREDs and3T049REDs retained in durable rawTRX.",
+    "Mixed121run119passed2failed retained: expected test cleanup handler needed sanitized exception handling; factory operation-token poisoning masked guarded retry quarantine. Original guarded assertion retained and final121GREEN.",
+    "Test-only CS1501 and CS1061 build corrections were not behavioral RED/workflow failures; original build logs remain in TestResults.",
+    "Pre-test launcher host crash0xC0000005 settled before unchanged standard retry; recorded separately in immediate-lifetime-basic-launcher-crash-01.json."
+  ],
+  "scope": "Immediate IO-R01-IO-R08 and T037-T049 owned-fixture boundary only; old19SKIP and historical workflow/recovery/reviews remain inactive and preserved.",
+  "basic": {
+    "excluded": [
+      "LocalTools including JDT",
+      "PostgreSql",
+      "External",
+      "E2E",
+      "HistoricalBoundary"
+    ],
+    "raw": "TestResults/isolation-8564b39b7c9c4755ad265899fa1e76c9/results.trx",
+    "selected": 2063,
+    "failed": 0,
+    "compressedSha256": "38AD93C167C55FA65098602DD69FDBA263B7DB79875DD5FCC8B1C32813E39D87",
+    "passed": 2063,
+    "durable": "immediate-lifetime-basic-green-01.trx.gz",
+    "suite": "SelfContained",
+    "skipped": 0,
+    "discovered": 3010,
+    "rawSha256": "E20205F9F26285A9B49AC6732E809A0C02EAD4E7A9064085A43F2F32DCD74AC0"
+  },
+  "java": "User-supplied logical JDK21 resolved in tool caller and injected via existing optional application JavaBinDirectory; JDK21.0.12, no installation path in product/test code, host PATH unchanged.",
+  "behavior": [
+    "Existing initialization/request deadlines bound consumer authority/root/mapping/disclosure waits; borrowed lease receives caller token, not operation deadline. Late callbacks do no work after expiry, and no late results launch or disclose.",
+    "Already-returned session is disposed or retained/quarantined on failed final opening checks.",
+    "Dedicated disposal closes disclosure at entry, uses one total ShutdownTimeout, reports TimeoutException jdt_cleanup_unconfirmed, releases slot once, and retains pending exact session/deferred retirement. Legacy guarded disposal semantics remain."
+  ],
+  "limitations": [
+    "Owned fresh Java fixture only; prepared registration/login Repository not ready.",
+    "Existing JDT-created filter metadata variants may be rewritten; no universal source-write or filesystem/network isolation claim.",
+    "Unresponsive owned resources remain retained/quarantined; deferred cleanup may remain pending, never reported as success.",
+    "Mixed CodeGraph roots, concurrent preparation, cross-process arbitration, restart/cache adoption and producer integration remain deferred/unqualified; no fullStory18.2completion."
+  ],
+  "date": "2026-10-06",
+  "native": {
+    "anchors": [
+      "src/main/java/fixture/Target.java:3 definition",
+      "src/main/java/fixture/Caller.java:3 reference"
+    ],
+    "raw": "TestResults/isolation-6278a595fc1745bb8d0c5d4abc6010a6/results.trx",
+    "selected": 1,
+    "failed": 0,
+    "proof": "Actual public factory and AIFunction invocation; bounded session shutdown/confirmed combined process wait; owned state removed; unrelated sentinel/caller marker retained; whole source inventory and all bytes unchanged.",
+    "passed": 1,
+    "durable": "immediate-lifetime-jdk21-native-green-01.trx",
+    "suite": "LocalTools",
+    "skipped": 0,
+    "server": "org.eclipse.jdt.ls.core_1.58.0.202605150919.jar;666pinnedinputs"
+  }
+}

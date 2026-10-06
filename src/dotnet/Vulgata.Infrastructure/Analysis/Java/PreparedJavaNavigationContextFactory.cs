@@ -205,8 +205,35 @@ public sealed class PreparedJavaNavigationContextFactory
             return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
         }
 
-        PreparedToolWorkspaceCheckStatus leaseStatus =
-            await workspaceLease.CheckCurrentAsync(cancellationToken);
+        using var waitDeadline = new CancellationTokenSource(_profile.InitializationTimeout);
+        using var waitToken = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, waitDeadline.Token);
+        PreparedToolWorkspaceCheckStatus leaseStatus;
+        Task<PreparedToolWorkspaceCheckStatus>? pendingAuthority = null;
+        try
+        {
+            waitToken.Token.ThrowIfCancellationRequested();
+            pendingAuthority = workspaceLease.CheckCurrentAsync(cancellationToken);
+            leaseStatus = await pendingAuthority.WaitAsync(waitToken.Token);
+        }
+        catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
+        {
+            if (pendingAuthority is { IsCompleted: false })
+            {
+                _ = ObserveLateAuthorityCheckAsync(pendingAuthority);
+            }
+
+            return Failed(cancellationToken.IsCancellationRequested
+                ? PreparedJavaNavigationOpenStatus.Cancelled
+                : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+        }
+        if (waitToken.IsCancellationRequested)
+        {
+            return Failed(cancellationToken.IsCancellationRequested
+                ? PreparedJavaNavigationOpenStatus.Cancelled
+                : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+        }
+
         if (leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
         {
             return Failed(Map(leaseStatus));
@@ -214,9 +241,6 @@ public sealed class PreparedJavaNavigationContextFactory
 
         RepositorySlot slot = RepositorySlots.GetOrAdd(
             workspaceLease.RepositoryId, static _ => new RepositorySlot());
-        using var waitDeadline = new CancellationTokenSource(_profile.InitializationTimeout);
-        using var waitToken = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken, waitDeadline.Token);
         try
         {
             await slot.Gate.WaitAsync(waitToken.Token);
@@ -236,7 +260,31 @@ public sealed class PreparedJavaNavigationContextFactory
                 return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
             }
 
-            leaseStatus = await workspaceLease.CheckCurrentAsync(cancellationToken);
+            pendingAuthority = null;
+            try
+            {
+                waitToken.Token.ThrowIfCancellationRequested();
+                pendingAuthority = workspaceLease.CheckCurrentAsync(cancellationToken);
+                leaseStatus = await pendingAuthority.WaitAsync(waitToken.Token);
+            }
+            catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
+            {
+                if (pendingAuthority is { IsCompleted: false })
+                {
+                    _ = ObserveLateAuthorityCheckAsync(pendingAuthority);
+                }
+
+                return Failed(cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOpenStatus.Cancelled
+                    : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+            }
+            if (waitToken.IsCancellationRequested)
+            {
+                return Failed(cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOpenStatus.Cancelled
+                    : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+            }
+
             if (leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
             {
                 return Failed(Map(leaseStatus));
@@ -248,15 +296,44 @@ public sealed class PreparedJavaNavigationContextFactory
             if (dedicated)
             {
                 bool stateRootIsSeparate = false;
-                PreparedToolWorkspaceCheckStatus stateCheck =
-                    await workspaceLease.UseContainedRootAsync(
+                PreparedToolWorkspaceCheckStatus stateCheck;
+                Task<PreparedToolWorkspaceCheckStatus>? pendingStateCheck = null;
+                try
+                {
+                    waitToken.Token.ThrowIfCancellationRequested();
+                    pendingStateCheck = workspaceLease.UseContainedRootAsync(
                         PreparedToolPurpose.JdtNavigation,
                         (scope, _) =>
                         {
+                            if (waitToken.IsCancellationRequested)
+                            {
+                                return ValueTask.CompletedTask;
+                            }
+
                             stateRootIsSeparate = scope.IsSeparateDisposableStateRoot(
                                 _profile.DisposableStateRoot);
                             return ValueTask.CompletedTask;
-                        }, waitToken.Token);
+                        }, cancellationToken);
+                    stateCheck = await pendingStateCheck.WaitAsync(waitToken.Token);
+                }
+                catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
+                {
+                    if (pendingStateCheck is { IsCompleted: false })
+                    {
+                        _ = ObserveLateAuthorityCheckAsync(pendingStateCheck);
+                    }
+
+                    return Failed(cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOpenStatus.Cancelled
+                        : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+                }
+                if (waitToken.IsCancellationRequested)
+                {
+                    return Failed(cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOpenStatus.Cancelled
+                        : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+                }
+
                 if (stateCheck != PreparedToolWorkspaceCheckStatus.Current)
                 {
                     return Failed(Map(stateCheck));
@@ -437,7 +514,28 @@ public sealed class PreparedJavaNavigationContextFactory
                 return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
             }
 
-            leaseStatus = await workspaceLease.CheckCurrentAsync(cancellationToken);
+            pendingAuthority = null;
+            if (waitToken.IsCancellationRequested)
+            {
+                leaseStatus = PreparedToolWorkspaceCheckStatus.Cancelled;
+            }
+            else
+            {
+                try
+                {
+                    pendingAuthority = workspaceLease.CheckCurrentAsync(cancellationToken);
+                    leaseStatus = await pendingAuthority.WaitAsync(waitToken.Token);
+                }
+                catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
+                {
+                    if (pendingAuthority is { IsCompleted: false })
+                    {
+                        _ = ObserveLateAuthorityCheckAsync(pendingAuthority);
+                    }
+
+                    leaseStatus = PreparedToolWorkspaceCheckStatus.Cancelled;
+                }
+            }
             if (waitToken.IsCancellationRequested || leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
             {
                 Task? disposal = null;
@@ -499,6 +597,19 @@ public sealed class PreparedJavaNavigationContextFactory
             {
                 slot.Gate.Release();
             }
+        }
+    }
+
+    private static async Task ObserveLateAuthorityCheckAsync(
+        Task<PreparedToolWorkspaceCheckStatus> pendingAuthority)
+    {
+        try
+        {
+            _ = await pendingAuthority;
+        }
+        catch (Exception)
+        {
+            // The caller already received a bounded result; no late check can open a session.
         }
     }
 

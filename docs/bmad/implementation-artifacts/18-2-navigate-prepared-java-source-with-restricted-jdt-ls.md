@@ -1,13 +1,13 @@
 # Story 18.2 development record
 
-Status: in-progress — immediate T037–T047 owned-fixture slice qualified with JDK21; original full story deferred and historical governed workflow frozen
+Status: in-progress — immediate T037–T049 owned-fixture slice qualified and converged with JDK21; original full story deferred and historical governed workflow frozen
 Feature directory: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls
 Workflow state: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/workflow-state.json
 
 ## Current immediate-objective boundary — 2026-10-06
 
 The human stopped the previous workflow and authorized direct SpecKit correction
-and implementation of T037–T047 in the existing branch/feature. T037–T047 are
+and implementation of T037–T047 in the existing branch/feature. Convergence added T048–T049; T037–T049 are
 complete for the owned-fixture slice; final basic SelfContained passed 2063/2063, no skips.
 All 19 earlier unfinished items remain SKIP, not completed or waived. Historical
 reviews, counter, owners/models and workflow state remain preserved and inactive.
@@ -20,14 +20,16 @@ No JDK installation location is embedded in production or fixture code. Applicat
 retains root/startup/disposal authority; default Web remains file-only. No shared
 18.1/18.3 workspace/ordinary-reader/filter contract changed.
 
-Controlled JDT LocalTools passed 112/112; final affected checks passed 2/2 and 14/14.
+Current controlled JDT LocalTools passed 121/121 with no skips, including all seven T048 and three T049 cases and the preserved guarded-path quarantine retry.
 The real pinned JDT1.58 public-factory fixture under user-selected JDK21 passed:
 actual functions returned Target.java:3 definition and Caller.java:3 reference,
 bounded shutdown/combined process wait completed, owned state was removed, caller
 state marker and unrelated sentinel survived, and whole source inventory/bytes
 (including Eclipse metadata, Git configuration and hooks) remained unchanged.
-See `evidence/immediate-objective-jdk21-native-qualified-01.json` and raw TRX/log.
+Current real-JDK21 rerun passed 1/1; current basic SelfContained passed 2063/2063. See `evidence/immediate-lifetime-verification-01.json` and durable raw TRX (basic TRX is losslessly gzip-compressed); prior evidence remains preserved.
 JDT tests are LocalTools, excluded from basic SelfContained verification.
+
+T048 bounds JDT consumer waits without making its operation deadline cancel the borrowed lease; late checks/callbacks cannot start work or disclose buffered results. T049 closes disclosure at disposal entry, uses one total shutdown deadline, reports sanitized `jdt_cleanup_unconfirmed` publicly, and releases the slot once. Unknown cleanup retains the exact session and deferred retirement owner, remains quarantined, and never becomes a success claim. Legacy guarded disposal semantics and all original assertions remain. Expected RED/build corrections and the separately recorded pre-test launcher crash did not restart the historical workflow or change its counters.
 
 Historical Java27 incompatibility, unconfirmed Java-child cleanup, the fresh-fixture
 .project mutation, all genuine REDs, intermediate failures and test-harness corrections
