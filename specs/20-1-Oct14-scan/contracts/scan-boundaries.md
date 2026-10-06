@@ -1,6 +1,6 @@
 # OCT-SCAN boundary requirements
 
-**Checkpoint C0 status**: exact initial owner contract/fixture imported for bounded T001–T004 consumer conformance. Scan's compiled acknowledgement is recorded in `conformance-c0.md` when verified; final shared CP-K1 acceptance remains integration-owned and does not precede these probes.
+**Checkpoint C0 status**: T001–T004 bounded preparation complete. Scan acknowledges the exact initial compiled owner contract/fixture after 69/69 filtered SelfContained cases passed (19 new Scan + 50 imported Business), with no blocking supported-conformance objection. Evidence and fixture limits are recorded in `../conformance-c0.md`. Final shared CP-K1 acceptance remains integration-owned; T005 is not authorized or started.
 
 ## Imported initial contract — bounded preparation
 
