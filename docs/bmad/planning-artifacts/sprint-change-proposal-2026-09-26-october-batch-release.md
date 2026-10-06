@@ -1,7 +1,7 @@
 ---
 title: October 14 batch wiki, conversational Chat and document graph
 date: 2026-09-26
-updated: 2026-09-27
+updated: 2026-10-06
 status: proposed-selection
 scope: october-14-release-only
 source_commit: 2d8b280f921507abf986ba11e439ec57c555accc
@@ -11,6 +11,16 @@ implementation_authorized: false
 # October release selection and course-correction proposal
 
 ## Decision and authority
+
+**October 6 first-deliverable selection:** the user requested revised inputs for
+the four feature groups, using integrated narrowed 18.2/18.3 and completed 18.4,
+selectively absorbing 18.5's design without executing that full story. The
+[current delivery plan](october-delivery-plan-2026-09-30.md) and its four briefs
+govern this smaller delivery scope; the [integration plan](october-integration-plan-2026-10-06.md)
+reserves combined verification and presentation time. Earlier breadth, story
+dependencies and package outlines below remain broader planning history where the
+new selection defers them. Compatible source integrity, authority and evidence
+rules continue to apply; this selection is not a full-story completion claim.
 
 The user's twelve September 26 decisions replace the earlier optional-cross-repository,
 snapshot-first and Docker-first October suggestions. Deliver a separate host-side
@@ -131,9 +141,10 @@ not required for the October story selection.
 
 Directory lists must be complete through pagination; file reads may use ranges and
 continuations; text search returns locations and explicit limit/continuation state.
-Bounded responses must not silently exclude source coverage. No shell/command tool,
-writes, arbitrary host paths or path/symlink escape is granted. Tool Runtime binds
-CodeGraph/JDT-LS to configured roots outside model arguments. Use one JDT-LS session
+Bounded responses must not silently exclude source coverage. Ordinary Worker tools
+grant no shell/command execution, writes, arbitrary host paths or path/symlink escape.
+Tool Runtime binds CodeGraph/JDT-LS to configured roots outside model arguments.
+Use one JDT-LS session
 per selected Repository where applicable and serialize operations when concurrent
 LSP access is unsafe. List/read/grep is an LSP fallback, not permission to omit the
 retained CodeGraph MCP requirement.
@@ -144,6 +155,40 @@ CodeGraph preparation remains a CLI invocation followed by native MCP connection
 and Worker use. Keep its verification small: actual discovery/invocation and correct
 root binding, not a new research spike or protocol framework. Availability of MCP
 on both products is useful integration evidence, not proof of this composition.
+
+#### Approved trusted CodeGraph runtime clarification — September 30, 2026
+
+The October release may use the pinned trusted CodeGraph adapter delivered by
+Story 18.3, including through its downstream October consumers, under the same
+declared runtime profile and restrictions. This carries the existing authorized
+exception with that adapter; it is not a blanket O-NFR01 waiver.
+
+Under this exception, the trusted Infrastructure-launched CodeGraph 1.5.0 child may
+run directly in an explicitly dedicated Vulgata-managed prepared workspace selected by the
+application. It retains the launching account's permissions; preventive operating
+system filesystem or network isolation is not claimed. Only declared, positively
+bound CodeGraph tool state (normally `.codegraph`) is intended to change. Prepared
+source, project configuration and Git hooks must remain unchanged. Observed effects
+outside that footprint stop native readiness; this is not proof that every effect
+is detected. Runtime flags and controlled smoke results do not prove OS isolation.
+
+Application-selected exact roots, live authorization, ordinary Worker path/write/
+command denials, bounded work, cancellation and owned-process cleanup remain
+obligations. Existing workspace/ownership capability and integrated qualification
+dependencies remain. This clarification grants no other executable or workspace,
+broader Worker tool, credential/provider/database access, or normal retained-source
+production deployment. It does not extend to JDT-LS or change its restricted profile,
+the generic PRD/AD-3 source guarantees, or the September 29 tool-state consumer
+criteria. Story gates and separately authorized runtime resources still apply.
+
+Authority: the user's Story 18.3 decision `18-3-o-nfr01-exception-01`, recorded at
+`2026-09-30T02:35:41Z` in `evidence/direct-process-human-authority-01.json` under
+`specs/18-3-use-native-codegraph-mcp-against-prepared-source` in **Worker 18.3**
+(chat `01a0eae9-657d-7f90-80e0-6bf7d83a5c7c`), followed by the user's September 30
+instruction in **Vulgata Master** (chat `019fcbe8-f5db-73b3-914c-b29f75688a22`) to
+implement this downstream October applicability clarification. The original
+story-local decision and its evidence remain unchanged; this paragraph does not
+claim that branch's implementation or qualification has been integrated.
 
 ### Context-assisted coverage and cross-repository interpretation
 
@@ -548,7 +593,11 @@ full version-history explorer. Attractive layout must not distort edge meaning.
 
 ## Proposed regrouping: three workstreams, ten packages
 
-These outlines are course-correction selection proposals, not formal new story IDs.
+These outlines are historical course-correction selection packages, not formal
+story IDs. The [first-deliverable plan, updated October 6](october-delivery-plan-2026-09-30.md)
+now supplies engineering feature packaging and selected scope. Preserve prior
+implementation/evidence and apply its explicit disposition of full 18.5 execution;
+broader original story obligations remain traceable beyond this first deliverable.
 
 | Package | User-visible or operator outcome | Existing obligations reused/reworked |
 | --- | --- | --- |

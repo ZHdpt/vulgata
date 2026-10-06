@@ -1,7 +1,7 @@
 ---
 title: Vulgata October release - requirements and epic breakdown
 created: 2026-09-27
-updated: 2026-10-02
+updated: 2026-10-06
 scope: october-14-release-only
 status: final
 stepsCompleted: [1, 2, 3, 4]
@@ -31,6 +31,8 @@ workflowCompletedOn: 2026-09-27
 implementation_authorized: false
 latestDefinitionAmendment: docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-29-october-tool-state-consumers.md
 latestDefinitionAmendmentApprovedOn: 2026-09-29
+firstDeliverableInput: docs/bmad/planning-artifacts/october-delivery-plan-2026-09-30.md
+firstDeliverableUpdatedOn: 2026-10-06
 primaryInput: docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md
 inputDocuments:
   - docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md
@@ -70,6 +72,35 @@ statuses are unchanged. Shared source/tool repairs remain with the coordinated
 upstream owners; this amendment neither activates a story nor grants implementation
 or runtime authority. September 27 validation below describes its original revision.
 
+## Scoped runtime clarification — September 30, 2026
+
+The user approved carrying Story 18.3's narrow trusted-CodeGraph-child exception
+into downstream October consumers of the same pinned adapter/profile. The
+[October proposal's runtime clarification](sprint-change-proposal-2026-09-26-october-batch-release.md#approved-trusted-codegraph-runtime-clarification--september-30-2026)
+records its authority, residual host-permission risk and restrictions. O-NFR01 below
+reflects that boundary; it does not waive ordinary Worker containment or extend the
+exception to JDT-LS. Story identities, dependencies, lifecycle states and September
+29 consumer criteria are unchanged. Historical validation does not qualify this
+runtime, and owning-story review/approval and integration holds remain in force.
+
+## First-deliverable revision — October 6, 2026
+
+The September 30 four-feature organization is now narrowed by the user's October 6
+instruction. Use the revised [delivery plan and feature inputs](october-delivery-plan-2026-09-30.md)
+and [integration phase](october-integration-plan-2026-10-06.md) for the first deliverable.
+They start from integrated 18.1, completed 18.4 and the qualified narrow 18.2/18.3
+adapters. Full 18.5 execution is abandoned for this delivery; OCT-BUSINESS absorbs
+selected acceptance/publication/read ideas from its plan. Its old stop is not a
+prerequisite for the replacement work, and its original scope is not marked complete.
+
+The first deliverable selects a coherent business source slice, minimum useful Chat
+and reader/graph behavior, plus separately scheduled integration. The original story
+definitions below retain traceability and broader backlog; their full acceptance
+matrices, completion dependencies and historical workflow mechanics are not copied
+wholesale into the new feature inputs. Compatible integrity, authorization and
+truthful-evidence requirements remain. This revision defines planning scope and
+does not start implementation, invoke skills or change historical lifecycle evidence.
+
 ## Overview
 
 This finalized October story definition decomposes the selected presentation release,
@@ -83,6 +114,10 @@ The user confirmed this filename and input set on September 27. No implementatio
 story activation, runtime operation or canonical queue change is authorized here.
 
 ### Delivery at a Glance
+
+The following table and dated targets retain the original full October story plan.
+For the selected first deliverable, use the [October 6 feature map and calendar](october-delivery-plan-2026-09-30.md#parallel-work-and-calendar)
+instead; these historical dependencies do not reinstate full 18.5 execution.
 
 The table is a navigation/dispatch aid, not permission to start implementation.
 Dependencies are **completion** dependencies; development can start earlier at the
@@ -213,7 +248,7 @@ The primary source is the October proposal; section references below locate its 
 
 ### NonFunctional Requirements
 
-- **O-NFR01 — Containment.** Bind source/tool roots outside model arguments; deny path/symlink escapes, arbitrary host files, writes and shell/command tools. Bound tool responses/work without disguising limits as coverage. For Story 18.3 only, the trusted, pinned CodeGraph child may run directly in an explicitly dedicated Vulgata-managed prepared workspace under application-selected authority. This child inherits host filesystem rights; preventive operating-system denial of its out-of-footprint writes is not claimed. Only declared contained CodeGraph tool state (normally `.codegraph`) is intended to change. Prepared source, project configuration and Git hooks must remain unchanged; observed effects outside that footprint stop native readiness. Model-visible Worker tools retain the arbitrary-path, write and command denials. This exception does not authorize other tools, processes or workspaces. (Proposal: Whole-root tools; Story 18.3 direct-process human decision)
+- **O-NFR01 — Containment.** Bind source/tool roots outside model arguments; ordinary Worker tools deny path/symlink escapes, arbitrary host files, writes and shell/command execution. Bound tool responses/work without disguising limits as coverage. The sole direct-child exception is the trusted pinned CodeGraph 1.5.0 adapter delivered by Story 18.3 and reused by October consumers under that same declared profile: the child retains the launching account's permissions, with no preventive OS filesystem/network isolation claim. Only declared positively bound tool state is intended to change; source/configuration/hooks stay unchanged, and observed out-of-footprint effects stop readiness. Exact application-selected roots, live authority, bounded work, cancellation and owned cleanup remain required. No extension to JDT-LS, other executables/workspaces, broader Worker privileges or normal production deployment is granted. See the [approved runtime clarification and human-decision provenance](sprint-change-proposal-2026-09-26-october-batch-release.md#approved-trusted-codegraph-runtime-clarification--september-30-2026). (Proposal: Whole-root tools)
 - **O-NFR02 — Live disclosure control.** Recheck every composite contributor before acceptance/disclosure and history reuse. No restricted metadata leakage; revocation stops further unauthorized output. Preserve real Identity and existing password/security rules, without redesigning them. (Proposal: Isolation; Chat; Graph)
 - **O-NFR03 — Secrets and provider boundaries.** Never discover unspecified .env files, reuse old secrets, or expose credentials in prompts/logs. Follow valid encryption rules for DB configuration; copied protected rows require compatible keys/app identity/purpose only if that optional route is used. Self-hosted source/Documents stay within organization infrastructure. (Proposal: Provider configuration; compatible NFR-2)
 - **O-NFR04 — Atomicity and replay safety.** Completed-file acceptance, coherent publication and Chat terminal saves resist partial visibility and duplicate replay. Accepted content survives aborts; no failed drafts, previous-batch substitutions or fabricated completion. This does not require durable batch restart. (Proposal: Acceptance; Chat completion)
@@ -697,6 +732,12 @@ So that agents can explore the index without a custom query-protocol replacement
 **When** qualification is completed,
 **Then** evidence records the actual tool version and small native smoke result,
 **And** it does not require a new research spike, protocol framework or provider call merely to establish MCP connectivity.
+
+**Scope note:** O-NFR01's approved exception belongs to this pinned trusted adapter
+and runtime profile, including its downstream October use, not to every tool in
+this story or a consumer. Its host permissions and observed-effect checks must not
+be described as preventive OS isolation. Preserve the owning story's capability,
+review and qualification holds; this note supplies no completion evidence.
 
 ### Story 18.4: Prepare an Owned October Batch with Valid Context and Provider Bindings
 

@@ -42,8 +42,14 @@ override its explicitly scoped October decisions.
 
 When refreshing sprint tracking, pass both this file and the October release epic
 file to `sprint_plan.py generate`; neither input alone represents the whole tracker.
-October stories are backlog. This routing does not activate a feature or authorize
-implementation; use `run-governed-delivery` and retain all formal story gates.
+For new October work, first read the [first-deliverable plan, updated October 6](planning-artifacts/october-delivery-plan-2026-09-30.md)
+and its [integration phase](planning-artifacts/october-integration-plan-2026-10-06.md).
+It selects bounded outcomes for four features from the integrated 18.1-18.4 baseline;
+OCT-BUSINESS absorbs useful 18.5 design, and the full 18.5 run is no longer an October
+delivery prerequisite. Earlier story criteria remain broader requirement/history
+references; follow the new briefs for selected scope instead of restoring all old
+dependencies. Main-tracker labels do not replace current feature ownership or this
+disposition. This routing creates no feature, task list or implementation authority.
 The September 11 metadata and definitions below retain their original scope.
 
 ## Overview

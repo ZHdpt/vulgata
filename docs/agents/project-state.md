@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-06 (Story 18.4 completion and the narrowed Story 18.2/18.3 checkpoints integrated into oct14/main; runtime qualification retains its recorded scope).
+Updated: 2026-10-06 (integrated 18.2-18.4 baseline and revised four-feature first-deliverable inputs; runtime qualification retains its recorded scope).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -44,6 +44,14 @@ verification before reuse.
   and 18.4 are done. The narrowed 18.2 and 18.3 slices are integrated; their original
   full-story requirements remain incomplete and skipped, not silently completed.
   Integration does not activate another story or resume the frozen tool workflows.
+- The [October delivery plan, revised October 6](../bmad/planning-artifacts/october-delivery-plan-2026-09-30.md)
+  now selects the first useful outcomes of four feature groups and reserves an
+  [integration phase](../bmad/planning-artifacts/october-integration-plan-2026-10-06.md).
+  The user abandoned full 18.5 execution for this delivery; OCT-BUSINESS owns the
+  minimum Knowledge foundation derived from its plan. Old 18.5 evidence remains
+  historical and incomplete; resuming its held workflow is not a new prerequisite.
+  Follow the revised briefs rather than copying the full original story matrices
+  or skipped tool tasks. No new feature, implementation or runtime was started.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
