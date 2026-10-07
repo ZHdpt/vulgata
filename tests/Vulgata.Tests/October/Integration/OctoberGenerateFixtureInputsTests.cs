@@ -10,6 +10,28 @@ namespace Vulgata.Tests.October.Integration;
 public sealed class OctoberGenerateFixtureInputsTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(1)]
+    [InlineData(900)]
+    [InlineData(1800)]
+    public void GenerateWait_ValidDeadline_AddsTwoMinutesForOwnedSettlement(int runDeadlineSeconds)
+    {
+        Assert.Equal(TimeSpan.FromSeconds(runDeadlineSeconds + 120), OctoberGenerateFixtureInputs.GenerateWait(runDeadlineSeconds));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    [InlineData(1801)]
+    [InlineData(int.MaxValue)]
+    public void GenerateWait_InvalidDeadline_RejectsBeforeConstructingWait(int runDeadlineSeconds)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => OctoberGenerateFixtureInputs.GenerateWait(runDeadlineSeconds));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public void ValidateFiles_NoGenerateInputs_PreservesExistingFixtureModes()
     {
