@@ -1522,3 +1522,19 @@ Root's combined October/Explore/PreparedSource SelfContained selection passes
 classified files and compilation at zero errors/14,177 warnings. This is not a new
 full-suite pass; the previously captured logging teardown defect remains open.
 No PostgreSQL, native tool, external-provider or E2E suite was executed.
+
+### Rate reservation correction during actual-client composition
+
+Scan's actual-client review identified a defect in the imported Business consumers:
+their early CheckBeforeSendAsync reserves the scope's rate slot, while the selected
+transport repeats the check at HTTP dispatch. The same lease's already-reserved
+branch can reuse that stale slot after another request sends. Root verified this
+source path; passing controlled consumer tests did not qualify actual send spacing.
+This supersedes the earlier instruction to retain that early rate-bearing precheck.
+Business owns removing/repairing premature reservation while retaining disclosure,
+original lifetime, deadline and cancellation checks. The selected HTTP boundary
+retains the mandatory final gate. No scheduler rewrite or second permit is authorized.
+Final-denial status must remain truthful; any missing typed transport outcome is a
+bounded owner compatibility question. Scan owns the actual executor/factory delayed-
+dispatch regression. Complete real-client composition remains open pending the
+reviewed correction and that conformance evidence; no runtime/resource scope changes.
