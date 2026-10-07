@@ -1266,5 +1266,20 @@
   },
   "October/Knowledge/OctoberBusinessFinalizationContractTests.cs": {
     "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFlowPublicationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberBusinessFinalizerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFlowPublicationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Integration/OctoberGeneratedClReportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberGeneratedClReport.cs": {
+    "suite": "SelfContained"
   }
 }

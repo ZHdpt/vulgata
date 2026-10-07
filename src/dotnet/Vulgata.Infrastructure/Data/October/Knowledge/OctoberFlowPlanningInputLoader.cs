@@ -222,8 +222,19 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
             Contributors = ledger,
             FileUncertainties = fileUnknowns.OrderBy(x => x.ManifestId).ThenBy(x => x.Key, StringComparer.Ordinal).ToImmutableArray()
         };
+        // Check exact source-backed unit identity even for a deferred root kind. This probe
+        // discards its groups and never changes the requested kind or authorizes synthesis.
+        // Deduplicate only the probe: the original selection can contain the same unit under
+        // distinct kinds and must retain that complete terminal-outcome partition.
+        var identityProbe = OctoberFlowPlanner.Plan(input with
+        {
+            Roots = roots.Select(root => root with { Kind = FlowRootKind.SelectedCodeUnit }).Distinct().ToImmutableArray()
+        });
+        if (identityProbe.Status != FlowPlanningStatus.Succeeded ||
+            identityProbe.RootDispositions.Any(x => x.Kind != FlowRootDispositionKind.Planned)) return Unavailable();
         var planned = OctoberFlowPlanner.Plan(input);
-        if (planned.Status != FlowPlanningStatus.Succeeded || planned.RootDispositions.Any(x => x.Kind != FlowRootDispositionKind.Planned)) return Unavailable();
+        if (planned.Status != FlowPlanningStatus.Succeeded ||
+            planned.RootDispositions.Any(x => x.Kind is not (FlowRootDispositionKind.Planned or FlowRootDispositionKind.UnsupportedKind))) return Unavailable();
         if (!await AuthorizedAsync(handle.Binding, ledger, ct)) return Unavailable();
         ct.ThrowIfCancellationRequested();
         return new(KnowledgeReadStatus.Success, input);

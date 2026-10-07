@@ -236,7 +236,12 @@ public enum BusinessFinalizationStatus
 }
 /// <summary>Replay retains the original explicit outcome and exact publication; it never regenerates.</summary>
 public sealed record BusinessFinalizationResult(BusinessFinalizationStatus Status, OperationKey Operation,
-    PublicationBinding? Publication, CoverageProjection Coverage, bool IsReplay = false);
+    PublicationBinding? Publication, CoverageProjection Coverage, bool IsReplay = false)
+{
+    /// <summary>Persistence diagnostics do not change the immutable logical result or grant dispatch authority.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public KnowledgeWriteStatus? PersistenceStatus { get; init; }
+}
 
 public sealed record FinalizationRequest(OperationKey Operation, CorpusHandle Corpus, string CanonicalPayloadDigest,
     IOctoberExecutionScope ExecutionScope)

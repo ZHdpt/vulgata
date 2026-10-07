@@ -211,7 +211,7 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
                         equals new { version.BatchId, version.VersionId, version.LogicalDocumentId }
                     join logical in context.LogicalDocuments.AsNoTracking() on new { member.BatchId, member.LogicalDocumentId }
                         equals new { logical.BatchId, logical.LogicalDocumentId }
-                    join unit in context.CodeUnits.AsNoTracking() on new { logical.BatchId, logical.UnitId } equals new { unit.BatchId, unit.UnitId }
+                    join unit in context.CodeUnits.AsNoTracking() on new { logical.BatchId, logical.UnitId } equals new { unit.BatchId, UnitId = (Guid?)unit.UnitId }
                     where member.BatchId == batch && member.CorpusId == corpusId
                     select new { Version = version, logical.Kind, unit.UnitId, unit.RepositoryId };
         var manifests = await context.CorpusManifests.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => x.ManifestId).ToArrayAsync(ct);

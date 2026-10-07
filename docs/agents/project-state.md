@@ -47,8 +47,14 @@ Subsequent controlled slot integration imports Scan `ba43236b`: private original
 one-shot finalization mechanics and cleanup lifetime, not live S3 activation.
 The combined October/Explore/PreparedSource selection passes 1,868/1,868, zero
 failures/skips (`e35d387415e34dc699e485edfb542b49`). Actual CL-only/fresh-host paths
-cannot issue the slot. Business's persistence checkpoint, actual BL host composition
-and the one-dataset ordinary-user qualification remain open; see the wave handoff.
+cannot issue the slot. Business persistence/finalizer `a0c9676b` plus exact deferred-root
+correction `bf3ca6ca` are now reviewed for controlled integration; seven PostgreSQL
+facts remain authored/unrun. Final combined SelfContained run `a3c026a8b3f042ab8d6e8ca5e4be3a16`
+is 3,876/3,877, zero skips, NOT green: the sole logging-test cleanup failure captures
+an undisposed local logger/open handle after factory scope exit. Root owns this
+unresolved teardown defect; no test waiver or runtime readiness is claimed. Actual
+BL host composition, Web Chat activation and one-dataset ordinary-user qualification
+remain open. See the wave handoff for exact evidence and resource boundaries.
 
 - [PRD](../bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md): product scope
   and explicit Current/Deferred/History/Original unmet backlog dispositions.

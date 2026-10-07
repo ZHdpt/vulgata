@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices.OctoberDialogue;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities.OctoberKnowledge;
 using Vulgata.Core.Entities.OctoberDialogue;
 using Vulgata.Infrastructure.Data.October.Knowledge;
@@ -56,6 +57,13 @@ public sealed class OctoberDbContext : DbContext
     public DbSet<UncertaintyVersion> UncertaintyVersions => Set<UncertaintyVersion>();
     public DbSet<PublicationRelationshipRecord> PublicationRelationships => Set<PublicationRelationshipRecord>();
     public DbSet<PublicationResolutionUncertaintyRecord> PublicationResolutionUncertainties => Set<PublicationResolutionUncertaintyRecord>();
+    public DbSet<BusinessFinalizationRecord> BusinessFinalizations => Set<BusinessFinalizationRecord>();
+    public DbSet<LogicalFlowRecord> LogicalFlows => Set<LogicalFlowRecord>();
+    public DbSet<FlowGroupVersionRecord> FlowGroupVersions => Set<FlowGroupVersionRecord>();
+    public DbSet<FlowDocumentDependencyRecord> FlowDocumentDependencies => Set<FlowDocumentDependencyRecord>();
+    public DbSet<FlowRelationshipDependencyRecord> FlowRelationshipDependencies => Set<FlowRelationshipDependencyRecord>();
+    public DbSet<FlowResolutionUncertaintyDependencyRecord> FlowResolutionUncertaintyDependencies => Set<FlowResolutionUncertaintyDependencyRecord>();
+    public DbSet<FlowFileUncertaintyDependencyRecord> FlowFileUncertaintyDependencies => Set<FlowFileUncertaintyDependencyRecord>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -96,8 +104,12 @@ public sealed class OctoberDbContext : DbContext
                 KnowledgeOperation => true,
                 AcceptedFileManifest row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
                 CodeUnit row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
-                LogicalDocument row => added.OfType<CodeUnit>().Any(x => x.BatchId == row.BatchId && x.UnitId == row.UnitId),
-                DocumentVersion row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
+                LogicalDocument row => row.Kind == DocumentKind.CodeLogic
+                    ? added.OfType<CodeUnit>().Any(x => x.BatchId == row.BatchId && x.UnitId == row.UnitId)
+                    : added.OfType<LogicalFlowRecord>().Any(x => x.BatchId == row.BatchId && x.LogicalFlowId == row.LogicalFlowId),
+                DocumentVersion row => row.Kind == DocumentKind.CodeLogic
+                    ? added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId)
+                    : added.OfType<BusinessFinalizationRecord>().Any(x => x.BatchId == row.BatchId && x.OperationKind == row.FinalizationOperationKind && x.OperationId == row.FinalizationOperationId),
                 DocumentSectionRecord row => added.OfType<DocumentVersion>().Any(x => x.BatchId == row.BatchId && x.VersionId == row.VersionId),
                 QualifiedClaimGroupRecord row => added.OfType<DocumentSectionRecord>().Any(x => x.BatchId == row.BatchId && x.VersionId == row.VersionId && x.SectionId == row.SectionId),
                 KnowledgeContributorRecord row => added.OfType<AcceptedFileManifest>().Any(x => x.BatchId == row.BatchId && x.ManifestId == row.ManifestId),
@@ -117,9 +129,49 @@ public sealed class OctoberDbContext : DbContext
                 UncertaintyVersion row => added.OfType<ResolutionItem>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.ItemId == row.ItemId),
                 PublicationRelationshipRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
                 PublicationResolutionUncertaintyRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
+                BusinessFinalizationRecord row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
+                LogicalFlowRecord row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
+                FlowGroupVersionRecord row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
+                FlowDocumentDependencyRecord row => added.OfType<FlowGroupVersionRecord>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.GroupVersionId == row.GroupVersionId),
+                FlowRelationshipDependencyRecord row => added.OfType<FlowGroupVersionRecord>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.GroupVersionId == row.GroupVersionId),
+                FlowResolutionUncertaintyDependencyRecord row => added.OfType<FlowGroupVersionRecord>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.GroupVersionId == row.GroupVersionId),
+                FlowFileUncertaintyDependencyRecord row => added.OfType<FlowGroupVersionRecord>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.GroupVersionId == row.GroupVersionId),
                 _ => false
             };
             if (!hasNewParent) throw new InvalidOperationException("Cannot extend committed October Knowledge.");
+        }
+        ValidateDocumentOwnership(added);
+    }
+
+    private void ValidateDocumentOwnership(object[] added)
+    {
+        DocumentVersion? Version(Guid batch, Guid logical, Guid version) => added.OfType<DocumentVersion>()
+            .SingleOrDefault(x => x.BatchId == batch && x.LogicalDocumentId == logical && x.VersionId == version) ??
+            DocumentVersions.AsNoTracking().SingleOrDefault(x => x.BatchId == batch && x.LogicalDocumentId == logical && x.VersionId == version);
+        FlowGroupVersionRecord? Group(Guid batch, Guid? group) => added.OfType<FlowGroupVersionRecord>()
+            .SingleOrDefault(x => x.BatchId == batch && x.GroupVersionId == group) ??
+            FlowGroupVersions.AsNoTracking().SingleOrDefault(x => x.BatchId == batch && x.GroupVersionId == group);
+        foreach (var version in added.OfType<DocumentVersion>().Where(x => x.Kind == DocumentKind.BusinessLogic))
+        {
+            var logical = added.OfType<LogicalDocument>().SingleOrDefault(x => x.BatchId == version.BatchId && x.LogicalDocumentId == version.LogicalDocumentId) ??
+                LogicalDocuments.AsNoTracking().SingleOrDefault(x => x.BatchId == version.BatchId && x.LogicalDocumentId == version.LogicalDocumentId);
+            var group = Group(version.BatchId, version.FlowGroupVersionId);
+            if (group is null || logical is null || logical.LogicalFlowId != group.LogicalFlowId)
+                throw new InvalidOperationException("A BL version must belong to its exact logical flow.");
+        }
+        foreach (var member in added.OfType<CorpusDocumentRecord>())
+        {
+            var version = Version(member.BatchId, member.LogicalDocumentId, member.VersionId);
+            if (version is null || version.Kind != DocumentKind.CodeLogic || version.ManifestId != member.ManifestId)
+                throw new InvalidOperationException("Frozen corpus membership requires exact CL manifest ownership.");
+        }
+        foreach (var member in added.OfType<PublicationMemberRecord>())
+        {
+            var version = Version(member.BatchId, member.LogicalDocumentId, member.VersionId);
+            bool valid = version is not null && (version.Kind == DocumentKind.CodeLogic
+                ? CorpusDocuments.AsNoTracking().Any(x => x.BatchId == member.BatchId && x.CorpusId == member.CorpusId && x.LogicalDocumentId == member.LogicalDocumentId && x.VersionId == member.VersionId)
+                : Group(member.BatchId, version.FlowGroupVersionId)?.CorpusId == member.CorpusId);
+            if (!valid) throw new InvalidOperationException("Publication membership must pin an exact CL corpus or BL group version.");
         }
     }
 

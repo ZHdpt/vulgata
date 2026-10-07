@@ -1355,3 +1355,81 @@ denial and security-stamp revocation. This is initial HTTP/SSR qualification, no
 interactive browser proof. No duplicate generated dataset or fixture publication
 substitution is permitted. The consolidated source/provider/database/host authority
 request remains outstanding; no live run is authorized by this checkpoint.
+
+### Business persistence integration review
+
+Business submitted `a0c9676b15bfbc58ba61140cf1e2331548103b20` (T032/T033 controlled
+publication and finalizer). Root staged the authored branch delta without replacing
+newer main files. The only conflict was additive contract documentation; both the
+accepted persistence diagnostics and original-run callback agreement were retained.
+Independent schema review found no blocking issue in the inspected CL manifest
+keys, Dialogue exact-version keys, explicit CL/BL ownership, typed dependencies or
+immutability guards. Seven PostgreSQL migration/constraint facts are authored and
+compiled, not executed; no migration was applied.
+
+Independent producer/store review found a real mismatch: the finalizer could offer
+NotEvaluated for unsupported roots while the loader/store rejected those roots.
+The bounded owner correction must retain exact unit/document/selector/source
+membership for every root, permit only recomputed known deferred-kind UnsupportedKind
+as NotEvaluated with no group, and continue rejecting invalid or foreign identities.
+Completed results still require the actual planned group. Business owns the two-file
+loader/store correction and actual finalizer-to-loader-to-store regression, with no
+schema change. The checkpoint is not accepted until this correction is reviewed.
+
+Correction `bf3ca6ca69cd11ada852015117363fd48e889db1` was subsequently imported
+exactly (four affected files compare equal to the owner's commit) and independently
+accepted. The identity probe validates exact primary-source membership, discards its
+temporary groups and retains original root kinds. Store acceptance permits only
+the recomputed unsupported disposition with no group/content. The owner's genuine
+RED `1a518c89603749e9b49d0a8ea3d46eb3` became 198/198 GREEN
+(`63144e3d62ff4978841160c1be75aedd`), including actual finalizer/loader/store/reader
+partial publication and replay, plus wrong-identity/fabricated-outcome negatives.
+This closes the concrete review finding without adding supported synthesis kinds.
+
+The staged full SelfContained run `30d03d7aeed0418b9ef2343550093874` compiled with
+zero errors and finished 3,827/3,828, zero skips. Its sole failure was
+LoggingConfigurationTests.ProductionHost_CriticalLog_WritesConfiguredLocalFileAsync:
+Directory.Delete at line 52 raised IOException because vulgata.log remained open.
+This matches the earlier Scan full-run cleanup failure, not a newly proven Business
+regression. Root owns diagnosis; the cause remains unknown. A test-only diagnostic
+captures the actual provider's disposal and file-handle state on failure and
+rethrows the original exception without retries, sleeps or cleanup suppression.
+
+The diagnostic-enabled isolated logging replay passed 1/1
+(`363aae39cd784a63a86c921440661030`); it does not establish the cause of the failed
+full-run cleanup or erase that result.
+
+Root's test-only `OctoberGeneratedClReport` now validates the clean one-file
+qualification protocol against trusted KnowledgeBinding and PreparedOrigin inputs.
+It supports multiple exact document versions for that file and never accepts a
+database identity from stdout. Independent review accepted it; 42/42 controlled
+cases passed (`55a5aaf064744874a9a5e7b343373141`), including actual
+ExecuteConfiguredAsync projection compatibility. Initial missing-API compile RED
+(`579e346648dd48dcaf89180eb669e888`) and an intermediate test enum-name compile error
+(`9be9335f46634699ba4ef2efece5ab7e`) remain separate evidence, not behavioral RED.
+This helper yields exact handles for the future read test, not proof of persisted,
+useful generated Knowledge. Expected source digest/prepared version must come from
+the owned prepared input, never be copied from the untrusted console report.
+
+Final combined controlled run `a3c026a8b3f042ab8d6e8ca5e4be3a16` selected 3,877:
+3,876 passed, one failed, zero skipped; build zero errors (13,367 warnings).
+Only the same logging cleanup test failed. New diagnostic: provider-count=1,
+provider-disposed=False, safe-file-handle-closed=False after the await-using scope
+exited. This establishes that the captured application provider remained undisposed;
+it does not yet explain why (including possible disposal exceptions masked by
+cleanup). Root retains the host-test lifetime defect. The full suite is NOT green.
+All selected Business/Scan/Chat/Explore/report-helper checks passed. The reviewed
+Business contract/implementation checkpoint is accepted for incremental controlled
+consumer work, not whole-release completion or runtime qualification. No failing
+test was removed, weakened or waived.
+
+Next ready Scan work is controlled natural-completion composition of the existing
+owner finalizer with the original live scope/corpus, exact selection/profile/client/
+prompt and F1; no new root-inference strategy or schema ownership. Preserve S2 and
+do not treat pending external S2 checks as passed. Any missing owner input/port
+returns as a concrete bounded dependency, not a consumer substitute or broad plan.
+Root's next Web work is execution registry/store observation and retained per-turn
+service lifetime with the route still disabled; then durable conversation/history
+preparation and parent UI activation. Those controlled tasks need no new provider
+grant. Live dataset generation and PostgreSQL/host qualification remain blocked on
+the consolidated explicit resource request.
