@@ -78,14 +78,18 @@ public sealed class OctoberChatClientSessionTests
     }
 
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task Client_ProviderReturnsFailure_DoesNotRetryPhysicalRequestAsync()
+    [SuiteTheory("SelfContained")]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.Found)]
+    [InlineData(HttpStatusCode.TemporaryRedirect)]
+    public async Task Client_ProviderReturnsFailureOrRedirect_DoesNotRetryOrFollowPhysicalRequestAsync(HttpStatusCode status)
     {
         var fixture = await Fixture.CreateAsync();
-        var physical = new PhysicalHandler { Status = HttpStatusCode.TooManyRequests };
+        var physical = new PhysicalHandler { Status = status };
         await using var session = await fixture.SessionAsync(physical, new OctoberChatRequestAdmission(1));
         Assert.NotNull(await Record.ExceptionAsync(() => RequestAsync(session)));
         Assert.Equal(1, physical.Sends);
+        Assert.Equal("https://controlled.invalid/v1/chat/completions", physical.Uri!.AbsoluteUri);
         await session.SealAndWaitForSettlementAsync().WaitAsync(TimeSpan.FromSeconds(10));
     }
 
@@ -292,6 +296,96 @@ public sealed class OctoberChatClientSessionTests
         }
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("authority", false)]
+    [InlineData("authority", true)]
+    [InlineData("decrypt", false)]
+    [InlineData("decrypt", true)]
+    public async Task CreateAsync_NoncooperativeReadiness_ReturnsOnOriginalLifetimeWithoutLateClientAsync(string stage, bool deadline)
+    {
+        using var original = new CancellationTokenSource();
+        var fixture = await Fixture.CreateAsync(original.Token);
+        fixture.Admitted = fixture.Admitted with { Admission = fixture.Admitted.Admission! with { DeadlineUtc = fixture.Clock.GetUtcNow() + TimeSpan.FromSeconds(1) } };
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var underlyingFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        async Task IgnoreCancellation(CancellationToken _)
+        {
+            entered.TrySetResult();
+            await release.Task; // Intentionally ignores cancellation; owned test eventually observes/releases it.
+            underlyingFinished.TrySetResult();
+            throw new IOException("Controlled late readiness failure.");
+        }
+        if (stage == "authority") fixture.Authority.BeforeVerify = IgnoreCancellation;
+        else fixture.Secrets.BeforeDecrypt = IgnoreCancellation;
+        var physical = new PhysicalHandler();
+        var pending = fixture.SessionAsync(physical, new OctoberChatRequestAdmission(1));
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            if (deadline) fixture.Clock.Advance(TimeSpan.FromSeconds(2));
+            else original.Cancel();
+            var error = await Record.ExceptionAsync(() => pending.WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.NotNull(error);
+            Assert.IsNotType<TimeoutException>(error);
+            Assert.True(pending.IsCompleted);
+            Assert.False(underlyingFinished.Task.IsCompleted);
+            Assert.Equal(0, physical.Sends);
+            Assert.Equal(1, physical.Disposals);
+        }
+        finally
+        {
+            release.TrySetResult();
+            await underlyingFinished.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            _ = await Record.ExceptionAsync(async () =>
+            {
+                var unexpected = await pending.WaitAsync(TimeSpan.FromSeconds(10));
+                await unexpected.DisposeAsync();
+            });
+        }
+        Assert.Equal(0, physical.Sends);
+        Assert.Equal(1, physical.Disposals);
+        if (stage == "authority") Assert.Equal(0, fixture.Secrets.DecryptCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Client_EarlierDurableDeadlineDuringNoncooperativeRead_StopsConsumerButRetainsPhysicalPermitAsync()
+    {
+        var fixture = await Fixture.CreateAsync();
+        fixture.Admitted = fixture.Admitted with { Admission = fixture.Admitted.Admission! with { DeadlineUtc = fixture.Clock.GetUtcNow() + TimeSpan.FromSeconds(1) } };
+        var body = new GatedBody();
+        var physical = new PhysicalHandler { BodyStream = body };
+        var admission = new OctoberChatRequestAdmission(1);
+        await using var session = await fixture.SessionAsync(physical, admission);
+        var run = RequestAsync(session);
+        try
+        {
+            await body.GateEntered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            fixture.Clock.Advance(TimeSpan.FromSeconds(2)); // Original budget duration is still much longer.
+            var error = await Record.ExceptionAsync(() => run.WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.NotNull(error);
+            Assert.IsNotType<TimeoutException>(error);
+            Assert.True(run.IsCompleted);
+            var drain = session.SealAndWaitForSettlementAsync();
+            Assert.Same(drain, session.SealAndWaitForSettlementAsync());
+            Assert.False(drain.IsCompleted);
+            Assert.Equal(1, admission.ActiveRequests);
+            Assert.False(body.DisposedWhileReading);
+            Assert.Equal(0, physical.ResponseContent!.Disposals);
+        }
+        finally
+        {
+            body.Release.TrySetResult();
+            _ = await Record.ExceptionAsync(() => run.WaitAsync(TimeSpan.FromSeconds(10)));
+            await session.SealAndWaitForSettlementAsync().WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        Assert.Equal(0, admission.ActiveRequests);
+        Assert.Equal(1, physical.ResponseContent!.Disposals);
+        Assert.False(body.DisposedWhileReading);
+    }
+
     private static async Task<string> RequestAsync(OctoberChatClientSession session)
     {
         session.Budget.TryStartProviderRound(out _);
@@ -358,9 +452,11 @@ public sealed class OctoberChatClientSessionTests
     private sealed class Secret : ISecretEncryptionService
     {
         public Func<CancellationToken, Task>? BeforeDecrypt { get; set; }
+        public int DecryptCalls { get; private set; }
         public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default) => throw new InvalidOperationException();
         public async Task<string> DecryptAsync(string purpose, string cipher, CancellationToken cancellationToken = default)
         {
+            DecryptCalls++;
             if (BeforeDecrypt is not null) await BeforeDecrypt(cancellationToken);
             return "controlled-dummy-key";
         }
@@ -382,6 +478,8 @@ public sealed class OctoberChatClientSessionTests
             Body = await request.Content!.ReadAsStringAsync(cancellationToken);
             ResponseContent = new CountedContent(BodyStream ?? new MemoryStream(Encoding.UTF8.GetBytes(Payload)));
             var response = new HttpResponseMessage(Status) { Content = ResponseContent };
+            if (Status is HttpStatusCode.Found or HttpStatusCode.TemporaryRedirect)
+                response.Headers.Location = new Uri("https://alternate-controlled.invalid/forbidden");
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/event-stream");
             return response;
         }

@@ -47,6 +47,11 @@ public sealed class OctoberChatClientSession : IAsyncDisposable
             }
         };
         Client = new ChatClient(snapshot.Model, new ApiKeyCredential(secret), options).AsIChatClient();
+        // Register only after every owned field exists: an expired token can invoke
+        // synchronously. Its source owns this registration until confirmed cleanup.
+        // A durable deadline can be earlier than the guard's already-created timer.
+        _ = _admission.Stopping.Register(static state =>
+            _ = ((OctoberChatClientSession)state!).SealAndWaitForSettlementAsync(), this);
     }
 
     public IChatClient Client { get; }
@@ -85,8 +90,9 @@ public sealed class OctoberChatClientSession : IAsyncDisposable
                 budget.OriginalCancellationToken, originalDeadline.Token, durableDeadline.Token);
             var token = readiness.Token;
             token.ThrowIfCancellationRequested();
-            if (await authority.VerifyAdmissionAsync(admission.Request, token) != DialogueExecutionStatus.Verified) throw Refused();
-            string? secret = await binding.DecryptCurrentKeyAsync(snapshot, token);
+            if (await AwaitReadinessAsync(authority.VerifyAdmissionAsync(admission.Request, token), token) != DialogueExecutionStatus.Verified) throw Refused();
+            token.ThrowIfCancellationRequested();
+            string? secret = await AwaitReadinessAsync(binding.DecryptCurrentKeyAsync(snapshot, token), token);
             token.ThrowIfCancellationRequested();
             if (secret is null || budget.IsStopped || admission.DeadlineUtc <= clock.GetUtcNow()) throw Refused();
             return new(binding, snapshot, admission, budget, authority, reauthorizeBeforeSend,
@@ -144,6 +150,26 @@ public sealed class OctoberChatClientSession : IAsyncDisposable
 
     private static InvalidOperationException Refused() => new("The selected Chat execution is unavailable.");
 
+    private static async Task<T> AwaitReadinessAsync<T>(Task<T> operation, CancellationToken token)
+    {
+        try { return await operation.WaitAsync(token); }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            // These are read-only readiness calls, not submitted writes or provider
+            // requests. Observe eventual completion without using a late credential,
+            // creating a client or granting dispatch. The unstarted handler is safe
+            // to dispose; dispatched physical I/O still uses the two-owner drain.
+            _ = ObserveReadinessAsync(operation);
+            throw;
+        }
+    }
+
+    private static async Task ObserveReadinessAsync(Task operation)
+    {
+        try { await operation; }
+        catch (Exception) { /* No credential or authority diagnostics are logged. */ }
+    }
+
     /// <summary>
     /// Private to this guard chain. The guard tracks actual reads and invokes response
     /// disposal only after they settle; this owner retains capacity through that disposal.
@@ -178,6 +204,8 @@ public sealed class OctoberChatClientSession : IAsyncDisposable
             _deadline = new(admitted.DeadlineUtc - clock.GetUtcNow(), clock);
             _stop = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, cancellationToken);
         }
+
+        internal CancellationToken Stopping => _stop.Token;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {

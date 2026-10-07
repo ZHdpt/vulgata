@@ -132,9 +132,8 @@ public sealed class OctoberWikiTools
                 }
                 if (parsed is ReportArguments report && report.Documents is not null && report.Documents.Length <= _budget.Limits.ToolCalls)
                 {
-                    ImmutableArray<OctoberChatReference>? references = await DisclosureSession.ReportAsync(report.Documents, linked.Token);
-                    return references is null ? await GenericAsync(OctoberChatToolStatus.InvalidReport, linked.Token)
-                        : EncodeGeneric(new(OctoberChatToolStatus.Succeeded, References: references.Value));
+                    OctoberChatToolInvocation? reported = await DisclosureSession.ReportEncodedAsync(report.Documents, linked.Token);
+                    return reported ?? await GenericAsync(OctoberChatToolStatus.InvalidReport, linked.Token);
                 }
                 return await GenericAsync(OctoberChatToolStatus.InvalidArguments, linked.Token);
             }

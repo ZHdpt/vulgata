@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Vulgata.Core.DomainServices.OctoberChat;
+using Vulgata.Core.DomainServices.OctoberDialogue;
 
 namespace Vulgata.Agents.ChatExecution.October;
 
@@ -16,20 +17,23 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
     private readonly OctoberWikiTools _tools;
     private readonly OctoberChatBudget _budget;
     private readonly Action<OctoberChatToolProgress>? _onToolProgress;
+    private readonly Func<CancellationToken, Task>? _beforeRequest;
     private readonly HashSet<string> _seenCallIds = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PendingCall> _pendingCalls = new(StringComparer.Ordinal);
 
     internal OctoberChatProviderAdapter(IChatClient client, OctoberWikiTools tools, OctoberChatBudget budget,
-        Action<OctoberChatToolProgress>? onToolProgress = null)
+        Action<OctoberChatToolProgress>? onToolProgress = null, Func<CancellationToken, Task>? beforeRequest = null)
         : base(new BorrowedChatClient(client))
     {
         _tools = tools;
         _budget = budget;
         _onToolProgress = onToolProgress;
+        _beforeRequest = beforeRequest;
     }
 
     internal ChatFinishReason? LastFinishReason { get; private set; }
     internal OctoberChatProviderStatus? FailureStatus { get; private set; }
+    internal DialogueProviderFinish FailureFinish { get; private set; } = DialogueProviderFinish.Unknown;
     internal bool HasPendingCalls => _pendingCalls.Count != 0;
 
     public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
@@ -41,6 +45,7 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (_beforeRequest is not null) await _beforeRequest(cancellationToken).WaitAsync(cancellationToken);
         if (_tools.DisclosureSession is { } disclosure) await disclosure.ReauthorizeAsync(cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         if (!_budget.TryStartProviderRound(out _)) throw Fail(OctoberChatProviderStatus.BudgetExceeded);
@@ -121,7 +126,8 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
             finish != ChatFinishReason.Length && finish != ChatFinishReason.ContentFilter)
         {
             await RejectCallsAsync(calls, cancellationToken);
-            throw Fail(OctoberChatProviderStatus.Failed);
+            throw Fail(OctoberChatProviderStatus.Failed, finish is null ? DialogueProviderFinish.Truncated :
+                calls.Count != 0 && finish != ChatFinishReason.ToolCalls ? DialogueProviderFinish.UnfinishedTools : DialogueProviderFinish.Invalid);
         }
 
         // No native function reaches the SDK dispatcher until its entire typed round
@@ -298,9 +304,11 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
 
     private sealed record PendingCall(FunctionCallContent Snapshot, string ArgumentsJson);
 
-    private InvalidOperationException Fail(OctoberChatProviderStatus status)
+    private InvalidOperationException Fail(OctoberChatProviderStatus status, DialogueProviderFinish? finish = null)
     {
         FailureStatus ??= status;
+        if (FailureFinish == DialogueProviderFinish.Unknown)
+            FailureFinish = finish ?? (status == OctoberChatProviderStatus.Failed ? DialogueProviderFinish.Invalid : DialogueProviderFinish.Unknown);
         _budget.StopExecution();
         return new InvalidOperationException("The controlled Chat operation stopped.");
     }

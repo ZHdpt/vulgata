@@ -22,6 +22,7 @@ public sealed class OctoberChatBudget
     private long _outputBytes;
     private long _sseBytes;
     private OctoberChatProviderStatus? _transportFailureStatus;
+    private TimeSpan _effectiveDuration;
 
     public OctoberChatBudget(OctoberChatLimits? limits = null, TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
@@ -39,6 +40,7 @@ public sealed class OctoberChatBudget
         _clock = timeProvider ?? TimeProvider.System;
         _started = _clock.GetTimestamp();
         _cancellationToken = cancellationToken;
+        _effectiveDuration = Limits.Duration;
     }
 
     public OctoberChatLimits Limits { get; }
@@ -50,6 +52,22 @@ public sealed class OctoberChatBudget
     public long OutputBytes { get { lock (_gate) return _outputBytes; } }
     public long SseBytes { get { lock (_gate) return _sseBytes; } }
     public CancellationToken OriginalCancellationToken => _cancellationToken;
+    internal DateTimeOffset CurrentUtc => _clock.GetUtcNow();
+    internal bool DeadlineExpired { get { lock (_gate) return _clock.GetElapsedTime(_started) >= _effectiveDuration; } }
+
+    internal bool ConstrainToDeadline(DateTimeOffset deadlineUtc)
+    {
+        lock (_gate)
+        {
+            if (Stopped()) return false;
+            TimeSpan elapsed = _clock.GetElapsedTime(_started);
+            TimeSpan remaining = deadlineUtc - _clock.GetUtcNow();
+            if (remaining <= TimeSpan.Zero) return Stop();
+            TimeSpan cap = elapsed + remaining;
+            if (cap < _effectiveDuration) _effectiveDuration = cap;
+            return !Stopped();
+        }
+    }
     internal OctoberChatProviderStatus? TransportFailureStatus { get { lock (_gate) return _transportFailureStatus; } }
 
     internal void RecordTransportRejection(int observedAttempts, bool budgetExceeded)
@@ -67,7 +85,7 @@ public sealed class OctoberChatBudget
     {
         lock (_gate)
         {
-            TimeSpan remaining = Limits.Duration - _clock.GetElapsedTime(_started);
+            TimeSpan remaining = _effectiveDuration - _clock.GetElapsedTime(_started);
             return new CancellationTokenSource(remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero, _clock);
         }
     }
@@ -179,7 +197,7 @@ public sealed class OctoberChatBudget
     private bool Stopped()
     {
         _stopped |= _cancellationToken.IsCancellationRequested ||
-            _clock.GetElapsedTime(_started) >= Limits.Duration;
+            _clock.GetElapsedTime(_started) >= _effectiveDuration;
         return _stopped;
     }
 

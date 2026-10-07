@@ -208,6 +208,18 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanAcceptancePostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "OctoberScan/OctoberScanAcceptanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanAcceptanceHarness.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanPreparedSourceFrameTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanFileWorkerTests.cs": {
     "suite": "SelfContained"
   },
@@ -248,6 +260,12 @@
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatDisclosureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatTurnRunnerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatOwnerConformanceTests.cs": {
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatEntryTests.cs": {
