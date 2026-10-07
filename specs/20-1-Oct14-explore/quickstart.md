@@ -101,3 +101,42 @@ Only the first row is added now; all future entries below are proposals for thei
 Integration still owns ordinary Web registration/navigation/selection and final runtime resources; Business owns the real store and all October migrations; Chat owns footer adoption. No database, migrations, host startup, provider calls, source Scan or native analysis tools ran. The standard SelfContained launcher's own local process/timeout guard probes ran as part of the approved launcher. No user/machine PATH/global settings or unrelated process was changed.
 
 Pause **before T004**. Only T001–T003's initial preparation is complete; the remainder stays unstarted. No push is performed. The final preparation commit identifies this record and its exact scoped changes; no self-referential commit hash is embedded here.
+
+## Controlled E0 implementation — T004–T013
+
+The later user instruction **"Implement Controlled E0: T004–T013"** supersedes the initial-preparation pause above for E0 only. This worktree fast-forwarded from `aa63ca157dc20f0047999b8ae53663425a0fb504` to accepted common CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91` before implementation. T004–T013 are complete against controlled data; **stop before T014/E1**. No graph, real B0/store, provider/native analysis or shared Web composition is included.
+
+Direct `speckit-implement` was restricted to those task IDs with the absolute feature-directory override. Requirements checklist: 16 checked, zero unchecked; not edited. No before/after-implement hooks are configured; agent-context hooks/root instructions were not changed. Existing .gitignore/.dockerignore already cover the generated .NET/test outputs.
+
+### Delivered surface and ownership
+
+- Shared presentation wrappers/validator, `IExplorePresentationService`, exact reader/browse facade, opaque single-use instance/context-bound continuations, bounded current-chunk ViewModels and feature-local DI.
+- Ordinary `[Authorize]` routes `/knowledge/documents` and `/knowledge/documents/read`; safe query parsing, all four Guid identities and optional string section, no query-based mode elevation, Chinese Fluent controls and Library Oak light/dark styling.
+- Encoded content/qualified claims/limitations/coverage, Chinese Document type, IT-only safe relative source provenance and exact-section focus. Explicit next/reopen/cancel states; context/authentication events clear protected content and invalidate in-flight results. No accumulation or auto-drain.
+- Missing module/dependencies render unavailable; no automatic fixture, legacy wiki, current-version or source fallback. No source viewer. Integration registration and trusted context/event requirements are specified in [consumer-boundary.md](contracts/consumer-boundary.md#implemented-e0-composition-handoff-t012).
+
+`contract_test_author` exclusively owned five new test/helper files and their exact SelfContained inventory entries. `e0_production` owned the Shared/Explore, Web.ViewModels/Explore, Web/Explore and reader/browse/component files. Root owned orchestration, Git import, launcher runs and documentation. `independent_plan_review` reviewed the final code read-only. No production or test owner edited the other's files. Shared Core/Infrastructure/Agents, Program/Routes/layouts/packages and Business contracts were unchanged.
+
+### Honest RED/GREEN and verification
+
+Focused command: `pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.Explore'`.
+
+| Boundary | Actual result | Evidence directory under TestResults |
+| --- | --- | --- |
+| Initial behavioral RED against compile-only skeletons | Build succeeded; 43 selected: 10 existing probes passed, 33 new cases failed, 0 skipped. Failures were missing behavior/DI/rendered controls, not compilation errors. | `isolation-28296ab27ab648c9bcfc79f18413923b` |
+| Review regression RED after original implementation | Build succeeded; 45 selected: 41 passed, 4 failed, 0 skipped. Failures: two malformed-Unicode tests and two mode-specific type/provenance assertions. | `isolation-18ae02286c7747a8a585d7add7d1fd8b` |
+| Final focused GREEN | 45 selected, **45 passed, 0 failed, 0 skipped**. | `isolation-5cf8852f60774165bd85eac5fd4cf166` |
+| Full SelfContained regression | `pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained`: 3,453 discovered, 2,405 selected; **2,405 passed, 0 failed, 0 skipped**, launcher exit 0. Qualification suites excluded, not passed. | `isolation-be981bf4400945ab9cb92ddd9c604987` |
+| Explicit Web build | `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj`: exit 0, **0 errors, 15 dependency warnings**. No package/analyzer settings changed. | `isolation-be981bf4400945ab9cb92ddd9c604987/web-build.log` |
+
+Each test directory contains `results.trx`, discovery/build/execution logs and guard evidence. Root checked persisted counters; repository policy covered 329 classified files. Standard launcher policy/outcome/timeout/cleanup/fixture-exclusion checks passed. Initial test-count estimates were corrected to actual discovery (33 initial new cases, then two added regression cases, plus ten prior conformance cases = 45). The full run's 2,405 selected tests are the actual SelfContained population; 3,453 discovered is not a passed count.
+
+The independent review required rejecting malformed Unicode rather than JSON/UTF-8 replacement and preserving Document type/provenance. Separate regression tests failed before their production correction. Final review found no remaining code blockers and accepted controlled E0 conditional on focused GREEN, full regression and Web build; all three conditions now passed. The concrete T012 handoff is recorded. No subsequent production/test changes were made after these passing checks.
+
+### Practical evidence limits and next increment
+
+The harness uses the imported labelled fixture plus scripted response/delay probes. Tests demonstrate >64-KiB total Document/section traversal through locally bounded supplied chunks, exact handle/qualification preservation, encoding safety, denied outputs, cancellation/context races, components and DI. They do not implement or qualify Business splitting, cryptographic cursor expiry, real live Identity policy, production persistence, actual browser keyboard/theme behavior or real source-backed generation. Component tests exercise controls/markup and focus calls with bUnit; no browser or application host was launched.
+
+CP-K1 has no canonical section catalogue/schema discriminator; E0 renders the supplied Content/qualified Claims and does not invent a competing schema. The conservative full-ContentPage default-JSON 64-KiB guard can reject chunks a producer counts differently. Agree the canonical byte-budget representation with Business before real E1 and qualify actual content; no claim of exact production size interoperability is made. Graph-wide final disclosure and GENERATED_FROM graph coverage remain outside E0.
+
+Integration must supply trusted `IExploreContextProvider` with reliable ContextChanged notifications, the canonical reader and existing authentication provider, opt-in registration/navigation, and Chat link adoption. Real store/Identity/publication data and owned runtime resources are E1 prerequisites. **T014–T032 remain unchecked/unstarted.** No database, migration, provider, source tool, host startup, global setting or unrelated process was used or changed. The standard isolated launcher's own local process guard probes are included in its authorized execution. Changes remain in this worktree for review; no E0 commit or push was requested/performed.

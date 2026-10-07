@@ -1,0 +1,6 @@
+<p class="explore-status" role="status" aria-live="polite" aria-atomic="true" data-load-state="@LoadState">@StatusText</p>
+
+@code {
+    [Parameter] public LoadState LoadState { get; set; }
+    [Parameter] public string StatusText { get; set; } = "";
+}
