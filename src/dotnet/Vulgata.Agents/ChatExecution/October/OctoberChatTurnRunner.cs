@@ -143,8 +143,19 @@ public sealed class OctoberChatTurnRunner
         catch (Exception) { return null; } // No dispatch, fallback, receipt or admission-absence inference.
     }
 
-    public async Task<OctoberChatGenerationResult> RunAsync(Func<string, CancellationToken, ValueTask> authorizedText,
+    public Task<OctoberChatGenerationResult> RunAsync(Func<string, CancellationToken, ValueTask> authorizedText,
         CancellationToken cancellationToken = default, Action<OctoberChatToolProgress>? onToolProgress = null)
+    {
+        ArgumentNullException.ThrowIfNull(authorizedText);
+        return RunAsync((text, _, token) => authorizedText(text, token), cancellationToken,
+            onToolProgress is null ? null : (progress, _) => onToolProgress(progress));
+    }
+
+    /// <summary>Host-only opaque lineage captured with each authorized delta; never a model or browser payload.</summary>
+    public async Task<OctoberChatGenerationResult> RunAsync(
+        Func<string, KnowledgeDependencyHandle, CancellationToken, ValueTask> authorizedText,
+        CancellationToken cancellationToken = default,
+        Action<OctoberChatToolProgress, KnowledgeDependencyHandle>? onToolProgress = null)
     {
         ArgumentNullException.ThrowIfNull(authorizedText);
         if (Interlocked.Exchange(ref _used, 1) != 0) throw new InvalidOperationException("This admitted Chat execution has already started.");
@@ -161,9 +172,11 @@ public sealed class OctoberChatTurnRunner
                     if (!CanRetain(_disclosure.InferenceDependencies, _disclosure.ConsumedReads, candidate))
                         throw _disclosure.Reject(KnowledgeDependencyStatus.BudgetExceeded);
                     token.ThrowIfCancellationRequested();
-                    await authorizedText(delta, token).AsTask().WaitAsync(token);
+                    KnowledgeDependencyHandle dependencies = _disclosure.InferenceDependencies;
+                    await authorizedText(delta, dependencies, token).AsTask().WaitAsync(token);
                     _answer = candidate;
-                }, cancellationToken, onToolProgress, _history, VerifyExecutionAsync);
+                }, cancellationToken, onToolProgress is null ? null
+                    : progress => onToolProgress(progress, _disclosure.InferenceDependencies), _history, VerifyExecutionAsync);
         }
         finally { Volatile.Write(ref _active, 0); }
 

@@ -59,8 +59,9 @@ public sealed class OctoberChatCoordinator
     {
     }
 
-    // Controlled composition uses the same integration-owned session and transfers
-    // physical transport ownership through its existing internal factory.
+    // Trusted same-assembly host composition may intercept the real factory with
+    // System time and a mandatory generation observer to retain actual task ownership.
+    // Omitted observers, fake clocks and controlled physical transports are test-only.
     internal OctoberChatCoordinator(IOctoberDialogueStore store, IOctoberDialoguePayloadCodec codec,
         IOctoberKnowledgeDisclosedReader reader, IOctoberKnowledgeDependencyAuthority dependencies,
         IOctoberDialogueExecutionAuthority executionAuthority, IOctoberChatContextProvider context,
@@ -86,16 +87,30 @@ public sealed class OctoberChatCoordinator
     public DialogueTurnState? State { get; private set; }
     [JsonIgnore] public DialogueTerminalSaveRequest? PendingSave { get; private set; }
 
-    /// <summary>
-    /// Submits the frozen request once. Its initial capsule must already contain the
-    /// owner-agreed history union; the coordinator never rewrites admission inputs.
-    /// An uncertain or replayed admission cannot authorize provider dispatch.
-    /// </summary>
-    public async Task<OctoberChatCoordinationResult> ExecuteAsync(DialogueBeginRequest frozenRequest,
+    public Task<OctoberChatCoordinationResult> ExecuteAsync(DialogueBeginRequest frozenRequest,
         OctoberChatBudget originalBudget, ReadSelection selection, DialogueHistoryResult frozenHistory,
         OctoberChatProviderSnapshot snapshot, Guid saveOperationId,
         Func<string, CancellationToken, ValueTask> authorizedText,
         Action<OctoberChatToolProgress>? onToolProgress = null,
+        CancellationToken explicitExecutionCancellation = default)
+    {
+        ArgumentNullException.ThrowIfNull(authorizedText);
+        return ExecuteAsync(frozenRequest, originalBudget, selection, frozenHistory, snapshot, saveOperationId,
+            (text, _, token) => authorizedText(text, token),
+            onToolProgress is null ? null : (progress, _) => onToolProgress(progress), explicitExecutionCancellation);
+    }
+
+    /// <summary>
+    /// Submits the frozen request once. Its initial capsule must already contain the
+    /// owner-agreed history union; the coordinator never rewrites admission inputs.
+    /// An uncertain or replayed admission cannot authorize provider dispatch.
+    /// Opaque delivery capsules stay host-only and never enter outward event payloads.
+    /// </summary>
+    public async Task<OctoberChatCoordinationResult> ExecuteAsync(DialogueBeginRequest frozenRequest,
+        OctoberChatBudget originalBudget, ReadSelection selection, DialogueHistoryResult frozenHistory,
+        OctoberChatProviderSnapshot snapshot, Guid saveOperationId,
+        Func<string, KnowledgeDependencyHandle, CancellationToken, ValueTask> authorizedText,
+        Action<OctoberChatToolProgress, KnowledgeDependencyHandle>? onToolProgress = null,
         CancellationToken explicitExecutionCancellation = default)
     {
         ArgumentNullException.ThrowIfNull(frozenRequest);

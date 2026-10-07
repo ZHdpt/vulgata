@@ -293,3 +293,52 @@ Final affected Chat/Knowledge/legacy-page/October.Integration verification passe
 discovery 4,309/inventory 386, build zero errors and 19 warnings. This satisfies the
 independent review condition. It is an affected SelfContained selection, not a full
 suite or PostgreSQL/native/provider/browser qualification.
+## Bounded presentation delivery — 2026-10-07
+
+Coordinator `d99517a65a58868ad2f9836abe91ef8775f4812e` was independently reviewed
+and committed after 720 affected controlled passes. Approved integration `d72d1b80`
+was then merged cleanly at `4c808bb90583ce974a64ffe846a75dfd87fcca38`.
+The next increment adds an isolated application delivery adapter, narrow opaque-lineage
+callback overloads and authoritative terminal replacement in the existing view model.
+It does not activate page sending, a route or runtime resources.
+
+The initial eight focused cases compiled and failed against the fail-closed scaffold:
+**0/8 passed**, `TestResults/isolation-08e065c8abeb4e07b6398a0fbf6f0b3d/results.trx`.
+Seven failures were unavailable attachment/coordinator paths; the bUnit regression
+showed an explicit sanitized terminal projection left prior prose visible.
+The first implementation plus two reviewer-requested safeguards ran **9/10 passed**,
+`TestResults/isolation-9cb8be71fab84bcbb8b313326df73336/results.trx`.
+The remaining failure was a test setup mistake: empty history does not merge an
+initial root. Correcting the expected starting capsule to the actual initial capsule
+preserved all strict native-read updated-union assertions; that case then passed.
+The byte-cap and native-read additions are coverage, not claimed pre-implementation RED.
+
+Independent review found a separate real display gap: queued-delta denial detached
+delivery before a later sanitized receipt could clear an already visible prefix.
+The two denial/unavailability rows reproduced it (**0/2 passed**); the corrected
+runner fixture passed in the same three-case run,
+`TestResults/isolation-7c9308fcf141460c892e81473e4ee274/results.trx`.
+The accepted correction adds an application-only content-free DisclosureSuppressed
+event, bound to the original turn/context, with no durable terminal/save/idle claim.
+Tests require cleared text/references, no late restoration and the actual owner-store
+slot still occupied. This cannot recall previously delivered bytes or force a broken
+subscriber to render; actual callback ownership and trusted UI handoff checks remain.
+
+Final affected verification passed **795/795, zero failed/skipped**, including all
+12 new presentation/lineage/VM cases,
+`TestResults/isolation-d90c38a470d84f5e99363472087e653b/results.trx`;
+discovery 4,424/inventory 392, build zero errors and 7,281 warnings, including AD0001
+analyzer exceptions. Warning policy was preserved; these are not all claimed pre-existing.
+Independent reviewer `wave_reviewer` accepted the complete increment conditional on
+this GREEN, now satisfied. Separate production/test owners assessed their boundaries.
+This qualifies controlled application delivery with actual SQLite owner receipts and
+controlled provider transport, not PostgreSQL, live Identity/provider/browser or a full
+SelfContained suite. No runtime services, migrations or provider calls were started.
+
+Next demonstrable result is the trusted host registry/commit/death and route composition
+driving this adapter against the shared qualified dataset. Integration remains its owner.
+The reported Business dialogue commit/disposal race is a separate live-dialogue hold;
+T022 must qualify the accepted owner fix and PostgreSQL before T023 live/provider/browser
+execution. Consolidated resource/source/data/spend approval remains with Integrator;
+controlled tests and integration checkpoints do not grant it. Safe Markdown, exact reader
+links and actual page/browser wiring remain incomplete T020/T021 work.
