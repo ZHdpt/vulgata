@@ -932,3 +932,23 @@ dispositions and host reason codes are report summaries, not byte-identical cano
 coverage/proposal authority. Root checks publication/document/origin bindings and
 uses the canonical reader for actual content. CLI Ctrl+C drain semantics are not
 qualified by S2 API cancellation tests and remain a distinct S3 obligation.
+
+## Combined controlled checkpoint: trusted loader and CL-only runner
+
+The fixture hook is committed at `417c888f`. Independent review accepted its
+test-only boundary; focused verification passed 24/24. Scan's final synchronous
+invocation correction `b19a6816` is independently accepted and merged, with the
+previously held input-ledger, retry-lifetime and CL-only runner checkpoints, at
+`2cca4913`. The original accounting hold is resolved: attempted transport calls
+include synchronous throws, while token usage remains unknown. This does not prove
+remote provider acceptance. Main's executable Generate/report wiring is still a
+separate pending Scan checkpoint, not completed by importing the internal runner.
+
+At `2cca4913`, combined affected verification passed **1,670/1,670 SelfContained**
+cases, zero failures/skips, 407 classified sources. Evidence:
+`TestResults/isolation-abb08056811e47dbae6a60b7fccbc6ae/results.trx`.
+This includes the trusted Business loader and final fixture cleanup guard, and is
+not a full-suite, PostgreSQL, native-tool, provider, browser or E2E qualification.
+Scan may consume the fixture API after committing its own dirty Main work; no reset
+or all-lane barrier is required. Business continues synthesis, Chat completes its
+footer lifecycle correction, and Explorer awaits the same actual publication/run.
