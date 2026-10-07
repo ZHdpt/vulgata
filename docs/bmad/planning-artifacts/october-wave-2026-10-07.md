@@ -1126,3 +1126,30 @@ actual generated Document includes that exact RepositoryAdvisory contributor:
 OctoberKnowledgeIdentityAdapter rejects a missing/blank current advisory context.
 A nonempty context edit does not revoke its historical snapshot, and clearing an
 unreferenced context or source-only contributor is not equivalent evidence.
+
+## Accepted finalization persistence-diagnostic mapping
+
+Business and Scan concurred on an optional non-positional nullable
+`KnowledgeWriteStatus PersistenceStatus` on BusinessFinalizationResult, omitted when
+null and preserving existing constructor/statuses. Business validates the allowed
+matrix and IsReplay consistency; null is absence of an additional observation, never
+proof of a commit. Per-call append/replay diagnostics do not enter immutable request
+or outcome identity.
+
+- Changed request/outcome for the same operation: Failed + Conflict, no content or
+  publication and no regeneration.
+- Confirmed Published/PublishedPartial/NoContent with diagnostic append failure:
+  retain the exact durable outcome and, only under fresh disclosure authority,
+  publication/handles/coverage/completed stage; PersistenceStatus is LogUnavailable.
+  Future S3 reports operation_log_unavailable, Execution=Failed (exit 1), while
+  PublicationStatus remains Confirmed or NoContent. It is neither a clean run nor
+  CommitIndeterminate and does not permit another synthesis attempt.
+- Ordinary observed commit/exact replay may report Committed/AlreadyCommitted.
+  Missing or unknown durable result remains CommitIndeterminate without invented
+  handles or a dispatch grant.
+
+This closes the bounded compatibility question, not the current lifetime prerequisite.
+Business may include the additive declaration with its next dependent reviewed
+checkpoint; no separate immediate commit is required. Schema/persistence work remains
+behind accepted actual lifetime correction. Scan's S2 work continues independently;
+no S3 implementation, migration execution or runtime resource permission is added.
