@@ -968,3 +968,35 @@ constructs the initial union/request/budget/execution and makes active-slot/retr
 composer decisions. No duplicate suffix selection, new Core contract, caller-created
 capsule, stream replay or historical-row-as-new-admission is permitted. This work
 does not wait for Business BL synthesis and does not authorize provider/browser use.
+
+## Accepted bounded Scan-to-B2 finalization agreement
+
+Business's T032/T033 proposal and Scan's compatibility response agree on the missing
+finalization selection. Integration releases controlled declarations/implementation
+under this agreement, not S3 dispatch or runtime resources:
+
+- Add non-positional Selection to FinalizationRequest. Existing
+  CanonicalPayloadDigest is the single canonical request digest over exact Operation,
+  Corpus and Selection; do not add a competing request-digest field.
+- Missing selection/default roots is invalid. Explicit empty roots means a settled
+  selection with durable NoContent, honest original coverage and zero provider calls;
+  it does not assert no roots exist. Bound selected roots to 256, reject duplicate
+  stable identities/conflicting versions and verify exact corpus membership before
+  dispatch. Existing 256-node/512-edge/depth-16 per-flow caps may only be reduced.
+- Pin RunId, profile ID, frozen non-secret configuration fingerprint, PromptDigest
+  and token ceiling. Business publishes one versioned canonical helper/projection
+  over source identity, precedence, profile name, API type, exact endpoint, model
+  and credential-reference identifier. Exclude secrets, ciphertext, credential hashes,
+  prompt text and live objects. The fingerprint is configuration identity, not proof
+  of credential rotation or execution authority. Scan's original live host binds
+  it to the actual selected client/credential lifetime and checks it before dispatch.
+- Business owns trusted input loading/planning/policy, derived BL identities, typed
+  full dependencies and atomic exact request/outcome/result persistence. Scan owns
+  original live-run single flight, F1 and remaining shared request/token/deadline
+  budget. A 256-root bound never grants 256 provider calls. Persisted exact lookup
+  replays the original result; missing/indeterminate lookup grants neither generation
+  nor owner-death/restart authority.
+- CL-only S2 remains unchanged. Business remains sole migration/schema owner and
+  sends reviewed declarations/migration checkpoints for consumer compatibility and
+  integration before activation. Main and controlled synthesis continue independently;
+  no new generic receipt framework or all-Chat completion barrier is introduced.
