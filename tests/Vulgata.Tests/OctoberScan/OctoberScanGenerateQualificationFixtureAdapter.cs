@@ -24,7 +24,7 @@ internal static class OctoberScanGenerateQualificationFixtureAdapter
                     runtimeFilePath: files.RuntimeFilePath, scanPolicyFilePath: files.ScanPolicyFilePath,
                     workerProviderConfigurationFilePath: files.WorkerProviderConfigurationFilePath);
                 // The fixture owns the child and retains its bounded exit/cleanup even after cancellation.
-                var result = await fixture.WaitForGeneratorAsync(process);
+                var result = await fixture.WaitForGenerateAsync(process, approvedPolicy.RunDeadlineSeconds);
                 token.ThrowIfCancellationRequested();
                 return result;
             });
