@@ -408,3 +408,45 @@ endpoint. Production SocketsHttpHandler's redirects-disabled setting is inspecte
 source, not a live loopback redirect experiment. A subsequent cross-owner review
 identified ignored-cancellation readiness waits; that narrow correction is pending,
 so the current factory evidence is explicitly cooperative-readiness qualification.
+
+## Accepted next components and corrected lifetime boundary
+
+Scan accepted the exact supporting-input/fresh-Generate declaration `ed0f2600`;
+it is integrated at `af5520d2`. Business may implement those accepted ports without
+another routine approval round. The digest helpers and extended provenance behavior
+remain pending/fail-closed; declarations do not complete Generate. Kind5 requires
+its dedicated subject/lookup authority and exact RunId registration, not AcceptFile
+authority or a generic operation-lookup bypass.
+
+Reviewed Scan frame/F1 `cffbe50e` is integrated at `602cf362`: exact primary frames,
+irreversible observed authority/source loss, guarded actual submission and honest
+uncertainty/disposal reconciliation. Reviewed Chat admitted runner `6de2d394` is
+integrated at `f54d45e5`; its only-narrowing deadline and public original-lifetime
+bridge are both retained. Reviewed Business dialogue `42cac3c4` is integrated at
+`1b599c70`: store/codec/entities plus sole-owner additive migration/snapshot.
+The migration has NOT been applied; its sixteen PostgreSQL cases remain NOT RUN.
+No permissive execution/commit/death fallback is registered.
+
+Chat's cross-owner review identified ignored-cancellation readiness. Root added
+bounded consumer waits with explicit late read-only task observation: no late key
+use, client creation or dispatch; only the unstarted transport can dispose promptly.
+Root also linked durable expiry to both settlement owners after complete session
+construction, because a guard timer created before runner deadline narrowing cannot
+be assumed to shorten retroactively. Already-dispatched reads still retain permits
+until physical completion/disposal. Five independent regressions reproduced the
+hangs in `isolation-747c69a271e44934852de5e64fdeb853` (22/27 passed).
+
+Both test/production assessment and independent source review accept the correction.
+Combined current source passed **1,303/1,303 selected SelfContained** cases, no
+failures/skips, 384 classified files, including all 27 client-session cases:
+`TestResults/isolation-96b8d4f3fd8c4d94aaf2a4a4e7dd603f/results.trx`.
+This supersedes the cooperative-only readiness limitation above, not the separate
+full-suite SQLite crash or any missing PostgreSQL/tool/provider/browser evidence.
+
+Next work is still scoped and parallel: Business implements accepted input/admission
+and B1 persistence behavior; Scan continues primary orchestration then consumes the
+real owner implementation; Chat can use the actual dialogue store/codec in controlled
+coordinator work; integration owns live execution registration, one-shot issuance,
+actual commit/death adapters and route composition. Explorer retains its accepted
+graph/reader and awaits the single shared real publication. No all-lane barrier or
+new routine permission gate applies. Runtime resource authority is still outstanding.
