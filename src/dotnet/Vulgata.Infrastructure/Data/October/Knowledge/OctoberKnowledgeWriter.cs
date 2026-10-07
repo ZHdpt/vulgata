@@ -61,22 +61,28 @@ public sealed class OctoberKnowledgeWriter : IOctoberKnowledgeWriter
             if (submission.Proof.AdmissionId != proposal.AdmissionId || submission.Proof.AttemptId != proposal.AttemptId ||
                 submission.Proof.ProposalDigest != proposal.CanonicalProposalDigest)
                 return new(KnowledgeWriteStatus.NotCompleted, operation);
-            VerifiedKnowledgeSource? source;
+            var origins = OctoberKnowledgePolicy.ContentOrigins(proposal);
+            var verified = ImmutableArray.CreateBuilder<VerifiedKnowledgeSource>();
             try
             {
-                source = await _sourceVerifier.VerifyAsync(proposal.Binding, proposal.Origin, cancellationToken);
+                foreach (var origin in origins)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var source = await _sourceVerifier.VerifyAsync(proposal.Binding, origin, cancellationToken).WaitAsync(cancellationToken);
+                    if (source is null || source.LineCount < 0 ||
+                        (source.Origin with { RelativePath = OctoberKnowledgePolicy.NormalizePath(source.Origin.RelativePath) }) != origin)
+                        return new(KnowledgeWriteStatus.InvalidProposal, operation);
+                    verified.Add(source);
+                }
             }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception)
-            {
-                return new(KnowledgeWriteStatus.AuthorityUnavailable, operation);
-            }
-            if (source is null || !OctoberKnowledgePolicy.Validate(proposal, source) ||
+            catch (OperationCanceledException) { throw; }
+            catch (Exception) { return new(KnowledgeWriteStatus.AuthorityUnavailable, operation); }
+            if (!OctoberKnowledgePolicy.ValidateInputs(proposal, verified.ToImmutable()) ||
                 OctoberKnowledgePolicy.ComputeProposalDigest(proposal) != proposal.CanonicalProposalDigest)
                 return new(KnowledgeWriteStatus.InvalidProposal, operation);
+            // Normalize only after checking the original issuer-authenticated ledger and complete digest.
+            proposal = proposal with { Contributors = OctoberKnowledgePolicy.NormalizeContributors(proposal) };
+            submission = submission with { Proposal = proposal };
             var current = await AuthorizeAsync(proposal.Binding, proposal.Contributors, cancellationToken);
             if (current != DisclosureStatus.Allowed) return new(AuthorityStatus(current), operation);
             var attempt = new CommitAttempt(operation, proposal.AttemptId, proposal.CanonicalProposalDigest);
@@ -157,7 +163,9 @@ public sealed class OctoberKnowledgeWriter : IOctoberKnowledgeWriter
         var cancellationToken = deadline.Token;
         try
         {
-            if (operation.BatchId != binding.BatchId) return new(KnowledgeWriteStatus.Denied, operation);
+            // BeginGenerate has a distinct live operator/owner recovery boundary, never generic Knowledge lookup.
+            if (operation.Kind == OperationKind.BeginGenerate || operation.BatchId != binding.BatchId)
+                return new(KnowledgeWriteStatus.Denied, operation);
             await using var context = await _contexts.CreateDbContextAsync(cancellationToken);
             if (!await BindingMatchesAsync(context, binding, cancellationToken)) return new(KnowledgeWriteStatus.Denied, operation);
             var previous = await _operations.FindAsync(operation, cancellationToken);
@@ -256,6 +264,16 @@ public sealed class OctoberKnowledgeWriter : IOctoberKnowledgeWriter
         {
             if (contributor.RepositoryId is { } repository && !repositories.Any(x => x.RepositoryId == repository &&
                 (contributor.SystemId is null || contributor.SystemId == x.SystemId))) return false;
+            if (contributor.Kind is ContributorKind.Source or ContributorKind.SourceMetadata)
+            {
+                bool valid = contributor.Kind == ContributorKind.Source
+                    ? OctoberKnowledgeInputPolicy.IsValidSourceContributor(contributor)
+                    : OctoberKnowledgeInputPolicy.IsValidMetadataContributor(contributor);
+                if (!valid || !repositories.Any(row => row.RepositoryId == contributor.RepositoryId &&
+                    row.RootBindingIdentity == contributor.RootBindingIdentity)) return false;
+                continue;
+            }
+            if (contributor.SourceOrigin is not null || contributor.MetadataOrigin is not null) return false;
             if (contributor.Kind == ContributorKind.SystemAdvisory && !repositories.Any(x => x.SystemId == contributor.SystemId)) return false;
             if (contributor.AdvisoryRecordId is { } record)
             {

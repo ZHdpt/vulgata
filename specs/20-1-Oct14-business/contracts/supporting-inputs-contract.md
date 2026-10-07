@@ -1,6 +1,6 @@
 # October supporting-input provenance agreement
 
-Status: owner proposal under Scan/Integrator compatibility review, 2026-10-07.
+Status: canonical declaration ed0f2600ecc9bd4896a2c91bc14c36eec93fe35f accepted by Scan through Integrator on 2026-10-07; integrated at af5520d2868b310df9444b272ed4cb5175f38628. Behavioral implementation and qualification remain separate.
 This corrects the existing whole-Repository source-tool/Knowledge boundary. It does
 not add a tool, source root, Git capture, repository copy, tree-wide hash, provider
 allowance, general provenance framework or October table.
@@ -123,5 +123,4 @@ same-byte distinct paths; uncited content/metadata retention; wrong root/version
 bounds; forged/missing metadata ledger and request binding; limits without truncation;
 metadata-only missing/directory results without file hashing; exclusion/non-disclosure;
 replay after source-verifier expiry; full publication/read/capsule/live revocation behavior.
-Actual Scan mapping and source-frame qualification remain owner prerequisites. This proposal
-is not yet an implemented or runtime-qualified supporting-input boundary.
+Actual Scan mapping and source-frame qualification remain owner prerequisites. Business controlled implementation and review are recorded in quickstart.md; actual Scan/native/provider qualification remains separate.

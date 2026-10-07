@@ -1,6 +1,6 @@
 # October fresh execution admission agreement
 
-Owner declaration candidate, 2026-10-07. This enforces the accepted fresh-batch/no-restart
+Canonical declaration ed0f2600ecc9bd4896a2c91bc14c36eec93fe35f accepted by Scan through Integrator on 2026-10-07 (integration af5520d2868b310df9444b272ed4cb5175f38628). Store implementation and runtime qualification remain separate. This enforces the accepted fresh-batch/no-restart
 boundary. It is not a durable job, reservation, lease takeover or recovery framework.
 There is no Reserved/Abort lifecycle and no new table or migration.
 
@@ -68,6 +68,5 @@ late selection/subject changes; entry/submission fencing; real uniqueness/rollba
 delayed pre-lock request remains indeterminate; setup mutation denied after admission;
 generic lookup rejection; original-live-run one-shot dispatch controlled by Scan.
 
-This candidate declares the ports and identity. Its digest helper/store and corresponding
-host authority/one-shot runner integration still require independent RED/GREEN and review.
+Business digest helper/store controlled implementation and review are recorded in quickstart.md. Corresponding live host authority, one-shot runner integration and PostgreSQL qualification remain required.
 No runtime/paid call or PostgreSQL qualification is authorized or claimed by this document.

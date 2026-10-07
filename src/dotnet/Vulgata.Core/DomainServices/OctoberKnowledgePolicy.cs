@@ -66,7 +66,7 @@ public static class OctoberKnowledgePolicy
             }),
             observations = proposal.Observations.OrderBy(x => x.ObservationKey, StringComparer.Ordinal),
             uncertainties = proposal.Uncertainties.OrderBy(x => x.Key, StringComparer.Ordinal),
-            contributors = proposal.Contributors.OrderBy(SerializeCanonical, StringComparer.Ordinal),
+            contributors = NormalizeContributors(proposal).OrderBy(SerializeCanonical, StringComparer.Ordinal),
             coverage = proposal.Coverage with { Origin = NormalizeOrigin(proposal.Coverage.Origin) }
         };
         return Hash(SerializeCanonical(canonical));
@@ -76,12 +76,55 @@ public static class OctoberKnowledgePolicy
     {
         try
         {
-            return ValidateCore(proposal, source);
+            return ValidateCore(proposal, source, new Dictionary<PreparedOrigin, VerifiedKnowledgeSource> { [NormalizeOrigin(source.Origin)] = source });
         }
         catch (Exception error) when (error is ArgumentException or JsonException or InvalidOperationException or NullReferenceException)
         {
             return false;
         }
+    }
+
+    /// <summary>All content origins are verified by the trusted adapter; metadata never becomes a file-read request.</summary>
+    public static bool ValidateInputs(CompletedFileProposal proposal, ImmutableArray<VerifiedKnowledgeSource> verifiedSources)
+    {
+        try
+        {
+            if (verifiedSources.IsDefaultOrEmpty || verifiedSources.Length > OctoberKnowledgeInputLimits.MaximumContentOriginsIncludingPrimary ||
+                verifiedSources.Any(source => source is null || source.LineCount < 0 || !OriginValid(source.Origin))) return false;
+            var sources = verifiedSources.ToDictionary(source => NormalizeOrigin(source.Origin));
+            return sources.TryGetValue(NormalizeOrigin(proposal.Origin), out var primary) && ValidateCore(proposal, primary, sources);
+        }
+        catch (Exception error) when (error is ArgumentException or JsonException or InvalidOperationException or NullReferenceException) { return false; }
+    }
+
+    public static ImmutableArray<Contributor> NormalizeContributors(CompletedFileProposal proposal) => proposal.Contributors
+        .Select(contributor => contributor.SourceOrigin is { } origin ? contributor with
+        {
+            SourceOrigin = NormalizeOrigin(origin) == NormalizeOrigin(proposal.Origin) ? null : NormalizeOrigin(origin),
+        } : contributor).Distinct().ToImmutableArray();
+
+    public static ImmutableArray<PreparedOrigin> ContentOrigins(CompletedFileProposal proposal)
+    {
+        if (proposal.Contributors.IsDefaultOrEmpty || proposal.Contributors.Distinct().Count() != proposal.Contributors.Length ||
+            proposal.Contributors.Any(contributor => !ContributorValid(contributor, proposal.Origin)))
+            throw new ArgumentException("Invalid complete contributor ledger.");
+        // A completed file's supporting inputs stay inside its admitted Repository/root.
+        // Published composite unions have a separate boundary and may span selected repositories.
+        if (proposal.Contributors.Any(contributor =>
+            contributor.Kind is ContributorKind.Source or ContributorKind.SourceMetadata &&
+            (contributor.RepositoryId != proposal.Origin.RepositoryId ||
+             contributor.RootBindingIdentity != proposal.Origin.RootBindingIdentity)))
+            throw new ArgumentException("File supporting input is outside the primary Repository/root.");
+        var contributors = NormalizeContributors(proposal);
+        if (contributors.Count(contributor => contributor.Kind == ContributorKind.SourceMetadata) > OctoberKnowledgeInputLimits.MaximumMetadataObservations)
+            throw new ArgumentException("Metadata observation limit exceeded.");
+        var origins = contributors.Where(contributor => contributor.Kind == ContributorKind.Source)
+            .Select(contributor => NormalizeOrigin(contributor.SourceOrigin ?? proposal.Origin)).Append(NormalizeOrigin(proposal.Origin)).Distinct().ToImmutableArray();
+        if (origins.Length > OctoberKnowledgeInputLimits.MaximumContentOriginsIncludingPrimary || origins.Any(origin => !OriginValid(origin)) ||
+            origins.GroupBy(origin => new { origin.RepositoryId, origin.RootBindingIdentity, origin.RelativePath }).Any(group => group.Count() != 1))
+            throw new ArgumentException("Content origin limit or immutable origin identity conflict.");
+        return origins.OrderBy(origin => NormalizeOrigin(origin) == NormalizeOrigin(proposal.Origin) ? 0 : 1)
+            .ThenBy(SerializeCanonical, StringComparer.Ordinal).ToImmutableArray();
     }
 
     public static string SemanticKey(CompletedFileProposal proposal, string selector) => Hash(SerializeCanonical(new
@@ -100,7 +143,7 @@ public static class OctoberKnowledgePolicy
     public static string SerializeCanonical<T>(T value) => CanonicalizeJson(JsonSerializer.Serialize(value, _json));
     public static string NormalizePath(string value) => value.Replace('\\', '/');
 
-    private static bool ValidateCore(CompletedFileProposal p, VerifiedKnowledgeSource source)
+    private static bool ValidateCore(CompletedFileProposal p, VerifiedKnowledgeSource source, IReadOnlyDictionary<PreparedOrigin, VerifiedKnowledgeSource> sources)
     {
         if (p.SchemaVersion != KnowledgeContract.SchemaVersion || p.Binding.BatchId == Guid.Empty ||
             !Text(p.Binding.TargetId) || !Text(p.Binding.CanonicalDatabaseIdentity) || !Digest(p.Binding.SelectionDigest) ||
@@ -112,11 +155,11 @@ public static class OctoberKnowledgePolicy
         if (p.Units.IsEmpty ? p.Coverage.Disposition != CoverageDisposition.CompletedZeroUnit || !Text(p.Coverage.Reason)
             : p.Coverage.Disposition != CoverageDisposition.Accepted)
             return false;
-        // The additive input declarations do not grant acceptance before verified-ledger support is implemented.
-        if (p.Contributors.Any(x => x.SourceOrigin is not null || x.MetadataOrigin is not null)) return false;
-        if (p.Contributors.Distinct().Count() != p.Contributors.Length || p.Contributors.Any(x => !ContributorValid(x, p.Origin)) ||
-            !p.Contributors.Any(x => x.Kind == ContributorKind.Source && SourceContributorMatches(x, p.Origin)))
+        var origins = ContentOrigins(p);
+        if (origins.Length != sources.Count || origins.Any(origin => !sources.ContainsKey(origin)) ||
+            !p.Contributors.Any(contributor => contributor.Kind == ContributorKind.Source && SourceContributorMatches(contributor, p.Origin, p.Origin)))
             return false;
+        p = p with { Contributors = NormalizeContributors(p) };
 
         var units = p.Units.ToDictionary(x => x.SemanticSelector, StringComparer.Ordinal);
         foreach (var unit in p.Units)
@@ -143,7 +186,7 @@ public static class OctoberKnowledgePolicy
                 foreach (var claim in section.Claims)
                 {
                     if (!Key(claim.ClaimGroupId) || !Text(claim.Text) || claim.Limitations.IsDefault ||
-                        claim.Limitations.Any(x => !Text(x)) || !EvidenceValid(claim.Evidence, p, source) ||
+                        claim.Limitations.Any(x => !Text(x)) || !EvidenceValid(claim.Evidence, p, sources) ||
                         !Qualified(claim.Qualification, claim.Evidence) ||
                         (claim.Qualification is ClaimQualification.Hypothesis or ClaimQualification.Uncertain && claim.Limitations.IsEmpty))
                         return false;
@@ -157,14 +200,14 @@ public static class OctoberKnowledgePolicy
         {
             if (!Key(observation.ObservationKey) || !units.ContainsKey(observation.OwnerSelector) || !Text(observation.Role) ||
                 !Text(observation.Mechanism) || !Text(observation.Operation) || observation.LiteralsOrExpressions.IsDefault ||
-                !EvidenceValid(observation.Evidence, p, source) || !Qualified(observation.Qualification, observation.Evidence))
+                !EvidenceValid(observation.Evidence, p, sources) || !Qualified(observation.Qualification, observation.Evidence))
                 return false;
         }
         return p.Uncertainties.All(x => Key(x.Key) && Text(x.Explanation) && !x.Limitations.IsDefault &&
-            x.Limitations.All(Text) && EvidenceValid(x.Evidence, p, source));
+            x.Limitations.All(Text) && EvidenceValid(x.Evidence, p, sources));
     }
 
-    private static bool EvidenceValid(ImmutableArray<EvidenceReference> evidence, CompletedFileProposal p, VerifiedKnowledgeSource source)
+    private static bool EvidenceValid(ImmutableArray<EvidenceReference> evidence, CompletedFileProposal p, IReadOnlyDictionary<PreparedOrigin, VerifiedKnowledgeSource> sources)
     {
         if (evidence.IsDefault) return false;
         foreach (var item in evidence)
@@ -173,12 +216,12 @@ public static class OctoberKnowledgePolicy
             if (item.Document is not null || item.ClaimGroupId is not null || !Digest(item.ContentDigest)) return false;
             if (item.Source is { } anchor)
             {
-                if (item.AdvisoryRecordId is not null || !AnchorValid(anchor, source) || item.ContentDigest != anchor.Origin.SourceDigest ||
-                    !p.Contributors.Any(x => x.Kind == ContributorKind.Source && SourceContributorMatches(x, anchor.Origin))) return false;
+                if (item.AdvisoryRecordId is not null || !sources.TryGetValue(NormalizeOrigin(anchor.Origin), out var source) || !AnchorValid(anchor, source) || item.ContentDigest != anchor.Origin.SourceDigest ||
+                    !p.Contributors.Any(x => x.Kind == ContributorKind.Source && SourceContributorMatches(x, anchor.Origin, p.Origin))) return false;
             }
             else if (item.AdvisoryRecordId is { } advisory)
             {
-                if (advisory == Guid.Empty || !p.Contributors.Any(x => x.Kind != ContributorKind.Source &&
+                if (advisory == Guid.Empty || !p.Contributors.Any(x => x.Kind is ContributorKind.GlobalAdvisory or ContributorKind.SystemAdvisory or ContributorKind.RepositoryAdvisory &&
                     x.AdvisoryRecordId == advisory && x.ContentDigest == item.ContentDigest)) return false;
             }
             else return false;
@@ -201,16 +244,19 @@ public static class OctoberKnowledgePolicy
         };
     }
 
-    private static bool ContributorValid(Contributor c, PreparedOrigin origin) => Digest(c.ContentDigest) && (c.Kind switch
+    private static bool ContributorValid(Contributor c, PreparedOrigin origin) => c is not null && Digest(c.ContentDigest) &&
+        (c.Kind is ContributorKind.Source or ContributorKind.SourceMetadata || c.SourceOrigin is null && c.MetadataOrigin is null) && (c.Kind switch
     {
-        ContributorKind.Source => c.AdvisoryRecordId is null && SourceContributorMatches(c, origin),
+        ContributorKind.Source => OctoberKnowledgeInputPolicy.IsValidSourceContributor(c) && SourceContributorMatches(c, c.SourceOrigin ?? origin, origin),
+        ContributorKind.SourceMetadata => OctoberKnowledgeInputPolicy.IsValidMetadataContributor(c),
         ContributorKind.GlobalAdvisory => c.AdvisoryRecordId is { } id && id != Guid.Empty && c.RepositoryId is null && c.SystemId is null && c.RootBindingIdentity is null,
         ContributorKind.SystemAdvisory => c.AdvisoryRecordId is { } id && id != Guid.Empty && c.SystemId is { } system && system != Guid.Empty && c.RepositoryId is null && c.RootBindingIdentity is null,
         ContributorKind.RepositoryAdvisory => c.AdvisoryRecordId is { } id && id != Guid.Empty && c.RepositoryId is { } repository && repository != Guid.Empty && c.RootBindingIdentity is null,
         _ => false
     });
-    private static bool SourceContributorMatches(Contributor c, PreparedOrigin origin) => c.RepositoryId == origin.RepositoryId &&
-        c.RootBindingIdentity == origin.RootBindingIdentity && c.ContentDigest == origin.SourceDigest;
+    private static bool SourceContributorMatches(Contributor c, PreparedOrigin origin, PreparedOrigin primary) =>
+        c.RepositoryId == origin.RepositoryId && c.RootBindingIdentity == origin.RootBindingIdentity && c.ContentDigest == origin.SourceDigest &&
+        NormalizeOrigin(c.SourceOrigin ?? primary) == NormalizeOrigin(origin);
     private static bool AnchorValid(SourceAnchor anchor, VerifiedKnowledgeSource source) =>
         NormalizeOrigin(anchor.Origin) == NormalizeOrigin(source.Origin) && anchor.StartLine >= 1 && anchor.EndLine >= anchor.StartLine && anchor.EndLine <= source.LineCount;
     private static PreparedOrigin NormalizeOrigin(PreparedOrigin origin) => origin with { RelativePath = NormalizePath(origin.RelativePath) };

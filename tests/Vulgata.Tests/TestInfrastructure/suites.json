@@ -1,4 +1,13 @@
 {
+  "October/Knowledge/OctoberGenerateAdmissionPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberGenerateAdmissionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeInputTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberDialoguePostgreSqlTests.cs": {"suite": "PostgreSql"},
   "October/Knowledge/OctoberDialoguePersistenceTests.cs": {"suite": "SelfContained"},
   "October/Integration/OctoberChatClientSessionTests.cs": {
@@ -206,6 +215,12 @@
     "suite": "SelfContained"
   },
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanClPublicationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanInventoryTests.cs": {
     "suite": "SelfContained"
   },
   "OctoberScan/OctoberScanAcceptancePostgreSqlTests.cs": {

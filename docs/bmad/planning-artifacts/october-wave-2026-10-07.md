@@ -450,3 +450,106 @@ coordinator work; integration owns live execution registration, one-shot issuanc
 actual commit/death adapters and route composition. Explorer retains its accepted
 graph/reader and awaits the single shared real publication. No all-lane barrier or
 new routine permission gate applies. Runtime resource authority is still outstanding.
+
+## Latest combined checkpoint and consumer recovery clarification
+
+Chat actual-owner conformance `4057fb5b` is integrated at `556ac04f`; Business's
+accepted contract/task/model wording `613134c4` / `79eebaa5` is integrated at
+`f48f8744`. The final affected selection at that source boundary passed
+**1,306/1,306 SelfContained** cases, zero failures/skips, 385 classified files:
+`TestResults/isolation-9ec68daafd564547bb7471fd62c3e10f/results.trx`.
+This includes actual Business disclosure/crypto through the actual Chat wrapper:
+near-limit continuation/proof/report, ciphertext-independent replay accounting,
+and uncited-input revocation. Published data/policy remain controlled; no provider,
+PostgreSQL, native preparation or browser qualification is implied.
+
+Business confirmed its dialogue checkpoint intentionally never emits ConfirmedAbsent.
+A fresh in-memory lifecycle submits its frozen Begin once directly; requiring a
+missing-row lookup to prove absence first would block every new turn. After an
+uncertain/replayed Begin, lookup cannot grant another dispatch. Supported recovery
+is positive exact receipt reconciliation, or separately proven dead-and-settled
+orphan interruption under the current fence/lock. Missing terminal rows stay
+Indeterminate; neither Chat nor integration may invent a storage-retry permission.
+The consumer is released on that exact supported boundary, not a new recovery ledger.
+
+All lanes retain the same accepted scope. Their safe synchronization checkpoints
+will be sent with the integration commit. Pending host registry/commit/death wiring
+requires the actual coordinator lifecycle handshake; no fallback authority is added.
+
+## Supporting-input release and Generate admission hold
+
+Reviewed Business supporting-input `0ab10a77` and Generate-admission `0332399e`
+were source-merged together at `3f4a425c`, including generic Kind5 lookup refusal
+and the dedicated operator-authorized store. The pinned affected regression passed
+**1,369/1,369 SelfContained** cases, zero failures/skips, 387 classified files:
+`TestResults/isolation-e30289984fa34b6faee02f59ce31e517/results.trx`.
+Separate unfinished B1 lifetime tests were not imported. This count does not erase
+the integration review finding below or qualify PostgreSQL/runtime behavior.
+
+Supporting-input provenance passed cross-module review and may be consumed by Scan
+under its exact trusted ledger/root/source-verification requirements. Generate
+admission is **HOLD, not released for activation**: an unsynchronized catch filter
+can choose CancelledBeforeCommit before the finally block waits for a callback that
+has already passed cancellation checks under the submission gate. That callback
+can then submit commit, leaving an incorrect precommit result. Business must close
+submission and classify the actual submitted/settlement state under the same gate
+before selecting a precommit outcome; a volatile flag alone is insufficient.
+The owner has received the narrow finding and regression request. No reset/revert,
+new architecture gate, runtime activation or all-lane pause is implied by this hold.
+
+Reviewed Scan `49c18845` is independently integrated at `c359c1ce`: bounded
+contained inventory, explicit dispositions/gaps, independent stage reporting and
+the internal guarded CL publication phase. It requires settled file attempts,
+closed terminal inventory, mandatory freeze authority and the original remaining
+run lifetime. It does not implement public Generate Main, dynamic tool ledgers or
+the held atomic admission's host binding. Combined affected verification passed
+**1,404/1,404 SelfContained** cases, zero failures/skips, 389 classified files:
+`TestResults/isolation-5ac8bb38664a4d58949a4033f39e1aca/results.trx`.
+
+Scan is released to consume this exact source for supporting-input provenance,
+the now-implemented owner canonical Generate digest helper and controlled
+orchestration checks. No helper fork is needed. Actual admission-store activation
+remains on HOLD until Business's same-gate classification correction is accepted.
+The reported race is source-derived; no deterministic runtime reproduction of
+that precise instruction window has been claimed. Do not add a test-only hook or
+fabricate RED evidence; verify the corrected arbitration and all precommit exits
+with proportionate tests plus independent source review.
+
+The coordinator's sanitized-terminal edge was verified against the actual owner
+store: a denied Running-to-Saving transition need not prevent a fenced, settled,
+empty Interrupted/Failed authorization-failure closure from a nonterminal state.
+Root must register that exact no-content exception, not demand full-lineage content
+permission for cleanup. It still requires original ownership/fence and real task
+settlement; a previously submitted payload cannot be rewritten. A cleanup receipt
+does not authorize disclosure of transcript content or metadata.
+
+## Admission correction accepted — previous hold lifted
+
+Business correction `7958a5e37ca1bcc94c400fbd350ae051e12e318f` is integrated at
+`7efdf67d`. An inner finally closes submission and captures submitted/settlement
+state under the callback's own gate before any normal or exceptional outcome is
+classified. Submitted-dependent exception filters are removed. Synchronous guard
+throws, non-submission returns, late callbacks and deferred cleanup use the same
+arbitration. The original independent reviewer audited those exits and closed the
+specific finding. The exact instruction-window race remains static evidence, not
+a fabricated runtime RED reproduction.
+
+The corrected source passed **1,404/1,404 affected SelfContained** cases, zero
+failures/skips, 390 classified files:
+`TestResults/isolation-48aa754086244d3f93b1a6d84fa10c7f/results.trx`.
+The six new PostgreSQL admission cases compile but remain NOT RUN. This supersedes
+the admission HOLD sections above for development/consumer composition only.
+
+Scan may now consume the actual admission store and canonical helper with the
+dedicated current held-operator authority, exact Kind5/BatchId key/RunId/digest F1
+registration and one dispatch for the original live run. Call it before any native
+preparation or source work. No receipt, replay or missing lookup grants another
+dispatch. Public Generate Main, complete trusted tool ledger/aggregate accounting
+and shared real qualification remain unfinished; resource approval is unchanged.
+
+Chat's lost-transition acknowledgement recovery is bounded to the same original
+intent: preserve uncertain phase, positive exact owner/request/fence matching and
+actual task settlement. Lookup never restores generation permission. A verified
+NotStarted failure or retained actual generation may reach its first never-attempted
+terminal save; once any save is attempted, preserve its exact payload and reconcile
+only. A matching row alone is not proof of physical write/task settlement.
