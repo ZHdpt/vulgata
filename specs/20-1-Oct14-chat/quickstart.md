@@ -249,3 +249,47 @@ Runner commit `6de2d394606d534e02a15afd747e3f7a72303469` was preserved while imp
 Three new qualification cases use Business's existing `DisclosureFixture`: real reader, protected capsules, dependency union and consumed proofs over controlled published source/policy. They prove complete near-limit Chat wrapper bytes and genuine continuation, eager proof/report agreement, replay deduplication despite changed protected cursor bytes while charging both outputs, and uncited-search contributor denial without a guessed citation reread. Root independently checked the assertions and resource boundary. No alternate crypto, contributor reconstruction or production persistence was introduced; these tests qualify existing implementation rather than manufacture a RED phase.
 
 The affected Chat/Knowledge/legacy/October.Integration selection passed **630/630, zero failed/skipped**, including these three cases, `TestResults/isolation-b38301cc82204b5c95dfe9e8e6bc4d33/results.trx`; discovery 4,181/inventory 377, build zero errors and 11,274 warnings. This is actual owner implementation under controlled data/authority, not live Identity, PostgreSQL dialogue, real provider/browser or complete W1 qualification. It does not authorize T023 or a separate real dataset.
+## Canonical coordinator — controlled, 2026-10-07
+
+Approved Business dialogue implementation `1b599c` was imported at `7804c520`,
+then Integration client-readiness/durable-timer correction `e1f7ed0b` at
+`f42f10169bfd7f517138e4abe4780052116a935e`. The original Chat contribution and
+planning baseline remain ancestors. The new coordinator consumes these owner ports
+and actual client session; it supplies no competing schema, codec or execution authority.
+
+Initial fail-closed coordinator RED was **0/16 passed**,
+`TestResults/isolation-0f6a2bf2e09844a997e038c1972a3fd0/results.trx`.
+The first implementation passed **16/16** at
+`TestResults/isolation-d39651a0646448698b1b9ce1ed53d40c/results.trx`.
+Two post-drain authorization-loss cases then reproduced the retained-Running gap
+(**0/2 passed**, `TestResults/isolation-70368382108041cdbc89e129514b3396/results.trx`).
+Two lost-transition acknowledgement cases reproduced stale phase projection
+(**0/2 passed**, `TestResults/isolation-1c5d9eb8626a46689c942f2ed7386693/results.trx`).
+Corrections preserve explicit uncertainty and exact first-save recovery without
+redispatch, and perform fresh complete-lineage authorization after actual drain.
+Only the owner's sanctioned no-content authorization-failure closure can bypass
+a denied Saving transition; missing context, unknown lineage and unsettled work cannot.
+
+Two additional safeguard cases cover an ignored-cancellation phase operation and
+a synchronously throwing save. These are post-implementation coverage, not claimed RED.
+The frozen coordinator selection passed **22/22, zero failed/skipped**,
+`TestResults/isolation-da1a5951642445a4b52fa39f7ebfffe8/results.trx`.
+Tests use Business's actual SQLite store/codec and Integration's real client session
+with controlled HTTP, clock and authority/commit doubles. They do not qualify the
+root execution registry, PostgreSQL, real Identity/provider, host routes or browser.
+
+Independent reviewer `wave_reviewer` accepted the corrections conditional on affected
+GREEN. The host must still register original intent, actual execution/store tasks,
+exact expected operations and settlement. Canonical missing-row lookup returns
+Indeterminate, not proof of absence; attempted saves are never resubmitted.
+Browser disconnect must detach presentation without cancelling the owned lifecycle.
+T020/T021 remain partial, including current authorization at actual UI handoff and
+clearing provisional content after a confirmed sanitized closure. T022 remains
+separate from T023; no runtime or resource approval is inferred from controlled GREEN.
+
+Final affected Chat/Knowledge/legacy-page/October.Integration verification passed
+**720/720, zero failed/skipped**,
+`TestResults/isolation-046b9ed63bdc469fb115b927c0f5c83f/results.trx`;
+discovery 4,309/inventory 386, build zero errors and 19 warnings. This satisfies the
+independent review condition. It is an affected SelfContained selection, not a full
+suite or PostgreSQL/native/provider/browser qualification.
