@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Vulgata.Core.DomainServices.OctoberChat;
@@ -9,6 +10,7 @@ namespace Vulgata.Agents.ChatExecution.October;
 /// <summary>Controlled typed-SDK seam; raw HTTP/SSE framing and W1 admission remain separate prerequisites.</summary>
 internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
 {
+    private static readonly UTF8Encoding _strictUtf8 = new(false, true);
     internal static readonly ImmutableArray<string> ToolNames =
         ["SearchWiki", "BrowseWiki", "ReadWiki", "GetRelatedDocuments", "ReportAnswerDocuments"];
     private readonly OctoberWikiTools _tools;
@@ -38,6 +40,8 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         IEnumerable<ChatMessage> messages, ChatOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (_tools.DisclosureSession is { } disclosure) await disclosure.ReauthorizeAsync(cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         if (!_budget.TryStartProviderRound(out _)) throw Fail(OctoberChatProviderStatus.BudgetExceeded);
         if (HasPendingCalls) throw Fail(OctoberChatProviderStatus.Failed);
@@ -148,9 +152,15 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         Guid operationId = Guid.NewGuid();
         _onToolProgress?.Invoke(new(operationId, OctoberChatToolProgressKind.Started));
         OctoberChatToolResult result;
+        OctoberChatToolInvocation? invocation = null;
         try
         {
-            result = await _tools.InvokeAsync(call.Name, admitted.ArgumentsJson, cancellationToken);
+            if (_tools.DisclosureSession is not null)
+            {
+                invocation = await _tools.InvokeForModelAsync(call.Name, admitted.ArgumentsJson, cancellationToken);
+                result = invocation.Result;
+            }
+            else result = await _tools.InvokeAsync(call.Name, admitted.ArgumentsJson, cancellationToken);
         }
         catch (Exception)
         {
@@ -173,8 +183,17 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
             });
         }
 
-        // The JsonElement has the same unquoted representation that the facade
-        // accounted. No second JSON-string quoting layer or DTO schema export occurs.
+        if (invocation is not null)
+        {
+            if (invocation.OutputUtf8.IsDefaultOrEmpty) throw Fail(OctoberChatProviderStatus.Failed);
+            // The installed OpenAI adapter formats object/JsonElement results. Its
+            // text-result path carries the already-encoded JSON as tool-message text.
+            // Actual SDK request conformance must preserve these exact bytes and an
+            // object JSON payload, with no second quoted-JSON representation.
+            return _strictUtf8.GetString(invocation.OutputUtf8.AsSpan());
+        }
+        // Historical controlled typed-client mechanics retain their representation;
+        // this path is never a canonical disclosed-reader fallback.
         return OctoberWikiTools.SerializeResult(result);
     }
 
