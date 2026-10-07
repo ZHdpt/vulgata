@@ -1081,3 +1081,29 @@ the imported declaration and Chat history source:
 `TestResults/isolation-f8faa36c11d2463aaa6472b5503e1ab9/results.trx`.
 The earlier 1/1,712 failure is not erased or attributed to the new history code.
 This remains controlled verification, not full-suite or external qualification.
+
+Main fallback correction `0b16dc1b` closes the accounting hold: report loss preserves
+unknown request/token usage instead of fabricating zero. Its exception/cancellation/
+missing-report regressions passed owner review. The Main/report checkpoint is merged
+at `a3763827`; combined affected verification passes **1,733/1,733**, zero failures/
+skips, 412 classified sources:
+`TestResults/isolation-35587a20a993465e8fb4e0d8a9d39f6e/results.trx`.
+Actual production entry wiring and safe report emission are now implemented under
+controlled verification, not a real Generate/provider/PG/native/reader success.
+Business lifetime implementation and held synthesis/Resolution remain outstanding.
+
+The combined real scenario is still not implemented. Its planned root-owned file is
+`tests/Vulgata.Tests/October/Integration/OctoberGeneratedClReaderE2ETests.cs`, case
+`GenerateOnce_OrdinaryItReaderOpensExactCl_BusinessDenied_RevocationClosesAccessAsync`.
+Use one owning fixture and Scan adapter/Generate report; no seeded accepted Knowledge
+or separate paid dataset. Root supplies strict report binding, ordinary Identity user,
+frozen Wiki Web configuration and exact reader assertions. HTTP/Identity/server-rendered
+first-chunk evidence is not browser interaction, continuation or streaming evidence.
+
+Scan identified the existing three-minute fixture wait as inappropriate for longer
+Generate policies. Root will author a separate `WaitForGenerateAsync(Process, int
+runDeadlineSeconds)` hook, bounded to a valid 1..1800-second configured run plus
+120 seconds of cleanup margin. This hook is not implemented at this checkpoint.
+Prepare/Select defaults remain unchanged; the eventual explicit E2E test/command
+timeouts must cover the complete setup/Generate/Web/cleanup envelope. Extra cleanup
+time grants no renewed run/provider allowance, and timeout remains failure.

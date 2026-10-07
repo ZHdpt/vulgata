@@ -30,13 +30,14 @@ verification before reuse.
 
 ## Current authority and delivery
 
-Latest October integration checkpoint (October 7): `bed683d9` includes the reviewed
-Business trusted flow-input loader, corrected controlled CL-only Generate runner
-and authorized saved Chat reference footer. Shared explicit Generate fixture inputs
-are at `417c888f`. Combined affected SelfContained verification passes 1,695/1,695,
-zero failures/skips; this is not a full
-suite or real runtime qualification. Generate Main/report wiring, shared ordinary-user
-reader qualification, BL synthesis/publication and final Web Chat composition remain
+Latest October integration checkpoint (October 7): `a3763827` includes the reviewed
+Business trusted flow-input loader, controlled CL-only Generate runner and actual
+Main/safe-report wiring, saved Chat reference footer and canonical history/display
+consumer. Shared explicit Generate fixture inputs are at `417c888f`; the behavior-free
+Business handoff lifetime declaration is selectively imported at `6578a2d5`.
+Combined affected SelfContained verification passes 1,733/1,733, zero failures/skips;
+this is not a full suite or real runtime qualification. Shared ordinary-user
+reader qualification, corrected BL synthesis/publication and final Web Chat composition remain
 open. Source/provider/database/host permission for the shared real run is still
 outstanding. See the current delivery-wave handoff below for exact ownership and evidence.
 
