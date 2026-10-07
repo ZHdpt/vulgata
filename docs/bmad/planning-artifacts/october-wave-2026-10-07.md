@@ -1107,3 +1107,22 @@ runDeadlineSeconds)` hook, bounded to a valid 1..1800-second configured run plus
 Prepare/Select defaults remain unchanged; the eventual explicit E2E test/command
 timeouts must cover the complete setup/Generate/Web/cleanup envelope. Extra cleanup
 time grants no renewed run/provider allowance, and timeout remains failure.
+
+The wait hook is now implemented at isolated checkpoint `4c36c5b2`, exactly the
+fixture, pure-input helper and helper tests. Focused verification passes **32/32**,
+zero failures/skips, including eight new boundary cases:
+`TestResults/isolation-5a7716b4cfee4e0c9b43ec5800a16e30/results.trx`.
+An earlier restricted launcher attempt failed before compilation/test evidence
+(`isolation-094741a3822b4f02942decd0c841ae25`); it was not behavioral RED. The
+successful retry used the same controlled launcher outside that sandbox. No live
+process, native tool, provider or database qualification follows from these tests.
+Scan must bind its owned adapter to the new wait before the shared real run.
+
+Shared reader authoring can reuse the real cookie-login helper and server-rendered
+first chunk of DocumentReaderPage; it still needs an ordinary User and frozen exact
+Wiki configuration in the fixture. Security-stamp rotation is a direct revocation
+check. Clearing Repository.Context is a contributor-revocation check ONLY when the
+actual generated Document includes that exact RepositoryAdvisory contributor:
+OctoberKnowledgeIdentityAdapter rejects a missing/blank current advisory context.
+A nonempty context edit does not revoke its historical snapshot, and clearing an
+unreferenced context or source-only contributor is not equivalent evidence.
