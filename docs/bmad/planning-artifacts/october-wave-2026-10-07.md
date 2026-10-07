@@ -1316,3 +1316,42 @@ Import intact accepted files at a clean point, compile the actual consumer check
 and commit this prerequisite separately. No competing type/canonicalizer, Agents or
 Infrastructure import, schema/stub ancestry, or full-main merge is required. Slot
 implementation remains within the existing controlled dispatch; no runtime grant.
+
+### Controlled original-run slot checkpoint
+
+Scan checkpoint `ba43236bed012d806986ee6d81c3227513916567` passed independent
+source review and imports exactly six files. Its private slot binds the original
+Begin submission, confirmed corpus, canonical request and same live execution
+scope; it retains one callback task permanently, distinguishes waiter cancellation
+from host cancellation, and waits for actual callback settlement before cleanup.
+Positive tests construct explicitly synthetic future host state. Actual CL-only
+and fresh-host paths cannot issue it; this is not S3 activation or live BL proof.
+Business must still perform fresh disclosure checks before exposing cached results.
+
+Scan's 34 slot cases and 37-case scoped replay passed. Its earlier full selection
+remains 3,649/3,652: two admission-test database cleanup failures and one log-file
+cleanup failure. Importing the already accepted admission-observation correction
+subsequently passed both admission cases (`3f0bc7acaa994732b320b96782230fbf`);
+neither isolated replay establishes the cause of the prior cleanup failures.
+
+Root's first combined verification attempt
+`494bdbda019b43dd989d1bf3707dc7c1` stopped during compilation: CS0009 reported invalid
+managed metadata in the generated Core reference assembly, followed by dependent
+missing-type errors. Rebuilding that project's outputs passed (zero errors, 721
+warnings), without source changes; this failed attempt remains recorded separately
+from the subsequent verification result.
+
+Combined main verification `e35d387415e34dc699e485edfb542b49` then passed
+1,868/1,868 selected SelfContained cases, zero failures/skips (October, Explore and
+PreparedSource filter; 418 classified files). Compilation had zero errors and
+12,896 warnings. This is the integrated slot checkpoint's controlled verification,
+not a repeat of the full suite or external qualification. The earlier full-main
+3,727/3,727 result remains bound to source `d92833c1`.
+
+The shared real milestone still uses one Generate result for all three lanes.
+Remaining root test glue is strict safe-report hydration against the owned fixture,
+frozen Wiki host selection, ordinary User creation, exact IT read, Business CL
+denial and security-stamp revocation. This is initial HTTP/SSR qualification, not
+interactive browser proof. No duplicate generated dataset or fixture publication
+substitution is permitted. The consolidated source/provider/database/host authority
+request remains outstanding; no live run is authorized by this checkpoint.

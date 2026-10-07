@@ -221,6 +221,9 @@
   "OctoberScan/OctoberScanClPublicationTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanOriginalBusinessSlotTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanGenerateQualificationFixtureAdapter.cs": {
     "suite": "E2E"
   },

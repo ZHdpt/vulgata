@@ -181,3 +181,31 @@ run deadline plus 120 seconds for observation/cleanup, at most 32 minutes; this
 adds no Scan/provider allowance. The combined scenario, credentials, resource
 approval, strict report hydration and ordinary-reader Web composition remain
 integration-owned.
+
+### Original-run finalization slot preparation (not an active S3 route)
+
+`OctoberGenerateRunner.OriginalBusiness.cs` contains the private no-argument
+issuer and the actual one-shot implementation of the Business-owned slot port.
+It requires the host's tracked original Begin submission and known settlement,
+including exact reconciliation of that same original submission, a live owning
+run/session/scope, closed settled admissions, confirmed corpus, and exact canonical
+request/configuration. Request equality uses owner helpers and the same scope
+reference. Receipt-only restart, expired session, incomplete Begin, foreign scope,
+missing corpus and cleanup/completed host state cannot authorize first work.
+
+Before invoking the sole callback outside the lock, the slot permanently retains
+its task under the runner lock. Duplicate callbacks are ignored; wrong bindings
+cannot invoke or stop it. Invocation cancellation affects only that caller's wait;
+the callback receives the original host token. Fault, cancellation and indeterminate
+results cannot reopen the slot. Cleanup atomically bars first dispatch and awaits
+the actual retained callback before releasing resources. Cached results remain
+private producer data; Business must freshly authorize every external return.
+
+The CL-only route neither populates these private host fields nor calls the issuer.
+Its existing scope disposal and stage rejection remain unchanged. Positive tests
+use explicitly labelled controlled future-run state through the same private code;
+they do not demonstrate live CL-and-BL issuance. Future composition must be dispatched
+separately: keep the original scope alive through actual owner-confirmed freeze and
+finalization, populate the canonical request/provider binding from trusted host
+outcomes, and bind Business's producer-only exact-read and fresh-disclosure wrapper.
+No missing or unavailable public lookup result creates dispatch authority.

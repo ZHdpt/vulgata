@@ -43,6 +43,13 @@ reader qualification, BL persistence/first-dispatch composition and final Web Ch
 open. Source/provider/database/host permission for the shared real run is still
 outstanding. See the current delivery-wave handoff below for exact ownership and evidence.
 
+Subsequent controlled slot integration imports Scan `ba43236b`: private original-run
+one-shot finalization mechanics and cleanup lifetime, not live S3 activation.
+The combined October/Explore/PreparedSource selection passes 1,868/1,868, zero
+failures/skips (`e35d387415e34dc699e485edfb542b49`). Actual CL-only/fresh-host paths
+cannot issue the slot. Business's persistence checkpoint, actual BL host composition
+and the one-dataset ordinary-user qualification remain open; see the wave handoff.
+
 - [PRD](../bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md): product scope
   and explicit Current/Deferred/History/Original unmet backlog dispositions.
 - [Glossary](../UBIQUITOUS_LANGUAGE.md): canonical domain terms.
