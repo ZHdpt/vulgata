@@ -65,13 +65,15 @@ public enum OctoberGeneratorExecutionStatus
     Denied,
     AuthorityUnavailable,
     TargetUnavailable,
-    Cancelled
+    Cancelled,
+    GenerateFinished
 }
 
 public sealed record OctoberGeneratorExecutionResult(
     OctoberGeneratorExecutionStatus Status,
     OctoberCommittedBatch? CommittedBatch = null,
-    IOctoberBoundSetupData? BoundSetupData = null);
+    IOctoberBoundSetupData? BoundSetupData = null,
+    OctoberScanReport? Report = null);
 
 public interface IOctoberGeneratorModule
 {
@@ -209,7 +211,8 @@ public sealed class OctoberGeneratorModule : IOctoberGeneratorModule
                 // its tools and writes before this owning scope disposes the session.
                 result = await _generate!.ExecuteAsync(new OctoberGenerateExecution(
                     session, setup, authority, command.ScanPolicy, _provider!), cancellationToken);
-                cancellationToken.ThrowIfCancellationRequested();
+                // Generate's terminal report owns cancellation and submitted-write
+                // settlement; a late caller cancellation must not erase that result.
             }
             return result;
         }

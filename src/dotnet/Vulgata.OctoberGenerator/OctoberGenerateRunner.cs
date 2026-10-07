@@ -1,519 +1,665 @@
 using System.Collections.Immutable;
+using System.Text.Json;
+using Microsoft.Extensions.AI;
+using Vulgata.Agents.WorkerExecution;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberScan;
+using Vulgata.Infrastructure.Data.October.Knowledge;
 
 namespace Vulgata.OctoberGenerator;
 
-/// <summary>Trusted closed inventory input, not authority to begin or resume Generate.</summary>
-internal sealed record OctoberClPublicationRequest(
-    KnowledgeBinding Binding,
-    OperationKey FreezeOperation,
-    OperationKey PublicationOperation,
-    ImmutableArray<AcceptedFile> AcceptedFiles,
-    ImmutableArray<FileCoverage> TerminalCoverage,
-    ImmutableArray<Uncertainty> Uncertainties,
-    bool SelectedScopeComplete,
-    string RequestedStage);
-
-/// <summary>The B0-only publication component used after file attempts have settled.</summary>
-internal sealed class OctoberClPublicationPhase : IOctoberCommitSubmissionGuard, IAsyncDisposable
+/// <summary>Host-owned contained access, opened only after the original run's Begin receipt.</summary>
+internal interface IOctoberScanRunSource : IAsyncDisposable
 {
-    private readonly OctoberClPublicationRequest _request;
-    private readonly Func<IOctoberCommitSubmissionGuard, IOctoberCorpusFreezeAuthority, IOctoberKnowledgeWriter> _createWriter;
-    private readonly IOctoberCorpusFreezeAuthority _freezeAuthority;
-    private readonly Func<CancellationToken, Task<DisclosureStatus>> _checkAuthority;
+    Task<PreparedSourceResult> ListSourceAsync(Guid repositoryId, PreparedSourceListRequest request,
+        CancellationToken cancellationToken = default);
+    Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repositoryId, string relativePath,
+        CancellationToken cancellationToken = default);
+    OctoberToolRuntime GetRuntime(Guid repositoryId);
+}
+
+internal sealed record OctoberKnowledgeHostPorts(
+    IOctoberFileAcceptanceAuthority CompletionAuthority,
+    IOctoberCommitSubmissionGuard CommitGuard,
+    IOctoberCorpusFreezeAuthority FreezeAuthority,
+    IOctoberKnowledgeSourceVerifier SourceVerifier,
+    IOctoberKnowledgeProducerAuthorization ProducerAuthorization);
+
+internal sealed record OctoberGenerateRunnerDependencies(
+    IOctoberLocalAuthority Authority,
+    Func<OctoberGenerateExecution, bool> ValidateSourceConfiguration,
+    Func<IOctoberGenerateAdmissionAuthority, IOctoberCommitSubmissionGuard, IOctoberGenerateAdmissionStore> CreateAdmissionStore,
+    Func<OctoberGenerateExecution, TimeSpan, CancellationToken, Task<IOctoberScanRunSource>> OpenSource,
+    Func<OctoberSelectedWorkerProvider, CancellationToken, Task<IChatClient>> CreateWorkerClient,
+    Func<OctoberKnowledgeHostPorts, IOctoberKnowledgeWriter> CreateKnowledgeWriter,
+    IOctoberKnowledgeOperationLog OperationLog);
+
+/// <summary>Owns the original single-file Generate run; a stored receipt is never a restart grant.</summary>
+internal sealed class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncDisposable,
+    IOctoberGenerateAdmissionAuthority, IOctoberCommitSubmissionGuard, IOctoberCorpusFreezeAuthority,
+    IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority
+{
+    private readonly OctoberGenerateRunnerDependencies _dependencies;
     private readonly TimeProvider _time;
-    private readonly long _started;
-    private readonly TimeSpan _lifetime;
-    private readonly CancellationToken _hardStop;
-    private readonly CancellationTokenSource _deadline;
-    private readonly CancellationTokenSource _beforeStop = new();
-    private readonly SemaphoreSlim _runGate = new(1, 1);
-    private readonly SemaphoreSlim _submissionGate = new(1, 1);
     private readonly Lock _sync = new();
+    private readonly SemaphoreSlim _beginGate = new(1, 1);
+    private readonly CancellationTokenSource _stop = new();
     private readonly HashSet<Task> _outstanding = [];
-    private readonly CorpusFreezeRequest _freezeRequest;
-    private readonly PhaseWrite _freeze;
-    private PhaseWrite? _publication;
-    private PublicationRequest? _publicationRequest;
-    private IOctoberKnowledgeWriter? _writer;
-    private TimeSpan _storeWait;
-    private bool _executionStarted;
+    private readonly List<OctoberAttemptState> _attempts = [];
+    private readonly List<IChatClient> _clients = [];
+    private Task<OctoberGeneratorExecutionResult>? _executionTask;
+    private OctoberGenerateExecution? _execution;
+    private KnowledgeBinding? _binding;
+    private GenerateAdmissionRequest? _beginRequest;
+    private Task<CommitSettlement>? _beginCommit;
+    private CommitSettlement? _beginSettlement;
+    private bool _beginUncertain;
+    private bool _beginClosed;
+    private bool _beginSubmitted;
     private bool _fenced;
     private bool _disposed;
-    private int _activeCalls;
+    private bool _admissionClosed;
+    private bool _resourcesSettled;
+    private Exception? _cleanupFailure;
+    private Task? _analysisCleanup;
+    private long _started;
+    private long? _fileStarted;
+    private CancellationToken _caller;
+    private CancellationTokenSource? _deadline;
+    private CancellationTokenSource? _runToken;
+    private OctoberExecutionScope? _scope;
+    private IOctoberScanRunSource? _source;
+    private OctoberWorkerInputLedger? _activeLedger;
+    private OctoberClPublicationPhase? _publication;
+    private ImmutableArray<Contributor> _observedContributors = [];
+    private ImmutableArray<AcceptedFile> _accepted = [];
+    private ImmutableArray<FileCoverage> _coverage = [];
+    private ImmutableArray<Uncertainty> _uncertainties = [];
+    private ImmutableArray<OctoberScanInventoryEntry> _inventory = [];
+    private ImmutableArray<OctoberScanGap> _gaps = [];
+    private CorpusFreezeRequest? _expectedFreeze;
+    private TimeSpan _toolWait;
+    private TimeSpan _storeWait;
 
-    internal OctoberClPublicationPhase(OctoberClPublicationRequest request,
-        Func<IOctoberCommitSubmissionGuard, IOctoberCorpusFreezeAuthority, IOctoberKnowledgeWriter> createWriter,
-        IOctoberCorpusFreezeAuthority freezeAuthority,
-        Func<CancellationToken, Task<DisclosureStatus>> checkAuthority,
-        TimeSpan remainingLifetime,
-        TimeProvider? timeProvider = null,
-        CancellationToken hardStop = default)
+    internal OctoberGenerateRunner(OctoberGenerateRunnerDependencies dependencies,
+        TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(createWriter);
-        ArgumentNullException.ThrowIfNull(freezeAuthority);
-        ArgumentNullException.ThrowIfNull(checkAuthority);
-        if (request.Binding is null || request.FreezeOperation is null || request.PublicationOperation is null ||
-            request.FreezeOperation.BatchId != request.Binding.BatchId ||
-            request.PublicationOperation.BatchId != request.Binding.BatchId ||
-            request.FreezeOperation.Kind != OperationKind.FreezeCorpus ||
-            request.PublicationOperation.Kind != OperationKind.PublishSelection ||
-            request.FreezeOperation.OperationId == Guid.Empty || request.PublicationOperation.OperationId == Guid.Empty ||
-            request.AcceptedFiles.IsDefault || request.TerminalCoverage.IsDefault || request.Uncertainties.IsDefault ||
-            remainingLifetime <= TimeSpan.Zero || remainingLifetime > TimeSpan.FromMinutes(30))
-            throw new ArgumentException("An exact closed publication request and original remaining lifetime are required.");
-        _request = request;
-        _createWriter = createWriter;
-        _freezeAuthority = freezeAuthority;
-        _checkAuthority = checkAuthority;
+        _dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
+        ArgumentNullException.ThrowIfNull(dependencies.Authority);
+        ArgumentNullException.ThrowIfNull(dependencies.ValidateSourceConfiguration);
+        ArgumentNullException.ThrowIfNull(dependencies.CreateAdmissionStore);
+        ArgumentNullException.ThrowIfNull(dependencies.OpenSource);
+        ArgumentNullException.ThrowIfNull(dependencies.CreateWorkerClient);
+        ArgumentNullException.ThrowIfNull(dependencies.CreateKnowledgeWriter);
+        ArgumentNullException.ThrowIfNull(dependencies.OperationLog);
         _time = timeProvider ?? TimeProvider.System;
-        _started = _time.GetTimestamp();
-        _lifetime = remainingLifetime;
-        _hardStop = hardStop;
-        _deadline = new(remainingLifetime, _time);
-        var freeze = new CorpusFreezeRequest(request.FreezeOperation, request.Binding, "",
-            request.AcceptedFiles, request.TerminalCoverage);
-        _freezeRequest = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
-        _freeze = new(_freezeRequest.Operation, _freezeRequest.CanonicalPayloadDigest);
     }
 
-    internal Task<OctoberScanReport> ExecuteAsync(CancellationToken cancellationToken = default) =>
-        RunAsync(reconcile: false, cancellationToken);
-
-    internal Task<OctoberScanReport> ReconcileAsync(CancellationToken cancellationToken = default) =>
-        RunAsync(reconcile: true, cancellationToken);
-
-    internal async Task FenceAsync(CancellationToken cancellationToken = default)
-    {
-        lock (_sync) if (_disposed) return;
-        _beforeStop.Cancel();
-        await _submissionGate.WaitAsync(cancellationToken);
-        try { lock (_sync) _fenced = true; }
-        finally { _submissionGate.Release(); }
-    }
-
-    public async Task<CommitEligibilityStatus> CheckBeforeTransactionAsync(CommitAttempt attempt,
+    public async Task<OctoberGeneratorExecutionResult> ExecuteAsync(OctoberGenerateExecution execution,
         CancellationToken cancellationToken = default)
     {
-        if (!Enter()) return CommitEligibilityStatus.StaleOrFenced;
+        ArgumentNullException.ThrowIfNull(execution);
+        TaskCompletionSource<OctoberGeneratorExecutionResult>? completion = null;
+        Task<OctoberGeneratorExecutionResult> task;
+        lock (_sync)
+        {
+            if (_disposed || (_execution is not null && !ReferenceEquals(execution, _execution)))
+                return Finished(Failure("run_binding_unavailable", disclose: false, stage: execution.Policy.OutputStage));
+            if (_executionTask is null)
+            {
+                _execution = execution;
+                _started = _time.GetTimestamp();
+                _caller = cancellationToken;
+                completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                _executionTask = completion.Task;
+            }
+            task = _executionTask;
+        }
+        if (completion is not null) _ = CompleteAsync(completion);
+        // The original caller token already fences execution. Keep this owning
+        // task alive until cleanup settles so the module retains its session.
+        OctoberGeneratorExecutionResult result = await task;
+        // Returning a cached run never repeats dispatch, but remains a new disclosure.
+        if (result.Report is { } report && HasMetadata(report) &&
+            await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
+            return Finished(Hide(report, "authority_unavailable"));
+        return result;
+    }
+
+    private async Task CompleteAsync(TaskCompletionSource<OctoberGeneratorExecutionResult> completion)
+    {
+        OctoberScanReport report;
+        try { report = await RunAsync(); }
+        catch (OperationCanceledException)
+        { report = Failure("run_interrupted", interrupted: !Unresolved(), indeterminate: Unresolved(), disclose: false); }
+        catch (Exception)
+        { report = Failure("run_unavailable", indeterminate: Unresolved(), disclose: false); }
+        try { await SettleResourcesAsync(); }
+        catch (Exception error)
+        {
+            _cleanupFailure = error;
+            report = report with { Execution = OctoberExecutionStatus.Indeterminate,
+                Gaps = report.Gaps.Add(new("owned_cleanup_unconfirmed")) };
+        }
+        if (HasMetadata(report) && await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
+            report = Hide(report, "authority_unavailable");
+        report = MergeMetrics(report);
+        completion.TrySetResult(Finished(report));
+    }
+
+    private async Task<OctoberScanReport> RunAsync()
+    {
+        OctoberGenerateExecution execution = _execution!;
+        if (!new OctoberScanPolicyValidator().Validate(execution.Policy).IsValid ||
+            execution.Policy.OutputStage != "cl-only" || execution.Policy.WorkerCap != 1 ||
+            !_dependencies.ValidateSourceConfiguration(execution) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
+            return Failure("invalid_run_configuration", disclose: false);
+        _binding = new(execution.Authority.CanonicalDatabaseIdentity, execution.Authority.TargetId,
+            execution.Authority.BatchId, execution.Authority.SelectionDigest);
+        _deadline = new(TimeSpan.FromSeconds(execution.Policy.RunDeadlineSeconds), _time);
+        _runToken = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, _stop.Token, _caller);
+        CancellationToken token = _runToken.Token;
+        Guid runId = Guid.NewGuid();
+        // Construction precedes Begin and all preparation, so no later phase receives
+        // a fresh run allowance. The callback also checks the original host stopwatch.
+        _scope = new(runId, execution.Provider.Profile.Name, execution.Policy,
+            CheckProviderEligibilityAsync, timeProvider: _time, hardStop: token);
+        if (await CheckPermissionsAsync([], token) != DisclosureStatus.Allowed)
+            return Failure("authority_unavailable", disclose: false);
+        var begin = new GenerateAdmissionRequest(_binding, execution.Session.SubjectId, runId, Guid.NewGuid(), "");
+        _beginRequest = begin with { CanonicalPayloadDigest = OctoberGenerateAdmissionPolicy.ComputePayloadDigest(begin) };
+        IOctoberGenerateAdmissionStore admission = _dependencies.CreateAdmissionStore(this, this);
+        KnowledgeWriteResult receipt;
         try
         {
-            var current = Eligibility(attempt, cancellationToken);
-            if (current != CommitEligibilityStatus.Eligible) return current;
-            using var before = BeforeToken(cancellationToken);
-            var live = await LiveAsync(before.Token);
-            current = Eligibility(attempt, cancellationToken);
-            return current == CommitEligibilityStatus.Eligible ? live : current;
+            receipt = await StoreAsync(() => admission.StartFreshExecutionAsync(_beginRequest, token), token);
         }
-        catch (OperationCanceledException) { return CancelStatus(attempt, cancellationToken); }
-        catch (Exception) { LoseAuthority(); return CommitEligibilityStatus.AuthorityUnavailable; }
-        finally { Exit(); }
+        catch (Exception)
+        {
+            receipt = new(KnowledgeWriteStatus.CommitIndeterminate, OctoberGenerateAdmissionPolicy.OperationFor(_binding));
+        }
+        finally { lock (_sync) _beginClosed = true; }
+        bool originalUnknown = receipt.Status == KnowledgeWriteStatus.CommitIndeterminate;
+        if (originalUnknown && RunAvailable)
+            receipt = await StoreAsync(() => admission.LookupAsync(_beginRequest, token), token);
+        if (receipt.Operation != OctoberGenerateAdmissionPolicy.OperationFor(_binding) ||
+            (receipt.Status != KnowledgeWriteStatus.Committed &&
+             !(receipt.Status == KnowledgeWriteStatus.AlreadyCommitted && (originalUnknown || _beginSubmitted))))
+            return Failure(receipt.Status == KnowledgeWriteStatus.CommitIndeterminate ? "begin_indeterminate" : "fresh_run_required",
+                indeterminate: receipt.Status == KnowledgeWriteStatus.CommitIndeterminate, disclose: false);
+        lock (_sync) { _beginSettlement = CommitSettlement.Committed; _beginUncertain = false; }
+        if (!RunAvailable || await CheckPermissionsAsync([], token) != DisclosureStatus.Allowed)
+            return Failure("run_ineligible", interrupted: IsCancelled, disclose: false);
+        await AcquireSourceAsync(execution, token);
+        var inventory = new OctoberScanInventory((repository, request, callToken) =>
+            ToolAsync(() => _source.ListSourceAsync(repository, request, callToken), callToken));
+        bool complete = true;
+        foreach (Guid repository in execution.Policy.SourceRules.Select(rule => rule.RepositoryId).Distinct().Order())
+        {
+            OctoberScanInventoryResult listed = await inventory.BuildAsync(repository, "", execution.Policy.SourceRules, cancellationToken: token);
+            complete &= listed.IsComplete;
+            _inventory = _inventory.AddRange(listed.Entries);
+            _gaps = _gaps.AddRange(listed.Gaps.Select(gap => new OctoberScanGap(gap.Reason, gap.RepositoryId, gap.RelativeDirectory)));
+        }
+        var selected = _inventory.Where(entry => entry.Kind == PreparedSourceEntryKind.RegularFile && entry.Disposition == "selected")
+            .OrderByDescending(entry => entry.Priority).ThenBy(entry => entry.RepositoryId).ThenBy(entry => entry.RelativePath, StringComparer.Ordinal).ToArray();
+        if (selected.Length > 1) return Failure("single_file_checkpoint_limit");
+        if (!RunAvailable) return Failure("run_ineligible", interrupted: IsCancelled);
+        if (selected.Length == 1)
+        {
+            var selectedFile = selected[0];
+            OctoberSourceFrameResult acquired = await ToolAsync(() => _source.AcquireFrameAsync(
+                selectedFile.RepositoryId, selectedFile.RelativePath, token), token);
+            if (acquired.Status != OctoberSourceFrameStatus.Acquired || acquired.Frame is null)
+                return Failure("source_frame_unavailable");
+            IOctoberVerifiedFileFrame frame = acquired.Frame;
+            var repository = execution.Setup.Snapshot.Request.Repositories.Single(item => item.RepositoryId == selectedFile.RepositoryId);
+            if (frame.Origin.RepositoryId != repository.RepositoryId || frame.Origin.RootBindingIdentity != repository.RootBindingIdentity ||
+                frame.Origin.RelativePath != selectedFile.RelativePath || !await BoundedAsync(frame.VerifyCurrentAsync(token), token))
+                return Failure("source_frame_binding_changed", disclose: false);
+            _fileStarted = _time.GetTimestamp();
+            Guid admissionId = Guid.NewGuid();
+            Guid workstreamId = Guid.NewGuid();
+            ImmutableArray<OctoberWorkerAdvisory> advisory = Advisory(repository.RepositoryId);
+            ImmutableArray<Contributor> baseline = [new(ContributorKind.Source, repository.RepositoryId,
+                repository.SystemId, repository.RootBindingIdentity, null, frame.Origin.SourceDigest), .. advisory.Select(item => item.Contributor)];
+            _observedContributors = baseline;
+            for (int retry = 0; ; retry++)
+            {
+                if (!FileAvailable) return Failure("file_deadline_exceeded", interrupted: IsCancelled);
+                var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
+                    execution.Provider.Profile.Name, frame, baseline, advisory,
+                    new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
+                        RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(32768, execution.Policy.MaximumTotalTokens!.Value),
+                        MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows));
+                var ledger = new OctoberWorkerInputLedger(request,
+                    async (path, callToken) =>
+                    {
+                        var support = await ToolAsync(() => _source.AcquireFrameAsync(repository.RepositoryId, path, callToken), callToken);
+                        return support.Status == OctoberSourceFrameStatus.Acquired ? support.Frame : null;
+                    }, async (contributors, callToken) =>
+                    {
+                        DisclosureStatus status = await CheckPermissionsAsync(contributors, callToken);
+                        if (status == DisclosureStatus.Allowed) _observedContributors = contributors;
+                        return status;
+                    });
+                _activeLedger = ledger;
+                request = request with { Source = ledger };
+                IReadOnlyList<AIFunction> tools = await ToolAsync(() => new OctoberWorkerTools(_source.GetRuntime(repository.RepositoryId), ledger).CreateAsync(token), token);
+                tools = tools.Select(tool => (AIFunction)new MeasuredTool(this, tool)).ToArray();
+                IChatClient client = await AcquireClientAsync(execution.Provider, token);
+                var executor = new OctoberFileWorkerExecutor(client, _scope);
+                var attempt = new OctoberAttemptState(new(_binding.BatchId, OperationKind.AcceptFile, Guid.NewGuid()), request,
+                    callToken => executor.ExecuteAsync(request, tools, callToken),
+                    callToken => CheckPermissionsAsync(_observedContributors, callToken),
+                    RemainingFile, ledger, _time, token);
+                _attempts.Add(attempt);
+                CompletedFileSubmission? submission = await attempt.ExecuteAndSealAsync(token);
+                var accounting = _scope.GetSnapshot();
+                if (accounting.HasUnconfirmedSettlement || accounting.OutstandingAttempts != 0)
+                    return Failure("provider_settlement_unconfirmed", indeterminate: true);
+                client.Dispose();
+                _clients.Remove(client);
+                if (submission is null)
+                {
+                    OctoberFileWorkerResult? observed = attempt.WorkerResult;
+                    bool retrySafe = observed is { Status: OctoberFileWorkerStatus.ProviderFailed,
+                        RetryDisposition: OctoberWorkerRetryDisposition.KnownSafeTransient } &&
+                        !accounting.Usage.HasUnknownUsage && attempt.IsSettledForFreeze && !attempt.HasSubmitted &&
+                        retry < execution.Policy.MaximumTransientRetries && FileAvailable;
+                    if (retrySafe)
+                    {
+                        TimeSpan delay = TimeSpan.FromSeconds(retry == 0 ? 1 : 3);
+                        if (observed!.RetryAfter is { } retryAfter && retryAfter > delay) delay = retryAfter;
+                        if (delay < TimeSpan.Zero || delay >= RemainingFile) retrySafe = false;
+                        else
+                        {
+                            await Task.Delay(delay, _time, token);
+                            if (!FileAvailable || await CheckProviderEligibilityAsync(OctoberProviderPhase.Worker, token) != ProviderAdmissionStatus.Granted)
+                                retrySafe = false;
+                        }
+                    }
+                    if (retrySafe) continue;
+                    _coverage = [new(admissionId, frame.Origin, IsCancelled ? CoverageDisposition.Cancelled : CoverageDisposition.Failed, "worker_not_completed")];
+                    _admissionClosed = true;
+                    return Failure("worker_not_completed", interrupted: IsCancelled);
+                }
+                IOctoberKnowledgeWriter writer = _dependencies.CreateKnowledgeWriter(new(attempt, attempt, this, ledger, this));
+                KnowledgeWriteResult accepted = await StoreAsync(() => attempt.AcceptAsync(writer, token), token);
+                if (accepted.Status == KnowledgeWriteStatus.CommitIndeterminate)
+                    accepted = await StoreAsync(() => attempt.ReconcileAsync(writer, token), token);
+                if (accepted.Status is not (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted) || accepted.AcceptedFile is null)
+                    return Failure("file_acceptance_unavailable", indeterminate: accepted.Status == KnowledgeWriteStatus.CommitIndeterminate || !attempt.IsSettledForFreeze,
+                        disclose: accepted.Status is not (KnowledgeWriteStatus.Denied or KnowledgeWriteStatus.AuthorityUnavailable));
+                _accepted = [accepted.AcceptedFile];
+                _coverage = [accepted.AcceptedFile.Coverage];
+                _uncertainties = submission.Proposal.Uncertainties;
+                break;
+            }
+        }
+        _admissionClosed = true;
+        // Accepted provenance and fresh permissions suffice from here. Disposable
+        // source grants and native processes must settle before publication starts.
+        await CloseAnalysisResourcesAsync();
+        if (!RunAvailable) return Failure("run_ineligible", interrupted: IsCancelled);
+        var phaseRequest = new OctoberClPublicationRequest(_binding, new(_binding.BatchId, OperationKind.FreezeCorpus, Guid.NewGuid()),
+            new(_binding.BatchId, OperationKind.PublishSelection, Guid.NewGuid()), _accepted, _coverage, _uncertainties, complete, "cl-only");
+        var freeze = new CorpusFreezeRequest(phaseRequest.FreezeOperation, _binding, "", _accepted, _coverage);
+        _expectedFreeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
+        _publication = new(phaseRequest, (guard, freezeAuthority) => _dependencies.CreateKnowledgeWriter(new(this, guard, freezeAuthority, this, this)),
+            this, callToken => CheckPermissionsAsync(_observedContributors, callToken), RemainingRun, _time, token);
+        OctoberScanReport published = await _publication.ExecuteAsync(token);
+        if (published.ExitCode == 4 && RunAvailable) published = await _publication.ReconcileAsync(token);
+        if (await DisclosureAsync(token) != DisclosureStatus.Allowed) return Hide(published, "authority_unavailable");
+        return published with { Inventory = _inventory, Gaps = published.Gaps.AddRange(_gaps) };
     }
 
-    public async Task<CommitGuardResult> SubmitAsync(CommitAttempt attempt,
-        Func<CancellationToken, SubmittedCommit> submitAsync,
+    private ImmutableArray<OctoberWorkerAdvisory> Advisory(Guid repositoryId)
+    {
+        var selected = _execution!.Authority.SelectedContext!;
+        var repository = selected.Repositories.Single(item => item.RepositoryId == repositoryId);
+        return selected.Entries.Where(entry => entry.RepositoryId == repositoryId && entry.Applicability == OctoberContextApplicability.Selected)
+            .Select(entry =>
+            {
+                if (entry.OriginRecordId is null || entry.Value is null) throw new InvalidOperationException("Advisory snapshot unavailable.");
+                var contributor = entry.Scope switch
+                {
+                    OctoberContextScope.Global => new Contributor(ContributorKind.GlobalAdvisory, null, null, null, entry.OriginRecordId, OctoberKnowledgePolicy.Hash(entry.Value)),
+                    OctoberContextScope.System => new Contributor(ContributorKind.SystemAdvisory, null, repository.SystemId, null, entry.OriginRecordId, OctoberKnowledgePolicy.Hash(entry.Value)),
+                    OctoberContextScope.Repository => new Contributor(ContributorKind.RepositoryAdvisory, repositoryId, null, null, entry.OriginRecordId, OctoberKnowledgePolicy.Hash(entry.Value)),
+                    _ => throw new InvalidOperationException("Advisory scope unavailable.")
+                };
+                return new OctoberWorkerAdvisory(contributor, entry.Value);
+            }).Distinct().ToImmutableArray();
+    }
+
+    private async Task<ProviderAdmissionStatus> CheckProviderEligibilityAsync(OctoberProviderPhase phase, CancellationToken token)
+    {
+        if (phase != OctoberProviderPhase.Worker) return ProviderAdmissionStatus.Denied;
+        if (!FileAvailable) return IsCancelled ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
+        if (_activeLedger is null || !await BoundedAsync(_activeLedger.VerifyCurrentAsync(token), token)) return ProviderAdmissionStatus.Denied;
+        if (await CheckPermissionsAsync(_observedContributors, token) != DisclosureStatus.Allowed) return ProviderAdmissionStatus.Denied;
+        return FileAvailable ? ProviderAdmissionStatus.Granted : IsCancelled ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
+    }
+
+    private async Task<DisclosureStatus> CheckPermissionsAsync(ImmutableArray<Contributor> contributors, CancellationToken token)
+    {
+        if (_execution is null || _disposed) return DisclosureStatus.Denied;
+        try
+        {
+            OctoberAuthoritySelectionResult current = await BoundedAsync(_dependencies.Authority.AuthorizeSelectionAsync(_execution.Session,
+                new(_execution.Authority.TargetId, _execution.Authority.BatchId, null), token), token);
+            if (current.Status != OctoberAuthorityDecisionStatus.Authorized || current.Request is null || current.Authority is null ||
+                !BindingMatches(current.Request, current.Authority)) return Deny(current.Status == OctoberAuthorityDecisionStatus.Unavailable);
+            var allowedAdvisory = _execution.Authority.RepositoryIds.SelectMany(repository => Advisory(repository)).Select(item => item.Contributor).ToHashSet();
+            foreach (Contributor contributor in contributors)
+            {
+                if (contributor.Kind is ContributorKind.Source or ContributorKind.SourceMetadata)
+                {
+                    var repository = _execution.Setup.Snapshot.Request.Repositories.SingleOrDefault(item => item.RepositoryId == contributor.RepositoryId);
+                    if (repository is null || contributor.RootBindingIdentity != repository.RootBindingIdentity ||
+                        (contributor.SystemId is not null && contributor.SystemId != repository.SystemId) ||
+                        (contributor.Kind == ContributorKind.Source && !OctoberKnowledgeInputPolicy.IsValidSourceContributor(contributor)) ||
+                        (contributor.Kind == ContributorKind.SourceMetadata && !OctoberKnowledgeInputPolicy.IsValidMetadataContributor(contributor)))
+                        return Deny();
+                }
+                else if (!allowedAdvisory.Contains(contributor)) return Deny();
+            }
+            token.ThrowIfCancellationRequested();
+            return DisclosureStatus.Allowed;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { return Deny(unavailable: true); }
+    }
+
+    private bool BindingMatches(OctoberSetupRequest request, OctoberAuthorizedSelection authority)
+    {
+        var execution = _execution!;
+        var original = execution.Authority;
+        var snapshot = execution.Setup.Snapshot;
+        if (authority.SelectedContext is not { } current || original.SelectedContext is not { } selected ||
+            snapshot.Authority.SelectedContext is not { } saved ||
+            authority.SubjectId != execution.Session.SubjectId || original.SubjectId != execution.Session.SubjectId ||
+            current.ManagementAuthorityId != execution.Session.ManagementAuthorityId || selected.ManagementAuthorityId != current.ManagementAuthorityId ||
+            authority.TargetId != original.TargetId || authority.BatchId != original.BatchId ||
+            authority.CanonicalDatabaseIdentity != original.CanonicalDatabaseIdentity || authority.SelectionDigest != original.SelectionDigest ||
+            request.TargetId != original.TargetId || request.BatchId != original.BatchId || request.SelectionDigest != original.SelectionDigest ||
+            execution.Setup.TargetId != original.TargetId || execution.Setup.BatchId != original.BatchId ||
+            !authority.RepositoryIds.Order().SequenceEqual(original.RepositoryIds.Order()) ||
+            !request.Repositories.OrderBy(item => item.RepositoryId).SequenceEqual(snapshot.Request.Repositories.OrderBy(item => item.RepositoryId)) ||
+            !current.Repositories.OrderBy(item => item.RepositoryId).SequenceEqual(selected.Repositories.OrderBy(item => item.RepositoryId))) return false;
+        return OctoberSelectionDigest.Compute(request, current) == original.SelectionDigest &&
+            OctoberSelectionDigest.Compute(snapshot.Request, saved) == original.SelectionDigest &&
+            OctoberSelectionDigest.Compute(snapshot.Request, selected) == original.SelectionDigest;
+    }
+
+    Task<DisclosureStatus> IOctoberGenerateAdmissionAuthority.CheckAsync(GenerateAdmissionRequest request, CancellationToken token) =>
+        request == _beginRequest ? CheckPermissionsAsync([], token) : Task.FromResult(DisclosureStatus.Denied);
+    Task<DisclosureStatus> IOctoberKnowledgeProducerAuthorization.CheckAsync(KnowledgeBinding binding, ImmutableArray<Contributor> contributors, CancellationToken token) =>
+        binding == _binding ? CheckPermissionsAsync(contributors, token) : Task.FromResult(DisclosureStatus.Denied);
+    Task<VerifiedKnowledgeSource?> IOctoberKnowledgeSourceVerifier.VerifyAsync(KnowledgeBinding binding, PreparedOrigin origin, CancellationToken token) =>
+        _activeLedger is null ? Task.FromResult<VerifiedKnowledgeSource?>(null) : _activeLedger.VerifyAsync(binding, origin, token);
+    Task<DisclosureStatus> IOctoberFileAcceptanceAuthority.VerifyAsync(CompletedFileSubmission submission, CancellationToken token) =>
+        _attempts.FirstOrDefault(attempt => attempt.Submission?.Operation == submission.Operation)?.VerifyAsync(submission, token)
+        ?? Task.FromResult(DisclosureStatus.Denied);
+
+    public async Task<CorpusFreezeEligibility> VerifyAsync(CorpusFreezeRequest request, CancellationToken cancellationToken = default)
+    {
+        if (_expectedFreeze is null || request.Operation != _expectedFreeze.Operation || request.Binding != _binding ||
+            request.CanonicalPayloadDigest != _expectedFreeze.CanonicalPayloadDigest ||
+            OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(request) != _expectedFreeze.CanonicalPayloadDigest)
+            return CorpusFreezeEligibility.Denied;
+        if (!_admissionClosed) return CorpusFreezeEligibility.AdmissionOpen;
+        if (!RunAvailable) return CorpusFreezeEligibility.HardStopped;
+        if (Unresolved() || _scope?.GetSnapshot().OutstandingAttempts != 0 || _attempts.Any(attempt => !attempt.IsSettledForFreeze))
+            return CorpusFreezeEligibility.Unsettled;
+        var allowed = await CheckPermissionsAsync(_observedContributors, cancellationToken);
+        if (!RunAvailable) return CorpusFreezeEligibility.HardStopped;
+        return allowed == DisclosureStatus.Allowed ? CorpusFreezeEligibility.Eligible :
+            allowed == DisclosureStatus.Denied ? CorpusFreezeEligibility.Denied : CorpusFreezeEligibility.AuthorityUnavailable;
+    }
+
+    public async Task<CommitEligibilityStatus> CheckBeforeTransactionAsync(CommitAttempt attempt, CancellationToken cancellationToken = default)
+    {
+        var status = BeginEligibility(attempt, cancellationToken);
+        if (status != CommitEligibilityStatus.Eligible) return status;
+        var authority = await CheckPermissionsAsync([], cancellationToken);
+        status = BeginEligibility(attempt, cancellationToken);
+        return status != CommitEligibilityStatus.Eligible ? status : authority == DisclosureStatus.Allowed
+            ? CommitEligibilityStatus.Eligible : authority == DisclosureStatus.Denied ? CommitEligibilityStatus.Denied : CommitEligibilityStatus.AuthorityUnavailable;
+    }
+
+    public async Task<CommitGuardResult> SubmitAsync(CommitAttempt attempt, Func<CancellationToken, SubmittedCommit> submitAsync,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(submitAsync);
-        if (!Enter()) return GuardFailure(CommitEligibilityStatus.StaleOrFenced);
         bool held = false;
         CancellationTokenSource? commitToken = null;
-        PhaseWrite? write = null;
         try
         {
-            using var before = BeforeToken(cancellationToken);
-            await _submissionGate.WaitAsync(before.Token);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _runToken!.Token);
+            await _beginGate.WaitAsync(linked.Token);
             held = true;
-            var current = Eligibility(attempt, cancellationToken);
-            if (current != CommitEligibilityStatus.Eligible) return GuardFailure(current);
-            var live = await LiveAsync(before.Token);
-            if (live != CommitEligibilityStatus.Eligible) return GuardFailure(live);
-            commitToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _hardStop, _deadline.Token);
+            var eligible = await CheckBeforeTransactionAsync(attempt, linked.Token);
+            if (eligible != CommitEligibilityStatus.Eligible) return BeginDenied(eligible);
+            commitToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _runToken.Token);
             Task<CommitSettlement> actual;
             lock (_sync)
             {
-                current = Eligibility(attempt, cancellationToken);
-                if (current != CommitEligibilityStatus.Eligible) return GuardFailure(current);
-                write = Find(attempt)!;
-                if (!write.Started) return GuardFailure(CommitEligibilityStatus.Denied);
-                if (write.Commit is not null) actual = write.Commit;
-                else if (write.Uncertain) return new(CommitSubmissionStatus.StaleOrFenced, CommitSettlement.Indeterminate);
+                eligible = BeginEligibility(attempt, cancellationToken);
+                if (eligible != CommitEligibilityStatus.Eligible) return BeginDenied(eligible);
+                if (_beginCommit is not null) actual = _beginCommit;
                 else
                 {
-                    write.Uncertain = true;
-                    write.Settlement = CommitSettlement.Indeterminate;
-                    // No await between final eligibility and the actual provider commit call.
+                    _beginUncertain = true;
+                    _beginSettlement = CommitSettlement.Indeterminate;
                     SubmittedCommit submitted = submitAsync(commitToken.Token);
-                    if (submitted?.Settlement is null)
-                        return new(CommitSubmissionStatus.AuthorityUnavailable, CommitSettlement.Indeterminate);
-                    write.Submitted = true;
-                    write.Uncertain = false;
-                    actual = ObserveCommitAsync(write, submitted.Settlement, commitToken);
-                    write.Commit = actual;
+                    if (submitted?.Settlement is null) return new(CommitSubmissionStatus.AuthorityUnavailable, CommitSettlement.Indeterminate);
+                    _beginSubmitted = true;
+                    _beginUncertain = false;
+                    actual = ObserveBeginCommitAsync(submitted.Settlement, commitToken);
+                    _beginCommit = actual;
                     commitToken = null;
                 }
             }
-            _submissionGate.Release();
-            held = false;
-            using var remaining = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _hardStop, _deadline.Token);
-            try { return new(CommitSubmissionStatus.Submitted, await actual.WaitAsync(remaining.Token)); }
+            _beginGate.Release(); held = false;
+            try { return new(CommitSubmissionStatus.Submitted, await actual.WaitAsync(linked.Token)); }
             catch (OperationCanceledException) { return new(CommitSubmissionStatus.Submitted, CommitSettlement.Indeterminate); }
         }
-        catch (OperationCanceledException) { return GuardFailure(CancelStatus(attempt, cancellationToken)); }
-        catch (Exception)
+        catch (OperationCanceledException) { return BeginDenied(BeginEligibility(attempt, cancellationToken)); }
+        catch (Exception) { return new(_beginSubmitted ? CommitSubmissionStatus.Submitted : CommitSubmissionStatus.AuthorityUnavailable, _beginUncertain ? CommitSettlement.Indeterminate : null); }
+        finally { commitToken?.Dispose(); if (held) _beginGate.Release(); }
+    }
+
+    private async Task<CommitSettlement> ObserveBeginCommitAsync(Task<CommitSettlement> task, CancellationTokenSource token)
+    {
+        try
         {
-            return new(write?.Submitted == true ? CommitSubmissionStatus.Submitted : CommitSubmissionStatus.AuthorityUnavailable,
-                write is { Uncertain: true } or { Submitted: true } ? CommitSettlement.Indeterminate : null);
+            CommitSettlement settled;
+            try { settled = await task; } catch (Exception) { settled = CommitSettlement.Indeterminate; }
+            lock (_sync) if (_beginSettlement != CommitSettlement.Committed) _beginSettlement = settled;
+            return settled;
         }
-        finally
+        finally { token.Dispose(); }
+    }
+
+    private CommitEligibilityStatus BeginEligibility(CommitAttempt attempt, CancellationToken token)
+    {
+        lock (_sync)
         {
-            commitToken?.Dispose();
-            if (held) _submissionGate.Release();
-            Exit();
+            if (!RunAvailable || _beginClosed) return CommitEligibilityStatus.StaleOrFenced;
+            if (token.IsCancellationRequested) return CommitEligibilityStatus.Cancelled;
+            return _beginRequest is not null && attempt.Operation == OctoberGenerateAdmissionPolicy.OperationFor(_beginRequest.Binding) &&
+                attempt.AttemptId == _beginRequest.RunId && attempt.PayloadDigest == _beginRequest.CanonicalPayloadDigest
+                ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        await FenceAsync();
-        lock (_sync)
-        {
-            if (_disposed) return;
-            if (_activeCalls != 0 || _outstanding.Any(task => !task.IsCompleted) ||
-                Unsettled(_freeze) || (_publication is not null && Unsettled(_publication)))
-                throw new InvalidOperationException("october_publication_settlement_unconfirmed");
-            _disposed = true;
-        }
-        _deadline.Dispose();
-        _beforeStop.Dispose();
-        _runGate.Dispose();
-        _submissionGate.Dispose();
+        lock (_sync) { if (_disposed) return; _fenced = true; _beginClosed = true; }
+        _stop.Cancel();
+        if (_executionTask is { IsCompleted: false }) throw new InvalidOperationException("october_run_settlement_unconfirmed");
+        await SettleResourcesAsync();
+        lock (_sync) _disposed = true;
+        _runToken?.Dispose(); _deadline?.Dispose(); _stop.Dispose(); _beginGate.Dispose();
     }
 
-    private async Task<OctoberScanReport> RunAsync(bool reconcile, CancellationToken cancellationToken)
+    private async Task SettleResourcesAsync()
     {
-        if (!Enter()) return Report(OctoberPublicationStatus.Failed, "phase_closed", disclose: false);
-        bool held = false;
+        if (_resourcesSettled) return;
+        if (Unresolved() || HasOutstandingCalls())
+            throw new InvalidOperationException("october_run_settlement_unconfirmed");
+        foreach (OctoberAttemptState attempt in _attempts) await attempt.DisposeAsync();
+        if (_publication is not null) await _publication.DisposeAsync();
+        await CloseAnalysisResourcesAsync();
+        _resourcesSettled = true;
+        _cleanupFailure = null;
+    }
+
+    private Task CloseAnalysisResourcesAsync()
+    {
+        if (_analysisCleanup is not null) return _analysisCleanup;
+        if (Unresolved() || HasOutstandingCalls())
+            throw new InvalidOperationException("october_run_settlement_unconfirmed");
+        return _analysisCleanup = CloseAnalysisCoreAsync();
+    }
+
+    private async Task CloseAnalysisCoreAsync()
+    {
+        foreach (IChatClient client in _clients) client.Dispose();
+        _clients.Clear();
+        if (_source is not null) await _source.DisposeAsync();
+        if (_scope is not null) await _scope.DisposeAsync();
+    }
+
+    private bool HasOutstandingCalls()
+    {
+        lock (_sync) return _outstanding.Any(task => !task.IsCompleted);
+    }
+
+    private async Task AcquireSourceAsync(OctoberGenerateExecution execution, CancellationToken token)
+    {
+        long started = _time.GetTimestamp();
+        Task<IOctoberScanRunSource> acquisition = _dependencies.OpenSource(execution, RemainingRun, token);
+        lock (_sync) _outstanding.Add(acquisition);
         try
         {
-            using var waitBound = new CancellationTokenSource(TimeSpan.FromSeconds(5), _time);
-            using var queued = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, waitBound.Token);
-            await _runGate.WaitAsync(queued.Token);
-            held = true;
-            if (_request.RequestedStage != "cl-only")
-                return Report(OctoberPublicationStatus.Failed, "unsupported_stage", disclose: false);
-            if (reconcile && !_executionStarted)
-                return Report(OctoberPublicationStatus.Failed, "publication_not_started", disclose: false);
-            _executionStarted = true;
-            _writer ??= _createWriter(this, _freezeAuthority);
-            if (await DisclosureAsync(cancellationToken) != DisclosureStatus.Allowed)
-                return Report(OctoberPublicationStatus.Failed, "authority_unavailable", disclose: false);
-
-            var freeze = await WriteOrLookupAsync(_freeze,
-                token => _writer.FreezeCorpusAsync(_freezeRequest, token), cancellationToken);
-            if (!HasConfirmedHandle(_freeze, freeze)) return await FailedResultAsync(freeze, cancellationToken);
-            if (Unsettled(_freeze))
-                return Report(OctoberPublicationStatus.Indeterminate, "freeze_settlement_pending", disclose: false);
-            CorpusHandle corpus = freeze.Corpus!;
-            if (_request.AcceptedFiles.SelectMany(file => file.Documents).Any())
-            {
-                if (_publication is null)
-                {
-                    var publication = new PublicationRequest(_request.PublicationOperation, corpus, "",
-                        OctoberKnowledgePublicationPolicy.OrderedDocuments(_request.AcceptedFiles.SelectMany(file => file.Documents).ToImmutableArray()),
-                        [], _request.Uncertainties, [], _request.TerminalCoverage);
-                    _publicationRequest = publication with
-                    {
-                        CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputePublicationDigest(publication)
-                    };
-                    lock (_sync) _publication = new(_publicationRequest.Operation, _publicationRequest.CanonicalPayloadDigest);
-                }
-                var published = await WriteOrLookupAsync(_publication,
-                    token => _writer.PublishSelectionAsync(_publicationRequest!, token), cancellationToken);
-                if (!HasConfirmedHandle(_publication, published)) return await FailedResultAsync(published, cancellationToken);
-                if (Unsettled(_publication))
-                    return Report(OctoberPublicationStatus.Indeterminate, "publication_settlement_pending", disclose: false);
-                if (await DisclosureAsync(cancellationToken) != DisclosureStatus.Allowed)
-                    return Report(OctoberPublicationStatus.Failed, "authority_unavailable", disclose: false);
-                return Report(OctoberPublicationStatus.Confirmed, publication: published.Publication);
-            }
-            if (await DisclosureAsync(cancellationToken) != DisclosureStatus.Allowed)
-                return Report(OctoberPublicationStatus.Failed, "authority_unavailable", disclose: false);
-            if (_hardStop.IsCancellationRequested)
-                return Report(HasUnresolvedWrite() ? OctoberPublicationStatus.Indeterminate : OctoberPublicationStatus.NotRequested,
-                    "publication_interrupted", interrupted: true);
-            return Report(OctoberPublicationStatus.NoContent, "no_cl_content");
+            // An uncooperative factory still owns its eventual result. Await it,
+            // adopt that resource, then honor cancellation before using it.
+            _source = await acquisition ?? throw new InvalidOperationException("Source acquisition returned no owner.");
+            token.ThrowIfCancellationRequested();
+            if (!RunAvailable) throw new OperationCanceledException("The original run is no longer eligible.");
         }
-        catch (OperationCanceledException)
+        finally
         {
-            return Report(HasUnresolvedWrite() ? OctoberPublicationStatus.Indeterminate : OctoberPublicationStatus.NotRequested,
-                "publication_interrupted", disclose: false, interrupted: true);
+            Observe(acquisition);
+            lock (_sync) _toolWait += _time.GetElapsedTime(started);
         }
-        catch (Exception)
-        {
-            return Report(HasUnresolvedWrite() ? OctoberPublicationStatus.Indeterminate : OctoberPublicationStatus.Failed,
-                "publication_unavailable", disclose: false);
-        }
-        finally { if (held) _runGate.Release(); Exit(); }
     }
 
-    private async Task<KnowledgeWriteResult> WriteOrLookupAsync(PhaseWrite phase,
-        Func<CancellationToken, Task<KnowledgeWriteResult>> write, CancellationToken cancellationToken)
+    private async Task<IChatClient> AcquireClientAsync(OctoberSelectedWorkerProvider provider, CancellationToken token)
     {
-        if (phase.Outcome is { } known && HasConfirmedHandle(phase, known)) return known;
-        if (!phase.Started)
-        {
-            var attempt = new CommitAttempt(phase.Operation, phase.Operation.OperationId, phase.Digest);
-            var eligible = await CheckBeforeTransactionAsync(attempt, cancellationToken);
-            if (eligible != CommitEligibilityStatus.Eligible)
-                return new(eligible == CommitEligibilityStatus.Cancelled ? KnowledgeWriteStatus.CancelledBeforeCommit :
-                    eligible == CommitEligibilityStatus.Denied ? KnowledgeWriteStatus.Denied :
-                    eligible == CommitEligibilityStatus.AuthorityUnavailable ? KnowledgeWriteStatus.AuthorityUnavailable : KnowledgeWriteStatus.StaleOrFenced,
-                    phase.Operation);
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _deadline.Token, _hardStop);
-            phase.Started = true;
-            Task<KnowledgeWriteResult> pending = ObserveWriteAsync(phase, write, linked.Token);
-            phase.Write = pending;
-            try { return await BoundedAsync(pending, linked.Token); }
-            catch (OperationCanceledException) { return new(KnowledgeWriteStatus.CommitIndeterminate, phase.Operation); }
-        }
-        if (phase.Outcome is { } rejected && rejected.Status != KnowledgeWriteStatus.CommitIndeterminate && !Unsettled(phase))
-            return rejected;
-        using var lookupBound = new CancellationTokenSource(TimeSpan.FromSeconds(5), _time);
-        using var lookupToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lookupBound.Token);
-        long start = _time.GetTimestamp();
+        Task<IChatClient> acquisition = _dependencies.CreateWorkerClient(provider, token);
+        lock (_sync) _outstanding.Add(acquisition);
         try
         {
-            var result = await BoundedAsync(_writer!.LookupOperationAsync(_request.Binding,
-                phase.Operation, phase.Digest, lookupToken.Token), lookupToken.Token);
-            RecordOutcome(phase, result, definitiveWrite: false);
-            return result;
+            IChatClient client = await acquisition ?? throw new InvalidOperationException("Client acquisition returned no owner.");
+            _clients.Add(client);
+            token.ThrowIfCancellationRequested();
+            if (!FileAvailable) throw new OperationCanceledException("The original file is no longer eligible.");
+            return client;
         }
-        finally { _storeWait += _time.GetElapsedTime(start); }
+        finally { Observe(acquisition); }
     }
 
-    private async Task<KnowledgeWriteResult> ObserveWriteAsync(PhaseWrite phase,
-        Func<CancellationToken, Task<KnowledgeWriteResult>> write, CancellationToken cancellationToken)
+    private bool Unresolved() => _beginUncertain || _beginCommit is { IsCompleted: false } ||
+        _beginSettlement == CommitSettlement.Indeterminate || _attempts.Any(attempt =>
+            attempt.HasSubmitted && !attempt.IsSettledForFreeze) || _scope?.GetSnapshot().HasUnconfirmedSettlement == true;
+    private TimeSpan RemainingRun => TimeSpan.FromSeconds(_execution!.Policy.RunDeadlineSeconds) - _time.GetElapsedTime(_started);
+    private TimeSpan RemainingFile => _fileStarted is { } started
+        ? Min(RemainingRun, TimeSpan.FromSeconds(_execution!.Policy.FileDeadlineSeconds) - _time.GetElapsedTime(started)) : RemainingRun;
+    private bool RunAvailable => !_fenced && !_disposed && !IsCancelled && RemainingRun > TimeSpan.Zero;
+    private bool FileAvailable => RunAvailable && RemainingFile > TimeSpan.Zero;
+    private bool IsCancelled => _caller.IsCancellationRequested || _stop.IsCancellationRequested;
+    private static TimeSpan Min(TimeSpan left, TimeSpan right) => left < right ? left : right;
+    private DisclosureStatus Deny(bool unavailable = false) { lock (_sync) _fenced = true; return unavailable ? DisclosureStatus.AuthorityUnavailable : DisclosureStatus.Denied; }
+
+    private async Task<DisclosureStatus> DisclosureAsync(CancellationToken token)
     {
-        long start = _time.GetTimestamp();
-        try
-        {
-            var result = await write(cancellationToken);
-            RecordOutcome(phase, result, definitiveWrite: true);
-            return result;
-        }
-        catch (Exception)
-        {
-            lock (_sync)
-            {
-                if (phase.Settlement is not (CommitSettlement.Committed or CommitSettlement.ConfirmedNotCommitted))
-                    phase.Uncertain = true;
-            }
-            return new(KnowledgeWriteStatus.CommitIndeterminate, phase.Operation);
-        }
-        finally { lock (_sync) _storeWait += _time.GetElapsedTime(start); }
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5), _time);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, deadline.Token);
+        try { return await CheckPermissionsAsync(_observedContributors, linked.Token); }
+        catch (Exception) { return Deny(unavailable: true); }
     }
 
-    private void RecordOutcome(PhaseWrite phase, KnowledgeWriteResult result, bool definitiveWrite)
-    {
-        lock (_sync)
-        {
-            if (result.Operation != phase.Operation) { phase.Uncertain = true; _fenced = true; return; }
-            if (result.Status is KnowledgeWriteStatus.Denied or KnowledgeWriteStatus.AuthorityUnavailable) _fenced = true;
-            if (ValidHandle(phase, result) && result.Status is (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted or KnowledgeWriteStatus.LogUnavailable))
-            {
-                phase.Settlement = CommitSettlement.Committed;
-                phase.Uncertain = false;
-                phase.Outcome = result;
-            }
-            else if (phase.Settlement != CommitSettlement.Committed && definitiveWrite && !phase.Submitted && !phase.Uncertain &&
-                result.Status is (KnowledgeWriteStatus.Denied or KnowledgeWriteStatus.AuthorityUnavailable or
-                    KnowledgeWriteStatus.InvalidProposal or KnowledgeWriteStatus.NotCompleted or KnowledgeWriteStatus.StaleOrFenced or
-                    KnowledgeWriteStatus.CancelledBeforeCommit or KnowledgeWriteStatus.StorageUnavailable or KnowledgeWriteStatus.Conflict))
-            {
-                phase.Settlement = CommitSettlement.ConfirmedNotCommitted;
-                phase.Outcome = result;
-            }
-            else if (phase.Outcome is null)
-            {
-                phase.Outcome = result;
-                if (result.Status is KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted or KnowledgeWriteStatus.LogUnavailable)
-                {
-                    phase.Uncertain = true;
-                    _fenced = true;
-                }
-            }
-        }
-    }
-
-    private bool ValidHandle(PhaseWrite phase, KnowledgeWriteResult result) => result.Operation == phase.Operation &&
-        (phase.Operation.Kind == OperationKind.FreezeCorpus
-            ? result.Corpus is { } corpus && corpus.Binding == _request.Binding && corpus.CorpusId != Guid.Empty && corpus.CorpusDigest == phase.Digest
-            : result.Publication is { } publication && publication.Knowledge == _request.Binding && publication.PublicationId != Guid.Empty);
-
-    private bool HasConfirmedHandle(PhaseWrite phase, KnowledgeWriteResult result) =>
-        result.Status is (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted) && ValidHandle(phase, result);
-
-    private async Task<CommitSettlement> ObserveCommitAsync(PhaseWrite phase, Task<CommitSettlement> settlement,
-        CancellationTokenSource commitToken)
-    {
-        try
-        {
-            CommitSettlement result;
-            try { result = await settlement; }
-            catch (Exception) { result = CommitSettlement.Indeterminate; }
-            if (!Enum.IsDefined(result)) result = CommitSettlement.Indeterminate;
-            lock (_sync) if (phase.Settlement != CommitSettlement.Committed) phase.Settlement = result;
-            return result;
-        }
-        finally { commitToken.Dispose(); }
-    }
-
-    private async Task<CommitEligibilityStatus> LiveAsync(CancellationToken cancellationToken)
-    {
-        var authority = await CheckAuthorityAsync(cancellationToken);
-        if (authority != DisclosureStatus.Allowed)
-            return authority == DisclosureStatus.Denied ? CommitEligibilityStatus.Denied : CommitEligibilityStatus.AuthorityUnavailable;
-        var freeze = await BoundedAsync(_freezeAuthority.VerifyAsync(_freezeRequest, cancellationToken), cancellationToken);
-        if (freeze == CorpusFreezeEligibility.Eligible) return CommitEligibilityStatus.Eligible;
-        if (freeze is CorpusFreezeEligibility.Denied or CorpusFreezeEligibility.AuthorityUnavailable or CorpusFreezeEligibility.HardStopped)
-            LoseAuthority();
-        return freeze == CorpusFreezeEligibility.Denied ? CommitEligibilityStatus.Denied :
-            freeze == CorpusFreezeEligibility.AuthorityUnavailable ? CommitEligibilityStatus.AuthorityUnavailable : CommitEligibilityStatus.StaleOrFenced;
-    }
-
-    private async Task<DisclosureStatus> DisclosureAsync(CancellationToken cancellationToken)
-    {
-        using var bound = new CancellationTokenSource(TimeSpan.FromSeconds(5), _time);
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, bound.Token);
-        try { return await CheckAuthorityAsync(linked.Token); }
-        catch (Exception) { LoseAuthority(); return DisclosureStatus.AuthorityUnavailable; }
-    }
-
-    private async Task<DisclosureStatus> CheckAuthorityAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var status = await BoundedAsync(_checkAuthority(cancellationToken), cancellationToken);
-            if (!Enum.IsDefined(status)) status = DisclosureStatus.AuthorityUnavailable;
-            if (status != DisclosureStatus.Allowed) LoseAuthority();
-            return status;
-        }
-        catch { LoseAuthority(); throw; }
-    }
-
-    private async Task<OctoberScanReport> FailedResultAsync(KnowledgeWriteResult result, CancellationToken cancellationToken)
-    {
-        if (result.Status is KnowledgeWriteStatus.Denied or KnowledgeWriteStatus.AuthorityUnavailable)
-            return Report(OctoberPublicationStatus.Failed, "authority_unavailable", disclose: false);
-        if (await DisclosureAsync(cancellationToken) != DisclosureStatus.Allowed)
-            return Report(OctoberPublicationStatus.Failed, "authority_unavailable", disclose: false);
-        bool interrupted = result.Status == KnowledgeWriteStatus.CancelledBeforeCommit ||
-            (result.Status == KnowledgeWriteStatus.StaleOrFenced && _hardStop.IsCancellationRequested);
-        bool indeterminate = result.Status == KnowledgeWriteStatus.CommitIndeterminate ||
-            (interrupted && HasUnresolvedWrite());
-        return Report(indeterminate ? OctoberPublicationStatus.Indeterminate :
-                interrupted ? OctoberPublicationStatus.NotRequested : OctoberPublicationStatus.Failed,
-            result.Status switch
-            {
-                KnowledgeWriteStatus.CommitIndeterminate => "commit_indeterminate",
-                KnowledgeWriteStatus.LogUnavailable => "operation_log_unavailable",
-                KnowledgeWriteStatus.Denied or KnowledgeWriteStatus.AuthorityUnavailable => "authority_unavailable",
-                KnowledgeWriteStatus.StaleOrFenced => "phase_ineligible",
-                _ => "publication_failed"
-            }, interrupted: interrupted);
-    }
-
-    private OctoberScanReport Report(OctoberPublicationStatus status, string? gap = null,
-        bool disclose = true, PublicationBinding? publication = null, bool interrupted = false)
-    {
-        var coverage = !disclose || _request.TerminalCoverage.IsEmpty ? OctoberCoverageStatus.None :
-            _request.SelectedScopeComplete && _request.TerminalCoverage.All(item =>
-                item.Disposition is CoverageDisposition.Accepted or CoverageDisposition.CompletedZeroUnit)
-                ? OctoberCoverageStatus.Complete : OctoberCoverageStatus.Partial;
-        var execution = status == OctoberPublicationStatus.Indeterminate ? OctoberExecutionStatus.Indeterminate :
-            interrupted ? OctoberExecutionStatus.Interrupted :
-            status is OctoberPublicationStatus.Confirmed or OctoberPublicationStatus.NoContent
-                ? OctoberExecutionStatus.Completed : OctoberExecutionStatus.Failed;
-        ImmutableArray<DocumentHandle> documents = disclose && publication is not null
-            ? _request.AcceptedFiles.SelectMany(file => file.Documents).Select(document =>
-                new DocumentHandle(document.BatchId, publication.PublicationId, document.LogicalDocumentId, document.DocumentVersionId)).ToImmutableArray()
-            : [];
-        return new(_request.RequestedStage, status == OctoberPublicationStatus.Confirmed ? "cl-only" : null,
-            coverage, execution, status, disclose ? publication : null, documents,
-            disclose ? _request.AcceptedFiles : [], disclose ? _request.TerminalCoverage : [],
-            new(_time.GetElapsedTime(_started), TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, _storeWait),
-            new(0, 0, 0, false), gap is null ? [] : [new(gap)]);
-    }
-
-    private CommitEligibilityStatus Eligibility(CommitAttempt attempt, CancellationToken cancellationToken)
-    {
-        lock (_sync)
-        {
-            if (_disposed || _fenced || _beforeStop.IsCancellationRequested || _hardStop.IsCancellationRequested ||
-                _time.GetElapsedTime(_started) >= _lifetime) return CommitEligibilityStatus.StaleOrFenced;
-            if (cancellationToken.IsCancellationRequested) return CommitEligibilityStatus.Cancelled;
-            return _executionStarted && _request.RequestedStage == "cl-only" && Find(attempt) is not null
-                ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;
-        }
-    }
-
-    private PhaseWrite? Find(CommitAttempt attempt) => attempt is null || attempt.AttemptId != attempt.Operation.OperationId ? null :
-        attempt.Operation == _freeze.Operation && attempt.PayloadDigest == _freeze.Digest ? _freeze :
-        _publication is { } publication && attempt.Operation == publication.Operation && attempt.PayloadDigest == publication.Digest ? publication : null;
-
-    private CommitEligibilityStatus CancelStatus(CommitAttempt attempt, CancellationToken token)
-    {
-        var current = Eligibility(attempt, token);
-        return current == CommitEligibilityStatus.Eligible ? CommitEligibilityStatus.AuthorityUnavailable : current;
-    }
-
-    private async Task<T> BoundedAsync<T>(Task<T> task, CancellationToken cancellationToken)
+    private async Task<T> BoundedAsync<T>(Task<T> task, CancellationToken token)
     {
         lock (_sync) _outstanding.Add(task);
-        try { return await task.WaitAsync(cancellationToken); }
+        try { return await task.WaitAsync(token); }
         finally
         {
             if (task.IsCompleted) Observe(task);
-            else _ = task.ContinueWith(Observe, CancellationToken.None,
-                TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            else _ = task.ContinueWith(Observe, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         }
     }
-
-    private void Observe(Task task)
+    private void Observe(Task task) { if (task.IsFaulted) _ = task.Exception; lock (_sync) _outstanding.Remove(task); }
+    private async Task<T> ToolAsync<T>(Func<Task<T>> action, CancellationToken token)
     {
-        if (task.IsFaulted) _ = task.Exception;
-        lock (_sync) _outstanding.Remove(task);
+        long started = _time.GetTimestamp();
+        try { return await BoundedAsync(action(), token); }
+        finally { lock (_sync) _toolWait += _time.GetElapsedTime(started); }
+    }
+    private async Task<T> StoreAsync<T>(Func<Task<T>> action, CancellationToken token)
+    {
+        long started = _time.GetTimestamp();
+        try { return await BoundedAsync(action(), token); }
+        finally { lock (_sync) _storeWait += _time.GetElapsedTime(started); }
     }
 
-    private static bool Unsettled(PhaseWrite phase) => phase.Uncertain ||
-        phase.Settlement == CommitSettlement.Indeterminate || phase.Commit is { IsCompleted: false } ||
-        phase.Write is { IsCompleted: false };
-    private bool HasUnresolvedWrite() { lock (_sync) return Unsettled(_freeze) || (_publication is not null && Unsettled(_publication)); }
-    private void LoseAuthority() { lock (_sync) _fenced = true; }
-    private bool Enter() { lock (_sync) { if (_disposed) return false; _activeCalls++; return true; } }
-    private void Exit() { lock (_sync) _activeCalls--; }
-    private CancellationTokenSource BeforeToken(CancellationToken caller) =>
-        CancellationTokenSource.CreateLinkedTokenSource(caller, _deadline.Token, _hardStop, _beforeStop.Token);
-    private static CommitGuardResult GuardFailure(CommitEligibilityStatus status) => new(status switch
+    private OctoberScanReport Failure(string code, bool interrupted = false, bool indeterminate = false, bool disclose = true, string? stage = null) =>
+        new(stage ?? _execution?.Policy.OutputStage ?? string.Empty, null,
+            disclose && !_inventory.IsEmpty ? OctoberCoverageStatus.Partial : OctoberCoverageStatus.None,
+            indeterminate ? OctoberExecutionStatus.Indeterminate : interrupted ? OctoberExecutionStatus.Interrupted : OctoberExecutionStatus.Failed,
+            indeterminate ? OctoberPublicationStatus.Indeterminate : OctoberPublicationStatus.NotRequested,
+            null, [], disclose ? _accepted : [], disclose ? _coverage : [],
+            new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(0, 0, 0, false), disclose ? _gaps.Add(new(code)) : [new(code)])
+        { Inventory = disclose ? _inventory : [] };
+    private static OctoberScanReport Hide(OctoberScanReport report, string code) => report with
+    {
+        CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
+        PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
+        TerminalCoverage = [], Inventory = [], Gaps = [new(code)]
+    };
+    private OctoberScanReport MergeMetrics(OctoberScanReport report)
+    {
+        var snapshot = _scope?.GetSnapshot();
+        return report with
+        {
+            Usage = snapshot?.Usage ?? report.Usage,
+            Timings = new(_time.GetElapsedTime(_started), snapshot?.QueueWait ?? TimeSpan.Zero,
+                _toolWait, snapshot?.ModelWait ?? TimeSpan.Zero, _storeWait + report.Timings.StoreWait)
+        };
+    }
+    private static bool HasMetadata(OctoberScanReport report) => report.Publication is not null ||
+        !report.Documents.IsEmpty || !report.AcceptedFiles.IsEmpty || !report.TerminalCoverage.IsEmpty || !report.Inventory.IsEmpty;
+    private static OctoberGeneratorExecutionResult Finished(OctoberScanReport report) => new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report);
+    private static CommitGuardResult BeginDenied(CommitEligibilityStatus status) => new(status switch
     {
         CommitEligibilityStatus.Denied => CommitSubmissionStatus.Denied,
-        CommitEligibilityStatus.AuthorityUnavailable => CommitSubmissionStatus.AuthorityUnavailable,
         CommitEligibilityStatus.Cancelled => CommitSubmissionStatus.CancelledBeforeSubmission,
+        CommitEligibilityStatus.AuthorityUnavailable => CommitSubmissionStatus.AuthorityUnavailable,
         _ => CommitSubmissionStatus.StaleOrFenced
     }, null);
 
-    private sealed class PhaseWrite(OperationKey operation, string digest)
+    private sealed class MeasuredTool(OctoberGenerateRunner owner, AIFunction tool) : AIFunction
     {
-        internal OperationKey Operation { get; } = operation;
-        internal string Digest { get; } = digest;
-        internal bool Started { get; set; }
-        internal bool Submitted { get; set; }
-        internal bool Uncertain { get; set; }
-        internal CommitSettlement? Settlement { get; set; }
-        internal Task<CommitSettlement>? Commit { get; set; }
-        internal Task<KnowledgeWriteResult>? Write { get; set; }
-        internal KnowledgeWriteResult? Outcome { get; set; }
+        public override string Name => tool.Name;
+        public override string Description => tool.Description;
+        public override JsonElement JsonSchema => tool.JsonSchema;
+        public override JsonElement? ReturnJsonSchema => tool.ReturnJsonSchema;
+        protected override async ValueTask<object?> InvokeCoreAsync(AIFunctionArguments arguments, CancellationToken cancellationToken) =>
+            await owner.ToolAsync(() => tool.InvokeAsync(arguments, cancellationToken).AsTask(), cancellationToken);
     }
 }

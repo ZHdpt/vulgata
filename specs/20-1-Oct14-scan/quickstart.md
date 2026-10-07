@@ -1,6 +1,6 @@
 # OCT-SCAN validation and handoff guide
 
-S1 T005–T012 are implemented, independently reviewed and qualified. S2 is now authorized and in progress: Configuration, Worker, shared scope, primary framing/F1, inventory and internal CL publication have reviewed controlled GREEN. Full Generate wiring, complete dynamic input provenance, qualified fresh-run admission and real qualification remain pending. The corrected owner admission store and provenance helpers are imported for controlled composition; this is not runtime resource permission. The combined S1 fixture passes source paging/read/search, real JDT definition/reference, renewed CodeGraph sessions and owned cleanup. See [verification-s1.md](verification-s1.md) and [verification-s2.md](verification-s2.md). Stop before S3; retain the [plan.md](plan.md) runtime/authority stop conditions and [contracts/scan-boundaries.md](contracts/scan-boundaries.md).
+S1 T005–T012 are implemented, independently reviewed and qualified. S2 is now authorized and in progress: Configuration, Worker, shared scope, primary framing/F1, inventory and internal CL publication have reviewed controlled GREEN. Complete dynamic input provenance and exact-bound tool wrappers are also reviewed at `f396e35b1fcaab83586245ad23ecbcc46616e639`. Full Generate wiring, fresh-run admission composition and real qualification remain pending. The corrected owner admission store and provenance helpers are imported for controlled composition; this is not runtime resource permission. The combined S1 fixture passes source paging/read/search, real JDT definition/reference, renewed CodeGraph sessions and owned cleanup. See [verification-s1.md](verification-s1.md) and [verification-s2.md](verification-s2.md). Stop before S3; retain the [plan.md](plan.md) runtime/authority stop conditions and [contracts/scan-boundaries.md](contracts/scan-boundaries.md).
 
 Historical bounded preparation imported integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0` for T001–T004 controlled consumer probes. See `conformance-c0.md` for those results. S1 subsequently imported accepted common CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91` under its direct user instruction; accepted S1 evidence is in `verification-s1.md`. This local conformance command selects only SelfContained tests and provisions no database/provider/tool runtime:
 
@@ -16,6 +16,19 @@ pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedN
 4. Business publication/read ports, Explore destination and integration-owner Web composition for ordinary-reader proof. Ordinary Web uses frozen DefaultConnection and cannot run October migrations or require generator credentials.
 
 ## Controlled checks after implementation
+
+Generate composition under construction uses one explicit `October__RuntimeFile`
+alongside the existing scan-policy/provider/authority configuration. Its trusted
+host document contains `preparedRoots` (exact target/batch/Repository/root-binding
+tuples and physical roots), `codeGraphCommandPath`, `javaNavigation`,
+`javaHostPolicy` and `logDirectory`. These reuse the existing bounded native
+profile and source-binding types. Parsing is source-free: it reads only that
+configuration document, rejects duplicate/unknown fields and relative paths, and
+does not start tools or create state/log directories. Exact selection matching
+precedes fresh-run admission; source approval and tool composition follow a known
+Begin receipt. This configuration is not a resource grant or a claim that Generate
+is already executable. Keep actual deployment paths and protected values outside
+source control and evidence.
 
 The qualified S1 invocation uses installed CodeGraph 1.5.0, JDT-LS core `1.58.0.202605150919`, and physical Java 21.0.12. Source and dedicated JDT grants remain 30 seconds; the optional 120-second policy was **not** added. Both isolated JDT and combined S1 fixtures pass useful navigation and cleanup. The launcher settles validated retained descendants using actual Windows process signals; stderr EOF and exit-code availability are not cleanup proof. Shutdown remains bounded at 15 seconds. This qualifies the pinned launcher profile, not arbitrary process trees.
 
