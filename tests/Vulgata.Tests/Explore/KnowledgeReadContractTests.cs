@@ -211,6 +211,40 @@ public sealed class KnowledgeReadContractTests
         Assert.True(validator.Validate(request with { PageSize = KnowledgeContract.MaximumPageSize }).IsValid);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task GetRelatedAsync_LaterUnrelatedSuccess_DoesNotRevalidatePreviouslyAccumulatedMaterialAsync()
+    {
+        var fixture = new OctoberKnowledgeFixture();
+        var policy = new ControlledDisclosurePolicy();
+        IOctoberKnowledgeReader reader = new ControlledKnowledgeReader(fixture, policy);
+        var selection = (await reader.OpenReadSelectionAsync(fixture.Selection() with { Purpose = KnowledgePurpose.Graph })).Selection!;
+        var seeds = await reader.SearchAsync(new(selection, ""));
+        Assert.Equal(KnowledgeReadStatus.Success, seeds.Status);
+        Assert.Contains(seeds.Documents, document => document.Handle == fixture.Handle(fixture.ClA));
+        var earlier = await reader.GetRelatedAsync(new(selection, fixture.Handle(fixture.ClA)));
+        Assert.Equal(KnowledgeReadStatus.Success, earlier.Status);
+        var relationship = Assert.Single(earlier.Relationships);
+        Assert.Equal(fixture.Handle(fixture.ClA), relationship.From);
+        Assert.Equal(fixture.Handle(fixture.ClB), relationship.To);
+
+        policy.RevokedRepositories.Add(fixture.RepositoryA);
+
+        // A final call for an independent permitted document is only authority for that call.
+        // The imported interface/fixture supplies no accumulated-projection disclosure operation.
+        var later = await reader.GetRelatedAsync(new(selection, fixture.Handle(fixture.ClB)));
+        Assert.Equal(KnowledgeReadStatus.Success, later.Status);
+        Assert.Empty(later.Relationships);
+        var unrelatedContent = await reader.ReadExactAsync(new(selection, fixture.Handle(fixture.ClB)));
+        Assert.Equal(KnowledgeReadStatus.Success, unrelatedContent.Status);
+        Assert.Equal(fixture.Handle(fixture.ClB), unrelatedContent.Document!.Handle);
+        AssertNoContent(await reader.ReadExactAsync(new(selection, relationship.From)), KnowledgeReadStatus.Unavailable);
+
+        // Previously returned values remain in consumer memory; later success cannot grant redisclosure.
+        Assert.Contains(seeds.Documents, document => document.Handle == relationship.From);
+        Assert.Single(earlier.Relationships);
+    }
+
     private static void AssertNoContent(ContentPage page, KnowledgeReadStatus expectedStatus)
     {
         Assert.Equal(expectedStatus, page.Status);
