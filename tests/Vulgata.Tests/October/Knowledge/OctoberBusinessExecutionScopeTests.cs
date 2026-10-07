@@ -453,7 +453,7 @@ internal sealed class ResolutionClient(string providerProfileId, Func<int, Cance
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
         var eligibility = await lease.CheckBeforeSendAsync(linked.Token);
         if (eligibility != ProviderAdmissionStatus.Granted)
-            throw new InvalidOperationException("Controlled final lease eligibility refused dispatch: " + eligibility);
+            throw new OctoberBusinessAttemptDeniedException(eligibility);
         linked.Token.ThrowIfCancellationRequested();
         long dispatched = Stopwatch.GetTimestamp();
         observer.RecordDispatch();
