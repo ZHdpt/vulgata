@@ -138,3 +138,19 @@ Independent reviewer `wave_reviewer` found no blocking findings in the agent/ada
 ## Admitted runner — accepted controlled boundary, 2026-10-07
 
 `wave_reviewer` accepted the confirmed-admission factory, exact embedded prompt/owner history inputs, only-narrowing lifetime, owner-codec capacity measurements, atomic reported references and truthful generation facts. Capacity review required a maximum-width measurement timestamp, separate from the actual generation end time. Production assessment identified stale Knowledge authorization during awaited execution checks; two RED cases preceded the final authorization ordering at typed and post-permit boundaries. The reviewer accepted both corrections conditional on GREEN; root verified **583/583 affected passes, zero failures/skips**, `TestResults/isolation-cc10983c70f942a399e5533ccb84e043/results.trx`. The independent two-modifier visibility review for `007fd7d3` is separate from this behavioral acceptance. Host execution registration, actual physical settlement, canonical persistence and subscriber/browser integration remain outside the accepted boundary.
+## Canonical coordinator — accepted controlled boundary, 2026-10-07
+
+`wave_reviewer` independently accepted the actual owner-store/client coordinator
+after RED-backed corrections for authorization loss during drain and lost phase
+acknowledgements. Recovery retains exact original identities/timestamps and waits
+for actual operations to settle; it cannot redispatch or resubmit an attempted save.
+Sanitized closure is limited to fresh explicit owner denial/unavailability before
+payload freeze. Additional tests cover unsettled timed-out phase operations and
+synchronous save throws. No remaining blocking finding was reported.
+
+Acceptance was conditional on GREEN; root verified **22/22 focused** and
+**720/720 affected**, zero failed/skipped, with the final TRX at
+`TestResults/isolation-046b9ed63bdc469fb115b927c0f5c83f/results.trx`.
+Root registration/commit/death authority, PostgreSQL and current UI disclosure remain
+separate integration requirements. Cached terminal projection is host state, not
+lasting permission to display it. No full T016–T023 completion is claimed.

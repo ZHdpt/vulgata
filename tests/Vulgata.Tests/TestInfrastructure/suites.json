@@ -284,6 +284,9 @@
   "October/Chat/OctoberChatOwnerConformanceTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Chat/OctoberChatTurnTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Chat/OctoberChatEntryTests.cs": {
     "suite": "SelfContained"
   },
@@ -1163,6 +1166,9 @@
     "suite": "SelfContained"
   },
   "October/Integration/OctoberChatHostBindingTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberChatDialogueCommitGuardTests.cs": {
     "suite": "SelfContained"
   },
   "October/Integration/OctoberChatProviderBindingTests.cs": {

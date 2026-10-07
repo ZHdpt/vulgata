@@ -591,3 +591,78 @@ handoff correction; do not reconstruct it from Outcome or regenerate. Controlled
 B2 preparation follows its actual inputs, not a blanket wait for Chat or all T027
 evidence. FlowPlanner/synthesis/finalizer remain scoped Business work, while real
 dispatch, PostgreSQL and connected-source qualification retain their prerequisites.
+
+## Controlled canonical Chat coordinator integrated
+
+Reviewed Chat checkpoint `d99517a65a58868ad2f9836abe91ef8775f4812e` is merged
+at `9227f3761335d7147c6f221e70cd58e472fde110`. Independent cross-module review
+accepted the bounded coordinator without a remaining must-fix. It preserves the
+original Admitted snapshot, observes actual generation before opening the physical
+send gate, drains owned work, and reconciles uncertain phase acknowledgements
+without redispatch. Terminal save intent is frozen once; sanitized no-content
+closure is distinct from authorization to disclose a saved answer.
+
+Combined affected verification passed **1,459/1,459 SelfContained** cases, zero
+failures/skips, 395 classified files:
+`TestResults/isolation-b1c1457f40d94f4c84cc28f03ee4d2aa/results.trx`.
+This is an affected selection, not a full-suite or real-provider result. The earlier
+Explorer full-run SQLite crash remains unexplained; no new migration was applied.
+
+The component is released for consumer composition. Root still owns live execution
+registration, canonical store observation/commit and owner-death adapters, actual
+client-factory/physical-settlement retention, and Web route activation. Chat owns
+the bounded turn-local presentation adapter; slow or throwing UI subscribers must
+not own generation or cleanup. The same-assembly factory seam may intercept the
+real client factory for trusted host observation, with the real clock and mandatory
+generation observer; it does not authorize fake runtime authority or transport.
+
+Scan continues public Generate and S3 composition independently. Business owns the
+same-attempt witness handoff correction and available B2 work. Explorer awaits the
+single shared retained publication, not Chat persistence. No all-lane barrier or
+new resource approval follows from this controlled checkpoint.
+
+## Witness handoff and root commit-fence component
+
+Business `8b72833d598190dff4e896809b3aa87da5690cdb` is integrated at `3fcb9c4c`.
+The additive non-positional `ResolutionExecutionResult.Witness` retains the exact
+parsed proposal from the same successfully validated and settled attempt. It is
+not reconstructed from an outcome and grants no acceptance authority. The actual
+owner store still independently recomputes acceptance; controlled compatibility
+preserves the original B0 publication. Independent source review accepted this
+bounded handoff. Scan may use it after safe synchronization; S3 still awaits its
+prerequisite-based integration-owner dispatch, not an invented human-only gate.
+
+Root's internal `OctoberChatDialogueCommitGuard` supplies exact expected-mutation
+binding and at-most-once synchronous commit entry under the future registry's shared
+fence lock. Fresh asynchronous authorization is followed by synchronous current
+ownership checks under that same lock. Closing a mutation prevents a late callback;
+after submission, cancelling a wait never releases the actual settlement task.
+A callback throwing without returning a task remains conservatively unresolved.
+Known task completion with an indeterminate durable outcome is not commit success
+or proof of absence. No caller can reopen a consumed/closed mutation by re-registering.
+
+Separate test ownership and independent source review accepted the final component.
+Missing-component verification temporarily excluded only its new uncommitted source:
+`isolation-470982ec3fb240d3a2f328bc1a14cadc/build.log` records CS0246, not a behavioral
+failure. Draft behavioral RED was 19 passed / four failed of 23, with counterexamples
+for undefined enums (`isolation-e5e77f3549ca4987aa1cc534f5369e6d/results.trx`). Minimal
+fail-closed corrections passed **23/23** focused controlled cases, zero skips:
+`TestResults/isolation-7ecc29ad71e44fe99a47b335a6e169f5/results.trx`.
+
+The guard is deliberately unregistered until its real host owner exists. It does not
+supply execution authority, the store-observing decorator, actual session/generation
+registration, owner-death proof or route activation. Root retains those tasks;
+Chat's presentation adapter and Business's B2 work continue independently.
+
+Review also found a separate store-local submission/disposal race in
+`OctoberDialogueStore.MutateAsync`: cancellation could dispose a transaction before
+its callback had captured the actual commit task. Business owns the narrow correction
+and has reproduced it with a controlled provider (45 passed / one failed of 46 at
+`a12286d7ed9f4ae5a91f0abaf46c4713`). Live dialogue mutations remain unqualified until
+that owner correction is reviewed and integrated. No schema change, new broad gate,
+runtime permission or all-lane pause is implied.
+
+Combined affected verification of the witness handoff, coordinator and root guard
+passed **1,486/1,486 SelfContained** cases, zero failures/skips, 397 classified files:
+`TestResults/isolation-4050e41ebfe441a89a5a175c79f48b89/results.trx`.
+No PostgreSQL, native tool, external provider or browser qualification was run.
