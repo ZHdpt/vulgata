@@ -265,6 +265,9 @@
   "October/Chat/OctoberChatTurnRunnerTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Chat/OctoberChatOwnerConformanceTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Chat/OctoberChatEntryTests.cs": {
     "suite": "SelfContained"
   },
