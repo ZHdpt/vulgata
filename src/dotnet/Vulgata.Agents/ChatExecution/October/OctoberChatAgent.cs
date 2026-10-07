@@ -132,7 +132,7 @@ internal sealed class OctoberChatAgent
             OctoberChatProviderStatus status = linked.IsCancellationRequested
                 ? cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested
                     ? OctoberChatProviderStatus.Cancelled : OctoberChatProviderStatus.BudgetExceeded
-                : adapter.FailureStatus ?? OctoberChatProviderStatus.Failed;
+                : _budget.TransportFailureStatus ?? adapter.FailureStatus ?? OctoberChatProviderStatus.Failed;
             _budget.StopExecution();
             linked.Cancel();
             return new(status, text.ToString());
