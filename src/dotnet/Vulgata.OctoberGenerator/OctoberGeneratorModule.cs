@@ -1,18 +1,54 @@
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.Configuration;
 
 namespace Vulgata.OctoberGenerator;
 
 public enum OctoberGeneratorMode
 {
     Prepare,
-    Select
+    Select,
+    Generate
 }
 
 public sealed record OctoberGeneratorCommand(
     OctoberGeneratorMode Mode,
     string TargetId,
     Guid BatchId,
-    OctoberSetupRequest? SetupRequest);
+    OctoberSetupRequest? SetupRequest,
+    OctoberScanPolicy? ScanPolicy = null);
+
+public sealed record OctoberGenerateExecution(
+    IOctoberOperatorSession Session,
+    IOctoberHistoricalBoundSetupData Setup,
+    OctoberAuthorizedSelection Authority,
+    OctoberScanPolicy Policy,
+    OctoberSelectedWorkerProvider Provider);
+
+public sealed class OctoberSelectedWorkerProvider
+{
+    internal OctoberSelectedWorkerProvider(string sourceIdentity, string precedence,
+        OctoberProviderProfile profile, string protectedCredential)
+    {
+        SourceIdentity = sourceIdentity;
+        Precedence = precedence;
+        Profile = profile;
+        ProtectedCredential = protectedCredential;
+    }
+
+    public string SourceIdentity { get; }
+    public string Precedence { get; }
+    public OctoberProviderProfile Profile { get; }
+    internal string ProtectedCredential { get; }
+
+    public override string ToString() => nameof(OctoberSelectedWorkerProvider);
+}
+
+public interface IOctoberGenerateOperation
+{
+    Task<OctoberGeneratorExecutionResult> ExecuteAsync(
+        OctoberGenerateExecution execution,
+        CancellationToken cancellationToken = default);
+}
 
 public interface IOctoberConfiguredTarget
 {
@@ -49,11 +85,15 @@ public sealed class OctoberGeneratorModule : IOctoberGeneratorModule
     private readonly IOctoberLocalAuthority _authority;
     private readonly IOctoberConfiguredTarget _target;
     private readonly string _expectedManagementAuthorityId;
+    private readonly IOctoberGenerateOperation? _generate;
+    private readonly OctoberSelectedWorkerProvider? _provider;
 
     public OctoberGeneratorModule(
         IOctoberLocalAuthority authority,
         IOctoberConfiguredTarget target,
-        string expectedManagementAuthorityId)
+        string expectedManagementAuthorityId,
+        IOctoberGenerateOperation? generate = null,
+        OctoberSelectedWorkerProvider? provider = null)
     {
         _authority = authority ?? throw new ArgumentNullException(nameof(authority));
         _target = target ?? throw new ArgumentNullException(nameof(target));
@@ -66,6 +106,8 @@ public sealed class OctoberGeneratorModule : IOctoberGeneratorModule
         }
 
         _expectedManagementAuthorityId = expectedManagementAuthorityId;
+        _generate = generate;
+        _provider = provider;
     }
 
     public async Task<OctoberGeneratorExecutionResult> ExecuteAsync(
@@ -79,6 +121,12 @@ public sealed class OctoberGeneratorModule : IOctoberGeneratorModule
             command.BatchId == Guid.Empty ||
             (command.Mode == OctoberGeneratorMode.Prepare) != (command.SetupRequest is not null))
             return new OctoberGeneratorExecutionResult(OctoberGeneratorExecutionStatus.Denied);
+        if (command.Mode == OctoberGeneratorMode.Generate &&
+            (command.ScanPolicy is null || _generate is null || _provider is null ||
+             !new OctoberScanPolicyValidator().Validate(command.ScanPolicy).IsValid))
+            return Failed(OctoberGeneratorExecutionStatus.Denied);
+        if (command.Mode != OctoberGeneratorMode.Generate && command.ScanPolicy is not null)
+            return Failed(OctoberGeneratorExecutionStatus.Denied);
 
         bool targetReached = false;
         try
@@ -138,9 +186,31 @@ public sealed class OctoberGeneratorModule : IOctoberGeneratorModule
             targetReached = true;
             OctoberGeneratorCommand trustedCommand = command with { SetupRequest =
                 command.Mode == OctoberGeneratorMode.Prepare ? canonical : null };
+            if (command.Mode == OctoberGeneratorMode.Generate)
+                trustedCommand = trustedCommand with
+                {
+                    Mode = OctoberGeneratorMode.Select,
+                    ScanPolicy = null
+                };
             OctoberGeneratorExecutionResult result = await _target.ExecuteAsync(
                 trustedCommand, authority, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            if (command.Mode == OctoberGeneratorMode.Generate)
+            {
+                if (result.Status != OctoberGeneratorExecutionStatus.Selected)
+                    return result;
+                if (result.BoundSetupData is not IOctoberHistoricalBoundSetupData setup ||
+                    !MatchesSelection(setup, canonical, authority) ||
+                    command.ScanPolicy!.SourceRules.Any(rule =>
+                        !authority.RepositoryIds.Contains(rule.RepositoryId)))
+                    return Failed(OctoberGeneratorExecutionStatus.Denied);
+
+                // Selection is rebound inside this session. The operation must settle
+                // its tools and writes before this owning scope disposes the session.
+                result = await _generate!.ExecuteAsync(new OctoberGenerateExecution(
+                    session, setup, authority, command.ScanPolicy, _provider!), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
             return result;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -157,4 +227,44 @@ public sealed class OctoberGeneratorModule : IOctoberGeneratorModule
 
     private static OctoberGeneratorExecutionResult Failed(OctoberGeneratorExecutionStatus status) =>
         new(status);
+
+    private static bool MatchesSelection(IOctoberHistoricalBoundSetupData setup,
+        OctoberSetupRequest canonical, OctoberAuthorizedSelection authority)
+    {
+        try
+        {
+            OctoberBoundSetupSnapshot snapshot = setup.Snapshot;
+            if (snapshot is null || snapshot.Request is null || snapshot.Authority is null)
+                return false;
+            OctoberSetupRequest request = snapshot.Request;
+            OctoberAuthorizedSelection selected = snapshot.Authority;
+            if (setup.TargetId != canonical.TargetId || setup.BatchId != canonical.BatchId ||
+                request.TargetId != canonical.TargetId || request.BatchId != canonical.BatchId ||
+                selected.TargetId != authority.TargetId || selected.BatchId != authority.BatchId ||
+                selected.CanonicalDatabaseIdentity != authority.CanonicalDatabaseIdentity ||
+                selected.SubjectId != authority.SubjectId ||
+                selected.SelectionDigest != authority.SelectionDigest ||
+                request.SelectionDigest != canonical.SelectionDigest ||
+                snapshot.SelectedAtUtc.Offset != TimeSpan.Zero ||
+                selected.SelectedContext is not { } context ||
+                authority.SelectedContext is not { } current ||
+                !selected.RepositoryIds.Order().SequenceEqual(authority.RepositoryIds.Order()) ||
+                !authority.RepositoryIds.Order().SequenceEqual(
+                    canonical.Repositories.Select(repository => repository.RepositoryId).Order()) ||
+                !request.Repositories.OrderBy(repository => repository.RepositoryId)
+                    .SequenceEqual(canonical.Repositories.OrderBy(repository => repository.RepositoryId)) ||
+                !context.Repositories.OrderBy(repository => repository.RepositoryId)
+                    .SequenceEqual(current.Repositories.OrderBy(repository => repository.RepositoryId)) ||
+                !context.Repositories.OrderBy(repository => repository.RepositoryId)
+                    .SequenceEqual(request.Repositories.OrderBy(repository => repository.RepositoryId)))
+                return false;
+
+            return OctoberSelectionDigest.Compute(request, context) == authority.SelectionDigest &&
+                OctoberSelectionDigest.Compute(canonical, current) == authority.SelectionDigest;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
 }
