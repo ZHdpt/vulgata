@@ -620,3 +620,49 @@ Scan continues public Generate and S3 composition independently. Business owns t
 same-attempt witness handoff correction and available B2 work. Explorer awaits the
 single shared retained publication, not Chat persistence. No all-lane barrier or
 new resource approval follows from this controlled checkpoint.
+
+## Witness handoff and root commit-fence component
+
+Business `8b72833d598190dff4e896809b3aa87da5690cdb` is integrated at `3fcb9c4c`.
+The additive non-positional `ResolutionExecutionResult.Witness` retains the exact
+parsed proposal from the same successfully validated and settled attempt. It is
+not reconstructed from an outcome and grants no acceptance authority. The actual
+owner store still independently recomputes acceptance; controlled compatibility
+preserves the original B0 publication. Independent source review accepted this
+bounded handoff. Scan may use it after safe synchronization; S3 still awaits its
+prerequisite-based integration-owner dispatch, not an invented human-only gate.
+
+Root's internal `OctoberChatDialogueCommitGuard` supplies exact expected-mutation
+binding and at-most-once synchronous commit entry under the future registry's shared
+fence lock. Fresh asynchronous authorization is followed by synchronous current
+ownership checks under that same lock. Closing a mutation prevents a late callback;
+after submission, cancelling a wait never releases the actual settlement task.
+A callback throwing without returning a task remains conservatively unresolved.
+Known task completion with an indeterminate durable outcome is not commit success
+or proof of absence. No caller can reopen a consumed/closed mutation by re-registering.
+
+Separate test ownership and independent source review accepted the final component.
+Missing-component verification temporarily excluded only its new uncommitted source:
+`isolation-470982ec3fb240d3a2f328bc1a14cadc/build.log` records CS0246, not a behavioral
+failure. Draft behavioral RED was 19 passed / four failed of 23, with counterexamples
+for undefined enums (`isolation-e5e77f3549ca4987aa1cc534f5369e6d/results.trx`). Minimal
+fail-closed corrections passed **23/23** focused controlled cases, zero skips:
+`TestResults/isolation-7ecc29ad71e44fe99a47b335a6e169f5/results.trx`.
+
+The guard is deliberately unregistered until its real host owner exists. It does not
+supply execution authority, the store-observing decorator, actual session/generation
+registration, owner-death proof or route activation. Root retains those tasks;
+Chat's presentation adapter and Business's B2 work continue independently.
+
+Review also found a separate store-local submission/disposal race in
+`OctoberDialogueStore.MutateAsync`: cancellation could dispose a transaction before
+its callback had captured the actual commit task. Business owns the narrow correction
+and has reproduced it with a controlled provider (45 passed / one failed of 46 at
+`a12286d7ed9f4ae5a91f0abaf46c4713`). Live dialogue mutations remain unqualified until
+that owner correction is reviewed and integrated. No schema change, new broad gate,
+runtime permission or all-lane pause is implied.
+
+Combined affected verification of the witness handoff, coordinator and root guard
+passed **1,486/1,486 SelfContained** cases, zero failures/skips, 397 classified files:
+`TestResults/isolation-4050e41ebfe441a89a5a175c79f48b89/results.trx`.
+No PostgreSQL, native tool, external provider or browser qualification was run.

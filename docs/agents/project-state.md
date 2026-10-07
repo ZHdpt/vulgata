@@ -143,6 +143,12 @@ verification before reuse.
   live execution registration, commit/owner-death adapters and route activation
   remain missing; Chat owns the bounded presentation adapter. Controlled evidence
   does not authorize or prove a real provider/host/database run.
+  The same-attempt Business resolution witness handoff `8b72833d` is integrated,
+  and the unregistered root Chat commit-fence component is independently reviewed.
+  Combined affected verification passes 1,486/1,486 controlled cases, zero skips.
+  Business is correcting a separately reproduced dialogue-store submission/disposal
+  race; live dialogue mutation activation awaits that fix. The root commit guard
+  alone is not execution registration, owner-death proof or a reachable Chat route.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

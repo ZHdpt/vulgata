@@ -1168,6 +1168,9 @@
   "October/Integration/OctoberChatHostBindingTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Integration/OctoberChatDialogueCommitGuardTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberChatProviderBindingTests.cs": {
     "suite": "SelfContained"
   },
