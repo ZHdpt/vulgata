@@ -1206,5 +1206,8 @@
   },
   "October/Knowledge/OctoberResolutionHandoffTests.cs": {
     "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFlowPlannerTests.cs": {
+    "suite": "SelfContained"
   }
 }
