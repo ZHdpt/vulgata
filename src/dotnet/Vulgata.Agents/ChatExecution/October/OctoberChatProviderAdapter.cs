@@ -57,13 +57,23 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
             {
                 bool usageOnly = update.Contents.All(content => content is UsageContent);
                 if (usageOnly && (update.FinishReason is null || update.FinishReason == finish)) continue;
-                foreach (FunctionCallContent late in update.Contents.OfType<FunctionCallContent>().Where(call => !call.InformationalOnly))
+                // The installed OpenAI adapter emits ToolCalls finish metadata, then
+                // one final aggregate containing the assembled native calls with the
+                // same finish reason. Accept that exact shape, still withholding all
+                // dispatch until the complete iterator has settled below.
+                bool finalNativeAggregate = finish == ChatFinishReason.ToolCalls && update.FinishReason == finish &&
+                    calls.Count == 0 && update.Contents.Any(content => content is FunctionCallContent { InformationalOnly: false }) &&
+                    update.Contents.All(content => content is FunctionCallContent or UsageContent);
+                if (!finalNativeAggregate)
                 {
-                    await BufferCallAsync(late, calls, cancellationToken);
-                }
+                    foreach (FunctionCallContent late in update.Contents.OfType<FunctionCallContent>().Where(call => !call.InformationalOnly))
+                    {
+                        await BufferCallAsync(late, calls, cancellationToken);
+                    }
 
-                await RejectCallsAsync(calls, cancellationToken);
-                throw Fail(OctoberChatProviderStatus.Failed);
+                    await RejectCallsAsync(calls, cancellationToken);
+                    throw Fail(OctoberChatProviderStatus.Failed);
+                }
             }
 
             if (update.Role is { } role && role != ChatRole.Assistant) throw Fail(OctoberChatProviderStatus.Failed);
