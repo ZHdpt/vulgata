@@ -460,6 +460,43 @@ relative paths remain available to Integrator's strict fixture-bound hydration.
 CLI Ctrl+C signal/drain behavior is not qualified by the controlled API cancellation
 tests; its S3 task remains undispatched. No new S3 signal semantics are adopted.
 
+Output-projection RED selected **17: 15 passed, 2 failed, zero skipped** in
+`isolation-7fe9f3ff47944b5baef438c98c70aba8/results.trx`, reproducing model/source
+prose in coverage reasons; foreign binding tests passed. The explicit projection
+then passed all 17 cases in
+`isolation-f7ab8cbb499047bc9a79c02650b5bda4/results.trx`, whose sole failure among
+18 cases was the newly asserted planned CL-only matching/businessLogic labels.
+Those fields were added without any Business service resolution.
+
+Final Main/Generate affected verification passed **299/299, zero failed/skipped**:
+`isolation-8169a90f12ae44f5bdfa21bcd82a0b64/results.trx`. Independent Main review
+and separate production/test final-shape assessments accept the executable/control
+boundary. Main now composes the actual B0 admission/writer/log and source/Worker
+factories, settles before one exact safe report, and returns its matching exit code.
+Prepare/Select remain covered. The exact report protocol is documented in
+`contracts/scan-boundaries.md`. Two PostgreSQL full-route cases are authored, not
+executed. Broad SelfContained regression, owned PostgreSQL qualification and the
+single shared real E2E/reader run remain separately outstanding at this checkpoint.
+
+Main was committed at `b04313c393a2d0b33556e693152645c4e6e065ae`. The clean
+assigned branch merged approved integration
+`274d1f733c15d89a63969f53322514adbc24cac2`, producing
+`e873b8cbab7008262c724b6c65fd49651033367f`; the reviewed shared fixture API is
+now present. No reset/discard occurred and no imported migration was executed.
+An additional proposed documentation sync to `b9df7b70` was rejected by automatic
+approval review. Read-only ancestry inspection showed its delta from the imported
+checkpoint also includes unrelated Chat source changes; it is left unmerged, as
+Integrator confirmed. This does not block S2's already imported fixture API.
+
+Integration review then identified unjustified zero usage in Main's no-terminal-
+report fallback. Controlled RED
+`isolation-65ff138965b44c3b9eebb92c0c6215fb/results.trx` selected **21:
+18 passed, 3 failed, zero skipped**. Invoked module throw, cancellation and missing
+report each emitted numeric counts where JSON null was required. Root inspected
+the failures before releasing the narrow fallback change to unknown requests/input/
+output and `hasUnknownUsage=true`. Actual runner reports retain their proven zero
+or measured usage. Status/exit/safe output semantics are unchanged.
+
 ## Early composition decisions
 
 The reviewed primary-frame/F1 component is committed at
@@ -561,3 +598,9 @@ loopback processes, at most three provider requests with no retries, aggregate
 model/protected credential source and approval remain unresolved. Even when
 approved and successful, that synthetic run qualifies the real execution/store/
 reader route only; T024 registration/login source and usefulness remain separate.
+
+### Main fallback correction and qualification adapter RED
+
+- Independent review accepted Main's missing-terminal-report correction: requests/input/output tokens are null with `hasUnknownUsage=true`, rather than fabricated zero usage.
+- `eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberScanGenerateQualificationAdapterTests|FullyQualifiedName~OctoberScanEntryPointTests'` run `1880470bf0e0436c83d1810aa4aa5746`: 34 selected, 31 passed, 3 failed, 0 skipped. All 21 Main tests passed; the adapter's exact positive input and two one-dispatch cases failed on deliberate stubs. Negative fail-closed cases passing a stub are not implementation proof.
+- Initial adapter policy validation rejected a SelfContained reference to the E2E fixture before build. The physical factory was split into a separately classified E2E helper; no policy exception or weakened assertion was introduced. Controlled validation remains source-free and credential-free.
