@@ -2,6 +2,9 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using ModelContextProtocol.Client;
+using System.Diagnostics;
+using Microsoft.Win32.SafeHandles;
+using Vulgata.Infrastructure.Source;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
@@ -15,6 +18,7 @@ public sealed class PreparedCodeGraphConnectionFactory
     private readonly string _commandPath;
     private readonly ICodeGraphProcessRunner _process;
     private readonly Func<string, CancellationToken, Task> _preflight;
+    private readonly Action<string>? _beforeStateCreate;
 
     public PreparedCodeGraphConnectionFactory(string commandPath)
         : this(commandPath, new CodeGraphProcessRunner(), VerifyPinnedBundleAsync)
@@ -24,7 +28,8 @@ public sealed class PreparedCodeGraphConnectionFactory
     internal PreparedCodeGraphConnectionFactory(
         string commandPath,
         ICodeGraphProcessRunner process,
-        Func<string, CancellationToken, Task> preflight)
+        Func<string, CancellationToken, Task> preflight,
+        Action<string>? beforeStateCreate = null)
     {
         if (string.IsNullOrWhiteSpace(commandPath) || !Path.IsPathFullyQualified(commandPath))
         {
@@ -34,13 +39,26 @@ public sealed class PreparedCodeGraphConnectionFactory
         _commandPath = Path.GetFullPath(commandPath);
         _process = process ?? throw new ArgumentNullException(nameof(process));
         _preflight = preflight ?? throw new ArgumentNullException(nameof(preflight));
+        _beforeStateCreate = beforeStateCreate;
     }
+
+    public Task<PreparedCodeGraphConnection> PrepareAsync(
+        Guid repositoryId,
+        string applicationSelectedDirectory,
+        CancellationToken cancellationToken)
+        => PrepareAsync(repositoryId, applicationSelectedDirectory, TimeSpan.FromMinutes(30), cancellationToken);
 
     public async Task<PreparedCodeGraphConnection> PrepareAsync(
         Guid repositoryId,
         string applicationSelectedDirectory,
+        TimeSpan remainingLifetime,
         CancellationToken cancellationToken)
     {
+        if (remainingLifetime <= TimeSpan.Zero || remainingLifetime > TimeSpan.FromMinutes(30))
+        {
+            throw new ArgumentOutOfRangeException(nameof(remainingLifetime));
+        }
+        long ownerStartedAt = Stopwatch.GetTimestamp();
         cancellationToken.ThrowIfCancellationRequested();
         if (repositoryId == Guid.Empty)
         {
@@ -69,8 +87,25 @@ public sealed class PreparedCodeGraphConnectionFactory
 
         try
         {
+            (_, SafeFileHandle? openedRoot) = PreparedSourceTraversal.OpenRoot(root);
+            using SafeFileHandle? heldRoot = openedRoot;
+            PreparedSourceTraversal.DirectoryIdentity? rootIdentity = heldRoot is null
+                ? null : PreparedSourceTraversal.ObserveDirectory(heldRoot);
+            if (rootIdentity is null)
+            {
+                throw new InvalidOperationException("The prepared root identity is unavailable.");
+            }
             await _preflight(_commandPath, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            (_, SafeFileHandle? checkedRoot) = PreparedSourceTraversal.OpenRoot(root);
+            using (checkedRoot)
+            {
+                if (checkedRoot is null || !PreparedCodeGraphConnection.SameObject(
+                    rootIdentity, PreparedSourceTraversal.ObserveDirectory(checkedRoot)))
+                {
+                    throw new InvalidOperationException("The prepared root changed before initialization.");
+                }
+            }
             string statePath = Path.Combine(root, ".codegraph");
             if (Directory.EnumerateFileSystemEntries(root).Any(path =>
                 string.Equals(Path.GetFileName(path), ".codegraph",
@@ -79,19 +114,44 @@ public sealed class PreparedCodeGraphConnectionFactory
                 throw new InvalidOperationException("Pre-existing CodeGraph state is not owned by this preparation.");
             }
 
-            Directory.CreateDirectory(statePath);
+            _beforeStateCreate?.Invoke(root);
+            (PreparedSourceTraversal.OpenStatus created, SafeFileHandle? openedState) =
+                PreparedSourceTraversal.CreateRelativeDirectory(heldRoot!, ".codegraph");
+            using SafeFileHandle? heldState = openedState;
+            PreparedSourceTraversal.DirectoryIdentity? stateIdentity = heldState is null
+                ? null : PreparedSourceTraversal.ObserveDirectory(heldState);
+            if (created != PreparedSourceTraversal.OpenStatus.Opened || stateIdentity is null)
+            {
+                throw new InvalidOperationException("Exclusive CodeGraph state creation failed; existing state is not adopted.");
+            }
+            (_, SafeFileHandle? dispatchRoot) = PreparedSourceTraversal.OpenRoot(root);
+            using (dispatchRoot)
+            {
+                if (dispatchRoot is null || !PreparedCodeGraphConnection.SameObject(
+                    rootIdentity, PreparedSourceTraversal.ObserveDirectory(dispatchRoot)))
+                    throw new InvalidOperationException("The prepared root changed before dispatch.");
+            }
             IReadOnlyDictionary<string, string> environment = CreateEnvironment();
+            TimeSpan preparationBudget = remainingLifetime - Stopwatch.GetElapsedTime(ownerStartedAt);
+            if (preparationBudget <= TimeSpan.Zero)
+            {
+                throw new InvalidOperationException("The prepared connection lifetime expired before initialization.");
+            }
+            preparationBudget = preparationBudget < _preparationTimeout ? preparationBudget : _preparationTimeout;
+            using var preparationDeadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            preparationDeadline.CancelAfter(preparationBudget);
             CodeGraphProcessRequest request = new(
                 _commandPath,
                 ["init", root],
                 root,
-                _preparationTimeout,
+                preparationBudget,
                 DiagnosticByteLimit,
                 DiagnosticByteLimit,
                 environment,
                 closeStandardInput: true,
                 inheritEnvironmentVariables: false);
-            CodeGraphProcessResult result = await _process.RunAsync(request, cancellationToken);
+            CodeGraphProcessResult result = await _process.RunAsync(request, preparationDeadline.Token);
+            preparationDeadline.Token.ThrowIfCancellationRequested();
             if (result.TimedOut || result.ExitCode != 0 ||
                 !File.Exists(Path.Combine(statePath, "codegraph.db")))
             {
@@ -105,14 +165,26 @@ public sealed class PreparedCodeGraphConnectionFactory
                 ? ["-NoProfile", "-File", _commandPath,
                    "serve", "--mcp", "-p", root, "--no-watch"]
                 : ["serve", "--mcp", "-p", root, "--no-watch"];
-            return new PreparedCodeGraphConnection(
+            TimeSpan remaining = remainingLifetime - Stopwatch.GetElapsedTime(ownerStartedAt);
+            if (remaining <= TimeSpan.Zero)
+            {
+                throw new InvalidOperationException("The prepared connection lifetime expired during preparation.");
+            }
+            var connection = new PreparedCodeGraphConnection(
                 repositoryId,
                 _commandPath,
                 command,
                 Array.AsReadOnly(arguments),
                 root,
                 environment,
-                () => _activeRoots.TryRemove(root, out _));
+                () => _activeRoots.TryRemove(root, out _), remainingLifetime: remaining);
+            if (!connection.MatchesPreparedObjects(rootIdentity, stateIdentity) ||
+                !connection.IsCurrentOwnedState(heldRoot!))
+            {
+                await connection.DisposeAsync();
+                throw new InvalidOperationException("The prepared root or owned state changed during preparation.");
+            }
+            return connection;
         }
         catch
         {

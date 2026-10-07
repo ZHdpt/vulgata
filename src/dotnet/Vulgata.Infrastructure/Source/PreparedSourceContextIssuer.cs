@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.Analysis.CodeGraph;
 
 namespace Vulgata.Infrastructure.Source;
 
@@ -17,9 +18,33 @@ public sealed class PreparedSourceContextIssuer
         _authority = authority ?? throw new ArgumentNullException(nameof(authority));
     }
 
-    public async Task<PreparedSourceIssueResult> IssueAsync(
+    /// <summary>Trusted host observation for bounded inventory restart reconciliation.</summary>
+    public Task<string?> ObserveFileIdentityAsync(
+        IPreparedSourceReadContext context,
+        string relativePath,
+        CancellationToken cancellationToken = default)
+        => context is PreparedSourceReadContext issued
+            ? issued.ObserveFileIdentityAsync(_authority, relativePath, cancellationToken)
+            : Task.FromResult<string?>(null);
+
+    public Task<PreparedSourceIssueResult> IssueAsync(
+        PreparedSourceGrantRequest request,
+        PreparedCodeGraphConnection ownedState,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(ownedState);
+        return IssueCoreAsync(request, ownedState, cancellationToken);
+    }
+
+    public Task<PreparedSourceIssueResult> IssueAsync(
         PreparedSourceGrantRequest request,
         CancellationToken cancellationToken = default)
+        => IssueCoreAsync(request, null, cancellationToken);
+
+    private async Task<PreparedSourceIssueResult> IssueCoreAsync(
+        PreparedSourceGrantRequest request,
+        PreparedCodeGraphConnection? ownedState,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -112,6 +137,12 @@ public sealed class PreparedSourceContextIssuer
                 : PreparedSourceIssueStatus.DeadlineExceeded);
         }
 
+        if (ownedState is not null && !ownedState.MatchesSourceBinding(request, rootHandle))
+        {
+            rootHandle.Dispose();
+            return Failed(PreparedSourceIssueStatus.Denied);
+        }
+
         TimeSpan remaining = request.Limits.Deadline -
             Stopwatch.GetElapsedTime(issuedAt);
         if (remaining <= TimeSpan.Zero)
@@ -127,7 +158,8 @@ public sealed class PreparedSourceContextIssuer
                 rootHandle,
                 _authority,
                 request.Limits,
-                remaining));
+                remaining,
+                ownedState));
     }
 
     private static bool WithinApplicationCaps(PreparedSourceGrantLimits limits)

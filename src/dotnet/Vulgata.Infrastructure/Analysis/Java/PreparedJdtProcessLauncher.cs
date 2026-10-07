@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Infrastructure.Source;
@@ -406,13 +407,27 @@ internal sealed class PreparedJdtOwnedProcess : IJdtLsProcess
     private readonly StringBuilder _stderr = new();
     private readonly Lock _stderrLock = new();
     private readonly Task _stderrPump;
+    private readonly TextReader _stderrReader;
+    private readonly CancellationTokenSource _stderrStop = new();
+    private readonly Lock _disposalLock = new();
+    private readonly Lock _terminationLock = new();
+    private readonly List<Process> _descendants = [];
+    private bool _descendantsCaptured;
+    private Exception? _captureFailure;
+    private Task? _disposal;
 
-    internal PreparedJdtOwnedProcess(Process process, PreparedJdtOwnedStateDirectories ownedState)
+    internal PreparedJdtOwnedProcess(Process process, PreparedJdtOwnedStateDirectories ownedState,
+        TextReader? stderrReader = null)
     {
         _process = process;
         _ownedState = ownedState;
+        _stderrReader = stderrReader ?? process.StandardError;
         _stderrPump = DrainStderrAsync();
     }
+
+    internal bool HasExited => _process.HasExited;
+
+    internal bool StderrPumpCompleted => _stderrPump.IsCompleted;
 
     public Stream StandardInput => _process.StandardInput.BaseStream;
 
@@ -439,8 +454,14 @@ internal sealed class PreparedJdtOwnedProcess : IJdtLsProcess
             cancellationToken, deadline.Token);
         try
         {
-            await _process.WaitForExitAsync(linked.Token);
-            await _stderrPump.WaitAsync(linked.Token);
+            Process[] descendants = GetCapturedDescendants();
+            await WaitForKernelExitAsync(_process, linked.Token);
+            foreach (Process descendant in descendants)
+            {
+                await WaitForKernelExitAsync(descendant, linked.Token);
+            }
+            // Stderr pipe EOF is diagnostic completion, not proof of OS exit.
+            // Disposal separately stops and settles that owned reader.
             return _process.ExitCode;
         }
         catch (OperationCanceledException) when (deadline.IsCancellationRequested &&
@@ -450,12 +471,133 @@ internal sealed class PreparedJdtOwnedProcess : IJdtLsProcess
         }
     }
 
+    internal void CaptureDescendantsForTermination()
+    {
+        lock (_terminationLock)
+        {
+            ThrowIfCaptureFailed();
+            if (_descendantsCaptured)
+            {
+                return;
+            }
+
+            try
+            {
+                // The retained root must still be alive when ancestry is established.
+                // A PID discovered after root exit cannot grant cleanup authority.
+                _ = _process.SafeHandle;
+                if (_process.HasExited)
+                {
+                    throw new InvalidOperationException("jdt_descendant_capture_unconfirmed");
+                }
+
+                List<ProcessParent> snapshot = SnapshotProcessParents();
+                var parents = new Queue<Process>();
+                var observed = new HashSet<int> { _process.Id };
+                parents.Enqueue(_process);
+                while (parents.TryDequeue(out Process? parent))
+                {
+                    foreach (ProcessParent entry in snapshot.Where(entry => entry.ParentId == parent.Id))
+                    {
+                        if (parent.HasExited || !observed.Add(entry.Id))
+                        {
+                            throw new InvalidOperationException("jdt_descendant_capture_unconfirmed");
+                        }
+
+                        Process child = Process.GetProcessById(entry.Id);
+                        bool retained = false;
+                        try
+                        {
+                            // Force handle acquisition before checking identity. All later
+                            // termination and waits use this handle, never another PID lookup.
+                            SafeProcessHandle handle = child.SafeHandle;
+                            ProcessBasicInformation information = default;
+                            int query = NtQueryInformationProcess(handle, 0, ref information,
+                                Marshal.SizeOf<ProcessBasicInformation>(), out _);
+                            if (query != 0 || information.UniqueProcessId != (nuint)entry.Id ||
+                                information.InheritedFromUniqueProcessId != (nuint)parent.Id ||
+                                child.StartTime < parent.StartTime || parent.HasExited)
+                            {
+                                throw new InvalidOperationException("jdt_descendant_capture_unconfirmed");
+                            }
+
+                            _descendants.Add(child);
+                            retained = true;
+                            parents.Enqueue(child);
+                        }
+                        finally
+                        {
+                            if (!retained)
+                            {
+                                child.Dispose();
+                            }
+                        }
+                    }
+                }
+
+                _descendantsCaptured = true;
+            }
+            catch (Exception exception)
+            {
+                _captureFailure = new InvalidOperationException(
+                    "jdt_descendant_capture_unconfirmed", exception);
+                throw _captureFailure;
+            }
+        }
+    }
+
     public Task KillTreeAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        Exception? captureFailure = null;
+        try
+        {
+            CaptureDescendantsForTermination();
+        }
+        catch (Exception exception)
+        {
+            // Unknown ancestry cannot authorize new children, but it must not
+            // prevent best-effort termination of already validated handles.
+            captureFailure = exception;
+        }
+        Process[] descendants;
+        lock (_terminationLock)
+        {
+            descendants = _descendants.ToArray();
+        }
+        // Process.Kill(entireProcessTree:true) does not acknowledge descendant
+        // exit. Terminate the exact captured handles deepest first, including
+        // children whose parent has exited since capture.
+        List<Exception>? failures = captureFailure is null ? null : [captureFailure];
+        foreach (Process descendant in descendants.Reverse())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                if (!descendant.HasExited)
+                {
+                    descendant.Kill();
+                }
+            }
+            catch (Exception exception)
+            {
+                (failures ??= []).Add(exception);
+            }
+        }
         if (!_process.HasExited)
         {
-            _process.Kill(entireProcessTree: true);
+            try
+            {
+                _process.Kill(entireProcessTree: captureFailure is null);
+            }
+            catch (Exception exception)
+            {
+                (failures ??= []).Add(exception);
+            }
+        }
+        if (failures is not null)
+        {
+            throw new AggregateException("jdt_process_termination_unconfirmed", failures);
         }
 
         return Task.CompletedTask;
@@ -463,15 +605,57 @@ internal sealed class PreparedJdtOwnedProcess : IJdtLsProcess
 
     public ValueTask DisposeAsync()
     {
-        if (!_process.HasExited)
+        lock (_disposalLock)
         {
-            throw new InvalidOperationException("jdt_process_still_running");
+            if (_disposal is not null)
+            {
+                return new ValueTask(_disposal);
+            }
+            if (!_process.WaitForExit(0))
+            {
+                throw new InvalidOperationException("jdt_process_still_running");
+            }
+            if (GetCapturedDescendants().Any(descendant => !descendant.WaitForExit(0)))
+            {
+                throw new InvalidOperationException("jdt_descendant_still_running");
+            }
+            _disposal = DisposeCoreAsync();
+            return new ValueTask(_disposal);
         }
+    }
 
+    private async Task DisposeCoreAsync()
+    {
+        _stderrStop.Cancel();
+        Exception? readerFailure = null;
+        try
+        {
+            _stderrReader.Dispose();
+        }
+        catch (Exception exception)
+        {
+            readerFailure = exception;
+        }
+        try
+        {
+            await _stderrPump.ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // A faulted diagnostic read is settled once observed. It does not
+            // change the confirmed process exit or authorize a live reader.
+        }
+        if (readerFailure is not null)
+        {
+            throw new InvalidOperationException("jdt_stderr_cleanup_unconfirmed", readerFailure);
+        }
         _ownedState.CleanupAfterConfirmedExit();
+        foreach (Process descendant in GetCapturedDescendants())
+        {
+            descendant.Dispose();
+        }
         _process.Dispose();
-
-        return ValueTask.CompletedTask;
+        _stderrStop.Dispose();
     }
 
     private async Task DrainStderrAsync()
@@ -479,7 +663,7 @@ internal sealed class PreparedJdtOwnedProcess : IJdtLsProcess
         char[] buffer = new char[4_096];
         while (true)
         {
-            int read = await _process.StandardError.ReadAsync(buffer);
+            int read = await _stderrReader.ReadAsync(buffer.AsMemory(), _stderrStop.Token);
             if (read == 0)
             {
                 return;
@@ -495,5 +679,148 @@ internal sealed class PreparedJdtOwnedProcess : IJdtLsProcess
             }
         }
     }
+
+    private Process[] GetCapturedDescendants()
+    {
+        lock (_terminationLock)
+        {
+            ThrowIfCaptureFailed();
+            return _descendants.ToArray();
+        }
+    }
+
+    private static async Task WaitForKernelExitAsync(Process process,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        SafeProcessHandle processHandle = process.SafeHandle;
+        bool retained = false;
+        try
+        {
+            processHandle.DangerousAddRef(ref retained);
+            using var signal = new ProcessExitSignal(processHandle.DangerousGetHandle());
+            if (signal.WaitOne(0))
+            {
+                return;
+            }
+
+            // GetExitCodeProcess can report an exit code before kernel teardown
+            // finishes. Process.WaitForExitAsync uses that fast path, so only
+            // the actual process-object signal can authorize state cleanup.
+            var completion = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            RegisteredWaitHandle registration = ThreadPool.RegisterWaitForSingleObject(
+                signal, static (state, _) => ((TaskCompletionSource)state!).TrySetResult(),
+                completion, Timeout.InfiniteTimeSpan, executeOnlyOnce: true);
+            try
+            {
+                using CancellationTokenRegistration cancellation = cancellationToken.Register(
+                    () => completion.TrySetCanceled(cancellationToken));
+                await completion.Task.ConfigureAwait(false);
+            }
+            finally
+            {
+                registration.Unregister(null);
+            }
+        }
+        finally
+        {
+            if (retained)
+            {
+                processHandle.DangerousRelease();
+            }
+        }
+    }
+
+    private sealed class ProcessExitSignal : WaitHandle
+    {
+        internal ProcessExitSignal(nint processHandle)
+        {
+            SafeWaitHandle = new SafeWaitHandle(processHandle, ownsHandle: false);
+        }
+    }
+
+    private void ThrowIfCaptureFailed()
+    {
+        if (_captureFailure is not null)
+        {
+            throw _captureFailure;
+        }
+    }
+
+    private static List<ProcessParent> SnapshotProcessParents()
+    {
+        using SafeFileHandle snapshot = CreateToolhelp32Snapshot(0x00000002, 0);
+        if (snapshot.IsInvalid)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+
+        var result = new List<ProcessParent>();
+        ProcessEntry entry = new() { Size = (uint)Marshal.SizeOf<ProcessEntry>() };
+        if (!Process32FirstW(snapshot, ref entry))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+        do
+        {
+            result.Add(new ProcessParent(checked((int)entry.ProcessId),
+                checked((int)entry.ParentProcessId)));
+            entry.Size = (uint)Marshal.SizeOf<ProcessEntry>();
+        }
+        while (Process32NextW(snapshot, ref entry));
+
+        int error = Marshal.GetLastWin32Error();
+        if (error != 18) // ERROR_NO_MORE_FILES is the only complete snapshot result.
+        {
+            throw new Win32Exception(error);
+        }
+        return result;
+    }
+
+    private sealed record ProcessParent(int Id, int ParentId);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct ProcessEntry
+    {
+        internal uint Size;
+        internal uint Usage;
+        internal uint ProcessId;
+        internal nuint DefaultHeapId;
+        internal uint ModuleId;
+        internal uint Threads;
+        internal uint ParentProcessId;
+        internal int BasePriority;
+        internal uint Flags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        internal string Executable;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessBasicInformation
+    {
+        internal nint Reserved1;
+        internal nint PebBaseAddress;
+        internal nint Reserved2;
+        internal nint Reserved3;
+        internal nuint UniqueProcessId;
+        internal nuint InheritedFromUniqueProcessId;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern SafeFileHandle CreateToolhelp32Snapshot(uint flags, uint processId);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool Process32FirstW(SafeFileHandle snapshot, ref ProcessEntry entry);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool Process32NextW(SafeFileHandle snapshot, ref ProcessEntry entry);
+
+    [DllImport("ntdll.dll")]
+    private static extern int NtQueryInformationProcess(SafeProcessHandle processHandle,
+        int informationClass, ref ProcessBasicInformation information, int informationLength,
+        out int returnLength);
 
 }

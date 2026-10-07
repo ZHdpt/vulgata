@@ -176,6 +176,24 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanCodeGraphLifetimeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanSourcePolicyTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanToolRuntimeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanToolRuntimeQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "OctoberScan/OctoberScanJdtProcessSettlementTests.cs": {
+    "suite": "LocalTools"
+  },
+  "OctoberScan/OctoberScanOwnedProcessObservation.cs": {
+    "suite": "LocalTools"
+  },
   "OctoberScan/OctoberScanContractProbes.cs": {
     "suite": "SelfContained"
   },

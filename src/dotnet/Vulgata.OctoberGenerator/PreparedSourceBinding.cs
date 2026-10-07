@@ -1,5 +1,6 @@
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
+using Vulgata.Infrastructure.Analysis.CodeGraph;
 
 namespace Vulgata.OctoberGenerator;
 
@@ -54,6 +55,26 @@ public sealed class PreparedSourceBinding
         return approval is not null &&
             _trustedRoots.ContainsKey((_targetId, approval.BatchId, approval.RepositoryId,
                 approval.RootBindingIdentity));
+    }
+
+    internal string GetTrustedRoot(PreparedSourceApproval approval) =>
+        _trustedRoots.TryGetValue((_targetId, approval.BatchId, approval.RepositoryId,
+            approval.RootBindingIdentity), out string? root)
+            ? root : throw new InvalidOperationException("The exact prepared-source binding is unavailable.");
+
+    internal Task<string?> ObserveFileIdentityAsync(IPreparedSourceReadContext context,
+        string relativePath, CancellationToken cancellationToken)
+        => _issuer.ObserveFileIdentityAsync(context, relativePath, cancellationToken);
+
+    public Task<PreparedSourceIssueResult> IssueAsync(
+        PreparedSourceApproval approval, PreparedSourceGrantLimits limits,
+        PreparedCodeGraphConnection ownedState, CancellationToken cancellationToken = default)
+    {
+        if (!HasCurrentRootBinding(approval))
+        {
+            return Task.FromResult(new PreparedSourceIssueResult(PreparedSourceIssueStatus.Denied, null));
+        }
+        return _issuer.IssueAsync(new(approval, GetTrustedRoot(approval), limits), ownedState, cancellationToken);
     }
 
     public Task<PreparedSourceIssueResult> IssueAsync(
