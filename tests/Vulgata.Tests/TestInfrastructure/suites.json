@@ -1,4 +1,7 @@
 {
+  "October/Integration/OctoberChatClientSessionTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberBusinessExecutionScopeTests.cs": {
     "suite": "SelfContained"
   },
@@ -6,6 +9,21 @@
     "suite": "SelfContained"
   },
   "October/Knowledge/OctoberDisclosureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphComponentTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphViewModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphProjectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphAuthorizationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/ControlledGraphFixture.cs": {
     "suite": "SelfContained"
   },
   "Explore/ExplorePersistedReaderTests.cs": {
@@ -188,6 +206,12 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanFileWorkerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanExecutionScopeTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanGenerateConfigurationTests.cs": {
     "suite": "SelfContained"
   },
@@ -221,6 +245,9 @@
   "October/Chat/OctoberChatContractTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Chat/OctoberChatDisclosureTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Chat/OctoberChatEntryTests.cs": {
     "suite": "SelfContained"
   },
@@ -234,6 +261,9 @@
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatSelectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatStreamingUiTests.cs": {

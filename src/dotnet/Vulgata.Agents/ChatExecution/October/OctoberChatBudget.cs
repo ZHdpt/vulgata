@@ -21,6 +21,7 @@ public sealed class OctoberChatBudget
     private long _toolResultBytes;
     private long _outputBytes;
     private long _sseBytes;
+    private OctoberChatProviderStatus? _transportFailureStatus;
 
     public OctoberChatBudget(OctoberChatLimits? limits = null, TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
@@ -48,9 +49,21 @@ public sealed class OctoberChatBudget
     public long ToolResultBytes { get { lock (_gate) return _toolResultBytes; } }
     public long OutputBytes { get { lock (_gate) return _outputBytes; } }
     public long SseBytes { get { lock (_gate) return _sseBytes; } }
-    internal CancellationToken OriginalCancellationToken => _cancellationToken;
+    public CancellationToken OriginalCancellationToken => _cancellationToken;
+    internal OctoberChatProviderStatus? TransportFailureStatus { get { lock (_gate) return _transportFailureStatus; } }
 
-    internal CancellationTokenSource CreateDeadlineCancellation()
+    internal void RecordTransportRejection(int observedAttempts, bool budgetExceeded)
+    {
+        lock (_gate)
+        {
+            if (_transportFailureStatus is not null) return;
+            _transportFailureStatus = budgetExceeded ? OctoberChatProviderStatus.BudgetExceeded : OctoberChatProviderStatus.Failed;
+            _toolCalls += Math.Min(Math.Max(0, observedAttempts), Limits.ToolCalls - _toolCalls);
+            _stopped = true;
+        }
+    }
+
+    public CancellationTokenSource CreateDeadlineCancellation()
     {
         lock (_gate)
         {

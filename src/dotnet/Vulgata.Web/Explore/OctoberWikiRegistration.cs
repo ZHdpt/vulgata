@@ -43,6 +43,9 @@ public static class OctoberWikiRegistration
                     .GetAuthenticationStateAsync().WaitAsync(token)).User));
         services.AddScoped<IOctoberKnowledgeDisclosurePolicy, OctoberKnowledgeDisclosurePolicy>();
         services.AddSingleton<IOctoberKnowledgeTokenProtector, OctoberKnowledgeDataProtectionTokenProtector>();
+        services.AddSingleton<IOctoberKnowledgeDisclosureProtector, OctoberKnowledgeDisclosureDataProtectionProtector>();
+        services.AddScoped<OctoberKnowledgeDependencyAuthority>();
+        services.AddScoped<IOctoberKnowledgeDependencyAuthority>(provider => provider.GetRequiredService<OctoberKnowledgeDependencyAuthority>());
         services.AddOctoberKnowledgeReads(selection.Publication, selection.LogDirectory);
         services.AddScoped<IExploreContextProvider>(provider => new OctoberExploreContextProvider(
             selection, provider.GetRequiredService<AuthenticationStateProvider>(),

@@ -1,0 +1,277 @@
+@using Vulgata.Core.DomainServices.OctoberKnowledge
+@using Vulgata.Shared.Explore
+@using Vulgata.Web.Explore
+
+@if (Graph is not null)
+{
+    <section class="knowledge-graph" aria-label="已接受知识的有限图谱" data-theme="@(Mode == KnowledgeMode.IT ? "dark" : "light")">
+        <p class="graph-scope">当前只显示一个文档页及其中部分文档的一跳已接受关系；不自动扩展。</p>
+        <p>已显示 @Graph.Nodes.Length 个文档、@Graph.Edges.Length 条关系。显示上限为 40 个文档、80 条关系。</p>
+        @if (Graph.Incomplete)
+        {
+            <p class="graph-limit">本次图谱不完整：已达到读取或显示范围限制。</p>
+        }
+        @if (Graph.HasUnknownCoverage || Graph.Coverage is null)
+        {
+            <p class="graph-coverage">部分来源的知识覆盖情况未知。</p>
+        }
+        @if (Graph.Coverage is { } coverage)
+        {
+            @if (coverage.IsPartial)
+            {
+                <p class="graph-coverage">已披露的知识覆盖仍为部分覆盖。</p>
+            }
+            <ul aria-label="已披露的覆盖限制">
+                @foreach (var gap in coverage.PermittedGaps)
+                {
+                    <li>@gap</li>
+                }
+            </ul>
+        }
+        @if (!Graph.Nodes.IsEmpty)
+        {
+            <div class="viewport-actions" aria-label="图谱视图操作">
+                <FluentButton aria-label="向左平移" OnClick="() => Pan(-40, 0)">向左</FluentButton>
+                <FluentButton aria-label="向右平移" OnClick="() => Pan(40, 0)">向右</FluentButton>
+                <FluentButton aria-label="向上平移" OnClick="() => Pan(0, -40)">向上</FluentButton>
+                <FluentButton aria-label="向下平移" OnClick="() => Pan(0, 40)">向下</FluentButton>
+                <FluentButton aria-label="放大" OnClick="ZoomIn" Disabled="@(_zoom >= 4)">放大</FluentButton>
+                <FluentButton aria-label="缩小" OnClick="ZoomOut" Disabled="@(_zoom <= .25)">缩小</FluentButton>
+                <FluentButton aria-label="适应视图" OnClick="Fit">适应视图</FluentButton>
+            </div>
+            <svg class="graph-canvas" viewBox="@ViewBox" role="img" aria-label="带方向的知识图谱；完整文字与操作见下方文档和关系列表">
+                <defs>
+                    <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                        <path d="M0 0 L8 4 L0 8 Z" class="arrowhead" />
+                    </marker>
+                </defs>
+                <g data-viewport="true" transform="@Transform">
+                    @for (var index = 0; index < Graph.Edges.Length; index++)
+                    {
+                        var edge = Graph.Edges[index];
+                        <path data-edge-id="@edge.RelationshipVersionId" data-kind="@edge.Kind" d="@EdgePath(edge, index)"
+                              class="@(edge.Kind == RelationshipKind.GeneratedFrom ? "graph-edge generated-from" : "graph-edge references")"
+                              marker-end="url(#graph-arrow)">
+                            <title>@EdgeDescription(edge)</title>
+                        </path>
+                    }
+                    @foreach (var node in Graph.Nodes)
+                    {
+                        var position = _positions[node.Handle];
+                        <g data-node-id="@node.Handle.DocumentVersionId" class="@(_selected == node.Handle ? "graph-node selected" : "graph-node")">
+                            <circle cx="@Number(position.X)" cy="@Number(position.Y)" r="25" />
+                            <text x="@Number(position.X)" y="@Number(position.Y + 45)" text-anchor="middle">@CanvasLabel(node.Title)</text>
+                            <title>@node.Title</title>
+                        </g>
+                    }
+                </g>
+            </svg>
+        }
+        <h2>文档</h2>
+        <ul class="node-list" aria-label="可访问的文档及说明">
+            @foreach (var node in Graph.Nodes)
+            {
+                <li class="@(_selected == node.Handle ? "selected" : null)">
+                    <FluentButton data-node-id="@node.Handle.DocumentVersionId" aria-pressed="@(_selected == node.Handle ? "true" : "false")"
+                                  OnClick="() => SelectNode(node.Handle)">定位 @node.Title</FluentButton>
+                    <a href="@ExactDocumentLinkBuilder.Build(node.Handle)">打开 @node.Title</a>
+                    <span>@(node.Kind == DocumentKind.BusinessLogic ? "业务逻辑文档" : "代码逻辑文档")</span>
+                    @foreach (var claim in node.QualifiedExcerpt)
+                    {
+                        <div class="qualified-claim">
+                            <p class="qualification">@QualificationLabel(claim.Qualification)</p>
+                            <p>@claim.Text</p>
+                            @if (Mode == KnowledgeMode.IT)
+                            {
+                                @foreach (var evidence in claim.Evidence)
+                                {
+                                    @if (evidence.Source is { } source)
+                                    {
+                                        <p>来源：@(source.Origin.RelativePath)，第 @(source.StartLine)–@(source.EndLine) 行</p>
+                                    }
+                                }
+                            }
+                            <ul aria-label="说明限制">
+                                @foreach (var limitation in claim.Limitations)
+                                {
+                                    <li>@limitation</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+        <h2>已接受的关系</h2>
+        <ul class="edge-list" aria-label="关系方向与含义">
+            @foreach (var edge in Graph.Edges)
+            {
+                <li>@EdgeDescription(edge)：@edge.Meaning</li>
+            }
+        </ul>
+        <h2>不确定性</h2>
+        @if (Graph.Uncertainties.IsEmpty)
+        {
+            <p>本次读取未返回可显示的不确定性；这不代表知识已完整。</p>
+        }
+        <ul aria-label="已披露的不确定性">
+            @foreach (var uncertainty in Graph.Uncertainties)
+            {
+                <li>
+                    <p>@uncertainty.Explanation</p>
+                    <ul>
+                        @foreach (var limitation in uncertainty.Limitations)
+                        {
+                            <li>@limitation</li>
+                        }
+                    </ul>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@code {
+    [Parameter] public ExploreGraph? Graph { get; set; }
+    [Parameter] public KnowledgeMode? Mode { get; set; }
+
+    private readonly Dictionary<DocumentHandle, (double X, double Y)> _positions = [];
+    private ExploreGraph? _previousGraph;
+    private DocumentHandle? _selected;
+    private double _panX;
+    private double _panY;
+    private double _zoom = 1;
+    private double _originX;
+    private double _originY;
+    private double _width = 600;
+    private double _height = 300;
+    private string ViewBox => FormattableString.Invariant($"{_originX} {_originY} {_width} {_height}");
+    private string Transform => FormattableString.Invariant($"translate({_panX} {_panY}) scale({_zoom})");
+
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(_previousGraph, Graph)) { return; }
+        _previousGraph = Graph;
+        _positions.Clear();
+        _selected = null;
+        Fit();
+        if (Graph is null) { return; }
+        var columns = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(Graph.Nodes.Length)));
+        _width = Math.Max(600, columns * 180 + 40);
+        _height = Math.Max(300, Math.Ceiling(Graph.Nodes.Length / (double)columns) * 150 + 60);
+        for (var index = 0; index < Graph.Nodes.Length; index++)
+        {
+            _positions.Add(Graph.Nodes[index].Handle, (110 + index % columns * 180, 100 + index / columns * 150));
+        }
+
+        SetCanvasBounds();
+    }
+
+    private void SetCanvasBounds()
+    {
+        // A Bezier curve stays within its control-point hull. Include that whole hull, then
+        // leave room for strokes, arrowheads, circles and the bounded display labels.
+        var bounds = new List<(double X, double Y)> { (0, 0), (_width, _height) };
+        foreach (var point in _positions.Values)
+        {
+            bounds.Add((point.X - 85, point.Y - 30));
+            bounds.Add((point.X + 85, point.Y + 60));
+        }
+
+        for (var index = 0; index < Graph!.Edges.Length; index++)
+        {
+            bounds.AddRange(EdgeControlPoints(Graph.Edges[index], index));
+        }
+
+        const double markerPadding = 24;
+        _originX = bounds.Min(point => point.X) - markerPadding;
+        _originY = bounds.Min(point => point.Y) - markerPadding;
+        _width = bounds.Max(point => point.X) - _originX + markerPadding;
+        _height = bounds.Max(point => point.Y) - _originY + markerPadding;
+    }
+
+    private void Pan(double x, double y)
+    {
+        _panX = Math.Clamp(_panX + x, -4000, 4000);
+        _panY = Math.Clamp(_panY + y, -4000, 4000);
+    }
+
+    private void ZoomIn() => ChangeZoom(Math.Min(4, _zoom * 1.25));
+    private void ZoomOut() => ChangeZoom(Math.Max(.25, _zoom / 1.25));
+    private void ChangeZoom(double zoom)
+    {
+        var ratio = zoom / _zoom;
+        var centerX = _originX + _width / 2;
+        var centerY = _originY + _height / 2;
+        _panX = centerX - (centerX - _panX) * ratio;
+        _panY = centerY - (centerY - _panY) * ratio;
+        _zoom = zoom;
+    }
+
+    private void Fit() { _panX = 0; _panY = 0; _zoom = 1; }
+
+    private void SelectNode(DocumentHandle handle)
+    {
+        if (!_positions.TryGetValue(handle, out var point)) { return; }
+        _selected = handle;
+        _panX = _originX + _width / 2 - point.X * _zoom;
+        _panY = _originY + _height / 2 - point.Y * _zoom;
+    }
+
+    private string EdgePath(RelatedDocument edge, int index)
+    {
+        var points = EdgeControlPoints(edge, index);
+        return points.Length == 4
+            ? FormattableString.Invariant($"M {points[0].X} {points[0].Y} C {points[1].X} {points[1].Y} {points[2].X} {points[2].Y} {points[3].X} {points[3].Y}")
+            : FormattableString.Invariant($"M {points[0].X} {points[0].Y} Q {points[1].X} {points[1].Y} {points[2].X} {points[2].Y}");
+    }
+
+    private (double X, double Y)[] EdgeControlPoints(RelatedDocument edge, int index)
+    {
+        var from = _positions[edge.From];
+        var to = _positions[edge.To];
+        var parallelIndex = Graph!.Edges.Take(index).Count(previous => previous.From == edge.From && previous.To == edge.To);
+        if (edge.From == edge.To)
+        {
+            var offset = 65 + parallelIndex * 18;
+            return [(from.X - 18, from.Y - 18), (from.X - offset, from.Y - offset),
+                (from.X + offset, from.Y - offset), (from.X + 18, from.Y - 18)];
+        }
+
+        var dx = to.X - from.X;
+        var dy = to.Y - from.Y;
+        var length = Math.Sqrt(dx * dx + dy * dy);
+        var bend = (parallelIndex + 1) * 18;
+        return [(from.X + dx / length * 25, from.Y + dy / length * 25),
+            ((from.X + to.X) / 2 - dy / length * bend, (from.Y + to.Y) / 2 + dx / length * bend),
+            (to.X - dx / length * 30, to.Y - dy / length * 30)];
+    }
+
+    private static string CanvasLabel(string title)
+    {
+        var label = new System.Text.StringBuilder();
+        var count = 0;
+        foreach (var rune in title.EnumerateRunes())
+        {
+            if (++count > 11) { return label.Append('…').ToString(); }
+            label.Append(rune.ToString());
+        }
+
+        return label.ToString();
+    }
+
+    private string EdgeDescription(RelatedDocument edge) =>
+        $"{Graph!.Nodes.First(node => node.Handle == edge.From).Title} → {Graph.Nodes.First(node => node.Handle == edge.To).Title}，" +
+        (edge.Kind == RelationshipKind.GeneratedFrom ? "生成自（GENERATED_FROM）" : "引用（REFERENCES）");
+
+    private static string Number(double number) => number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private static string QualificationLabel(ClaimQualification qualification) => qualification switch
+    {
+        ClaimQualification.SourceSupported => "源代码支持",
+        ClaimQualification.Advisory => "参考上下文",
+        ClaimQualification.Hypothesis => "假设",
+        ClaimQualification.Uncertain => "不确定",
+        ClaimQualification.Mixed => "混合证据",
+        _ => "资格信息不可用",
+    };
+}
