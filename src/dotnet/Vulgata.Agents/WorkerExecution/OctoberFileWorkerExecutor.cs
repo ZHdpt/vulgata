@@ -337,11 +337,16 @@ public sealed class OctoberFileWorkerExecutor
                     await lease.CheckBeforeSendAsync(linked.Token) != ProviderAdmissionStatus.Granted)
                     throw Fail(OctoberFileWorkerStatus.Denied);
                 if (!await request.Source.VerifyCurrentAsync(linked.Token)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
+                linked.Token.ThrowIfCancellationRequested();
                 Rounds++;
+                if (client is not IOctoberWorkerAttemptClient)
+                {
+                    (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
+                    timing.MarkDispatched(Stopwatch.GetTimestamp());
+                }
                 IAsyncEnumerable<ChatResponseUpdate> updates = client is IOctoberWorkerAttemptClient admittedClient
                     ? admittedClient.GetAttemptStreamingResponseAsync(snapshot, bounded, lease, linked.Token, timing.MarkDispatched)
                     : client.GetStreamingResponseAsync(snapshot, bounded, linked.Token);
-                if (client is not IOctoberWorkerAttemptClient) timing.MarkDispatched(Stopwatch.GetTimestamp());
                 iterator = updates.GetAsyncEnumerator(linked.Token);
                 while (true)
                 {
@@ -430,16 +435,39 @@ public sealed class OctoberFileWorkerExecutor
                     }
                     if (!deferred)
                     {
-                        await lease.SettleAsync(new(inputTokens, actualOutputTokens, null, wait,
-                            timing.Elapsed, success ? ProviderAttemptOutcome.Completed :
-                            linked.IsCancellationRequested ? ProviderAttemptOutcome.Cancelled : ProviderAttemptOutcome.Failed), CancellationToken.None);
-                        await lease.DisposeAsync();
+                        TimeSpan executionTime = timing.Elapsed;
+                        ProviderAttemptOutcome outcome = success ? ProviderAttemptOutcome.Completed :
+                            linked.IsCancellationRequested ? ProviderAttemptOutcome.Cancelled : ProviderAttemptOutcome.Failed;
+                        bool retryCandidate = false;
                         _allUsageKnown &= inputTokens is >= 0 && actualOutputTokens is >= 0 &&
                             inputTokens.Value <= admissionRequest.MaximumTokens &&
                             actualOutputTokens.Value <= admissionRequest.MaximumTokens - inputTokens.Value;
                         if (transient && _allUsageKnown && _pending.Count == 0 && calls.Count == 0 &&
-                            Failure is null && !linked.IsCancellationRequested &&
-                            await request.Source.VerifyCurrentAsync(CancellationToken.None))
+                            Failure is null && !linked.IsCancellationRequested)
+                        {
+                            Task<bool>? verification = null;
+                            try
+                            {
+                                verification = request.Source.VerifyCurrentAsync(linked.Token);
+                                bool current = await verification.WaitAsync(linked.Token);
+                                if (current && !linked.IsCancellationRequested)
+                                    retryCandidate = true;
+                            }
+                            catch (Exception)
+                            {
+                                if (verification is not null) _ = ObserveVerificationAsync(verification);
+                            }
+                        }
+                        // Physical cleanup is confirmed. Preserve the original lease deadline through
+                        // verification, then account observed facts even when verification was cancelled.
+                        (lease as IOctoberWorkerDispatchObserver)?.CompleteDispatchObservation();
+                        try
+                        {
+                            await lease.SettleAsync(new(inputTokens, actualOutputTokens, null, wait,
+                                executionTime, outcome), CancellationToken.None);
+                        }
+                        finally { await lease.DisposeAsync(); }
+                        if (retryCandidate && !linked.IsCancellationRequested)
                             RetryDisposition = OctoberWorkerRetryDisposition.KnownSafeTransient;
                     }
                 }
@@ -455,6 +483,12 @@ public sealed class OctoberFileWorkerExecutor
                 Contents = [new TextContent(LastText), .. calls],
                 FinishReason = finish
             };
+        }
+
+        private static async Task ObserveVerificationAsync(Task<bool> verification)
+        {
+            try { await verification; }
+            catch (Exception) { }
         }
 
         internal async ValueTask<object?> InvokeAsync(FunctionInvocationContext context, CancellationToken token)
@@ -529,6 +563,7 @@ public sealed class OctoberFileWorkerExecutor
             {
                 try { await pending; } catch (Exception) { }
                 await iterator.DisposeAsync();
+                (lease as IOctoberWorkerDispatchObserver)?.CompleteDispatchObservation();
                 await lease.SettleAsync(new(null, null, null, wait, timing.Elapsed, ProviderAttemptOutcome.Cancelled));
                 await lease.DisposeAsync();
             }
@@ -541,6 +576,7 @@ public sealed class OctoberFileWorkerExecutor
             try
             {
                 await cleanup;
+                (lease as IOctoberWorkerDispatchObserver)?.CompleteDispatchObservation();
                 await lease.SettleAsync(new(null, null, null, wait, timing.Elapsed, ProviderAttemptOutcome.Cancelled));
                 await lease.DisposeAsync();
             }

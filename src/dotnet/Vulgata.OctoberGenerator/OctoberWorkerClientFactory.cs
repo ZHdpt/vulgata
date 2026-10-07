@@ -8,6 +8,7 @@ using OpenAI.Chat;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberScan;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.OctoberGenerator;
@@ -113,7 +114,9 @@ public sealed class OctoberWorkerClientFactory
                 throw new InvalidOperationException("The Worker attempt is no longer eligible.");
             cancellationToken.ThrowIfCancellationRequested();
             onDispatched?.Invoke(Stopwatch.GetTimestamp());
-            return await _invoker.SendAsync(request, cancellationToken);
+            Task<HttpResponseMessage> response = _invoker.SendAsync(request, cancellationToken);
+            (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
+            return await response;
         }
         protected override void Dispose(bool disposing)
         {

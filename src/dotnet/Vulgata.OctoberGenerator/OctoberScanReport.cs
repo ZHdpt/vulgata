@@ -10,7 +10,7 @@ public enum OctoberPublicationStatus { NotRequested, Confirmed, NoContent, Faile
 public sealed record OctoberScanTimings(TimeSpan Elapsed, TimeSpan QueueWait,
     TimeSpan ToolWait, TimeSpan ModelWait, TimeSpan StoreWait);
 
-public sealed record OctoberScanUsage(int Requests, long? InputTokens,
+public sealed record OctoberScanUsage(int? Requests, long? InputTokens,
     long? OutputTokens, bool HasUnknownUsage);
 
 public sealed record OctoberExecutionSnapshot(OctoberScanUsage Usage, TimeSpan QueueWait,

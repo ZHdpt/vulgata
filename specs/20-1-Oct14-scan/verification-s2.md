@@ -340,6 +340,82 @@ test/production final-shape assessments accept the input-ledger/tool/accounting
 component. The full Generate runner remains unimplemented and T020–T024 remain
 open; no S2 completion or real generation is claimed.
 
+This component was committed as `f396e35b1fcaab83586245ad23ecbcc46616e639`.
+Integrator cross-module review subsequently held that candidate for two narrow
+corrections: physical request counts must follow actual dispatch rather than send
+eligibility, and final retry source verification must remain bounded by the
+original Worker lifetime and cannot assign safe retry after cancellation. The
+findings are source-derived; controlled RED is being authored before correction.
+The remaining provenance/tool binding review stays accepted. No broad S2 hold or
+runtime grant is implied; unrelated runner/configuration work continues.
+
+First full-runner/configuration verification:
+`isolation-28af191689994fffb5d26836883f4788/results.trx`, **11 selected,
+7 passed, 4 failed, zero skipped**. The two actual runner cases fail at the
+deliberate stub (expected published exit 0; Begin receipt never reached). Two
+independent-review parser cases reproduce nested state/log acceptance for a
+drive-root source. Root inspected these failures and released the runner and
+narrow parser corrections. This harness starts from an unaccepted owned SQLite
+batch and controlled Worker/native adapters; it is not a retained real run.
+
+Integrator correction RED and source-factory RED:
+`isolation-55c33d5ef9c24aa49cb24d8bf26a2cef/results.trx`, **32 selected,
+26 passed, 6 failed, zero skipped**. Both cancelled/source-lost post-grant cases
+observed zero transport/client calls but reported one physical request. The final
+retry verifier ignored cancellation and exceeded the bounded test wait. Three
+source-factory cases reached the deliberately absent selection/approval behavior.
+Root inspected all failures before releasing the corresponding narrow corrections
+and source-factory implementation. The factory fixture explicitly supplies an
+inert absolute JDK path, matching configuration requirements; validation was not
+relaxed. Existing Worker checks still pass, and no native/provider resources ran.
+
+First complete controlled runner candidate:
+`isolation-5f4485640808436988a7629251f9c0b2/results.trx`, **276 selected,
+270 passed, 6 failed, zero skipped**. Nine runner cases passed, including actual
+unaccepted SQLite batch → owner Begin → real Worker executor/tool facade → F1
+acceptance → owner freeze/CL publication → ordinary reader, replay, revocation and
+uncertain operations. All eight runtime-parser cases passed. Remaining failures:
+three source-factory stubs, original-file-deadline retry verification timeout,
+Business settled usage lost without a Worker observer, and module cancellation
+erasing a known terminal report. Root inspected and released those corrections.
+
+Integrator/Business clarified truthful reporting: preserve settled usage and
+conservative reservations independently of dispatch observation. Physical request
+count is nullable when a consumer lacks trusted observation; a fully observed
+Worker that never dispatched reports exact zero. No shared Business lease change
+or new S2 prerequisite is introduced. A future Business transport observation
+binding belongs to its owner before S3.
+
+Independent runner review additionally requires retained operator-session ownership
+through cancellation cleanup and exactly-once cleanup of late successful source/
+client acquisition. Settled analysis resources must close before freeze/publication.
+Controlled counterexamples are being authored before those lifecycle corrections.
+This first controlled route is not Main activation, PostgreSQL equivalence, native
+generation, real provider output or T024 source usefulness qualification.
+
+`isolation-bd772d2089794d1287baf242ed6fab3d/results.trx` selected **76:
+70 passed, 6 failed, zero skipped**. Source composition (4), both retry lifetime
+counterexamples, Business usage/unknown-request accounting, parser and module
+terminal-result fixes passed. Four runner lifecycle failures reproduced missing
+late resource disposal, premature session exit and publication before failing tool
+cleanup. Root released their corrections. The other two failures were exact-zero
+Worker counts becoming null because the controlled AfterGrantLease wrapper erased
+the new optional observer capability. The test owner forwards that capability;
+the exact-zero and Business-null assertions remain unchanged. Independent review
+accepts the accounting/retry/source-factory production changes contingent on the
+final controlled result; separate production final-shape assessment agrees.
+
+Final affected controlled verification passed **280/280, zero failed/skipped**:
+`isolation-fb827fae3d824dba8987e3488151c591/results.trx`. This includes the
+Integrator physical-observation/original-deadline corrections, unchanged exact-zero
+Worker assertions, preserved Business usage with nullable unknown requests, all
+14 runner cases, four source-factory cases and eight configuration cases. The
+runner now retains its session through owned completion, adopts late successful
+resource acquisitions before cancellation handling, and closes analysis resources
+before freeze/publication. Cleanup failure remains sticky and blocks success.
+Independent re-review accepts these corrections and the controlled runner boundary.
+Main activation and separate PostgreSQL/External/E2E qualification remain open.
+
 ## Early composition decisions
 
 The reviewed primary-frame/F1 component is committed at

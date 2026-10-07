@@ -31,6 +31,7 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
     private ProviderAdmissionStatus? _blocked;
     private bool _unknownUsage;
     private int _dispatchedRequests;
+    private bool _unknownDispatch;
     private long? _actualInputTokens = 0;
     private long? _actualOutputTokens = 0;
     private TimeSpan _queueWait;
@@ -69,9 +70,10 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
         lock (_sync)
         {
             bool pending = _leases.Values.Any(lease => lease.HasUnconfirmedSettlement);
-            return new(new(_dispatchedRequests, pending ? null : _actualInputTokens,
+            bool unknownRequests = _unknownDispatch || _leases.Values.Any(lease => lease.DispatchUnknown);
+            return new(new(unknownRequests ? null : _dispatchedRequests, pending ? null : _actualInputTokens,
                     pending ? null : _actualOutputTokens,
-                    pending || _actualInputTokens is null || _actualOutputTokens is null),
+                    pending || unknownRequests || _actualInputTokens is null || _actualOutputTokens is null),
                 _queueWait, _modelWait, _leases.Count + _pendingAcquisitions, pending);
         }
     }
@@ -367,14 +369,17 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
     }
 
     private sealed class AttemptLease(OctoberExecutionScope owner, AttemptState state)
-        : IOctoberProviderAttemptLease
+        : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
         private readonly SemaphoreSlim _sendGate = new(1, 1);
         private bool _sent;
+        private bool _dispatched;
+        private bool _dispatchObservationComplete;
         private bool _released;
         private ProviderAttemptUsage? _settled;
         private Exception? _disposalFailure;
         internal bool HasUnconfirmedSettlement => _sent && _settled is null;
+        internal bool DispatchUnknown => _sent && !_dispatched && !_dispatchObservationComplete;
 
         public Guid AttemptId => state.AttemptId;
         public CancellationToken CancellationToken => state.Token;
@@ -414,7 +419,6 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
                             // A delayed check cannot revive an already-matured send slot.
                             owner._nextSend = now + owner._rateInterval;
                             _sent = true;
-                            owner._dispatchedRequests++;
                             return ProviderAdmissionStatus.Granted;
                         }
                     }
@@ -431,6 +435,27 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
                 if (!alreadySent)
                     lock (owner._sync)
                         owner._queueWait = AddDuration(owner._queueWait, owner._time.GetElapsedTime(waitStarted));
+            }
+        }
+
+        public void RecordDispatch()
+        {
+            lock (owner._sync)
+            {
+                if (_dispatched) return;
+                if (!_sent || _released) throw new InvalidOperationException("october_provider_dispatch_without_live_lease");
+                _dispatched = true;
+                owner._dispatchedRequests++;
+            }
+        }
+
+        public void CompleteDispatchObservation()
+        {
+            lock (owner._sync)
+            {
+                if (_dispatchObservationComplete) return;
+                if (_released) throw new InvalidOperationException("october_dispatch_observation_after_release");
+                _dispatchObservationComplete = true;
             }
         }
 
@@ -472,6 +497,7 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
                     _settled = usage;
                     if (_sent)
                     {
+                        if (!_dispatched && !_dispatchObservationComplete) owner._unknownDispatch = true;
                         owner._actualInputTokens = AddTokens(owner._actualInputTokens, usage.InputTokens);
                         owner._actualOutputTokens = AddTokens(owner._actualOutputTokens, usage.OutputTokens);
                         owner._modelWait = AddDuration(owner._modelWait, usage.ExecutionDuration);
