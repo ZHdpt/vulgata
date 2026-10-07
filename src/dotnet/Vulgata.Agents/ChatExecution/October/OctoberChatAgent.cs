@@ -52,10 +52,27 @@ internal sealed class OctoberChatAgent
     /// sinks must be nonblocking; production subscriber isolation belongs to the
     /// deferred coordinator. Progress describes facade invocation, never a saved turn.
     /// </summary>
-    public async Task<OctoberChatProviderResult> RunAsync(string question, string instructions, Action<string> onText,
+    public Task<OctoberChatProviderResult> RunAsync(string question, string instructions, Action<string> onText,
         CancellationToken cancellationToken = default, Action<OctoberChatToolProgress>? onToolProgress = null)
     {
         ArgumentNullException.ThrowIfNull(onText);
+        if (_tools.DisclosureSession is not null) return Task.FromResult(new OctoberChatProviderResult(OctoberChatProviderStatus.Failed, string.Empty));
+        return RunCoreAsync(question, instructions, (text, _) => { onText(text); return ValueTask.CompletedTask; }, cancellationToken, onToolProgress);
+    }
+
+    internal Task<OctoberChatProviderResult> RunAuthorizedAsync(string question, string instructions,
+        Func<string, CancellationToken, ValueTask> onText, CancellationToken cancellationToken = default,
+        Action<OctoberChatToolProgress>? onToolProgress = null)
+    {
+        ArgumentNullException.ThrowIfNull(onText);
+        if (_tools.DisclosureSession is null) return Task.FromResult(new OctoberChatProviderResult(OctoberChatProviderStatus.Failed, string.Empty));
+        return RunCoreAsync(question, instructions, onText, cancellationToken, onToolProgress);
+    }
+
+    private async Task<OctoberChatProviderResult> RunCoreAsync(string question, string instructions,
+        Func<string, CancellationToken, ValueTask> onText, CancellationToken cancellationToken,
+        Action<OctoberChatToolProgress>? onToolProgress)
+    {
         // Local instance protection only. D0 must still establish durable admission and
         // cross-request fencing before any production-facing execution can use this seam.
         if (Interlocked.Exchange(ref _used, 1) != 0) return new(OctoberChatProviderStatus.Failed, string.Empty);
@@ -105,7 +122,9 @@ internal sealed class OctoberChatAgent
                 linked.Token.ThrowIfCancellationRequested();
                 foreach (TextContent content in update.Contents.OfType<TextContent>())
                 {
-                    onText(content.Text);
+                    if (_tools.DisclosureSession is { } disclosure) await disclosure.ReauthorizeAsync(linked.Token);
+                    linked.Token.ThrowIfCancellationRequested();
+                    await onText(content.Text, linked.Token).AsTask().WaitAsync(linked.Token);
                     text.Append(content.Text);
                 }
             }
@@ -129,10 +148,16 @@ internal sealed class OctoberChatAgent
             // A tool may return a cancellation result for the linked execution token
             // and the SDK may wrap that as a non-cancellation exception. Preserve
             // the original cause before cancelling this token for cleanup ourselves.
+            OctoberChatProviderStatus? disclosureFailure = _tools.DisclosureSession?.FailureStatus switch
+            {
+                Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeDependencyStatus.BudgetExceeded => OctoberChatProviderStatus.BudgetExceeded,
+                Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeDependencyStatus.Cancelled => OctoberChatProviderStatus.Cancelled,
+                _ => null,
+            };
             OctoberChatProviderStatus status = linked.IsCancellationRequested
                 ? cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested
                     ? OctoberChatProviderStatus.Cancelled : OctoberChatProviderStatus.BudgetExceeded
-                : _budget.TransportFailureStatus ?? adapter.FailureStatus ?? OctoberChatProviderStatus.Failed;
+                : _budget.TransportFailureStatus ?? disclosureFailure ?? adapter.FailureStatus ?? OctoberChatProviderStatus.Failed;
             _budget.StopExecution();
             linked.Cancel();
             return new(status, text.ToString());
