@@ -15,7 +15,9 @@ public static class OctoberKnowledgeModule
             string.IsNullOrWhiteSpace(binding.TargetId) || string.IsNullOrWhiteSpace(binding.SelectionDigest) ||
             string.IsNullOrWhiteSpace(ownedLogDirectory) || !Path.IsPathFullyQualified(ownedLogDirectory) || !Directory.Exists(ownedLogDirectory))
         {
-            services.AddScoped<IOctoberKnowledgeReader, UnavailableOctoberKnowledgeReader>();
+            services.AddScoped<UnavailableOctoberKnowledgeReader>();
+            services.AddScoped<IOctoberKnowledgeReader>(provider => provider.GetRequiredService<UnavailableOctoberKnowledgeReader>());
+            services.AddScoped<IOctoberKnowledgeDisclosedReader>(provider => provider.GetRequiredService<UnavailableOctoberKnowledgeReader>());
             return services;
         }
 
@@ -25,17 +27,34 @@ public static class OctoberKnowledgeModule
         services.AddScoped<IOctoberKnowledgeReadLog>(_ => new OctoberKnowledgeOperationLog(ownedLogDirectory, timeProvider));
         services.AddScoped(provider => new OctoberKnowledgeCursorProtector(
             provider.GetRequiredService<IOctoberKnowledgeTokenProtector>(), timeProvider));
-        services.AddScoped<IOctoberKnowledgeReader>(provider => new OctoberKnowledgeReader(
-            provider.GetRequiredService<IOctoberPublishedKnowledgeSource>(), configuredPublication,
-            provider.GetRequiredService<IOctoberKnowledgeDisclosurePolicy>(),
-            provider.GetRequiredService<OctoberKnowledgeCursorProtector>(),
-            provider.GetRequiredService<IOctoberKnowledgeReadLog>()));
+        services.AddScoped(provider =>
+        {
+            var source = provider.GetRequiredService<IOctoberPublishedKnowledgeSource>();
+            var policy = provider.GetRequiredService<IOctoberKnowledgeDisclosurePolicy>();
+            var cursors = provider.GetRequiredService<OctoberKnowledgeCursorProtector>();
+            var log = provider.GetRequiredService<IOctoberKnowledgeReadLog>();
+            var authority = provider.GetService<OctoberKnowledgeDependencyAuthority>();
+            return authority is null ? new OctoberKnowledgeReader(source, configuredPublication, policy, cursors, log)
+                : new OctoberKnowledgeReader(source, configuredPublication, policy, cursors, log, authority);
+        });
+        services.AddScoped<IOctoberKnowledgeReader>(provider => provider.GetRequiredService<OctoberKnowledgeReader>());
+        services.AddScoped<IOctoberKnowledgeDisclosedReader>(provider => provider.GetRequiredService<OctoberKnowledgeReader>());
         return services;
     }
 }
 
-internal sealed class UnavailableOctoberKnowledgeReader : IOctoberKnowledgeReader
+internal sealed class UnavailableOctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKnowledgeDisclosedReader
 {
+    public Task<KnowledgeDisclosureReadResult<SearchPage>> SearchAsync(KnowledgeSearchRequest request,
+        KnowledgeReadOutputBudget budget, CancellationToken cancellationToken = default) =>
+        Task.FromResult(new KnowledgeDisclosureReadResult<SearchPage>(Status(cancellationToken), null));
+    public Task<KnowledgeDisclosureReadResult<ContentPage>> ReadExactAsync(ExactReadRequest request,
+        KnowledgeReadOutputBudget budget, CancellationToken cancellationToken = default) =>
+        Task.FromResult(new KnowledgeDisclosureReadResult<ContentPage>(Status(cancellationToken), null));
+    public Task<KnowledgeDisclosureReadResult<RelatedPage>> GetRelatedAsync(RelatedReadRequest request,
+        KnowledgeReadOutputBudget budget, CancellationToken cancellationToken = default) =>
+        Task.FromResult(new KnowledgeDisclosureReadResult<RelatedPage>(Status(cancellationToken), null));
+
     private static KnowledgeReadStatus Status(CancellationToken token) => token.IsCancellationRequested
         ? KnowledgeReadStatus.Cancelled : KnowledgeReadStatus.Unavailable;
     public Task<ReadSelectionResult> OpenReadSelectionAsync(ReadSelectionRequest request, CancellationToken cancellationToken = default) =>

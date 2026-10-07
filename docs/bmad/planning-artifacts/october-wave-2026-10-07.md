@@ -241,3 +241,134 @@ execution entry must accept integration's plain client/budget/session without a
 second MAF loop or reflection over internals. Integration retains selected-client,
 redirect/retry disabling, Web-local request admission and two-owner drain composition.
 Guard availability does not itself complete those responsibilities or enable sending.
+
+Business prompt-only `861e349118b89c87d37c72563b0efad4956b6b81` is also imported;
+the shared project now embeds `Prompts/OctoberBusiness/Resolution.md` as
+`Vulgata.Agents.Prompts.OctoberBusiness.Resolution.md`. Direct Agents build with
+`--no-restore` succeeded with zero errors and 4,410 warnings; warning severity was
+not changed. This is resource/build verification, not a resolution/provider test.
+
+## Newly identified narrow Scan/Knowledge dependency
+
+Scan reported, and integration verified, that `OctoberKnowledgePolicy` currently
+requires every Source contributor and source anchor to match the primary file's
+origin. Supporting source/JDT/CodeGraph results can legitimately expose other files
+under the accepted tool scope, so their complete provenance cannot currently be
+accepted. Business owns the minimal compatible origin/verification/persistence
+correction; Scan must not alter the policy or relabel support as Advisory.
+
+The owner assessment must distinguish actual supporting content from metadata-only
+directory listings, paths and missing/unreadable limitations. Typed locations are
+available; free-text parsing must not invent source identity. Source-byte proof needs
+one identity-pinned read sequence, not success across renewed per-call contexts.
+Metadata cannot require reading unavailable bytes or masquerade as content evidence.
+Until the owner contract is accepted, Scan fails closed before disclosing support it
+cannot represent, while primary-file/F1 work and other lanes continue. No broad plan
+restart, new root authority or all-lane barrier is authorized by this finding.
+
+## Worker/scope component integration
+
+Reviewed Scan `7b34147d8231ee43b6ae7cf162165d5fc101ae14` is integrated at
+`7c8e33ded88accc53f92f91f4427bfa787db1226`. It adds actual SDK/MAF Worker execution,
+strict model-local proposals, explicit protected-profile construction and shared
+Worker/Business execution-scope limits. The physical Worker transport disables redirects
+and SDK retries. Generate Main still awaits T022 composition and real qualification.
+
+Owner evidence remains accurately split: 238/239 affected tests, then correction of
+the fixture synchronization and 17/17 focused scope GREEN; independent/final owner
+reviews accepted. Integration reran the combined current source: **1,064/1,064 selected
+SelfContained October/Explore/PreparedSource cases passed**, zero failures/skips,
+367 classified files. Evidence:
+`TestResults/isolation-398266fa4f34414bad79506ceebf38c5/results.trx`.
+The first integration launcher became unaddressable before any build/test result
+in `isolation-df7eaa1204084d14b3d961511efee4df`; no success is attributed to it.
+The completed rerun above is the evidence. This is still controlled transport evidence,
+not paid provider, native tool, retained publication or ordinary-reader runtime proof.
+
+Supporting-source correction is still a proposal. Business owns the additive origin
+and separate metadata representation; Scan requires safe request parameters as well
+as the exact filtered admitted projection in the metadata digest. Equal file bytes at
+different paths remain distinct origins; primary-null/explicit-primary aliases must
+not double count. Prepared-version semantics must follow the existing October host
+binding, not a new snapshot registry or a blanket cross-file string-equality rule.
+Ordinary positively bound index metadata must not force whole-repository hashing;
+arbitrary free-form CodeGraph text is not automatically safe metadata. Until the
+exact owner checkpoint is accepted, unrepresentable support stays withheld.
+
+## Disclosure, graph and canonical Chat consumer integration
+
+Business disclosure `f5e999ef` is integrated at `6901372f`, Explorer graph
+`b23ed71e` at `aa4fab94`, and Chat canonical consumer `34aaf110` at `a64f2de0`.
+The additive test inventory conflict retained both owners' entries. Integration
+adds the three Business-owned disclosure registrations to the existing scoped
+Web composition and an authenticated ordinary-user `知识图谱` navigation link.
+No dialogue persistence dependency, generator activation or management-role
+requirement was added to graph access.
+
+Independent source review found no additional cross-lane defect after the missing
+composition was corrected. Test-owner RED `e249e133badc49009a0521221db011b6`
+confirmed missing protector and navigation (3 passes, 2 failures); the preceding
+`b76e321b07e1415fa8f54db0abec16bf` also exposed a bUnit authorization harness
+prerequisite, corrected without production-policy changes. Combined current
+source then passed **1,147/1,147 selected SelfContained** October/Explore/
+PreparedSource cases, no failures/skips, 374 classified files:
+`TestResults/isolation-212cf45d26f841c0b085554474fbe428/results.trx`.
+The joint graph probe uses actual owner reader/capsule crypto and actual Explore
+projection over controlled published data; a later contributor denial removes the
+graph. This is not a retained real generated corpus or PostgreSQL qualification.
+
+Chat's actual SDK test found that JsonElement tool results were indented after
+owner sizing. The integrated consumer sends strictly decoded owner OutputUtf8 as
+literal JSON text through the SDK text-result branch, without serializing it again.
+Decoded outgoing content is byte-for-byte owner-sized object JSON. Business owns
+the corresponding contract prose clarification; no schema/profile change is needed.
+
+Explorer separately reported a full SelfContained native SQLite test-host crash at
+its `f2b8afa` checkout: 2,927 completed passes, no reported assertion failures, but
+exit 1 / 0xC0000005. Its unchanged-source nine-case composition replay passed.
+Neither that replay nor the integrated affected selection explains or erases the
+full-run failure. The last complete successful main suite remains 2,859/2,859.
+
+Next independent work remains Scan primary F1/Generate composition, Business
+dialogue and B1/B2 prerequisites, Chat's admitted runner, and integration-owned
+Web request/client lifetime. Supporting-source/metadata provenance and atomic
+fresh-Generate admission remain bounded owner agreements, not permission to add
+general restart infrastructure. No real source/provider/database authority has
+been added by these commits.
+
+## Integration-owned selected Chat client component
+
+`OctoberChatClientSession.CreateAsync` now accepts the selected provider binding/
+snapshot, successful dispatchable durable admission, original `OctoberChatBudget`,
+mandatory execution authority, final lineage-reauthorization callback and shared
+Web-local `OctoberChatRequestAdmission`. It returns a plain SDK `Client` and the same
+`Budget`. No automatic registration or Chat route activation is included.
+Chat owner visibility-only `007fd7d3` was imported as `93afdec9` to expose the original
+budget token and remaining monotonic timer, not a replacement budget.
+
+Factory readiness links the original cancellation/monotonic deadline, remaining
+durable deadline and caller cancellation before checking authority/decrypting.
+The SDK has retry zero, tracing/body logging off and redirects disabled. After the
+shared permit wait, actual dispatch rechecks execution/profile, then complete
+lineage immediately before deadline/cancellation checks and physical sending.
+The fixed endpoint/model/stream shape is checked. Guard and admission seals begin
+together; the stable settlement task waits for actual physical response cleanup.
+Cancellation of a wait never releases capacity. Unconfirmed disposal fails settlement.
+This component does not prove atomicity across independent authority observations.
+
+Separate test/production ownership and independent review were retained. Initial
+missing-API RED: `isolation-be2427f26f9049b0a387c4cbacec5fa8/build.log`.
+First controlled run `b8fa1c83bec64f25a6052c7bd391411c`: 14/15; the remaining
+assertion confused one StreamContent disposal with its two internal stream-disposal
+callbacks. A controlled counterexample now checks that distinction while retaining
+single original-content ownership, no read/dispose race and permit assertions.
+Review added five regression cases: `0ec07c8f83ab4c348a80cb9cf78193a9` reproduced
+all five defects (15/20 passed). Corrected source passes **20/20**, no failures/skips:
+`TestResults/isolation-3e0188523d3f423293e0781da81ccbe2/results.trx`.
+Both owners and independent reviewer accept this bounded component, not complete W1.
+
+Remaining integration work: authoritative live execution registration, one-shot
+session issuance, commit/owner-death adapters, coordinator binding and route activation.
+Chat's runner will expose `ReauthorizeBeforeSendAsync` for the callback without
+revealing capsules. Business durable dialogue and Scan final Generate composition
+continue independently. This component neither starts a host nor calls a live provider.

@@ -1,4 +1,25 @@
 {
+  "October/Integration/OctoberChatClientSessionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberDisclosureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphComponentTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphViewModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphProjectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphAuthorizationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/ControlledGraphFixture.cs": {
+    "suite": "SelfContained"
+  },
   "Explore/ExplorePersistedReaderTests.cs": {
     "suite": "PostgreSql"
   },
@@ -177,6 +198,12 @@
     "suite": "SelfContained"
   },
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanFileWorkerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanExecutionScopeTests.cs": {
     "suite": "SelfContained"
   },
   "OctoberScan/OctoberScanGenerateConfigurationTests.cs": {

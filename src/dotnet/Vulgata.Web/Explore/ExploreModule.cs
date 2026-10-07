@@ -13,11 +13,16 @@ public static class ExploreModule
     public static IServiceCollection AddExploreReader(this IServiceCollection services)
     {
         services.TryAddScoped<IExploreContextProvider, UnavailableExploreContextProvider>();
-        services.TryAddScoped<IExplorePresentationService>(provider => new ExplorePresentationService(
+        services.TryAddScoped<ExplorePresentationService>(provider => new ExplorePresentationService(
             provider.GetService<IOctoberKnowledgeReader>(), provider.GetRequiredService<IExploreContextProvider>(),
-            provider.GetService<AuthenticationStateProvider>(), provider.GetService<IOptions<IdentityOptions>>()));
+            provider.GetService<AuthenticationStateProvider>(), provider.GetService<IOptions<IdentityOptions>>(),
+            provider.GetService<IOctoberKnowledgeDisclosedReader>(), provider.GetService<IOctoberKnowledgeDependencyAuthority>(),
+            provider.GetService<TimeProvider>()));
+        services.TryAddScoped<IExplorePresentationService>(provider => provider.GetRequiredService<ExplorePresentationService>());
+        services.TryAddScoped<IExploreGraphService>(provider => provider.GetRequiredService<ExplorePresentationService>());
         services.TryAddTransient<DocumentReaderViewModel>();
         services.TryAddTransient<DocumentBrowseViewModel>();
+        services.TryAddTransient<KnowledgeGraphViewModel>();
         return services;
     }
 

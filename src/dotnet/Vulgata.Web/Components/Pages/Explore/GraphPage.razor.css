@@ -1,0 +1,7 @@
+.explore-graph-page { padding: 1.5rem; border-radius: .5rem; background: #faf8f5; color: #2d333a; color-scheme: light; }
+.explore-graph-page[data-theme="dark"] { background: #20252c; color: #ede9e4; color-scheme: dark; }
+h1 { font-family: "Noto Serif SC", serif; }
+a { color: #445e7a; }
+[data-theme="dark"] a { color: #a5c0df; }
+.graph-page-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-block: 1rem; }
+.controlled-label { border: 1px solid #b98b6b; padding: .5rem; }

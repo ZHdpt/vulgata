@@ -92,8 +92,20 @@ verification before reuse.
   Reviewed raw Chat guard `26a89712` is subsequently integrated: 509/509 selected
   related SelfContained cases pass (not another full-suite run). This supplies strict
   streaming validation and guard cleanup, not selected-client/admission composition.
-  Chat generation remains disabled; owner disclosure/dialogue implementation, W1
-  admission/client composition and real-source retained qualification remain open.
+  Scan Worker/scope `7b34147d` is also integrated with 1,064/1,064 selected combined
+  October/Explore/PreparedSource passes. Actual SDK calls used controlled transports;
+  Generate Main, supporting-source acceptance compatibility and real S2 remain open.
+  Owner disclosure `f5e999ef`, Explorer graph `b23ed71e` and Chat canonical consumer
+  `34aaf110` are now integrated with actual Web disclosure wiring and an ordinary-user
+  graph navigation link. Combined affected verification passes 1,147/1,147 controlled
+  cases; graph and owner crypto are exercised together over controlled published data.
+  This is not a new full-suite result; Explorer's separate full-run native SQLite
+  crash remains unexplained. Chat generation remains disabled; dialogue persistence,
+  W1 admission/client composition and real-source retained qualification remain open.
+  A subsequent selected Chat client/request-lifetime component has 20/20 controlled
+  SDK/queue/cancellation/cleanup tests and independent review. It does not activate
+  sending: live execution registration, commit/owner-death adapters and coordinator
+  composition remain required. See the same wave handoff for its exact API and limits.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
