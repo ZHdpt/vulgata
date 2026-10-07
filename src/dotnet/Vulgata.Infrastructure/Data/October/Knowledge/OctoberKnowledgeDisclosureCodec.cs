@@ -93,6 +93,11 @@ internal static class OctoberKnowledgeDisclosureCodec
                 foreach (var contributor in group.Contributors)
                 {
                     if (contributor is null || !Enum.IsDefined(contributor.Kind) || string.IsNullOrWhiteSpace(contributor.ContentDigest)) throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
+                    if ((contributor.Kind == ContributorKind.Source && !OctoberKnowledgeInputPolicy.IsValidSourceContributor(contributor)) ||
+                        (contributor.Kind == ContributorKind.SourceMetadata && !OctoberKnowledgeInputPolicy.IsValidMetadataContributor(contributor)) ||
+                        (contributor.Kind is not (ContributorKind.Source or ContributorKind.SourceMetadata) &&
+                            (contributor.SourceOrigin is not null || contributor.MetadataOrigin is not null)))
+                        throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
                     _ = StrictUtf8.GetByteCount(contributor.ContentDigest);
                     if (contributor.RootBindingIdentity is not null) _ = StrictUtf8.GetByteCount(contributor.RootBindingIdentity);
                 }
