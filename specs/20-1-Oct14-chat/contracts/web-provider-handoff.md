@@ -135,3 +135,19 @@ be forced to display a clear; its actual lifetime remains owned.
 
 No production page sending, host registry, route, Markdown renderer or reader-link
 composition is activated by this adapter. Root alone supplies those prerequisites.
+## Encoded leaf rendering subset
+
+The October turn uses a leaf renderer with fixed application tags and encoded text
+nodes only. Supported formatting is deliberately limited: paragraphs, ATX headings,
+flat unordered and sequential ordered lists starting at one, block quotes, closed
+triple-backtick code fences, single-backtick inline code and flat emphasis/strong spans.
+This is not full Markdown/CommonMark. Unsupported links, images and HTML remain
+readable text; model input never supplies a tag, attribute, class, destination or image.
+Unfinished fences remain visible literal text immediately, without waiting for a
+provider finish or closing delimiter. Exact code content is encoded, not interpreted.
+
+Parsing is capped at 65,536 UTF-16 characters, 4,096 nodes and a bounded scan-work
+budget. Exceeding a bound renders the entire original encoded text, without truncation
+or partial syntax-tree output. These are renderer limits, not new generation budgets.
+Styling is local to the turn and inherits the existing theme. Parent ChatPage, routes,
+dependencies and exact authorized reader-link projection are unchanged by this leaf.

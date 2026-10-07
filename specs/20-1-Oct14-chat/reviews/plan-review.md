@@ -170,3 +170,12 @@ No remaining source blocker was reported, conditional on affected GREEN. Root ve
 Callback cancellation and queue retention are bounded, honestly owned lifetimes;
 application handoff is not atomic network revocation. No route, browser or live provider
 qualification is accepted by this review.
+## Encoded Markdown leaf — accepted controlled boundary, 2026-10-07
+
+`wave_reviewer` accepted the conservative rendering subset with no blocking findings:
+fixed elements, encoded model text, no model attributes/navigation/images, bounded flat
+parsing and complete-text fallback, immediately visible unfinished syntax, suppression
+removing previous rich DOM, and local inherited styling. Six focused cases cover these
+boundaries; this is not full Markdown/CommonMark or a performance/browser qualification.
+Root satisfied the review's GREEN condition with **402/402 selected Chat/page passes**,
+zero failures/skips, `TestResults/isolation-20a4b658e5374f58ac696abadc22bbcc/results.trx`.

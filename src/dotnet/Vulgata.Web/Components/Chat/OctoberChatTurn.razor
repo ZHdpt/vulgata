@@ -3,7 +3,7 @@
 
 <article class="chat-message chat-message--assistant october-chat-turn"
          data-answer-state="@(ViewModel.IsTerminal ? "saved" : ViewModel.IsSaveUncertain ? "save-uncertain" : "provisional")">
-    <div class="october-chat-answer">@ViewModel.AnswerText</div>
+    <div class="october-chat-answer"><OctoberChatMarkdown Text="@ViewModel.AnswerText" /></div>
     @if (ViewModel.ActivityMessage is not null)
     {
         <p class="october-chat-activity" role="status">@ViewModel.ActivityMessage</p>

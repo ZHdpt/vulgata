@@ -722,3 +722,120 @@ SelfContained** cases, zero failures/skips, 398 classified files:
 `TestResults/isolation-0b3a7dd9690d488fa50431c69b829029/results.trx`.
 This qualifies the controlled component combination, not a full suite, real
 streaming browser session, PostgreSQL or a retained real-Worker dataset.
+
+## Scan input-ledger candidate review — bounded correction pending
+
+Scan offered `f396e35b1fcaab83586245ad23ecbcc46616e639`: complete host-observed
+primary/advisory/supporting-content/metadata lineage, six exact-bound tool facades,
+F1 completion binding and execution accounting/retry classification. The separate
+RuntimeFile parser's intentional RED is absent from this committed source/test
+boundary. Owner evidence reports 249/249 affected non-configuration controlled
+passes; the mixed dirty run's 254/255 result is not relabelled as a green checkpoint.
+
+Independent cross-module review found two narrow corrections before integration:
+
+1. The reported physical request count increments on send eligibility, before the
+   actual HTTP invocation. Cancellation or source-check failure in between can
+   produce a false dispatch count. Preserve conservative reservation while
+   separating actual dispatch observation from eligibility.
+2. Final transient-retry verification awaits source/ledger verification with
+   `CancellationToken.None`, outside the original Worker deadline, then can assign
+   retry eligibility without rechecking cancellation. Tool-runtime lifetime does
+   not bound the ledger's entire semaphore/authority operation. Retain the original
+   linked lifetime, bound and observe late verification, and refuse a late retry grant.
+
+These are source-review findings, not claimed executed failures. Scan owns their
+regressions and corrections; the remaining provenance boundary was coherent on
+inspection. This candidate is not merged. Existing integrated capability remains
+at `964f5303`; Scan's unrelated runner/parser work, Business B2 and Chat rendering
+continue. No all-lane barrier or runtime/resource permission is introduced.
+
+## Safe leaf rendering integrated
+
+Chat `bd51e764e55a3783bcfc4d0b05b2e32db33122ad` is merged at `97f428ec` after
+independent source review. The leaf emits application-fixed tags with encoded text,
+not model HTML, attributes, image targets or links. Incomplete streamed syntax stays
+immediately readable. Character/node/scan limits fall back to the entire original
+encoded text rather than truncating it; no full CommonMark claim is made. Parent
+ChatPage, packages, routes, host execution and reader-link authority are unchanged.
+
+Combined affected verification passed **1,505/1,505 SelfContained** cases, zero
+failures/skips, 398 classified files:
+`TestResults/isolation-b9572b8e60be4951a22fdbd6ac1f279d/results.trx`.
+This is controlled rendering/integration evidence, not a real browser/provider run.
+
+Integration requested the exact E0 title/destination surface from Explorer for
+Chat T026/T027. Existing `ExactDocumentLinkBuilder.Build` supplies a validated URL,
+not fresh title/disclosure permission. Reuse the owner route and canonical Knowledge
+authorization; do not invent a parallel reader, purpose conversion or model URL.
+Controlled agreement/work need not wait for the shared real publication, while
+actual navigation qualification still does. Scan's held candidate remains separate.
+
+## Accounting compatibility and exact footer agreement
+
+Scan's correction must distinguish conservative send admission, actual transport
+invocation and settled usage. A Worker-only physical observer must not erase Business
+token/cost/wait aggregation or reservation/unknown-settlement safety. The Scan-owned
+report may represent physical request totals as unknown (nullable Requests with
+unknown-usage signalling) when a consumer lacks trustworthy observation. Complete
+Worker observation proving no send still means exact zero; missing observer
+capability does not. No shared Business lease API changes are authorized by this S2
+correction. Business has been asked for the smallest future S3 observation seam;
+that agreement is not a prerequisite for Worker-only S2. Business's disposition
+accepts a future host-bound per-attempt observer at the underlying transport API
+invocation, covering all physical retries. An executor-side IChatClient call is not
+physical invocation proof; neither observation proves remote acceptance. Concrete
+adapter binding remains to be agreed before implementation, without a Core lease
+change for S2.
+
+Explorer confirmed there is no combined Chat-purpose title/destination API. Its
+Reader-purpose OpenDocumentAsync cannot authorize a Chat footer. The proposed local
+Chat projection uses canonical exact disclosed reads under fresh Chat authority,
+then the existing pure link builder. Retain every presentation-read capsule with
+the complete original turn/history lineage and reauthorize before disclosure.
+These reads grant neither model-consumption credit nor stronger source coverage.
+Business confirmed this composition: use a bounded, conformance-tested complete
+wrapper encoding; derive the title from the same successfully admitted exact page;
+retain new DISPLAY lineage plus all original turn/history inputs. Never rewrite
+original reference coverage or expose protected envelopes. Failed aggregate
+authorization suppresses the whole dependent display, not only one citation.
+Business and Chat accepted the exact local adapter/encoder/limits mapping, and
+integration released controlled T026/T027 implementation. Reuse the unchanged
+mechanical ExploreGraphOutputEncoder profile; it grants no Graph/Reader purpose.
+Check complete page bytes/output digest/typed page digest and exact original handle.
+The local display attempt is caller-linked and bounded to ten seconds, serial
+acquisition, at most 16 initial-page title reads, 64 KiB per complete result and
+256 KiB aggregate, without continuation/retry/cache or silent reference truncation.
+Canonical reference/capsule/origin/contributor ceilings still apply. A title-page
+read adds DISPLAY lineage only; zero references skip acquisition, not original
+display authorization. Use owner-issued saved projections initially, not invented
+live report evidence. A closed TurnPresentation cannot be reopened: the local footer
+handoff is separately bounded and checked against the actual attachment/context.
+Saved-history display uses a fresh bounded display lifetime and aggregate budget,
+not a restarted model budget or a requirement that the old generation still run.
+No new Knowledge API, route, schema or runtime permission follows from the agreement.
+
+## Controlled explicit-root Business planner integrated
+
+Business `44aac5686554ae6173d513d3d604058fe934370d` is merged at `fccde66c`.
+Independent cross-module source review accepted the bounded pure planner. It uses
+explicitly selected exact source-backed CodeUnits, accepted directed relationships,
+cycle detection and visible node/edge/depth frontiers. Configured bounds may only
+narrow 256 nodes, 512 edges and depth 16. Unsupported root kinds receive explicit
+dispositions; names or connectivity cannot manufacture positive classification.
+
+The input's complete corpus contributor ledger is independent of traversed members
+and accepted CL membership, including coverage with zero units or failed/unprocessed
+files. The trusted loader must establish immutable accepted units, primary origins,
+anchors, resolution outcomes/witness provenance and the full ledger; these domain
+records are neither an acceptance nor authorization port. No schema changed.
+Trusted loading, synthesis and atomic BL persistence/finalization remain Business
+work in dependency order; controlled implementation does not wait for Chat. Actual
+dispatch and real qualification still require S3/F1 and approved runtime resources.
+
+Combined affected verification passed **1,543/1,543 SelfContained** cases, zero
+failures/skips, 399 classified files:
+`TestResults/isolation-cf8270b6078f48ec81f939ec94117a0d/results.trx`.
+This qualifies the controlled planner combination only. Business has dispatched
+its bounded read-only trusted loader with separate test/production ownership; no
+migration window or real consumer activation follows from this checkpoint.

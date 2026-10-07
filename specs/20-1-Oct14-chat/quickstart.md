@@ -342,3 +342,31 @@ T022 must qualify the accepted owner fix and PostgreSQL before T023 live/provide
 execution. Consolidated resource/source/data/spend approval remains with Integrator;
 controlled tests and integration checkpoints do not grant it. Safe Markdown, exact reader
 links and actual page/browser wiring remain incomplete T020/T021 work.
+## Encoded Markdown leaf — controlled, 2026-10-07
+
+On clean `2d371f4f`, Integrator requested available bounded T020/T021 leaf work and
+confirmed ownership of parent attachment/route composition. Inspection found no
+installed Markdown/sanitizer package. The accepted narrow approach uses fixed Blazor
+tags and encoded text only, with the supported subset and limits documented in
+contracts/web-provider-handoff.md. No dependency/project/ChatPage change was needed.
+
+Five initial component cases compiled: **1 passed, 4 failed**, with encoded HTML/URL
+safety already passing and formatting selectors absent on the plain-text scaffold,
+`TestResults/isolation-7529785738d54714b8a751f87ef62560/results.trx`.
+A sixth coverage case checks dense syntax and oversized-input complete-text fallback;
+it is not claimed as pre-implementation RED or a timing benchmark.
+
+The final controlled Chat/page selection passed **402/402, zero failed/skipped**,
+including all six renderer cases,
+`TestResults/isolation-20a4b658e5374f58ac696abadc22bbcc/results.trx`;
+discovery 4,430/inventory 392, build zero errors and 7,296 warnings including AD0001.
+Warning policy was preserved. Independent reviewer `wave_reviewer` accepted the fixed
+tag/encoded-text implementation, bounded flat parsing, incomplete-prefix visibility,
+rich-DOM suppression and scoped inherited styling conditional on GREEN, now satisfied.
+The broader combined owner suite was left to Integrator, avoiding duplicate qualification.
+
+This is a conservative Markdown subset, not full CommonMark or actual browser/provider
+qualification. Parent route/registry, exact authorized reader links and T022/T023
+resource prerequisites remain. Integrator reports the specific Business store hold
+lifted at approved checkpoint `964f530326e9d46c1a2ebeb7d6fa0d141a6d02d8`; it was not
+merged into this dirty leaf increment. No migrations/services/provider calls were run.
