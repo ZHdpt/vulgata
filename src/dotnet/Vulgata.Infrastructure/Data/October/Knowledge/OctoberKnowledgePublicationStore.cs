@@ -34,7 +34,7 @@ public sealed class OctoberKnowledgePublicationStore
         if (authority != DisclosureStatus.Allowed)
             return new(new(OctoberKnowledgePublicationCommitter.AuthorityStatus(authority), operation), []);
         if (corpus.CorpusDigest != request.Corpus.CorpusDigest || request.Documents.IsDefaultOrEmpty ||
-            request.Relationships.IsDefault || !request.Relationships.IsEmpty || request.Flows.IsDefault || !request.Flows.IsEmpty ||
+            request.Relationships.IsDefault || request.Flows.IsDefault || !request.Flows.IsEmpty ||
             request.Uncertainties.IsDefault || request.Coverage.IsDefault ||
             request.Documents.Any(x => x.BatchId != batch || x.DocumentVersionId == Guid.Empty || x.LogicalDocumentId == Guid.Empty) ||
             request.Documents.Select(x => x.LogicalDocumentId).Distinct().Count() != request.Documents.Length ||
@@ -53,15 +53,56 @@ public sealed class OctoberKnowledgePublicationStore
             return Failure(operation);
         var manifestIds = await context.CorpusManifests.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => x.ManifestId).ToListAsync(cancellationToken);
         var acceptedUnknowns = await context.KnowledgeUncertainties.AsNoTracking().Where(x => x.BatchId == batch && manifestIds.Contains(x.ManifestId)).ToListAsync(cancellationToken);
+        bool requestsResolution = !request.Relationships.IsEmpty || request.Uncertainties.Any(unknown =>
+            !acceptedUnknowns.Any(x => OctoberKnowledgePolicy.CanonicalizeJson(x.ContentJson) == OctoberKnowledgePolicy.SerializeCanonical(unknown)));
+        var resolutionUnknowns = requestsResolution
+            ? await context.UncertaintyVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(cancellationToken)
+            : new List<UncertaintyVersion>();
+        var relationshipVersions = requestsResolution
+            ? await context.RelationshipVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(cancellationToken)
+            : new List<RelationshipVersion>();
         var selectedUnknowns = new List<KnowledgeUncertaintyRecord>();
+        var selectedResolutionUnknowns = new List<UncertaintyVersion>();
+        var selectedRelationships = new List<RelationshipVersion>();
+        foreach (var relationship in request.Relationships)
+        {
+            string canonical = OctoberKnowledgePolicy.SerializeCanonical(relationship);
+            var exact = relationshipVersions.SingleOrDefault(x => x.RelationshipVersionId == relationship.RelationshipVersionId &&
+                OctoberKnowledgePolicy.CanonicalizeJson(x.ContentJson) == canonical);
+            if (exact is null || selectedRelationships.Any(x => x.RelationshipVersionId == exact.RelationshipVersionId) ||
+                !request.Documents.Contains(relationship.From) || !request.Documents.Contains(relationship.To)) return Failure(operation);
+            selectedRelationships.Add(exact);
+        }
         foreach (var unknown in request.Uncertainties)
         {
             string canonical = OctoberKnowledgePolicy.SerializeCanonical(unknown);
             var exact = acceptedUnknowns.Where(x => OctoberKnowledgePolicy.CanonicalizeJson(x.ContentJson) == canonical).ToArray();
+            var resolution = resolutionUnknowns.Where(x => OctoberKnowledgePolicy.CanonicalizeJson(x.ContentJson) == canonical).ToArray();
             // Shared uncertainty requests contain no manifest ID. Ambiguous identical payloads cannot choose an owner.
-            if (exact.Length != 1 || selectedUnknowns.Any(x => x.ManifestId == exact[0].ManifestId && x.Key == exact[0].Key))
+            if (exact.Length + resolution.Length != 1) return Failure(operation);
+            if (resolution.Length == 1)
+            {
+                if (selectedResolutionUnknowns.Any(x => x.UncertaintyId == resolution[0].UncertaintyId)) return Failure(operation);
+                selectedResolutionUnknowns.Add(resolution[0]);
+            }
+            else
+            {
+                if (selectedUnknowns.Any(x => x.ManifestId == exact[0].ManifestId && x.Key == exact[0].Key)) return Failure(operation);
+                selectedUnknowns.Add(exact[0]);
+            }
+        }
+        if (selectedRelationships.Count != 0 || selectedResolutionUnknowns.Count != 0)
+        {
+            var actualCorpus = await OctoberResolutionStore.LoadExactCorpusAsync(context, request.Corpus, cancellationToken);
+            var plan = OctoberResolutionPolicy.Plan(actualCorpus);
+            var items = await context.ResolutionItems.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(cancellationToken);
+            string dispositions = OctoberKnowledgePolicy.SerializeCanonical(plan.Dispositions);
+            if (plan.Inquiries.Any(inquiry => !items.Any(item => item.InquiryFingerprint == inquiry.Fingerprint &&
+                item.PolicyVersion == OctoberResolutionPolicy.PolicyVersion && OctoberKnowledgePolicy.CanonicalizeJson(item.PlanDispositionsJson) == dispositions)))
                 return Failure(operation);
-            selectedUnknowns.Add(exact[0]);
+            // An accepted supported edge never sheds its own source/witness qualifications at publication.
+            if (selectedRelationships.Any(edge => resolutionUnknowns.Any(unknown => unknown.ItemId == edge.ItemId &&
+                !selectedResolutionUnknowns.Any(selected => selected.UncertaintyId == unknown.UncertaintyId)))) return Failure(operation);
         }
         Guid publicationId = Guid.NewGuid();
         var publication = new PublicationBinding(request.Corpus.Binding, publicationId);
@@ -87,6 +128,18 @@ public sealed class OctoberKnowledgePublicationStore
             context.PublicationUncertainties.Add(new()
             {
                 BatchId = batch, PublicationId = publicationId, CorpusId = corpusId, ManifestId = item.ManifestId, Key = item.Key
+            });
+        foreach (var item in selectedRelationships)
+            context.PublicationRelationships.Add(new()
+            {
+                BatchId = batch, PublicationId = publicationId, CorpusId = corpusId, RelationshipVersionId = item.RelationshipVersionId,
+                FromLogicalDocumentId = item.FromLogicalDocumentId, FromVersionId = item.FromVersionId,
+                ToLogicalDocumentId = item.ToLogicalDocumentId, ToVersionId = item.ToVersionId
+            });
+        foreach (var item in selectedResolutionUnknowns)
+            context.PublicationResolutionUncertainties.Add(new()
+            {
+                BatchId = batch, PublicationId = publicationId, CorpusId = corpusId, UncertaintyId = item.UncertaintyId
             });
         return new(new(KnowledgeWriteStatus.Committed, operation, Publication: publication), contributors);
     }

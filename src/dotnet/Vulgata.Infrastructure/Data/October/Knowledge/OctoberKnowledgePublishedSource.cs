@@ -110,12 +110,70 @@ public sealed class OctoberKnowledgePublishedSource(IDbContextFactory<OctoberDbC
             documents.Add(new(new(batch, version.LogicalDocumentId, version.VersionId), item.Kind, version.Title,
                 content, sections, contributors[version.ManifestId]));
         }
+        var resolution = await LoadResolutionAsync(context, publication, budget, token);
         token.ThrowIfCancellationRequested();
         return new(publication, documents.ToImmutable(),
             coverage.Select(x => new OctoberPublishedCoverage(Required<FileCoverage>(x.CoverageJson), RequiredContributors(x.ContributorsJson))).ToImmutableArray(),
-            [], uncertainties.Select(x => new OctoberPublishedUncertainty(Required<Uncertainty>(x.ContentJson), contributors[x.ManifestId],
+            resolution.Relationships, uncertainties.Select(x => new OctoberPublishedUncertainty(Required<Uncertainty>(x.ContentJson), contributors[x.ManifestId],
                 versions.Where(version => version.Version.ManifestId == x.ManifestId)
-                    .Select(version => new DocumentVersionReference(batch, version.Version.LogicalDocumentId, version.Version.VersionId)).ToImmutableArray())).ToImmutableArray());
+                    .Select(version => new DocumentVersionReference(batch, version.Version.LogicalDocumentId, version.Version.VersionId)).ToImmutableArray()))
+                .Concat(resolution.Uncertainties).ToImmutableArray());
+    }
+
+    private static async Task<(ImmutableArray<OctoberPublishedRelationship> Relationships, ImmutableArray<OctoberPublishedUncertainty> Uncertainties)>
+        LoadResolutionAsync(OctoberDbContext context, PublicationBinding publication, OctoberKnowledgeStoredReadBudget budget, CancellationToken token)
+    {
+        Guid batch = publication.Knowledge.BatchId;
+        Guid publicationId = publication.PublicationId;
+        var relationships = from selected in context.PublicationRelationships.AsNoTracking()
+                            join edge in context.RelationshipVersions.AsNoTracking()
+                                on new { selected.BatchId, selected.CorpusId, selected.RelationshipVersionId }
+                                equals new { edge.BatchId, edge.CorpusId, edge.RelationshipVersionId }
+                            join item in context.ResolutionItems.AsNoTracking()
+                                on new { edge.BatchId, edge.CorpusId, edge.ItemId } equals new { item.BatchId, item.CorpusId, item.ItemId }
+                            where selected.BatchId == batch && selected.PublicationId == publicationId
+                            select new { Edge = edge, item.ContributorsJson };
+        var uncertainties = from selected in context.PublicationResolutionUncertainties.AsNoTracking()
+                            join unknown in context.UncertaintyVersions.AsNoTracking()
+                                on new { selected.BatchId, selected.CorpusId, selected.UncertaintyId }
+                                equals new { unknown.BatchId, unknown.CorpusId, unknown.UncertaintyId }
+                            join item in context.ResolutionItems.AsNoTracking()
+                                on new { unknown.BatchId, unknown.CorpusId, unknown.ItemId } equals new { item.BatchId, item.CorpusId, item.ItemId }
+                            where selected.BatchId == batch && selected.PublicationId == publicationId
+                            select new { Unknown = unknown, item.ContributorsJson };
+        if (context.Database.IsNpgsql())
+        {
+            budget.Add(await context.Database.SqlQuery<long>($"""
+                SELECT octet_length(e."ContentJson"::text)::bigint + octet_length(i."ContributorsJson"::text) AS "Value"
+                FROM october."OctoberPublicationRelationships" p
+                JOIN october."OctoberRelationshipVersions" e ON e."BatchId"=p."BatchId" AND e."CorpusId"=p."CorpusId" AND e."RelationshipVersionId"=p."RelationshipVersionId"
+                JOIN october."OctoberResolutionItems" i ON i."BatchId"=e."BatchId" AND i."CorpusId"=e."CorpusId" AND i."ItemId"=e."ItemId"
+                WHERE p."BatchId"={batch} AND p."PublicationId"={publicationId} LIMIT 10001
+                """).ToListAsync(token), bytes: true);
+            budget.Add(await context.Database.SqlQuery<long>($"""
+                SELECT octet_length(u."ContentJson"::text)::bigint + octet_length(i."ContributorsJson"::text) AS "Value"
+                FROM october."OctoberPublicationResolutionUncertainties" p
+                JOIN october."OctoberUncertaintyVersions" u ON u."BatchId"=p."BatchId" AND u."CorpusId"=p."CorpusId" AND u."UncertaintyId"=p."UncertaintyId"
+                JOIN october."OctoberResolutionItems" i ON i."BatchId"=u."BatchId" AND i."CorpusId"=u."CorpusId" AND i."ItemId"=u."ItemId"
+                WHERE p."BatchId"={batch} AND p."PublicationId"={publicationId} LIMIT 10001
+                """).ToListAsync(token), bytes: true);
+        }
+        else
+        {
+            budget.Add(await relationships.Select(x => (long)x.Edge.ContentJson.Length + x.ContributorsJson.Length).Take(10001).ToListAsync(token));
+            budget.Add(await uncertainties.Select(x => (long)x.Unknown.ContentJson.Length + x.ContributorsJson.Length).Take(10001).ToListAsync(token));
+        }
+        var edges = await relationships.ToListAsync(token);
+        var unknowns = await uncertainties.ToListAsync(token);
+        var itemIds = unknowns.Select(x => x.Unknown.ItemId).Distinct().ToArray();
+        var dependencies = context.ResolutionDocumentDependencies.AsNoTracking().Where(x => x.BatchId == batch && itemIds.Contains(x.ItemId) && x.IsInquiryCaller);
+        budget.Add(await dependencies.Select(x => 48L).Take(10001).ToListAsync(token), bytes: true);
+        var owners = await dependencies.ToListAsync(token);
+        if (itemIds.Any(itemId => owners.Count(owner => owner.ItemId == itemId) != 1))
+            throw new JsonException("An accepted resolution uncertainty requires one exact inquiry caller.");
+        return (edges.Select(x => new OctoberPublishedRelationship(Required<AcceptedRelationship>(x.Edge.ContentJson), RequiredContributors(x.ContributorsJson))).ToImmutableArray(),
+            unknowns.Select(x => new OctoberPublishedUncertainty(Required<Uncertainty>(x.Unknown.ContentJson), RequiredContributors(x.ContributorsJson),
+                owners.Where(owner => owner.ItemId == x.Unknown.ItemId).Select(owner => new DocumentVersionReference(batch, owner.LogicalDocumentId, owner.VersionId)).ToImmutableArray())).ToImmutableArray());
     }
 
     internal static async Task<bool> IsSelectedAsync(OctoberDbContext context, PublicationBinding publication, CancellationToken token)

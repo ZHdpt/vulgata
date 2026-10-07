@@ -302,7 +302,7 @@ public sealed class OctoberGenerateAdmissionTests
         try
         {
             await probe.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            producingContext = factory.CreatedContexts.Last();
+            producingContext = Assert.IsType<OctoberDbContext>(probe.ProducingContext);
             cancellation.Cancel();
             Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(2))));
             Assert.Equal(KnowledgeWriteStatus.CommitIndeterminate, (await pending).Status);
@@ -535,9 +535,16 @@ internal sealed class AdmissionPhysicalCommitProbe : DbTransactionInterceptor
     public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public TaskCompletionSource Settled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public TaskCompletionSource Disposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    public override DbTransaction TransactionStarted(DbConnection connection, TransactionEndEventData eventData, DbTransaction result) => new AdmissionPhysicalTransaction(result, this);
+    public OctoberDbContext? ProducingContext { get; private set; }
+    public override DbTransaction TransactionStarted(DbConnection connection, TransactionEndEventData eventData, DbTransaction result) => Capture(eventData, result);
     public override ValueTask<DbTransaction> TransactionStartedAsync(DbConnection connection, TransactionEndEventData eventData, DbTransaction result, CancellationToken cancellationToken = default) =>
-        ValueTask.FromResult<DbTransaction>(new AdmissionPhysicalTransaction(result, this));
+        ValueTask.FromResult(Capture(eventData, result));
+    private DbTransaction Capture(TransactionEndEventData eventData, DbTransaction transaction)
+    {
+        // Observe the owner of this physical transaction, not whichever context a factory created most recently.
+        ProducingContext = Assert.IsType<OctoberDbContext>(eventData.Context);
+        return new AdmissionPhysicalTransaction(transaction, this);
+    }
 }
 internal sealed class AdmissionPhysicalTransaction(DbTransaction inner, AdmissionPhysicalCommitProbe probe) : DbTransaction
 {
@@ -601,5 +608,3 @@ internal sealed class AdmissionSqliteCommand(DbCommand inner) : DbCommand
     protected override void Dispose(bool disposing) { if (disposing) inner.Dispose(); base.Dispose(disposing); }
     public override async ValueTask DisposeAsync() { await inner.DisposeAsync(); GC.SuppressFinalize(this); }
 }
-
-

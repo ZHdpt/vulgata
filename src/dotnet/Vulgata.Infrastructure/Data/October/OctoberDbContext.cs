@@ -50,6 +50,12 @@ public sealed class OctoberDbContext : DbContext
     public DbSet<DialogueTurnRecord> DialogueTurns => Set<DialogueTurnRecord>();
     public DbSet<DialogueTerminalRecord> DialogueTerminals => Set<DialogueTerminalRecord>();
     public DbSet<DialogueReferenceRecord> DialogueReferences => Set<DialogueReferenceRecord>();
+    public DbSet<ResolutionItem> ResolutionItems => Set<ResolutionItem>();
+    public DbSet<ResolutionDocumentDependencyRecord> ResolutionDocumentDependencies => Set<ResolutionDocumentDependencyRecord>();
+    public DbSet<RelationshipVersion> RelationshipVersions => Set<RelationshipVersion>();
+    public DbSet<UncertaintyVersion> UncertaintyVersions => Set<UncertaintyVersion>();
+    public DbSet<PublicationRelationshipRecord> PublicationRelationships => Set<PublicationRelationshipRecord>();
+    public DbSet<PublicationResolutionUncertaintyRecord> PublicationResolutionUncertainties => Set<PublicationResolutionUncertaintyRecord>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -105,6 +111,12 @@ public sealed class OctoberDbContext : DbContext
                 PublicationMemberRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
                 PublicationCoverageRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
                 PublicationUncertaintyRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
+                ResolutionItem row => added.OfType<KnowledgeOperation>().Any(x => x.BatchId == row.BatchId && x.Kind == row.OperationKind && x.OperationId == row.OperationId),
+                ResolutionDocumentDependencyRecord row => added.OfType<ResolutionItem>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.ItemId == row.ItemId),
+                RelationshipVersion row => added.OfType<ResolutionItem>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.ItemId == row.ItemId),
+                UncertaintyVersion row => added.OfType<ResolutionItem>().Any(x => x.BatchId == row.BatchId && x.CorpusId == row.CorpusId && x.ItemId == row.ItemId),
+                PublicationRelationshipRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
+                PublicationResolutionUncertaintyRecord row => added.OfType<KnowledgePublicationRecord>().Any(x => x.BatchId == row.BatchId && x.PublicationId == row.PublicationId && x.CorpusId == row.CorpusId),
                 _ => false
             };
             if (!hasNewParent) throw new InvalidOperationException("Cannot extend committed October Knowledge.");
