@@ -18,11 +18,13 @@ internal sealed class OctoberChatDisclosureSession
     private KnowledgeDependencyHandle _dependencies;
     private ImmutableArray<DialogueConsumedTarget> _consumed = [];
     private KnowledgeDependencyStatus? _failure;
+    private readonly Func<KnowledgeDependencyHandle, ImmutableArray<DialogueConsumedTarget>, bool>? _canRetain;
 
     internal OctoberChatDisclosureSession(OctoberChatTurnBinding binding, OctoberChatBudget budget,
         IOctoberKnowledgeDependencyAuthority authority,
         Func<CancellationToken, Task<ReadSelectionRequest?>> currentSelection,
-        KnowledgeDependencyHandle initialDependencies)
+        KnowledgeDependencyHandle initialDependencies,
+        Func<KnowledgeDependencyHandle, ImmutableArray<DialogueConsumedTarget>, bool>? canRetain = null)
     {
         _binding = binding ?? throw new ArgumentNullException(nameof(binding));
         Budget = budget ?? throw new ArgumentNullException(nameof(budget));
@@ -30,6 +32,7 @@ internal sealed class OctoberChatDisclosureSession
         _currentSelection = currentSelection ?? throw new ArgumentNullException(nameof(currentSelection));
         if (!ValidHandle(initialDependencies)) throw new ArgumentException("An explicit owner dependency capsule is required.", nameof(initialDependencies));
         _dependencies = initialDependencies;
+        _canRetain = canRetain;
     }
 
     internal OctoberChatBudget Budget { get; }
@@ -37,6 +40,10 @@ internal sealed class OctoberChatDisclosureSession
     internal KnowledgeDependencyHandle InferenceDependencies { get { lock (_stateGate) return _dependencies; } }
     internal ImmutableArray<DialogueConsumedTarget> ConsumedReads { get { lock (_stateGate) return _consumed; } }
     internal KnowledgeDependencyStatus? FailureStatus { get { lock (_stateGate) return _failure; } }
+    internal ImmutableArray<OctoberChatReference> ReportedReferences
+    {
+        get { lock (_stateGate) return _reported.Select(target => _consumed.Single(value => value.Reference.Document == target).Reference).ToImmutableArray(); }
+    }
 
     internal Task ReauthorizeAsync(CancellationToken cancellationToken = default) => InScopeAsync(async token =>
     {
@@ -80,6 +87,16 @@ internal sealed class OctoberChatDisclosureSession
 
         await CheckAsync(merged.Dependencies!, token);
         token.ThrowIfCancellationRequested();
+        ImmutableArray<DialogueConsumedTarget> candidate = _consumed;
+        if (target is not null)
+        {
+            int existing = -1;
+            for (int i = 0; i < candidate.Length; i++) if (candidate[i].Reference.Document == target) { existing = i; break; }
+            candidate = existing < 0 ? candidate.Add(consumed!) : candidate.SetItem(existing, consumed!);
+        }
+        if (_canRetain is not null && !_canRetain(merged.Dependencies!, candidate))
+            throw Reject(KnowledgeDependencyStatus.BudgetExceeded);
+        token.ThrowIfCancellationRequested();
         // There are no awaited operations after this commit. Failed accounting never
         // publishes an inference union or consumed proof for an undelivered result.
         if (bytes is { } length && !Budget.TryAddToolResultBytes(length, content))
@@ -90,17 +107,20 @@ internal sealed class OctoberChatDisclosureSession
             if (target is not null)
             {
                 _contentPages[target] = pages;
-                int index = -1;
-                for (int i = 0; i < _consumed.Length; i++)
-                    if (_consumed[i].Reference.Document == target) { index = i; break; }
-                _consumed = index < 0 ? _consumed.Add(consumed!) : _consumed.SetItem(index, consumed!);
+                _consumed = candidate;
             }
         }
         return true;
     }, cancellationToken);
 
-    internal Task<ImmutableArray<OctoberChatReference>?> ReportAsync(IEnumerable<DocumentHandle> documents,
-        CancellationToken cancellationToken = default) => InScopeAsync<ImmutableArray<OctoberChatReference>?>(async token =>
+    internal async Task<ImmutableArray<OctoberChatReference>?> ReportAsync(IEnumerable<DocumentHandle> documents,
+        CancellationToken cancellationToken = default) => (await ReportCoreAsync(documents, false, cancellationToken))?.Result.References;
+
+    internal Task<OctoberChatToolInvocation?> ReportEncodedAsync(IEnumerable<DocumentHandle> documents,
+        CancellationToken cancellationToken = default) => ReportCoreAsync(documents, true, cancellationToken);
+
+    private Task<OctoberChatToolInvocation?> ReportCoreAsync(IEnumerable<DocumentHandle> documents, bool encoded,
+        CancellationToken cancellationToken) => InScopeAsync<OctoberChatToolInvocation?>(async token =>
     {
         DocumentHandle[] requested = documents.ToArray();
         await CheckAsync(_dependencies, token);
@@ -122,9 +142,15 @@ internal sealed class OctoberChatDisclosureSession
         }
         await CheckAsync(_dependencies, token);
         token.ThrowIfCancellationRequested();
-        _reported.Clear();
-        _reported.AddRange(ordered);
-        return references.ToImmutable();
+        var result = new OctoberChatToolResult(OctoberChatToolStatus.Succeeded, References: references.ToImmutable());
+        ImmutableArray<byte> output = encoded ? OctoberWikiTools.SerializeResultUtf8(result) : [];
+        if (encoded && !Budget.TryAddToolResultBytes(output.Length)) throw Reject(KnowledgeDependencyStatus.BudgetExceeded);
+        lock (_stateGate)
+        {
+            _reported.Clear();
+            _reported.AddRange(ordered);
+        }
+        return new(result, output);
     }, cancellationToken);
 
     internal InvalidOperationException Reject(KnowledgeDependencyStatus status)
