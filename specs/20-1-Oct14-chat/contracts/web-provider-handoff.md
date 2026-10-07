@@ -101,3 +101,37 @@ authorization at actual disclosure; an earlier runner check is not a lasting gra
 Slow/throwing subscribers must not block owned generation. Confirmed sanitized closure
 must clear provisional prose/references, not describe them as retained. Existing
 controlled events do not yet supply this integration or browser qualification.
+## Bounded presentation attachment — application plumbing
+
+The Runner and Coordinator retain their existing callback overloads and add overloads
+carrying `KnowledgeDependencyHandle` with authorized text and sanitized progress.
+The immutable opaque snapshot is host-only, never part of an outward event. The same
+runner/lifecycle executes both APIs; this adds no model tool or invocation loop.
+
+Create `OctoberChatTurnPresentation` only inside the confirmed-Running generation
+observer, using the original admission, exact binding and preallocated save identity.
+Producers use nonblocking TryPublish methods. Delivery has its own cancellation and
+observable Completion; disconnect, overflow and subscriber failure cannot cancel
+generation or terminal persistence. Retain an actual callback that ignores cancellation
+until it settles. Completion is a lifetime fact, not proof of successful display.
+The default queue allows 64 waiting events with a conservative 4 MiB retained-memory
+reservation that includes the active item and protected capsule strings. This is local
+presentation accounting, not canonical serialized-size or generation-budget accounting.
+
+After dequeue, the adapter obtains fresh Chat context, reauthorizes the exact opaque
+union and checks current context/authentication again before application handoff.
+A trusted asynchronous UI sink must also check its current attachment and supplied
+token at actual apply/render time. No atomic revocation across later browser/network
+delivery or recall of previously delivered bytes is claimed. Context replacement must
+remove the old bound view; detached delivery cannot be used as a replay mechanism.
+
+Only exact confirmed canonical results produce TurnSaved. Ordinary results require
+matching authorized projection; sanctioned no-content authorization-failure receipts
+clear prose/references explicitly. A separate content-free DisclosureSuppressed event
+handles explicit denial/unavailability during queued delivery. It clears the original
+bound view and prevents late content from returning, without claiming persistence,
+terminal status or active-slot release. A throwing/noncooperative UI sink still cannot
+be forced to display a clear; its actual lifetime remains owned.
+
+No production page sending, host registry, route, Markdown renderer or reader-link
+composition is activated by this adapter. Root alone supplies those prerequisites.

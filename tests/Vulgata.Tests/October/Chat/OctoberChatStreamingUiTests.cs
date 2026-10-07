@@ -281,6 +281,30 @@ public sealed class OctoberChatStreamingUiTests
         Assert.DoesNotContain("另一个上下文", page.Markup, StringComparison.Ordinal);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Apply_ExplicitSanitizedTerminalClearsProvisionalProseAndReferences()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        var fixture = new ControlledChatFixture();
+        ImmutableArray<OctoberChatReference> references = [new(fixture.Knowledge.Handle(fixture.Knowledge.BlA, section: "overview"), true, 1, 100)];
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta, "授权撤销前显示的正文")));
+        Assert.True(model.Apply(Event(model, 3, OctoberChatEventKind.ReferencesUpdated) with { References = references }));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+
+        // This tests display semantics only; the adapter separately qualifies canonical receipt acceptance.
+        Assert.True(model.Apply(Event(model, 4, OctoberChatEventKind.TurnSaved, string.Empty) with
+        { SavedOutcome = OctoberChatDisplayOutcome.Failed, References = [] }));
+
+        component.WaitForAssertion(() => Assert.Equal(string.Empty, component.Find(".october-chat-answer").TextContent));
+        Assert.Empty(model.References);
+        Assert.Empty(component.FindAll(".october-chat-references"));
+        Assert.DoesNotContain("已保留部分内容", component.Markup, StringComparison.Ordinal);
+        Assert.True(model.IsTerminal);
+    }
+
     private static OctoberChatTurnViewModel CreateModel()
     {
         var fixture = new ControlledChatFixture();

@@ -152,6 +152,12 @@ verification before reuse.
   PostgreSQL qualification is claimed. The owner's separate discovery CLR crash
   remains unexplained/non-success. The root commit guard alone is not execution
   registration, owner-death proof or a reachable Chat route.
+  Reviewed Chat presentation `2d371f4f` is integrated at `3d40c143` with
+  1,499/1,499 affected controlled passes, zero skips. Its bounded nonblocking queue
+  retains subscriber lifetime, rechecks full disclosure lineage and suppresses
+  denied content without inventing a saved state. Actual page attachment/host
+  activation and browser qualification remain open; Chat continues leaf rendering
+  and reader links while root owns parent composition.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

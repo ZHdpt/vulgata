@@ -18,6 +18,61 @@ namespace Vulgata.Tests.October.Chat;
 public sealed class OctoberChatTurnRunnerTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RunAsync_NativeReadCapturesUpdatedOpaqueUnionForProgressAndTextWithoutChangingEarlierSnapshotAsync()
+    {
+        Harness h = await Harness.OpenAsync();
+        KnowledgeDependencyHandle before = h.Initial;
+        KnowledgeDependencyHandle after = Capsule('F', "owner-union-after-read");
+        h.Dependencies.MergeResult = caps => caps.Contains(before) && caps.Length > 1 ? after : before;
+        h.Client.Script = token => RoundAsync(token);
+        OctoberChatTurnRunner? runner = await h.CreateAsync();
+        Assert.NotNull(runner);
+        var text = new List<(string Text, KnowledgeDependencyHandle Dependencies)>();
+        var progress = new List<(OctoberChatToolProgress Progress, KnowledgeDependencyHandle Dependencies)>();
+
+        OctoberChatGenerationResult result = await runner.RunAsync((delta, dependencies, _) =>
+        {
+            text.Add((delta, dependencies));
+            return ValueTask.CompletedTask;
+        }, onToolProgress: (item, dependencies) => progress.Add((item, dependencies)));
+
+        Assert.Equal(DialogueTerminalState.Completed, result.TerminalState);
+        Assert.Equal(2, h.Client.Requests.Count);
+        Assert.Equal(1, h.Reader.Calls);
+        Assert.Equal(new[] { "读取前。", "读取后。" }, text.Select(item => item.Text));
+        Assert.Equal(before, text[0].Dependencies);
+        Assert.Equal(after, text[1].Dependencies);
+        Assert.Equal(new[] { OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Completed }, progress.Select(item => item.Progress.Kind));
+        Assert.Equal(before, progress[0].Dependencies);
+        Assert.Equal(after, progress[1].Dependencies);
+        Assert.Equal(progress[0].Progress.OperationId, progress[1].Progress.OperationId);
+        Assert.Equal(after, result.InferenceDependencies);
+        Assert.Contains(h.Dependencies.MergeCalls, caps => caps.Contains(before) && caps.Length > 1);
+        Assert.Equal(before.ProtectedPayload, text[0].Dependencies.ProtectedPayload);
+        Assert.NotEqual(text[0].Dependencies, text[1].Dependencies);
+
+        async IAsyncEnumerable<ChatResponseUpdate> RoundAsync([EnumeratorCancellation] CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            if (h.Client.Requests.Count == 1)
+            {
+                yield return new() { Role = ChatRole.Assistant, Contents = [new TextContent("读取前。")] };
+                yield return new() { Role = ChatRole.Assistant, Contents = [new FunctionCallContent("read", "ReadWiki",
+                    new Dictionary<string, object?> { ["document"] = h.Reader.Document })] };
+                yield return new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.ToolCalls };
+            }
+            else
+            {
+                Assert.Equal(2, h.Client.Requests.Count);
+                yield return new() { Role = ChatRole.Assistant, Contents = [new TextContent("读取后。")] };
+                yield return new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.Stop };
+            }
+            await Task.CompletedTask;
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
@@ -613,7 +668,8 @@ public sealed class OctoberChatTurnRunnerTests
 
     private sealed class FixedDependencies : IOctoberKnowledgeDependencyAuthority
     {
-        public KnowledgeDependencyHandle Merged { get; } = Capsule('E', "merged-full-inputs");
+        public KnowledgeDependencyHandle Merged { get; private set; } = Capsule('E', "merged-full-inputs");
+        public Func<ImmutableArray<KnowledgeDependencyHandle>, KnowledgeDependencyHandle>? MergeResult { get; set; }
         public List<ImmutableArray<KnowledgeDependencyHandle>> MergeCalls { get; } = [];
         public List<ImmutableArray<KnowledgeDependencyHandle>> CheckCalls { get; } = [];
         public int RootCalls { get; private set; }
@@ -625,7 +681,7 @@ public sealed class OctoberChatTurnRunnerTests
         public Task<KnowledgeDependencyResult> CreateNoKnowledgeRootAsync(ReadSelectionRequest selection, string initialInputDigest, CancellationToken cancellationToken = default)
         { RootCalls++; return Task.FromResult(new KnowledgeDependencyResult(KnowledgeDependencyStatus.UnknownLineage, null)); }
         public Task<KnowledgeDependencyResult> MergeAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> dependencies, CancellationToken cancellationToken = default)
-        { MergeCalls.Add(dependencies); return Task.FromResult(new KnowledgeDependencyResult(KnowledgeDependencyStatus.Succeeded, Merged)); }
+        { MergeCalls.Add(dependencies); Merged = MergeResult?.Invoke(dependencies) ?? Merged; return Task.FromResult(new KnowledgeDependencyResult(KnowledgeDependencyStatus.Succeeded, Merged)); }
         public Task<KnowledgeDependencyStatus> ReauthorizeAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> dependencies, CancellationToken cancellationToken = default)
         { CheckCalls.Add(dependencies); return Task.FromResult(Status); }
         public Task<KnowledgeConsumedContentResult> BuildConsumedContentAsync(ReadSelectionRequest selection, DocumentHandle document,
