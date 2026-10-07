@@ -123,5 +123,4 @@ same-byte distinct paths; uncited content/metadata retention; wrong root/version
 bounds; forged/missing metadata ledger and request binding; limits without truncation;
 metadata-only missing/directory results without file hashing; exclusion/non-disclosure;
 replay after source-verifier expiry; full publication/read/capsule/live revocation behavior.
-Actual Scan mapping and source-frame qualification remain owner prerequisites. This proposal
-is not yet an implemented or runtime-qualified supporting-input boundary.
+Actual Scan mapping and source-frame qualification remain owner prerequisites. Business controlled implementation and review are recorded in quickstart.md; actual Scan/native/provider qualification remains separate.

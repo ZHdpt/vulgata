@@ -1,4 +1,7 @@
 {
+  "October/Knowledge/OctoberKnowledgeInputTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberDialoguePostgreSqlTests.cs": {"suite": "PostgreSql"},
   "October/Knowledge/OctoberDialoguePersistenceTests.cs": {"suite": "SelfContained"},
   "October/Integration/OctoberChatClientSessionTests.cs": {
