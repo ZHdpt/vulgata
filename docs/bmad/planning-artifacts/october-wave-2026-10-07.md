@@ -1552,3 +1552,10 @@ remains sent/unknown on failure, never zero merely because a denial type is retu
 Business is released to provide the isolated compiling declaration checkpoint first;
 root imports it before both consumers bind production changes. Actual SDK propagation
 and delayed-entry rate conformance remain Scan-owned controlled qualification.
+
+Owner denial declaration `699979a3633d32c91cabe2a1ea2e0b47e5a3d468` is selectively
+integrated at `2aeb2d4c699dc45c834cfafe2af58769e56bc5e0`; the two files match the
+owner exactly. Root Agents compilation passed, zero errors/5,793 warnings. Both
+owners received this hash and are released for their disjoint executor/transport
+corrections. The declaration itself does not remove the premature reservation or
+prove SDK propagation; those implementation/regression checkpoints remain pending.
