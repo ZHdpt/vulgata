@@ -1559,3 +1559,34 @@ owner exactly. Root Agents compilation passed, zero errors/5,793 warnings. Both
 owners received this hash and are released for their disjoint executor/transport
 corrections. The declaration itself does not remove the premature reservation or
 prove SDK propagation; those implementation/regression checkpoints remain pending.
+
+Business correction `b3edb9e0dcb2dd2638582977744e06a5a0ba0b79` removes both early
+rate-bearing checks and catches the canonical final-denial status without retry.
+Root independent review accepted preserved disclosure/lifetime/deadline checks and
+callback/observer-based usage. Root controlled Business/Resolution/FlowPublication/
+ScanExecutionScope selection passed 292/292, zero failures/skips
+(`511b8ee42a664b94b77e309ba2383275`). One earlier launcher attempt exited 1 before
+output or a new results directory; the identical retry passed, with no environment
+or test change and no asserted cause. Scan's actual delayed-entry spacing and SDK
+propagation remain separate qualification against this corrected consumer.
+
+### Failed B1 outcome versus retained publication
+
+Business owner guidance, independently reviewed, preserves canonical coverage:
+file coverage accounts for source input; B1 admission to B2 requires every selected
+inquiry to have a settled outcome/disposition, not every inquiry to succeed; BL
+publication coverage describes selected BL-root/file gaps rather than aggregate
+execution success. Planner and synthesis already retain failed/uncertain frontiers
+and the full dependency ledger. Do not broaden IsPartial or invent a Scan policy.
+
+Root adopts the narrow host mapping: inspect accepted Outcome.Kind equally on direct
+acknowledgement and exact lost-ack lookup. Failed means execution failure/exit 1 and
+a sanitized resolution-processing gap, retaining its durable receipt and any still-
+authorized confirmed BL publication. Do not regenerate, erase BL or manufacture
+CommitIndeterminate. Unresolved and Supported-with-limitations can be valid bounded
+conclusions; they are not failures merely because no edge is confirmed. NotEvaluated
+retains its actual incompleteness/limit cause and is not blanket-mapped to Failed.
+Scope evidence: owner resolution persistence tests for uncheckable witness and
+explicit host dispositions; FlowPlanner non-supported frontiers; SynthesisPolicy's
+app-owned uncertain gap section. Scan owns direct-ack/lookup parity and nonfailure
+Unresolved controls. No schema, owner coverage redefinition or new runtime authority.
