@@ -356,9 +356,12 @@ public sealed class OctoberBusinessExecutionScopeTests
 }
 
 /// <summary>Controlled host protocol model; no real Scan adapter, provider quota, or synthesis execution.</summary>
-internal sealed class ResolutionScopeProbe : IOctoberExecutionScope
+internal sealed class ResolutionScopeProbe : IOctoberExecutionScope, IOctoberBusinessHandoffLifetime
 {
     public ControlledExecutionScope Inner { get; } = new();
+    public CancellationToken HandoffCancellation => Inner.HandoffCancellation;
+    public ProviderAdmissionStatus CheckHandoffEligibility(Guid runId, OperationKey finalizationOperation, string providerProfileId) =>
+        Inner.CheckHandoffEligibility(runId, finalizationOperation, providerProfileId);
     public ProviderAdmissionStatus? AdmissionFailure { get; set; }
     public Action? AfterGrant { get; set; }
     public List<ProviderAttemptRequest> Requests { get; } = [];

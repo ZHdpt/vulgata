@@ -39,6 +39,17 @@ public sealed class OctoberResolutionExecutor
         var attempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
         ResolutionExecutionResult Result(ProviderAdmissionStatus? failure, ResolutionOutcome? outcome = null) =>
             new(outcome, failure, attempts.ToImmutable());
+        if (executionScope is not IOctoberBusinessHandoffLifetime lifetime) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
+        ProviderAdmissionStatus HandoffStatus()
+        {
+            try { return lifetime.CheckHandoffEligibility(runId, finalizationOperation, providerProfileId); }
+            catch (Exception) { return ProviderAdmissionStatus.AuthorityUnavailable; }
+        }
+        CancellationToken handoffCancellation;
+        try { handoffCancellation = lifetime.HandoffCancellation; }
+        catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
+        var initialHandoff = HandoffStatus();
+        if (initialHandoff != ProviderAdmissionStatus.Granted) return Result(initialHandoff);
         if (runId == Guid.Empty || finalizationOperation.BatchId != corpus.Handle.Binding.BatchId ||
             finalizationOperation.OperationId == Guid.Empty || string.IsNullOrWhiteSpace(providerProfileId) || maximumTokens <= 0)
             return Result(ProviderAdmissionStatus.Denied);
@@ -58,7 +69,7 @@ public sealed class OctoberResolutionExecutor
             if (remaining <= TimeSpan.Zero) return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (cancellationToken.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
             using var deadline = new CancellationTokenSource(remaining, _time);
-            using var admissionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, deadline.Token);
+            using var admissionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, deadline.Token, handoffCancellation);
             long requested = _time.GetTimestamp();
             ProviderAdmission admission;
             try
@@ -66,7 +77,8 @@ public sealed class OctoberResolutionExecutor
                 admission = await executionScope.AcquireProviderAttemptAsync(new(runId, finalizationOperation,
                     Guid.NewGuid(), BusinessWorkKind.Resolution, providerProfileId, remaining, maximumTokens), admissionCancellation.Token);
             }
-            catch (OperationCanceledException) { return Result(deadline.IsCancellationRequested ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped); }
+            catch (OperationCanceledException) { return Result(HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted
+                ? stopped : deadline.IsCancellationRequested ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped); }
             catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
             if (admission.Status != ProviderAdmissionStatus.Granted || admission.Lease is null)
                 return Result(admission.Status == ProviderAdmissionStatus.Granted ? ProviderAdmissionStatus.AuthorityUnavailable : admission.Status);
@@ -85,13 +97,14 @@ public sealed class OctoberResolutionExecutor
             ProviderAttemptOutcome attemptOutcome = ProviderAttemptOutcome.Failed;
             try
             {
-                var authority = await disclosure.CheckAsync(corpus.Handle, actual.Contributors, transportCancellation.Token);
+                var authority = await CheckAuthorityAsync(disclosure, corpus.Handle, actual.Contributors, transportCancellation.Token);
                 if (authority != DisclosureStatus.Allowed)
                     failure = authority == DisclosureStatus.Denied ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.AuthorityUnavailable;
                 else
                 {
                     var eligibility = await lease.CheckBeforeSendAsync(transportCancellation.Token);
                     if (eligibility != ProviderAdmissionStatus.Granted) failure = eligibility;
+                    else if (HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted) failure = stopped;
                     else if (Elapsed() >= TimeSpan.FromSeconds(120)) failure = ProviderAdmissionStatus.DeadlineExceeded;
                     else
                     {
@@ -117,7 +130,7 @@ public sealed class OctoberResolutionExecutor
                             response.Messages.All(x => x.Role == ChatRole.Assistant && x.Contents.All(c => c is TextContent or UsageContent)) &&
                             Encoding.UTF8.GetByteCount(response.Text) <= KnowledgeContract.MaximumContentBytes)
                         {
-                            var finalAuthority = await disclosure.CheckAsync(corpus.Handle, actual.Contributors, transportCancellation.Token);
+                            var finalAuthority = await CheckAuthorityAsync(disclosure, corpus.Handle, actual.Contributors, transportCancellation.Token);
                             if (finalAuthority != DisclosureStatus.Allowed)
                                 failure = finalAuthority == DisclosureStatus.Denied ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.AuthorityUnavailable;
                             else
@@ -152,6 +165,8 @@ public sealed class OctoberResolutionExecutor
                 try { await lease.DisposeAsync(); }
                 catch (Exception) { failure = ProviderAdmissionStatus.AuthorityUnavailable; retry = false; outcome = null; }
             }
+            var handoffStatus = HandoffStatus();
+            if (handoffStatus != ProviderAdmissionStatus.Granted) return Result(handoffStatus);
             if (leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested)
                 return Result(ProviderAdmissionStatus.HardStopped);
             if (deadline.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(120))
@@ -159,7 +174,29 @@ public sealed class OctoberResolutionExecutor
             if (failure is not null) return Result(failure);
             // Preserve this attempt's original proposal for independent store validation.
             // All failure, settlement and late-stop exits above intentionally disclose no witness.
-            if (outcome is not null) return Result(null, outcome) with { Witness = parsedWitness };
+            if (outcome is not null)
+            {
+                try
+                {
+                    var authority = await CheckAuthorityAsync(disclosure, corpus.Handle, actual.Contributors, transportCancellation.Token);
+                    if (authority != DisclosureStatus.Allowed) return Result(authority == DisclosureStatus.Denied
+                        ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.AuthorityUnavailable);
+                }
+                catch (OperationCanceledException)
+                {
+                    var stopped = HandoffStatus();
+                    return Result(stopped != ProviderAdmissionStatus.Granted ? stopped :
+                        deadline.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(120)
+                            ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped);
+                }
+                catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
+                handoffStatus = HandoffStatus();
+                if (handoffStatus != ProviderAdmissionStatus.Granted) return Result(handoffStatus);
+                if (transportCancellation.IsCancellationRequested) return Result(deadline.IsCancellationRequested
+                    ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped);
+                if (Elapsed() >= TimeSpan.FromSeconds(120)) return Result(ProviderAdmissionStatus.DeadlineExceeded);
+                return Result(null, outcome) with { Witness = parsedWitness };
+            }
             if (!retry) return Result(null);
         }
         return Result(null);
@@ -167,4 +204,16 @@ public sealed class OctoberResolutionExecutor
 
     private static long? Nonnegative(long? value) => value is >= 0 ? value : null;
     private static TimeSpan Max(TimeSpan left, TimeSpan right) => left >= right ? left : right;
+    private static async Task<DisclosureStatus> CheckAuthorityAsync(IOctoberResolutionDisclosureAuthority authority,
+        CorpusHandle corpus, ImmutableArray<Contributor> contributors, CancellationToken token)
+    {
+        Task<DisclosureStatus> pending = authority.CheckAsync(corpus, contributors, token);
+        _ = ObserveAsync(pending);
+        return await pending.WaitAsync(token);
+    }
+    private static async Task ObserveAsync(Task pending)
+    {
+        try { await pending; }
+        catch (Exception) { }
+    }
 }

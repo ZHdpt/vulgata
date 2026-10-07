@@ -17,6 +17,69 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteAsync_MissingHostHandoffLifetime_FailsClosedBeforeProviderOrAdmissionAsync()
+    {
+        var f = new SynthesisCase();
+        var scope = new SynthesisMissingLifetimeScope();
+        using var client = new ResolutionClient((_, _) => Task.FromResult(f.Response()));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), new SynthesisClock());
+        Assert.Equal(ProviderAdmissionStatus.AuthorityUnavailable, result.AdmissionFailure);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Empty(result.Gaps); Assert.Empty(result.Coverage); Assert.Empty(result.PlanDispositions); Assert.Empty(result.Attempts);
+        Assert.Equal(0, scope.Acquisitions); Assert.Equal(0, client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false, ProviderAdmissionStatus.HardStopped)]
+    [InlineData(true, ProviderAdmissionStatus.DeadlineExceeded)]
+    public async Task ExecuteAsync_ActualHostLifetimeEndsDuringPostSettlementAuthority_SuppressesLateAllowedContentAsync(
+        bool runDeadline, ProviderAdmissionStatus expectedFailure)
+    {
+        var f = new SynthesisCase();
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock, runDeadline ? 180 : 1800);
+        // The host run predates this synthesis call: 60 seconds remain from its original 180-second allowance.
+        if (runDeadline) clock.Advance(TimeSpan.FromSeconds(120));
+        var authority = new SynthesisHandoffDisclosure(f.Input.Contributors);
+        using var client = new ResolutionClient((_, _) => Task.FromResult(f.Response()));
+        var active = f.ExecuteAsync(client, scope, authority, clock);
+        try
+        {
+            await authority.HandoffEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(1, client.Calls);
+            Assert.False(active.IsCompleted);
+            // A second actual host lease can acquire the sole slot only after the physical attempt is settled.
+            clock.Advance(TimeSpan.FromSeconds(1));
+            var capacity = await scope.AcquireWorkerAttemptAsync(f.Worker(1)).WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(ProviderAdmissionStatus.Granted, capacity.Status);
+            Assert.NotNull(capacity.Lease);
+            await capacity.Lease.DisposeAsync(); // No provider dispatch; returns the probe reservation and slot.
+            if (runDeadline) clock.Advance(TimeSpan.FromSeconds(60));
+            else scope.HardStop();
+            // Verify actual host state, independently of the now-released synthesis attempt token.
+            Assert.Equal(expectedFailure, (await scope.AcquireWorkerAttemptAsync(f.Worker(1))).Status);
+        }
+        finally
+        {
+            authority.Release.TrySetResult();
+            await active.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        var result = await active;
+        Assert.Null(result.Content);
+        Assert.Null(result.Proposal);
+        Assert.Null(result.Dependencies);
+        Assert.Empty(result.Gaps);
+        Assert.Empty(result.Coverage);
+        Assert.Empty(result.PlanDispositions);
+        Assert.Equal(expectedFailure, result.AdmissionFailure);
+        Assert.Equal(1, client.Calls);
+        Assert.Single(result.Attempts);
+        Assert.Equal(3, authority.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(DisclosureStatus.Denied, ProviderAdmissionStatus.Denied)]
     [InlineData(DisclosureStatus.AuthorityUnavailable, ProviderAdmissionStatus.AuthorityUnavailable)]
@@ -417,9 +480,10 @@ internal sealed class SynthesisCase
         FinishReason = ChatFinishReason.Stop,
         Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 }
     };
-    public OctoberExecutionScope Scope(SynthesisClock clock) => new(Run, "selected-profile", new OctoberScanPolicy
+    public OctoberExecutionScope Scope(SynthesisClock clock, int runDeadlineSeconds = 1800) => new(Run, "selected-profile", new OctoberScanPolicy
     {
         OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 100,
+        RunDeadlineSeconds = runDeadlineSeconds, FileDeadlineSeconds = Math.Min(600, runDeadlineSeconds),
         SourceRules = [new(Input.Corpus.Documents[0].RepositoryId, "src", "selected", "Controlled synthesis qualification")]
     }, (_, token) => { token.ThrowIfCancellationRequested(); return Task.FromResult(ProviderAdmissionStatus.Granted); }, Operation, clock);
     public OctoberWorkerProviderAttemptRequest Worker(long tokens) => new(Run, ResolutionCase.Id(97003), Guid.NewGuid(), "selected-profile", TimeSpan.FromSeconds(10), tokens);
@@ -449,8 +513,13 @@ internal sealed class SynthesisDisclosure : IOctoberResolutionDisclosureAuthorit
     }
 }
 
-internal sealed class SynthesisScopeSpy(IOctoberExecutionScope inner) : IOctoberExecutionScope
+internal sealed class SynthesisScopeSpy(IOctoberExecutionScope inner) : IOctoberExecutionScope, IOctoberBusinessHandoffLifetime
 {
+    public CancellationToken HandoffCancellation => inner is IOctoberBusinessHandoffLifetime lifetime
+        ? lifetime.HandoffCancellation : throw new InvalidOperationException("Missing host handoff lifetime.");
+    public ProviderAdmissionStatus CheckHandoffEligibility(Guid runId, OperationKey finalizationOperation, string providerProfileId) =>
+        inner is IOctoberBusinessHandoffLifetime lifetime ? lifetime.CheckHandoffEligibility(runId, finalizationOperation, providerProfileId)
+            : ProviderAdmissionStatus.AuthorityUnavailable;
     public List<ProviderAttemptRequest> Requests { get; } = [];
     public Task<ProviderAdmission> AcquireProviderAttemptAsync(ProviderAttemptRequest request, CancellationToken cancellationToken = default)
     {
@@ -463,8 +532,13 @@ internal sealed class SynthesisScopeSpy(IOctoberExecutionScope inner) : IOctober
 
 
 /// <summary>Delegates to the real host lease; models authority changing while settlement is awaited, without cancelling its token.</summary>
-internal sealed class SynthesisSettlementScope(IOctoberExecutionScope inner, Action afterSettlement) : IOctoberExecutionScope
+internal sealed class SynthesisSettlementScope(IOctoberExecutionScope inner, Action afterSettlement) : IOctoberExecutionScope, IOctoberBusinessHandoffLifetime
 {
+    public CancellationToken HandoffCancellation => inner is IOctoberBusinessHandoffLifetime lifetime
+        ? lifetime.HandoffCancellation : throw new InvalidOperationException("Missing host handoff lifetime.");
+    public ProviderAdmissionStatus CheckHandoffEligibility(Guid runId, OperationKey finalizationOperation, string providerProfileId) =>
+        inner is IOctoberBusinessHandoffLifetime lifetime ? lifetime.CheckHandoffEligibility(runId, finalizationOperation, providerProfileId)
+            : ProviderAdmissionStatus.AuthorityUnavailable;
     private readonly Action _afterSettlement = afterSettlement;
     public int SettleCalls { get; private set; }
     public int DisposeCalls { get; private set; }
@@ -492,5 +566,35 @@ internal sealed class SynthesisSettlementScope(IOctoberExecutionScope inner, Act
             owner.LeaseCancellationObserved |= innerLease.CancellationToken.IsCancellationRequested;
             await innerLease.DisposeAsync();
         }
+    }
+}
+
+/// <summary>Pauses only the post-settlement full-contributor check and then returns Allowed even if the old attempt token changed.</summary>
+internal sealed class SynthesisHandoffDisclosure(ImmutableArray<Contributor> expected) : IOctoberResolutionDisclosureAuthority
+{
+    private int _calls;
+    public int Calls => Volatile.Read(ref _calls);
+    public TaskCompletionSource HandoffEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public async Task<DisclosureStatus> CheckAsync(CorpusHandle corpus, ImmutableArray<Contributor> contributors, CancellationToken cancellationToken = default)
+    {
+        Assert.True(expected.ToHashSet().SetEquals(contributors));
+        if (Interlocked.Increment(ref _calls) == 3)
+        {
+            HandoffEntered.TrySetResult();
+            await Release.Task;
+        }
+        return DisclosureStatus.Allowed;
+    }
+}
+
+
+internal sealed class SynthesisMissingLifetimeScope : IOctoberExecutionScope
+{
+    public int Acquisitions { get; private set; }
+    public Task<ProviderAdmission> AcquireProviderAttemptAsync(ProviderAttemptRequest request, CancellationToken cancellationToken = default)
+    {
+        Acquisitions++;
+        return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.AuthorityUnavailable, null));
     }
 }

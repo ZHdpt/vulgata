@@ -47,6 +47,17 @@ public sealed class OctoberBusinessSynthesisExecutor
         ArgumentNullException.ThrowIfNull(disclosure);
         var attempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
         BusinessSynthesisResult Result(ProviderAdmissionStatus? failure) => new(null, null, failure, attempts.ToImmutable());
+        if (executionScope is not IOctoberBusinessHandoffLifetime lifetime) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
+        ProviderAdmissionStatus HandoffStatus()
+        {
+            try { return lifetime.CheckHandoffEligibility(runId, operation, providerProfileId); }
+            catch (Exception) { return ProviderAdmissionStatus.AuthorityUnavailable; }
+        }
+        CancellationToken handoffCancellation;
+        try { handoffCancellation = lifetime.HandoffCancellation; }
+        catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
+        var initialHandoff = HandoffStatus();
+        if (initialHandoff != ProviderAdmissionStatus.Granted) return Result(initialHandoff);
         FlowGroupVersion? group;
         string payload;
         try
@@ -77,7 +88,7 @@ public sealed class OctoberBusinessSynthesisExecutor
             if (remaining <= TimeSpan.Zero) return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (cancellationToken.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
             using var deadline = new CancellationTokenSource(remaining, _time);
-            using var admissionCancellation = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token, cancellationToken);
+            using var admissionCancellation = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token, cancellationToken, handoffCancellation);
             long requested = _time.GetTimestamp();
             ProviderAdmission admission;
             try
@@ -86,7 +97,8 @@ public sealed class OctoberBusinessSynthesisExecutor
                     BusinessWorkKind.Synthesis, providerProfileId, remaining, maximumTokens), admissionCancellation.Token);
             }
             catch (OperationCanceledException)
-            { return Result(deadline.IsCancellationRequested ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped); }
+            { return Result(HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted
+                ? stopped : deadline.IsCancellationRequested ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped); }
             catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
             if (admission.Status != ProviderAdmissionStatus.Granted || admission.Lease is null)
                 return Result(admission.Status == ProviderAdmissionStatus.Granted ? ProviderAdmissionStatus.AuthorityUnavailable : admission.Status);
@@ -105,12 +117,13 @@ public sealed class OctoberBusinessSynthesisExecutor
             ProviderAttemptOutcome outcome = ProviderAttemptOutcome.Failed;
             try
             {
-                var authority = await disclosure.CheckAsync(input.Corpus.Handle, group.Dependencies.Contributors, transportCancellation.Token);
+                var authority = await CheckAuthorityAsync(disclosure, input.Corpus.Handle, group.Dependencies.Contributors, transportCancellation.Token);
                 if (authority != DisclosureStatus.Allowed) failure = AuthorityStatus(authority);
                 else
                 {
                     var eligibility = await lease.CheckBeforeSendAsync(transportCancellation.Token);
                     if (eligibility != ProviderAdmissionStatus.Granted) failure = eligibility;
+                    else if (HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted) failure = stopped;
                     else if (Elapsed() >= TimeSpan.FromSeconds(180)) failure = ProviderAdmissionStatus.DeadlineExceeded;
                     else
                     {
@@ -131,7 +144,7 @@ public sealed class OctoberBusinessSynthesisExecutor
                             response.Messages.All(x => x.Role == ChatRole.Assistant && x.Contents.All(c => c is TextContent or UsageContent)) &&
                             _utf8.GetByteCount(response.Text) <= OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes)
                         {
-                            authority = await disclosure.CheckAsync(input.Corpus.Handle, group.Dependencies.Contributors, transportCancellation.Token);
+                            authority = await CheckAuthorityAsync(disclosure, input.Corpus.Handle, group.Dependencies.Contributors, transportCancellation.Token);
                             if (authority != DisclosureStatus.Allowed) failure = AuthorityStatus(authority);
                             else
                             {
@@ -162,6 +175,8 @@ public sealed class OctoberBusinessSynthesisExecutor
                 try { await lease.DisposeAsync(); }
                 catch (Exception) { failure = ProviderAdmissionStatus.AuthorityUnavailable; }
             }
+            var handoffStatus = HandoffStatus();
+            if (handoffStatus != ProviderAdmissionStatus.Granted) return Result(handoffStatus);
             if (leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
             if (deadline.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(180)) return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (failure is not null) return Result(failure);
@@ -171,16 +186,21 @@ public sealed class OctoberBusinessSynthesisExecutor
                 // using the same attempt deadline rather than opening another allowance or retry.
                 try
                 {
-                    var finalAuthority = await disclosure.CheckAsync(input.Corpus.Handle, group.Dependencies.Contributors,
-                        transportCancellation.Token).WaitAsync(transportCancellation.Token);
+                    var finalAuthority = await CheckAuthorityAsync(disclosure, input.Corpus.Handle, group.Dependencies.Contributors,
+                        transportCancellation.Token);
                     if (finalAuthority != DisclosureStatus.Allowed) return Result(AuthorityStatus(finalAuthority));
                 }
                 catch (OperationCanceledException)
                 {
-                    return Result(leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested
-                        ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded);
+                    var stopped = HandoffStatus();
+                    return Result(stopped != ProviderAdmissionStatus.Granted ? stopped :
+                        leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested
+                            ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded);
                 }
                 catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
+                handoffStatus = HandoffStatus();
+                if (handoffStatus != ProviderAdmissionStatus.Granted) return Result(handoffStatus);
+                if (handoffCancellation.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
                 if (leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested)
                     return Result(ProviderAdmissionStatus.HardStopped);
                 if (deadline.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(180))
@@ -200,4 +220,16 @@ public sealed class OctoberBusinessSynthesisExecutor
         ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.AuthorityUnavailable;
     private static long? Nonnegative(long? value) => value is >= 0 ? value : null;
     private static TimeSpan Max(TimeSpan left, TimeSpan right) => left >= right ? left : right;
+    private static async Task<DisclosureStatus> CheckAuthorityAsync(IOctoberResolutionDisclosureAuthority authority,
+        CorpusHandle corpus, ImmutableArray<Contributor> contributors, CancellationToken token)
+    {
+        Task<DisclosureStatus> pending = authority.CheckAsync(corpus, contributors, token);
+        _ = ObserveAsync(pending);
+        return await pending.WaitAsync(token);
+    }
+    private static async Task ObserveAsync(Task pending)
+    {
+        try { await pending; }
+        catch (Exception) { }
+    }
 }
