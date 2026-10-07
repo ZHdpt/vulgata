@@ -607,6 +607,33 @@ public sealed class OctoberScanFileWorkerTests
         }
         finally { release.TrySetResult(true); await pending.WaitAsync(TimeSpan.FromSeconds(3)); }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualFactory_SynchronousTransportThrow_CountsAttemptedDispatchWithUnknownTokensAsync()
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        await using var scope = new OctoberExecutionScope(request.RunId, request.ProviderProfileId, RealScopePolicy(), (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted));
+        using var transport = new SynchronousFailureTransport();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(1, transport.Calls);
+        var snapshot = scope.GetSnapshot();
+        Assert.Equal(1, snapshot.Usage.Requests);
+        Assert.True(snapshot.Usage.HasUnknownUsage);
+        Assert.Null(snapshot.Usage.InputTokens);
+        Assert.Null(snapshot.Usage.OutputTokens);
+    }
+
+    private sealed class SynchronousFailureTransport : HttpMessageHandler
+    {
+        internal int Calls;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Calls++;
+            throw new HttpRequestException("Controlled synchronous transport invocation failure");
+        }
+    }
     private sealed record Round(string? Text, ChatFinishReason? Finish, IReadOnlyList<AIContent>? Calls = null);
     private sealed class ScriptedClient(IReadOnlyList<Round> rounds, Action? afterRequest = null) : IChatClient
     {

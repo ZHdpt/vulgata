@@ -114,8 +114,8 @@ public sealed class OctoberWorkerClientFactory
                 throw new InvalidOperationException("The Worker attempt is no longer eligible.");
             cancellationToken.ThrowIfCancellationRequested();
             onDispatched?.Invoke(Stopwatch.GetTimestamp());
-            Task<HttpResponseMessage> response = _invoker.SendAsync(request, cancellationToken);
             (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
+            Task<HttpResponseMessage> response = _invoker.SendAsync(request, cancellationToken);
             return await response;
         }
         protected override void Dispose(bool disposing)

@@ -416,6 +416,50 @@ before freeze/publication. Cleanup failure remains sticky and blocks success.
 Independent re-review accepts these corrections and the controlled runner boundary.
 Main activation and separate PostgreSQL/External/E2E qualification remain open.
 
+Reviewed corrections and controlled runner were committed at
+`69c066b2ddd155f6ea01e3584b9af96c020e5ff2` and
+`b63cae492fd8e55544b828f01d46ad8913ee65cd`, respectively, and sent to Integrator.
+Cross-module review accepted the lifetime/ownership corrections but found one
+transport observation edge: a synchronous underlying handler throw occurs before
+`SendAsync` returns a Task. Invocation must be recorded at call entry, after
+eligibility/cancellation checks, not after Task return. This counts an attempted
+transport invocation, not remote acceptance.
+
+Main composition/reporting and synchronous-throw RED:
+`isolation-4ec6100ca2ed486d80ec638eeb891035/results.trx`, **55 selected,
+44 passed, 11 failed, zero skipped**. Ten failures reach the deliberate Main
+composition/reporting stubs; one confirms handler invocation count 1 while the
+reported request count is 0. Root inspected and released these changes. Existing
+runner checks pass; two new full-route PostgreSQL cases are authored and separately
+classified but have not run.
+
+The integration qualification boundary is now concrete: one guarded E2E invocation
+with `-WithPostgreSql`, one owning `OctoberHostSelectionTests.GeneratorPrepareFixture`
+and exactly one production Generate. Integrator owns shared fixture extension,
+strict report hydration and ordinary Web reader checks on that same publication.
+Scan owns explicit approved runtime/policy/provider input binding and settled
+report emission. The standard runner removes its container/volume and fixture DB;
+this proves publication during that run, not a seven-day retained website. Retain
+only sanitized report/evidence. Real-resource permissions remain missing; no
+fixture dummy provider, ambient credential fallback or duplicate Scan is allowed.
+
+Main implementation plus the synchronous-invocation correction ran in
+`isolation-0b580ac63a1548a8a98a43a23963d37b/results.trx`: **296 selected,
+292 passed, 4 failed, zero skipped**. All initial Main/report/cleanup cases,
+the synchronous handler counterexample and prior accounting/lifetime/runner
+regressions passed. Only four newly added foreign publication/document binding
+cases failed by returning success; root inspected and released that validation.
+Independent review accepts the narrow invocation correction contingent on this
+now-recorded GREEN.
+
+Main review also identified raw `FileCoverage.Reason` as potentially model-derived
+source prose. Explicit safe coverage projections with host reason codes are being
+tested before correction. CLI report summaries are not replacement stored
+coverage/proposal authority. Exact owner IDs/digests/origin/disposition and safe
+relative paths remain available to Integrator's strict fixture-bound hydration.
+CLI Ctrl+C signal/drain behavior is not qualified by the controlled API cancellation
+tests; its S3 task remains undispatched. No new S3 signal semantics are adopted.
+
 ## Early composition decisions
 
 The reviewed primary-frame/F1 component is committed at
