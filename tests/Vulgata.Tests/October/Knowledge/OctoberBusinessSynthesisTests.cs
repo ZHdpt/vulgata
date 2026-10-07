@@ -494,4 +494,3 @@ internal sealed class SynthesisSettlementScope(IOctoberExecutionScope inner, Act
         }
     }
 }
-
