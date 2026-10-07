@@ -450,3 +450,28 @@ coordinator work; integration owns live execution registration, one-shot issuanc
 actual commit/death adapters and route composition. Explorer retains its accepted
 graph/reader and awaits the single shared real publication. No all-lane barrier or
 new routine permission gate applies. Runtime resource authority is still outstanding.
+
+## Latest combined checkpoint and consumer recovery clarification
+
+Chat actual-owner conformance `4057fb5b` is integrated at `556ac04f`; Business's
+accepted contract/task/model wording `613134c4` / `79eebaa5` is integrated at
+`f48f8744`. The final affected selection at that source boundary passed
+**1,306/1,306 SelfContained** cases, zero failures/skips, 385 classified files:
+`TestResults/isolation-9ec68daafd564547bb7471fd62c3e10f/results.trx`.
+This includes actual Business disclosure/crypto through the actual Chat wrapper:
+near-limit continuation/proof/report, ciphertext-independent replay accounting,
+and uncited-input revocation. Published data/policy remain controlled; no provider,
+PostgreSQL, native preparation or browser qualification is implied.
+
+Business confirmed its dialogue checkpoint intentionally never emits ConfirmedAbsent.
+A fresh in-memory lifecycle submits its frozen Begin once directly; requiring a
+missing-row lookup to prove absence first would block every new turn. After an
+uncertain/replayed Begin, lookup cannot grant another dispatch. Supported recovery
+is positive exact receipt reconciliation, or separately proven dead-and-settled
+orphan interruption under the current fence/lock. Missing terminal rows stay
+Indeterminate; neither Chat nor integration may invent a storage-retry permission.
+The consumer is released on that exact supported boundary, not a new recovery ledger.
+
+All lanes retain the same accepted scope. Their safe synchronization checkpoints
+will be sent with the integration commit. Pending host registry/commit/death wiring
+requires the actual coordinator lifecycle handshake; no fallback authority is added.

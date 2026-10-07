@@ -116,6 +116,10 @@ verification before reuse.
   corrections. No migration or real host/provider run occurred. Generate owner helper/
   provenance implementation, Scan Main composition and live Chat execution/commit/death
   wiring remain incomplete; ordinary graph access does not wait for Chat persistence.
+  Final cross-owner Chat conformance and accepted task/model wording raise the affected
+  combined result to 1,306/1,306, zero skips. Real qualification remains pending.
+  Dialogue lookup currently supports positive receipt reconciliation, not ConfirmedAbsent
+  proof; a missing row never authorizes a retry or a second generation.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
