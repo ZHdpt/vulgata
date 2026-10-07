@@ -281,6 +281,162 @@ public sealed class OctoberChatStreamingUiTests
         Assert.DoesNotContain("另一个上下文", page.Markup, StringComparison.Ordinal);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Apply_ExplicitSanitizedTerminalClearsProvisionalProseAndReferences()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        var fixture = new ControlledChatFixture();
+        ImmutableArray<OctoberChatReference> references = [new(fixture.Knowledge.Handle(fixture.Knowledge.BlA, section: "overview"), true, 1, 100)];
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta, "授权撤销前显示的正文")));
+        Assert.True(model.Apply(Event(model, 3, OctoberChatEventKind.ReferencesUpdated) with { References = references }));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+
+        // This tests display semantics only; the adapter separately qualifies canonical receipt acceptance.
+        Assert.True(model.Apply(Event(model, 4, OctoberChatEventKind.TurnSaved, string.Empty) with
+        { SavedOutcome = OctoberChatDisplayOutcome.Failed, References = [] }));
+
+        component.WaitForAssertion(() => Assert.Equal(string.Empty, component.Find(".october-chat-answer").TextContent));
+        Assert.Empty(model.References);
+        Assert.Empty(component.FindAll(".october-chat-references"));
+        Assert.DoesNotContain("已保留部分内容", component.Markup, StringComparison.Ordinal);
+        Assert.True(model.IsTerminal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Markdown_SupportedBlocksAndInlineFormattingHaveMeaningfulSafeElements()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta,
+            "# 业务说明\n\n正文 **重要**、*推测* 与 `a < b`。\n\n- 第一项\n- 第二项\n\n1. 步骤一\n2. 步骤二\n\n> 明确限定\n> 保留不确定性")));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+
+        Assert.Equal("业务说明", component.Find(".october-chat-answer h1").TextContent);
+        Assert.Equal("重要", component.Find(".october-chat-answer strong").TextContent);
+        Assert.Equal("推测", component.Find(".october-chat-answer em").TextContent);
+        Assert.Equal("a < b", component.Find(".october-chat-answer p code").TextContent);
+        Assert.Equal(new[] { "第一项", "第二项" }, component.FindAll(".october-chat-answer ul > li").Select(item => item.TextContent));
+        Assert.Equal(new[] { "步骤一", "步骤二" }, component.FindAll(".october-chat-answer ol > li").Select(item => item.TextContent));
+        Assert.Contains("明确限定", component.Find(".october-chat-answer blockquote").TextContent, StringComparison.Ordinal);
+        Assert.Contains("保留不确定性", component.Find(".october-chat-answer blockquote").TextContent, StringComparison.Ordinal);
+        Assert.False(model.IsTerminal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Markdown_IncompleteChunksRemainVisibleWithoutWaitingForTerminalOrClosingDelimiter()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta, "# 流式标题\n\n正文 **尚未闭合")));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+        Assert.Equal("流式标题", component.Find(".october-chat-answer h1").TextContent);
+        Assert.Contains("**尚未闭合", component.Find(".october-chat-answer").TextContent, StringComparison.Ordinal);
+        Assert.Empty(component.FindAll(".october-chat-answer strong"));
+
+        Assert.True(model.Apply(Event(model, 3, OctoberChatEventKind.AnswerDelta, "现在完成**")));
+        component.WaitForAssertion(() => Assert.Equal("尚未闭合现在完成", component.Find(".october-chat-answer strong").TextContent));
+        string unclosed = "```csharp\n" + string.Concat(Enumerable.Repeat("<x> **未完成 ", 2048));
+        Assert.True(model.Apply(Event(model, 4, OctoberChatEventKind.AnswerDelta, "\n\n" + unclosed)));
+        component.WaitForAssertion(() => Assert.Contains(unclosed, component.Find(".october-chat-answer").TextContent, StringComparison.Ordinal));
+        Assert.Empty(component.FindAll(".october-chat-answer pre"));
+        Assert.False(model.IsTerminal);
+        Assert.Equal("provisional", component.Find(".october-chat-turn").GetAttribute("data-answer-state"));
+        Assert.DoesNotContain("已保存", component.Markup, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Markdown_ModelHtmlImagesAndUrlSchemesRemainEncodedLiteralWithoutNavigation()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        const string prose = "<script>alert(1)</script><img src=x onerror=alert(1)><svg onload=alert(1)></svg> " +
+            "<a href='javascript:alert(1)' onclick='alert(1)'>链接</a> " +
+            "[http](http://example.invalid/) [https](https://example.invalid/) [js](javascript:alert(1)) " +
+            "[data](data:text/html,hello) [file](file:///C:/private) [mail](mailto:test@example.invalid) " +
+            "[ftp](ftp://example.invalid/) [relative](/internal) [network](//example.invalid/) ![image](https://example.invalid/image.png)";
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta, prose)));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+
+        Assert.Equal(prose, component.Find(".october-chat-answer").TextContent);
+        Assert.Empty(component.FindAll(".october-chat-answer a, .october-chat-answer img, .october-chat-answer script, .october-chat-answer svg, .october-chat-answer iframe"));
+        Assert.Empty(component.FindAll(".october-chat-answer [href], .october-chat-answer [src], .october-chat-answer [onclick], .october-chat-answer [onerror], .october-chat-answer [onload]"));
+        Assert.Contains("&lt;script&gt;", component.Markup, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Markdown_FencedAndInlineCodePreserveExactContentWithoutInterpretingMarkup()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        const string code = "\tif (x < 3 && y > 1) {\n    print(\"**literal** <script>alert(1)</script> 😀\");\n}\n";
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta,
+            "```csharp\n" + code + "```\n\n行内 `a < b & c` 保持原样。")));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+
+        Assert.Equal(code, component.Find(".october-chat-answer pre > code").TextContent);
+        Assert.Equal("a < b & c", component.Find(".october-chat-answer p > code").TextContent);
+        Assert.Empty(component.FindAll(".october-chat-answer pre strong, .october-chat-answer pre script"));
+        Assert.Empty(component.FindAll(".october-chat-answer a, .october-chat-answer img"));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Markdown_DisclosureSuppressionClearsRichDomAndRejectsStaleDelta()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta, "# 受限标题\n\n**受限正文**\n\n- 私有列表")));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+        Assert.Equal("受限标题", component.Find(".october-chat-answer h1").TextContent);
+        Assert.Equal("受限正文", component.Find(".october-chat-answer strong").TextContent);
+
+        Assert.True(model.Apply(Event(model, 3, OctoberChatEventKind.DisclosureSuppressed)));
+        Assert.False(model.Apply(Event(model, 4, OctoberChatEventKind.AnswerDelta, "# 迟到旧标题")));
+
+        component.WaitForAssertion(() => Assert.Equal(string.Empty, component.Find(".october-chat-answer").TextContent));
+        Assert.Empty(component.FindAll(".october-chat-answer h1, .october-chat-answer strong, .october-chat-answer li"));
+        Assert.DoesNotContain("受限", component.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("迟到旧标题", component.Markup, StringComparison.Ordinal);
+        Assert.False(model.IsTerminal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Markdown_SyntaxBudgetAndOversizedInputFallbackPreserveEntireOriginalText()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        // Thousands of distinct closed emphasis elements exceed 4,096 syntax/text nodes,
+        // while the input remains well below the separate 65,536-character parse limit.
+        string dense = string.Concat(Enumerable.Repeat("**x** ", 3000));
+        Assert.True(dense.Length < 65_536);
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta, dense)));
+        IRenderedComponent<TurnComponent> component = context.Render<TurnComponent>(parameters => parameters.Add(item => item.ViewModel, model));
+
+        Assert.Equal(dense, component.Find(".october-chat-answer").TextContent);
+        Assert.Empty(component.FindAll(".october-chat-answer strong"));
+        Assert.False(model.IsTerminal);
+
+        string oversized = "# " + new string('x', 65_537);
+        IRenderedComponent<Vulgata.Web.Components.Chat.OctoberChatMarkdown> leaf =
+            context.Render<Vulgata.Web.Components.Chat.OctoberChatMarkdown>(parameters => parameters.Add(item => item.Text, oversized));
+        Assert.Equal(oversized, leaf.Markup);
+        Assert.Empty(leaf.FindAll("h1"));
+    }
+
     private static OctoberChatTurnViewModel CreateModel()
     {
         var fixture = new ControlledChatFixture();

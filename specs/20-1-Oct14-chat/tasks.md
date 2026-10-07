@@ -149,3 +149,24 @@ US3 access is present from C0, not a later bolt-on. US4 persistence/completion i
 The earlier task-generation phase performed document checks/independent analysis only. Subsequent explicit authority delivered K0 preparation and controlled T002–T006; current results are recorded separately so historical review hashes retain their original boundary. The user's later instruction, "Move on to Controlled work toward T021", authorizes the next isolated mechanics within those task boundaries. "Commit previous changes first" was fulfilled by `803142072cabd3606b2121ed6fc142c80aa4c881` before that work. Any material new tool/Scan/PRD departure still needs its existing applicable approval, not an invented per-checkpoint approval. W0/D0/W1/E0/I0 and real services remain owner dependencies, not permission to design replacements. T007, host activation and real provider execution remain stopped. The owner-issued dialogue and complete disclosure-dependency declarations are now imported through Integrator-approved 2ea9cc5d at Chat merge 3a853603. T016–T019 may proceed against those ports; controlled rendering does not establish persistence or live disclosure qualification.
 
 Total: **38 tasks**. C0 T001–T007 (7); C1 T008–T023 (16); C2 T024–T031 (8); C3 T032–T038 (7). Primary labels: US1 16, US2 6, US3 6, US4 5; setup/final cross-cutting 5. **T001–T006 and T008–T011 checked; T007 and T012–T038 open.** The explicit T011 approval and passing facade tests supersede the earlier hold/partial primitive accounting. T012–T013 now include the approved internal production agent/adapter, verified with 40 scripted typed-client cases and independent review; the raw HTTP/SSE guard is independently reviewed and controlled-qualified at 26a89712, while selected client/admission/permit integration and live qualification remain outstanding. T014–T015 have imported production prompt embedding but still require admitted-input wiring and semantic qualification. T016–T019 now consume accepted Business dialogue/full-lineage declarations; canonical consumer implementation and D0 qualification remain incomplete. T020–T021 remain partial without actual provider/browser/coordinator integration and rich Markdown. Owner-issued W0/D0/W1/E0 checkpoints remain mandatory at their dependent boundaries. The controlled T013 approval is resolved; no new human checkpoint is pending. No integrated C0/full Chat completion is claimed.
+## Current bounded implementation accounting — 2026-10-07
+
+The later quickstart/review records supersede earlier missing-contract statements:
+Business canonical disclosure and dialogue implementations are imported, and the
+public admitted runner plus canonical coordinator are implemented under controlled
+qualification. T012–T015 include actual selected-client transport and embedded
+prompt wiring; real-provider semantic qualification remains outstanding.
+T016–T019 include the actual SQLite owner-store coordinator, full-lineage checks,
+physical settlement, sanitized closure and lookup-only attempted-save recovery,
+verified by 22 coordinator and 720 affected SelfContained passes. These tasks remain
+open overall for root execution/commit/death composition, guarded PostgreSQL consumer
+qualification and live history/disclosure integration. No competing Chat turn schema
+or persistence implementation is needed; Business declarations remain canonical.
+T020–T021 now include the reviewed bounded actual delivery adapter, opaque lineage
+snapshots, authorized terminal replacement and nonterminal display suppression,
+verified by 795 affected controlled passes. A conservative encoded Markdown subset
+is also implemented and independently reviewed with 402 selected Chat/page passes;
+full CommonMark is not claimed. Exact reader links and actual page/browser integration
+remain incomplete. T022 and T023 retain their distinct resource
+and qualification prerequisites. No additional human gate is introduced by these
+controlled increments.

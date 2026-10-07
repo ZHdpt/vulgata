@@ -138,3 +138,44 @@ Independent reviewer `wave_reviewer` found no blocking findings in the agent/ada
 ## Admitted runner — accepted controlled boundary, 2026-10-07
 
 `wave_reviewer` accepted the confirmed-admission factory, exact embedded prompt/owner history inputs, only-narrowing lifetime, owner-codec capacity measurements, atomic reported references and truthful generation facts. Capacity review required a maximum-width measurement timestamp, separate from the actual generation end time. Production assessment identified stale Knowledge authorization during awaited execution checks; two RED cases preceded the final authorization ordering at typed and post-permit boundaries. The reviewer accepted both corrections conditional on GREEN; root verified **583/583 affected passes, zero failures/skips**, `TestResults/isolation-cc10983c70f942a399e5533ccb84e043/results.trx`. The independent two-modifier visibility review for `007fd7d3` is separate from this behavioral acceptance. Host execution registration, actual physical settlement, canonical persistence and subscriber/browser integration remain outside the accepted boundary.
+## Canonical coordinator — accepted controlled boundary, 2026-10-07
+
+`wave_reviewer` independently accepted the actual owner-store/client coordinator
+after RED-backed corrections for authorization loss during drain and lost phase
+acknowledgements. Recovery retains exact original identities/timestamps and waits
+for actual operations to settle; it cannot redispatch or resubmit an attempted save.
+Sanitized closure is limited to fresh explicit owner denial/unavailability before
+payload freeze. Additional tests cover unsettled timed-out phase operations and
+synchronous save throws. No remaining blocking finding was reported.
+
+Acceptance was conditional on GREEN; root verified **22/22 focused** and
+**720/720 affected**, zero failed/skipped, with the final TRX at
+`TestResults/isolation-046b9ed63bdc469fb115b927c0f5c83f/results.trx`.
+Root registration/commit/death authority, PostgreSQL and current UI disclosure remain
+separate integration requirements. Cached terminal projection is host state, not
+lasting permission to display it. No full T016–T023 completion is claimed.
+## Bounded presentation adapter — accepted controlled boundary, 2026-10-07
+
+`wave_reviewer` independently accepted the entire adapter, opaque-lineage callback
+overloads, append-only suppression event, view-model terminal replacement and 12
+targeted cases. Review added active-item/capsule byte exhaustion and actual native-read
+snapshot checks. A fixture's incorrect initial-root expectation was corrected separately
+from production findings. Two observed RED rows reproduced queued-denial display
+retention; sequential content-free suppression now clears the bound view and rejects
+late restoration without fabricating a saved outcome or active-slot release.
+
+No remaining source blocker was reported, conditional on affected GREEN. Root verified
+**795/795, zero failed/skipped**, at
+`TestResults/isolation-d90c38a470d84f5e99363472087e653b/results.trx`.
+Callback cancellation and queue retention are bounded, honestly owned lifetimes;
+application handoff is not atomic network revocation. No route, browser or live provider
+qualification is accepted by this review.
+## Encoded Markdown leaf — accepted controlled boundary, 2026-10-07
+
+`wave_reviewer` accepted the conservative rendering subset with no blocking findings:
+fixed elements, encoded model text, no model attributes/navigation/images, bounded flat
+parsing and complete-text fallback, immediately visible unfinished syntax, suppression
+removing previous rich DOM, and local inherited styling. Six focused cases cover these
+boundaries; this is not full Markdown/CommonMark or a performance/browser qualification.
+Root satisfied the review's GREEN condition with **402/402 selected Chat/page passes**,
+zero failures/skips, `TestResults/isolation-20a4b658e5374f58ac696abadc22bbcc/results.trx`.

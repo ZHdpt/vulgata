@@ -7,7 +7,11 @@ using Vulgata.Core.DomainServices.OctoberKnowledge;
 namespace Vulgata.Agents.OctoberBusiness;
 
 public sealed record ResolutionExecutionResult(ResolutionOutcome? Outcome,
-    ProviderAdmissionStatus? AdmissionFailure, ImmutableArray<ProviderAttemptUsage> Attempts);
+    ProviderAdmissionStatus? AdmissionFailure, ImmutableArray<ProviderAttemptUsage> Attempts)
+{
+    /// <summary>Original parsed proposal for store revalidation, never accepted relationship authority.</summary>
+    public ResolutionWitness? Witness { get; init; }
+}
 
 /// <summary>Bounded accepted-document inquiry; the host owns provider admission and durable replay.</summary>
 public sealed class OctoberResolutionExecutor
@@ -76,6 +80,7 @@ public sealed class OctoberResolutionExecutor
             bool sent = false;
             bool retry = false;
             ResolutionOutcome? outcome = null;
+            ResolutionWitness? parsedWitness = null;
             ProviderAdmissionStatus? failure = null;
             ProviderAttemptOutcome attemptOutcome = ProviderAttemptOutcome.Failed;
             try
@@ -119,8 +124,8 @@ public sealed class OctoberResolutionExecutor
                             {
                                 transportCancellation.Token.ThrowIfCancellationRequested();
                                 string canonical = OctoberKnowledgePolicy.CanonicalizeJson(response.Text);
-                                var witness = JsonSerializer.Deserialize<ResolutionWitness>(canonical, _json);
-                                if (witness is not null) outcome = OctoberResolutionPolicy.Validate(corpus, actual, witness);
+                                parsedWitness = JsonSerializer.Deserialize<ResolutionWitness>(canonical, _json);
+                                if (parsedWitness is not null) outcome = OctoberResolutionPolicy.Validate(corpus, actual, parsedWitness);
                                 attemptOutcome = outcome is null ? ProviderAttemptOutcome.Failed : ProviderAttemptOutcome.Completed;
                             }
                         }
@@ -152,7 +157,9 @@ public sealed class OctoberResolutionExecutor
             if (deadline.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(120))
                 return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (failure is not null) return Result(failure);
-            if (outcome is not null) return Result(null, outcome);
+            // Preserve this attempt's original proposal for independent store validation.
+            // All failure, settlement and late-stop exits above intentionally disclose no witness.
+            if (outcome is not null) return Result(null, outcome) with { Witness = parsedWitness };
             if (!retry) return Result(null);
         }
         return Result(null);

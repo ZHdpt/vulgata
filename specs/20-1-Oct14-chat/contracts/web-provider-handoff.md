@@ -66,3 +66,88 @@ The canonical consumer's actual SDK request test found that the installed adapte
 `RunAsync(Func<string, CancellationToken, ValueTask> authorizedText, CancellationToken = default, Action<OctoberChatToolProgress>? onToolProgress = null)` is single-use. The text sink must honor cancellation and context/attachment ownership; the progress sink must synchronously enqueue bounded sanitized events without blocking. `OctoberChatGenerationResult` contains canonical terminal state/reason/provider-finish, answer, exact references/consumed proofs/full dependency capsule, actual generation end time and the same save operation ID. It is **generation facts only**, never a saved receipt or physical settlement certificate.
 
 Bind `ReauthorizeBeforeSendAsync(CancellationToken = default)` into Integration's request admission. It refuses outside active Run, verifies execution, then freshly reauthorizes the complete input union under the original lifetime. Invoke it after permit waiting and other awaited execution/profile checks immediately before physical send. A client-construction closure must refuse until the runner is assigned; construction sends no request. Keep root execution/profile fencing and both settlement owners. The public budget token/timer surfaces expose the original lifetime without resetting it. These APIs are controlled-qualified by 583 affected passes; production route, authoritative registry, final persistence and live qualification remain owner prerequisites.
+## Canonical coordinator attachment boundary — 2026-10-07
+
+`OctoberChatCoordinator` consumes the Business store/codec and the integration-owned
+`OctoberChatClientSession`; it does not issue execution authority or activate a route.
+The host freezes/registers the exact request, initial history dependency union,
+selected profile and original budget before calling `ExecuteAsync`. Its required
+generation observer attaches the actual `Task<OctoberChatGenerationResult>` before
+the post-permit callback can send. A throwing observer seals and drains the session.
+The original Admitted snapshot remains immutable; current phase is tracked separately.
+
+The host retains the whole execution task through factory, generation and physical
+settlement, even when a browser detaches. Canonical store calls use separate bounded
+persistence attempts. A terminal generation result is not a saved receipt. Root-owned
+registration, expected-operation checks and actual database-task settlement remain
+required in production; controlled authority doubles do not replace them.
+
+An uncertain transition is displayed as unknown, not the last confirmed phase or
+an idle slot. Exact admission lookup may complete only the first never-attempted save
+of this original lifecycle after the original phase task and owned work settle.
+It never restores dispatch. Once a save is attempted, even if invocation throws,
+the immutable payload is retained and recovery uses exact terminal lookup only.
+Missing owner rows do not prove absence or authorize resubmission.
+
+After physical drain, fresh full-capsule authorization precedes the first terminal
+freeze. Explicit owner denial/unavailability can produce the owner's sanctioned
+empty authorization-failure closure from a nonterminal phase. Missing context,
+unknown lineage, exceptions or unconfirmed cleanup cannot manufacture this exception.
+Provider finish and generation-end time remain actual facts. An already attempted
+payload is never rewritten. The host's commit guard must preserve this exact exception.
+
+T020/T021 still require a bounded presentation attachment. A queued delta needs live
+authorization at actual disclosure; an earlier runner check is not a lasting grant.
+Slow/throwing subscribers must not block owned generation. Confirmed sanitized closure
+must clear provisional prose/references, not describe them as retained. Existing
+controlled events do not yet supply this integration or browser qualification.
+## Bounded presentation attachment — application plumbing
+
+The Runner and Coordinator retain their existing callback overloads and add overloads
+carrying `KnowledgeDependencyHandle` with authorized text and sanitized progress.
+The immutable opaque snapshot is host-only, never part of an outward event. The same
+runner/lifecycle executes both APIs; this adds no model tool or invocation loop.
+
+Create `OctoberChatTurnPresentation` only inside the confirmed-Running generation
+observer, using the original admission, exact binding and preallocated save identity.
+Producers use nonblocking TryPublish methods. Delivery has its own cancellation and
+observable Completion; disconnect, overflow and subscriber failure cannot cancel
+generation or terminal persistence. Retain an actual callback that ignores cancellation
+until it settles. Completion is a lifetime fact, not proof of successful display.
+The default queue allows 64 waiting events with a conservative 4 MiB retained-memory
+reservation that includes the active item and protected capsule strings. This is local
+presentation accounting, not canonical serialized-size or generation-budget accounting.
+
+After dequeue, the adapter obtains fresh Chat context, reauthorizes the exact opaque
+union and checks current context/authentication again before application handoff.
+A trusted asynchronous UI sink must also check its current attachment and supplied
+token at actual apply/render time. No atomic revocation across later browser/network
+delivery or recall of previously delivered bytes is claimed. Context replacement must
+remove the old bound view; detached delivery cannot be used as a replay mechanism.
+
+Only exact confirmed canonical results produce TurnSaved. Ordinary results require
+matching authorized projection; sanctioned no-content authorization-failure receipts
+clear prose/references explicitly. A separate content-free DisclosureSuppressed event
+handles explicit denial/unavailability during queued delivery. It clears the original
+bound view and prevents late content from returning, without claiming persistence,
+terminal status or active-slot release. A throwing/noncooperative UI sink still cannot
+be forced to display a clear; its actual lifetime remains owned.
+
+No production page sending, host registry, route, Markdown renderer or reader-link
+composition is activated by this adapter. Root alone supplies those prerequisites.
+## Encoded leaf rendering subset
+
+The October turn uses a leaf renderer with fixed application tags and encoded text
+nodes only. Supported formatting is deliberately limited: paragraphs, ATX headings,
+flat unordered and sequential ordered lists starting at one, block quotes, closed
+triple-backtick code fences, single-backtick inline code and flat emphasis/strong spans.
+This is not full Markdown/CommonMark. Unsupported links, images and HTML remain
+readable text; model input never supplies a tag, attribute, class, destination or image.
+Unfinished fences remain visible literal text immediately, without waiting for a
+provider finish or closing delimiter. Exact code content is encoded, not interpreted.
+
+Parsing is capped at 65,536 UTF-16 characters, 4,096 nodes and a bounded scan-work
+budget. Exceeding a bound renders the entire original encoded text, without truncation
+or partial syntax-tree output. These are renderer limits, not new generation budgets.
+Styling is local to the turn and inherits the existing theme. Parent ChatPage, routes,
+dependencies and exact authorized reader-link projection are unchanged by this leaf.

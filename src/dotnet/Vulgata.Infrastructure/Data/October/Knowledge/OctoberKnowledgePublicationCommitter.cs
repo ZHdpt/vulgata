@@ -10,14 +10,13 @@ namespace Vulgata.Infrastructure.Data.October.Knowledge;
 
 internal sealed record PreparedPublicationMutation(KnowledgeWriteResult Result, ImmutableArray<Contributor> Contributors);
 
-/// <summary>Shared atomic commit mechanics for the two fixed-selection mutations; no scheduler or durable receipt.</summary>
+/// <summary>Shared atomic commit mechanics for fixed selections and resolution acceptance; no scheduler or durable receipt.</summary>
 internal sealed class OctoberKnowledgePublicationCommitter
 {
     private readonly IDbContextFactory<OctoberDbContext> _contexts;
     private readonly IOctoberKnowledgeProducerAuthorization _authorization;
     private readonly IOctoberCommitSubmissionGuard _guard;
     private readonly IOctoberKnowledgeOperationLog _log;
-    private readonly OctoberKnowledgeOperationStore _operations;
 
     public OctoberKnowledgePublicationCommitter(IDbContextFactory<OctoberDbContext> contexts,
         IOctoberKnowledgeProducerAuthorization authorization, IOctoberCommitSubmissionGuard guard, IOctoberKnowledgeOperationLog log)
@@ -26,53 +25,74 @@ internal sealed class OctoberKnowledgePublicationCommitter
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         _guard = guard ?? throw new ArgumentNullException(nameof(guard));
         _log = log ?? throw new ArgumentNullException(nameof(log));
-        _operations = new(contexts);
     }
 
     public async Task<KnowledgeWriteResult> ExecuteAsync(KnowledgeBinding binding, OperationKey operation, OperationKind kind,
         string digest, Func<string> computeDigest, Func<CancellationToken, Task<KnowledgeWriteStatus?>> beforeWrite,
-        Func<OctoberDbContext, CancellationToken, Task<PreparedPublicationMutation>> prepare, CancellationToken cancellationToken)
+        Func<OctoberDbContext, CancellationToken, Task<PreparedPublicationMutation>> prepare, CancellationToken cancellationToken, Guid? attemptId = null)
     {
         if (operation.BatchId != binding.BatchId || operation.Kind != kind || operation.OperationId == Guid.Empty)
             return new(KnowledgeWriteStatus.InvalidProposal, operation);
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(TimeSpan.FromSeconds(10));
+        var ct = deadline.Token;
+        var submissionGate = new object();
+        bool callbackOpen = false;
         bool submitted = false;
         Task<CommitSettlement>? actualSettlement = null;
+        bool submissionObserved = false;
+        Task<CommitSettlement>? observedSettlement = null;
+        void CloseSubmission()
+        {
+            lock (submissionGate)
+            {
+                callbackOpen = false;
+                submissionObserved = submitted;
+                observedSettlement = actualSettlement;
+            }
+        }
+        OctoberDbContext? context = null;
+        IDbContextTransaction? transaction = null;
         try
         {
-            await using (var check = await _contexts.CreateDbContextAsync(cancellationToken))
-                if (!await BindingMatchesAsync(check, binding, cancellationToken)) return new(KnowledgeWriteStatus.Denied, operation);
-            var prior = await _operations.FindAsync(operation, cancellationToken);
-            if (prior is not null) return await DiscloseAsync(binding, operation, digest, computeDigest, prior, false, cancellationToken);
-            if (digest.Length != 64 || computeDigest() != digest) return new(KnowledgeWriteStatus.InvalidProposal, operation);
-            var eligibility = await beforeWrite(cancellationToken);
-            if (eligibility is { } rejected) return new(rejected, operation);
-            var attempt = new CommitAttempt(operation, operation.OperationId, digest);
-            await using (var context = await _contexts.CreateDbContextAsync(cancellationToken))
+            try
             {
-                var entry = await _guard.CheckBeforeTransactionAsync(attempt, cancellationToken);
+                await using (var check = await OpenContextAsync(ct))
+                    if (!await BindingMatchesAsync(check, binding, ct)) return new(KnowledgeWriteStatus.Denied, operation);
+                var prior = await FindAsync(operation, ct);
+                if (prior is not null) return await DiscloseAsync(binding, operation, digest, computeDigest, prior, false, ct);
+                if (digest.Length != 64 || computeDigest() != digest) return new(KnowledgeWriteStatus.InvalidProposal, operation);
+                var eligibility = await beforeWrite(ct).WaitAsync(ct);
+                ct.ThrowIfCancellationRequested();
+                if (eligibility is { } rejected) return new(rejected, operation);
+                var attempt = new CommitAttempt(operation, attemptId ?? operation.OperationId, digest);
+                context = await OpenContextAsync(ct);
+                var entry = await _guard.CheckBeforeTransactionAsync(attempt, ct).WaitAsync(ct);
+                ct.ThrowIfCancellationRequested();
                 if (entry != CommitEligibilityStatus.Eligible) return new(EntryStatus(entry), operation);
-                await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+                transaction = await context.Database.BeginTransactionAsync(ct);
                 context.Database.AutoSavepointsEnabled = false;
                 if (context.Database.IsNpgsql())
                 {
                     if (kind == OperationKind.FreezeCorpus)
-                        await context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM october.\"OctoberBatches\" WHERE \"BatchId\" = {binding.BatchId} FOR UPDATE", cancellationToken);
+                        await context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM october.\"OctoberBatches\" WHERE \"BatchId\" = {binding.BatchId} FOR UPDATE", ct);
                     else
-                        await context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM october.\"OctoberBatches\" WHERE \"BatchId\" = {binding.BatchId} FOR SHARE", cancellationToken);
+                        await context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM october.\"OctoberBatches\" WHERE \"BatchId\" = {binding.BatchId} FOR SHARE", ct);
                 }
-                if (!await BindingMatchesAsync(context, binding, cancellationToken)) return new(KnowledgeWriteStatus.Denied, operation);
-                // A concurrent identical freeze can finish while this transaction waits on the batch lock.
-                prior = await _operations.FindAsync(operation, cancellationToken);
+                if (!await BindingMatchesAsync(context, binding, ct)) return new(KnowledgeWriteStatus.Denied, operation);
+                prior = await FindAsync(operation, ct);
                 if (prior is not null)
                 {
-                    await transaction.RollbackAsync(CancellationToken.None);
-                    return await DiscloseAsync(binding, operation, digest, computeDigest, prior, false, cancellationToken);
+                    await transaction.RollbackAsync(ct);
+                    return await DiscloseAsync(binding, operation, digest, computeDigest, prior, false, ct);
                 }
-                eligibility = await beforeWrite(cancellationToken);
+                eligibility = await beforeWrite(ct).WaitAsync(ct);
+                ct.ThrowIfCancellationRequested();
                 if (eligibility is { } ineligible) return new(ineligible, operation);
-                var mutation = await prepare(context, cancellationToken);
+                var mutation = await prepare(context, ct);
+                ct.ThrowIfCancellationRequested();
                 if (mutation.Result.Status != KnowledgeWriteStatus.Committed) return mutation.Result;
-                var authority = await AuthorizeAsync(binding, mutation.Contributors, cancellationToken);
+                var authority = await AuthorizeAsync(binding, mutation.Contributors, ct);
                 if (authority != DisclosureStatus.Allowed) return new(AuthorityStatus(authority), operation);
                 context.KnowledgeOperations.Add(new()
                 {
@@ -80,47 +100,89 @@ internal sealed class OctoberKnowledgePublicationCommitter
                     PayloadDigest = digest, CommittedResultJson = OctoberKnowledgePolicy.SerializeCanonical(mutation.Result),
                     ContributorsJson = OctoberKnowledgePolicy.SerializeCanonical(mutation.Contributors), CommittedAtUtc = DateTimeOffset.UtcNow
                 });
-                await context.SaveChangesAsync(cancellationToken);
-                authority = await AuthorizeAsync(binding, mutation.Contributors, cancellationToken);
+                ct.ThrowIfCancellationRequested();
+                await context.SaveChangesAsync(ct);
+                authority = await AuthorizeAsync(binding, mutation.Contributors, ct);
                 if (authority != DisclosureStatus.Allowed) return new(AuthorityStatus(authority), operation);
-                var guarded = await _guard.SubmitAsync(attempt, token =>
+                ct.ThrowIfCancellationRequested();
+                lock (submissionGate) callbackOpen = true;
+                CommitGuardResult guarded;
+                try
                 {
-                    submitted = true;
-                    Task commit = transaction.GetDbTransaction().CommitAsync(token);
-                    actualSettlement = SettleAsync(commit);
-                    return new SubmittedCommit(actualSettlement);
-                }, cancellationToken);
-                if (!submitted) return new(SubmissionStatus(guarded.Status), operation);
-                if (actualSettlement is not null) await actualSettlement;
+                    var guardCall = _guard.SubmitAsync(attempt, callbackToken =>
+                    {
+                        // The small local lock owns callback closure, not the Scan fence or a second scheduler.
+                        lock (submissionGate)
+                        {
+                            if (!callbackOpen || submitted) throw new OperationCanceledException(ct);
+                            ct.ThrowIfCancellationRequested();
+                            cancellationToken.ThrowIfCancellationRequested();
+                            callbackToken.ThrowIfCancellationRequested();
+                            callbackOpen = false;
+                            submitted = true;
+                            try
+                            {
+                                // No await, queued work or interceptor prelude before the actual provider API.
+                                Task commit = transaction.GetDbTransaction().CommitAsync(callbackToken);
+                                actualSettlement = SettleAsync(commit);
+                            }
+                            catch
+                            {
+                                actualSettlement = Task.FromResult(CommitSettlement.Indeterminate);
+                                throw;
+                            }
+                            return new SubmittedCommit(actualSettlement);
+                        }
+                    }, ct);
+                    _ = ObserveAsync(guardCall);
+                    guarded = await guardCall.WaitAsync(ct);
+                }
+                finally
+                {
+                    CloseSubmission();
+                }
+                if (!submissionObserved) return new(SubmissionStatus(guarded.Status), operation);
             }
-            return await ReconcileAsync(binding, operation, digest, actualSettlement?.Result == CommitSettlement.Committed);
+            catch (Exception error)
+            {
+                // Exception filters run before inner finally blocks. Arbitrate first, then classify.
+                CloseSubmission();
+                if (!submissionObserved)
+                {
+                    if (error is OperationCanceledException) return new(KnowledgeWriteStatus.CancelledBeforeCommit, operation);
+                    if (error is DbUpdateException update && IsCollision(update)) return await ReconcileAsync(binding, operation, digest, false);
+                    if (error is ArgumentException or JsonException) return new(KnowledgeWriteStatus.InvalidProposal, operation);
+                    return new(KnowledgeWriteStatus.StorageUnavailable, operation);
+                }
+            }
+            if (observedSettlement is null) return new(KnowledgeWriteStatus.CommitIndeterminate, operation);
+            if (!observedSettlement.IsCompleted)
+            {
+                try { await observedSettlement.WaitAsync(ct); }
+                catch (OperationCanceledException) { return new(KnowledgeWriteStatus.CommitIndeterminate, operation); }
+            }
+            return await ReconcileAsync(binding, operation, digest, observedSettlement.Result == CommitSettlement.Committed);
         }
-        catch (OperationCanceledException)
+        finally
         {
-            if (!submitted) return new(KnowledgeWriteStatus.CancelledBeforeCommit, operation);
+            CloseSubmission();
+            if (observedSettlement is { IsCompleted: false })
+            {
+                // Retain the producing context and physical transaction until the submitted task settles.
+                _ = DisposeAfterSettlementAsync(observedSettlement, transaction, context);
+            }
+            else await DisposeOwnedAsync(transaction, context);
         }
-        catch (DbUpdateException exception) when (!submitted)
-        {
-            if (IsCollision(exception)) return await ReconcileAsync(binding, operation, digest, false);
-            return new(KnowledgeWriteStatus.StorageUnavailable, operation);
-        }
-        catch (Exception error) when (!submitted && (error is ArgumentException or JsonException))
-        {
-            return new(KnowledgeWriteStatus.InvalidProposal, operation);
-        }
-        catch (Exception)
-        {
-            if (!submitted) return new(KnowledgeWriteStatus.StorageUnavailable, operation);
-        }
-        if (actualSettlement is not null) await actualSettlement;
-        return await ReconcileAsync(binding, operation, digest, actualSettlement?.Result == CommitSettlement.Committed);
     }
 
     public async Task<DisclosureStatus> AuthorizeAsync(KnowledgeBinding binding, ImmutableArray<Contributor> contributors, CancellationToken cancellationToken)
     {
         try
         {
-            return await _authorization.CheckAsync(binding, contributors, cancellationToken).WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await _authorization.CheckAsync(binding, contributors, cancellationToken).WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return result;
         }
         catch (OperationCanceledException)
         {
@@ -137,11 +199,11 @@ internal sealed class OctoberKnowledgePublicationCommitter
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
-            await using var context = await _contexts.CreateDbContextAsync(deadline.Token);
+            await using var context = await OpenContextAsync(deadline.Token);
             if (!await BindingMatchesAsync(context, binding, deadline.Token)) return new(KnowledgeWriteStatus.Denied, operation);
             for (int retry = 0; retry < 5; retry++)
             {
-                var prior = await _operations.FindAsync(operation, deadline.Token);
+                var prior = await FindAsync(operation, deadline.Token);
                 if (prior is not null) return await DiscloseAsync(binding, operation, digest, () => digest, prior, knownCommit, deadline.Token);
                 await Task.Delay(20, deadline.Token);
             }
@@ -181,6 +243,59 @@ internal sealed class OctoberKnowledgePublicationCommitter
     private static async Task<bool> BindingMatchesAsync(OctoberDbContext context, KnowledgeBinding binding, CancellationToken cancellationToken) =>
         await context.Batches.AsNoTracking().AnyAsync(x => x.BatchId == binding.BatchId && x.TargetId == binding.TargetId &&
             x.CanonicalDatabaseIdentity == binding.CanonicalDatabaseIdentity && x.SelectionDigest == binding.SelectionDigest, cancellationToken);
+
+    private async Task<KnowledgeOperation?> FindAsync(OperationKey operation, CancellationToken ct)
+    {
+        await using var context = await OpenContextAsync(ct);
+        return await context.KnowledgeOperations.AsNoTracking().SingleOrDefaultAsync(x => x.BatchId == operation.BatchId &&
+            x.Kind == operation.Kind && x.OperationId == operation.OperationId, ct);
+    }
+
+    private async Task<OctoberDbContext> OpenContextAsync(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        Task<OctoberDbContext> pending = _contexts.CreateDbContextAsync(ct);
+        OctoberDbContext? context = null;
+        try
+        {
+            context = await pending.WaitAsync(ct);
+            ct.ThrowIfCancellationRequested();
+            return context;
+        }
+        catch
+        {
+            if (context is not null) await DisposeOwnedAsync(null, context);
+            else _ = DisposeLateContextAsync(pending);
+            throw;
+        }
+    }
+
+    private static async Task DisposeLateContextAsync(Task<OctoberDbContext> pending)
+    {
+        try { await DisposeOwnedAsync(null, await pending); }
+        catch (Exception) { /* Failed creation owns no returned resource. */ }
+    }
+
+    private static async Task ObserveAsync(Task pending)
+    {
+        try { await pending; }
+        catch (Exception) { /* The original bounded caller already handled the guard result. */ }
+    }
+
+    private static async Task DisposeAfterSettlementAsync(Task<CommitSettlement> settlement,
+        IDbContextTransaction? transaction, OctoberDbContext? context)
+    {
+        try { await settlement; }
+        finally { await DisposeOwnedAsync(transaction, context); }
+    }
+
+    private static async Task DisposeOwnedAsync(IDbContextTransaction? transaction, OctoberDbContext? context)
+    {
+        try { if (transaction is not null) await transaction.DisposeAsync(); }
+        catch (Exception) { /* Cleanup cannot rewrite a durable or indeterminate outcome. */ }
+        try { if (context is not null) await context.DisposeAsync(); }
+        catch (Exception) { /* Observe cleanup failure without an unhandled detached task. */ }
+    }
 
     private static async Task<CommitSettlement> SettleAsync(Task commit)
     {

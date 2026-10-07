@@ -1,15 +1,16 @@
 {
-  "October/Knowledge/OctoberGenerateAdmissionPostgreSqlTests.cs": {
-    "suite": "PostgreSql"
-  },
   "October/Knowledge/OctoberGenerateAdmissionTests.cs": {
     "suite": "SelfContained"
   },
   "October/Knowledge/OctoberKnowledgeInputTests.cs": {
     "suite": "SelfContained"
   },
-  "October/Knowledge/OctoberDialoguePostgreSqlTests.cs": {"suite": "PostgreSql"},
-  "October/Knowledge/OctoberDialoguePersistenceTests.cs": {"suite": "SelfContained"},
+  "October/Knowledge/OctoberDialoguePostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberDialoguePersistenceTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberChatClientSessionTests.cs": {
     "suite": "SelfContained"
   },
@@ -302,6 +303,12 @@
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatOwnerConformanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatTurnTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatPresentationTests.cs": {
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatEntryTests.cs": {
@@ -1185,6 +1192,15 @@
   "October/Integration/OctoberChatHostBindingTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Integration/OctoberGenerateFixtureInputsTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberGenerateFixtureInputs.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberChatDialogueCommitGuardTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberChatProviderBindingTests.cs": {
     "suite": "SelfContained"
   },
@@ -1199,5 +1215,29 @@
   },
   "TestInfrastructure/OctoberOwnedIdentityFixture.cs": {
     "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberResolutionPersistenceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberResolutionPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberBusinessRealScopeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberResolutionCommitLifetimeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberGenerateAdmissionPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberResolutionHandoffTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFlowPlannerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFlowInputStoreTests.cs": {
+    "suite": "SelfContained"
   }
 }

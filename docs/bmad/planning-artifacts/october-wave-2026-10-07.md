@@ -553,3 +553,402 @@ actual task settlement. Lookup never restores generation permission. A verified
 NotStarted failure or retained actual generation may reach its first never-attempted
 terminal save; once any save is attempted, preserve its exact payload and reconcile
 only. A matching row alone is not proof of physical write/task settlement.
+
+## Controlled B1 persistence and explicit publication integrated
+
+Business reviewed `cbb8051f` (implementation `a7641d65`, migration whitespace
+cleanup `09823eee`, approved integration ancestry) is merged at `f44d2449`.
+It adds immutable resolution evidence, outcome replay, exact inquiry-caller
+uncertainty ownership, complete input provenance and a new explicit B1 publication
+without changing the original B0 publication's membership or CL versions.
+The shared publication committer retains the same-gate outcome arbitration and
+actual physical settlement ownership. Independent cross-module review found no
+remaining must-fix in this bounded checkpoint.
+
+Combined affected verification passed **1,437/1,437 SelfContained** cases, zero
+failures/skips, 394 classified files:
+`TestResults/isolation-82a6777118a54565a9d0939671daafe4/results.trx`.
+The six-table additive October migration is source only: no migration was applied.
+The updated read adapter requires the latest October schema before runtime use;
+this is not permission for automatic migration at ordinary Web startup.
+The 13 resolution, 16 dialogue and six admission PostgreSQL cases remain NOT RUN.
+
+Release is for consumer composition, not completion of B1 runtime qualification.
+Scan still owns S3 finalization and exact AcceptResolution=4 operation/attempt/digest
+registration plus the actual selected Business client and shared execution scope.
+The existing Worker-only client is not implicitly a nonstreaming Business client.
+Connected-source/provider usefulness and the single shared retained CL qualification
+still need their actual adapters/resources. B2 follows its genuine accepted B1
+prerequisites, not completion of Chat; the owner will identify any remaining precise
+dependency rather than infer readiness from these controlled passes.
+
+Business's concrete follow-up confirms F2 exists and is controlled-qualified; it
+is not a missing prerequisite. S3 still needs exact AcceptResolution registration
+and cl-and-bl composition. The current executor also drops its parsed witness
+from ResolutionExecutionResult although store acceptance requires that witness
+for independent recomputation. Business owns the narrow same-attempt witness
+handoff correction; do not reconstruct it from Outcome or regenerate. Controlled
+B2 preparation follows its actual inputs, not a blanket wait for Chat or all T027
+evidence. FlowPlanner/synthesis/finalizer remain scoped Business work, while real
+dispatch, PostgreSQL and connected-source qualification retain their prerequisites.
+
+## Controlled canonical Chat coordinator integrated
+
+Reviewed Chat checkpoint `d99517a65a58868ad2f9836abe91ef8775f4812e` is merged
+at `9227f3761335d7147c6f221e70cd58e472fde110`. Independent cross-module review
+accepted the bounded coordinator without a remaining must-fix. It preserves the
+original Admitted snapshot, observes actual generation before opening the physical
+send gate, drains owned work, and reconciles uncertain phase acknowledgements
+without redispatch. Terminal save intent is frozen once; sanitized no-content
+closure is distinct from authorization to disclose a saved answer.
+
+Combined affected verification passed **1,459/1,459 SelfContained** cases, zero
+failures/skips, 395 classified files:
+`TestResults/isolation-b1c1457f40d94f4c84cc28f03ee4d2aa/results.trx`.
+This is an affected selection, not a full-suite or real-provider result. The earlier
+Explorer full-run SQLite crash remains unexplained; no new migration was applied.
+
+The component is released for consumer composition. Root still owns live execution
+registration, canonical store observation/commit and owner-death adapters, actual
+client-factory/physical-settlement retention, and Web route activation. Chat owns
+the bounded turn-local presentation adapter; slow or throwing UI subscribers must
+not own generation or cleanup. The same-assembly factory seam may intercept the
+real client factory for trusted host observation, with the real clock and mandatory
+generation observer; it does not authorize fake runtime authority or transport.
+
+Scan continues public Generate and S3 composition independently. Business owns the
+same-attempt witness handoff correction and available B2 work. Explorer awaits the
+single shared retained publication, not Chat persistence. No all-lane barrier or
+new resource approval follows from this controlled checkpoint.
+
+## Witness handoff and root commit-fence component
+
+Business `8b72833d598190dff4e896809b3aa87da5690cdb` is integrated at `3fcb9c4c`.
+The additive non-positional `ResolutionExecutionResult.Witness` retains the exact
+parsed proposal from the same successfully validated and settled attempt. It is
+not reconstructed from an outcome and grants no acceptance authority. The actual
+owner store still independently recomputes acceptance; controlled compatibility
+preserves the original B0 publication. Independent source review accepted this
+bounded handoff. Scan may use it after safe synchronization; S3 still awaits its
+prerequisite-based integration-owner dispatch, not an invented human-only gate.
+
+Root's internal `OctoberChatDialogueCommitGuard` supplies exact expected-mutation
+binding and at-most-once synchronous commit entry under the future registry's shared
+fence lock. Fresh asynchronous authorization is followed by synchronous current
+ownership checks under that same lock. Closing a mutation prevents a late callback;
+after submission, cancelling a wait never releases the actual settlement task.
+A callback throwing without returning a task remains conservatively unresolved.
+Known task completion with an indeterminate durable outcome is not commit success
+or proof of absence. No caller can reopen a consumed/closed mutation by re-registering.
+
+Separate test ownership and independent source review accepted the final component.
+Missing-component verification temporarily excluded only its new uncommitted source:
+`isolation-470982ec3fb240d3a2f328bc1a14cadc/build.log` records CS0246, not a behavioral
+failure. Draft behavioral RED was 19 passed / four failed of 23, with counterexamples
+for undefined enums (`isolation-e5e77f3549ca4987aa1cc534f5369e6d/results.trx`). Minimal
+fail-closed corrections passed **23/23** focused controlled cases, zero skips:
+`TestResults/isolation-7ecc29ad71e44fe99a47b335a6e169f5/results.trx`.
+
+The guard is deliberately unregistered until its real host owner exists. It does not
+supply execution authority, the store-observing decorator, actual session/generation
+registration, owner-death proof or route activation. Root retains those tasks;
+Chat's presentation adapter and Business's B2 work continue independently.
+
+Review also found a separate store-local submission/disposal race in
+`OctoberDialogueStore.MutateAsync`: cancellation could dispose a transaction before
+its callback had captured the actual commit task. Business owns the narrow correction
+and has reproduced it with a controlled provider (45 passed / one failed of 46 at
+`a12286d7ed9f4ae5a91f0abaf46c4713`). Live dialogue mutations remain unqualified until
+that owner correction is reviewed and integrated. No schema change, new broad gate,
+runtime permission or all-lane pause is implied.
+
+Combined affected verification of the witness handoff, coordinator and root guard
+passed **1,486/1,486 SelfContained** cases, zero failures/skips, 397 classified files:
+`TestResults/isolation-4050e41ebfe441a89a5a175c79f48b89/results.trx`.
+No PostgreSQL, native tool, external provider or browser qualification was run.
+
+## Dialogue provider-return race correction integrated
+
+Business correction `4ff94d024f27ccc9f695437d541d78719d26c98b`, offered at
+`c53055afcaa794e0dacb4872e7f9793d1990d28d`, is merged at `be1915ab`.
+Independent cross-module source review accepted the fix. A short local gate
+publishes invocation ownership before entering the provider API; cancellation and
+cleanup observe that same ownership. The actual commit invocation stays synchronous
+under the host's fence, outside the store-local gate. Late/duplicate callbacks are
+closed out, and producing resources remain retained through the actual settlement.
+No schema or public contract changed.
+
+Owner focused verification passed 57/57 controlled cases. Its subsequent merged
+compatibility invocation `isolation-95aebb1e365845ca9455274e5045744b` failed in
+`guard-probes.log` during xUnit discovery with internal CLR error `0x80131506`,
+before selected-test results. That invocation is incomplete/non-success, not a
+product assertion failure or a diagnosed environment cause. Main performs its own
+affected regression against this merged source; an eventual pass does not explain
+or erase that failed discovery run.
+
+Main verification passed **1,487/1,487 affected SelfContained** cases, zero
+failures/skips, 397 classified files:
+`TestResults/isolation-ab7be60e10f94209b7b5e3c4097f1bc5/results.trx`.
+This lifts the specific store implementation hold reported above. The actual host
+execution registry/store observation/session retention and Web activation remain
+root work; PostgreSQL and real-provider/browser qualification remain unperformed.
+No runtime authority is created, and B2/Scan/graph continue independently.
+
+## Bounded Chat presentation adapter integrated
+
+Chat checkpoint `2d371f4fa52f1f4d8f8b693ddbe19d839cabedb5` is merged at
+`3d40c143`. Independent cross-module source review accepted its nonblocking
+presentation queue, separately retained subscriber lifetime, full opaque dependency
+union carried only inside the host, and fresh authorization before dequeued output.
+Exact canonical terminal projections replace provisional text. Explicit denial or
+authority unavailability can send a content-free suppression event which clears
+the bound view and prevents late restoration, without claiming save/slot release.
+
+This remains unactivated plumbing. Root must create it only from the actual
+confirmed-Running generation observer, retain the real sink lifetime and bind the
+selected turn/context. Context replacement must remove the old view; an asynchronous
+UI sink must recheck the attachment and token at actual application time. Previously
+delivered bytes cannot be recalled. No fake streaming, second execution path,
+browser-supplied capsules or permissive execution authority is introduced.
+
+Chat is released to remaining bounded T020/T021 leaf rendering and exact reader-link
+work with controlled checks. Root retains parent Web/page composition and activation;
+overlapping page edits must be coordinated before writing. PostgreSQL and real
+browser/provider qualification remain separately authorized work, not implied by
+component tests or this dispatch.
+
+The merged presentation plus corrected dialogue store passed **1,499/1,499 affected
+SelfContained** cases, zero failures/skips, 398 classified files:
+`TestResults/isolation-0b3a7dd9690d488fa50431c69b829029/results.trx`.
+This qualifies the controlled component combination, not a full suite, real
+streaming browser session, PostgreSQL or a retained real-Worker dataset.
+
+## Scan input-ledger candidate review — bounded correction pending
+
+Scan offered `f396e35b1fcaab83586245ad23ecbcc46616e639`: complete host-observed
+primary/advisory/supporting-content/metadata lineage, six exact-bound tool facades,
+F1 completion binding and execution accounting/retry classification. The separate
+RuntimeFile parser's intentional RED is absent from this committed source/test
+boundary. Owner evidence reports 249/249 affected non-configuration controlled
+passes; the mixed dirty run's 254/255 result is not relabelled as a green checkpoint.
+
+Independent cross-module review found two narrow corrections before integration:
+
+1. The reported physical request count increments on send eligibility, before the
+   actual HTTP invocation. Cancellation or source-check failure in between can
+   produce a false dispatch count. Preserve conservative reservation while
+   separating actual dispatch observation from eligibility.
+2. Final transient-retry verification awaits source/ledger verification with
+   `CancellationToken.None`, outside the original Worker deadline, then can assign
+   retry eligibility without rechecking cancellation. Tool-runtime lifetime does
+   not bound the ledger's entire semaphore/authority operation. Retain the original
+   linked lifetime, bound and observe late verification, and refuse a late retry grant.
+
+These are source-review findings, not claimed executed failures. Scan owns their
+regressions and corrections; the remaining provenance boundary was coherent on
+inspection. This candidate is not merged. Existing integrated capability remains
+at `964f5303`; Scan's unrelated runner/parser work, Business B2 and Chat rendering
+continue. No all-lane barrier or runtime/resource permission is introduced.
+
+## Safe leaf rendering integrated
+
+Chat `bd51e764e55a3783bcfc4d0b05b2e32db33122ad` is merged at `97f428ec` after
+independent source review. The leaf emits application-fixed tags with encoded text,
+not model HTML, attributes, image targets or links. Incomplete streamed syntax stays
+immediately readable. Character/node/scan limits fall back to the entire original
+encoded text rather than truncating it; no full CommonMark claim is made. Parent
+ChatPage, packages, routes, host execution and reader-link authority are unchanged.
+
+Combined affected verification passed **1,505/1,505 SelfContained** cases, zero
+failures/skips, 398 classified files:
+`TestResults/isolation-b9572b8e60be4951a22fdbd6ac1f279d/results.trx`.
+This is controlled rendering/integration evidence, not a real browser/provider run.
+
+Integration requested the exact E0 title/destination surface from Explorer for
+Chat T026/T027. Existing `ExactDocumentLinkBuilder.Build` supplies a validated URL,
+not fresh title/disclosure permission. Reuse the owner route and canonical Knowledge
+authorization; do not invent a parallel reader, purpose conversion or model URL.
+Controlled agreement/work need not wait for the shared real publication, while
+actual navigation qualification still does. Scan's held candidate remains separate.
+
+## Accounting compatibility and exact footer agreement
+
+Scan's correction must distinguish conservative send admission, actual transport
+invocation and settled usage. A Worker-only physical observer must not erase Business
+token/cost/wait aggregation or reservation/unknown-settlement safety. The Scan-owned
+report may represent physical request totals as unknown (nullable Requests with
+unknown-usage signalling) when a consumer lacks trustworthy observation. Complete
+Worker observation proving no send still means exact zero; missing observer
+capability does not. No shared Business lease API changes are authorized by this S2
+correction. Business has been asked for the smallest future S3 observation seam;
+that agreement is not a prerequisite for Worker-only S2. Business's disposition
+accepts a future host-bound per-attempt observer at the underlying transport API
+invocation, covering all physical retries. An executor-side IChatClient call is not
+physical invocation proof; neither observation proves remote acceptance. Concrete
+adapter binding remains to be agreed before implementation, without a Core lease
+change for S2.
+
+Explorer confirmed there is no combined Chat-purpose title/destination API. Its
+Reader-purpose OpenDocumentAsync cannot authorize a Chat footer. The proposed local
+Chat projection uses canonical exact disclosed reads under fresh Chat authority,
+then the existing pure link builder. Retain every presentation-read capsule with
+the complete original turn/history lineage and reauthorize before disclosure.
+These reads grant neither model-consumption credit nor stronger source coverage.
+Business confirmed this composition: use a bounded, conformance-tested complete
+wrapper encoding; derive the title from the same successfully admitted exact page;
+retain new DISPLAY lineage plus all original turn/history inputs. Never rewrite
+original reference coverage or expose protected envelopes. Failed aggregate
+authorization suppresses the whole dependent display, not only one citation.
+Business and Chat accepted the exact local adapter/encoder/limits mapping, and
+integration released controlled T026/T027 implementation. Reuse the unchanged
+mechanical ExploreGraphOutputEncoder profile; it grants no Graph/Reader purpose.
+Check complete page bytes/output digest/typed page digest and exact original handle.
+The local display attempt is caller-linked and bounded to ten seconds, serial
+acquisition, at most 16 initial-page title reads, 64 KiB per complete result and
+256 KiB aggregate, without continuation/retry/cache or silent reference truncation.
+Canonical reference/capsule/origin/contributor ceilings still apply. A title-page
+read adds DISPLAY lineage only; zero references skip acquisition, not original
+display authorization. Use owner-issued saved projections initially, not invented
+live report evidence. A closed TurnPresentation cannot be reopened: the local footer
+handoff is separately bounded and checked against the actual attachment/context.
+Saved-history display uses a fresh bounded display lifetime and aggregate budget,
+not a restarted model budget or a requirement that the old generation still run.
+No new Knowledge API, route, schema or runtime permission follows from the agreement.
+
+## Controlled explicit-root Business planner integrated
+
+Business `44aac5686554ae6173d513d3d604058fe934370d` is merged at `fccde66c`.
+Independent cross-module source review accepted the bounded pure planner. It uses
+explicitly selected exact source-backed CodeUnits, accepted directed relationships,
+cycle detection and visible node/edge/depth frontiers. Configured bounds may only
+narrow 256 nodes, 512 edges and depth 16. Unsupported root kinds receive explicit
+dispositions; names or connectivity cannot manufacture positive classification.
+
+The input's complete corpus contributor ledger is independent of traversed members
+and accepted CL membership, including coverage with zero units or failed/unprocessed
+files. The trusted loader must establish immutable accepted units, primary origins,
+anchors, resolution outcomes/witness provenance and the full ledger; these domain
+records are neither an acceptance nor authorization port. No schema changed.
+Trusted loading, synthesis and atomic BL persistence/finalization remain Business
+work in dependency order; controlled implementation does not wait for Chat. Actual
+dispatch and real qualification still require S3/F1 and approved runtime resources.
+
+Combined affected verification passed **1,543/1,543 SelfContained** cases, zero
+failures/skips, 399 classified files:
+`TestResults/isolation-cf8270b6078f48ec81f939ec94117a0d/results.trx`.
+This qualifies the controlled planner combination only. Business has dispatched
+its bounded read-only trusted loader with separate test/production ownership; no
+migration window or real consumer activation follows from this checkpoint.
+
+## Scan correction/runner review and shared qualification boundary
+
+Scan offered correction `69c066b2` and runner `b63cae49`. Review confirms the
+original retry lifetime is preserved, absent Business dispatch observation is
+unknown rather than zero, and the controlled runner starts with setup rows only.
+It then uses actual owner Begin, Worker/tools, F1, writer/freeze/publication and
+stored exact reads. Model, native transport and authorization remain controlled;
+the reader assertion is not live Identity/Web qualification. Main still lacks the
+actual Generate composition/report path at this offered checkpoint.
+
+One accounting edge remains before import: the Worker factory records invocation
+only after HttpMessageInvoker.SendAsync returns a Task. A synchronous handler throw
+can skip observation and later falsely certify zero. Scan owns the narrow call-entry
+observation regression/correction; prior zero-send and Business-unknown cases remain.
+Neither offered checkpoint is integrated yet. Unrelated lane work continues.
+
+There is no implemented retained-run harness or new manifest API to consume.
+The agreed minimal authoring direction is one sequential guarded E2E run with
+`-WithPostgreSql`, one owning fixture lifetime and one production Generate call:
+
+- Reuse `OctoberHostSelectionTests.GeneratorPrepareFixture` for owned PostgreSQL,
+  actual setup/Identity/operator/keys. Its current provider configuration is dummy;
+  approved runtime/policy/protected-provider inputs require explicit child binding.
+- Scan owns the executable input adapter and actual Main/report path. Root owns
+  shared fixture extensions and Web/ordinary-reader composition. Existing
+  `OctoberScanReport` publication, document handles, origins and coverage are the
+  handoff; no parallel schema or accepted-publication seed is introduced.
+- A root reader-only helper consumes the same fixture/report, real ordinary User
+  login and exact reader destination. IT success, Business CL denial and Identity
+  revocation reuse that same database/publication. Do not regenerate per lane.
+- Standard fixture/runner cleanup removes its database/container/volume. This proves
+  durable publication during the run, not seven-day database or website retention.
+  Retain sanitized report/evidence only; a long-lived product dataset requires its
+  separately approved owned operation, not bypassing test cleanup.
+
+Runtime/resource permission remains outstanding. Authoring this boundary neither
+executes native tools/provider/hosts nor qualifies an in-process runner as Main.
+
+Scan's proposed Main handoff is accepted as a transport projection of the existing
+report: one complete settled camelCase JSON document on Generate stdout, with the
+process exit matching report.exitCode and no interleaved progress/provider text.
+Unknown counts remain null. Canonical database identity and private paths/secrets/
+completion capabilities are omitted. Root hydrates identity only from the already
+owned fixture after exact target/batch/selection and handle consistency checks;
+it never overwrites mismatches or resolves a current publication instead. Startup
+failure before a report remains a sanitized nonzero failure, not a fabricated report.
+Scan must pin exact casing/enum/null conventions with its implementation.
+
+Explorer's minimum shared Web assertions are exact report/schema binding, ordinary
+Identity IT access without management/operator permissions, metadata-free rejection
+of mismatched versions/publications/sections, Business CL denial, and actual
+contributor/stamp revocation on subsequent disclosure. Long-content continuation,
+history versions and graph edges qualify only if this same real output contains
+them; no padding, fabricated relationships or second Generate is permitted.
+
+## Trusted flow input and explicit Generate fixture inputs
+
+Business loader `f61abf0d` (offered merge `60b6e79f`) is independently reviewed
+and integrated at `6f5b1816`. It loads exact persisted corpus units, primary source
+anchors, original B1 resolution witnesses and complete dependencies, manifest/coverage
+contributors and composite file uncertainties. Zero-unit files remain represented.
+Its 32 MiB payload budget is not a total managed-memory ceiling; separate row limits
+also apply. This checkpoint changes no schema and does not activate real B2.
+Business continues controlled T031 synthesis; its subsequent BL schema checkpoint
+must preserve existing CL exact-handle constraints and populated data. Integration
+owns embedding the reviewed Synthesis prompt when that file is delivered.
+
+The shared fixture extension has three optional named `StartGenerator` inputs:
+`runtimeFilePath`, `scanPolicyFilePath`, `workerProviderConfigurationFilePath`.
+They are all absent for existing behavior, or all supplied for exact `generate`
+mode with no conflicting identity/target/batch/negative-configuration overrides.
+Only existing absolute regular files under the owned fixture root are accepted;
+the fixture does not expose an arbitrary child-environment override dictionary.
+Its database, operator, application name and keyring remain fixture-owned.
+
+`WriteGenerateWorkerProviderAsync(approvedProfile, readApprovedCredential, token)`
+creates a distinct Worker-only protected configuration using that same fixture
+protector and `SecretPurposes.LlmApiKey`. It never assumes external ciphertext can
+be decrypted by fixture keys. The supplied credential reader is invoked once and
+must be separately authorized before any real use; no actual secret reader is
+selected yet. Only protected credentials reach the file. Controlled qualification
+uses synthetic strings and an ephemeral protector, not a live provider or database.
+An ignored-cancellation credential read remains awaited; its cancelled late result
+cannot create a configuration file. This is owned test-fixture plumbing, not a
+replacement production source-containment boundary.
+
+Main's report must also omit raw `FileCoverage.Reason` text, which can contain
+model-derived uncertainty/source prose. Safe identifiers, digests, relative paths,
+dispositions and host reason codes are report summaries, not byte-identical canonical
+coverage/proposal authority. Root checks publication/document/origin bindings and
+uses the canonical reader for actual content. CLI Ctrl+C drain semantics are not
+qualified by S2 API cancellation tests and remain a distinct S3 obligation.
+
+## Combined controlled checkpoint: trusted loader and CL-only runner
+
+The fixture hook is committed at `417c888f`. Independent review accepted its
+test-only boundary; focused verification passed 24/24. Scan's final synchronous
+invocation correction `b19a6816` is independently accepted and merged, with the
+previously held input-ledger, retry-lifetime and CL-only runner checkpoints, at
+`2cca4913`. The original accounting hold is resolved: attempted transport calls
+include synchronous throws, while token usage remains unknown. This does not prove
+remote provider acceptance. Main's executable Generate/report wiring is still a
+separate pending Scan checkpoint, not completed by importing the internal runner.
+
+At `2cca4913`, combined affected verification passed **1,670/1,670 SelfContained**
+cases, zero failures/skips, 407 classified sources. Evidence:
+`TestResults/isolation-abb08056811e47dbae6a60b7fccbc6ae/results.trx`.
+This includes the trusted Business loader and final fixture cleanup guard, and is
+not a full-suite, PostgreSQL, native-tool, provider, browser or E2E qualification.
+Scan may consume the fixture API after committing its own dirty Main work; no reset
+or all-lane barrier is required. Business continues synthesis, Chat completes its
+footer lifecycle correction, and Explorer awaits the same actual publication/run.

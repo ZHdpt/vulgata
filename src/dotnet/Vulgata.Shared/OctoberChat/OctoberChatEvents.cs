@@ -6,6 +6,7 @@ namespace Vulgata.Shared.OctoberChat;
 public enum OctoberChatEventKind
 {
     TurnStarted, ToolStarted, ToolCompleted, ToolFailed, AnswerDelta, ReferencesUpdated, TurnSaved, TurnSaveUncertain,
+    DisclosureSuppressed,
 }
 
 /// <summary>Host-supplied display projection, not a storage result or durable admission receipt.</summary>

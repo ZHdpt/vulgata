@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Vulgata.Core.DomainServices.OctoberChat;
+using Vulgata.Core.DomainServices.OctoberDialogue;
 using Vulgata.Shared.OctoberChat;
 
 namespace Vulgata.Web.ViewModels.OctoberChat;
@@ -13,6 +14,7 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
     private readonly OctoberChatEventSequence _sequence = new(binding);
     private readonly HashSet<string> _activeTools = new(StringComparer.Ordinal);
     private bool _started;
+    private bool _suppressed;
 
     public OctoberChatTurnBinding Binding { get; } = binding;
     public string AnswerText { get; private set; } = string.Empty;
@@ -31,7 +33,11 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
             // sequence must not suppress a subsequent valid settlement projection.
             if (IsTerminal || !_started && item.Kind != OctoberChatEventKind.TurnStarted ||
                 _started && item.Kind == OctoberChatEventKind.TurnStarted ||
-                IsSaveUncertain && item.Kind != OctoberChatEventKind.TurnSaved || !ValidPayload(item) ||
+                IsSaveUncertain && item.Kind is not (OctoberChatEventKind.TurnSaved or OctoberChatEventKind.DisclosureSuppressed) ||
+                _suppressed && (item.Kind != OctoberChatEventKind.TurnSaved || item.Text != string.Empty ||
+                    item.References.IsDefault || !item.References.IsEmpty ||
+                    item.SavedOutcome is not (OctoberChatDisplayOutcome.Failed or OctoberChatDisplayOutcome.Interrupted)) ||
+                !ValidPayload(item) ||
                 !_sequence.TryAccept(item))
             {
                 return false;
@@ -67,7 +73,22 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
                     _activeTools.Clear();
                     StatusMessage = "保存状态待确认，暂时无法继续提问。";
                     break;
+                case OctoberChatEventKind.DisclosureSuppressed:
+                    _suppressed = true;
+                    AnswerText = string.Empty;
+                    References = [];
+                    ActivityMessage = null;
+                    _activeTools.Clear();
+                    StatusMessage = "当前内容暂不可用。";
+                    break;
                 case OctoberChatEventKind.TurnSaved:
+                    // An explicit canonical terminal projection replaces provisional
+                    // output, including the owner's sanitized empty closure.
+                    if (item.Text is not null)
+                    {
+                        AnswerText = item.Text;
+                        References = item.References;
+                    }
                     IsTerminal = true;
                     IsSaveUncertain = false;
                     ActivityMessage = null;
@@ -103,16 +124,25 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
             case OctoberChatEventKind.ToolFailed:
                 return item.ToolCallId is not null && _activeTools.Contains(item.ToolCallId);
             case OctoberChatEventKind.ReferencesUpdated:
-                return !item.References.IsDefault && item.References.All(reference =>
-                    reference is not null && reference.Document is not null &&
-                    reference.Document.LogicalDocumentId != Guid.Empty && reference.Document.DocumentVersionId != Guid.Empty &&
-                    reference.Document.BatchId == Binding.Request.Publication.Knowledge.BatchId &&
-                    reference.Document.PublicationId == Binding.Request.Publication.PublicationId &&
-                    reference.SuccessfulChunks > 0 && reference.ContentBytes >= 0);
+                return ValidReferences(item.References);
+            case OctoberChatEventKind.DisclosureSuppressed:
+                return string.IsNullOrEmpty(item.Text) && item.ToolCallId is null &&
+                    item.References.IsDefaultOrEmpty && item.SavedOutcome is null;
             case OctoberChatEventKind.TurnSaved:
-                return item.SavedOutcome is { } outcome && Enum.IsDefined(outcome);
+                if (item.SavedOutcome is not { } outcome || !Enum.IsDefined(outcome)) return false;
+                if (item.Text is null) return item.References.IsDefault; // Existing controlled marker-only events.
+                try { return _strictUtf8.GetByteCount(item.Text) <= OctoberDialogueLimits.MaximumAnswerUtf8Bytes && ValidReferences(item.References); }
+                catch (ArgumentException) { return false; }
             default:
                 return true;
         }
     }
+
+    private bool ValidReferences(ImmutableArray<OctoberChatReference> references) => !references.IsDefault &&
+        references.Length <= OctoberDialogueLimits.MaximumReferences && references.All(reference =>
+            reference is not null && reference.Document is not null &&
+            reference.Document.LogicalDocumentId != Guid.Empty && reference.Document.DocumentVersionId != Guid.Empty &&
+            reference.Document.BatchId == Binding.Request.Publication.Knowledge.BatchId &&
+            reference.Document.PublicationId == Binding.Request.Publication.PublicationId &&
+            reference.SuccessfulChunks > 0 && reference.ContentBytes >= 0);
 }

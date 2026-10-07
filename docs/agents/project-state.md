@@ -30,6 +30,15 @@ verification before reuse.
 
 ## Current authority and delivery
 
+Latest October integration checkpoint (October 7): `2cca4913` adds the reviewed
+Business trusted flow-input loader and corrected controlled CL-only Generate runner.
+Shared explicit Generate fixture inputs are at `417c888f`. Combined affected
+SelfContained verification passes 1,670/1,670, zero failures/skips; this is not a full
+suite or real runtime qualification. Generate Main/report wiring, shared ordinary-user
+reader qualification, BL synthesis/publication and final Web Chat composition remain
+open. Source/provider/database/host permission for the shared real run is still
+outstanding. See the current delivery-wave handoff below for exact ownership and evidence.
+
 - [PRD](../bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md): product scope
   and explicit Current/Deferred/History/Original unmet backlog dispositions.
 - [Glossary](../UBIQUITOUS_LANGUAGE.md): canonical domain terms.
@@ -128,6 +137,48 @@ verification before reuse.
   live operator, F1 registration and one-dispatch lifetime. Public Generate remains
   incomplete. The six new admission PostgreSQL cases are authored, not executed;
   no real run, migration or new resource permission is implied.
+  Reviewed B1 persistence/publication `cbb8051f` is now integrated with 1,437/1,437
+  affected controlled passes. It preserves B0 membership and distinguishes exact
+  inquiry-caller uncertainty ownership from full input provenance. The additive
+  six-table October migration is unapplied; updated runtime readers require that
+  schema. S3 finalization/F1 registration, the Business-owned executor-to-store
+  witness handoff correction, PostgreSQL and real-source/provider qualification
+  remain pending. F2 exists; controlled B2 preparation does not wait for Chat.
+  No implicit B2 or Chat runtime completion is claimed.
+  Reviewed Chat coordinator `d99517a6` is integrated at `9227f376`, with
+  1,459/1,459 combined affected SelfContained passes and zero failures/skips.
+  It coordinates the canonical admitted turn, actual generation/drain ownership,
+  phase acknowledgement reconciliation and immutable terminal save. Root-owned
+  live execution registration, commit/owner-death adapters and route activation
+  remain missing; Chat owns the bounded presentation adapter. Controlled evidence
+  does not authorize or prove a real provider/host/database run.
+  The same-attempt Business resolution witness handoff `8b72833d` is integrated,
+  and the unregistered root Chat commit-fence component is independently reviewed.
+  Combined affected verification passes 1,486/1,486 controlled cases, zero skips.
+  Business's reproduced dialogue-store submission/disposal race is corrected by
+  `4ff94d02`, integrated at `be1915ab`, with 1,487/1,487 combined affected controlled
+  passes. The store-specific implementation hold is lifted; no live mutation or
+  PostgreSQL qualification is claimed. The owner's separate discovery CLR crash
+  remains unexplained/non-success. The root commit guard alone is not execution
+  registration, owner-death proof or a reachable Chat route.
+  Reviewed Chat presentation `2d371f4f` is integrated at `3d40c143` with
+  1,499/1,499 affected controlled passes, zero skips. Its bounded nonblocking queue
+  retains subscriber lifetime, rechecks full disclosure lineage and suppresses
+  denied content without inventing a saved state. Actual page attachment/host
+  activation and browser qualification remain open; Chat continues leaf rendering
+  and reader links while root owns parent composition.
+  The encoded-text Chat renderer `bd51e764` is integrated at `97f428ec`;
+  combined affected controlled checks pass 1,505/1,505, zero skips. It supports a
+  bounded formatting subset with literal fallback, not full CommonMark or live
+  Chat activation. Business/Explorer/Chat footer agreement is now accepted and
+  controlled T026/T027 implementation is released; a URL builder alone is not title
+  or disclosure authority. The exact display-only lineage and limits are in the
+  wave handoff.
+  Explicit-root Business planner `44aac568` is integrated at `fccde66c`;
+  combined affected verification passes 1,543/1,543 controlled cases, zero skips.
+  Complete corpus lineage includes coverage without CL, independently of bounded
+  directed flow membership. Trusted persisted-input loading, synthesis and atomic
+  BL persistence remain unfinished; no schema or live execution was added.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
