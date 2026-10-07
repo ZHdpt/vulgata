@@ -239,7 +239,7 @@ public sealed class PreparedCodeGraphConnectionTests
     private static async Task AssertTransportFieldsAsync(PreparedCodeGraphConnection connection)
     {
         Assert.NotNull(typeof(PreparedCodeGraphConnection).GetMethod(
-            "OpenSession", BindingFlags.Instance | BindingFlags.Public));
+            "OpenSession", BindingFlags.Instance | BindingFlags.Public, binder: null, types: Type.EmptyTypes, modifiers: null));
         ConstructorInfo? constructor = typeof(NativeCodeGraphMcpClient).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic,
             binder: null,

@@ -4,7 +4,11 @@
 
 **Input**: `specs/20-1-Oct14-scan/spec.md`
 
-**Status**: Definition/design only; independent review recorded separately. Neither review acceptance nor this plan authorizes tasks, implementation, native execution or provider spending.
+**Historical planning status**: Definition/design only; independent review recorded separately. Neither review acceptance nor this plan alone authorizes tasks, implementation, native execution or provider spending. Later direct user authority and the current result are recorded below.
+
+**Current bounded execution**: The user subsequently authorized “Implement S1: T005–T012”. S1 is proceeding from accepted common CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91`; see `verification-s1.md`. This supersedes the historical preparation-only stop for S1 and its owned native qualification, while retaining the stop before T013/S2, providers, databases and application-host startup.
+
+**Current result**: S1 T005–T012 are complete. Final affected SelfContained checks pass (296/296); combined native source/JDT/CodeGraph qualification and all selected existing native regressions pass. Six focused process lifecycle checks pass after correcting their teardown. The user-authorized bounded correction in `PreparedJdtProcessLauncher.cs` separates stderr draining from process exit, terminates validated retained descendants and waits for actual Windows kernel signals before owned-state cleanup. No lease, shutdown limit or host profile was widened. Independent review accepted the correction. Stop before T013/S2; see `verification-s1.md` for exact runs and remaining dependencies.
 
 **Bounded preparation dispatch**: Subsequent coordinator authorization permits only T001–T004 import/conformance and commits, stopping before T005. Exact integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0` (Business candidate `07c3fe4463e3228a6982fd106b58148ca87974bd`, handoff `7a189c34aec625202f74846d4907ded787ccbdca`) is now imported. Concrete symbol mapping and controlled-fixture limits are in `contracts/scan-boundaries.md`; verification/consumer acknowledgement belongs in `conformance-c0.md`. This supersedes the initial-commit-unavailable statement below for this import only, not the requirement for final integration-owned CP-K1 acceptance or separate Wave 2 authority. No product implementation is claimed.
 

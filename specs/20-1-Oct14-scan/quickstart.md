@@ -1,8 +1,8 @@
 # OCT-SCAN validation and handoff guide
 
-This is a future validation guide, not executed evidence. No Generate implementation or new tests are present from this planning request. Follow [plan.md](plan.md) stop conditions and [contracts/scan-boundaries.md](contracts/scan-boundaries.md).
+S1 T005–T012 are implemented, independently reviewed and qualified; Generate/S2 remains future work. The combined fixture passes source paging/read/search, real JDT definition/reference, renewed CodeGraph sessions and owned cleanup. Actual controlled/native results are in [verification-s1.md](verification-s1.md). Stop before T013; follow [plan.md](plan.md) stop conditions and [contracts/scan-boundaries.md](contracts/scan-boundaries.md).
 
-Subsequent bounded preparation imports integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0` and permits only T001–T004 controlled consumer probes using the imported Core/Shared types and fixture. See `conformance-c0.md` for actual results; all feature/runtime scenarios below remain future work. Final CP-K1 acceptance is integration-owned. This local probe command selects only SelfContained tests and provisions no database/provider/tool runtime:
+Historical bounded preparation imported integration `3bcd815b09cfbac7418d6644a2a75816e0788ec0` for T001–T004 controlled consumer probes. See `conformance-c0.md` for those results. S1 subsequently imported accepted common CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91` under its direct user instruction; accepted S1 evidence is in `verification-s1.md`. This local conformance command selects only SelfContained tests and provisions no database/provider/tool runtime:
 
 ```powershell
 pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.OctoberScan|FullyQualifiedName~Vulgata.Tests.October.Knowledge'
@@ -12,12 +12,26 @@ pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedN
 
 1. Explicit post-review tool/Scan planned-change approval and implementation authority. F1/F2/F5 semantics are adopted against Business contract SHA-256 `F449357B5273D009C3262277912A797886E385AA883E5A5A149A887946EA3D36`; this is not a compiled checkpoint. Business first publishes an initial compiling contract/fixture commit, integration imports it, and minimal consumer compile/conformance probes validate CP-K1/C0 before dependent production. Completed consumer implementations are not probe prerequisites. S2 needs accepted checkpoint plus B0 acceptance/CL publication/exact reads; S3 adds B1/B2 and actual scope conformance. No probe/code/runtime execution is authorized by this guide.
 2. Owned prepared source fixture/approved registration-login slice, exact batch/database bindings, real permitted accounts, compatible pinned native/JDK profile and separate disposable tool state. Existing Identity setup is required; October setup does not provision an empty organization.
-3. Explicit authorization for owned PostgreSQL/native processes and provider spending, selected explicit provider document, protected keys and finite budgets. Keep values outside source control/evidence. Do not inspect unrelated secrets or modify PATH/global configuration.
+3. Explicit authorization for owned PostgreSQL/native processes and provider spending, selected explicit provider document, protected keys and finite budgets. Keep values outside source control/evidence. Do not inspect unrelated secrets or modify user/machine PATH or global configuration.
 4. Business publication/read ports, Explore destination and integration-owner Web composition for ordinary-reader proof. Ordinary Web uses frozen DefaultConnection and cannot run October migrations or require generator credentials.
 
 ## Controlled checks after implementation
 
-From the assigned worktree, use the existing launcher (new test names are illustrative until implemented; zero discovered tests is failure):
+The qualified S1 invocation uses installed CodeGraph 1.5.0, JDT-LS core `1.58.0.202605150919`, and physical Java 21.0.12. Source and dedicated JDT grants remain 30 seconds; the optional 120-second policy was **not** added. Both isolated JDT and combined S1 fixtures pass useful navigation and cleanup. The launcher settles validated retained descendants using actual Windows process signals; stderr EOF and exit-code availability are not cleanup proof. Shutdown remains bounded at 15 seconds. This qualifies the pinned launcher profile, not arbitrary process trees.
+
+The native test process must contain only absolute PATH entries. This host's inherited PATH contains an empty entry; the verified runner preparation removes only empty entries in its child process, preserving absolute entry order and leaving user/machine settings untouched:
+
+```powershell
+$s1AbsolutePathEntries = @($env:PATH -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+if ($s1AbsolutePathEntries | Where-Object { -not [System.IO.Path]::IsPathFullyQualified($_) }) { throw 'Unexpected non-absolute test-process search path.' }
+$env:PATH = $s1AbsolutePathEntries -join ';'
+$env:VULGATA_JDT_JAVA_BIN = 'C:\Program Files\Java\jdk-21.0.12\bin'
+pwsh -NoProfile -File eng/test.ps1 -Suite LocalTools -Filter 'FullyQualifiedName~OctoberScanToolRuntimeQualificationTests' -TestTimeoutSeconds 300 -CommandTimeoutSeconds 900
+```
+
+Run this only inside a fresh owned shell with native-fixture authority. The recorded blocker is corrected and qualified; reruns need a changed behavior or verification purpose. Never adopt/delete retained state from an earlier failed attempt automatically.
+
+From the assigned worktree, use the existing launcher; zero discovered tests is failure:
 
 ```powershell
 pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberScan'
