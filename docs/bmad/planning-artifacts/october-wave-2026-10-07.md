@@ -100,3 +100,21 @@ because Docker Desktop's Linux engine pipe was absent. Root has consolidated a
 specific pending resource request for a new synthetic real-Worker retained run;
 source/provider/spend/host/retention approval is not yet received. Such a run would
 qualify the execution path, not the later registration/login usefulness milestone.
+
+## Combined controlled checkpoint
+
+Imported reviewed Chat `df7f09cc352e6760cfa780f058885455d7c1a19a`
+(including consumer contribution `f3db38db` and Web/provider seam `1aadbd86`)
+at merge `fb65bbf7`. Imported reviewed Explorer
+`d28ba2369ea9b60fefae57c122b7f18814705e5b` and preserved graph probes at
+merge `84d60d8d5b3718d89ae853c3dd2be29e507611c8`.
+Chat now reports actual sanitized tool invocation progress; Explorer honors the
+host's configured Identity claim types and same authenticated identity.
+
+Full combined SelfContained regression at `84d60d8d`: **2,798/2,798 passed**,
+zero failures/skips; policy classified 362 source files. Evidence:
+`TestResults/isolation-70284aff48e64053b721cbfd63f0e7b1/results.trx`.
+Explorer's four new PostgreSQL cases are compiled, not executed. No retained
+publication, graph aggregate owner mechanism, live provider or browser qualification
+is claimed. Business canonical dialogue/disclosure candidate remains pending;
+preliminary consumer compatibility is not yet contract acceptance.

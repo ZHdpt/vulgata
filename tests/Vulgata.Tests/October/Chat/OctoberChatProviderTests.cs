@@ -5,6 +5,7 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.ChatExecution.October;
 using Vulgata.Core.DomainServices.OctoberChat;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.October.Chat;
@@ -764,6 +765,226 @@ public sealed class OctoberChatProviderTests
         Assert.Equal(0, client.DisposeCalls);
         Assert.Equal("已收到的片段", text.ToString());
         Assert.Single(client.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RunAsync_ToolProgress_GatedReadReportsActualInvocationAndPreservesImmediateTextAsync()
+    {
+        var fixture = new ControlledChatFixture();
+        ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
+        var readGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Reader.ExactGate = readGate;
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Guid privateProviderId = Guid.NewGuid();
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Update("private-response", new TextContent("先到达的文本。")),
+                Call("private-response", privateProviderId.ToString(), "ReadWiki", new() { ["document"] = fixture.Knowledge.Handle(fixture.Knowledge.ClA) }),
+                Finish("private-response", ChatFinishReason.ToolCalls),
+            ], token),
+            token => StreamAsync([
+                Call("second", "private-browse-id", "BrowseWiki", new() { ["query"] = "" }),
+                Finish("second", ChatFinishReason.ToolCalls),
+            ], token),
+            token => StreamAsync([Update("third", new TextContent("工具完成后的文本。"))], token, finish.Task, Finish("third", ChatFinishReason.Stop)),
+        ]);
+        var progress = new List<OctoberChatToolProgress>();
+        var visible = new StringBuilder();
+        Task<OctoberChatProviderResult> run = new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", delta =>
+            {
+                visible.Append(delta);
+                if (visible.ToString().Contains("工具完成后", StringComparison.Ordinal)) answer.TrySetResult();
+            }, onToolProgress: item =>
+            {
+                progress.Add(item);
+                if (item.Kind == OctoberChatToolProgressKind.Started) started.TrySetResult();
+            });
+        try
+        {
+            Assert.Same(started.Task, await Task.WhenAny(started.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal("先到达的文本。", visible.ToString());
+            Assert.False(run.IsCompleted);
+            OctoberChatToolProgress pending = Assert.Single(progress);
+            Assert.Equal(OctoberChatToolProgressKind.Started, pending.Kind);
+            Assert.NotEqual(Guid.Empty, pending.OperationId);
+            Assert.NotEqual(privateProviderId, pending.OperationId);
+            Assert.Single(fixture.Reader.ExactRequests);
+            Assert.Empty(wiki.Ledger.Snapshot);
+
+            readGate.TrySetResult();
+            Assert.Same(answer.Task, await Task.WhenAny(answer.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.False(run.IsCompleted);
+            Assert.Equal(new[] { OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Completed,
+                OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Completed }, progress.Select(item => item.Kind));
+            Assert.Equal(progress[0].OperationId, progress[1].OperationId);
+            Assert.Equal(progress[2].OperationId, progress[3].OperationId);
+            Assert.NotEqual(progress[0].OperationId, progress[2].OperationId);
+            Assert.NotEqual(Guid.Empty, progress[2].OperationId);
+            Assert.Single(wiki.Ledger.Snapshot);
+            Assert.Single(fixture.Reader.SearchRequests);
+            Assert.Equal(3, client.Requests.Count);
+            using JsonDocument projection = JsonDocument.Parse(JsonSerializer.Serialize(progress));
+            Assert.All(projection.RootElement.EnumerateArray(), item =>
+                Assert.Equal(new[] { "Kind", "OperationId" }, item.EnumerateObject().Select(property => property.Name).Order()));
+        }
+        finally
+        {
+            readGate.TrySetResult();
+            finish.TrySetResult();
+            await run;
+        }
+
+        Assert.Equal(OctoberChatProviderStatus.Completed, (await run).Status);
+        Assert.Equal("先到达的文本。工具完成后的文本。", visible.ToString());
+        Assert.Equal(visible.ToString(), (await run).AnswerText);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RunAsync_ToolProgress_FacadeFailureReportsFailedWithoutClaimingToolSuccessAsync(bool invalidArguments)
+    {
+        var fixture = new ControlledChatFixture();
+        ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
+        fixture.Reader.SearchStatus = KnowledgeReadStatus.Unavailable;
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("private-response", "private-call", "BrowseWiki", invalidArguments
+                    ? new() { ["query"] = "", ["subject"] = "private-authority-override" } : new() { ["query"] = "" }),
+                Finish("private-response", ChatFinishReason.ToolCalls),
+            ], token),
+            token => StreamAsync([Update("second", new TextContent("当前资料不可用。")), Finish("second", ChatFinishReason.Stop)], token),
+        ]);
+        var progress = new List<OctoberChatToolProgress>();
+        var visible = new StringBuilder();
+
+        OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", delta => visible.Append(delta), onToolProgress: progress.Add);
+
+        Assert.Equal(new[] { OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Failed }, progress.Select(item => item.Kind));
+        Assert.NotEqual(Guid.Empty, progress[0].OperationId);
+        Assert.Equal(progress[0].OperationId, progress[1].OperationId);
+        Assert.Equal(invalidArguments ? OctoberChatProviderStatus.Failed : OctoberChatProviderStatus.Completed, result.Status);
+        Assert.Equal(invalidArguments ? 0 : 1, fixture.Reader.SearchRequests.Count);
+        Assert.Equal(invalidArguments ? 1 : 2, client.Requests.Count);
+        Assert.Equal(invalidArguments ? "" : "当前资料不可用。", visible.ToString());
+        Assert.Empty(wiki.Ledger.Snapshot);
+        Assert.Equal(0, wiki.Budget.ActiveTools);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RunAsync_ToolProgress_PreDispatchRejectionDoesNotInventInvocationAsync(bool duplicate)
+    {
+        var fixture = new ControlledChatFixture();
+        ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
+        var updates = new List<ChatResponseUpdate>
+        {
+            Call("first", "private-id", duplicate ? "BrowseWiki" : "UnapprovedPrivateTool", new() { ["query"] = "" }),
+        };
+        if (duplicate) updates.Add(Call("first", "private-id", "BrowseWiki", new() { ["query"] = "" }));
+        updates.Add(Finish("first", ChatFinishReason.ToolCalls));
+        using var client = new ScriptedChatClient([token => StreamAsync(updates, token)]);
+        var progress = new List<OctoberChatToolProgress>();
+
+        OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", _ => { }, onToolProgress: progress.Add);
+
+        Assert.Equal(OctoberChatProviderStatus.Failed, result.Status);
+        Assert.Empty(progress);
+        Assert.Empty(fixture.Reader.SearchRequests);
+        Assert.Single(client.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RunAsync_ToolProgress_CancelledReadReportsOneFailureBeforeReturnAndNoLateCallbacksAsync(bool deadline)
+    {
+        var fixture = new ControlledChatFixture();
+        var clock = new ControlledChatFixture.ManualClock();
+        using var cancellation = new CancellationTokenSource();
+        var budget = new OctoberChatBudget(timeProvider: clock, cancellationToken: cancellation.Token);
+        ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync(budget: budget);
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.Reader.ExactGate = gate;
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var client = new ScriptedChatClient([token => StreamAsync([
+            Call("first", "private-read-id", "ReadWiki", new() { ["document"] = fixture.Knowledge.Handle(fixture.Knowledge.ClA) }),
+            Finish("first", ChatFinishReason.ToolCalls),
+        ], token)]);
+        var progress = new List<OctoberChatToolProgress>();
+        Task<OctoberChatProviderResult> run = new OctoberChatAgent(client, wiki.Tools, budget)
+            .RunAsync("问题", "controlled instructions", _ => { }, onToolProgress: item =>
+            {
+                progress.Add(item);
+                if (item.Kind == OctoberChatToolProgressKind.Started) started.TrySetResult();
+            });
+        try
+        {
+            Assert.Same(started.Task, await Task.WhenAny(started.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Single(fixture.Reader.ExactRequests);
+            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            else cancellation.Cancel();
+            OctoberChatProviderResult result = await run.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(deadline ? OctoberChatProviderStatus.BudgetExceeded : OctoberChatProviderStatus.Cancelled, result.Status);
+            Assert.False(gate.Task.IsCompleted);
+            Assert.Equal(new[] { OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Failed }, progress.Select(item => item.Kind));
+            Assert.Equal(progress[0].OperationId, progress[1].OperationId);
+            Assert.NotEqual(Guid.Empty, progress[0].OperationId);
+        }
+        finally
+        {
+            cancellation.Cancel();
+            gate.TrySetResult();
+            await run;
+        }
+
+        Assert.Equal(2, progress.Count);
+        Assert.Empty(wiki.Ledger.Snapshot);
+        Assert.Single(client.Requests);
+        Assert.Equal(0, budget.ActiveTools);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RunAsync_ToolProgress_ThrowingSinkStopsWithoutRecursiveNotificationOrFurtherDispatchAsync(bool throwOnCompletion)
+    {
+        var fixture = new ControlledChatFixture();
+        ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
+        using var client = new ScriptedChatClient([token => StreamAsync([
+            Call("first", "private-id", "BrowseWiki", new() { ["query"] = "" }),
+            Finish("first", ChatFinishReason.ToolCalls),
+        ], token)]);
+        var progress = new List<OctoberChatToolProgress>();
+        var visible = new StringBuilder();
+
+        OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", delta => visible.Append(delta), onToolProgress: item =>
+            {
+                progress.Add(item);
+                if (!throwOnCompletion || item.Kind == OctoberChatToolProgressKind.Completed)
+                    throw new InvalidOperationException("PRIVATE progress sink failure");
+            });
+
+        Assert.Equal(OctoberChatProviderStatus.Failed, result.Status);
+        Assert.Equal(throwOnCompletion ? 2 : 1, progress.Count);
+        Assert.DoesNotContain(progress, item => item.Kind == OctoberChatToolProgressKind.Failed);
+        Assert.Equal(throwOnCompletion ? 1 : 0, fixture.Reader.SearchRequests.Count);
+        Assert.Single(client.Requests);
+        Assert.Empty(visible.ToString());
+        Assert.Empty(result.AnswerText);
+        Assert.Equal(0, wiki.Budget.ActiveTools);
     }
 
     private static ChatResponseUpdate Call(string responseId, string callId, string name, Dictionary<string, object?> arguments) =>
