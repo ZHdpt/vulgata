@@ -1,6 +1,39 @@
 # OCT-SCAN boundary requirements
 
-**Checkpoint C0 status**: T001–T004 bounded preparation complete. Scan acknowledged the exact initial compiled owner contract/fixture after 69/69 filtered SelfContained cases passed (19 new Scan + 50 imported Business), with no blocking supported-conformance objection. Historical evidence and fixture limits are recorded in `../conformance-c0.md`. S1 subsequently imported integration's accepted common CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91` under the direct user instruction to implement T005–T012. S1 T005–T012 is implemented and qualified, including combined native JDT settlement, as recorded in `../verification-s1.md`. No shared contract or schema changed; S2 remains outside this instruction.
+**Checkpoint C0 status**: T001–T004 bounded preparation complete. Scan acknowledged the exact initial compiled owner contract/fixture after 69/69 filtered SelfContained cases passed (19 new Scan + 50 imported Business), with no blocking supported-conformance objection. Historical evidence and fixture limits are recorded in `../conformance-c0.md`. S1 subsequently imported integration's accepted common CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91` under the direct user instruction to implement T005–T012. S1 T005–T012 is implemented and qualified, including combined native JDT settlement, as recorded in `../verification-s1.md`. That S1 boundary changed no shared contract or schema. The later S2 authorization and owner checkpoint are recorded next.
+
+## Current S2 owner checkpoint
+
+The later direct user instruction authorizes S2 T013–T024. The latest consumed
+approved checkpoint is `d72d1b80fd13a5ba21e425cffcc2d9cd89103316`, merged on Scan as
+`256fdbf15a28e3bc0d7a2b96618b797edc6f23f2`. It includes reviewed supporting-input
+implementation `0ab10a77` and corrected fresh admission `7958a5e3`; the earlier
+admission hold is lifted for controlled composition. This grants no runtime resources.
+
+- Supporting content uses owner `Contributor.SourceOrigin`; metadata uses
+  `ContributorKind.SourceMetadata` and `MetadataOrigin`. The host retains every
+  actual input, including uncited results, before final digest/completion. Use owner
+  `ComputeMetadataResultDigest`, `ContentOrigins`, `NormalizeContributors` and
+  `ValidateInputs`; metadata never becomes a source-content anchor.
+- `PreparedVersion` is the existing approval identity as a root-session provenance
+  label, checked with its complete approved binding. File digest and identity prove
+  content; the label is neither a snapshot nor permission. The 128 content-origin
+  and 128 metadata-observation ceilings cannot enlarge original tool/input grants.
+- `IOctoberGenerateAdmissionStore` runs after source-free preflight and before any
+  native/source/Worker activity. Its dedicated `IOctoberGenerateAdmissionAuthority`
+  rechecks the held operator. `OctoberGenerateAdmissionPolicy` derives the sole
+  `(BatchId, BeginGenerate=5, BatchId)` key and payload digest; the exact guard uses
+  `CommitAttempt.AttemptId = RunId`. A receipt permits no restart or second dispatch.
+- Mandatory `IOctoberCorpusFreezeAuthority` proves closed terminal inventory and
+  settled writes. Exact freeze/publication operations retain their own guard
+  identities. CL-only needs no Resolution/Synthesis service or provider call.
+
+Business owns these contracts, persistence, policy and migrations. Scan's complete
+ledger and full Generate composition remain under T021/T022 verification; imported
+owner behavior and component tests are not the real T024 milestone. See the owner
+[input contract](../../20-1-Oct14-business/contracts/supporting-inputs-contract.md),
+[admission contract](../../20-1-Oct14-business/contracts/generate-admission-contract.md)
+and [current Scan evidence](../verification-s2.md).
 
 ## Imported initial contract — bounded preparation
 
@@ -62,11 +95,11 @@ Explore supplies the exact reader destination; integration composes ordinary Web
 
 ## Generator command and source/tool contract
 
-Proposed command selection: extend the existing environment-backed `October:Mode` parser with `generate` (`October__Mode=generate` in the child-process environment). Preserve existing `October:TargetId`, `October:BatchId`, authority/connection/provider document selectors; add `October:ScanPolicyFile` for the explicit policy file. In that same policy, require `outputStage` equal to `cl-only` or `cl-and-bl`; missing/unknown values fail before dispatch. Pin it for the execution; there is no default, interactive stage switch, second selector or configuration framework. Preserve prepare/select behavior. These selectors are planned, not currently executable.
+Proposed command selection: extend the existing environment-backed `October:Mode` parser with `generate` (`October__Mode=generate` in the child-process environment). Preserve existing `October:TargetId`, `October:BatchId`, authority/connection/provider document selectors; add `October:ScanPolicyFile` for the explicit policy file. In that same policy, require `outputStage` equal to `cl-only` or `cl-and-bl`; missing/unknown values fail before dispatch. Pin it for the execution; there is no default, interactive stage switch, second selector or configuration framework. Preserve prepare/select behavior. These selectors are implemented and controlled-tested; full Generate execution wiring remains incomplete.
 
 ### F5 — early CL-only publication route
 
-For S2 explicitly use `outputStage: cl-only`. Route: bind → required tools → declared inventory/admission → real whole-file Worker → Business acceptance and exact acknowledgement reconciliation → settled terminal coverage/frozen exact set → Business's `PublishSelectionAsync` responsibility for a CL-only fixed publication → exact owner-returned publication/Document handles. Its input contains only that set, coverage/provenance, expected corpus identity and stable publication operation key; empty relationship/BL selections assert no matching was performed. Do not resolve or invoke B1/B2 services, require their implementation, run their providers, issue SQL or synthesize publication IDs. Shared compiled contracts may describe the later stages; their production implementations are not S2 prerequisites.
+For S2 explicitly use `outputStage: cl-only`. Route: bind → atomic fresh-run admission → required tools → declared inventory/admission → real whole-file Worker → Business acceptance and exact acknowledgement reconciliation → settled terminal coverage/frozen exact set → Business's `PublishSelectionAsync` responsibility for a CL-only fixed publication → exact owner-returned publication/Document handles. Its input contains only that set, coverage/provenance, expected corpus identity and stable publication operation key; empty relationship/BL selections assert no matching was performed. Do not resolve or invoke B1/B2 services, require their implementation, run their providers, issue SQL or synthesize publication IDs. Shared compiled contracts may describe the later stages; their production implementations are not S2 prerequisites.
 
 The proposed command result reports `requestedStage`, `completedStage`, execution/coverage status, exact batch/publication binding and returned Document Version/section handles, plus `matching=not-requested` and `businessLogic=not-requested` for CL-only. These are host report fields referencing owner types, not a new Knowledge DTO. Report completion only after publication is confirmed; lost acknowledgement uses exact operation lookup/replay without re-analysis or re-publication under a fresh key. Indeterminate lookup returns exit 4; accepted CL alone is not published success. No accepted files or no CL Documents (including only valid zero-unit manifests) returns exit 5 with truthful coverage, not a usable wiki claim.
 

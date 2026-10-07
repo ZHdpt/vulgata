@@ -221,6 +221,21 @@
   "OctoberScan/OctoberScanClPublicationTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanRunSourceFactoryTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanGenerateRunnerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanRuntimeConfigurationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanWorkerToolsTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanWorkerInputLedgerTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanInventoryTests.cs": {
     "suite": "SelfContained"
   },

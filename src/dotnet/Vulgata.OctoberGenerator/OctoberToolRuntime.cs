@@ -136,6 +136,10 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     }
 
     public Guid RepositoryId { get; }
+    internal bool HasPreparedBinding(Guid repositoryId, string rootBindingIdentity, string preparedVersion)
+        => repositoryId == _approval.RepositoryId &&
+            string.Equals(rootBindingIdentity, _approval.RootBindingIdentity, StringComparison.Ordinal) &&
+            string.Equals(preparedVersion, _approval.ApprovalIdentity, StringComparison.Ordinal);
     internal PreparedCodeGraphConnection? PreparedConnection => _connection;
     internal IReadOnlyList<PreparedToolWorkspaceLease> JdtLeases => _jdtLeases;
     private TimeSpan Remaining => _lifetime - _clock.GetElapsedTime(_started);

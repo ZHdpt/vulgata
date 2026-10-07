@@ -269,6 +269,26 @@ public sealed class OctoberScanClPublicationTests
         Assert.Equal(0, await context.KnowledgePublications.CountAsync());
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Execute_KnownPublicationThenHardStop_ReturnsTerminalPublicationWithoutAnotherWriteAsync()
+    {
+        using var stop = new CancellationTokenSource();
+        await using var harness = await PhaseHarness.CreateAsync(hardStop: stop.Token);
+        harness.AfterPublish = stop.Cancel;
+        var completed = await harness.Phase.ExecuteAsync();
+        Assert.Equal(0, completed.ExitCode);
+        Assert.Equal("cl-only", completed.CompletedStage);
+        Assert.NotNull(completed.Publication);
+        Assert.NotEmpty(completed.Documents);
+        var replay = await harness.Phase.ReconcileAsync();
+        Assert.Equal(0, replay.ExitCode);
+        Assert.Equal(completed.Publication, replay.Publication);
+        Assert.Equal(completed.Documents.ToArray(), replay.Documents.ToArray());
+        Assert.Equal(1, harness.FreezeCalls);
+        Assert.Equal(1, harness.PublishCalls);
+    }
+
     private sealed class PhaseHarness : IAsyncDisposable
     {
         private PhaseHarness(OctoberKnowledgePublicationFixture fixture, bool complete, string stage, CancellationToken hardStop)

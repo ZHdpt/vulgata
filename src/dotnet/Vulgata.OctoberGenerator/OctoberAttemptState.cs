@@ -16,6 +16,8 @@ public sealed class OctoberAttemptState : IOctoberFileAcceptanceAuthority,
     private readonly int _lineCount;
     private readonly Func<CancellationToken, Task<OctoberFileWorkerResult>> _executeWorker;
     private readonly Func<CancellationToken, Task<DisclosureStatus>> _checkAuthority;
+    private readonly OctoberWorkerInputLedger? _inputLedger;
+    private OctoberWorkerInputSnapshot? _inputSnapshot;
     private readonly TimeProvider _time;
     private readonly long _started;
     private readonly TimeSpan _lifetime;
@@ -65,6 +67,18 @@ public sealed class OctoberAttemptState : IOctoberFileAcceptanceAuthority,
         _lifetime = maximumLifetime;
         _hardStop = hardStop;
         _deadline = new CancellationTokenSource(maximumLifetime, _time);
+    }
+
+    internal OctoberAttemptState(OperationKey operation, OctoberFileWorkerRequest request,
+        Func<CancellationToken, Task<OctoberFileWorkerResult>> executeWorker,
+        Func<CancellationToken, Task<DisclosureStatus>> checkAuthority,
+        TimeSpan maximumLifetime, OctoberWorkerInputLedger inputLedger,
+        TimeProvider? timeProvider = null, CancellationToken hardStop = default)
+        : this(operation, request, executeWorker, checkAuthority, maximumLifetime, timeProvider, hardStop)
+    {
+        _inputLedger = inputLedger ?? throw new ArgumentNullException(nameof(inputLedger));
+        if (!ReferenceEquals(request.Source, inputLedger))
+            throw new ArgumentException("The Worker source must be its trusted input ledger.", nameof(request));
     }
 
     public CompletedFileSubmission? Submission { get { lock (_sync) return _submission; } }
@@ -320,9 +334,26 @@ public sealed class OctoberAttemptState : IOctoberFileAcceptanceAuthority,
                 proposal.Contributors.Length != _request.Contributors.Length ||
                 !proposal.Contributors.ToHashSet().SetEquals(_request.Contributors) ||
                 !OctoberKnowledgePolicy.Validate(proposal, new(_origin, _lineCount)) ||
-                OctoberKnowledgePolicy.ComputeProposalDigest(proposal) != proposal.CanonicalProposalDigest ||
-                await LiveAsync(linked.Token) != DisclosureStatus.Allowed)
+                OctoberKnowledgePolicy.ComputeProposalDigest(proposal) != proposal.CanonicalProposalDigest)
                 return;
+            if (_inputLedger is not null)
+            {
+                OctoberWorkerInputSnapshot? snapshot = await BoundedAsync(
+                    _inputLedger.FreezeForCompletionAsync(linked.Token), linked.Token);
+                if (snapshot is null || !await BoundedAsync(_inputLedger.VerifySnapshotAsync(snapshot, linked.Token), linked.Token))
+                {
+                    ObserveAuthority(DisclosureStatus.Denied);
+                    return;
+                }
+                // Only host-observed lineage changes. Model-produced semantics,
+                // anchors, units and coverage remain the terminal Worker result.
+                proposal = proposal with { Contributors = snapshot.Contributors };
+                proposal = proposal with { Contributors = OctoberKnowledgePolicy.NormalizeContributors(proposal) };
+                proposal = proposal with { CanonicalProposalDigest = OctoberKnowledgePolicy.ComputeProposalDigest(proposal) };
+                if (!OctoberKnowledgePolicy.ValidateInputs(proposal, snapshot.VerifiedSources)) return;
+                lock (_sync) _inputSnapshot = snapshot;
+            }
+            if (await LiveAsync(linked.Token) != DisclosureStatus.Allowed) return;
             lock (_sync)
             {
                 if (Eligibility(null, cancellationToken, requireSeal: false) != CommitEligibilityStatus.Eligible)
@@ -458,6 +489,9 @@ public sealed class OctoberAttemptState : IOctoberFileAcceptanceAuthority,
                 new UTF8Encoding(false, true).GetByteCount(_request.Source.Text) != _byteLength ||
                 !string.Equals(OctoberKnowledgePolicy.Hash(_request.Source.Text), _origin.SourceDigest, StringComparison.OrdinalIgnoreCase) ||
                 !await BoundedAsync(_request.Source.VerifyCurrentAsync(cancellationToken), cancellationToken))
+                return ObserveAuthority(DisclosureStatus.Denied);
+            if (_inputSnapshot is { } snapshot && _inputLedger is not null &&
+                !await BoundedAsync(_inputLedger.VerifySnapshotAsync(snapshot, cancellationToken), cancellationToken))
                 return ObserveAuthority(DisclosureStatus.Denied);
             return await CheckAuthorityAsync(cancellationToken);
         }
