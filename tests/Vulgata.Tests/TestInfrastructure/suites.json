@@ -1051,6 +1051,18 @@
   "PostgreSqlHeavyCollection.cs": {
     "suite": "PostgreSql"
   },
+  "October/Integration/OctoberWikiCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberWikiPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Integration/OctoberWikiHostTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberWikiPublishedReaderTests.cs": {
+    "suite": "SelfContained"
+  },
   "TestInfrastructure/OctoberOwnedIdentityFixture.cs": {
     "suite": "PostgreSql"
   }

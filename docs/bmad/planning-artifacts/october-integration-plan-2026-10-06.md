@@ -8,6 +8,15 @@ implementation_authorized: false
 
 # Integrate the four first deliverables
 
+## October 7 implementation checkpoint
+
+The user's instruction to execute item 1 authorizes the bounded integration now
+recorded in [the reader integration handoff](october-reader-integration-2026-10-07.md).
+Business through T018, Explorer E0 and Scan S1 are imported. The section below
+records the earlier October 6 contract checkpoint, not current implementation
+completeness. Real-source Scan S2 and retained source-backed publication remain
+later work; disposable persisted test data does not satisfy that evidence.
+
 ## Current integration checkpoint — October 6
 
 The user assigned OCT-Integrator to import Business's initial checkpoint and

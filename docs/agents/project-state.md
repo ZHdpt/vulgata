@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-06 (accepted initial Knowledge K and locally verified B0a/B0b T014–T018; runtime qualification retains its recorded scope).
+Updated: 2026-10-07 (Business B0 reader, Explore E0 and Scan S1 integrated; reader-composition qualification retains its bounded scope).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -63,9 +63,14 @@ verification before reuse.
   feature-local composition. Final affected verification passed 373/373 SelfContained,
   20/20 owned PostgreSQL and 1/1 cross-process logging checks, with zero skips and
   verified cleanup. The writer now additionally requires trusted host freeze/inventory
-  authority. Shared Web composition, real Scan adapters and exact-reader routing remain
-  T019 dependencies; T020 real-file qualification is unstarted. No real-source/provider
-  or combined runtime qualification follows. Stop before T019 under the current scope.
+  authority. The October 7 integration imports Business `b65213ad`, Explore E0
+  `50be5782` and Scan S1 `50779d73`, and wires opt-in exact reader composition to
+  the frozen DefaultConnection with live ordinary-user authorization. Full
+  SelfContained regression passed 2,592/2,592 and owned PostgreSQL passed 21/21,
+  zero skips. See the [integration handoff](../bmad/planning-artifacts/october-reader-integration-2026-10-07.md)
+  for configuration, evidence and remaining resource limits. Real Scan S2 adapters,
+  retained source-backed publication, Business T020 and Explorer's real generated-CL
+  qualification remain pending. This is not Chat W0/live Chat completion.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
