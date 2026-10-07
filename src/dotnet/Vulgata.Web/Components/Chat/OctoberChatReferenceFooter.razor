@@ -1,0 +1,54 @@
+@using Vulgata.Web.Services.OctoberChat
+@using Vulgata.Web.Explore
+@using Vulgata.Shared.Explore
+@using System.Collections.Immutable
+@using Vulgata.Core.DomainServices.OctoberDialogue
+
+<footer class="october-chat-reference-footer">
+    @if (_unavailable)
+    {
+        <p role="status">参考文档暂不可用。</p>
+    }
+    else if (!_rows.IsEmpty)
+    {
+        <span>参考文档：</span>
+        <ul>
+            @foreach (var row in _rows)
+            {
+                <li>
+                    <a href="@row.Link">@row.Title</a>
+                    @if (row.Reference.IsPartial)
+                    {
+                        <span>（部分内容已读取）</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</footer>
+
+@code {
+    // Only the guarded, current attachment's UI handoff supplies this state.
+    // A rendered leaf is not an authorization check or a replayable permission.
+    [Parameter] public OctoberChatReferenceFooterState? State { get; set; }
+
+    private bool _unavailable = true;
+    private ImmutableArray<OctoberChatReferenceRow> _rows = [];
+
+    protected override void OnParametersSet()
+    {
+        _unavailable = true;
+        _rows = [];
+        try
+        {
+            if (State is not { IsUnavailable: false, Dependencies: not null } ready || ready.Rows.IsDefault ||
+                ready.Rows.Length > OctoberDialogueLimits.MaximumReferences || ready.Rows.Any(row =>
+                    row is null || row.Reference is null || row.Reference.SuccessfulChunks <= 0 || row.Reference.ContentBytes < 0 ||
+                    row.Title is null || !ExplorePresentationText.IsWellFormed(row.Title) ||
+                    row.Link != ExactDocumentLinkBuilder.Build(row.Reference.Document))) return;
+            _rows = ready.Rows;
+            _unavailable = false;
+        }
+        catch (Exception) { } // Invalid destinations never fall back to another version or URL.
+    }
+}

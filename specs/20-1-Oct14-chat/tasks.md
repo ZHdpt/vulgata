@@ -170,3 +170,14 @@ full CommonMark is not claimed. Exact reader links and actual page/browser integ
 remain incomplete. T022 and T023 retain their distinct resource
 and qualification prerequisites. No additional human gate is introduced by these
 controlled increments.
+
+Integrator subsequently released a bounded **saved-projection T026/T027** slice after
+Business agreed existing encoder/lineage/display-budget semantics. The local reference
+adapter and footer leaf now have 25 controlled cases and 427/427 selected Chat/page
+passes, with independent acceptance. They compose canonical disclosed Chat reads with
+the unchanged Explore encoder and exact destination builder; no combined owner title
+API was invented. This supersedes the earlier assumption that a combined E0 projection
+service must exist. Exact saved reference facts/order/coverage are unchanged.
+T026/T027 remain partial overall for live preterminal consumed-proof validation and
+parent-page attachment; actual reader navigation is still T031. Existing task IDs and
+historical evidence remain intact; no runtime grant or new routine human gate is added.

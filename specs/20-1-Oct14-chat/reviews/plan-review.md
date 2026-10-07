@@ -179,3 +179,20 @@ removing previous rich DOM, and local inherited styling. Six focused cases cover
 boundaries; this is not full Markdown/CommonMark or a performance/browser qualification.
 Root satisfied the review's GREEN condition with **402/402 selected Chat/page passes**,
 zero failures/skips, `TestResults/isolation-20a4b658e5374f58ac696abadc22bbcc/results.trx`.
+## Saved-reference adapter and leaf — accepted controlled boundary, 2026-10-07
+
+After Business confirmed the existing full-page encoder/lineage/display limits and
+Integrator released bounded T026/T027, `wave_reviewer` independently reviewed the
+adapter, leaf renderer, direct bound saved-view suppression and controlled tests.
+The only source blocker was post-seal operation dispatch; two observed RED rows
+preceded the atomic start/retention gate shared with Seal. Original deadline checks,
+exact handle/profile/byte/digest validation, full lineage retention, stable original
+reference facts and no new schema/owner API were preserved.
+
+The reviewer accepted the correction and requested one honest ignored-apply coverage
+case for the non-generic Handoff lifetime. Root verified **427/427 controlled Chat/page
+passes**, zero failures/skips, including all 25 reference cases at
+`TestResults/isolation-16fc8edabd1f4cef977f06bafe1d401d/results.trx`.
+The reviewer read that case and confirmed all conditions satisfied with no remaining
+blocker. Acceptance excludes parent-page/runtime activation, live preterminal report
+validation, real browser navigation and provider qualification.
