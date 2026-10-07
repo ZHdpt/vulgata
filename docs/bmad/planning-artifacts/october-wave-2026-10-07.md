@@ -1491,3 +1491,11 @@ declaration after import. Scan may meanwhile author the internal controlled host
 and tests using the agreed mapping, preserving explicit selection over owner Units,
 original scope/session/F1 and CL-only behavior, without Program activation. Runtime
 resources, migration execution and the shared real qualification remain unapproved.
+
+The exact two-file owner declaration `fc9e0c0245d985480697748a158763ba6d34a3ac`
+is selectively integrated at `8b170d8cf0491cc88df5869a43516d71e9b6bc2f`; both files
+compare equal to the owner checkpoint. Root Agents compilation passed with zero
+errors and 5,779 warnings. Business executor consumption/accounting and Scan selected
+transport implementation/conformance are now released against this exact declaration.
+This is compilation of an interface, not corrected-client runtime qualification;
+the existing full-suite logging teardown failure remains unresolved.
