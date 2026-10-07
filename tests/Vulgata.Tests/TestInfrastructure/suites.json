@@ -1,4 +1,7 @@
 {
+  "October/Integration/OctoberChatClientSessionTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberDisclosureTests.cs": {
     "suite": "SelfContained"
   },

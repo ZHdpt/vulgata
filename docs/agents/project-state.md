@@ -102,6 +102,10 @@ verification before reuse.
   This is not a new full-suite result; Explorer's separate full-run native SQLite
   crash remains unexplained. Chat generation remains disabled; dialogue persistence,
   W1 admission/client composition and real-source retained qualification remain open.
+  A subsequent selected Chat client/request-lifetime component has 20/20 controlled
+  SDK/queue/cancellation/cleanup tests and independent review. It does not activate
+  sending: live execution registration, commit/owner-death adapters and coordinator
+  composition remain required. See the same wave handoff for its exact API and limits.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

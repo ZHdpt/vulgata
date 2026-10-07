@@ -335,3 +335,40 @@ Web request/client lifetime. Supporting-source/metadata provenance and atomic
 fresh-Generate admission remain bounded owner agreements, not permission to add
 general restart infrastructure. No real source/provider/database authority has
 been added by these commits.
+
+## Integration-owned selected Chat client component
+
+`OctoberChatClientSession.CreateAsync` now accepts the selected provider binding/
+snapshot, successful dispatchable durable admission, original `OctoberChatBudget`,
+mandatory execution authority, final lineage-reauthorization callback and shared
+Web-local `OctoberChatRequestAdmission`. It returns a plain SDK `Client` and the same
+`Budget`. No automatic registration or Chat route activation is included.
+Chat owner visibility-only `007fd7d3` was imported as `93afdec9` to expose the original
+budget token and remaining monotonic timer, not a replacement budget.
+
+Factory readiness links the original cancellation/monotonic deadline, remaining
+durable deadline and caller cancellation before checking authority/decrypting.
+The SDK has retry zero, tracing/body logging off and redirects disabled. After the
+shared permit wait, actual dispatch rechecks execution/profile, then complete
+lineage immediately before deadline/cancellation checks and physical sending.
+The fixed endpoint/model/stream shape is checked. Guard and admission seals begin
+together; the stable settlement task waits for actual physical response cleanup.
+Cancellation of a wait never releases capacity. Unconfirmed disposal fails settlement.
+This component does not prove atomicity across independent authority observations.
+
+Separate test/production ownership and independent review were retained. Initial
+missing-API RED: `isolation-be2427f26f9049b0a387c4cbacec5fa8/build.log`.
+First controlled run `b8fa1c83bec64f25a6052c7bd391411c`: 14/15; the remaining
+assertion confused one StreamContent disposal with its two internal stream-disposal
+callbacks. A controlled counterexample now checks that distinction while retaining
+single original-content ownership, no read/dispose race and permit assertions.
+Review added five regression cases: `0ec07c8f83ab4c348a80cb9cf78193a9` reproduced
+all five defects (15/20 passed). Corrected source passes **20/20**, no failures/skips:
+`TestResults/isolation-3e0188523d3f423293e0781da81ccbe2/results.trx`.
+Both owners and independent reviewer accept this bounded component, not complete W1.
+
+Remaining integration work: authoritative live execution registration, one-shot
+session issuance, commit/owner-death adapters, coordinator binding and route activation.
+Chat's runner will expose `ReauthorizeBeforeSendAsync` for the callback without
+revealing capsules. Business durable dialogue and Scan final Generate composition
+continue independently. This component neither starts a host nor calls a live provider.
