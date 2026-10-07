@@ -124,6 +124,10 @@ verification before reuse.
   with 1,369/1,369 affected controlled passes. Supporting provenance is accepted for
   consumer integration. Admission remains HOLD for a separately identified callback/
   cancellation classification race despite passing tests; see the wave handoff.
+  Reviewed Scan inventory/CL publication component `49c18845` is also integrated.
+  The combined affected suite passes 1,404/1,404. Scan may consume the actual owner
+  input/digest helpers and independent components; public Generate and the held
+  admission-store activation remain incomplete. No real run or migration occurred.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
