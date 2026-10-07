@@ -1,4 +1,10 @@
 {
+  "October/Knowledge/OctoberBusinessExecutionScopeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberResolutionTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberDisclosureTests.cs": {
     "suite": "SelfContained"
   },
