@@ -95,8 +95,13 @@ verification before reuse.
   Scan Worker/scope `7b34147d` is also integrated with 1,064/1,064 selected combined
   October/Explore/PreparedSource passes. Actual SDK calls used controlled transports;
   Generate Main, supporting-source acceptance compatibility and real S2 remain open.
-  Chat generation remains disabled; owner disclosure/dialogue implementation, W1
-  admission/client composition and real-source retained qualification remain open.
+  Owner disclosure `f5e999ef`, Explorer graph `b23ed71e` and Chat canonical consumer
+  `34aaf110` are now integrated with actual Web disclosure wiring and an ordinary-user
+  graph navigation link. Combined affected verification passes 1,147/1,147 controlled
+  cases; graph and owner crypto are exercised together over controlled published data.
+  This is not a new full-suite result; Explorer's separate full-run native SQLite
+  crash remains unexplained. Chat generation remains disabled; dialogue persistence,
+  W1 admission/client composition and real-source retained qualification remain open.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

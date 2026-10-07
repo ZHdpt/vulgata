@@ -294,3 +294,44 @@ binding, not a new snapshot registry or a blanket cross-file string-equality rul
 Ordinary positively bound index metadata must not force whole-repository hashing;
 arbitrary free-form CodeGraph text is not automatically safe metadata. Until the
 exact owner checkpoint is accepted, unrepresentable support stays withheld.
+
+## Disclosure, graph and canonical Chat consumer integration
+
+Business disclosure `f5e999ef` is integrated at `6901372f`, Explorer graph
+`b23ed71e` at `aa4fab94`, and Chat canonical consumer `34aaf110` at `a64f2de0`.
+The additive test inventory conflict retained both owners' entries. Integration
+adds the three Business-owned disclosure registrations to the existing scoped
+Web composition and an authenticated ordinary-user `知识图谱` navigation link.
+No dialogue persistence dependency, generator activation or management-role
+requirement was added to graph access.
+
+Independent source review found no additional cross-lane defect after the missing
+composition was corrected. Test-owner RED `e249e133badc49009a0521221db011b6`
+confirmed missing protector and navigation (3 passes, 2 failures); the preceding
+`b76e321b07e1415fa8f54db0abec16bf` also exposed a bUnit authorization harness
+prerequisite, corrected without production-policy changes. Combined current
+source then passed **1,147/1,147 selected SelfContained** October/Explore/
+PreparedSource cases, no failures/skips, 374 classified files:
+`TestResults/isolation-212cf45d26f841c0b085554474fbe428/results.trx`.
+The joint graph probe uses actual owner reader/capsule crypto and actual Explore
+projection over controlled published data; a later contributor denial removes the
+graph. This is not a retained real generated corpus or PostgreSQL qualification.
+
+Chat's actual SDK test found that JsonElement tool results were indented after
+owner sizing. The integrated consumer sends strictly decoded owner OutputUtf8 as
+literal JSON text through the SDK text-result branch, without serializing it again.
+Decoded outgoing content is byte-for-byte owner-sized object JSON. Business owns
+the corresponding contract prose clarification; no schema/profile change is needed.
+
+Explorer separately reported a full SelfContained native SQLite test-host crash at
+its `f2b8afa` checkout: 2,927 completed passes, no reported assertion failures, but
+exit 1 / 0xC0000005. Its unchanged-source nine-case composition replay passed.
+Neither that replay nor the integrated affected selection explains or erases the
+full-run failure. The last complete successful main suite remains 2,859/2,859.
+
+Next independent work remains Scan primary F1/Generate composition, Business
+dialogue and B1/B2 prerequisites, Chat's admitted runner, and integration-owned
+Web request/client lifetime. Supporting-source/metadata provenance and atomic
+fresh-Generate admission remain bounded owner agreements, not permission to add
+general restart infrastructure. No real source/provider/database authority has
+been added by these commits.
