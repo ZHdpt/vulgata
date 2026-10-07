@@ -34,6 +34,17 @@ public sealed class OctoberGenerateAdmissionStore : IOctoberGenerateAdmissionSto
         IDbContextTransaction? ownedTransaction = null;
         object submissionGate = new();
         bool submissionClosed = false;
+        bool submissionObserved = false;
+        Task<CommitSettlement>? observedSettlement = null;
+        void CloseSubmission()
+        {
+            lock (submissionGate)
+            {
+                submissionClosed = true;
+                submissionObserved = submitted;
+                observedSettlement = settlement;
+            }
+        }
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(10));
         var token = deadline.Token;
@@ -81,52 +92,59 @@ public sealed class OctoberGenerateAdmissionStore : IOctoberGenerateAdmissionSto
                 await context.SaveChangesAsync(token);
                 authority = await AuthorizeAsync(request, token);
                 if (authority != DisclosureStatus.Allowed) return new(AuthorityStatus(authority), operation);
-                Task<CommitGuardResult> guardCall = _guard.SubmitAsync(attempt, commitToken =>
+                CommitGuardResult guarded;
+                try
                 {
-                    lock (submissionGate)
+                    Task<CommitGuardResult> guardCall = _guard.SubmitAsync(attempt, commitToken =>
                     {
-                        token.ThrowIfCancellationRequested();
-                        commitToken.ThrowIfCancellationRequested();
-                        if (submissionClosed) throw new OperationCanceledException("Execution admission submission is closed.");
-                        submitted = true;
-                        // Physical provider submission occurs inside the guard, before its callback returns.
-                        Task commit = transaction.GetDbTransaction().CommitAsync(commitToken);
-                        settlement = SettleAsync(commit);
-                        return new SubmittedCommit(settlement);
-                    }
-                }, token);
-                _ = ObserveAsync(guardCall);
-                var guarded = await guardCall.WaitAsync(token);
-                if (!submitted) return new(SubmissionStatus(guarded.Status), operation);
-                if (settlement is not null) await settlement.WaitAsync(token);
+                        lock (submissionGate)
+                        {
+                            token.ThrowIfCancellationRequested();
+                            commitToken.ThrowIfCancellationRequested();
+                            if (submissionClosed) throw new OperationCanceledException("Execution admission submission is closed.");
+                            submitted = true;
+                            // Physical provider submission occurs inside the guard, before its callback returns.
+                            Task commit = transaction.GetDbTransaction().CommitAsync(commitToken);
+                            settlement = SettleAsync(commit);
+                            return new SubmittedCommit(settlement);
+                        }
+                    }, token);
+                    _ = ObserveAsync(guardCall);
+                    guarded = await guardCall.WaitAsync(token);
+                }
+                finally
+                {
+                    // Arbitrate with a callback already inside the gate before choosing any exit.
+                    CloseSubmission();
+                }
+                if (!submissionObserved) return new(SubmissionStatus(guarded.Status), operation);
+                if (observedSettlement is not null) await observedSettlement.WaitAsync(token);
             }
         }
-        catch (OperationCanceledException) when (!submitted)
+        catch (Exception error)
         {
-            return new(cancellationToken.IsCancellationRequested ? KnowledgeWriteStatus.CancelledBeforeCommit : KnowledgeWriteStatus.StorageUnavailable, operation);
-        }
-        catch (DbUpdateException) when (!submitted)
-        {
-            return await LookupBoundedAsync(request, false, CancellationToken.None);
-        }
-        catch (Exception) when (!submitted)
-        {
-            return new(KnowledgeWriteStatus.StorageUnavailable, operation);
-        }
-        catch (Exception)
-        {
+            // Do not classify in exception filters: filters run before inner finally blocks.
+            CloseSubmission();
+            if (!submissionObserved)
+            {
+                if (error is OperationCanceledException)
+                    return new(cancellationToken.IsCancellationRequested ? KnowledgeWriteStatus.CancelledBeforeCommit : KnowledgeWriteStatus.StorageUnavailable, operation);
+                if (error is DbUpdateException)
+                    return await LookupBoundedAsync(request, false, CancellationToken.None);
+                return new(KnowledgeWriteStatus.StorageUnavailable, operation);
+            }
             // A submitted commit is reconciled, never retried as new execution.
         }
         finally
         {
-            lock (submissionGate) submissionClosed = true;
-            if (settlement is { IsCompleted: false })
-                _ = DisposeAfterSettlementAsync(settlement, ownedTransaction, ownedContext);
+            CloseSubmission();
+            if (observedSettlement is { IsCompleted: false })
+                _ = DisposeAfterSettlementAsync(observedSettlement, ownedTransaction, ownedContext);
             else
                 await DisposeOwnedAsync(ownedTransaction, ownedContext);
         }
-        if (settlement is { IsCompleted: false }) return new(KnowledgeWriteStatus.CommitIndeterminate, operation);
-        return await LookupBoundedAsync(request, settlement?.Result == CommitSettlement.Committed, CancellationToken.None);
+        if (observedSettlement is { IsCompleted: false }) return new(KnowledgeWriteStatus.CommitIndeterminate, operation);
+        return await LookupBoundedAsync(request, observedSettlement?.Result == CommitSettlement.Committed, CancellationToken.None);
     }
 
     public Task<KnowledgeWriteResult> LookupAsync(GenerateAdmissionRequest request,

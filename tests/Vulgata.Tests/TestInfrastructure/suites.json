@@ -1,4 +1,7 @@
 {
+  "October/Knowledge/OctoberGenerateAdmissionPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
   "October/Knowledge/OctoberGenerateAdmissionTests.cs": {
     "suite": "SelfContained"
   },
