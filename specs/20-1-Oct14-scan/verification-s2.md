@@ -242,6 +242,90 @@ Scan will not add SQL, a store, speculative claim DTOs or stricter restart polic
 
 ## Early composition decisions
 
+The reviewed primary-frame/F1 component is committed at
+`cffbe50e5338132d71c4c9e0562f11e17e061924` and was sent to OCT-Integrator with its
+remaining runner and qualification boundaries. The clean Scan worktree then merged
+approved `11e1327a8427ff39eb63da3364c5d1809de8d7a8`, producing
+`98ccc9b339ca3645cac2041c170d29e5a2412843`. No reset or discarded work occurred.
+
+Scan reviewed Business candidate `ed0f2600ecc9bd4896a2c91bc14c36eec93fe35f`
+from this repository's Git objects and acknowledged declaration compatibility to
+the Integrator. Supporting content/metadata use the exact owner contributor fields,
+canonical request-plus-admitted-projection digest and existing bounded approval
+mapping. BeginGenerate uses the owner-derived `(BatchId, Kind5, BatchId)` key and
+`CommitAttempt.AttemptId = RunId`, with a dedicated live operator authority and
+exact original-request lookup. Only one dispatch in the original live run is
+permitted; a stored receipt grants no restart. Candidate digest helpers still
+throw `NotImplementedException`, and new contributor fields remain fail-closed.
+This acknowledgement does not claim implemented owner behavior or a usable runner.
+
+T021's first controlled batch contains eight inventory and seventeen publication/
+report cases. It exercises the actual B0 writer and stored ordinary reader with
+controlled authority and SQLite, preserving accepted uncertainties, exact handles,
+mandatory freeze authority and lost-acknowledgement lookup. External/E2E scenarios
+must exercise the executable full route; no passing placeholders substitute for it.
+
+The first T021 attempt stopped at one test-only C# params-construction error
+(`isolation-6659a774319a488894f89de4fcdca629/build.log`); it is not behavioral RED.
+After the test owner's syntax-only correction, current-build SelfContained selected
+**25: 7 passed, 18 failed, zero skipped**:
+`TestResults/isolation-24b442c7cb8e4007b0267d43204e387c/results.trx`.
+Inspected failures expose the fail-closed inventory/publication/report stubs.
+Independent test review additionally requested lost freeze acknowledgement with
+temporary lookup absence, producer revocation after publication commit, and
+foreign/out-of-scope inventory entries before production is released.
+
+Expanded T021 RED compiled and selected **29: 7 passed, 22 failed, zero skipped**:
+`TestResults/isolation-27a2f6a372e34303ab8367f64d47f702/results.trx`.
+All four added cases fail against the stubs; root inspected outcomes and released
+the disjoint inventory and CL publication/report production owners. No real tools,
+provider or PostgreSQL database were used. Full Generate composition, complete
+dynamic input provenance and atomic fresh-run admission remain separate unfinished
+parts of T022; these component tests do not prove the user milestone.
+
+First production verification selected **32: 29 passed, 3 failed, zero skipped**:
+`TestResults/isolation-02f67bbf6fe148b2a7176471f3fea28d/results.trx`.
+All nineteen CL publication/report checks passed. The three new inventory cases
+reproduced a concrete leak: after observed denial, unavailable authority or changed
+input, a queued directory name reappeared as an unvisited-region gap. The inventory
+owner cleared that queue as well as the observed entries/gaps after inspected RED.
+Independent review additionally requires actual hard-stop phase results to report
+interruption (3), preserving indeterminate (4) when submission is unresolved;
+synthetic report mapping alone does not verify that execution path.
+
+The subsequent run passed **32/34**, with only the two new actual hard-stop
+counterexamples failing (expected exit 3, actual 1), zero skipped:
+`TestResults/isolation-3e84466bf5d9407aa5319e3c0cc147d3/results.trx`.
+All thirteen inventory tests passed, including metadata loss. Root inspected both
+classification failures and released the minimal publication-phase correction;
+unresolved submitted outcomes must retain precedence as indeterminate.
+
+Affected Scan/Generator/Headless regression then passed **203/203, zero skips**:
+`TestResults/isolation-d9532e9990b642d08f3f82ec8baa2ffc/results.trx`.
+The test owner's final-shape assessment found the zero-unit variant of the same
+hard-stop branch. Its focused RED selected **3: 2 passed, 1 failed, zero skipped**:
+`TestResults/isolation-48fb29febe154e7d9dec12fdb298707c/results.trx`.
+Only hard stop after a known zero-content freeze returned no-content (5) instead
+of interruption (3). The minimal correction preserves the committed corpus and
+normal no-content outcome, with no additional writes or publication.
+
+The terminal boundary is explicit: freeze is preparatory, so a hard stop after
+freeze prevents publication or a new no-content declaration. An exact publication
+already known committed is terminal; a later stop cannot undo that immutable
+result. Its handles may still be returned only after fresh disclosure authorization.
+Authority loss still hides them, and unknown submission remains indeterminate.
+This is not a blanket rule that any stop before returning from a method rewrites
+known committed publication as failed or rolled back.
+
+Final focused GREEN passed **35/35, zero failed/skipped**:
+`TestResults/isolation-bb97fbc19b7e49cfa046b29ea16383b2/results.trx`.
+Independent re-review and separate production/test final-shape assessments accept
+the inventory/report/internal CL publication component. The earlier affected
+203-case GREEN and this final changed-branch verification are controlled evidence.
+T021/T022 stay open for actual Generate wiring, complete dynamic tool provenance,
+atomic fresh-run admission, aggregate accounting/retry checks and executable live
+scenarios. No native/provider/PostgreSQL or retained real-reader result is claimed.
+
 The existing setup provider binder mandates both Worker and Chat profiles.
 Generate instead binds only the explicitly selected Worker from the same provider
 document, source identity and `only-source` precedence, using existing profile
