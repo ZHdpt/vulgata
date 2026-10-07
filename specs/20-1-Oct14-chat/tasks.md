@@ -181,3 +181,13 @@ service must exist. Exact saved reference facts/order/coverage are unchanged.
 T026/T027 remain partial overall for live preterminal consumed-proof validation and
 parent-page attachment; actual reader navigation is still T031. Existing task IDs and
 historical evidence remain intact; no runtime grant or new routine human gate is added.
+
+The Integrator-approved history/read-only saved-display slice now implements the
+consumer portion of **T024/T025 and T028/T029**, with 17 focused and 444 affected
+Chat/page controlled passes. Business chooses the exact completed suffix and display
+rows; Chat preserves owner bytes/digest/omissions and checks all supplied lineage at
+handoff. The fresh saved VM does not replay events or infer idle/retry authority.
+These task IDs remain open overall for root initial-union/admission and Coordinator
+callsite/parent-page integration, actual follow-up qualification and retry controls.
+T030 has affected SelfContained evidence only; PostgreSQL and T031 actual navigation
+remain separately unqualified. See the canonical history section in quickstart.md.

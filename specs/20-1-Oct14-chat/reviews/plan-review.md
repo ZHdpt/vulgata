@@ -196,3 +196,20 @@ passes**, zero failures/skips, including all 25 reference cases at
 The reviewer read that case and confirmed all conditions satisfied with no remaining
 blocker. Acceptance excludes parent-page/runtime activation, live preterminal report
 validation, real browser navigation and provider qualification.
+
+## Canonical history and read-only saved display — accepted, 2026-10-07
+
+`wave_reviewer` independently accepted the bounded T024/T025 and saved-display
+T028/T029 increment with no remaining actionable blocker. Review covered unchanged
+owner result/codec handoff, no consumer history repair or transcript serializer,
+complete supplied lineage at fresh handoff, original Prepare-anchored deadline,
+atomic operation start/seal and retained actual task settlement, exact empty
+OwnerLost/authorization closure shapes, and fresh saved VMs without stream replay.
+Actual owner projections and orphan persistence are exercised separately from the
+read-only consumer, whose lifecycle/write calls remain forbidden by its test wrapper.
+
+Root verified **17/17 focused** and **444/444 affected Chat/page** tests with zero
+failures/skips; the reviewer confirmed these satisfy the acceptance condition.
+Evidence is in quickstart.md. This accepts consumer/leaf behavior only: root
+initial-union/admission, Coordinator callsite/parent-page composition, retry controls,
+PostgreSQL, actual navigation and live provider execution remain outside the increment.
