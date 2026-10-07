@@ -179,6 +179,12 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanFileWorkerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanExecutionScopeTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanGenerateConfigurationTests.cs": {
     "suite": "SelfContained"
   },
