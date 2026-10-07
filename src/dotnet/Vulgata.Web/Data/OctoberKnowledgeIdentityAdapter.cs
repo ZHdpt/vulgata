@@ -82,7 +82,18 @@ public sealed class OctoberKnowledgeIdentityAdapter : IOctoberKnowledgeLiveReadA
             }
             foreach (var contributor in allContributors)
             {
-                if (contributor.Kind == ContributorKind.Source) continue;
+                if (contributor.Kind is ContributorKind.Source or ContributorKind.SourceMetadata)
+                {
+                    bool valid = contributor.Kind == ContributorKind.Source
+                        ? OctoberKnowledgeInputPolicy.IsValidSourceContributor(contributor)
+                        : OctoberKnowledgeInputPolicy.IsValidMetadataContributor(contributor);
+                    if (!valid || contributor.RepositoryId is not { } repositoryId || !requestedScope.Contains(repositoryId) ||
+                        !repositories.TryGetValue(repositoryId, out var bound) || contributor.RootBindingIdentity != bound.RootBindingIdentity ||
+                        contributor.SystemId is { } systemId && bound.SystemId != systemId)
+                        return DisclosureStatus.Denied;
+                    continue;
+                }
+                if (contributor.SourceOrigin is not null || contributor.MetadataOrigin is not null) return DisclosureStatus.Denied;
                 if (contributor.AdvisoryRecordId is not { } recordId) return DisclosureStatus.Denied;
                 string? liveContext = contributor.Kind switch
                 {

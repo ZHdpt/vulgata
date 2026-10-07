@@ -31,5 +31,10 @@ public static class OctoberGenerateAdmissionPolicy
         new(binding.BatchId, OperationKind.BeginGenerate, binding.BatchId);
 
     /// <summary>Owner canonical identity helper seam; excludes CanonicalPayloadDigest itself.</summary>
-    public static string ComputePayloadDigest(GenerateAdmissionRequest request) => throw new NotImplementedException();
+    public static string ComputePayloadDigest(GenerateAdmissionRequest request) => OctoberKnowledgePolicy.Hash(
+        OctoberKnowledgePolicy.SerializeCanonical(new
+        {
+            domain = "october/generate-admission/1", request.Binding, request.SubjectId,
+            request.RunId, request.AdmissionOperationId
+        }));
 }

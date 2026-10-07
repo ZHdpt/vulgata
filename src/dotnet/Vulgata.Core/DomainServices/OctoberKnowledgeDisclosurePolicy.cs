@@ -82,9 +82,14 @@ public sealed class OctoberKnowledgeDisclosurePolicy(
              contributor.SystemId is { } systemId && repository.SystemId != systemId))
             return false;
 
-        if (contributor.Kind == ContributorKind.Source)
-            return repository is not null && contributor.AdvisoryRecordId is null &&
-                contributor.RootBindingIdentity == repository.RootBindingIdentity;
+        if (contributor.Kind is ContributorKind.Source or ContributorKind.SourceMetadata)
+        {
+            bool shape = contributor.Kind == ContributorKind.Source
+                ? OctoberKnowledgeInputPolicy.IsValidSourceContributor(contributor)
+                : OctoberKnowledgeInputPolicy.IsValidMetadataContributor(contributor);
+            return shape && repository is not null && contributor.RootBindingIdentity == repository.RootBindingIdentity;
+        }
+        if (contributor.SourceOrigin is not null || contributor.MetadataOrigin is not null) return false;
 
         if (contributor.AdvisoryRecordId is not { } recordId || recordId == Guid.Empty || contributor.RootBindingIdentity is not null)
             return false;
