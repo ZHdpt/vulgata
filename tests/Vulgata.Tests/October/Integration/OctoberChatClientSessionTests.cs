@@ -78,14 +78,18 @@ public sealed class OctoberChatClientSessionTests
     }
 
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task Client_ProviderReturnsFailure_DoesNotRetryPhysicalRequestAsync()
+    [SuiteTheory("SelfContained")]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.Found)]
+    [InlineData(HttpStatusCode.TemporaryRedirect)]
+    public async Task Client_ProviderReturnsFailureOrRedirect_DoesNotRetryOrFollowPhysicalRequestAsync(HttpStatusCode status)
     {
         var fixture = await Fixture.CreateAsync();
-        var physical = new PhysicalHandler { Status = HttpStatusCode.TooManyRequests };
+        var physical = new PhysicalHandler { Status = status };
         await using var session = await fixture.SessionAsync(physical, new OctoberChatRequestAdmission(1));
         Assert.NotNull(await Record.ExceptionAsync(() => RequestAsync(session)));
         Assert.Equal(1, physical.Sends);
+        Assert.Equal("https://controlled.invalid/v1/chat/completions", physical.Uri!.AbsoluteUri);
         await session.SealAndWaitForSettlementAsync().WaitAsync(TimeSpan.FromSeconds(10));
     }
 
@@ -382,6 +386,8 @@ public sealed class OctoberChatClientSessionTests
             Body = await request.Content!.ReadAsStringAsync(cancellationToken);
             ResponseContent = new CountedContent(BodyStream ?? new MemoryStream(Encoding.UTF8.GetBytes(Payload)));
             var response = new HttpResponseMessage(Status) { Content = ResponseContent };
+            if (Status is HttpStatusCode.Found or HttpStatusCode.TemporaryRedirect)
+                response.Headers.Location = new Uri("https://alternate-controlled.invalid/forbidden");
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/event-stream");
             return response;
         }

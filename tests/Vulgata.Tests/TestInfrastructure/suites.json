@@ -1,5 +1,13 @@
 {
+  "October/Knowledge/OctoberDialoguePostgreSqlTests.cs": {"suite": "PostgreSql"},
+  "October/Knowledge/OctoberDialoguePersistenceTests.cs": {"suite": "SelfContained"},
   "October/Integration/OctoberChatClientSessionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberBusinessExecutionScopeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberResolutionTests.cs": {
     "suite": "SelfContained"
   },
   "October/Knowledge/OctoberDisclosureTests.cs": {
@@ -198,6 +206,18 @@
     "suite": "SelfContained"
   },
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanAcceptancePostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "OctoberScan/OctoberScanAcceptanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanAcceptanceHarness.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanPreparedSourceFrameTests.cs": {
     "suite": "SelfContained"
   },
   "OctoberScan/OctoberScanFileWorkerTests.cs": {

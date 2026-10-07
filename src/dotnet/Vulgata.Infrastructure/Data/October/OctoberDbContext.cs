@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Vulgata.Core.DomainServices.OctoberDialogue;
 using Vulgata.Core.Entities.OctoberKnowledge;
+using Vulgata.Core.Entities.OctoberDialogue;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 
 namespace Vulgata.Infrastructure.Data.October;
@@ -44,6 +46,11 @@ public sealed class OctoberDbContext : DbContext
     public DbSet<PublicationCoverageRecord> PublicationCoverage => Set<PublicationCoverageRecord>();
     public DbSet<PublicationUncertaintyRecord> PublicationUncertainties => Set<PublicationUncertaintyRecord>();
 
+    public DbSet<DialogueConversationRecord> DialogueConversations => Set<DialogueConversationRecord>();
+    public DbSet<DialogueTurnRecord> DialogueTurns => Set<DialogueTurnRecord>();
+    public DbSet<DialogueTerminalRecord> DialogueTerminals => Set<DialogueTerminalRecord>();
+    public DbSet<DialogueReferenceRecord> DialogueReferences => Set<DialogueReferenceRecord>();
+
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         ValidateKnowledgeChanges();
@@ -71,6 +78,7 @@ public sealed class OctoberDbContext : DbContext
     private void ValidateKnowledgeChanges()
     {
         ChangeTracker.DetectChanges();
+        ValidateDialogueChanges();
         if (ChangeTracker.Entries().Any(x => x.Entity is IOctoberKnowledgeRecord &&
             x.State is EntityState.Modified or EntityState.Deleted))
             throw new InvalidOperationException("Accepted October Knowledge is append-only.");
@@ -100,6 +108,50 @@ public sealed class OctoberDbContext : DbContext
                 _ => false
             };
             if (!hasNewParent) throw new InvalidOperationException("Cannot extend committed October Knowledge.");
+        }
+    }
+
+    private void ValidateDialogueChanges()
+    {
+        foreach (var entry in ChangeTracker.Entries<DialogueConversationRecord>())
+        {
+            if (entry.State == EntityState.Deleted || entry.State == EntityState.Modified &&
+                entry.Properties.Any(x => x.IsModified && x.Metadata.Name is not (nameof(DialogueConversationRecord.NextTurnSequence) or nameof(DialogueConversationRecord.NextFence))))
+                throw new InvalidOperationException("Dialogue identity is immutable.");
+            if (entry.State == EntityState.Modified &&
+                (entry.Entity.NextTurnSequence < entry.OriginalValues.GetValue<long>(nameof(DialogueConversationRecord.NextTurnSequence)) ||
+                 entry.Entity.NextFence < entry.OriginalValues.GetValue<long>(nameof(DialogueConversationRecord.NextFence))))
+                throw new InvalidOperationException("Dialogue counters cannot decrease.");
+        }
+        foreach (var entry in ChangeTracker.Entries<DialogueTurnRecord>())
+        {
+            if (entry.State == EntityState.Deleted || entry.State == EntityState.Modified &&
+                entry.Properties.Any(x => x.IsModified && x.Metadata.Name is not (nameof(DialogueTurnRecord.State) or nameof(DialogueTurnRecord.Fence))))
+                throw new InvalidOperationException("The original dialogue admission is immutable.");
+            if (entry.State != EntityState.Modified) continue;
+            var old = entry.OriginalValues.GetValue<DialogueTurnState>(nameof(DialogueTurnRecord.State));
+            if (old >= DialogueTurnState.Completed)
+                throw new InvalidOperationException("Terminal dialogue state is immutable.");
+            if (entry.Entity.State >= DialogueTurnState.Completed && !ChangeTracker.Entries<DialogueTerminalRecord>().Any(x =>
+                x.State == EntityState.Added && x.Entity.ConversationId == entry.Entity.ConversationId && x.Entity.TurnId == entry.Entity.TurnId &&
+                (int)x.Entity.TerminalState + 4 == (int)entry.Entity.State && x.Entity.Fence == entry.Entity.Fence))
+                throw new InvalidOperationException("Terminal state and outcome must be saved together.");
+        }
+        foreach (var entry in ChangeTracker.Entries<DialogueTerminalRecord>())
+        {
+            if (entry.State is EntityState.Modified or EntityState.Deleted)
+                throw new InvalidOperationException("Dialogue terminal history is immutable.");
+            if (entry.State == EntityState.Added && !ChangeTracker.Entries<DialogueTurnRecord>().Any(x =>
+                x.State == EntityState.Modified && x.Entity.ConversationId == entry.Entity.ConversationId && x.Entity.TurnId == entry.Entity.TurnId &&
+                (int)entry.Entity.TerminalState + 4 == (int)x.Entity.State && entry.Entity.Fence == x.Entity.Fence))
+                throw new InvalidOperationException("A terminal requires the matching atomic turn transition.");
+        }
+        foreach (var entry in ChangeTracker.Entries<DialogueReferenceRecord>())
+        {
+            if (entry.State is EntityState.Modified or EntityState.Deleted || entry.State == EntityState.Added &&
+                !ChangeTracker.Entries<DialogueTerminalRecord>().Any(x => x.State == EntityState.Added &&
+                    x.Entity.ConversationId == entry.Entity.ConversationId && x.Entity.TurnId == entry.Entity.TurnId))
+                throw new InvalidOperationException("Terminal references cannot change after acceptance.");
         }
     }
 

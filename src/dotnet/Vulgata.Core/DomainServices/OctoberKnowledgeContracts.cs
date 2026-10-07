@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 
 namespace Vulgata.Core.DomainServices.OctoberKnowledge;
 
@@ -17,10 +18,10 @@ public enum KnowledgeMode { Business, IT }
 public enum KnowledgePurpose { Reader, Chat, Graph, Resolution, Synthesis }
 public enum DocumentKind { CodeLogic, BusinessLogic }
 public enum ClaimQualification { SourceSupported, Advisory, Hypothesis, Uncertain, Mixed }
-public enum ContributorKind { Source, GlobalAdvisory, SystemAdvisory, RepositoryAdvisory }
+public enum ContributorKind { Source = 0, GlobalAdvisory = 1, SystemAdvisory = 2, RepositoryAdvisory = 3, SourceMetadata = 4 }
 public enum CoverageDisposition { Accepted, CompletedZeroUnit, Failed, Cancelled, Unprocessed }
 public enum RelationshipKind { References, GeneratedFrom }
-public enum OperationKind { AcceptFile, FreezeCorpus, PublishSelection, FinalizeCorpus }
+public enum OperationKind { AcceptFile = 0, FreezeCorpus = 1, PublishSelection = 2, FinalizeCorpus = 3, AcceptResolution = 4, BeginGenerate = 5 }
 public enum KnowledgeWriteStatus
 {
     Committed, AlreadyCommitted, Conflict, InvalidProposal, NotCompleted, StaleOrFenced,
@@ -38,7 +39,14 @@ public sealed record DocumentHandle(Guid BatchId, Guid PublicationId, Guid Logic
 public sealed record OperationKey(Guid BatchId, OperationKind Kind, Guid OperationId);
 public sealed record PreparedOrigin(Guid RepositoryId, string RootBindingIdentity, string RelativePath, string SourceDigest, string PreparedVersion);
 public sealed record SourceAnchor(PreparedOrigin Origin, int StartLine, int EndLine);
-public sealed record Contributor(ContributorKind Kind, Guid? RepositoryId, Guid? SystemId, string? RootBindingIdentity, Guid? AdvisoryRecordId, string ContentDigest);
+public sealed record Contributor(ContributorKind Kind, Guid? RepositoryId, Guid? SystemId, string? RootBindingIdentity, Guid? AdvisoryRecordId, string ContentDigest)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PreparedOrigin? SourceOrigin { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public SourceMetadataOrigin? MetadataOrigin { get; init; }
+}
 public sealed record EvidenceReference(DocumentVersionReference? Document, string? ClaimGroupId, SourceAnchor? Source, Guid? AdvisoryRecordId, string ContentDigest);
 public sealed record QualifiedClaimGroup(string ClaimGroupId, string Text, ClaimQualification Qualification,
     ImmutableArray<EvidenceReference> Evidence, ImmutableArray<string> Limitations);

@@ -414,6 +414,7 @@ public sealed class OctoberDbContextModelSnapshot : ModelSnapshot
             b.Property<Guid>("VersionId").HasColumnType("uuid");
             b.Property<int>("Ordinal").HasColumnType("integer");
             b.HasKey("BatchId", "PublicationId", "LogicalDocumentId");
+            b.HasAlternateKey("BatchId", "PublicationId", "LogicalDocumentId", "VersionId").HasName("AK_PublicationMember_ExactVersion");
             b.HasIndex("BatchId", "PublicationId", "VersionId").IsUnique();
             b.HasIndex("BatchId", "PublicationId", "Ordinal").IsUnique();
             b.HasIndex("BatchId", "PublicationId", "CorpusId");
@@ -505,5 +506,95 @@ public sealed class OctoberDbContextModelSnapshot : ModelSnapshot
             b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgeUncertaintyRecord", null).WithMany().HasForeignKey("BatchId", "ManifestId", "Key").OnDelete(DeleteBehavior.Restrict).IsRequired();
         });
 
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberDialogue.DialogueConversationRecord", b =>
+        {
+            b.Property<Guid>("ConversationId").ValueGeneratedOnAdd().HasColumnType("uuid");
+            b.Property<Guid>("ContextId").HasColumnType("uuid");
+            b.Property<string>("OwnerSubjectId").IsRequired().HasColumnType("text");
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("PublicationId").HasColumnType("uuid");
+            b.Property<string>("IdentityJson").IsRequired().HasColumnType("jsonb");
+            b.Property<DateTimeOffset>("CreatedAtUtc").HasColumnType("timestamp with time zone");
+            b.Property<long>("NextTurnSequence").HasColumnType("bigint");
+            b.Property<long>("NextFence").HasColumnType("bigint");
+            b.HasKey("ConversationId");
+            b.HasAlternateKey("ConversationId", "BatchId", "PublicationId").HasName("AK_DialogueConversation_Publication");
+            b.HasIndex("BatchId", "PublicationId").HasDatabaseName("IX_DialogueConversation_Publication");
+            b.ToTable("OctoberDialogueConversations", "october", t => t.HasCheckConstraint("CK_DialogueConversation_Counters", "\"NextTurnSequence\" > 0 AND \"NextFence\" > 0"));
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.KnowledgePublicationRecord", null).WithMany()
+                .HasForeignKey("BatchId", "PublicationId").OnDelete(DeleteBehavior.Restrict).IsRequired().HasConstraintName("FK_DialogueConversation_Publication");
+        });
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberDialogue.DialogueTurnRecord", b =>
+        {
+            b.Property<Guid>("ConversationId").HasColumnType("uuid");
+            b.Property<Guid>("TurnId").HasColumnType("uuid");
+            b.Property<Guid>("ClientRequestKey").HasColumnType("uuid");
+            b.Property<long>("Sequence").HasColumnType("bigint");
+            b.Property<long>("Fence").HasColumnType("bigint");
+            b.Property<Guid>("OwnerGeneration").HasColumnType("uuid");
+            b.Property<Guid>("AttemptId").HasColumnType("uuid");
+            b.Property<string>("RequestDigest").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+            b.Property<string>("BeginEnvelopeJson").IsRequired().HasColumnType("jsonb");
+            b.Property<DateTimeOffset>("AdmittedAtUtc").HasColumnType("timestamp with time zone");
+            b.Property<DateTimeOffset>("DeadlineUtc").HasColumnType("timestamp with time zone");
+            b.Property<int>("State").HasColumnType("integer");
+            b.HasKey("ConversationId", "TurnId");
+            b.HasIndex("ConversationId", "ClientRequestKey").IsUnique();
+            b.HasIndex("ConversationId", "Sequence").IsUnique();
+            b.HasIndex("ConversationId").IsUnique().HasDatabaseName("UX_DialogueTurn_Active").HasFilter("\"State\" IN (0, 1, 2, 3)");
+            b.ToTable("OctoberDialogueTurns", "october", t => t.HasCheckConstraint("CK_DialogueTurn_State", "\"State\" BETWEEN 0 AND 6 AND \"Sequence\" > 0 AND \"Fence\" > 0"));
+            b.HasOne("Vulgata.Core.Entities.OctoberDialogue.DialogueConversationRecord", null).WithMany()
+                .HasForeignKey("ConversationId").OnDelete(DeleteBehavior.Restrict).IsRequired().HasConstraintName("FK_DialogueTurn_Conversation");
+        });
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberDialogue.DialogueTerminalRecord", b =>
+        {
+            b.Property<Guid>("ConversationId").HasColumnType("uuid");
+            b.Property<Guid>("TurnId").HasColumnType("uuid");
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("PublicationId").HasColumnType("uuid");
+            b.Property<Guid>("SaveOperationId").HasColumnType("uuid");
+            b.Property<string>("OutcomeDigest").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+            b.Property<int>("TerminalState").HasColumnType("integer");
+            b.Property<int>("Reason").HasColumnType("integer");
+            b.Property<long>("Fence").HasColumnType("bigint");
+            b.Property<DateTimeOffset>("CommittedAtUtc").HasColumnType("timestamp with time zone");
+            b.Property<string>("TerminalEnvelopeJson").IsRequired().HasColumnType("jsonb");
+            b.Property<string>("VerifiedConsumedJson").IsRequired().HasColumnType("jsonb");
+            b.HasKey("ConversationId", "TurnId");
+            b.HasAlternateKey("ConversationId", "TurnId", "BatchId", "PublicationId").HasName("AK_DialogueTerminal_Publication");
+            b.HasIndex("ConversationId", "SaveOperationId").IsUnique();
+            b.HasIndex("ConversationId", "BatchId", "PublicationId").HasDatabaseName("IX_DialogueTerminal_ConversationPublication");
+            b.ToTable("OctoberDialogueTerminals", "october", t => t.HasCheckConstraint("CK_DialogueTerminal_State", "\"TerminalState\" BETWEEN 0 AND 2 AND \"Fence\" > 0"));
+            b.HasOne("Vulgata.Core.Entities.OctoberDialogue.DialogueTurnRecord", null).WithOne()
+                .HasForeignKey("Vulgata.Core.Entities.OctoberDialogue.DialogueTerminalRecord", "ConversationId", "TurnId")
+                .OnDelete(DeleteBehavior.Restrict).IsRequired().HasConstraintName("FK_DialogueTerminal_Turn");
+            b.HasOne("Vulgata.Core.Entities.OctoberDialogue.DialogueConversationRecord", null).WithMany()
+                .HasForeignKey("ConversationId", "BatchId", "PublicationId").HasPrincipalKey("ConversationId", "BatchId", "PublicationId")
+                .OnDelete(DeleteBehavior.Restrict).IsRequired().HasConstraintName("FK_DialogueTerminal_ConversationPublication");
+        });
+        modelBuilder.Entity("Vulgata.Core.Entities.OctoberDialogue.DialogueReferenceRecord", b =>
+        {
+            b.Property<Guid>("ConversationId").HasColumnType("uuid");
+            b.Property<Guid>("TurnId").HasColumnType("uuid");
+            b.Property<int>("Ordinal").HasColumnType("integer");
+            b.Property<Guid>("BatchId").HasColumnType("uuid");
+            b.Property<Guid>("PublicationId").HasColumnType("uuid");
+            b.Property<Guid>("LogicalDocumentId").HasColumnType("uuid");
+            b.Property<Guid>("VersionId").HasColumnType("uuid");
+            b.Property<string>("SectionId").HasColumnType("text");
+            b.HasKey("ConversationId", "TurnId", "Ordinal");
+            b.HasIndex("ConversationId", "TurnId", "BatchId", "PublicationId").HasDatabaseName("IX_DialogueReference_Terminal");
+            b.HasIndex("BatchId", "PublicationId", "LogicalDocumentId", "VersionId").HasDatabaseName("IX_DialogueReference_PublicationVersion");
+            b.HasIndex("BatchId", "VersionId", "SectionId").HasDatabaseName("IX_DialogueReference_Section");
+            b.ToTable("OctoberDialogueReferences", "october");
+            b.HasOne("Vulgata.Core.Entities.OctoberDialogue.DialogueTerminalRecord", null).WithMany()
+                .HasForeignKey("ConversationId", "TurnId", "BatchId", "PublicationId").HasPrincipalKey("ConversationId", "TurnId", "BatchId", "PublicationId")
+                .OnDelete(DeleteBehavior.Restrict).IsRequired().HasConstraintName("FK_DialogueReference_Terminal");
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.PublicationMemberRecord", null).WithMany()
+                .HasForeignKey("BatchId", "PublicationId", "LogicalDocumentId", "VersionId").HasPrincipalKey("BatchId", "PublicationId", "LogicalDocumentId", "VersionId")
+                .OnDelete(DeleteBehavior.Restrict).IsRequired().HasConstraintName("FK_DialogueReference_PublicationVersion");
+            b.HasOne("Vulgata.Core.Entities.OctoberKnowledge.DocumentSectionRecord", null).WithMany()
+                .HasForeignKey("BatchId", "VersionId", "SectionId").OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_DialogueReference_Section");
+        });
     }
 }
