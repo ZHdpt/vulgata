@@ -666,3 +666,30 @@ Combined affected verification of the witness handoff, coordinator and root guar
 passed **1,486/1,486 SelfContained** cases, zero failures/skips, 397 classified files:
 `TestResults/isolation-4050e41ebfe441a89a5a175c79f48b89/results.trx`.
 No PostgreSQL, native tool, external provider or browser qualification was run.
+
+## Dialogue provider-return race correction integrated
+
+Business correction `4ff94d024f27ccc9f695437d541d78719d26c98b`, offered at
+`c53055afcaa794e0dacb4872e7f9793d1990d28d`, is merged at `be1915ab`.
+Independent cross-module source review accepted the fix. A short local gate
+publishes invocation ownership before entering the provider API; cancellation and
+cleanup observe that same ownership. The actual commit invocation stays synchronous
+under the host's fence, outside the store-local gate. Late/duplicate callbacks are
+closed out, and producing resources remain retained through the actual settlement.
+No schema or public contract changed.
+
+Owner focused verification passed 57/57 controlled cases. Its subsequent merged
+compatibility invocation `isolation-95aebb1e365845ca9455274e5045744b` failed in
+`guard-probes.log` during xUnit discovery with internal CLR error `0x80131506`,
+before selected-test results. That invocation is incomplete/non-success, not a
+product assertion failure or a diagnosed environment cause. Main performs its own
+affected regression against this merged source; an eventual pass does not explain
+or erase that failed discovery run.
+
+Main verification passed **1,487/1,487 affected SelfContained** cases, zero
+failures/skips, 397 classified files:
+`TestResults/isolation-ab7be60e10f94209b7b5e3c4097f1bc5/results.trx`.
+This lifts the specific store implementation hold reported above. The actual host
+execution registry/store observation/session retention and Web activation remain
+root work; PostgreSQL and real-provider/browser qualification remain unperformed.
+No runtime authority is created, and B2/Scan/graph continue independently.

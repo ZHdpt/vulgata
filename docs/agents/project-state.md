@@ -146,9 +146,12 @@ verification before reuse.
   The same-attempt Business resolution witness handoff `8b72833d` is integrated,
   and the unregistered root Chat commit-fence component is independently reviewed.
   Combined affected verification passes 1,486/1,486 controlled cases, zero skips.
-  Business is correcting a separately reproduced dialogue-store submission/disposal
-  race; live dialogue mutation activation awaits that fix. The root commit guard
-  alone is not execution registration, owner-death proof or a reachable Chat route.
+  Business's reproduced dialogue-store submission/disposal race is corrected by
+  `4ff94d02`, integrated at `be1915ab`, with 1,487/1,487 combined affected controlled
+  passes. The store-specific implementation hold is lifted; no live mutation or
+  PostgreSQL qualification is claimed. The owner's separate discovery CLR crash
+  remains unexplained/non-success. The root commit guard alone is not execution
+  registration, owner-death proof or a reachable Chat route.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
