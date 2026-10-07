@@ -797,7 +797,7 @@ public sealed class OctoberFlowPublicationTests
         request = request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
         // The slot models original-run single flight; it does not claim actual Scan slot issuance.
         using var slot = new FinalizerControlledSlot(request);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant,
+        using var client = new ResolutionClient(selection.ProviderProfileId, (_, _) => Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant,
             JsonSerializer.Serialize(original.Completed[0].Proposal)))
         {
             FinishReason = ChatFinishReason.Stop,
