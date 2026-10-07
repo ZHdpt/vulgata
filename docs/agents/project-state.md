@@ -161,8 +161,15 @@ verification before reuse.
   The encoded-text Chat renderer `bd51e764` is integrated at `97f428ec`;
   combined affected controlled checks pass 1,505/1,505, zero skips. It supports a
   bounded formatting subset with literal fallback, not full CommonMark or live
-  Chat activation. Exact authorized footer destinations remain under owner/consumer
-  agreement; a URL builder alone is not title or disclosure authority.
+  Chat activation. Business/Explorer/Chat footer agreement is now accepted and
+  controlled T026/T027 implementation is released; a URL builder alone is not title
+  or disclosure authority. The exact display-only lineage and limits are in the
+  wave handoff.
+  Explicit-root Business planner `44aac568` is integrated at `fccde66c`;
+  combined affected verification passes 1,543/1,543 controlled cases, zero skips.
+  Complete corpus lineage includes coverage without CL, independently of bounded
+  directed flow membership. Trusted persisted-input loading, synthesis and atomic
+  BL persistence remain unfinished; no schema or live execution was added.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

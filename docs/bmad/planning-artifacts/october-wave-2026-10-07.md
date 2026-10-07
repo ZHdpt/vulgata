@@ -799,7 +799,43 @@ wrapper encoding; derive the title from the same successfully admitted exact pag
 retain new DISPLAY lineage plus all original turn/history inputs. Never rewrite
 original reference coverage or expose protected envelopes. Failed aggregate
 authorization suppresses the whole dependent display, not only one citation.
-Chat's exact local adapter/encoder/limits compatibility mapping remains pending.
+Business and Chat accepted the exact local adapter/encoder/limits mapping, and
+integration released controlled T026/T027 implementation. Reuse the unchanged
+mechanical ExploreGraphOutputEncoder profile; it grants no Graph/Reader purpose.
+Check complete page bytes/output digest/typed page digest and exact original handle.
+The local display attempt is caller-linked and bounded to ten seconds, serial
+acquisition, at most 16 initial-page title reads, 64 KiB per complete result and
+256 KiB aggregate, without continuation/retry/cache or silent reference truncation.
+Canonical reference/capsule/origin/contributor ceilings still apply. A title-page
+read adds DISPLAY lineage only; zero references skip acquisition, not original
+display authorization. Use owner-issued saved projections initially, not invented
+live report evidence. A closed TurnPresentation cannot be reopened: the local footer
+handoff is separately bounded and checked against the actual attachment/context.
 Saved-history display uses a fresh bounded display lifetime and aggregate budget,
 not a restarted model budget or a requirement that the old generation still run.
 No new Knowledge API, route, schema or runtime permission follows from the agreement.
+
+## Controlled explicit-root Business planner integrated
+
+Business `44aac5686554ae6173d513d3d604058fe934370d` is merged at `fccde66c`.
+Independent cross-module source review accepted the bounded pure planner. It uses
+explicitly selected exact source-backed CodeUnits, accepted directed relationships,
+cycle detection and visible node/edge/depth frontiers. Configured bounds may only
+narrow 256 nodes, 512 edges and depth 16. Unsupported root kinds receive explicit
+dispositions; names or connectivity cannot manufacture positive classification.
+
+The input's complete corpus contributor ledger is independent of traversed members
+and accepted CL membership, including coverage with zero units or failed/unprocessed
+files. The trusted loader must establish immutable accepted units, primary origins,
+anchors, resolution outcomes/witness provenance and the full ledger; these domain
+records are neither an acceptance nor authorization port. No schema changed.
+Trusted loading, synthesis and atomic BL persistence/finalization remain Business
+work in dependency order; controlled implementation does not wait for Chat. Actual
+dispatch and real qualification still require S3/F1 and approved runtime resources.
+
+Combined affected verification passed **1,543/1,543 SelfContained** cases, zero
+failures/skips, 399 classified files:
+`TestResults/isolation-cf8270b6078f48ec81f939ec94117a0d/results.trx`.
+This qualifies the controlled planner combination only. Business has dispatched
+its bounded read-only trusted loader with separate test/production ownership; no
+migration window or real consumer activation follows from this checkpoint.
