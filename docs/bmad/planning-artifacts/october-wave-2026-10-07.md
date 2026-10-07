@@ -722,3 +722,30 @@ SelfContained** cases, zero failures/skips, 398 classified files:
 `TestResults/isolation-0b3a7dd9690d488fa50431c69b829029/results.trx`.
 This qualifies the controlled component combination, not a full suite, real
 streaming browser session, PostgreSQL or a retained real-Worker dataset.
+
+## Scan input-ledger candidate review — bounded correction pending
+
+Scan offered `f396e35b1fcaab83586245ad23ecbcc46616e639`: complete host-observed
+primary/advisory/supporting-content/metadata lineage, six exact-bound tool facades,
+F1 completion binding and execution accounting/retry classification. The separate
+RuntimeFile parser's intentional RED is absent from this committed source/test
+boundary. Owner evidence reports 249/249 affected non-configuration controlled
+passes; the mixed dirty run's 254/255 result is not relabelled as a green checkpoint.
+
+Independent cross-module review found two narrow corrections before integration:
+
+1. The reported physical request count increments on send eligibility, before the
+   actual HTTP invocation. Cancellation or source-check failure in between can
+   produce a false dispatch count. Preserve conservative reservation while
+   separating actual dispatch observation from eligibility.
+2. Final transient-retry verification awaits source/ledger verification with
+   `CancellationToken.None`, outside the original Worker deadline, then can assign
+   retry eligibility without rechecking cancellation. Tool-runtime lifetime does
+   not bound the ledger's entire semaphore/authority operation. Retain the original
+   linked lifetime, bound and observe late verification, and refuse a late retry grant.
+
+These are source-review findings, not claimed executed failures. Scan owns their
+regressions and corrections; the remaining provenance boundary was coherent on
+inspection. This candidate is not merged. Existing integrated capability remains
+at `964f5303`; Scan's unrelated runner/parser work, Business B2 and Chat rendering
+continue. No all-lane barrier or runtime/resource permission is introduced.
