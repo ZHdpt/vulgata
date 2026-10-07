@@ -1,6 +1,7 @@
-using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Shared.Explore;
 using Vulgata.Shared.OctoberKnowledge;
@@ -25,15 +26,17 @@ public sealed class ExplorePresentationService : IExplorePresentationService, ID
     private readonly IOctoberKnowledgeReader? _reader;
     private readonly IExploreContextProvider _contextProvider;
     private readonly AuthenticationStateProvider? _authentication;
+    private readonly ClaimsIdentityOptions _claims;
     private long _contextGeneration;
     private bool _disposed;
 
     public ExplorePresentationService(IOctoberKnowledgeReader? reader, IExploreContextProvider contextProvider,
-        AuthenticationStateProvider? authenticationStateProvider)
+        AuthenticationStateProvider? authenticationStateProvider, IOptions<IdentityOptions>? identityOptions = null)
     {
         _reader = reader;
         _contextProvider = contextProvider;
         _authentication = authenticationStateProvider;
+        _claims = identityOptions?.Value.ClaimsIdentity ?? new ClaimsIdentityOptions();
         _contextProvider.ContextChanged += InvalidateContext;
         if (_authentication is not null)
         {
@@ -192,15 +195,17 @@ public sealed class ExplorePresentationService : IExplorePresentationService, ID
         var context = await _contextProvider.GetCurrentAsync(cancellationToken);
         var principal = (await _authentication.GetAuthenticationStateAsync()).User;
         cancellationToken.ThrowIfCancellationRequested();
-        if (context is null || principal.Identity?.IsAuthenticated != true ||
+        var identities = principal.Identities.Where(identity => identity.IsAuthenticated).ToArray();
+        if (context is null || identities.Length != 1 ||
             context.Selection.Purpose != KnowledgePurpose.Reader ||
-            principal.FindFirstValue(ClaimTypes.NameIdentifier) != context.Selection.Subject.SubjectId ||
+            identities[0].FindFirst(_claims.UserIdClaimType)?.Value != context.Selection.Subject.SubjectId ||
             string.IsNullOrWhiteSpace(context.Selection.Subject.AuthenticationBinding))
         {
             return null;
         }
 
-        var stamp = principal.FindFirstValue("AspNet.Identity.SecurityStamp");
+        // Bind both values to the same authenticated identity using the host's Identity configuration.
+        var stamp = identities[0].FindFirst(_claims.SecurityStampClaimType)?.Value;
         if (stamp is not null && stamp != context.Selection.Subject.AuthenticationBinding) { return null; }
         var request = context.Selection;
         if (request.Publication.Knowledge.BatchId == Guid.Empty ||

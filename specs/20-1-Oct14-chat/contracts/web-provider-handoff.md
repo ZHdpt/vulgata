@@ -1,0 +1,54 @@
+# October Chat Web/provider seam — 2026-10-07
+
+Baseline: `f3db38db` above integration `082994eb`. The user authorized the next bounded Chat wave, coordination with OCT-Integrator `01a1109d-ec4c-7500-8b73-642a5e22f59b`, and reviewed owned commits. Integration accepted ownership of selected configuration/credentials/retries-off SDK construction and Web-local admission; Chat owns raw HTTP/SSE validation and bounds. No duplicate validator or generator admission reuse. Business dialogue/disclosure remains a separate canonical-contract prerequisite.
+
+## Existing compiled consumer surface
+
+- `OctoberChatModule.AddOctoberChat(IServiceCollection)` registers scoped `IOctoberChatSelectionService` and `OctoberChatEntryViewModel` only; it does not register execution.
+- `IOctoberChatSelectionService.OpenAsync(ReadSelectionRequest? trustedSelection, CancellationToken cancellationToken = default)` consumes the host-derived publication, current `KnowledgeSubject`, fixed mode, `Purpose=Chat` and canonical Repository scope. It returns an ephemeral selection/conversation, not a durable admission receipt.
+- `ChatPage` accepts optional `OctoberEntry`, `OctoberSelection` and `OctoberTurn` parameters. Existing entry lifecycle handles pending selection changes and requires settled work before a fresh context. Integration supplies the Chat-purpose context, notification and host binding; it must not relabel/reuse a Reader-purpose token.
+- Integration confirmed public `Web.Services.OctoberChat.IOctoberChatContextProvider`, with `event Action? ContextChanged` and `Task<ReadSelectionRequest?> GetCurrentAsync(CancellationToken cancellationToken = default)`. It will register through AddOctoberWikiReader plus AddOctoberChat without route/generation activation. Freeze the explicit Wiki database/batch/publication configuration; derive current Identity at each observation; null/unavailable on missing or changing identity/configuration. Existing selection-only empty-contributor/null-kind checks do not authorize model inputs, answer text or history.
+- Internal `OctoberChatAgent(IChatClient client, OctoberWikiTools tools, OctoberChatBudget budget)` requires the facade's same budget instance and rejects an already function-invoking client. `RunAsync(string question, string instructions, Action<string> onText, CancellationToken cancellationToken = default)` is the established controlled execution entry. The current wave adds an optional nonblocking progress callback after cancellationToken; it reports actual invocation lifecycle with host-generated IDs only. This is not a public executable Web factory yet.
+- Internal `OctoberChatPromptCatalog.LoadAsync(KnowledgeMode mode, CancellationToken cancellationToken = default)` returns strict bounded text or null. Integration owns Agents csproj embedding under exact logical names `Vulgata.Agents.Prompts.OctoberChatBusiness.txt` and `Vulgata.Agents.Prompts.OctoberChatIT.txt`. Default loader tests can use the existing test friend assembly. Actual public execution/prompt factory should be settled with D0/W1, not by making a bare agent reachable from Web early.
+
+## Raw guard API selected for Chat implementation
+
+Proposed Chat-owned public type in `Vulgata.Agents.ChatExecution.October`:
+
+```csharp
+public sealed class OctoberChatStreamingHandler : DelegatingHandler
+{
+    public OctoberChatStreamingHandler(HttpMessageHandler admittedTransport, OctoberChatBudget budget);
+    public Task SealAndWaitForSettlementAsync();
+}
+```
+
+This signature is a contract target, not an already compiled declaration at this documentation checkpoint. Create one guard per turn; it borrows `admittedTransport`. The integration chain is SDK HttpClient -> Chat guard -> integration admission handler -> physical handler. The agent and guard share the original budget. The typed adapter alone calls TryStartProviderRound before invoking the client; guard captures that already-started round and rejects a second actual HTTP send for it. No automatic retry, concurrent alternate request, second provider-round charge or new tool invocation loop.
+
+Guard responsibilities: POST streaming ChatCompletions shape only; bounded raw bytes via TryAddSseBytes on the captured round; successful HTTP/SSE response; strict incremental UTF-8/framing; bounded events/native fragment storage; one choice; consistent native call index/ID/name and bounded arguments; consistent terminal finish. Ordinary validated text-bearing events reach SDK immediately. Hold only the final `[DONE]` marker until strict physical EOF validates the tail. Missing/trailing/duplicate terminal data fails honestly; no full-answer buffer or candidate-only assembler. The existing typed adapter still performs complete-round tool admission and strict facade validation. Hidden reasoning is not emitted by the typed text projection.
+
+Integration responsibilities: frozen selected provider/profile/model/ChatCompletions support; protected credential resolution; no implicit provider failover; endpoint request construction and retries-off client; request permits and actual physical I/O lifetime. Existing installed constructor pattern uses `OpenAIClientOptions` with `RetryPolicy = new ClientRetryPolicy(0)`, `Transport = new HttpClientPipelineTransport(httpClient, false, null)`, disabled distributed tracing/body logging, and selected `OpenAI.Chat.ChatClient(model, new ApiKeyCredential(apiKey), options)`. Expose it as the installed plain IChatClient adapter, not another FunctionInvokingChatClient. Integration owns SDK/client/physical-handler disposal. Chat's decorator must not dispose the borrowed admitted handler.
+
+## W1 settlement contract — accepted operation; guard cleanup handshake
+
+Recommended per-turn integration-owned operation:
+
+```csharp
+Task SealAndWaitForSettlementAsync();
+```
+
+Integration confirmed this operation name and no-caller-token semantics. Sealing atomically forbids additional sends. The returned task completes only after **all physical SendAsync, body-read and disposal operations have settled and their permits have been released**. Cancelling a caller's wait never completes this task or proves physical cleanup. Chat does not declare a competing admission interface, request Options key or persistence DTO.
+
+To include Chat's deferred cleanup, the Chat handler also exposes the same seal-and-settlement operation for **its own** tracked send/read/response-stream cleanup. It seals dispatch, signals owned stop, initiates cleanup without racing pending I/O, and returns one stable task. Pending ignored-cancellation reads remain registered until they settle and their response/stream disposal completes. No borrowed inner handler is disposed. Integration starts BOTH guard sealing and admission sealing before awaiting their tasks together; it must not await admission drain before asking the guard to release response resources. Keep the guard, SDK client and admission owner alive while either task remains pending. SDK synchronous Dispose may initiate this process but never certifies it. Successful completion of both is required for normal terminal/permit settlement; an unconfirmed cleanup/release remains explicit unresolved cleanup rather than a fabricated release. A failed send/read, cancelled generation or rejected protocol CAN drain successfully once operations have terminated and resource release is confirmed; successful drain does not mean successful generation. Only unproven cleanup/release keeps settlement unresolved. Integration accepted this two-owner handshake; its factory must preserve it before W1 is usable.
+
+Admission wait consumes the original turn deadline. Check eligibility immediately before actual send. Retain each permit until actual request transport cleanup, including a noncooperative send/read/disposal that outlives the SDK consumer. Stop-and-seal after agent completion; keep observing/owning deferred cleanup. Do not release the dialogue active slot or claim durable completed settlement based only on the provider-loop result. No Dispose/DisposeAsync may race an outstanding read; SDK synchronous disposal needs an owned deferred cleanup path. A cleanup fault with unconfirmed release is not confirmation of settlement. Usage must be actual or explicitly unknown, never invented zero.
+
+The guard bounds consumer waits and may observe unfinished I/O after cancellation; it cannot forcibly terminate arbitrary borrowed I/O. Integration's inner lifetime tracker must retain the underlying operation regardless of the outer wrapper returning or being disposed. No source/API/credential data belongs in logs/progress. W1 acceptance and D0 canonical outcomes must reconcile this requirement before production dispatch.
+
+## Controlled qualification and next handshake
+
+Use real installed OpenAI ChatClient -> plain IChatClient -> October agent over a controlled HttpMessageHandler, not a scripted typed client alone. Proposed probes cover split multibyte bytes/SSE fields and native arguments, early text before tool/finish gates, interleaved calls, invalid IDs/names, usage after finish, `[DONE]` plus EOF/tail failures, original aggregate budgets, refused retries and cleanup ownership. A physical fake stream that ignores cancellation must let consumer cancellation return while settlement stays pending/permit retained until its gate releases; assert exactly-once disposal and no late callbacks. No live endpoint or new real dataset is needed for these probes.
+
+Integrator will publish exact approved embedding/Chat-purpose context/W1 commits. Chat imports only those approved checkpoints and checks actual behavior against this seam. Business owns full-input dependency completeness and all dialogue/storage contracts; the earlier consumer contribution remains a proposal until agreed. T012–T015/T020–T021 remain partial, T016–T019 depend on canonical ports, and T022 persistence versus T023 provider/browser qualification remain distinct. This handoff does not authorize resources or activate sending.
+
+Independent source review found this ownership split viable with the lifetime/framing conditions above. Implementation and controlled test evidence are still required; no transport qualification is claimed by this document.
