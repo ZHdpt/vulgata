@@ -2,7 +2,7 @@
 
 **Branch**: `oct14/chat` | **Date**: 2026-10-06 | **Spec**: [spec.md](spec.md)
 **Input**: `C:\Users\13728\.codex\worktrees\c1c7\vulgata\specs\20-1-Oct14-chat\spec.md`
-**Status**: Proposed for independent review; planning only. No tasks or implementation authorized.
+**Status**: Accepted independent planning review; later task generation and scoped controlled implementation have separate user authority and evidence in [tasks.md](tasks.md) and [quickstart.md](quickstart.md). The user explicitly lifted the T011 hold by accepting the controlled-facade recommendation and instructing "Proceed T011 and what remains before T021", then approved the controlled T013 agent/adapter on 2026-10-07. That controlled implementation is independently accepted with 291 affected tests passing. Owner-contract, raw-transport and live-runtime stops remain. Historical planning-phase stops below retain their original meaning.
 
 **Subsequent scoped preparation**: After accepted review and separately authorized task generation, OCT-Integrator authorized import/conformance only. See [imported K0 and proposed W0](contracts/imported-k0-and-w0.md) for exact `3bcd815b09cfbac7418d6644a2a75816e0788ec0` symbols, test boundary and remaining W0/D0/W1 dependencies. No C0/full Wave 2 implementation is authorized by that preparation. Earlier review hashes describe the earlier accepted text, not this import-status annotation.
 

@@ -32,6 +32,13 @@
         </section>
         <section class="chat-surface" aria-label="对话记录" aria-live="polite"
                  aria-busy="@(october.LoadState == LoadState.Loading ? "true" : "false")" tabindex="0">
+            @if (OctoberTurn is { } turn && october.Conversation is { } conversation &&
+                turn.Binding.ConversationId == conversation.ConversationId &&
+                turn.Binding.ContextId == conversation.ContextId &&
+                turn.Binding.Request == conversation.Request && turn.Binding.Selection == conversation.Selection)
+            {
+                <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="turn" />
+            }
             <div class="chat-welcome">
                 <h1 class="display-serif display-serif-lg">@(october.ThemeName == "dark" ? "你好，需要追踪哪段逻辑？" : "你好，想了解什么业务流程？")</h1>
                 @if (october.Conversation is not null)

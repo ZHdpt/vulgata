@@ -20,6 +20,9 @@ public partial class ChatPage : IAsyncDisposable
     [Parameter]
     public Vulgata.Core.DomainServices.OctoberKnowledge.ReadSelectionRequest? OctoberSelection { get; set; }
 
+    [Parameter]
+    public Vulgata.Web.ViewModels.OctoberChat.OctoberChatTurnViewModel? OctoberTurn { get; set; }
+
     private ReadSelectionRequest? _lastOctoberSelection;
     private ReadSelectionRequest? _pendingOctoberSelection;
     private bool _newOctoberConversationRequested;
