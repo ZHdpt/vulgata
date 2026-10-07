@@ -1257,5 +1257,11 @@
   },
   "October/Knowledge/OctoberFlowInputStoreTests.cs": {
     "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberBusinessSynthesisTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberBusinessFinalizationContractTests.cs": {
+    "suite": "SelfContained"
   }
 }

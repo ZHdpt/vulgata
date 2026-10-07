@@ -230,15 +230,26 @@ internal sealed class ControlledKnowledgeWriter(OctoberKnowledgeFixture fixture,
 }
 
 /// <summary>Controlled host cap=1 queue/accounting model. No real scheduler, rate limiter or provider transport.</summary>
-internal sealed class ControlledExecutionScope : IOctoberExecutionScope
+internal sealed class ControlledExecutionScope : IOctoberExecutionScope, IOctoberBusinessHandoffLifetime
 {
     private readonly Queue<(ProviderAttemptRequest Request, TaskCompletionSource<ProviderAdmission> Completion)> _queue = [];
     private ControlledLease? _active;
     private bool _hardStopped;
     private readonly CancellationTokenSource _stop = new();
+    private readonly CancellationToken _stopToken;
+    private bool _deadlineExpired;
+    public ControlledExecutionScope() => _stopToken = _stop.Token;
+    public CancellationToken HandoffCancellation => _stopToken;
+    // Explicit protocol model only: real Scan adapters independently bind run/operation/profile identities.
+    public ProviderAdmissionStatus CheckHandoffEligibility(Guid runId, OperationKey finalizationOperation, string providerProfileId) =>
+        _hardStopped ? ProviderAdmissionStatus.HardStopped : DeadlineExpired ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.Granted;
     public bool RateAllowed { get; set; } = true;
     public bool RateDenied { get; set; }
-    public bool DeadlineExpired { get; set; }
+    public bool DeadlineExpired
+    {
+        get => _deadlineExpired;
+        set { if (value) { _deadlineExpired = true; _stop.Cancel(); } }
+    }
     public long RemainingTokens { get; private set; } = 100;
     public int RemainingRequests { get; private set; } = 4;
     public int Grants { get; private set; }
@@ -274,7 +285,7 @@ internal sealed class ControlledExecutionScope : IOctoberExecutionScope
         private bool _settled;
         private bool _released;
         public Guid AttemptId => attemptId;
-        public CancellationToken CancellationToken => owner._stop.Token;
+        public CancellationToken CancellationToken => owner._stopToken;
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default)
         {
             var status = owner._hardStopped ? ProviderAdmissionStatus.HardStopped : owner.DeadlineExpired ? ProviderAdmissionStatus.DeadlineExceeded : owner.RateDenied || !owner.RateAllowed ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.Granted;
@@ -310,5 +321,3 @@ internal sealed class ControlledFinalizer(BusinessFinalizationResult result) : I
     public Task<BusinessFinalizationResult> FinalizeAsync(FinalizationRequest request, CancellationToken cancellationToken = default) =>
         Task.FromResult(request.ExecutionScope is null ? result with { Status = BusinessFinalizationStatus.Failed, Publication = null } : result);
 }
-
-
