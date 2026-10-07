@@ -30,16 +30,16 @@ verification before reuse.
 
 ## Current authority and delivery
 
-Latest October integration checkpoint (October 7): `ab5161b3` includes the reviewed
+Latest October integration checkpoint (October 7): `d92833c1` includes the reviewed
 Business trusted flow-input loader, controlled CL-only Generate runner and actual
 Main/safe-report wiring, saved Chat reference footer and canonical history/display
 consumer. Shared explicit Generate fixture inputs are at `417c888f`; the behavior-free
 Business handoff lifetime declaration is selectively imported at `6578a2d5`.
-The actual same-scope handoff lifetime and confirmed-publication/log-failure correction
-are now imported; Business executor corrections must consume this implementation.
-Combined affected SelfContained verification passes 1,754/1,754, zero failures/skips;
-this is not a full suite or real runtime qualification. Shared ordinary-user
-reader qualification, corrected BL synthesis/publication and final Web Chat composition remain
+The actual same-scope handoff lifetime, both corrected Business executor consumers,
+canonical finalization helpers, synthesis prompt resource and guarded one-Generate
+qualification adapter are now imported. The full SelfContained suite passes
+3,727/3,727, zero failures/skips; external suites remain unqualified. Shared ordinary-user
+reader qualification, BL persistence/first-dispatch composition and final Web Chat composition remain
 open. Source/provider/database/host permission for the shared real run is still
 outstanding. See the current delivery-wave handoff below for exact ownership and evidence.
 

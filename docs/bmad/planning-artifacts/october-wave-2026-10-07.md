@@ -1183,3 +1183,55 @@ zero failures/skips, 412 classified sources:
 `TestResults/isolation-e1da5bda16c4497a81f9773d650f6faf/results.trx`.
 This includes the fixture wait additions and both new Scan corrections. It is not
 a full-suite, Business consumer-lifetime, PostgreSQL, native/provider or E2E result.
+
+## Guarded adapter and corrected Business consumers integrated
+
+Scan's final adapter `8e9f8694` (initial source `68bc6ff0`) passed independent
+integration review and is merged at `e07b0fe1`. The inspected incoming delta was
+exactly its eight adapter/documentation/inventory files; already integrated scope,
+declaration and fixture patches were unchanged. It validates the approved exact
+inputs, guards E2E/owned database access immediately before launch, consumes one
+dispatch even on failure, and uses the Generate-specific wait. It is qualification
+infrastructure, not execution evidence. Scan's full SelfContained run remains
+3,617/3,618 with the admission-disposal observation failure; its isolated passing
+replay did not explain or erase that failure.
+
+Business checkpoint `bea53ddd` passed independent integration review and is merged
+at `a4e7e6f0`: both executors retain original run lifetime through final authorization,
+observe late tasks, recheck synchronous eligibility and preserve completed output
+despite unknown future spending capacity alone. Owner verification passed 115/115,
+including Synthesis 27/27 and Resolution handoff 10/10. Earlier invalid-fixture
+failures remain in owner evidence. The canonical finalization declarations/digest
+helpers are included with their actual SynthesisProposal prerequisite; they are not
+standalone storage authority and add no schema. The sole merge conflict was adjacent
+contract sections; both accepted lifetime and finalization sections were retained.
+
+Business admission-test correction `e2fec556` is selectively imported at `275fa035`.
+The bounded helper now observes actual ObjectDisposedException through the pinned
+EF Database getter without concurrent SQL. It does not swallow InvalidOperationException
+or relax public-call/no-submit/no-write assertions. Owner focused evidence is 24/24;
+that is not a successful full-suite rerun. Root registered the reviewed Synthesis.md
+logical resource at `d92833c1` and added an actual compiled-resource/source-content
+verification case.
+
+The lifetime prerequisite is accepted and Business is released for controlled
+T032/T033 schema/persistence implementation in its sole-owner boundary. Preserve
+populated CL constraints, shared exact Dialogue keys and typed full provenance.
+Reviewed migration checkpoints still precede activation; no runtime migration,
+PostgreSQL/provider acquisition or all-Chat/adapter completion gate is introduced.
+
+Full current **SelfContained** verification at `d92833c1` passed **3,727/3,727**,
+zero failures/skips, 417 classified sources:
+`TestResults/isolation-21ca12a7642346fba0b13feda8f47f82/results.trx`.
+This includes the actual embedded synthesis prompt check and isolated disposal-test
+correction. It does not rewrite Scan's earlier failed full run and does not qualify
+PostgreSQL, LocalTools, External, E2E or HistoricalBoundary suites.
+
+Business's T033 read-only check identifies one still-missing host composition:
+current CL-only Generate owns fresh BeginGenerate and its retained execution task,
+but has no first-finalization dispatch binding. Lifetime eligibility and absent/
+indeterminate durable lookup cannot supply that authority. Scan is asked for the
+smallest original-run one-shot binding over exact run/operation/corpus/request,
+without a new durable framework or caller boolean. The precise mechanism remains
+pending agreement. Enabled finalizer dispatch stays unavailable; independent T032
+store/schema work continues. No S3 or runtime activation follows from this discussion.
