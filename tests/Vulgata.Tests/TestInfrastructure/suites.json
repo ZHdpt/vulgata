@@ -1209,5 +1209,8 @@
   },
   "October/Knowledge/OctoberFlowPlannerTests.cs": {
     "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFlowInputStoreTests.cs": {
+    "suite": "SelfContained"
   }
 }
