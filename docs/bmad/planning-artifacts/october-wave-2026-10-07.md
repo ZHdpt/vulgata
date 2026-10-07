@@ -894,3 +894,41 @@ of mismatched versions/publications/sections, Business CL denial, and actual
 contributor/stamp revocation on subsequent disclosure. Long-content continuation,
 history versions and graph edges qualify only if this same real output contains
 them; no padding, fabricated relationships or second Generate is permitted.
+
+## Trusted flow input and explicit Generate fixture inputs
+
+Business loader `f61abf0d` (offered merge `60b6e79f`) is independently reviewed
+and integrated at `6f5b1816`. It loads exact persisted corpus units, primary source
+anchors, original B1 resolution witnesses and complete dependencies, manifest/coverage
+contributors and composite file uncertainties. Zero-unit files remain represented.
+Its 32 MiB payload budget is not a total managed-memory ceiling; separate row limits
+also apply. This checkpoint changes no schema and does not activate real B2.
+Business continues controlled T031 synthesis; its subsequent BL schema checkpoint
+must preserve existing CL exact-handle constraints and populated data. Integration
+owns embedding the reviewed Synthesis prompt when that file is delivered.
+
+The shared fixture extension has three optional named `StartGenerator` inputs:
+`runtimeFilePath`, `scanPolicyFilePath`, `workerProviderConfigurationFilePath`.
+They are all absent for existing behavior, or all supplied for exact `generate`
+mode with no conflicting identity/target/batch/negative-configuration overrides.
+Only existing absolute regular files under the owned fixture root are accepted;
+the fixture does not expose an arbitrary child-environment override dictionary.
+Its database, operator, application name and keyring remain fixture-owned.
+
+`WriteGenerateWorkerProviderAsync(approvedProfile, readApprovedCredential, token)`
+creates a distinct Worker-only protected configuration using that same fixture
+protector and `SecretPurposes.LlmApiKey`. It never assumes external ciphertext can
+be decrypted by fixture keys. The supplied credential reader is invoked once and
+must be separately authorized before any real use; no actual secret reader is
+selected yet. Only protected credentials reach the file. Controlled qualification
+uses synthetic strings and an ephemeral protector, not a live provider or database.
+An ignored-cancellation credential read remains awaited; its cancelled late result
+cannot create a configuration file. This is owned test-fixture plumbing, not a
+replacement production source-containment boundary.
+
+Main's report must also omit raw `FileCoverage.Reason` text, which can contain
+model-derived uncertainty/source prose. Safe identifiers, digests, relative paths,
+dispositions and host reason codes are report summaries, not byte-identical canonical
+coverage/proposal authority. Root checks publication/document/origin bindings and
+uses the canonical reader for actual content. CLI Ctrl+C drain semantics are not
+qualified by S2 API cancellation tests and remain a distinct S3 obligation.

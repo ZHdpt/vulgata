@@ -1171,6 +1171,12 @@
   "October/Integration/OctoberChatHostBindingTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Integration/OctoberGenerateFixtureInputsTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberGenerateFixtureInputs.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberChatDialogueCommitGuardTests.cs": {
     "suite": "SelfContained"
   },

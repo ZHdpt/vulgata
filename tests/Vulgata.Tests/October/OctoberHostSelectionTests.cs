@@ -19,6 +19,7 @@ using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.Configuration;
 using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
+using Vulgata.Tests.October.Integration;
 using Vulgata.Web.Data;
 using Xunit.Abstractions;
 using SystemEntity = Vulgata.Core.Entities.System;
@@ -1773,6 +1774,13 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         internal Process StartGenerator(string requestJson)
             => StartGenerator("prepare", requestJson);
 
+        internal Task<string> WriteGenerateWorkerProviderAsync(
+            OctoberProviderProfile approvedProfile,
+            Func<CancellationToken, Task<string>> readApprovedCredential,
+            CancellationToken cancellationToken = default)
+            => OctoberGenerateFixtureInputs.WriteWorkerProviderAsync(
+                OwnedRoot, _protection.Provider, approvedProfile, readApprovedCredential, cancellationToken);
+
         internal Process StartGenerator(
             string mode,
             string? requestJson,
@@ -1782,8 +1790,18 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             string? targetCanonicalDatabaseIdentityOverride = null,
             string? invalidStartupConfigurationCase = null,
             Guid? batchIdOverride = null,
-            string? targetIdOverride = null)
+            string? targetIdOverride = null,
+            string? runtimeFilePath = null,
+            string? scanPolicyFilePath = null,
+            string? workerProviderConfigurationFilePath = null)
         {
+            OctoberGenerateInputFiles? generateInputs = OctoberGenerateFixtureInputs.ValidateFiles(
+                OwnedRoot, mode, runtimeFilePath, scanPolicyFilePath, workerProviderConfigurationFilePath,
+                includeCompetingProviderSource || identityConnectionStringOverride is not null ||
+                identityCanonicalDatabaseIdentityOverride is not null ||
+                targetCanonicalDatabaseIdentityOverride is not null ||
+                invalidStartupConfigurationCase is not null || batchIdOverride is not null ||
+                targetIdOverride is not null);
             string configuredTargetId = targetIdOverride ?? TargetId;
             Guid configuredBatchId = batchIdOverride ?? BatchId;
             string repositoryRoot = FindRepositoryRoot();
@@ -1838,6 +1856,13 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 Path.Combine(OwnedRoot, "operator.credentials.protected");
             startInfo.Environment["October__Providers__ConfigurationFile"] =
                 Path.Combine(OwnedRoot, "providers.json");
+            if (generateInputs is not null)
+            {
+                startInfo.Environment["October__RuntimeFile"] = generateInputs.RuntimeFilePath;
+                startInfo.Environment["October__ScanPolicyFile"] = generateInputs.ScanPolicyFilePath;
+                startInfo.Environment["October__Providers__ConfigurationFile"] =
+                    generateInputs.WorkerProviderConfigurationFilePath;
+            }
             if (includeCompetingProviderSource)
                 startInfo.Environment["October__Providers__SourceIdentity"] = "competing-flattened-source";
             if (identityConnectionStringOverride is not null)
