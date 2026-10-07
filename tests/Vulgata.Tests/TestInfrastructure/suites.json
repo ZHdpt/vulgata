@@ -1239,5 +1239,8 @@
   },
   "October/Knowledge/OctoberBusinessSynthesisTests.cs": {
     "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberBusinessFinalizationContractTests.cs": {
+    "suite": "SelfContained"
   }
 }

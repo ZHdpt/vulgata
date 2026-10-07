@@ -239,7 +239,12 @@ public sealed record BusinessFinalizationResult(BusinessFinalizationStatus Statu
     PublicationBinding? Publication, CoverageProjection Coverage, bool IsReplay = false);
 
 public sealed record FinalizationRequest(OperationKey Operation, CorpusHandle Corpus, string CanonicalPayloadDigest,
-    IOctoberExecutionScope ExecutionScope);
+    IOctoberExecutionScope ExecutionScope)
+{
+    /// <summary>Explicit host selection; null or default roots are invalid for B2 finalization.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public BusinessFinalizationSelection? Selection { get; init; }
+}
 public interface IOctoberBusinessFinalizer
 {
     Task<BusinessFinalizationResult> FinalizeAsync(FinalizationRequest request, CancellationToken cancellationToken = default);
