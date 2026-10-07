@@ -1197,5 +1197,8 @@
   },
   "October/Knowledge/OctoberGenerateAdmissionPostgreSqlTests.cs": {
     "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberResolutionHandoffTests.cs": {
+    "suite": "SelfContained"
   }
 }
