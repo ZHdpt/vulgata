@@ -136,6 +136,13 @@ verification before reuse.
   witness handoff correction, PostgreSQL and real-source/provider qualification
   remain pending. F2 exists; controlled B2 preparation does not wait for Chat.
   No implicit B2 or Chat runtime completion is claimed.
+  Reviewed Chat coordinator `d99517a6` is integrated at `9227f376`, with
+  1,459/1,459 combined affected SelfContained passes and zero failures/skips.
+  It coordinates the canonical admitted turn, actual generation/drain ownership,
+  phase acknowledgement reconciliation and immutable terminal save. Root-owned
+  live execution registration, commit/owner-death adapters and route activation
+  remain missing; Chat owns the bounded presentation adapter. Controlled evidence
+  does not authorize or prove a real provider/host/database run.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

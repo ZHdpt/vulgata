@@ -591,3 +591,32 @@ handoff correction; do not reconstruct it from Outcome or regenerate. Controlled
 B2 preparation follows its actual inputs, not a blanket wait for Chat or all T027
 evidence. FlowPlanner/synthesis/finalizer remain scoped Business work, while real
 dispatch, PostgreSQL and connected-source qualification retain their prerequisites.
+
+## Controlled canonical Chat coordinator integrated
+
+Reviewed Chat checkpoint `d99517a65a58868ad2f9836abe91ef8775f4812e` is merged
+at `9227f3761335d7147c6f221e70cd58e472fde110`. Independent cross-module review
+accepted the bounded coordinator without a remaining must-fix. It preserves the
+original Admitted snapshot, observes actual generation before opening the physical
+send gate, drains owned work, and reconciles uncertain phase acknowledgements
+without redispatch. Terminal save intent is frozen once; sanitized no-content
+closure is distinct from authorization to disclose a saved answer.
+
+Combined affected verification passed **1,459/1,459 SelfContained** cases, zero
+failures/skips, 395 classified files:
+`TestResults/isolation-b1c1457f40d94f4c84cc28f03ee4d2aa/results.trx`.
+This is an affected selection, not a full-suite or real-provider result. The earlier
+Explorer full-run SQLite crash remains unexplained; no new migration was applied.
+
+The component is released for consumer composition. Root still owns live execution
+registration, canonical store observation/commit and owner-death adapters, actual
+client-factory/physical-settlement retention, and Web route activation. Chat owns
+the bounded turn-local presentation adapter; slow or throwing UI subscribers must
+not own generation or cleanup. The same-assembly factory seam may intercept the
+real client factory for trusted host observation, with the real clock and mandatory
+generation observer; it does not authorize fake runtime authority or transport.
+
+Scan continues public Generate and S3 composition independently. Business owns the
+same-attempt witness handoff correction and available B2 work. Explorer awaits the
+single shared retained publication, not Chat persistence. No all-lane barrier or
+new resource approval follows from this controlled checkpoint.
