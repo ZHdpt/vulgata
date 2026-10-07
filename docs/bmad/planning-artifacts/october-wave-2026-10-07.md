@@ -1153,3 +1153,33 @@ Business may include the additive declaration with its next dependent reviewed
 checkpoint; no separate immediate commit is required. Schema/persistence work remains
 behind accepted actual lifetime correction. Scan's S2 work continues independently;
 no S3 implementation, migration execution or runtime resource permission is added.
+
+## Actual handoff lifetime and CL logging correction imported
+
+Scan's reviewed `ddcb1b0801eea9bd7ee3246a2f6ff81d3efac2de` lifetime correction
+and `8216439ce847c527408f380cca6f50b7e1897daa` publication-diagnostic correction
+are selectively integrated at `ab5161b3`. Only their four production/test files were
+applied; comparison with the offered checkpoint for those paths is empty. The
+pending qualification adapter and its history were not pulled into this boundary.
+Owner verification passed 92/92 controlled cases, including 32 scope cases and the
+publication log-failure/replay/revocation plus freeze-log-no-write checks.
+
+Independent scope review accepted persistent original run-stop/deadline observation,
+exact identity/phase checks and monotonic expiry without confusing future-call budget
+exhaustion with invalidation of a completed result. Publication review accepted exact
+confirmed handles plus diagnostic failure/exit 1, fresh denial withholding, and no
+freeze-log progression or repeated publication. These correct implemented S2/shared
+scope behavior; they do not compose Business/S3 or qualify external resources.
+
+Business received the exact integrated source checkpoint and is released to safely
+consume it and qualify both executor corrections against the actual scope. Owner
+controlled evidence and accepted source are explicit; root combined verification is
+recorded separately when complete. No unrelated adapter/Chat completion barrier or
+new human approval round applies. PostgreSQL prerequisite inspection remains read-only
+until the consolidated runtime resource grant is supplied.
+
+Root combined verification at `ab5161b3` passed **1,754/1,754 SelfContained**,
+zero failures/skips, 412 classified sources:
+`TestResults/isolation-e1da5bda16c4497a81f9773d650f6faf/results.trx`.
+This includes the fixture wait additions and both new Scan corrections. It is not
+a full-suite, Business consumer-lifetime, PostgreSQL, native/provider or E2E result.
