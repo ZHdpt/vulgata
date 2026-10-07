@@ -12,8 +12,10 @@ implementation_authorized: false
 
 The later [controlled Chat integration](october-chat-integration-2026-10-07.md)
 imports `e4689f0b` at `10db709b`, with 2,775/2,775 combined SelfContained passes.
-It does not activate Chat or implement its missing owner contracts. The user has
-explicitly required a pause before further development.
+It does not activate Chat or implement its missing owner contracts. The earlier
+pause is superseded by the user-authorized [October 7 delivery wave](october-wave-2026-10-07.md),
+which releases bounded four-lane development and incremental integration, not
+unapproved runtime resources.
 
 The user's instruction to execute item 1 authorizes the bounded integration now
 recorded in [the reader integration handoff](october-reader-integration-2026-10-07.md).

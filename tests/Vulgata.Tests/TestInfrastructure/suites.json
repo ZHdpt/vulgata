@@ -1,4 +1,7 @@
 {
+  "Explore/ExplorePersistedReaderTests.cs": {
+    "suite": "PostgreSql"
+  },
   "Explore/ReaderComponentTests.cs": {
     "suite": "SelfContained"
   },
@@ -174,6 +177,9 @@
     "suite": "SelfContained"
   },
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanGenerateConfigurationTests.cs": {
     "suite": "SelfContained"
   },
   "OctoberScan/OctoberScanCodeGraphLifetimeTests.cs": {
@@ -1082,6 +1088,12 @@
     "suite": "PostgreSql"
   },
   "October/Integration/OctoberWikiCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberChatHostBindingTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberChatProviderBindingTests.cs": {
     "suite": "SelfContained"
   },
   "October/Integration/OctoberWikiPostgreSqlTests.cs": {
