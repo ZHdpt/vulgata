@@ -89,6 +89,9 @@ verification before reuse.
   prompt `2106af16`, and adds controlled fresh-read Web provider binding. Final combined
   SelfContained verification passed 2,859/2,859, zero failures/skips. All four lanes
   are released within the wave boundaries; no all-Chat or all-lane barrier applies.
+  Reviewed raw Chat guard `26a89712` is subsequently integrated: 509/509 selected
+  related SelfContained cases pass (not another full-suite run). This supplies strict
+  streaming validation and guard cleanup, not selected-client/admission composition.
   Chat generation remains disabled; owner disclosure/dialogue implementation, W1
   admission/client composition and real-source retained qualification remain open.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
