@@ -84,8 +84,13 @@ verification before reuse.
   The first wave integrates Chat tool progress `df7f09cc`, Explorer Identity-claim
   correction `d28ba236` and host Chat-context/prompt preparation `0949d633`.
   Combined source `84d60d8d` passed 2,798/2,798 SelfContained tests, zero skips.
-  Chat generation remains disabled; Business canonical dialogue/disclosure, W1
-  admission/provider composition and real-source retained qualification remain open.
+  The subsequent wave accepts Business canonical dialogue/disclosure `d914fea8`
+  with both consumer agreements, imports Scan configuration `8cc06035` and its Worker
+  prompt `2106af16`, and adds controlled fresh-read Web provider binding. Final combined
+  SelfContained verification passed 2,859/2,859, zero failures/skips. All four lanes
+  are released within the wave boundaries; no all-Chat or all-lane barrier applies.
+  Chat generation remains disabled; owner disclosure/dialogue implementation, W1
+  admission/client composition and real-source retained qualification remain open.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
