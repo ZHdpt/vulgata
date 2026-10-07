@@ -693,3 +693,32 @@ This lifts the specific store implementation hold reported above. The actual hos
 execution registry/store observation/session retention and Web activation remain
 root work; PostgreSQL and real-provider/browser qualification remain unperformed.
 No runtime authority is created, and B2/Scan/graph continue independently.
+
+## Bounded Chat presentation adapter integrated
+
+Chat checkpoint `2d371f4fa52f1f4d8f8b693ddbe19d839cabedb5` is merged at
+`3d40c143`. Independent cross-module source review accepted its nonblocking
+presentation queue, separately retained subscriber lifetime, full opaque dependency
+union carried only inside the host, and fresh authorization before dequeued output.
+Exact canonical terminal projections replace provisional text. Explicit denial or
+authority unavailability can send a content-free suppression event which clears
+the bound view and prevents late restoration, without claiming save/slot release.
+
+This remains unactivated plumbing. Root must create it only from the actual
+confirmed-Running generation observer, retain the real sink lifetime and bind the
+selected turn/context. Context replacement must remove the old view; an asynchronous
+UI sink must recheck the attachment and token at actual application time. Previously
+delivered bytes cannot be recalled. No fake streaming, second execution path,
+browser-supplied capsules or permissive execution authority is introduced.
+
+Chat is released to remaining bounded T020/T021 leaf rendering and exact reader-link
+work with controlled checks. Root retains parent Web/page composition and activation;
+overlapping page edits must be coordinated before writing. PostgreSQL and real
+browser/provider qualification remain separately authorized work, not implied by
+component tests or this dispatch.
+
+The merged presentation plus corrected dialogue store passed **1,499/1,499 affected
+SelfContained** cases, zero failures/skips, 398 classified files:
+`TestResults/isolation-0b3a7dd9690d488fa50431c69b829029/results.trx`.
+This qualifies the controlled component combination, not a full suite, real
+streaming browser session, PostgreSQL or a retained real-Worker dataset.
