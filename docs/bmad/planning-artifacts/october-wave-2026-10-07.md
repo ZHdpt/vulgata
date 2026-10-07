@@ -1286,3 +1286,21 @@ Business is released to produce an isolated compiling declaration checkpoint wit
 contract documentation, excluding active schema/implementation changes. Root reviews
 and selectively integrates it before dispatching host implementation. This closes
 signature agreement only; it does not activate S3 or acquire runtime resources.
+
+Business declaration `d074bd21` is selectively imported at `c1505ba9`; only the
+new Core file and its contract section were included, not parent T032 stubs/schema.
+A documentation-context conflict included an ancestor-only diagnostics section.
+After approval review questioned possible loss, read-only comparison established
+the resolved main delta was seven insertions and zero deletions; the selective
+import was then approved. Existing diagnostics agreement remains recorded above.
+Core compilation passed with zero errors and 721 warnings. This is declaration
+compilation, not an implementation or runtime qualification.
+
+Scan is now dispatched for controlled private-slot mechanics and conformance tests
+against this exact declaration, preserving original Begin provenance, immutable
+binding/same scope, permanent retained task and wait-only cancellation. No public
+unconditional issuer or CL-and-BL command activation is authorized. Business may
+implement the same-store producer read within released T032 and prepare controlled
+T033 consumption, without inventing a grant while real slot composition is absent.
+Each owner supplies an isolated reviewed checkpoint; runtime and migration execution
+remain subject to the outstanding consolidated resource authority.
