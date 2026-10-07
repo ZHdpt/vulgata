@@ -1,6 +1,6 @@
 # October fresh execution admission agreement
 
-Owner declaration candidate, 2026-10-07. This enforces the accepted fresh-batch/no-restart
+Canonical declaration ed0f2600ecc9bd4896a2c91bc14c36eec93fe35f accepted by Scan through Integrator on 2026-10-07 (integration af5520d2868b310df9444b272ed4cb5175f38628). Store implementation and runtime qualification remain separate. This enforces the accepted fresh-batch/no-restart
 boundary. It is not a durable job, reservation, lease takeover or recovery framework.
 There is no Reserved/Abort lifecycle and no new table or migration.
 
