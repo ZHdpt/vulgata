@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-06 (integrated 18.2-18.4 baseline and revised four-feature first-deliverable inputs; runtime qualification retains its recorded scope).
+Updated: 2026-10-06 (accepted initial Knowledge K and locally verified B0a/B0b T014–T018; runtime qualification retains its recorded scope).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -51,13 +51,21 @@ verification before reuse.
   minimum Knowledge foundation derived from its plan. Old 18.5 evidence remains
   historical and incomplete; resuming its held workflow is not a new prerequisite.
   Follow the revised briefs rather than copying the full original story matrices
-  or skipped tool tasks. Business's initial compiled Knowledge contract/controlled
-  fixture checkpoint is now integrated at `3bcd815b` (candidate `07c3fe44`, handoff
-  `7a189c34`). Its focused integration replay passed 50/50 SelfContained tests,
-  zero skips. Initial K/CP-K1 is accepted at `12d92d80` after all three consumer
-  acknowledgements and a combined 89/89 SelfContained replay, zero skips.
-  This is not the real B0 store, Scan, Chat or runtime qualification. See the
-  integration plan's current checkpoint below before starting dependent work.
+  or skipped tool tasks. Initial Knowledge K/CP-K1 is accepted at `12d92d80`
+  (candidate `07c3fe44`), with Scan/Chat/Explore conformance and 89/89 combined
+  controlled passes. Business B0a T007–T013 is now locally implemented and
+  independently accepted: 160/160 focused SelfContained, 9/9 owned PostgreSQL 17,
+  and 1/1 owned cross-process logging qualification, with zero skips and verified
+  cleanup. Its source commit is imported with B0b; see the Business
+  [execution/handoff record](../../specs/20-1-Oct14-business/quickstart.md).
+  Local B0b T014–T018 is also independently accepted: exact immutable corpus/CL
+  publication, live ordinary-reader authorization, bounded protected reads and
+  feature-local composition. Final affected verification passed 373/373 SelfContained,
+  20/20 owned PostgreSQL and 1/1 cross-process logging checks, with zero skips and
+  verified cleanup. The writer now additionally requires trusted host freeze/inventory
+  authority. Shared Web composition, real Scan adapters and exact-reader routing remain
+  T019 dependencies; T020 real-file qualification is unstarted. No real-source/provider
+  or combined runtime qualification follows. Stop before T019 under the current scope.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
@@ -145,7 +153,7 @@ runtime workflow:
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
 | Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
 | CodeGraph/LSP | Integrated narrow adapters: 18.2 records 121 controlled JDT checks, real pinned JDT 1.58 navigation under application-supplied JDK 21, and 2,063 SelfContained passes. 18.3 records actual returned-descriptor native MCP use, process-exit corrections and 2,019 SelfContained passes. These are separate branch/owned-fixture results, not combined-root or customer-Repository qualification. General source-authority/reader integration remains unfinished; no preventive OS filesystem/network isolation is claimed. |
-| Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
+| Knowledge | OCT-BUSINESS B0a implements atomic semantic file acceptance, immutable CL history, exact replay/lookup and sanitized logging in October persistence; focused controlled, owned PostgreSQL and two-process logger evidence is recorded in its quickstart. Real Scan authority/source adapters and B0b publication/live reads remain unqualified; legacy stores are not substitutes. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |
 | Chat | Provider SSE is ingested but the current answer path buffers strict candidates and reveals accepted text in the UI. Pair-bound scope and process-local dialogue/publication are not genuine generic streaming/durable reattachment or Business BL-only behavior. |
 | Reader/graph | Current pages are placeholders; existing Knowledge/citation code is not a working exact-version reader or graph. The planned diagram package is not installed at this baseline. |
