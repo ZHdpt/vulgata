@@ -31,7 +31,7 @@ public sealed class AddOctoberResolutionEvidence : Migration
             );
             CREATE UNIQUE INDEX "UX_ResolutionItem_Fingerprint" ON october."OctoberResolutionItems" ("BatchId", "CorpusId", "InquiryFingerprint");
             CREATE UNIQUE INDEX "UX_ResolutionItem_Operation" ON october."OctoberResolutionItems" ("BatchId", "OperationKind", "OperationId");
-            
+
             CREATE TABLE october."OctoberResolutionDocumentDependencies" (
                 "BatchId" uuid NOT NULL,
                 "CorpusId" uuid NOT NULL,
@@ -46,7 +46,7 @@ public sealed class AddOctoberResolutionEvidence : Migration
             CREATE INDEX "IX_ResolutionDependency_Item" ON october."OctoberResolutionDocumentDependencies" ("BatchId", "CorpusId", "ItemId");
             CREATE UNIQUE INDEX "UX_ResolutionDependency_InquiryCaller" ON october."OctoberResolutionDocumentDependencies" ("BatchId", "ItemId") WHERE "IsInquiryCaller" = TRUE;
             CREATE INDEX "IX_ResolutionDependency_Document" ON october."OctoberResolutionDocumentDependencies" ("BatchId", "CorpusId", "LogicalDocumentId", "VersionId");
-            
+
             CREATE TABLE october."OctoberRelationshipVersions" (
                 "BatchId" uuid NOT NULL,
                 "CorpusId" uuid NOT NULL,
@@ -67,7 +67,7 @@ public sealed class AddOctoberResolutionEvidence : Migration
             CREATE UNIQUE INDEX "UX_RelationshipVersion_Item" ON october."OctoberRelationshipVersions" ("BatchId", "CorpusId", "ItemId");
             CREATE INDEX "IX_RelationshipVersion_From" ON october."OctoberRelationshipVersions" ("BatchId", "CorpusId", "FromLogicalDocumentId", "FromVersionId");
             CREATE INDEX "IX_RelationshipVersion_To" ON october."OctoberRelationshipVersions" ("BatchId", "CorpusId", "ToLogicalDocumentId", "ToVersionId");
-            
+
             CREATE TABLE october."OctoberUncertaintyVersions" (
                 "BatchId" uuid NOT NULL,
                 "CorpusId" uuid NOT NULL,
@@ -81,7 +81,7 @@ public sealed class AddOctoberResolutionEvidence : Migration
             );
             CREATE UNIQUE INDEX "UX_UncertaintyVersion_Key" ON october."OctoberUncertaintyVersions" ("BatchId", "CorpusId", "Key");
             CREATE UNIQUE INDEX "UX_UncertaintyVersion_Item" ON october."OctoberUncertaintyVersions" ("BatchId", "CorpusId", "ItemId");
-            
+
             CREATE TABLE october."OctoberPublicationRelationships" (
                 "BatchId" uuid NOT NULL,
                 "CorpusId" uuid NOT NULL,
@@ -101,7 +101,7 @@ public sealed class AddOctoberResolutionEvidence : Migration
             CREATE INDEX "IX_PublicationRelationship_Evidence" ON october."OctoberPublicationRelationships" ("BatchId", "CorpusId", "RelationshipVersionId", "FromLogicalDocumentId", "FromVersionId", "ToLogicalDocumentId", "ToVersionId");
             CREATE INDEX "IX_PublicationRelationship_From" ON october."OctoberPublicationRelationships" ("BatchId", "PublicationId", "FromLogicalDocumentId", "FromVersionId");
             CREATE INDEX "IX_PublicationRelationship_To" ON october."OctoberPublicationRelationships" ("BatchId", "PublicationId", "ToLogicalDocumentId", "ToVersionId");
-            
+
             CREATE TABLE october."OctoberPublicationResolutionUncertainties" (
                 "BatchId" uuid NOT NULL,
                 "CorpusId" uuid NOT NULL,
@@ -113,7 +113,7 @@ public sealed class AddOctoberResolutionEvidence : Migration
             );
             CREATE INDEX "IX_PublicationResolutionUnknown_Publication" ON october."OctoberPublicationResolutionUncertainties" ("BatchId", "PublicationId", "CorpusId");
             CREATE INDEX "IX_PublicationResolutionUnknown_Evidence" ON october."OctoberPublicationResolutionUncertainties" ("BatchId", "CorpusId", "UncertaintyId");
-            
+
             CREATE FUNCTION october."RequireNewOctoberResolutionParent"() RETURNS trigger LANGUAGE plpgsql AS $body$
             DECLARE parent_xid xid;
             BEGIN
@@ -136,7 +136,7 @@ public sealed class AddOctoberResolutionEvidence : Migration
                 END IF;
                 RETURN NEW;
             END $body$;
-            
+
             CREATE TRIGGER "ImmutableResolutionHistory" BEFORE UPDATE OR DELETE ON october."OctoberResolutionItems"
                 FOR EACH ROW EXECUTE FUNCTION october."RejectOctoberKnowledgeMutation"();
             CREATE TRIGGER "ImmutableResolutionHistoryTruncate" BEFORE TRUNCATE ON october."OctoberResolutionItems"
