@@ -10,4 +10,7 @@ namespace Vulgata.Core.Entities.OctoberKnowledge;
 /// </summary>
 public sealed record BLDependency(ImmutableArray<DocumentVersionReference> Documents,
     ImmutableArray<AcceptedRelationship> Relationships, ImmutableArray<FlowUncertainty> Uncertainties,
-    ImmutableArray<Contributor> Contributors);
+    ImmutableArray<Contributor> Contributors)
+{
+    public ImmutableArray<FlowFileUncertainty> FileUncertainties { get; init; } = [];
+}

@@ -200,11 +200,12 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
         return await context.CorpusSelections.AsNoTracking().SingleOrDefaultAsync(x => x.BatchId == binding.BatchId && x.CorpusId == corpus.CorpusId, ct);
     }
 
-    internal static async Task<ResolutionCorpus> LoadExactCorpusAsync(OctoberDbContext context, CorpusHandle corpus, CancellationToken ct)
+    internal static async Task<ResolutionCorpus> LoadExactCorpusAsync(OctoberDbContext context, CorpusHandle corpus, CancellationToken ct,
+        OctoberKnowledgeStoredReadBudget? sharedBudget = null)
     {
         Guid batch = corpus.Binding.BatchId;
         Guid corpusId = corpus.CorpusId;
-        var budget = new OctoberKnowledgeStoredReadBudget();
+        var budget = sharedBudget ?? new OctoberKnowledgeStoredReadBudget();
         var query = from member in context.CorpusDocuments.AsNoTracking()
                     join version in context.DocumentVersions.AsNoTracking() on new { member.BatchId, member.VersionId, member.LogicalDocumentId }
                         equals new { version.BatchId, version.VersionId, version.LogicalDocumentId }

@@ -27,12 +27,17 @@ public sealed record FlowPlanningInput(ResolutionCorpus Corpus, ImmutableArray<F
 {
     /// <summary>Complete owner-loaded corpus ledger, including coverage inputs with no accepted CodeUnit.</summary>
     public ImmutableArray<Contributor> Contributors { get; init; }
+
+    /// <summary>Accepted file unknowns retain their original composite identity, including zero-unit files.</summary>
+    public ImmutableArray<FlowFileUncertainty> FileUncertainties { get; init; } = [];
 }
 
 /// <summary>Configured limits may only reduce the hard ceilings.</summary>
 public sealed record FlowPlanningLimits(int MaxNodes = 256, int MaxEdges = 512, int MaxDepth = 16);
 
 public sealed record FlowUncertainty(Guid UncertaintyVersionId, Uncertainty Content);
+
+public sealed record FlowFileUncertainty(Guid BatchId, Guid ManifestId, string Key, Uncertainty Content);
 
 public sealed record FlowFrontier(FlowFrontierKind Kind, DocumentVersionReference From,
     DocumentVersionReference? To, Guid? RelationshipVersionId, string? UncertaintyKey);
@@ -61,7 +66,7 @@ public static class OctoberFlowPlanner
             new(status, [], [], [], []);
         if (input is null || input.Corpus is null || input.Corpus.Handle is null ||
             input.Corpus.Documents.IsDefault || input.Units.IsDefault || input.Resolutions.IsDefault ||
-            input.Roots.IsDefault || input.PlanDispositions.IsDefault || input.Coverage.IsDefault || input.Contributors.IsDefault ||
+            input.Roots.IsDefault || input.PlanDispositions.IsDefault || input.Coverage.IsDefault || input.Contributors.IsDefault || input.FileUncertainties.IsDefault ||
             limits.MaxNodes is < 1 or > MaximumNodes || limits.MaxEdges is < 0 or > MaximumEdges ||
             limits.MaxDepth is < 0 or > MaximumDepth)
             return Invalid();
@@ -87,6 +92,11 @@ public static class OctoberFlowPlanner
         // Corpus provenance also includes terminal coverage with no CodeUnit (for example zero-unit
         // acceptance or unprocessed files). Document citations cannot reconstruct that owner ledger.
         var contributorSet = input.Contributors.ToHashSet();
+        if (input.FileUncertainties.Any(x => x is null || x.BatchId != input.Corpus.Handle.Binding.BatchId || x.ManifestId == Guid.Empty ||
+                string.IsNullOrWhiteSpace(x.Key) || x.Content is null || x.Key != x.Content.Key ||
+                x.Content.Evidence.IsDefault || x.Content.Limitations.IsDefault) ||
+            input.FileUncertainties.Select(x => (x.BatchId, x.ManifestId, x.Key)).Distinct().Count() != input.FileUncertainties.Length)
+            return Invalid();
         if (documents.SelectMany(x => x.Contributors).Any(x => !contributorSet.Contains(x)) ||
             input.Coverage.Any(coverage => coverage.Origin is null || !input.Contributors.Any(contributor =>
                 contributor.Kind == ContributorKind.Source &&
@@ -125,7 +135,10 @@ public static class OctoberFlowPlanner
         var dependencies = new BLDependency(Canonical(documents.Select(x => x.Version)),
             Canonical(input.Resolutions.Where(x => x.Outcome.Relationship is not null).Select(x => x.Outcome.Relationship!)),
             Canonical(input.Resolutions.Where(x => x.Outcome.Uncertainty is not null)
-                .Select(x => new FlowUncertainty(x.UncertaintyVersionId!.Value, x.Outcome.Uncertainty!))), allContributors);
+                .Select(x => new FlowUncertainty(x.UncertaintyVersionId!.Value, x.Outcome.Uncertainty!))), allContributors)
+        {
+            FileUncertainties = Canonical(input.FileUncertainties)
+        };
         var groups = ImmutableArray.CreateBuilder<FlowGroupVersion>();
         var dispositions = ImmutableArray.CreateBuilder<FlowRootDisposition>();
         var coverage = Canonical(input.Coverage);
@@ -165,9 +178,9 @@ public static class OctoberFlowPlanner
             .Select(e => e.Source!).ToArray();
         // Unit ranges may contain several smaller accepted claim ranges. They cannot move ownership
         // to a supporting file or become a source-backed root solely through advisory text.
-        return unit.Anchors.All(anchor => anchor is not null && anchor.Origin == unit.PrimaryOrigin &&
+        return unit.Anchors.All(anchor => anchor is not null && SameOrigin(anchor.Origin, unit.PrimaryOrigin) &&
             anchor.StartLine > 0 && anchor.EndLine >= anchor.StartLine && sourceEvidence.Any(e =>
-                e.Origin == unit.PrimaryOrigin && e.StartLine >= anchor.StartLine && e.EndLine <= anchor.EndLine));
+                SameOrigin(e.Origin, unit.PrimaryOrigin) && e.StartLine >= anchor.StartLine && e.EndLine <= anchor.EndLine));
     }
 
     private static bool ValidOutcome(FlowAcceptedResolution item, ResolutionInquiry inquiry,
@@ -259,6 +272,11 @@ public static class OctoberFlowPlanner
 
     private static ImmutableArray<T> Canonical<T>(IEnumerable<T> values) =>
         values.OrderBy(OctoberKnowledgePolicy.SerializeCanonical, StringComparer.Ordinal).ToImmutableArray();
+
+    // Match the accepted source identity without rewriting immutable content or its digest.
+    private static bool SameOrigin(PreparedOrigin left, PreparedOrigin right) =>
+        (left with { RelativePath = OctoberKnowledgePolicy.NormalizePath(left.RelativePath) }) ==
+        (right with { RelativePath = OctoberKnowledgePolicy.NormalizePath(right.RelativePath) });
 
     private static Guid Identity<T>(T value) => new(Convert.FromHexString(
         OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(value))[..32]));
