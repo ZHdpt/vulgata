@@ -1235,3 +1235,34 @@ smallest original-run one-shot binding over exact run/operation/corpus/request,
 without a new durable framework or caller boolean. The precise mechanism remains
 pending agreement. Enabled finalizer dispatch stays unavailable; independent T032
 store/schema work continues. No S3 or runtime activation follows from this discussion.
+
+## Settled original-run finalization semantics; signatures pending
+
+Both owners agreed to a private Scan-owned one-shot slot within the original live
+Generate runner, bound to exact run/operation/corpus/canonical request and original
+scope. It is issued only from that runner's accepted Begin execution, including
+reconciliation of its own tracked submission; a restarted receipt reader cannot
+recreate it. Install and retain the task, permanently consuming the slot, before
+any callback or await. Exact duplicate callers await that task; changed binding
+cannot invoke the callback or stop the original execution. Fault/cancellation/
+indeterminate completion never resets it or renews an allowance.
+
+The first callback performs a bounded Business-owned exact read: existing same
+request replays only; conflict performs no work; a positively observed missing row
+can permit first generation ONLY because the callback already holds the original
+independently issued grant. Failed/ambiguous reads produce no generation and leave
+the slot consumed. Public recovery lookup remains indeterminate for missing or
+unavailable results. FINAL choice is a narrow producer-internal actual-read
+distinction from the same owner store, with exact binding/live authority checks.
+The crossed proposal to use public PersistenceStatus=NotCompleted for absence was
+withdrawn and is NOT adopted. No absence result creates dispatch authority.
+
+Every invocation token cancels only its wait, including the first waiter. Execution
+uses the original host stop/deadline; the runner retains the actual task and its
+session/scope/resource cleanup even with no waiters. Explicit authorized host stop
+remains separate. Cached outcomes require fresh Business disclosure before each
+exposure; separate lookup reconciliation does not replace the generation task.
+Business owns the minimal canonical producer-read/callback signatures and wrapper;
+Scan owns the private slot and runner lifecycle. Exact typed signatures/compiling
+checkpoint are next, not yet implemented. T032 remains independent; no new durable
+framework, UI surface, S3 execution or runtime resource grant is introduced.
