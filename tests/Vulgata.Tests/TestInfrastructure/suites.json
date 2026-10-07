@@ -1,4 +1,7 @@
 {
+  "October/Knowledge/OctoberGenerateAdmissionTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberKnowledgeInputTests.cs": {
     "suite": "SelfContained"
   },

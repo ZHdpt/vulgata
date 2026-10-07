@@ -68,6 +68,5 @@ late selection/subject changes; entry/submission fencing; real uniqueness/rollba
 delayed pre-lock request remains indeterminate; setup mutation denied after admission;
 generic lookup rejection; original-live-run one-shot dispatch controlled by Scan.
 
-This candidate declares the ports and identity. Its digest helper/store and corresponding
-host authority/one-shot runner integration still require independent RED/GREEN and review.
+Business digest helper/store controlled implementation and review are recorded in quickstart.md. Corresponding live host authority, one-shot runner integration and PostgreSQL qualification remain required.
 No runtime/paid call or PostgreSQL qualification is authorized or claimed by this document.
