@@ -781,7 +781,12 @@ unknown-usage signalling) when a consumer lacks trustworthy observation. Complet
 Worker observation proving no send still means exact zero; missing observer
 capability does not. No shared Business lease API changes are authorized by this S2
 correction. Business has been asked for the smallest future S3 observation seam;
-that agreement is not a prerequisite for Worker-only S2.
+that agreement is not a prerequisite for Worker-only S2. Business's disposition
+accepts a future host-bound per-attempt observer at the underlying transport API
+invocation, covering all physical retries. An executor-side IChatClient call is not
+physical invocation proof; neither observation proves remote acceptance. Concrete
+adapter binding remains to be agreed before implementation, without a Core lease
+change for S2.
 
 Explorer confirmed there is no combined Chat-purpose title/destination API. Its
 Reader-purpose OpenDocumentAsync cannot authorize a Chat footer. The proposed local
@@ -789,6 +794,12 @@ Chat projection uses canonical exact disclosed reads under fresh Chat authority,
 then the existing pure link builder. Retain every presentation-read capsule with
 the complete original turn/history lineage and reauthorize before disclosure.
 These reads grant neither model-consumption credit nor stronger source coverage.
-Business encoding/lineage confirmation and Chat compatibility are pending. Saved
-history display requires a bounded fresh display operation, not a restarted model
-budget or an invented requirement that the old generation still be running.
+Business confirmed this composition: use a bounded, conformance-tested complete
+wrapper encoding; derive the title from the same successfully admitted exact page;
+retain new DISPLAY lineage plus all original turn/history inputs. Never rewrite
+original reference coverage or expose protected envelopes. Failed aggregate
+authorization suppresses the whole dependent display, not only one citation.
+Chat's exact local adapter/encoder/limits compatibility mapping remains pending.
+Saved-history display uses a fresh bounded display lifetime and aggregate budget,
+not a restarted model budget or a requirement that the old generation still run.
+No new Knowledge API, route, schema or runtime permission follows from the agreement.
