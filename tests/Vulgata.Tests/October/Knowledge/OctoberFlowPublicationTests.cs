@@ -3,10 +3,13 @@ using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities.OctoberKnowledge;
 using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.Data.October.Knowledge;
+using Vulgata.OctoberGenerator;
 using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Web.Data;
 
@@ -770,6 +773,134 @@ public sealed class OctoberFlowPublicationTests
         Assert.Equal(0, await context.KnowledgeOperations.CountAsync(value => value.Kind == OperationKind.FinalizeCorpus));
         foreach (string table in _flowTables)
             Assert.Equal(0, await context.Database.SqlQueryRaw<long>($"SELECT COUNT(*) AS \"Value\" FROM \"{table}\"").SingleAsync());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_RealOwnerWithValidAndUnsupportedRoot_PublishesPartialWithExactNoGroupDispositionAsync()
+    {
+        await using var fixture = await FlowPublicationCase.CreateAsync();
+        var original = fixture.Request();
+        var unplanned = fixture.Root with { Kind = FlowRootKind.Handler };
+        var selection = original.Selection with { Roots = [fixture.Root, unplanned] };
+        var planned = OctoberFlowPlanner.Plan(fixture.Input with { Roots = selection.Roots }, selection.Limits);
+        Assert.Equal(FlowPlanningStatus.Succeeded, planned.Status);
+        var group = Assert.Single(planned.Groups);
+        Assert.Equal(fixture.Group.GroupVersionId, group.GroupVersionId);
+        Assert.Contains(planned.RootDispositions, disposition => disposition.Root == unplanned && disposition.Kind == FlowRootDispositionKind.UnsupportedKind);
+        await using var host = new OctoberExecutionScope(selection.RunId, selection.ProviderProfileId, new OctoberScanPolicy
+        {
+            OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 100,
+            SourceRules = [new(fixture.Input.Corpus.Documents[0].RepositoryId, "src", "selected", "Controlled component qualification")]
+        }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted), original.Operation);
+        var request = new FinalizationRequest(original.Operation, original.Corpus, "", host) { Selection = selection };
+        request = request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
+        // The slot models original-run single flight; it does not claim actual Scan slot issuance.
+        using var slot = new FinalizerControlledSlot(request);
+        using var client = new ResolutionClient((_, _) => Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant,
+            JsonSerializer.Serialize(original.Completed[0].Proposal)))
+        {
+            FinishReason = ChatFinishReason.Stop,
+            Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 }
+        }));
+        var store = fixture.Store();
+        var finalizer = new OctoberBusinessFinalizer(slot, store,
+            new OctoberFlowPlanningInputLoader(fixture.Basis.Acceptance.Factory, fixture.Basis.Authorization),
+            client, selection.ProviderProfileId,
+            new("controlled-host", 0, "controlled-profile", "openai", "https://unused.invalid", "controlled-model", "controlled-reference"),
+            "Controlled synthesis instructions.", new ResolutionDisclosure());
+
+        var result = await finalizer.FinalizeAsync(request);
+
+        Assert.Equal(BusinessFinalizationStatus.PublishedPartial, result.Status);
+        Assert.NotNull(result.Publication);
+        Assert.Equal(1, client.Calls);
+        Assert.Equal(1, slot.Invocations);
+        await using var context = fixture.Basis.Acceptance.Factory.CreateDbContext();
+        var receipt = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
+        var submitted = JsonSerializer.Deserialize<FlowFinalizationPublicationRequest>(receipt.RequestJson,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        var completed = Assert.Single(submitted.Completed);
+        var omitted = Assert.Single(submitted.Dispositions);
+        Assert.Equal(fixture.Root, completed.Root);
+        Assert.Equal(group.GroupVersionId, completed.GroupVersionId);
+        Assert.Equal(unplanned, omitted.Root);
+        Assert.Equal(FlowFinalizationDispositionKind.NotEvaluated, omitted.Kind);
+        Assert.Null(omitted.GroupVersionId);
+        Assert.False(string.IsNullOrWhiteSpace(omitted.Reason));
+        Assert.True(selection.Roots.ToHashSet().SetEquals(new[] { completed.Root, omitted.Root }));
+        Assert.Equal(OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(submitted), submitted.CanonicalOutcomeDigest);
+        var retained = await new OctoberKnowledgePublishedSource(fixture.Basis.Acceptance.Factory).LoadAsync(result.Publication!);
+        var bl = Assert.Single(retained!.Documents.Where(document => document.Kind == DocumentKind.BusinessLogic));
+        var reader = fixture.Reader(result.Publication!);
+        var opened = await reader.OpenReadSelectionAsync(fixture.ReadRequest(result.Publication!));
+        Assert.Equal(KnowledgeReadStatus.Success, opened.Status);
+        var page = await reader.ReadExactAsync(new(opened.Selection!, new(bl.Reference.BatchId, result.Publication!.PublicationId,
+            bl.Reference.LogicalDocumentId, bl.Reference.DocumentVersionId)));
+        Assert.Equal(KnowledgeReadStatus.Success, page.Status);
+        Assert.True(page.Coverage!.IsPartial);
+        Assert.NotEmpty(page.Coverage.PermittedGaps);
+        Assert.DoesNotContain(omitted.Reason, string.Join("\n", page.Coverage.PermittedGaps), StringComparison.Ordinal);
+        var replay = await finalizer.FinalizeAsync(request);
+        Assert.Equal(result.Publication, replay.Publication);
+        Assert.Equal(result.Status, replay.Status);
+        Assert.Equal(1, client.Calls);
+        Assert.Equal(1, slot.Invocations);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("fake-group")]
+    [InlineData("failed")]
+    [InlineData("completed")]
+    public async Task PublishAsync_UnplannedRootCannotAcquireFabricatedGroupOrAttemptOutcomeAsync(string fabricated)
+    {
+        await using var fixture = await FlowPublicationCase.CreateAsync();
+        var original = fixture.Request();
+        var unplanned = fixture.Root with { Kind = FlowRootKind.Handler };
+        var selection = original.Selection with { Roots = [fixture.Root, unplanned] };
+        string payload = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(new(original.Operation, original.Corpus, "", new FinalizationForbiddenScope()) { Selection = selection });
+        var disposition = new FlowFinalizationDisposition(unplanned, null, FlowFinalizationDispositionKind.NotEvaluated, "Unsupported bounded root.");
+        var completed = original.Completed;
+        if (fabricated == "fake-group") disposition = disposition with { GroupVersionId = fixture.Group.GroupVersionId };
+        if (fabricated == "failed") disposition = disposition with { Kind = FlowFinalizationDispositionKind.Failed };
+        if (fabricated == "completed") completed = completed.Add(new(unplanned, fixture.Group.GroupVersionId, original.Completed[0].Proposal));
+        var request = new FlowFinalizationPublicationRequest(original.Operation, original.Corpus, payload, selection,
+            completed, fabricated == "completed" ? [] : [disposition], "");
+        request = request with { CanonicalOutcomeDigest = OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(request) };
+        int submissions = fixture.Basis.Acceptance.Guard.Submissions;
+
+        var result = await fixture.Store().PublishAsync(request);
+
+        Assert.Equal(BusinessFinalizationStatus.Failed, result.Status);
+        Assert.Equal(KnowledgeWriteStatus.InvalidProposal, result.PersistenceStatus);
+        Assert.Null(result.Publication);
+        Assert.Equal(submissions, fixture.Basis.Acceptance.Guard.Submissions);
+        await AssertNoFlowMutationAsync(fixture);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("unit")]
+    [InlineData("version")]
+    [InlineData("selector")]
+    public async Task LoadAsync_UnsupportedKindCannotHideInvalidExactRootIdentityAsync(string invalid)
+    {
+        await using var fixture = await FlowPublicationCase.CreateAsync();
+        var root = fixture.Root with { Kind = FlowRootKind.Handler };
+        root = invalid switch
+        {
+            "unit" => root with { UnitId = Guid.NewGuid() },
+            "version" => root with { Document = root.Document with { DocumentVersionId = Guid.NewGuid() } },
+            _ => root with { Selector = "not-an-accepted-unit-selector" }
+        };
+
+        var loaded = await new OctoberFlowPlanningInputLoader(fixture.Basis.Acceptance.Factory, fixture.Basis.Authorization)
+            .LoadAsync(fixture.Input.Corpus.Handle, [root]);
+
+        Assert.Equal(KnowledgeReadStatus.Unavailable, loaded.Status);
+        Assert.Null(loaded.Input);
+        await AssertNoFlowMutationAsync(fixture);
     }
 
     private static void AssertUnavailableInitial(BusinessFinalizationInitialRead result)

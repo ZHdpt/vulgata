@@ -76,7 +76,8 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
         if (loaded.Status != KnowledgeReadStatus.Success || loaded.Input is not { } input)
             return Rejected(request, KnowledgeWriteStatus.Denied);
         var plan = OctoberFlowPlanner.Plan(input, request.Selection.Limits);
-        if (plan.Status != FlowPlanningStatus.Succeeded || plan.RootDispositions.Any(x => x.Kind != FlowRootDispositionKind.Planned))
+        if (plan.Status != FlowPlanningStatus.Succeeded ||
+            plan.RootDispositions.Any(x => x.Kind is not (FlowRootDispositionKind.Planned or FlowRootDispositionKind.UnsupportedKind)))
             return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
         var validated = new List<(FlowGroupVersion Group, BusinessLogicContent Content)>();
         foreach (var completed in request.Completed)
@@ -91,6 +92,14 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
         }
         foreach (var disposition in request.Dispositions)
         {
+            var rootDisposition = plan.RootDispositions.SingleOrDefault(x => x.Root == disposition.Root);
+            if (rootDisposition is null) return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
+            if (rootDisposition.Kind == FlowRootDispositionKind.UnsupportedKind)
+            {
+                if (disposition.Kind != FlowFinalizationDispositionKind.NotEvaluated || disposition.GroupVersionId is not null)
+                    return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
+                continue;
+            }
             var group = plan.Groups.Single(x => x.RootVersion == disposition.Root.Document && x.Flow.RootUnitId == disposition.Root.UnitId && x.Flow.RootKind == disposition.Root.Kind && x.Flow.RootSelector == disposition.Root.Selector);
             if (disposition.GroupVersionId is { } version && version != group.GroupVersionId) return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
         }
