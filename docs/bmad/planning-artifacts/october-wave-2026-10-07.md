@@ -1029,3 +1029,24 @@ There are no Scan-file changes/deletions in that incoming delta. No retry/workar
 is needed: Scan already has the required fixture API from `274d1f73`, and unaffected
 S2 adapter work continues. Shared contract agreement does not require unrelated
 source synchronization.
+
+Both owners subsequently concurred on the bounded lifetime correction:
+`IOctoberBusinessHandoffLifetime` exposes `CancellationToken HandoffCancellation`
+and `ProviderAdmissionStatus CheckHandoffEligibility(Guid runId,
+OperationKey finalizationOperation, string providerProfileId)`. Business owns the
+canonical declaration and both executor consumers; Scan implements it on the same
+OctoberExecutionScope. The cached signal links the original run deadline and scope
+stop independently of attempt settlement, and disposal cancels before cleanup. The
+synchronous check validates exact run/operation/profile and cl-and-bl mode, original
+monotonic deadline, stop/authority block and disposal under the scope lock. It does
+not reuse next-call admission status: unknown usage, exhausted future-call budget or
+capacity alone must not invalidate already completed results. It performs no I/O,
+permit acquisition, budget renewal or grant of execution authority.
+
+Business is released to commit the declaration separately from held synthesis and
+Resolution changes. Root will review/selectively integrate that checkpoint before
+Scan's scope implementation; Business's fail-closed consumers and actual-scope
+regressions follow the same declaration. Final awaited disclosure must remain under
+the original bounded lifetime, with a final synchronous check and actual late-task
+observation. This agreement resolves the design question, not the implementation
+hold. Main/S2 work remains independent; S3 and runtime resources remain undispatched.
