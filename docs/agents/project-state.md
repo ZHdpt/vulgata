@@ -132,8 +132,10 @@ verification before reuse.
   affected controlled passes. It preserves B0 membership and distinguishes exact
   inquiry-caller uncertainty ownership from full input provenance. The additive
   six-table October migration is unapplied; updated runtime readers require that
-  schema. S3 finalization/F1 registration, PostgreSQL and real-source/provider
-  qualification remain pending. No implicit B2 or Chat runtime completion is claimed.
+  schema. S3 finalization/F1 registration, the Business-owned executor-to-store
+  witness handoff correction, PostgreSQL and real-source/provider qualification
+  remain pending. F2 exists; controlled B2 preparation does not wait for Chat.
+  No implicit B2 or Chat runtime completion is claimed.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

@@ -581,3 +581,13 @@ Connected-source/provider usefulness and the single shared retained CL qualifica
 still need their actual adapters/resources. B2 follows its genuine accepted B1
 prerequisites, not completion of Chat; the owner will identify any remaining precise
 dependency rather than infer readiness from these controlled passes.
+
+Business's concrete follow-up confirms F2 exists and is controlled-qualified; it
+is not a missing prerequisite. S3 still needs exact AcceptResolution registration
+and cl-and-bl composition. The current executor also drops its parsed witness
+from ResolutionExecutionResult although store acceptance requires that witness
+for independent recomputation. Business owns the narrow same-attempt witness
+handoff correction; do not reconstruct it from Outcome or regenerate. Controlled
+B2 preparation follows its actual inputs, not a blanket wait for Chat or all T027
+evidence. FlowPlanner/synthesis/finalizer remain scoped Business work, while real
+dispatch, PostgreSQL and connected-source qualification retain their prerequisites.
