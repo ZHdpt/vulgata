@@ -535,6 +535,7 @@ internal sealed class AdmissionPhysicalCommitProbe : DbTransactionInterceptor
     public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public TaskCompletionSource Settled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public TaskCompletionSource Disposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public ManualResetEventSlim? ReturnGate { get; set; }
     public OctoberDbContext? ProducingContext { get; private set; }
     public override DbTransaction TransactionStarted(DbConnection connection, TransactionEndEventData eventData, DbTransaction result) => Capture(eventData, result);
     public override ValueTask<DbTransaction> TransactionStartedAsync(DbConnection connection, TransactionEndEventData eventData, DbTransaction result, CancellationToken cancellationToken = default) =>
@@ -552,9 +553,18 @@ internal sealed class AdmissionPhysicalTransaction(DbTransaction inner, Admissio
     public override IsolationLevel IsolationLevel => inner.IsolationLevel;
     protected override DbConnection? DbConnection => inner.Connection;
     public override void Commit() => inner.Commit();
-    public override async Task CommitAsync(CancellationToken cancellationToken = default)
+    public override Task CommitAsync(CancellationToken cancellationToken = default)
     {
         probe.Entered.TrySetResult();
+        Task settlement = CommitCoreAsync();
+        // Optional provider synchronous prefix: the call has begun but has not returned its Task.
+        // Default null preserves the existing asynchronous pending-commit behavior.
+        if (probe.ReturnGate is { } gate && !gate.Wait(TimeSpan.FromSeconds(10)))
+            throw new TimeoutException("Controlled provider did not receive its synchronous-return release.");
+        return settlement;
+    }
+    private async Task CommitCoreAsync()
+    {
         try
         {
             await probe.Release.Task;

@@ -301,6 +301,76 @@ public sealed class OctoberDialoguePersistenceTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task SaveTerminalAsync_ProviderCommitHasNotReturnedItsTask_CancellationRetainsExactProducingResourcesUntilSettlementAsync()
+    {
+        await using var f = await DialoguePersistenceFixture.CreateAsync();
+        var admission = await f.AdmitAsync();
+        var request = f.TerminalRequest(admission);
+        await using var reference = f.Factory.CreateDbContext();
+        using var providerReturn = new ManualResetEventSlim(false);
+        var probe = new AdmissionPhysicalCommitProbe { ReturnGate = providerReturn };
+        var options = new DbContextOptionsBuilder<OctoberDbContext>().UseSqlite(reference.Database.GetConnectionString())
+            .AddInterceptors(probe, new AdmissionCommandAdapter()).Options;
+        var factory = new AdmissionLifetimeFactory(options);
+        var guard = new DialogueAsyncCallbackGuard();
+        var store = new OctoberDialogueStore(factory, f.Identity.Publication.Knowledge, f.Disclosure, f.Dependencies,
+            f.Execution, guard, new OctoberDialoguePayloadCodec(), f.Clock);
+        using var cancellation = new CancellationTokenSource();
+        var pending = store.SaveTerminalAsync(request, f.Subject, cancellation.Token);
+        OctoberDbContext? producingContext = null;
+        try
+        {
+            await probe.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            producingContext = Assert.IsType<OctoberDbContext>(probe.ProducingContext);
+            // A natural provider synchronous prefix is still executing; its Task has not returned
+            // to the store callback. This is not a pause injected into production instructions.
+            Assert.False(guard.CallbackReturned);
+            cancellation.Cancel();
+            Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(2))));
+            var result = await pending;
+            Assert.Equal(DialogueStatus.Indeterminate, result.Status);
+            Assert.Null(result.Receipt);
+            Assert.Null(result.Projection);
+            Assert.False(probe.Disposed.Task.IsCompleted);
+            Assert.Null(Record.Exception(() => producingContext.ChangeTracker.Entries().ToArray()));
+            Assert.False(probe.Settled.Task.IsCompleted);
+            Assert.Equal(DialogueStatus.Indeterminate, (await f.Store.LookupTerminalAsync(new(f.Identity.ConversationId,
+                f.Identity.ContextId, admission.TurnId, request.SaveOperationId, admission.Fence, request.OutcomeDigest), f.Subject)).Status);
+        }
+        finally
+        {
+            // Always release both independent provider gates before awaiting cleanup, including on RED.
+            providerReturn.Set();
+            probe.Release.TrySetResult();
+            if (guard.Running is not null) await guard.Running.WaitAsync(TimeSpan.FromSeconds(5));
+            await pending.WaitAsync(TimeSpan.FromSeconds(5));
+            if (probe.ProducingContext is not null)
+            {
+                await probe.Settled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                await probe.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                await RequireDialogueContextDisposedAsync(probe.ProducingContext);
+            }
+        }
+        var recovered = await f.Store.LookupTerminalAsync(new(f.Identity.ConversationId, f.Identity.ContextId,
+            admission.TurnId, request.SaveOperationId, admission.Fence, request.OutcomeDigest), f.Subject);
+        Assert.Equal(DialogueStatus.Existing, recovered.Status);
+        Assert.Equal(request.OutcomeDigest, recovered.Receipt!.OutcomeDigest);
+        Assert.Equal(request.AnswerText, recovered.Projection!.AnswerText);
+    }
+
+    private static async Task RequireDialogueContextDisposedAsync(OctoberDbContext context)
+    {
+        for (int attempt = 0; attempt < 100; attempt++)
+        {
+            try { _ = context.DialogueTurns.ToArray(); }
+            catch (ObjectDisposedException) { return; }
+            await Task.Delay(20);
+        }
+        Assert.Fail("The physical dialogue transaction's producing context was not disposed after settlement.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task BeginTurnAsync_AuthorityIgnoresCancellation_ReturnsPromptlyAndNeverAdmitsAfterLateAuthorityCompletionAsync()
     {
         await using var f = await DialoguePersistenceFixture.CreateAsync();
@@ -597,3 +667,21 @@ internal sealed class DialogueTestDependencies : IOctoberKnowledgeDependencyAuth
 
 
 
+
+/// <summary>Trusted controlled host enters its callback asynchronously, allowing caller cancellation during a provider synchronous prefix.</summary>
+internal sealed class DialogueAsyncCallbackGuard : IOctoberDialogueCommitGuard
+{
+    public Task<CommitGuardResult>? Running { get; private set; }
+    public bool CallbackReturned { get; private set; }
+    public Task<CommitEligibilityStatus> CheckBeforeTransactionAsync(DialogueCommitAttempt attempt, CancellationToken cancellationToken = default) => Task.FromResult(CommitEligibilityStatus.Eligible);
+    public Task<CommitGuardResult> SubmitAsync(DialogueCommitAttempt attempt, Func<CancellationToken, SubmittedCommit> submitAsync, CancellationToken cancellationToken = default)
+    {
+        Running = Task.Run(async () =>
+        {
+            var submitted = submitAsync(CancellationToken.None);
+            CallbackReturned = true;
+            return new CommitGuardResult(CommitSubmissionStatus.Submitted, await submitted.Settlement);
+        });
+        return Running;
+    }
+}

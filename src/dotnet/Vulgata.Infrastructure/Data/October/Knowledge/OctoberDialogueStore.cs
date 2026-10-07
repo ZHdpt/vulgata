@@ -338,7 +338,17 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     {
         OctoberDbContext? db = null;
         IDbContextTransaction? transaction = null;
-        Task<CommitSettlement>? settlement = null;
+        object submissionGate = new();
+        bool submissionClosed = false;
+        TaskCompletionSource<CommitSettlement>? ownedInvocation = null;
+        Task<CommitSettlement>? CloseSubmission()
+        {
+            lock (submissionGate)
+            {
+                submissionClosed = true;
+                return ownedInvocation?.Task;
+            }
+        }
         try
         {
             db = await OpenContextAsync(ct);
@@ -355,16 +365,47 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             await db.SaveChangesAsync(ct);
             result = await reauthorize(ct);
             if (result != DialogueStatus.Succeeded) return result;
-            var submitted = await _guard.SubmitAsync(attempt, token =>
+            ct.ThrowIfCancellationRequested();
+            CommitGuardResult guarded;
+            try
             {
-                ct.ThrowIfCancellationRequested();
-                token.ThrowIfCancellationRequested();
-                // Invoke the provider synchronously under the host's final fence/authority guard.
-                Task actualCommit = transaction.GetDbTransaction().CommitAsync(token);
-                settlement = SettleAsync(actualCommit);
-                return new SubmittedCommit(settlement);
-            }, ct).WaitAsync(ct);
-            if (settlement is null) return submitted.Status switch
+                var guardCall = _guard.SubmitAsync(attempt, token =>
+                {
+                    TaskCompletionSource<CommitSettlement> owned;
+                    lock (submissionGate)
+                    {
+                        if (submissionClosed || ownedInvocation is not null) throw new OperationCanceledException(ct);
+                        ct.ThrowIfCancellationRequested();
+                        token.ThrowIfCancellationRequested();
+                        // Publish resource ownership before entering an API whose synchronous prelude may still be running.
+                        owned = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                        ownedInvocation = owned;
+                    }
+                    try
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        token.ThrowIfCancellationRequested();
+                        // Still synchronous under the host guard; never hold our local gate across provider code.
+                        Task actualCommit = transaction.GetDbTransaction().CommitAsync(token);
+                        _ = CompleteSettlementAsync(actualCommit, owned);
+                        // The ownership promise is not exposed as SubmittedCommit until the actual API was invoked.
+                        return new SubmittedCommit(owned.Task);
+                    }
+                    catch
+                    {
+                        owned.TrySetResult(CommitSettlement.Indeterminate);
+                        throw;
+                    }
+                }, ct);
+                _ = ObserveGuardAsync(guardCall);
+                guarded = await guardCall.WaitAsync(ct);
+            }
+            finally
+            {
+                CloseSubmission();
+            }
+            var settlement = CloseSubmission();
+            if (settlement is null) return guarded.Status switch
             {
                 CommitSubmissionStatus.StaleOrFenced => DialogueStatus.StaleFence,
                 CommitSubmissionStatus.Denied => DialogueStatus.Denied,
@@ -373,16 +414,19 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             };
             return await settlement.WaitAsync(ct) == CommitSettlement.Committed ? DialogueStatus.Succeeded : DialogueStatus.Indeterminate;
         }
-        catch (Exception ex) when (ex is DbUpdateException or System.Data.Common.DbException or OperationCanceledException or InvalidOperationException)
+        catch (Exception error)
         {
-            // A failed acknowledgement or missing row is never proof of rollback. Callers reconcile exact keys.
+            // Arbitrate in the catch body, never an exception filter that runs before inner finally blocks.
+            var settlement = CloseSubmission();
+            if (settlement is null && error is (ArgumentException or JsonException or OverflowException)) throw;
             return DialogueStatus.Indeterminate;
         }
         finally
         {
+            var settlement = CloseSubmission();
             if (settlement is { IsCompleted: false })
             {
-                // Do not dispose a provider transaction while its already-submitted COMMIT is settling.
+                // This includes a claimed provider invocation that has not returned its Task yet.
                 _ = DisposeAfterSettlementAsync(settlement, transaction, db);
             }
             else
@@ -405,10 +449,16 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
         }
     }
 
-    private static async Task<CommitSettlement> SettleAsync(Task commit)
+    private static async Task CompleteSettlementAsync(Task commit, TaskCompletionSource<CommitSettlement> owned)
     {
-        try { await commit; return CommitSettlement.Committed; }
-        catch (Exception) { return CommitSettlement.Indeterminate; }
+        try { await commit; owned.TrySetResult(CommitSettlement.Committed); }
+        catch (Exception) { owned.TrySetResult(CommitSettlement.Indeterminate); }
+    }
+
+    private static async Task ObserveGuardAsync(Task guard)
+    {
+        try { await guard; }
+        catch (Exception) { /* The bounded caller has already handled this acknowledgement failure. */ }
     }
 
     private async Task<DialogueConversationResult> ProjectConversationAsync(OctoberDbContext db, DialogueConversationRecord row,
