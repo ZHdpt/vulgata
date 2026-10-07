@@ -393,6 +393,120 @@ public sealed class OctoberScanExecutionScopeTests
         Assert.Equal(TimeSpan.FromMilliseconds(25), snapshot.ModelWait);
         Assert.Equal(0, snapshot.OutstandingAttempts);
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Handoff_ExactBindingDoesNotAcquireOrRetainProviderPermitAsync()
+    {
+        await using var scope = Scope();
+        var handoff = Assert.IsAssignableFrom<IOctoberBusinessHandoffLifetime>((object)scope);
+        Assert.Equal(ProviderAdmissionStatus.Granted, handoff.CheckHandoffEligibility(Run, Finalization, "selected-profile"));
+        Assert.Equal(ProviderAdmissionStatus.Granted, handoff.CheckHandoffEligibility(Run, Finalization, "selected-profile"));
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+        var admitted = await scope.AcquireWorkerAttemptAsync(Worker()).WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.Equal(ProviderAdmissionStatus.Granted, admitted.Status);
+        await admitted.Lease!.DisposeAsync(); // Unsent capacity probe; no Business or model invocation.
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("run")]
+    [InlineData("operation")]
+    [InlineData("profile")]
+    [InlineData("cl-only")]
+    public async Task Handoff_WrongBindingOrPhaseDoesNotGrantCompletedResultEligibilityAsync(string mismatch)
+    {
+        await using var scope = Scope(mismatch == "cl-only" ? Policy() with { OutputStage = "cl-only" } : Policy());
+        var handoff = Assert.IsAssignableFrom<IOctoberBusinessHandoffLifetime>((object)scope);
+        var result = handoff.CheckHandoffEligibility(mismatch == "run" ? Guid.NewGuid() : Run,
+            mismatch == "operation" ? Finalization with { OperationId = Guid.NewGuid() } : Finalization,
+            mismatch == "profile" ? "unselected-profile" : "selected-profile");
+        Assert.NotEqual(ProviderAdmissionStatus.Granted, result);
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Handoff_OriginalDeadlineExpiresEvenWhenTimerDeliveryIsDelayedAsync()
+    {
+        var clock = new ManualClock();
+        await using var scope = Scope(Policy() with { RunDeadlineSeconds = 1, FileDeadlineSeconds = 1, GracefulDrainSeconds = 1 }, clock);
+        var handoff = Assert.IsAssignableFrom<IOctoberBusinessHandoffLifetime>((object)scope);
+        var cached = handoff.HandoffCancellation;
+        var lease = await Granted(scope.AcquireWorkerAttemptAsync(Worker() with { MaximumDuration = TimeSpan.FromSeconds(1) }));
+        await Settle(lease, 1);
+        clock.Advance(TimeSpan.FromSeconds(2), deliverTimers: false);
+        Assert.Equal(ProviderAdmissionStatus.DeadlineExceeded, handoff.CheckHandoffEligibility(Run, Finalization, "selected-profile"));
+        Assert.True(cached.IsCancellationRequested);
+        Assert.Equal(cached, handoff.HandoffCancellation);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Handoff_CachedRunCancellationSurvivesAttemptSettlementAndStopOrScopeDisposalAsync(bool dispose)
+    {
+        var scope = Scope();
+        try
+        {
+            var handoff = Assert.IsAssignableFrom<IOctoberBusinessHandoffLifetime>((object)scope);
+            var cached = handoff.HandoffCancellation;
+            var lease = await Granted(scope.AcquireWorkerAttemptAsync(Worker()));
+            await Settle(lease, 1);
+            Assert.False(cached.IsCancellationRequested);
+            if (dispose) await scope.DisposeAsync(); else scope.HardStop();
+            Assert.True(cached.IsCancellationRequested);
+            Assert.Equal(cached, handoff.HandoffCancellation);
+            Assert.Equal(ProviderAdmissionStatus.HardStopped, handoff.CheckHandoffEligibility(Run, Finalization, "selected-profile"));
+        }
+        finally { await scope.DisposeAsync(); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Handoff_UnknownProviderUsageBarsNewSpendButNotAnOtherwiseEligibleCompletedResultAsync()
+    {
+        await using var scope = Scope();
+        var handoff = Assert.IsAssignableFrom<IOctoberBusinessHandoffLifetime>((object)scope);
+        var lease = await Granted(scope.AcquireWorkerAttemptAsync(Worker()));
+        await lease.SettleAsync(new(null, null, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(1), ProviderAttemptOutcome.Completed));
+        await lease.DisposeAsync();
+        var next = await scope.AcquireWorkerAttemptAsync(Worker());
+        try { Assert.NotEqual(ProviderAdmissionStatus.Granted, next.Status); }
+        finally { if (next.Lease is not null) await next.Lease.DisposeAsync(); }
+        Assert.Equal(ProviderAdmissionStatus.Granted, handoff.CheckHandoffEligibility(Run, Finalization, "selected-profile"));
+        Assert.False(handoff.HandoffCancellation.IsCancellationRequested);
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Handoff_ObservedBusinessAuthorityDenialCannotBeRestoredByLaterCallbackGrantAsync()
+    {
+        bool allowBusiness = false;
+        await using var scope = Scope(eligibility: (phase, _) => Task.FromResult(phase == OctoberProviderPhase.Business && !allowBusiness ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.Granted));
+        var handoff = Assert.IsAssignableFrom<IOctoberBusinessHandoffLifetime>((object)scope);
+        var denied = await scope.AcquireProviderAttemptAsync(Business());
+        Assert.Equal(ProviderAdmissionStatus.Denied, denied.Status);
+        Assert.Null(denied.Lease);
+        allowBusiness = true;
+        Assert.NotEqual(ProviderAdmissionStatus.Granted, handoff.CheckHandoffEligibility(Run, Finalization, "selected-profile"));
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Handoff_WorkerPhaseDenialDoesNotFenceEligibleBusinessPhaseAsync()
+    {
+        await using var scope = Scope(eligibility: (phase, _) => Task.FromResult(phase == OctoberProviderPhase.Worker ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.Granted));
+        var handoff = Assert.IsAssignableFrom<IOctoberBusinessHandoffLifetime>((object)scope);
+        var denied = await scope.AcquireWorkerAttemptAsync(Worker());
+        Assert.Equal(ProviderAdmissionStatus.Denied, denied.Status);
+        Assert.Null(denied.Lease);
+        Assert.Equal(ProviderAdmissionStatus.Granted, handoff.CheckHandoffEligibility(Run, Finalization, "selected-profile"));
+        Assert.False(handoff.HandoffCancellation.IsCancellationRequested);
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+    }
     private static OctoberExecutionScope Scope(OctoberScanPolicy? policy = null, TimeProvider? clock = null,
         Func<OctoberProviderPhase, CancellationToken, Task<ProviderAdmissionStatus>>? eligibility = null) =>
         new(Run, "selected-profile", policy ?? Policy(), eligibility ?? ((_, _) => Task.FromResult(ProviderAdmissionStatus.Granted)), Finalization, clock);
@@ -436,10 +550,10 @@ public sealed class OctoberScanExecutionScopeTests
             _timerAvailable.Release();
             return timer;
         }
-        internal void Advance(TimeSpan elapsed)
+        internal void Advance(TimeSpan elapsed, bool deliverTimers = true)
         {
             _timestamp += elapsed.Ticks;
-            foreach (var timer in _timers.Keys.ToArray()) timer.FireIfDue();
+            if (deliverTimers) foreach (var timer in _timers.Keys.ToArray()) timer.FireIfDue();
         }
         internal async Task PumpRateTimersUntilAsync(Task completed, TimeSpan maximumRateDelay)
         {

@@ -4,7 +4,7 @@ using Vulgata.Core.DomainServices.OctoberScan;
 namespace Vulgata.OctoberGenerator;
 
 public sealed class OctoberExecutionScope : IOctoberExecutionScope,
-    IOctoberWorkerExecutionScope, IAsyncDisposable
+    IOctoberWorkerExecutionScope, IOctoberBusinessHandoffLifetime, IAsyncDisposable
 {
     private readonly Guid _runId;
     private readonly string _providerProfileId;
@@ -17,6 +17,7 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
     private readonly TimeSpan _rateInterval;
     private readonly CancellationTokenSource _runDeadline;
     private readonly CancellationTokenSource _stop = new();
+    private readonly CancellationTokenSource _handoffLifetime;
     private readonly CancellationTokenRegistration _externalStop;
     private readonly SemaphoreSlim _slots;
     private readonly Lock _sync = new();
@@ -29,6 +30,7 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
     private TimeSpan _nextGrant;
     private TimeSpan _nextSend;
     private ProviderAdmissionStatus? _blocked;
+    private ProviderAdmissionStatus? _handoffBlocked;
     private bool _unknownUsage;
     private int _dispatchedRequests;
     private bool _unknownDispatch;
@@ -62,7 +64,40 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
         _remainingTokens = policy.MaximumTotalTokens!.Value;
         _slots = new SemaphoreSlim(policy.WorkerCap, policy.WorkerCap);
         _runDeadline = new CancellationTokenSource(_runLifetime, _time);
+        _handoffLifetime = CancellationTokenSource.CreateLinkedTokenSource(_runDeadline.Token, _stop.Token);
+        HandoffCancellation = _handoffLifetime.Token;
         _externalStop = hardStop.Register(HardStop);
+    }
+
+    public CancellationToken HandoffCancellation { get; }
+
+    public ProviderAdmissionStatus CheckHandoffEligibility(Guid runId,
+        OperationKey finalizationOperation, string providerProfileId)
+    {
+        ProviderAdmissionStatus status;
+        lock (_sync)
+        {
+            if (runId != _runId || _finalizationOperation is null ||
+                finalizationOperation != _finalizationOperation || providerProfileId != _providerProfileId ||
+                _policy.OutputStage != "cl-and-bl")
+                return ProviderAdmissionStatus.Denied;
+            if (_disposed)
+                status = ProviderAdmissionStatus.HardStopped;
+            else if (_blocked is { } blocked)
+                status = blocked;
+            else if (_handoffBlocked is { } handoffBlocked)
+                status = handoffBlocked;
+            else if (_time.GetElapsedTime(_started) >= _runLifetime || HandoffCancellation.IsCancellationRequested)
+            {
+                _handoffBlocked = ProviderAdmissionStatus.DeadlineExceeded;
+                status = ProviderAdmissionStatus.DeadlineExceeded;
+            }
+            else
+                return ProviderAdmissionStatus.Granted;
+        }
+        // Signal delayed timer expiry without running cancellation callbacks under the scope lock.
+        CancelHandoff();
+        return status;
     }
 
     public OctoberExecutionSnapshot GetSnapshot()
@@ -119,6 +154,7 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
             _disposed = true;
         }
         _externalStop.Dispose();
+        _handoffLifetime.Dispose();
         _runDeadline.Dispose();
         _stop.Dispose();
         _slots.Dispose();
@@ -246,6 +282,13 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
             eligibility = ProviderAdmissionStatus.AuthorityUnavailable;
         if (eligibility == ProviderAdmissionStatus.AuthorityUnavailable)
             Block(eligibility);
+        if (state.Phase == OctoberProviderPhase.Business &&
+            eligibility is ProviderAdmissionStatus.Denied or ProviderAdmissionStatus.AuthorityUnavailable or
+                ProviderAdmissionStatus.HardStopped or ProviderAdmissionStatus.DeadlineExceeded)
+        {
+            lock (_sync) _handoffBlocked ??= eligibility;
+            CancelHandoff();
+        }
         lock (_sync)
         {
             ProviderAdmissionStatus current = CurrentStatus(state, cancellationToken);
@@ -283,6 +326,8 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
             return ProviderAdmissionStatus.HardStopped;
         if (_blocked is { } blocked)
             return blocked;
+        if (state?.Phase == OctoberProviderPhase.Business && _handoffBlocked is { } handoffBlocked)
+            return handoffBlocked;
         if (_time.GetElapsedTime(_started) >= _runLifetime || state?.DeadlineExceeded == true)
             return ProviderAdmissionStatus.DeadlineExceeded;
         if (state?.FileWorkstreamId is { } fileId &&
@@ -316,6 +361,12 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
             _blocked ??= reason;
         }
         try { _stop.Cancel(); }
+        catch (ObjectDisposedException) { }
+    }
+
+    private void CancelHandoff()
+    {
+        try { _handoffLifetime.Cancel(); }
         catch (ObjectDisposedException) { }
     }
 

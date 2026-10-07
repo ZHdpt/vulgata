@@ -289,6 +289,55 @@ public sealed class OctoberScanClPublicationTests
         Assert.Equal(1, harness.PublishCalls);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PublicationCommittedButOperationLogUnavailable_RetainsExactPublicationWithoutRetry_AndRechecksDisclosureAsync()
+    {
+        await using var harness = await PhaseHarness.CreateAsync();
+        harness.AfterFreeze = () => harness.Fixture.Acceptance.Log.Succeeds = false;
+        var report = await harness.Phase.ExecuteAsync();
+        Assert.Equal(1, report.ExitCode);
+        Assert.Equal(OctoberExecutionStatus.Failed, report.Execution);
+        Assert.Equal(OctoberPublicationStatus.Confirmed, report.PublicationStatus);
+        Assert.Equal("cl-only", report.CompletedStage);
+        var publication = Assert.IsType<PublicationBinding>(report.Publication);
+        Assert.NotEmpty(report.Documents);
+        Assert.All(report.Documents, document => Assert.Equal(publication.PublicationId, document.PublicationId));
+        Assert.Equal(harness.Fixture.Accepted.Documents.Select(document => document.DocumentVersionId).Order(), report.Documents.Select(document => document.DocumentVersionId).Order());
+        Assert.Contains(report.Gaps, gap => gap.Code == "operation_log_unavailable");
+        var replay = await harness.Phase.ReconcileAsync();
+        Assert.Equal(publication, replay.Publication);
+        Assert.Equal(report.Documents.ToArray(), replay.Documents.ToArray());
+        Assert.Equal(1, harness.PublishCalls);
+        Assert.Equal(1, harness.FreezeCalls);
+        await using var context = harness.Fixture.Acceptance.Factory.CreateDbContext();
+        Assert.Equal(1, await context.KnowledgePublications.CountAsync());
+        harness.Authority = DisclosureStatus.Denied;
+        var hidden = await harness.Phase.ReconcileAsync();
+        Assert.Null(hidden.Publication);
+        Assert.Empty(hidden.Documents);
+        Assert.Empty(hidden.AcceptedFiles);
+        Assert.Empty(hidden.TerminalCoverage);
+        Assert.Equal(1, harness.PublishCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FreezeOperationLogUnavailable_RemainsFailClosedWithoutPublicationAsync()
+    {
+        await using var harness = await PhaseHarness.CreateAsync();
+        harness.Fixture.Acceptance.Log.Succeeds = false;
+        var report = await harness.Phase.ExecuteAsync();
+        Assert.Equal(1, report.ExitCode);
+        Assert.Null(report.Publication);
+        Assert.Empty(report.Documents);
+        Assert.Equal(1, harness.FreezeCalls);
+        Assert.Equal(0, harness.PublishCalls);
+        await harness.Phase.ReconcileAsync();
+        Assert.Equal(0, harness.PublishCalls);
+        await using var context = harness.Fixture.Acceptance.Factory.CreateDbContext();
+        Assert.Equal(0, await context.KnowledgePublications.CountAsync());
+    }
     private sealed class PhaseHarness : IAsyncDisposable
     {
         private PhaseHarness(OctoberKnowledgePublicationFixture fixture, bool complete, string stage, CancellationToken hardStop)
