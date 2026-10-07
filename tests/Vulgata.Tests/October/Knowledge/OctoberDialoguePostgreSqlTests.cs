@@ -25,22 +25,22 @@ public sealed class OctoberDialoguePostgreSqlTests
     {
         await using var database = await DisposablePostgreSqlDatabase.CreateAsync(TestResourceScope.RequireAdministrator());
         var options = Options(database);
-        await using (var old = new OctoberDbContext(options))
-            await old.GetService<IMigrator>().MigrateAsync("20261006010000_AddOctoberKnowledgePublications");
-        await using var fixture = await DialoguePersistenceFixture.CreateAsync(options);
+        await using var seeded = await OctoberFlowHistoricalSeed.CreateAsync(database, "20261006010000_AddOctoberKnowledgePublications", false);
+        var fixture = seeded.Fixture;
         var before = await CaptureExistingTablesAsync(database);
         Assert.NotEqual("[]", before["OctoberDocumentVersions"]);
         Assert.NotEqual("[]", before["OctoberKnowledgePublications"]);
         await using var current = new OctoberDbContext(options);
         var oldMigrations = (await current.Database.GetAppliedMigrationsAsync()).ToArray();
         await current.Database.MigrateAsync();
-        foreach (var table in before) Assert.Equal(table.Value, await CaptureTableAsync(database, table.Key));
+        foreach (var table in before) Assert.Equal(table.Value, table.Key is "OctoberLogicalDocuments" or "OctoberDocumentVersions"
+            ? await OctoberFlowHistoricalSeed.RowsAsync(database, table.Key, priorColumns: true) : await CaptureTableAsync(database, table.Key));
         var migrations = (await current.Database.GetAppliedMigrationsAsync()).ToArray();
         Assert.Equal(oldMigrations, migrations.Take(oldMigrations.Length));
         Assert.Contains("20261007000000_AddOctoberDialogue", migrations);
         Assert.False(current.Database.HasPendingModelChanges());
         foreach (var table in _dialogueTables) Assert.Equal("[]", await CaptureTableAsync(database, table));
-        await fixture.RequireOpenAsync();
+        Assert.Equal(DialogueStatus.Succeeded, (await seeded.TargetStore(database).OpenConversationAsync(fixture.OpenRequest, fixture.Subject)).Status);
     }
 
     [Trait("Suite", "PostgreSql")]
@@ -404,4 +404,3 @@ public sealed class OctoberDialoguePostgreSqlTests
         }
     }
 }
-

@@ -370,3 +370,103 @@ qualification. Parent route/registry, exact authorized reader links and T022/T02
 resource prerequisites remain. Integrator reports the specific Business store hold
 lifted at approved checkpoint `964f530326e9d46c1a2ebeb7d6fa0d141a6d02d8`; it was not
 merged into this dirty leaf increment. No migrations/services/provider calls were run.
+## Saved-reference footer — released controlled slice, 2026-10-07
+
+Chat fast-forwarded cleanly to Integrator-approved
+`ba8051c4dc5759be6f0f17e9e1d5de59ffe72fdb`, preserving original `f3db38db` and
+reviewed renderer `bd51e764`. After Explorer's read-only interface assessment and
+Business's explicit contract/encoder/limit agreement, Integrator released the bounded
+saved-projection T026/T027 adapter and leaf work. Parent page/registry/activation remain
+integration-owned. The exact agreement is in contracts/web-provider-handoff.md.
+
+The scaffold compiled against **22 controlled cases, 0 passed/22 failed/0 skipped**,
+`TestResults/isolation-ed472d395e7b49cabc03f3e1568d4c5e/results.trx`.
+Twenty-one failures were unavailable adapter paths and one was absent footer rendering;
+these were not build or fixture failures. Tests use real Business disclosed-reader and
+protected dependency fixtures for exact title/lineage/encoder behavior, separately from
+actual SQLite saved-projection tests with explicitly controlled metadata ports. Their
+different authority domains are not combined or represented as live integrated proof.
+
+The accepted local display lifetime starts at Prepare and lasts ten seconds across
+Handoff, with no reset. Saved-view suppression is binding-scoped and preserves durable
+terminal/save-indeterminate facts; it does not reopen the completed stream sequence.
+Live preterminal report projection and actual reader navigation remain outside this
+initial saved-reference slice. No source/provider/browser/database service was started.
+
+The initial implementation passed **22/22**, zero failures/skips,
+`TestResults/isolation-41ac1ada124f4ca5a7e844780f3dc366/results.trx`.
+Independent review then identified a seal/start ordering gap: retaining already-started
+tasks protected completion accounting but did not prevent another owner/sink invocation
+after sealing. Two deterministic reentrant attachment checks reproduced forbidden new
+context dispatch in Prepare and Handoff (**0/2 passed**),
+`TestResults/isolation-535d5e4adbe34ed59e8594f1461a6b02/results.trx`.
+The later UI-sink race was source-review evidence, not claimed as separately reproduced.
+The accepted correction uses one gate for seal and operation-start/retention, preserving
+the original deadline and ownership of work admitted before sealing.
+
+One additional post-implementation coverage case holds an actual footer apply callback
+past the original deadline: Handoff returns, but Completion/Seal remain pending until
+the actual callback settles. Repeated calls start no new work, and the trusted callback
+checks cancellation/current attachment before applying, preventing late UI restoration.
+This is coverage, not fabricated RED or a claim that cancellation recalls handed-off bytes.
+
+Final controlled Chat/page verification passed **427/427, zero failed/skipped**,
+including all **25 reference cases**,
+`TestResults/isolation-16fc8edabd1f4cef977f06bafe1d401d/results.trx`;
+discovery 4,526/inventory 399, build zero errors and 7,508 warnings including AD0001.
+Warning policy was preserved. Independent reviewer `wave_reviewer` accepted the full
+bounded saved-reference increment and confirmed the final coverage/GREEN conditions
+satisfied, with no remaining review blocker. The broader combined owner suite remains
+Integrator's responsibility; this is not full-suite, PostgreSQL or browser qualification.
+
+Implemented: saved owner projection to exact authorized document-title/local-link rows,
+complete original-plus-display lineage, bounded separate display lifetime, atomic
+operation-start/seal ordering, truthful retained-task settlement, binding-scoped saved
+display suppression and safe local footer rendering. Parent attachment/page wiring,
+live preterminal reports with actual consumed-proof validation, and actual reader
+navigation remain unfinished; no T031 or full C2 completion is claimed. No runtime
+resource or source/data/provider/spend approval is inferred from these controlled tests.
+
+## Canonical history and read-only saved display — released 2026-10-07
+
+Before new edits, Chat fast-forwarded cleanly from `d4d0b049` to approved integration
+`8a612a24c07a7e42e4f1815028bfdcc7e21ee100`. Integrator released bounded T024/T025
+and the read-only saved-display portion of T028/T029, with the exact root handoff in
+contracts/web-provider-handoff.md. Business selects history/transcript; root retains
+initial-union/request/admission/budget preparation, Coordinator invocation, parent page,
+retry/composer decisions and runtime activation. No unrelated Business/Scan barrier is
+introduced and no duplicate broad combined run is implied.
+
+The new scaffolds compiled against **17 controlled cases: 1 passed, 16 failed, zero
+skipped**, `TestResults/isolation-39f8feacf85e40e4ba4c671781ae4d97/results.trx`.
+The already-passing case rejected invalid saved-view bindings. Fifteen failures were
+unavailable read paths and one was the missing positive saved-view initializer.
+Actual Business SQLite fixtures own suffix selection, whole-turn omission and saved
+projections. Consumer wrappers prohibit lifecycle/write calls. No transcript serializer
+or display-to-inference conversion is introduced.
+
+Source inspection and Integrator confirmed the exact owner no-content orphan projection:
+Interrupted/OwnerLost, null dependencies and empty question/answer/references. The
+read-only consumer preserves that display shape without invoking orphan cleanup,
+inferring death, granting inference history or claiming conversation idle/retry authority.
+Its controlled fixture performs the owner transition separately from consumer reads.
+
+The implemented read-only consumer passed **17/17 focused cases**, zero failures/skips,
+`TestResults/isolation-8edc3ac0d80a4445baaccdf8469181ba/results.trx`, then
+**444/444 affected Chat/page cases**, zero failures/skips,
+`TestResults/isolation-c83522fce0e5456990a44193294dcf94/results.trx`.
+The latter discovered 4,708 tests, classified 410 source files and built with zero
+errors / 19 warnings. The earlier focused build reported 8,084 warnings including
+AD0001; no warning policy was changed or full-suite result inferred.
+
+Implemented scope: exact canonical history/codec handoff, separate owner-selected
+transcript display, complete supplied-capsule reauthorization, original ten-second
+attempt, actual late-work settlement, and fresh saved VMs without stream replay.
+Failed reads stay unavailable; legitimate empty history grants no admission.
+Root initial-union/admission and parent-page integration, retry/composer controls,
+PostgreSQL qualification and provider/browser execution remain outside this increment.
+
+Independent reviewer `wave_reviewer` accepted the frozen source and tests with no
+remaining actionable blocker and confirmed both GREEN runs satisfy review conditions.
+The current project-state pointers were rechecked: their open root-composition/runtime
+claims still apply; no shared project-state file or root instructions were changed.

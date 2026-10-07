@@ -30,14 +30,31 @@ verification before reuse.
 
 ## Current authority and delivery
 
-Latest October integration checkpoint (October 7): `2cca4913` adds the reviewed
-Business trusted flow-input loader and corrected controlled CL-only Generate runner.
-Shared explicit Generate fixture inputs are at `417c888f`. Combined affected
-SelfContained verification passes 1,670/1,670, zero failures/skips; this is not a full
-suite or real runtime qualification. Generate Main/report wiring, shared ordinary-user
-reader qualification, BL synthesis/publication and final Web Chat composition remain
+Latest October integration checkpoint (October 7): `d92833c1` includes the reviewed
+Business trusted flow-input loader, controlled CL-only Generate runner and actual
+Main/safe-report wiring, saved Chat reference footer and canonical history/display
+consumer. Shared explicit Generate fixture inputs are at `417c888f`; the behavior-free
+Business handoff lifetime declaration is selectively imported at `6578a2d5`.
+The actual same-scope handoff lifetime, both corrected Business executor consumers,
+canonical finalization helpers, synthesis prompt resource and guarded one-Generate
+qualification adapter are now imported. The full SelfContained suite passes
+3,727/3,727, zero failures/skips; external suites remain unqualified. Shared ordinary-user
+reader qualification, BL persistence/first-dispatch composition and final Web Chat composition remain
 open. Source/provider/database/host permission for the shared real run is still
 outstanding. See the current delivery-wave handoff below for exact ownership and evidence.
+
+Subsequent controlled slot integration imports Scan `ba43236b`: private original-run
+one-shot finalization mechanics and cleanup lifetime, not live S3 activation.
+The combined October/Explore/PreparedSource selection passes 1,868/1,868, zero
+failures/skips (`e35d387415e34dc699e485edfb542b49`). Actual CL-only/fresh-host paths
+cannot issue the slot. Business persistence/finalizer `a0c9676b` plus exact deferred-root
+correction `bf3ca6ca` are now reviewed for controlled integration; seven PostgreSQL
+facts remain authored/unrun. Final combined SelfContained run `a3c026a8b3f042ab8d6e8ca5e4be3a16`
+is 3,876/3,877, zero skips, NOT green: the sole logging-test cleanup failure captures
+an undisposed local logger/open handle after factory scope exit. Root owns this
+unresolved teardown defect; no test waiver or runtime readiness is claimed. Actual
+BL host composition, Web Chat activation and one-dataset ordinary-user qualification
+remain open. See the wave handoff for exact evidence and resource boundaries.
 
 - [PRD](../bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md): product scope
   and explicit Current/Deferred/History/Original unmet backlog dispositions.

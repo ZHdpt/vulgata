@@ -4,7 +4,11 @@ public sealed class DocumentVersion : IOctoberKnowledgeRecord
     public Guid BatchId { get; set; }
     public Guid VersionId { get; set; }
     public Guid LogicalDocumentId { get; set; }
-    public Guid ManifestId { get; set; }
+    public Guid? ManifestId { get; set; }
+    public Vulgata.Core.DomainServices.OctoberKnowledge.DocumentKind Kind { get; set; }
+    public Guid? FlowGroupVersionId { get; set; }
+    public Vulgata.Core.DomainServices.OctoberKnowledge.OperationKind? FinalizationOperationKind { get; set; }
+    public Guid? FinalizationOperationId { get; set; }
     public int SchemaVersion { get; set; }
     public string Title { get; set; } = "";
     public string ContentJson { get; set; } = "";

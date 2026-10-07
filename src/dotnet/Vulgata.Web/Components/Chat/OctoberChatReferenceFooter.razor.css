@@ -1,0 +1,24 @@
+.october-chat-reference-footer {
+    color: inherit;
+    font-family: inherit;
+    overflow-wrap: anywhere;
+}
+
+.october-chat-reference-footer p {
+    margin: 0;
+}
+
+.october-chat-reference-footer ul {
+    margin: 0.35em 0 0;
+    padding-inline-start: 1.4em;
+}
+
+.october-chat-reference-footer li + li {
+    margin-block-start: 0.25em;
+}
+
+.october-chat-reference-footer a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}

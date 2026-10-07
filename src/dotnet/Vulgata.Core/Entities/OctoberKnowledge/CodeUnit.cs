@@ -16,6 +16,7 @@ public sealed class LogicalDocument : IOctoberKnowledgeRecord
 {
     public Guid BatchId { get; set; }
     public Guid LogicalDocumentId { get; set; }
-    public Guid UnitId { get; set; }
+    public Guid? UnitId { get; set; }
+    public Guid? LogicalFlowId { get; set; }
     public DocumentKind Kind { get; set; }
 }

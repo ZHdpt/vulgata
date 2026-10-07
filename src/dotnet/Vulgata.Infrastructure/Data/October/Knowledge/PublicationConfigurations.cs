@@ -38,8 +38,10 @@ public sealed class CorpusDocumentConfiguration : IEntityTypeConfiguration<Corpu
         b.HasIndex(x => new { x.BatchId, x.CorpusId, x.VersionId }).IsUnique();
         b.HasIndex(x => new { x.BatchId, x.CorpusId, x.Ordinal }).IsUnique();
         b.HasOne<CorpusManifestRecord>().WithMany().HasForeignKey(x => new { x.BatchId, x.CorpusId, x.ManifestId }).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne<DocumentVersion>().WithMany().HasForeignKey(x => new { x.BatchId, x.ManifestId, x.LogicalDocumentId, x.VersionId })
-            .HasPrincipalKey(x => new { x.BatchId, x.ManifestId, x.LogicalDocumentId, x.VersionId }).OnDelete(DeleteBehavior.Restrict);
+        // PostgreSQL additionally retains the original native manifest-qualified FK/unique
+        // constraint. It must not become an EF alternate key that forces nullable BL owners required.
+        b.HasOne<DocumentVersion>().WithMany().HasForeignKey(x => new { x.BatchId, x.LogicalDocumentId, x.VersionId })
+            .HasPrincipalKey(x => new { x.BatchId, x.LogicalDocumentId, x.VersionId }).OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -81,8 +83,8 @@ public sealed class PublicationMemberConfiguration : IEntityTypeConfiguration<Pu
         b.HasIndex(x => new { x.BatchId, x.PublicationId, x.Ordinal }).IsUnique();
         b.HasOne<KnowledgePublicationRecord>().WithMany().HasForeignKey(x => new { x.BatchId, x.PublicationId, x.CorpusId })
             .HasPrincipalKey(x => new { x.BatchId, x.PublicationId, x.CorpusId }).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne<CorpusDocumentRecord>().WithMany().HasForeignKey(x => new { x.BatchId, x.CorpusId, x.LogicalDocumentId, x.VersionId })
-            .HasPrincipalKey(x => new { x.BatchId, x.CorpusId, x.LogicalDocumentId, x.VersionId }).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<DocumentVersion>().WithMany().HasForeignKey(x => new { x.BatchId, x.LogicalDocumentId, x.VersionId })
+            .HasPrincipalKey(x => new { x.BatchId, x.LogicalDocumentId, x.VersionId }).OnDelete(DeleteBehavior.Restrict);
     }
 }
 

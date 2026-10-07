@@ -17,6 +17,22 @@ namespace Vulgata.Tests.October.Integration;
 public sealed class OctoberChatHostBindingTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BusinessSynthesisPrompt_ExactEmbeddedResourceOccursOnceAndMatchesSourceAsync()
+    {
+        const string logicalName = "Vulgata.Agents.Prompts.OctoberBusiness.Synthesis.md";
+        var assembly = typeof(OctoberChatPromptCatalog).Assembly;
+        Assert.Single(assembly.GetManifestResourceNames().Where(name => name == logicalName));
+        using var resource = assembly.GetManifestResourceStream(logicalName);
+        Assert.NotNull(resource);
+        using var reader = new StreamReader(resource, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: false);
+        string actual = await reader.ReadToEndAsync();
+        string expected = await File.ReadAllTextAsync(PromptPath(Path.Combine("OctoberBusiness", "Synthesis.md")), new UTF8Encoding(false, true));
+        Assert.False(string.IsNullOrWhiteSpace(expected));
+        Assert.Equal(expected, actual);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(KnowledgeMode.Business, "Vulgata.Agents.Prompts.OctoberChatBusiness.txt", "OctoberChatBusiness.txt")]
     [InlineData(KnowledgeMode.IT, "Vulgata.Agents.Prompts.OctoberChatIT.txt", "OctoberChatIT.txt")]

@@ -137,6 +137,13 @@ still records actual or explicitly unknown usage, and F1 independently rechecks
 eligibility at durable submission. No fresh allowance, regenerated proposal or
 acceptance authority follows from this interface.
 
+## B2 canonical finalization selection and identities
+
+The accepted bounded Scan/Business agreement uses the existing `FinalizationRequest.CanonicalPayloadDigest`; nullable non-positional `Selection` preserves constructor compatibility but missing Selection or default Roots is invalid. Explicit empty Roots permits truthful durable NoContent and zero provider calls, not proof that no source roots exist. Maximum roots is256; duplicate stable `(batch, unit, kind, selector)` identities, conflicting versions and enlarged flow limits are rejected. Actual corpus membership and original live dispatch authority remain owner/host checks, not hash-helper authority.
+
+`OctoberBusinessFinalizationPolicy` is the single owner serializer/hash implementation, schemaVersion1. Provider fingerprint envelope domain is `october/business-provider-configuration/1`, with configuration fields SourceIdentity, Precedence, ProfileName, ApiType, exact Endpoint spelling, Model and CredentialReferenceId. The reference is a nonsecret identifier, never credential plaintext/ciphertext/hash. The fingerprint does not identify rotated credential contents; the host binds the frozen actual client/credential lifetime separately. Request domain is `october/business-finalization-request/1`, binding Operation, Corpus and Selection (roots, narrowed limits, RunId, profile ID, configuration fingerprint, prompt digest and token ceiling), excluding ExecutionScope and the self digest. Root sets are sorted by canonical stable identity; raw narrative arrays retain order.
+
+Outcome domain is `october/business-finalization-outcome/1`, binding the exact request digest, selection, original synthesis proposals and explicit terminal Failed/NotEvaluated dispositions. Every selected exact root occurs once across the completed/disposed partition. Outcome self digest is excluded. The persistence owner will reload trusted inputs and derive accepted content, IDs and complete typed dependencies; this transport shape is not acceptance or model authority. Lookup replays an exact persisted result only; missing/indeterminate lookup cannot authorize generation, owner-death or a restarted run. Scan retains single-flight, F1 and shared execution budgets; the256-root cap grants no provider allowance. No schema, S3 activation or runtime permission follows from these declarations.
 ## Shared diagnostic and dialogue boundaries
 
 Business owns a sanitized append-only `log.md` writer: UTC timestamp, correlation/operation ID, sanitized target token and outcome, no raw content/query/secrets. Cross-process writes serialize under an owned file lock. A failed append returns LogUnavailable; committed mutations remain recoverable by exact lookup and a retry never regenerates. Log is not transaction authority. Runtime must supply the owned path; no machine/global configuration change.
@@ -150,6 +157,13 @@ After separate implementation authorization, Business first publishes an initial
 Integration imports the initial owner-published hash; each consumer acknowledges the shared semantics from its probe. Required Scan acknowledgement explicitly covers F1/F2 and its F5 early Generate path. Once conformance objections are resolved and the exact checkpoint is accepted, dependent production implementation can proceed under its own authorization. Initial contract/probe work is not dependent consumer production and therefore has no circular prerequisite. Dialogue schema agreement remains separate and does not gate B0/this checkpoint.
 
 Planning review is not CP-K1/C0 completion or Scan concurrence. No C# contracts, fixture/probe code, compilation, tasks or implementation are authorized by these corrections. Later contract changes remain Business-owned small commits propagated by integration, never consumer forks. Current status: corrected Business proposal locally reviewable; Scan acknowledgement and cross-lane verification pending.
+
+
+### Finalization persistence diagnostics agreement
+
+Integrator and Scan accepted optional non-positional `BusinessFinalizationResult.PersistenceStatus` using existing `KnowledgeWriteStatus`; null is omitted and means no additional persistence observation, never confirmation of commit. Valid combinations must be checked at owner boundaries: conflicting request/outcome is Failed+Conflict without publication/content; confirmed Published/PublishedPartial/NoContent retains the exact authorized durable outcome when append fails and reports LogUnavailable; Committed/AlreadyCommitted must agree with replay state; unknown durable state remains CommitIndeterminate without invented artifacts or regeneration authority. Per-call append/replay diagnostics are excluded from immutable request/outcome identities. Fresh disclosure governs every returned handle and coverage projection.
+
+Scan's agreed future report mapping preserves confirmed publication or NoContent and completed stage, adds `operation_log_unavailable`, and reports Execution=Failed/exit1 for log failure. It must not silently report a completely clean run or confuse known publication with indeterminate storage. This compatibility agreement grants no new provider dispatch, S3 activation or runtime resources.
 
 ### Original-run first finalization callback
 

@@ -33,10 +33,10 @@ public sealed class OctoberChatClientSessionTests
         using var body = JsonDocument.Parse(physical.Body!);
         Assert.Equal("controlled-model", body.RootElement.GetProperty("model").GetString());
         Assert.True(body.RootElement.GetProperty("stream").GetBoolean());
-        Assert.Equal(0, admission.ActiveRequests);
         Task settlement = session.SealAndWaitForSettlementAsync();
         Assert.Same(settlement, session.SealAndWaitForSettlementAsync());
         await settlement.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal(0, admission.ActiveRequests);
         Assert.Equal(1, physical.Disposals);
         Assert.NotNull(await Record.ExceptionAsync(() => RequestAsync(session)));
         Assert.Equal(1, physical.Sends);

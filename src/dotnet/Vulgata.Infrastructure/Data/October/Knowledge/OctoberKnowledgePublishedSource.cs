@@ -42,7 +42,8 @@ public sealed class OctoberKnowledgePublishedSource(IDbContextFactory<OctoberDbC
             budget.Add(await versionsQuery.Select(x => (long)x.Version.ContentJson.Length + x.Version.Title.Length)
                 .Take(OctoberKnowledgeStoredReadBudget.MaximumItems + 1).ToListAsync(token));
         var versions = await versionsQuery.ToListAsync(token);
-        if (versions.Count == 0 || versions.Any(x => x.Kind != DocumentKind.CodeLogic || x.Version.SchemaVersion != KnowledgeContract.SchemaVersion))
+        if (versions.Count == 0 || versions.Any(x => x.Kind is not (DocumentKind.CodeLogic or DocumentKind.BusinessLogic) ||
+            x.Version.Kind != x.Kind || x.Version.SchemaVersion != KnowledgeContract.SchemaVersion))
             return null;
 
         var coverageQuery = context.PublicationCoverage.AsNoTracking().Where(x => x.BatchId == batch && x.PublicationId == publicationId);
@@ -73,7 +74,8 @@ public sealed class OctoberKnowledgePublishedSource(IDbContextFactory<OctoberDbC
             budget.Add(await uncertaintyQuery.Select(x => (long)x.ContentJson.Length)
                 .Take(OctoberKnowledgeStoredReadBudget.MaximumItems + 1).ToListAsync(token));
         var uncertainties = await uncertaintyQuery.ToListAsync(token);
-        var manifests = versions.Select(x => x.Version.ManifestId).Concat(uncertainties.Select(x => x.ManifestId)).Distinct().ToArray();
+        var manifests = versions.Where(x => x.Kind == DocumentKind.CodeLogic).Select(x => x.Version.ManifestId!.Value)
+            .Concat(uncertainties.Select(x => x.ManifestId)).Distinct().ToArray();
         var contributorsQuery = context.KnowledgeContributors.AsNoTracking().Where(x => x.BatchId == batch && manifests.Contains(x.ManifestId));
         if (context.Database.IsNpgsql())
             budget.Add(await context.Database.SqlQuery<long>($"""
@@ -93,6 +95,29 @@ public sealed class OctoberKnowledgePublishedSource(IDbContextFactory<OctoberDbC
             x => x.Select(row => Required<Contributor>(row.ContributorJson)).ToImmutableArray());
         if (manifests.Any(x => !contributors.ContainsKey(x))) throw new JsonException("Missing accepted contributor provenance.");
 
+        var groupIds = versions.Where(x => x.Kind == DocumentKind.BusinessLogic).Select(x => x.Version.FlowGroupVersionId!.Value).Distinct().ToArray();
+        var groups = context.FlowGroupVersions.AsNoTracking().Where(x => x.BatchId == batch && groupIds.Contains(x.GroupVersionId));
+        if (context.Database.IsNpgsql())
+            budget.Add(await context.Database.SqlQuery<long>($"""
+                SELECT octet_length(g."ContributorsJson"::text)::bigint + octet_length(g."GroupJson"::text) AS "Value"
+                FROM october."OctoberFlowGroupVersions" g WHERE g."BatchId"={batch} AND EXISTS (
+                    SELECT 1 FROM october."OctoberPublicationMembers" m JOIN october."OctoberDocumentVersions" v
+                    ON v."BatchId"=m."BatchId" AND v."VersionId"=m."VersionId" AND v."LogicalDocumentId"=m."LogicalDocumentId"
+                    WHERE m."BatchId"=g."BatchId" AND m."PublicationId"={publicationId} AND v."FlowGroupVersionId"=g."GroupVersionId") LIMIT 10001
+                """).ToListAsync(token), bytes: true);
+        else
+            budget.Add(await groups.Select(x => (long)x.ContributorsJson.Length + x.GroupJson.Length).Take(10001).ToListAsync(token));
+        var flowGroups = await groups.ToDictionaryAsync(x => x.GroupVersionId, token);
+        if (flowGroups.Count != groupIds.Length) throw new JsonException("Missing immutable BL provenance.");
+        foreach (var group in flowGroups.Values)
+        {
+            var value = Required<Vulgata.Core.Entities.OctoberKnowledge.FlowGroupVersion>(group.GroupJson);
+            if (value.GroupVersionId != group.GroupVersionId || value.Flow.LogicalFlowId != group.LogicalFlowId ||
+                value.Corpus.Binding != publication.Knowledge || value.Corpus.CorpusId != group.CorpusId ||
+                !value.Dependencies.Contributors.ToHashSet().SetEquals(RequiredContributors(group.ContributorsJson)))
+                throw new JsonException("Conflicting immutable BL provenance.");
+        }
+
         var documents = ImmutableArray.CreateBuilder<OctoberPublishedDocument>(versions.Count);
         foreach (var item in versions)
         {
@@ -108,16 +133,33 @@ public sealed class OctoberKnowledgePublishedSource(IDbContextFactory<OctoberDbC
             var sections = canonical.RootElement.GetProperty("sections").Deserialize<ImmutableArray<DocumentSection>>(_json);
             if (sections.IsDefaultOrEmpty) throw new JsonException("Missing accepted sections.");
             documents.Add(new(new(batch, version.LogicalDocumentId, version.VersionId), item.Kind, version.Title,
-                content, sections, contributors[version.ManifestId]));
+                content, sections, item.Kind == DocumentKind.CodeLogic ? contributors[version.ManifestId!.Value] :
+                    RequiredContributors(flowGroups[version.FlowGroupVersionId!.Value].ContributorsJson)));
         }
         var resolution = await LoadResolutionAsync(context, publication, budget, token);
+        var finalizationQuery = context.BusinessFinalizations.AsNoTracking().Where(x => x.BatchId == batch && x.PublicationId == publicationId);
+        if (context.Database.IsNpgsql())
+            budget.Add(await context.Database.SqlQuery<long>($"""
+                SELECT octet_length("ResultJson"::text)::bigint + octet_length("ContributorsJson"::text) AS "Value"
+                FROM october."OctoberBusinessFinalizations" WHERE "BatchId"={batch} AND "PublicationId"={publicationId} LIMIT 2
+                """).ToListAsync(token), 1, bytes: true);
+        else
+            budget.Add(await finalizationQuery.Select(x => (long)x.ResultJson.Length + x.ContributorsJson.Length).Take(2).ToListAsync(token), 1);
+        var finalization = await finalizationQuery.Select(x => new { x.ResultJson, x.ContributorsJson }).SingleOrDefaultAsync(token);
+        OctoberPublishedFinalizationCoverage? finalizationCoverage = null;
+        if (finalization is not null)
+        {
+            var result = Required<BusinessFinalizationResult>(finalization.ResultJson);
+            if (result.Publication != publication) throw new JsonException("Finalization coverage must pin its exact publication.");
+            finalizationCoverage = new(result.Coverage, RequiredContributors(finalization.ContributorsJson));
+        }
         token.ThrowIfCancellationRequested();
         return new(publication, documents.ToImmutable(),
             coverage.Select(x => new OctoberPublishedCoverage(Required<FileCoverage>(x.CoverageJson), RequiredContributors(x.ContributorsJson))).ToImmutableArray(),
             resolution.Relationships, uncertainties.Select(x => new OctoberPublishedUncertainty(Required<Uncertainty>(x.ContentJson), contributors[x.ManifestId],
                 versions.Where(version => version.Version.ManifestId == x.ManifestId)
                     .Select(version => new DocumentVersionReference(batch, version.Version.LogicalDocumentId, version.Version.VersionId)).ToImmutableArray()))
-                .Concat(resolution.Uncertainties).ToImmutableArray());
+                .Concat(resolution.Uncertainties).ToImmutableArray()) { FinalizationCoverage = finalizationCoverage };
     }
 
     private static async Task<(ImmutableArray<OctoberPublishedRelationship> Relationships, ImmutableArray<OctoberPublishedUncertainty> Uncertainties)>

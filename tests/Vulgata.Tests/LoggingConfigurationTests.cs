@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Win32.SafeHandles;
+using System.Reflection;
+using Xunit.Abstractions;
 
 namespace Vulgata.Tests;
 
-public sealed class LoggingConfigurationTests
+public sealed class LoggingConfigurationTests(ITestOutputHelper output)
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
@@ -19,6 +22,7 @@ public sealed class LoggingConfigurationTests
             "local-file-logging",
             Guid.NewGuid().ToString("N"));
         string logPath = Path.Combine(logDirectory, "vulgata.log");
+        var providerHandles = new List<(ILoggerProvider Provider, FieldInfo? DisposedField, SafeFileHandle? Handle)>();
 
         try
         {
@@ -33,6 +37,18 @@ public sealed class LoggingConfigurationTests
             ILogger logger = factory.Services
                 .GetRequiredService<ILoggerFactory>()
                 .CreateLogger("Vulgata.Tests.LocalFileLogging");
+
+            // Observe the host-owned instances; never dispose them independently of the factory.
+            foreach (var provider in factory.Services.GetServices<ILoggerProvider>().Where(provider =>
+                provider.GetType().FullName == "Vulgata.Web.Logging.LocalFileLoggerProvider"))
+            {
+                var type = provider.GetType();
+                var writer = type.GetField("_writer", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.GetValue(provider) as StreamWriter;
+                var handle = (writer?.BaseStream as FileStream)?.SafeFileHandle;
+                providerHandles.Add((provider,
+                    type.GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic), handle));
+            }
 
             logger.LogCritical("{Marker}", marker);
 
@@ -49,7 +65,22 @@ public sealed class LoggingConfigurationTests
         {
             if (Directory.Exists(logDirectory))
             {
-                Directory.Delete(logDirectory, recursive: true);
+                try
+                {
+                    Directory.Delete(logDirectory, recursive: true);
+                }
+                catch (IOException)
+                {
+                    // The original await-using scope has exited. Record ownership state, not paths or log contents.
+                    output.WriteLine($"local-file-cleanup provider-count={providerHandles.Count}");
+                    foreach (var captured in providerHandles)
+                    {
+                        var disposed = captured.DisposedField?.GetValue(captured.Provider) as bool?;
+                        output.WriteLine($"local-file-cleanup provider-disposed={disposed?.ToString() ?? "unknown"}; " +
+                            $"safe-file-handle-closed={captured.Handle?.IsClosed.ToString() ?? "unknown"}");
+                    }
+                    throw;
+                }
             }
         }
     }

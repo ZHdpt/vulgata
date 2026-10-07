@@ -11,9 +11,14 @@ public sealed record OctoberPublishedCoverage(FileCoverage Coverage, ImmutableAr
 public sealed record OctoberPublishedUncertainty(Uncertainty Value, ImmutableArray<Contributor> Contributors,
     ImmutableArray<DocumentVersionReference> Owners);
 public sealed record OctoberPublishedRelationship(AcceptedRelationship Relationship, ImmutableArray<Contributor> Contributors);
+public sealed record OctoberPublishedFinalizationCoverage(CoverageProjection Coverage, ImmutableArray<Contributor> Contributors);
 public sealed record OctoberPublishedKnowledge(PublicationBinding Publication,
     ImmutableArray<OctoberPublishedDocument> Documents, ImmutableArray<OctoberPublishedCoverage> Coverage,
-    ImmutableArray<OctoberPublishedRelationship> Relationships, ImmutableArray<OctoberPublishedUncertainty> Uncertainties);
+    ImmutableArray<OctoberPublishedRelationship> Relationships, ImmutableArray<OctoberPublishedUncertainty> Uncertainties)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public OctoberPublishedFinalizationCoverage? FinalizationCoverage { get; init; }
+}
 
 /// <summary>Only exact immutable published membership; null never triggers a latest or legacy fallback.</summary>
 public interface IOctoberPublishedKnowledgeSource
@@ -341,6 +346,9 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
     {
         if (!hasVisibleDocument || context.Ticket.Selection.RepositoryScope.IsEmpty) return new(false, []);
         var gaps = ImmutableArray.CreateBuilder<string>();
+        if (context.Source.FinalizationCoverage is { Coverage.IsPartial: true } finalization &&
+            await PermitAsync(context, finalization.Contributors, null, cancellationToken))
+            gaps.Add("部分内容尚未完成。");
         foreach (var item in context.Source.Coverage)
         {
             if (item.Coverage.Disposition is CoverageDisposition.Accepted or CoverageDisposition.CompletedZeroUnit) continue;

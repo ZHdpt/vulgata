@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Text;
 using Vulgata.Core.DomainServices.OctoberChat;
 using Vulgata.Core.DomainServices.OctoberDialogue;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Shared.OctoberChat;
 
 namespace Vulgata.Web.ViewModels.OctoberChat;
@@ -24,6 +25,68 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
     public bool IsTerminal { get; private set; }
     public bool IsSaveUncertain { get; private set; }
     public event Action? StateChanged;
+
+    /// <summary>New display model from a currently authorized owner snapshot; no stream replay, admission or retry authority.</summary>
+    public static OctoberChatTurnViewModel? CreateSaved(OctoberChatTurnBinding binding, DialogueTerminalProjection saved)
+    {
+        try
+        {
+            if (binding is null || saved is null || saved.Conversation is not { } identity ||
+                binding.ConversationId == Guid.Empty || identity.ConversationId != binding.ConversationId ||
+                identity.ContextId != binding.ContextId || binding.ContextId == Guid.Empty || saved.TurnId != binding.TurnId || saved.TurnId == Guid.Empty ||
+                saved.Sequence <= 0 || binding.Request.Purpose != KnowledgePurpose.Chat ||
+                binding.Request.Subject.SubjectId != identity.OwnerSubjectId || binding.Request.Publication != identity.Publication ||
+                binding.Request.Mode != identity.Mode || binding.Request.RepositoryScope.IsDefaultOrEmpty || identity.RepositoryScope.IsDefault ||
+                !binding.Request.RepositoryScope.Order().SequenceEqual(identity.RepositoryScope.Order()) ||
+                !Enum.IsDefined(saved.TerminalState) || !Enum.IsDefined(saved.Reason) || saved.Question is null || saved.AnswerText is null ||
+                _strictUtf8.GetByteCount(saved.Question) > OctoberDialogueLimits.MaximumQuestionUtf8Bytes ||
+                _strictUtf8.GetByteCount(saved.AnswerText) > OctoberDialogueLimits.MaximumAnswerUtf8Bytes) return null;
+            var model = new OctoberChatTurnViewModel(binding);
+            if (!model.ValidReferences(saved.References) || saved.References.Any(reference => reference.Document.SectionId is { } section &&
+                (string.IsNullOrWhiteSpace(section) || _strictUtf8.GetByteCount(section) > OctoberDialogueLimits.MaximumSectionIdUtf8Bytes))) return null;
+            if (saved.InferenceDependencies is { } capsule)
+            {
+                if (capsule.SetId == Guid.Empty || capsule.BindingDigest is not { Length: 64 } || !capsule.BindingDigest.All(Uri.IsHexDigit) ||
+                    string.IsNullOrWhiteSpace(capsule.ProtectedPayload) ||
+                    _strictUtf8.GetByteCount(capsule.ProtectedPayload) > OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes) return null;
+            }
+            else if (saved.Question.Length != 0 || saved.AnswerText.Length != 0 || !saved.References.IsEmpty ||
+                !(saved.TerminalState is (DialogueTerminalState.Failed or DialogueTerminalState.Interrupted) &&
+                    saved.Reason is (DialogueTerminalReason.AuthorizationDenied or DialogueTerminalReason.AuthorityUnavailable) ||
+                    saved.TerminalState == DialogueTerminalState.Interrupted && saved.Reason == DialogueTerminalReason.OwnerLost)) return null;
+
+            model._started = true;
+            model.AnswerText = saved.AnswerText;
+            model.References = saved.References;
+            model.IsTerminal = true;
+            model.StatusMessage = SavedStatus(saved.TerminalState switch
+            {
+                DialogueTerminalState.Completed => OctoberChatDisplayOutcome.Completed,
+                DialogueTerminalState.Interrupted => OctoberChatDisplayOutcome.Interrupted,
+                _ => OctoberChatDisplayOutcome.Failed
+            }, saved.AnswerText);
+            return model;
+        }
+        catch (Exception) { return null; }
+    }
+
+    /// <summary>Trusted current-attachment suppression, including a saved display; never a new stream or terminal outcome.</summary>
+    public bool TrySuppressDisclosure(OctoberChatTurnBinding expectedBinding)
+    {
+        lock (_gate)
+        {
+            if (expectedBinding is null || expectedBinding.ConversationId != Binding.ConversationId ||
+                expectedBinding.ContextId != Binding.ContextId || expectedBinding.TurnId != Binding.TurnId ||
+                expectedBinding.Request.Subject.SubjectId != Binding.Request.Subject.SubjectId ||
+                expectedBinding.Request.Publication != Binding.Request.Publication || expectedBinding.Request.Mode != Binding.Request.Mode ||
+                expectedBinding.Request.Purpose != Binding.Request.Purpose || expectedBinding.Request.RepositoryScope.IsDefault ||
+                Binding.Request.RepositoryScope.IsDefault ||
+                !expectedBinding.Request.RepositoryScope.Order().SequenceEqual(Binding.Request.RepositoryScope.Order())) return false;
+            SuppressDisclosure();
+        }
+        StateChanged?.Invoke();
+        return true;
+    }
 
     public bool Apply(OctoberChatEvent item)
     {
@@ -74,12 +137,7 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
                     StatusMessage = "保存状态待确认，暂时无法继续提问。";
                     break;
                 case OctoberChatEventKind.DisclosureSuppressed:
-                    _suppressed = true;
-                    AnswerText = string.Empty;
-                    References = [];
-                    ActivityMessage = null;
-                    _activeTools.Clear();
-                    StatusMessage = "当前内容暂不可用。";
+                    SuppressDisclosure();
                     break;
                 case OctoberChatEventKind.TurnSaved:
                     // An explicit canonical terminal projection replaces provisional
@@ -93,20 +151,33 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
                     IsSaveUncertain = false;
                     ActivityMessage = null;
                     _activeTools.Clear();
-                    StatusMessage = item.SavedOutcome switch
-                    {
-                        OctoberChatDisplayOutcome.Completed => "回答已保存。",
-                        OctoberChatDisplayOutcome.Interrupted => string.IsNullOrWhiteSpace(AnswerText)
-                            ? "回答已中断，尚未收到可用内容。" : "回答已中断，已保留部分内容。",
-                        _ => string.IsNullOrWhiteSpace(AnswerText)
-                            ? "回答失败，尚未收到可用内容。" : "回答失败，已保留部分内容。",
-                    };
+                    StatusMessage = SavedStatus(item.SavedOutcome!.Value, AnswerText);
                     break;
             }
         }
 
         StateChanged?.Invoke();
         return true;
+    }
+
+    private static string SavedStatus(OctoberChatDisplayOutcome outcome, string answer) => outcome switch
+    {
+        OctoberChatDisplayOutcome.Completed => "回答已保存。",
+        OctoberChatDisplayOutcome.Interrupted => string.IsNullOrWhiteSpace(answer)
+            ? "回答已中断，尚未收到可用内容。" : "回答已中断，已保留部分内容。",
+        _ => string.IsNullOrWhiteSpace(answer)
+            ? "回答失败，尚未收到可用内容。" : "回答失败，已保留部分内容。"
+    };
+
+    private void SuppressDisclosure()
+    {
+        _suppressed = true;
+        AnswerText = string.Empty;
+        References = [];
+        ActivityMessage = null;
+        _activeTools.Clear();
+        StatusMessage = "当前内容暂不可用。";
+        // Preserve durable terminal/uncertain flags and the original stream sequence.
     }
 
     private bool ValidPayload(OctoberChatEvent item)

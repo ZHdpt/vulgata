@@ -66,3 +66,11 @@ A migration for Knowledge can ship before Chat's contribution; later additive Ch
 
 
 
+
+### B2 persisted finalization records and controlled boundary
+
+`OctoberBusinessFinalizations` binds the exact corpus, finalization operation, canonical request and outcome digests, original proposal/disposition request, immutable logical result and full contributor ledger. Per-call replay/log diagnostics are not retained as the immutable outcome. Explicit empty roots produce a durable NoContent row without a BL publication. Missing receipt children under retained operations are unavailable, not fresh absence.
+
+`OctoberLogicalFlows` and `OctoberFlowGroupVersions` retain stable source-backed roots, exact frozen corpus/root version, finite membership and full supplied-input provenance. Typed document, relationship, resolution-Uncertainty and original `(BatchId, ManifestId, Key)` file-Uncertainty dependencies are stored separately from membership. Existing logical documents and versions have explicit exclusive CL/BL ownership; common exact publication/version identity remains compatible with Dialogue references. Native CL manifest-qualified keys remain enforced. Finalization partial coverage is retained separately from truthful file coverage and disclosed only after full-ledger authorization.
+
+The additive migration is `20261007140153_AddOctoberFlowPublications`; Designer/snapshot are frozen model metadata. It adds restrictive exact references, owner checks and immutable-history/same-transaction parent guards, and refuses destructive downgrade. Controlled SQLite behavior and offline model checks do not establish PostgreSQL upgrade or trigger qualification. Consumer activation and runtime migration require the separately coordinated accepted checkpoint/resources.
