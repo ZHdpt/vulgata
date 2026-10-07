@@ -1,0 +1,470 @@
+using System.Collections.Immutable;
+using System.Text.Json;
+using Microsoft.Extensions.AI;
+using Vulgata.Agents.OctoberBusiness;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Tests.TestInfrastructure;
+
+namespace Vulgata.Tests.October.Knowledge;
+
+/// <summary>Controlled original-slot/owner-store integration through real synthesis. Does not qualify Scan slot issuance, storage or live providers.</summary>
+public sealed class OctoberBusinessFinalizerTests
+{
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("conflict")]
+    [InlineData("invalid-proposal")]
+    [InlineData("indeterminate")]
+    [InlineData("committed-replay")]
+    [InlineData("partial-without-partial-coverage")]
+    public async Task FinalizeAsync_IncoherentFreshPublicationResult_ExposesNoArtifactOrCoverageAsync(string contradiction)
+    {
+        using var f = new FinalizerCase();
+        var published = f.Result(BusinessFinalizationStatus.Published) with { Coverage = new(false, ["controlled-incoherent-private-coverage"]) };
+        f.Store.LookupOverride = contradiction switch
+        {
+            "conflict" => published with { PersistenceStatus = KnowledgeWriteStatus.Conflict },
+            "invalid-proposal" => published with { PersistenceStatus = KnowledgeWriteStatus.InvalidProposal },
+            "indeterminate" => published with { PersistenceStatus = KnowledgeWriteStatus.CommitIndeterminate },
+            "committed-replay" => published with { Status = BusinessFinalizationStatus.PublishedPartial, Coverage = new(true, ["controlled-incoherent-private-coverage"]), PersistenceStatus = KnowledgeWriteStatus.Committed, IsReplay = true },
+            _ => published with { Status = BusinessFinalizationStatus.PublishedPartial, Coverage = new(false, ["controlled-incoherent-private-coverage"]) }
+        };
+
+        var result = await f.Finalizer().FinalizeAsync(f.Request);
+
+        Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, result.Status);
+        Assert.Null(result.Publication);
+        Assert.Empty(result.Coverage.PermittedGaps);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+        Assert.True(f.Store.Lookups >= 1);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("unavailable")]
+    [InlineData("indeterminate")]
+    [InlineData("throws")]
+    public async Task FinalizeAsync_FreshLookupFailsAfterCachedPublication_DoesNotExposeCachedPublicationOrCoverageAsync(string outage)
+    {
+        using var f = new FinalizerCase();
+        f.Store.PublishStatus = BusinessFinalizationStatus.PublishedPartial;
+        f.Store.PublishCoverage = new(true, ["controlled-private-cached-coverage"]);
+        var first = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Equal(BusinessFinalizationStatus.PublishedPartial, first.Status);
+        Assert.Equal(f.Publication, first.Publication);
+        Assert.Contains("controlled-private-cached-coverage", first.Coverage.PermittedGaps);
+        int lookups = f.Store.Lookups;
+        if (outage == "throws") f.Store.LookupFailure = new IOException("Controlled fresh owner lookup outage.");
+        else f.Store.LookupOverride = f.Result(outage == "unavailable" ? BusinessFinalizationStatus.AuthorityUnavailable : BusinessFinalizationStatus.CommitIndeterminate);
+
+        var replay = await f.Finalizer().FinalizeAsync(f.Request);
+
+        Assert.Equal(outage == "unavailable" ? BusinessFinalizationStatus.AuthorityUnavailable : BusinessFinalizationStatus.CommitIndeterminate, replay.Status);
+        Assert.Null(replay.Publication);
+        Assert.Empty(replay.Coverage.PermittedGaps);
+        Assert.True(f.Store.Lookups > lookups);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_FirstRootCompletedSecondRootInvalid_PublishesOriginalSuccessAndExactFailedDispositionOnceAsync()
+    {
+        using var f = new FinalizerCase();
+        f.Store.PublishStatus = BusinessFinalizationStatus.PublishedPartial;
+        f.Provider = (call, _) => Task.FromResult(call == 1 ? f.Response(0) : SynthesisCase.JsonResponse("{}"));
+
+        var result = await f.Finalizer().FinalizeAsync(f.Request);
+        var replay = await f.Finalizer().FinalizeAsync(f.Request);
+
+        Assert.Equal(BusinessFinalizationStatus.PublishedPartial, result.Status);
+        Assert.Equal(result.Publication, replay.Publication);
+        Assert.Equal(2, f.Client.Calls); Assert.Equal(1, f.Store.Publishes); Assert.Equal(1, f.Slot.Invocations);
+        var submitted = Assert.IsType<FlowFinalizationPublicationRequest>(f.Store.Submitted);
+        var completed = Assert.Single(submitted.Completed);
+        var failed = Assert.Single(submitted.Dispositions);
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal(0)), OctoberKnowledgePolicy.SerializeCanonical(completed.Proposal));
+        Assert.Equal(FlowFinalizationDispositionKind.Failed, failed.Kind);
+        Assert.False(string.IsNullOrWhiteSpace(failed.Reason));
+        Assert.NotEqual(completed.Root, failed.Root);
+        Assert.True(f.Request.Selection!.Roots.ToHashSet().SetEquals(new[] { completed.Root, failed.Root }));
+        var groups = OctoberFlowPlanner.Plan(f.Input, f.Request.Selection.Limits).Groups;
+        Assert.Equal(completed.Root.Document, groups.Single(x => x.GroupVersionId == completed.GroupVersionId).RootVersion);
+        Assert.Equal(failed.Root.Document, groups.Single(x => x.GroupVersionId == failed.GroupVersionId).RootVersion);
+        Assert.Equal(OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(submitted), submitted.CanonicalOutcomeDigest);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_OriginalHostStopsDuringProvider_CancelsTransportAndRetainsConsumedSlotWithoutLaterRootsAsync()
+    {
+        using var f = new FinalizerCase();
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Provider = async (call, _) => { await release.Task; return f.Response(call - 1); };
+        var pending = f.Finalizer().FinalizeAsync(f.Request);
+        try
+        {
+            await f.Client.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            f.Slot.StopHost();
+            Assert.True(f.Slot.HostToken.IsCancellationRequested);
+            Assert.True(f.Client.LastCancellation.IsCancellationRequested);
+            Assert.Equal(1, f.Client.Calls);
+            Assert.Equal(0, f.Store.Publishes);
+        }
+        finally
+        {
+            release.TrySetResult();
+            if (f.Slot.Retained is not null) await f.Slot.Retained.WaitAsync(TimeSpan.FromSeconds(5));
+            await pending.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        var first = await pending;
+        var replay = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Null(first.Publication); Assert.Null(replay.Publication);
+        Assert.Empty(first.Coverage.PermittedGaps); Assert.Empty(replay.Coverage.PermittedGaps);
+        Assert.DoesNotContain(first.Status, new[] { BusinessFinalizationStatus.Published, BusinessFinalizationStatus.PublishedPartial, BusinessFinalizationStatus.NoContent });
+        Assert.DoesNotContain(replay.Status, new[] { BusinessFinalizationStatus.Published, BusinessFinalizationStatus.PublishedPartial, BusinessFinalizationStatus.NoContent });
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Client.Calls); Assert.Equal(0, f.Store.Publishes);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("profile")]
+    [InlineData("configuration")]
+    [InlineData("prompt")]
+    [InlineData("digest")]
+    [InlineData("null-selection")]
+    [InlineData("default-roots")]
+    [InlineData("invalid-root")]
+    [InlineData("missing-lifetime")]
+    public async Task FinalizeAsync_InvalidPinnedRequest_IsDeniedBeforeOriginalSlotOrProviderAsync(string mutation)
+    {
+        using var f = new FinalizerCase();
+        var r = f.Request;
+        var s = r.Selection!;
+        r = mutation switch
+        {
+            "profile" => FinalizerCase.Seal(r with { Selection = s with { ProviderProfileId = "unselected-profile" } }),
+            "configuration" => FinalizerCase.Seal(r with { Selection = s with { ProviderConfigurationFingerprint = new string('E', 64) } }),
+            "prompt" => FinalizerCase.Seal(r with { Selection = s with { PromptDigest = new string('F', 64) } }),
+            "digest" => r with { CanonicalPayloadDigest = new string('A', 64) },
+            "null-selection" => r with { Selection = null },
+            "default-roots" => r with { Selection = s with { Roots = default } },
+            "invalid-root" => r with { Selection = s with { Roots = [s.Roots[0] with { UnitId = Guid.Empty }] } },
+            "missing-lifetime" => r with { ExecutionScope = new FinalizationForbiddenScope() },
+            _ => throw new InvalidOperationException()
+        };
+        var result = await f.Finalizer().FinalizeAsync(r);
+        Assert.Equal(mutation == "missing-lifetime" ? BusinessFinalizationStatus.AuthorityUnavailable : BusinessFinalizationStatus.Denied, result.Status);
+        Assert.Null(result.Publication);
+        Assert.Equal(0, f.Slot.Calls); Assert.Equal(0, f.Slot.Invocations);
+        Assert.Equal(0, f.Store.InitialReads); Assert.Equal(0, f.Store.Publishes);
+        Assert.Equal(0, f.Scope.Grants); Assert.Equal(0, f.Client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FinalizeAsync_MissingOriginalSlotOrSameStoreInitialRead_FailsClosedAsync(bool missingCompanion)
+    {
+        using var f = new FinalizerCase();
+        var finalizer = f.Finalizer(missingSlot: !missingCompanion, store: missingCompanion ? new FinalizerStoreWithoutInitialRead(f.Store) : null);
+        var result = await finalizer.FinalizeAsync(f.Request);
+        Assert.Equal(BusinessFinalizationStatus.AuthorityUnavailable, result.Status);
+        Assert.Null(result.Publication);
+        Assert.Equal(0, f.Slot.Calls); Assert.Equal(0, f.Client.Calls); Assert.Equal(0, f.Store.InitialReads);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("existing")]
+    [InlineData("conflict")]
+    [InlineData("unavailable")]
+    public async Task FinalizeAsync_InitialReadWithoutDispatchAuthority_NeverLoadsOrGeneratesAsync(string state)
+    {
+        using var f = new FinalizerCase();
+        var result = state == "conflict" ? f.Result(BusinessFinalizationStatus.Failed) with { PersistenceStatus = KnowledgeWriteStatus.Conflict }
+            : f.Result(BusinessFinalizationStatus.Published) with { IsReplay = true };
+        f.Store.Initial = state == "unavailable" ? new(BusinessFinalizationInitialReadKind.Unavailable, null)
+            : new(BusinessFinalizationInitialReadKind.NoDispatchResult, result);
+        if (state != "unavailable") f.Store.Durable = result;
+        var actual = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Equal(state == "unavailable" ? BusinessFinalizationStatus.CommitIndeterminate : result.Status, actual.Status);
+        Assert.Equal(1, f.Slot.Invocations); Assert.True(f.Store.InitialObservedInsideOriginalCallback);
+        Assert.Equal(0, f.Loader.Calls); Assert.Equal(0, f.Store.Publishes); Assert.Equal(0, f.Client.Calls);
+        if (state != "unavailable") Assert.True(f.Store.Lookups >= 1);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("absent-with-result")]
+    [InlineData("unavailable-with-result")]
+    [InlineData("result-without-result")]
+    [InlineData("unknown-kind")]
+    public async Task FinalizeAsync_InconsistentInitialReadUnion_IsIndeterminateWithoutGenerationAsync(string shape)
+    {
+        using var f = new FinalizerCase();
+        f.Store.Initial = shape switch
+        {
+            "absent-with-result" => new(BusinessFinalizationInitialReadKind.ObservedAbsent, f.Result(BusinessFinalizationStatus.Published)),
+            "unavailable-with-result" => new(BusinessFinalizationInitialReadKind.Unavailable, f.Result(BusinessFinalizationStatus.Published)),
+            "result-without-result" => new(BusinessFinalizationInitialReadKind.NoDispatchResult, null),
+            _ => new((BusinessFinalizationInitialReadKind)99, null)
+        };
+        var result = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, result.Status);
+        Assert.Null(result.Publication);
+        Assert.Equal(0, f.Loader.Calls); Assert.Equal(0, f.Store.Publishes); Assert.Equal(0, f.Client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_OriginalObservedAbsence_SynthesizesSequentiallyAndPublishesOriginalProposalsOnceAsync()
+    {
+        using var f = new FinalizerCase();
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Provider = async (call, _) => { if (call == 1) await release.Task; return f.Response(call - 1); };
+        var pending = f.Finalizer().FinalizeAsync(f.Request);
+        try
+        {
+            await f.Client.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(1, f.Client.Calls); Assert.Equal(0, f.Store.Publishes);
+            Assert.True(f.Store.InitialObservedInsideOriginalCallback);
+        }
+        finally { release.TrySetResult(); }
+        var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(BusinessFinalizationStatus.Published, result.Status);
+        Assert.Equal(f.Publication, result.Publication);
+        Assert.Equal(2, f.Client.Calls); Assert.Equal(1, f.Client.PeakActive);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.InitialReads); Assert.Equal(1, f.Store.Publishes);
+        Assert.Equal(1, f.Loader.Calls); Assert.True(f.Store.Lookups >= 1);
+        var submitted = Assert.IsType<FlowFinalizationPublicationRequest>(f.Store.Submitted);
+        Assert.Equal(f.Request.Operation, submitted.Operation); Assert.Equal(f.Request.Corpus, submitted.Corpus);
+        Assert.Equal(f.Request.CanonicalPayloadDigest, submitted.CanonicalPayloadDigest);
+        Assert.Equal(OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(submitted), submitted.CanonicalOutcomeDigest);
+        Assert.Empty(submitted.Dispositions); Assert.Equal(2, submitted.Completed.Length);
+        Assert.True(f.Input.Roots.ToHashSet().SetEquals(submitted.Completed.Select(x => x.Root)));
+        var proposals = submitted.Completed.Select(x => OctoberKnowledgePolicy.SerializeCanonical(x.Proposal)).ToHashSet();
+        Assert.Contains(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal(0)), proposals);
+        Assert.Contains(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal(1)), proposals);
+        Assert.All(submitted.Completed, value => Assert.DoesNotContain(value.Proposal.Sections, section => section.SectionId == OctoberBusinessSynthesisPolicy.GapSectionId));
+        Assert.All(f.Client.Requests, sent => Assert.Empty(sent.Tools));
+        Assert.All(f.Disclosure.Seen, value => Assert.True(f.Input.Contributors.ToHashSet().SetEquals(value)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_ExplicitEmptySelection_PersistsNoContentWithoutProviderCallsAsync()
+    {
+        using var f = new FinalizerCase(emptyRoots: true);
+        f.Store.PublishStatus = BusinessFinalizationStatus.NoContent;
+        var result = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Equal(BusinessFinalizationStatus.NoContent, result.Status); Assert.Null(result.Publication);
+        Assert.Equal(0, f.Client.Calls); Assert.Equal(1, f.Store.Publishes);
+        Assert.Empty(f.Store.Submitted!.Completed); Assert.Empty(f.Store.Submitted.Dispositions);
+        Assert.True(f.Store.Lookups >= 1);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_AmbiguousPublishAndRepeatedCall_OnlyReconcileWithoutRegenerationAsync()
+    {
+        using var f = new FinalizerCase();
+        f.Store.PublishStatus = BusinessFinalizationStatus.CommitIndeterminate;
+        var first = await f.Finalizer().FinalizeAsync(f.Request);
+        int lookups = f.Store.Lookups;
+        var second = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, first.Status);
+        Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, second.Status);
+        Assert.Null(first.Publication); Assert.Null(second.Publication);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+        Assert.True(f.Store.Lookups > lookups);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FinalizeAsync_FreshOwnerLookupDenial_SuppressesFirstOrCachedReturnAsync(bool denyCachedOnly)
+    {
+        using var f = new FinalizerCase();
+        if (!denyCachedOnly) f.Store.LookupOverride = f.Result(BusinessFinalizationStatus.Denied);
+        var first = await f.Finalizer().FinalizeAsync(f.Request);
+        if (denyCachedOnly) Assert.Equal(BusinessFinalizationStatus.Published, first.Status);
+        else { Assert.Equal(BusinessFinalizationStatus.Denied, first.Status); Assert.Null(first.Publication); }
+        int lookups = f.Store.Lookups;
+        f.Store.LookupOverride = f.Result(BusinessFinalizationStatus.Denied);
+        var replay = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Equal(BusinessFinalizationStatus.Denied, replay.Status); Assert.Null(replay.Publication);
+        Assert.True(f.Store.Lookups > lookups);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_CancelledFirstWaiter_DoesNotCancelHostCallbackOrPermitReplacementAsync()
+    {
+        using var f = new FinalizerCase();
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Provider = async (call, _) => { if (call == 1) await release.Task; return f.Response(call - 1); };
+        using var waiting = new CancellationTokenSource();
+        var first = f.Finalizer().FinalizeAsync(f.Request, waiting.Token);
+        Task<BusinessFinalizationResult>? duplicate = null;
+        try
+        {
+            await f.Client.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            waiting.Cancel();
+            try { Assert.Null((await first.WaitAsync(TimeSpan.FromSeconds(5))).Publication); }
+            catch (OperationCanceledException) { }
+            Assert.False(f.Slot.HostToken.IsCancellationRequested);
+            Assert.False(f.Client.LastCancellation.IsCancellationRequested);
+            Assert.False(f.Slot.Retained!.IsCompleted);
+            duplicate = f.Finalizer().FinalizeAsync(f.Request);
+            Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Client.Calls);
+        }
+        finally
+        {
+            release.TrySetResult();
+            if (f.Slot.Retained is not null) await f.Slot.Retained.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        Assert.NotNull(duplicate);
+        var result = await duplicate.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(BusinessFinalizationStatus.Published, result.Status);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+    }
+}
+
+internal sealed class FinalizerCase : IDisposable
+{
+    public const string ProfileId = "host-profile-id";
+    public const string Instructions = "Controlled synthesis instructions: use only accepted evidence; preserve qualifications.";
+    public FlowPlanningInput Input { get; }
+    public ControlledExecutionScope Scope { get; } = new();
+    public FinalizationRequest Request { get; }
+    public FinalizerControlledSlot Slot { get; }
+    public FinalizerOwnerStore Store { get; }
+    public FinalizerInputLoader Loader { get; }
+    public ResolutionClient Client { get; }
+    public SynthesisDisclosure Disclosure { get; } = new();
+    public PublicationBinding Publication { get; }
+    public Func<int, CancellationToken, Task<ChatResponse>>? Provider { get; set; }
+    public FinalizerCase(bool emptyRoots = false)
+    {
+        var basis = new FlowPlannerCase(2, [], [0, 1]);
+        Input = basis.Input with { Roots = emptyRoots ? [] : basis.Input.Roots };
+        Request = Seal(new(new(Input.Corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, ResolutionCase.Id(99501)), Input.Corpus.Handle, "", Scope)
+        {
+            Selection = new(Input.Roots, new(), ResolutionCase.Id(99502), ProfileId,
+                OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(FinalizationContractCase.Provider), OctoberKnowledgePolicy.Hash(Instructions), 40)
+        });
+        Publication = new(Input.Corpus.Handle.Binding, ResolutionCase.Id(99503));
+        Slot = new(Request);
+        Store = new(this);
+        Loader = new(Input);
+        Client = new((call, cancellation) => Provider?.Invoke(call, cancellation) ?? Task.FromResult(Response(call - 1)));
+    }
+    public static FinalizationRequest Seal(FinalizationRequest request) => request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
+    public BusinessSynthesisProposal Proposal(int index) => new("业务环节" + index,
+        [new("business-step", 0, "处理结果", [new("business-claim", "接收业务请求并执行相应处理。", ClaimQualification.SourceSupported,
+            [new(Input.Corpus.Documents[index].Version, "operation", "provider")], [])])]);
+    public ChatResponse Response(int index) => new(new ChatMessage(ChatRole.Assistant, JsonSerializer.Serialize(Proposal(index))))
+    { FinishReason = ChatFinishReason.Stop, Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 } };
+    public BusinessFinalizationResult Result(BusinessFinalizationStatus status) => new(status, Request.Operation,
+        status is BusinessFinalizationStatus.Published or BusinessFinalizationStatus.PublishedPartial ? Publication : null, new(status == BusinessFinalizationStatus.PublishedPartial, []));
+    public OctoberBusinessFinalizer Finalizer(bool missingSlot = false, IOctoberFlowPublicationStore? store = null) =>
+        OctoberBusinessModule.CreateFinalizer(missingSlot ? null : Slot, store ?? Store, Loader, Client, ProfileId, FinalizationContractCase.Provider, Instructions, Disclosure, new SynthesisClock());
+    public void Dispose() { Client.Dispose(); Slot.Dispose(); }
+}
+
+/// <summary>Explicit controlled single-flight protocol model, not Scan-issued admission authority.</summary>
+internal sealed class FinalizerControlledSlot(FinalizationRequest bound) : IOctoberOriginalBusinessFinalizationSlot, IDisposable
+{
+    private readonly object _gate = new();
+    private readonly CancellationTokenSource _host = new();
+    private TaskCompletionSource<BusinessFinalizationResult>? _retained;
+    public int Calls { get; private set; }
+    public int Invocations { get; private set; }
+    public bool InsideOriginalCallback { get; private set; }
+    public CancellationToken HostToken => _host.Token;
+    public void Dispose() => _host.Dispose();
+    public void StopHost() => _host.Cancel();
+    public Task<BusinessFinalizationResult>? Retained => _retained?.Task;
+    public Task<BusinessFinalizationResult> RunOnceAsync(FinalizationRequest request, Func<CancellationToken, Task<BusinessFinalizationResult>> originalWork, CancellationToken waitCancellation = default)
+    {
+        TaskCompletionSource<BusinessFinalizationResult> retained;
+        bool dispatch = false;
+        lock (_gate)
+        {
+            Calls++;
+            if (request.Operation != bound.Operation || request.Corpus != bound.Corpus || request.CanonicalPayloadDigest != bound.CanonicalPayloadDigest || !ReferenceEquals(request.ExecutionScope, bound.ExecutionScope))
+                throw new InvalidOperationException("Controlled slot rejects replacement bindings.");
+            if (_retained is null) { _retained = new(TaskCreationOptions.RunContinuationsAsynchronously); dispatch = true; }
+            retained = _retained;
+        }
+        if (dispatch) _ = ExecuteAsync(retained, originalWork);
+        return retained.Task.WaitAsync(waitCancellation);
+    }
+    private async Task ExecuteAsync(TaskCompletionSource<BusinessFinalizationResult> retained, Func<CancellationToken, Task<BusinessFinalizationResult>> work)
+    {
+        Invocations++;
+        InsideOriginalCallback = true;
+        try { retained.TrySetResult(await work(_host.Token)); }
+        catch (Exception error) { retained.TrySetException(error); }
+        finally { InsideOriginalCallback = false; }
+    }
+}
+
+internal sealed class FinalizerInputLoader(FlowPlanningInput input) : IOctoberFlowPlanningInputLoader
+{
+    public int Calls { get; private set; }
+    public Task<FlowPlanningInputResult> LoadAsync(CorpusHandle corpus, ImmutableArray<FlowRootSelection> roots, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested(); Calls++;
+        Assert.Equal(input.Corpus.Handle, corpus); Assert.True(input.Roots.ToHashSet().SetEquals(roots));
+        return Task.FromResult(new FlowPlanningInputResult(KnowledgeReadStatus.Success, input));
+    }
+}
+
+internal sealed class FinalizerOwnerStore(FinalizerCase fixture) : IOctoberFlowPublicationStore, IOctoberFlowPublicationInitialRead
+{
+    public BusinessFinalizationInitialRead Initial { get; set; } = new(BusinessFinalizationInitialReadKind.ObservedAbsent, null);
+    public BusinessFinalizationResult? Durable { get; set; }
+    public BusinessFinalizationResult? LookupOverride { get; set; }
+    public Exception? LookupFailure { get; set; }
+    public CoverageProjection? PublishCoverage { get; set; }
+    public BusinessFinalizationStatus PublishStatus { get; set; } = BusinessFinalizationStatus.Published;
+    public int InitialReads { get; private set; }
+    public int Publishes { get; private set; }
+    public int Lookups { get; private set; }
+    public bool InitialObservedInsideOriginalCallback { get; private set; }
+    public FlowFinalizationPublicationRequest? Submitted { get; private set; }
+    public Task<BusinessFinalizationInitialRead> ReadForOriginalDispatchAsync(CorpusHandle corpus, OperationKey operation, string canonicalPayloadDigest, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested(); InitialReads++;
+        InitialObservedInsideOriginalCallback = fixture.Slot.InsideOriginalCallback;
+        Assert.True(InitialObservedInsideOriginalCallback);
+        Assert.Equal(fixture.Request.Corpus, corpus); Assert.Equal(fixture.Request.Operation, operation); Assert.Equal(fixture.Request.CanonicalPayloadDigest, canonicalPayloadDigest);
+        return Task.FromResult(Initial);
+    }
+    public Task<BusinessFinalizationResult> PublishAsync(FlowFinalizationPublicationRequest request, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested(); Publishes++; Submitted = request;
+        var result = fixture.Result(PublishStatus);
+        if (PublishCoverage is not null) result = result with { Coverage = PublishCoverage };
+        if (PublishStatus != BusinessFinalizationStatus.CommitIndeterminate) Durable = result;
+        return Task.FromResult(result);
+    }
+    public Task<BusinessFinalizationResult> LookupAsync(CorpusHandle corpus, OperationKey operation, string canonicalPayloadDigest, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested(); Lookups++;
+        Assert.Equal(fixture.Request.Corpus, corpus); Assert.Equal(fixture.Request.Operation, operation); Assert.Equal(fixture.Request.CanonicalPayloadDigest, canonicalPayloadDigest);
+        if (LookupFailure is not null) throw LookupFailure;
+        return Task.FromResult(LookupOverride ?? Durable ?? fixture.Result(BusinessFinalizationStatus.CommitIndeterminate));
+    }
+}
+
+internal sealed class FinalizerStoreWithoutInitialRead(FinalizerOwnerStore inner) : IOctoberFlowPublicationStore
+{
+    public Task<BusinessFinalizationResult> PublishAsync(FlowFinalizationPublicationRequest request, CancellationToken cancellationToken = default) => inner.PublishAsync(request, cancellationToken);
+    public Task<BusinessFinalizationResult> LookupAsync(CorpusHandle corpus, OperationKey operation, string canonicalPayloadDigest, CancellationToken cancellationToken = default) => inner.LookupAsync(corpus, operation, canonicalPayloadDigest, cancellationToken);
+}

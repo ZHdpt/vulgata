@@ -46,25 +46,34 @@ public sealed class LogicalDocumentConfiguration : IEntityTypeConfiguration<Logi
 {
     public void Configure(EntityTypeBuilder<LogicalDocument> b)
     {
-        b.ToTable("OctoberLogicalDocuments");
+        b.ToTable("OctoberLogicalDocuments", t => t.HasCheckConstraint("CK_LogicalDocument_Owner",
+            "(\"Kind\" = 0 AND \"UnitId\" IS NOT NULL AND \"LogicalFlowId\" IS NULL) OR (\"Kind\" = 1 AND \"UnitId\" IS NULL AND \"LogicalFlowId\" IS NOT NULL)"));
         b.HasKey(x => new { x.BatchId, x.LogicalDocumentId });
+        b.HasAlternateKey(x => new { x.BatchId, x.LogicalDocumentId, x.Kind });
         b.HasIndex(x => new { x.BatchId, x.UnitId }).IsUnique();
+        b.HasIndex(x => new { x.BatchId, x.LogicalFlowId }).IsUnique();
         b.HasOne<CodeUnit>().WithMany().HasForeignKey(x => new { x.BatchId, x.UnitId }).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<LogicalFlowRecord>().WithMany().HasForeignKey(x => new { x.BatchId, x.LogicalFlowId }).OnDelete(DeleteBehavior.Restrict);
     }
 }
 public sealed class DocumentVersionConfiguration : IEntityTypeConfiguration<DocumentVersion>
 {
     public void Configure(EntityTypeBuilder<DocumentVersion> b)
     {
-        b.ToTable("OctoberDocumentVersions");
+        b.ToTable("OctoberDocumentVersions", t => t.HasCheckConstraint("CK_DocumentVersion_Owner",
+            "(\"Kind\" = 0 AND \"ManifestId\" IS NOT NULL AND \"FlowGroupVersionId\" IS NULL AND \"FinalizationOperationKind\" IS NULL AND \"FinalizationOperationId\" IS NULL) OR (\"Kind\" = 1 AND \"ManifestId\" IS NULL AND \"FlowGroupVersionId\" IS NOT NULL AND \"FinalizationOperationKind\" IS NOT NULL AND \"FinalizationOperationKind\" = 3 AND \"FinalizationOperationId\" IS NOT NULL)"));
         b.HasKey(x => new { x.BatchId, x.VersionId });
+        b.HasAlternateKey(x => new { x.BatchId, x.LogicalDocumentId, x.VersionId });
         // Preserve the foundation index explicitly: the publication identity key now
         // covers this prefix and otherwise suppresses EF's convention-created index.
         b.HasIndex(x => new { x.BatchId, x.ManifestId });
         b.Property(x => x.ContentJson).IsRequired().HasColumnType("jsonb");
         b.Property(x => x.AnchorsJson).IsRequired().HasColumnType("jsonb");
-        b.HasOne<LogicalDocument>().WithMany().HasForeignKey(x => new { x.BatchId, x.LogicalDocumentId }).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<LogicalDocument>().WithMany().HasForeignKey(x => new { x.BatchId, x.LogicalDocumentId, x.Kind })
+            .HasPrincipalKey(x => new { x.BatchId, x.LogicalDocumentId, x.Kind }).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<AcceptedFileManifest>().WithMany().HasForeignKey(x => new { x.BatchId, x.ManifestId }).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<FlowGroupVersionRecord>().WithMany().HasForeignKey(x => new { x.BatchId, x.FlowGroupVersionId }).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<BusinessFinalizationRecord>().WithMany().HasForeignKey(x => new { x.BatchId, x.FinalizationOperationKind, x.FinalizationOperationId }).OnDelete(DeleteBehavior.Restrict);
     }
 }
 public sealed class DocumentSectionConfiguration : IEntityTypeConfiguration<DocumentSectionRecord>

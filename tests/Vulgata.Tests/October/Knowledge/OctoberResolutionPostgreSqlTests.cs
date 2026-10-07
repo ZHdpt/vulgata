@@ -28,18 +28,9 @@ public sealed class OctoberResolutionPostgreSqlTests
     {
         await using var database = await DisposablePostgreSqlDatabase.CreateAsync(TestResourceScope.RequireAdministrator());
         var options = Options(database);
-        await using (var old = new OctoberDbContext(options))
-            await old.GetService<IMigrator>().MigrateAsync("20261007000000_AddOctoberDialogue");
-        await using var dialogue = await DialoguePersistenceFixture.CreateAsync(options);
-        var admission = await dialogue.AdmitAsync();
-        var terminal = dialogue.TerminalRequest(admission);
-        var reference = new OctoberChatReference(new(dialogue.Document.BatchId, dialogue.Identity.Publication.PublicationId,
-            dialogue.Document.LogicalDocumentId, dialogue.Document.DocumentVersionId, "overview"), true, 2, 345);
-        var dependencies = dialogue.Dependencies.Extend(terminal.InferenceDependencies!, "prior-exact-document-input");
-        var proof = dialogue.Dependencies.Consume(reference, dependencies);
-        terminal = terminal with { InferenceDependencies = dependencies, References = [reference], ConsumedReads = [new(reference, proof)] };
-        terminal = terminal with { OutcomeDigest = DialogueTestProtocol.OutcomeDigest(terminal) };
-        await dialogue.RequireSaveAsync(terminal);
+        await using var seeded = await OctoberFlowHistoricalSeed.CreateAsync(database, "20261007000000_AddOctoberDialogue", true);
+        var dialogue = seeded.Fixture;
+        var terminal = seeded.Terminal!;
         var before = await CaptureExistingAsync(database);
         foreach (string table in new[] { "OctoberDocumentVersions", "OctoberKnowledgePublications", "OctoberDialogueConversations", "OctoberDialogueTurns", "OctoberDialogueTerminals", "OctoberDialogueReferences" })
             Assert.NotEqual("[]", before[table]);
@@ -48,13 +39,14 @@ public sealed class OctoberResolutionPostgreSqlTests
 
         await current.Database.MigrateAsync();
 
-        foreach (var table in before) Assert.Equal(table.Value, await CaptureAsync(database, table.Key));
+        foreach (var table in before) Assert.Equal(table.Value, table.Key is "OctoberLogicalDocuments" or "OctoberDocumentVersions"
+            ? await OctoberFlowHistoricalSeed.RowsAsync(database, table.Key, priorColumns: true) : await CaptureAsync(database, table.Key));
         var applied = (await current.Database.GetAppliedMigrationsAsync()).ToArray();
         Assert.Equal(priorMigrations, applied.Take(priorMigrations.Length));
         Assert.Contains("20261007010000_AddOctoberResolutionEvidence", applied);
         Assert.False(current.Database.HasPendingModelChanges());
         foreach (string table in _tables) Assert.Equal("[]", await CaptureAsync(database, table));
-        var history = await dialogue.Store.ReadHistoryAsync(dialogue.HistoryRequest, dialogue.Subject);
+        var history = await seeded.TargetStore(database).ReadHistoryAsync(dialogue.HistoryRequest, dialogue.Subject);
         Assert.Equal(terminal.AnswerText, Assert.Single(history.Turns).AnswerText);
         Assert.Equal(terminal.References.ToArray(), history.Turns[0].References.ToArray());
     }

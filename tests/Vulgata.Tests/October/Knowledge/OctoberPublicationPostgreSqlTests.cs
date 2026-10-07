@@ -44,7 +44,7 @@ public sealed class OctoberPublicationPostgreSqlTests
         var priorMigrations = (await context.Database.GetAppliedMigrationsAsync()).ToArray();
         Assert.Equal(3, priorMigrations.Length);
         await context.Database.MigrateAsync();
-        var after = await CaptureAsync(database, priorTables);
+        var after = await CaptureAsync(database, priorTables, priorColumns: true);
         foreach (string table in priorTables) Assert.Equal(before[table], after[table]);
         Assert.False(context.Database.HasPendingModelChanges());
         var applied = (await context.Database.GetAppliedMigrationsAsync()).ToArray();
@@ -352,13 +352,14 @@ public sealed class OctoberPublicationPostgreSqlTests
         return new DbContextOptionsBuilder<OctoberDbContext>().UseNpgsql(database.ConnectionString, postgres => postgres.CommandTimeout(30)).Options;
     }
 
-    private static async Task<Dictionary<string, string>> CaptureAsync(DisposablePostgreSqlDatabase database, IEnumerable<string> tables)
+    private static async Task<Dictionary<string, string>> CaptureAsync(DisposablePostgreSqlDatabase database, IEnumerable<string> tables, bool priorColumns = false)
     {
         await using var connection = await database.OpenConnectionAsync();
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (string table in tables)
         {
-            await using var command = new NpgsqlCommand($"SELECT COALESCE(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text), '[]'::jsonb)::text FROM october.\"{table}\" t", connection);
+            string projection = priorColumns ? OctoberFlowHistoricalSeed.PriorProjection(table) : "to_jsonb(t)";
+            await using var command = new NpgsqlCommand($"SELECT COALESCE(jsonb_agg({projection} ORDER BY ({projection})::text), '[]'::jsonb)::text FROM october.\"{table}\" t", connection);
             result.Add(table, Assert.IsType<string>(await command.ExecuteScalarAsync()));
         }
         return result;

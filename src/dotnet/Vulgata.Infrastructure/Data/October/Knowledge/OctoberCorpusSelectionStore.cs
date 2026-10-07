@@ -120,7 +120,7 @@ public sealed class OctoberCorpusSelectionStore
             var version = orderedVersions[index];
             context.CorpusDocuments.Add(new()
             {
-                BatchId = batch, CorpusId = corpusId, ManifestId = version.ManifestId,
+                BatchId = batch, CorpusId = corpusId, ManifestId = version.ManifestId!.Value,
                 LogicalDocumentId = version.LogicalDocumentId, VersionId = version.VersionId, Ordinal = index
             });
         }
