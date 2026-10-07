@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.ClientModel;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
@@ -17,7 +18,8 @@ public interface IOctoberWorkerAttemptClient
     string ProviderProfileId { get; }
     IAsyncEnumerable<ChatResponseUpdate> GetAttemptStreamingResponseAsync(
         IEnumerable<ChatMessage> messages, ChatOptions? options,
-        IOctoberProviderAttemptLease lease, CancellationToken cancellationToken = default);
+        IOctoberProviderAttemptLease lease, CancellationToken cancellationToken = default,
+        Action<long>? onDispatched = null);
 }
 
 /// <summary>Application-injected contained source; never constructed from provider JSON.</summary>
@@ -61,13 +63,19 @@ public enum OctoberFileWorkerStatus
     Cancelled, SourceChanged, Denied
 }
 
+public enum OctoberWorkerRetryDisposition { None, KnownSafeTransient }
+
 /// <summary>Worker observation only; this is not a Knowledge completion capability.</summary>
 public sealed record OctoberFileWorkerResult(
     OctoberFileWorkerStatus Status,
     CompletedFileProposal? Proposal = null,
     int CoveredUtf8Bytes = 0,
     int ProviderRounds = 0,
-    int SettledToolCalls = 0);
+    int SettledToolCalls = 0)
+{
+    public OctoberWorkerRetryDisposition RetryDisposition { get; init; }
+    public TimeSpan? RetryAfter { get; init; }
+}
 
 public sealed class OctoberFileWorkerExecutor
 {
@@ -175,7 +183,11 @@ public sealed class OctoberFileWorkerExecutor
         catch (Exception) { return Failed(adapter?.Failure ?? OctoberFileWorkerStatus.ProviderFailed); }
 
         OctoberFileWorkerResult Failed(OctoberFileWorkerStatus status)
-            => new(status, null, covered, adapter?.Rounds ?? 0, adapter?.SettledTools ?? 0);
+            => new(status, null, covered, adapter?.Rounds ?? 0, adapter?.SettledTools ?? 0)
+            {
+                RetryDisposition = status == OctoberFileWorkerStatus.ProviderFailed
+                    ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None
+            };
     }
 
     private static bool ValidRequest(OctoberFileWorkerRequest request, IReadOnlyList<AIFunction> tools)
@@ -266,6 +278,8 @@ public sealed class OctoberFileWorkerExecutor
         private int _inputBytes;
         private int _outputBytes;
         private int _toolCount;
+        private bool _allUsageKnown = true;
+        internal OctoberWorkerRetryDisposition RetryDisposition { get; private set; }
         internal int Rounds { get; private set; }
         internal int SettledTools { get; private set; }
         internal int PendingCalls => _pending.Count;
@@ -305,8 +319,9 @@ public sealed class OctoberFileWorkerExecutor
             TimeSpan wait = Stopwatch.GetElapsedTime(waitStarted);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
             linked.CancelAfter(request.Limits.RequestTimeout ?? TimeSpan.FromMinutes(2));
-            long started = Stopwatch.GetTimestamp();
+            var timing = new AttemptTiming();
             bool success = false;
+            bool transient = false;
             bool deferred = false;
             IAsyncEnumerator<ChatResponseUpdate>? iterator = null;
             Task<bool>? pendingMove = null;
@@ -324,8 +339,9 @@ public sealed class OctoberFileWorkerExecutor
                 if (!await request.Source.VerifyCurrentAsync(linked.Token)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
                 Rounds++;
                 IAsyncEnumerable<ChatResponseUpdate> updates = client is IOctoberWorkerAttemptClient admittedClient
-                    ? admittedClient.GetAttemptStreamingResponseAsync(snapshot, bounded, lease, linked.Token)
+                    ? admittedClient.GetAttemptStreamingResponseAsync(snapshot, bounded, lease, linked.Token, timing.MarkDispatched)
                     : client.GetStreamingResponseAsync(snapshot, bounded, linked.Token);
+                if (client is not IOctoberWorkerAttemptClient) timing.MarkDispatched(Stopwatch.GetTimestamp());
                 iterator = updates.GetAsyncEnumerator(linked.Token);
                 while (true)
                 {
@@ -336,7 +352,7 @@ public sealed class OctoberFileWorkerExecutor
                     {
                         deferred = true;
                         await QuarantineAsync(lease);
-                        _ = SettleLateAsync(pendingMove, iterator, lease, wait, started);
+                        _ = SettleLateAsync(pendingMove, iterator, lease, wait, timing);
                         throw;
                     }
                     if (!next) break;
@@ -381,6 +397,11 @@ public sealed class OctoberFileWorkerExecutor
                 if (!await request.Source.VerifyCurrentAsync(linked.Token)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
                 success = true;
             }
+            catch (Exception exception) when (IsTransient(exception))
+            {
+                transient = true;
+                throw;
+            }
             finally
             {
                 if (!deferred)
@@ -397,7 +418,7 @@ public sealed class OctoberFileWorkerExecutor
                         {
                             deferred = true;
                             await QuarantineAsync(lease);
-                            if (cleanup is not null) _ = SettleAfterCleanupAsync(cleanup, lease, wait, started);
+                            if (cleanup is not null) _ = SettleAfterCleanupAsync(cleanup, lease, wait, timing);
                             Failure = OctoberFileWorkerStatus.ProviderFailed;
                         }
                         catch (Exception)
@@ -410,9 +431,16 @@ public sealed class OctoberFileWorkerExecutor
                     if (!deferred)
                     {
                         await lease.SettleAsync(new(inputTokens, actualOutputTokens, null, wait,
-                            Stopwatch.GetElapsedTime(started), success ? ProviderAttemptOutcome.Completed :
+                            timing.Elapsed, success ? ProviderAttemptOutcome.Completed :
                             linked.IsCancellationRequested ? ProviderAttemptOutcome.Cancelled : ProviderAttemptOutcome.Failed), CancellationToken.None);
                         await lease.DisposeAsync();
+                        _allUsageKnown &= inputTokens is >= 0 && actualOutputTokens is >= 0 &&
+                            inputTokens.Value <= admissionRequest.MaximumTokens &&
+                            actualOutputTokens.Value <= admissionRequest.MaximumTokens - inputTokens.Value;
+                        if (transient && _allUsageKnown && _pending.Count == 0 && calls.Count == 0 &&
+                            Failure is null && !linked.IsCancellationRequested &&
+                            await request.Source.VerifyCurrentAsync(CancellationToken.None))
+                            RetryDisposition = OctoberWorkerRetryDisposition.KnownSafeTransient;
                     }
                 }
             }
@@ -473,6 +501,17 @@ public sealed class OctoberFileWorkerExecutor
             return new(status);
         }
 
+        private static bool IsTransient(Exception exception)
+        {
+            int? status = exception switch
+            {
+                HttpRequestException { StatusCode: { } code } => (int)code,
+                ClientResultException clientError => clientError.Status,
+                _ => null
+            };
+            return status is 408 or 429 or >= 500 and <= 599;
+        }
+
         protected override void Dispose(bool disposing) { }
 
         private static async Task QuarantineAsync(IOctoberProviderAttemptLease lease)
@@ -484,28 +523,36 @@ public sealed class OctoberFileWorkerExecutor
         }
 
         private static async Task SettleLateAsync(Task<bool> pending, IAsyncEnumerator<ChatResponseUpdate> iterator,
-            IOctoberProviderAttemptLease lease, TimeSpan wait, long started)
+            IOctoberProviderAttemptLease lease, TimeSpan wait, AttemptTiming timing)
         {
             try
             {
                 try { await pending; } catch (Exception) { }
                 await iterator.DisposeAsync();
-                await lease.SettleAsync(new(null, null, null, wait, Stopwatch.GetElapsedTime(started), ProviderAttemptOutcome.Cancelled));
+                await lease.SettleAsync(new(null, null, null, wait, timing.Elapsed, ProviderAttemptOutcome.Cancelled));
                 await lease.DisposeAsync();
             }
             catch (Exception) { /* An unconfirmed cleanup retains its permit and cannot authorize more work. */ }
         }
 
         private static async Task SettleAfterCleanupAsync(Task cleanup, IOctoberProviderAttemptLease lease,
-            TimeSpan wait, long started)
+            TimeSpan wait, AttemptTiming timing)
         {
             try
             {
                 await cleanup;
-                await lease.SettleAsync(new(null, null, null, wait, Stopwatch.GetElapsedTime(started), ProviderAttemptOutcome.Cancelled));
+                await lease.SettleAsync(new(null, null, null, wait, timing.Elapsed, ProviderAttemptOutcome.Cancelled));
                 await lease.DisposeAsync();
             }
             catch (Exception) { /* Fail closed: never release an unsettled transport. */ }
+        }
+
+        private sealed class AttemptTiming
+        {
+            private long _dispatched;
+            internal void MarkDispatched(long timestamp) => Interlocked.CompareExchange(ref _dispatched, timestamp, 0);
+            internal TimeSpan Elapsed => Interlocked.Read(ref _dispatched) is var timestamp && timestamp > 0
+                ? Stopwatch.GetElapsedTime(timestamp) : TimeSpan.Zero;
         }
     }
 

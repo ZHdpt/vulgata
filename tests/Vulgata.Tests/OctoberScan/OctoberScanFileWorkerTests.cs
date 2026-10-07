@@ -419,6 +419,88 @@ public sealed class OctoberScanFileWorkerTests
         internal int Verifications { get; private set; }
         public Task<bool> VerifyCurrentAsync(CancellationToken cancellationToken = default) { Verifications++; return Task.FromResult(Current); }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Execute_TransientFailure_RetryClassificationRequiresKnownSettledUsageAsync(bool knownUsage)
+    {
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var scope = new Scope();
+        using var client = new TransientClient(knownUsage);
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(frame), []);
+        Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(knownUsage ? OctoberWorkerRetryDisposition.KnownSafeTransient : OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Null(result.Proposal);
+        Assert.True(client.DisposedStream);
+        Assert.Equal(1, Assert.Single(scope.Leases).Settlements);
+    }
+
+    private sealed class TransientClient(bool knownUsage) : IChatClient
+    {
+        internal bool DisposedStream { get; private set; }
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                await Task.Yield();
+                if (knownUsage) yield return new ChatResponseUpdate { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 0 })] };
+                throw new HttpRequestException("Controlled transient unavailable", null, HttpStatusCode.ServiceUnavailable);
+            }
+            finally { DisposedStream = true; }
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualFactory_AdmissionDelay_IsQueueWaitNotModelWaitAsync()
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        bool acquired = false;
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var actual = new OctoberExecutionScope(request.RunId, request.ProviderProfileId, RealScopePolicy(), async (_, token) =>
+        {
+            if (acquired)
+            {
+                entered.TrySetResult();
+                await release.Task.WaitAsync(token);
+            }
+            return ProviderAdmissionStatus.Granted;
+        });
+        var scope = new AfterAcquireScope(actual, () => acquired = true);
+        using var transport = new ControlledHttp();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var pending = new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Empty(transport.Requests);
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            await Task.Delay(TimeSpan.FromSeconds(1)); // Intentional controlled admission delay; transport itself responds immediately.
+            var held = System.Diagnostics.Stopwatch.GetElapsedTime(started);
+            release.TrySetResult();
+            await pending.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Single(transport.Requests);
+            var snapshot = actual.GetSnapshot();
+            Assert.True(snapshot.QueueWait >= held - TimeSpan.FromMilliseconds(25));
+            Assert.True(snapshot.ModelWait < held / 2,
+                $"The controlled admission hold {held} must not also count as model execution ({snapshot.ModelWait}).");
+        }
+        finally { release.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(3)); }
+    }
+
+    private sealed class AfterAcquireScope(IOctoberWorkerExecutionScope inner, Action acquired) : IOctoberWorkerExecutionScope
+    {
+        public async Task<ProviderAdmission> AcquireWorkerAttemptAsync(OctoberWorkerProviderAttemptRequest request, CancellationToken cancellationToken = default)
+        {
+            var result = await inner.AcquireWorkerAttemptAsync(request, cancellationToken);
+            acquired();
+            return result;
+        }
+    }
     private sealed record Round(string? Text, ChatFinishReason? Finish, IReadOnlyList<AIContent>? Calls = null);
     private sealed class ScriptedClient(IReadOnlyList<Round> rounds, Action? afterRequest = null) : IChatClient
     {

@@ -13,6 +13,9 @@ public sealed record OctoberScanTimings(TimeSpan Elapsed, TimeSpan QueueWait,
 public sealed record OctoberScanUsage(int Requests, long? InputTokens,
     long? OutputTokens, bool HasUnknownUsage);
 
+public sealed record OctoberExecutionSnapshot(OctoberScanUsage Usage, TimeSpan QueueWait,
+    TimeSpan ModelWait, int OutstandingAttempts, bool HasUnconfirmedSettlement);
+
 /// <summary>Host reason code and scoped location; never exception or provider payload text.</summary>
 public sealed record OctoberScanGap(string Code, Guid? RepositoryId = null, string? RelativePath = null);
 
@@ -30,6 +33,8 @@ public sealed record OctoberScanReport(
     OctoberScanUsage Usage,
     ImmutableArray<OctoberScanGap> Gaps)
 {
+    public ImmutableArray<OctoberScanInventoryEntry> Inventory { get; init; } = [];
+
     public int ExitCode => (Execution, PublicationStatus) switch
     {
         (OctoberExecutionStatus.Indeterminate, _) or (_, OctoberPublicationStatus.Indeterminate) => 4,

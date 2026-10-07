@@ -315,6 +315,63 @@ public sealed class OctoberScanExecutionScopeTests
         }
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Snapshot_UnsentReservationIsNotADispatchedRequestAsync()
+    {
+        await using var scope = Scope();
+        var admitted = await scope.AcquireWorkerAttemptAsync(Worker());
+        var lease = Assert.IsAssignableFrom<IOctoberProviderAttemptLease>(admitted.Lease);
+        try
+        {
+            var reserved = scope.GetSnapshot();
+            Assert.Equal(0, reserved.Usage.Requests);
+            Assert.Equal(1, reserved.OutstandingAttempts);
+            Assert.False(reserved.HasUnconfirmedSettlement);
+        }
+        finally { await lease.DisposeAsync(); }
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+        Assert.Equal(0, scope.GetSnapshot().Usage.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Snapshot_DispatchedKnownUsage_IsMeasuredOnceAsync()
+    {
+        await using var scope = Scope();
+        var lease = await Granted(scope.AcquireWorkerAttemptAsync(Worker()));
+        var usage = new ProviderAttemptUsage(7, 3, null, TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(750), ProviderAttemptOutcome.Completed);
+        await lease.SettleAsync(usage);
+        await lease.SettleAsync(usage);
+        await lease.DisposeAsync();
+        var snapshot = scope.GetSnapshot();
+        Assert.Equal(1, snapshot.Usage.Requests);
+        Assert.Equal(7L, snapshot.Usage.InputTokens);
+        Assert.Equal(3L, snapshot.Usage.OutputTokens);
+        Assert.False(snapshot.Usage.HasUnknownUsage);
+        Assert.Equal(TimeSpan.FromMilliseconds(750), snapshot.ModelWait);
+        Assert.Equal(0, snapshot.OutstandingAttempts);
+        Assert.False(snapshot.HasUnconfirmedSettlement);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Snapshot_UnknownSettledUsage_RemainsUnknownAndCannotFundRetryAsync()
+    {
+        await using var scope = Scope();
+        var lease = await Granted(scope.AcquireWorkerAttemptAsync(Worker()));
+        await lease.SettleAsync(new(null, null, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(750), ProviderAttemptOutcome.Completed));
+        await lease.DisposeAsync();
+        var snapshot = scope.GetSnapshot();
+        Assert.Equal(1, snapshot.Usage.Requests);
+        Assert.True(snapshot.Usage.HasUnknownUsage);
+        Assert.Null(snapshot.Usage.InputTokens);
+        Assert.Null(snapshot.Usage.OutputTokens);
+        Assert.Equal(0, snapshot.OutstandingAttempts);
+        var retry = await scope.AcquireWorkerAttemptAsync(Worker());
+        try { Assert.NotEqual(ProviderAdmissionStatus.Granted, retry.Status); }
+        finally { if (retry.Lease is not null) await retry.Lease.DisposeAsync(); }
+    }
     private static OctoberExecutionScope Scope(OctoberScanPolicy? policy = null, TimeProvider? clock = null,
         Func<OctoberProviderPhase, CancellationToken, Task<ProviderAdmissionStatus>>? eligibility = null) =>
         new(Run, "selected-profile", policy ?? Policy(), eligibility ?? ((_, _) => Task.FromResult(ProviderAdmissionStatus.Granted)), Finalization, clock);

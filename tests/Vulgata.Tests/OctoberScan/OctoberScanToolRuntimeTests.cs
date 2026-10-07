@@ -326,7 +326,7 @@ public sealed class OctoberScanToolRuntimeTests
     };
     private static PreparedSourceResult Failed(Guid repository, PreparedSourceOutcome outcome) => new() { RepositoryId = repository, Operation = PreparedSourceOperation.List, Outcome = outcome };
 
-    private sealed class RuntimeHarness : IAsyncDisposable
+    internal sealed class RuntimeHarness : IAsyncDisposable
     {
         private readonly PreparedSourceFixture _fixture;
         private readonly PreparedCodeGraphConnection _descriptor;
@@ -336,6 +336,7 @@ public sealed class OctoberScanToolRuntimeTests
             Java = new(fixture.Approval.RepositoryId);
             _descriptor = new(fixture.Approval.RepositoryId, Path.Combine(fixture.SandboxPath, "never-executed.ps1"), "never-executed", [], fixture.PreparedRootPath, new Dictionary<string, string>(), static () => { }, _ => NewCodeGraph());
         }
+        internal PreparedSourceApproval Approval => _fixture.Approval;
         internal Guid RepositoryId => _fixture.Approval.RepositoryId;
         internal Queue<ScriptedSourceContext> Sources { get; } = new();
         internal int SourceIssues { get; private set; }
@@ -377,7 +378,7 @@ public sealed class OctoberScanToolRuntimeTests
         }
     }
 
-    private sealed class ScriptedSourceContext(Guid repository, Func<PreparedSourceListRequest, PreparedSourceResult> list) : IPreparedSourceReadContext
+    internal sealed class ScriptedSourceContext(Guid repository, Func<PreparedSourceListRequest, PreparedSourceResult> list) : IPreparedSourceReadContext
     {
         public Guid RepositoryId => repository;
         public PreparedSourceContextLifetime Lifetime => Disposed ? PreparedSourceContextLifetime.Disposed : PreparedSourceContextLifetime.Open;
@@ -395,7 +396,7 @@ public sealed class OctoberScanToolRuntimeTests
         public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
     }
 
-    private sealed class ControlledCodeGraph(Guid repository) : ICodeGraphWorkerToolSession
+    internal sealed class ControlledCodeGraph(Guid repository) : ICodeGraphWorkerToolSession
     {
         internal bool Disposed { get; private set; }
         internal bool Expired { get; set; }
@@ -404,7 +405,7 @@ public sealed class OctoberScanToolRuntimeTests
         public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
     }
 
-    private sealed class ControlledJava(Guid repository) : IPreparedJavaNavigationContext
+    internal sealed class ControlledJava(Guid repository) : IPreparedJavaNavigationContext
     {
         public Guid RepositoryId => repository;
         internal TaskCompletionSource? Started { get; set; }

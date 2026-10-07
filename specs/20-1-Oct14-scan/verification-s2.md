@@ -158,9 +158,9 @@ are complete at this controlled component boundary. The actual SDK/MAF path was
 exercised only with controlled transports; no provider, native tool or database
 qualification is implied. Generate Main remains unwired pending T022.
 
-## Supporting-source owner dependency
+## Supporting-source owner dependency and release
 
-Business's current `OctoberKnowledgePolicy.ContributorValid` only permits Source
+At the Worker/scope checkpoint, Business's `OctoberKnowledgePolicy.ContributorValid` only permitted Source
 contributors matching the primary admitted Origin. Qualified tools may return
 supporting-file content and uncited metadata after Worker request construction.
 The host needs a complete trusted input ledger before F1 sealing, but cannot add
@@ -171,6 +171,24 @@ as advisory, fork policy/schema, or claim that the static request contributor se
 solves dynamic tool provenance. Primary-file/F1 work can continue. Directory and
 unreadable/missing-path metadata also require an owner-approved representation or
 explicit bounded disposition; they cannot honestly be given a file-content hash.
+
+This owner compatibility gap is now implemented in reviewed Business `0ab10a77`,
+imported through selectively approved `c359c1ce4df642d73499d68dd544d022a25d63c5`
+at Scan merge `4cfe6e2ee8d888ec7bc7540c6f96d25858436549`. Scan's complete actual-input
+ledger and trusted F1 consumption still require implementation and verification.
+The same import contains the implemented canonical Generate digest helper; the
+actual admission store is explicitly held for an owner cancellation/submission
+classification race and must not be activated. Pending Scan declarations and one
+test edit were temporarily stashed, merged from clean state, and restored intact;
+no reset or discarded work occurred.
+
+The admission hold was subsequently lifted by OCT-Integrator after owner
+correction `7958a5e3`, independent review and its reported 1,404-case affected
+controlled GREEN. Approved `d72d1b80fd13a5ba21e425cffcc2d9cd89103316` is imported
+at Scan merge `256fdbf15a28e3bc0d7a2b96618b797edc6f23f2`; frozen pending Scan files
+were preserved and restored, including additive suite entries. Actual owner
+admission is now available for controlled full-runner composition. No migrations,
+PostgreSQL, native tools, provider or retained host were executed by this import.
 
 ## Primary framing and F1 execution
 
@@ -239,6 +257,88 @@ is specifically grounded in abrupt/host failure (`spec.md:117`, `data-model.md:2
 `quickstart.md:52`); it does not expressly consume a batch on a clean pre-execution
 validation failure. Business must settle the minimal compatible owner contract;
 Scan will not add SQL, a store, speculative claim DTOs or stricter restart policy.
+
+## Complete input ledger and full-runner construction
+
+The new paths are authored against the imported owner APIs, not a Scan policy or
+store. Generate remains unwired in Main while the runner is a fail-closed stub.
+The existing CL phase moved to `OctoberClPublicationPhase.cs` without behavioral
+change so the actual runner can have its own file. New paths must prove atomic
+Begin before source/tools, one original live dispatch, complete input provenance,
+original deadlines and exact CL publication before any completion claim.
+
+| Controlled boundary | Result | Evidence under `TestResults/` |
+| --- | --- | --- |
+| Initial ledger authoring | Suite policy rejected bare attributes before execution; corrected to required guarded attributes, assertions unchanged | No behavioral RED claimed |
+| Core ledger RED | 10 selected: 4 passed, 6 failed, zero skipped | `isolation-5e67b4a90ce24536befe175d9a6e33c4/results.trx` |
+| Expanded ledger RED: frozen input closure and foreign binding | 13 selected: 6 passed, 7 failed, zero skipped | `isolation-bec35de5304f425e83cdec9dd882ec45/results.trx` |
+| Core ledger GREEN plus host accounting/F1 RED | 35 selected: 30 passed, 5 failed, zero skipped; core ledger 13 and previous scope 17 passed | `isolation-b362c62d31b34654bec350d51058cb96/results.trx` |
+| Accounting/F1 GREEN plus remaining input forms/retry RED | 68 selected: 62 passed, 6 failed, zero skipped; all 20 scope checks and both host ledger-sealing cases passed | `isolation-e3baf4da83da4d2ea89a84a646d758d5/results.trx` |
+
+The remaining six failures are five Search/Java/CodeGraph input forms and typed
+safe-transient classification with known settled usage. Unknown usage still bars
+retry. The first source-change timing test changed source during the initial check
+and was correctly caught later; it did not reproduce the final awaited-authority
+gap. Two precise final-admission/freeze cases were then added. Their first attempt
+failed in the build's policy subprocess without a test outcome
+(`isolation-f7018bb533294f70a91d087f82634a4a/build.log`). Standalone `-PolicyOnly`
+passed afterward; the bounded rerun preserves every policy check and assertion.
+
+The precise final-authorization rerun selected **2: both failed, zero skipped**:
+`isolation-e76a496f13954cb4b5592c579f52501f/results.trx`. It demonstrated both
+stale metadata disclosure and a stale frozen snapshot when source changed inside
+the final Allowed authorization callback. Root inspected those failures before
+releasing the final source recheck, remaining closed result forms and typed retry
+classification. This closes an observed asynchronous gap; it does not claim
+preventive operating-system source isolation.
+
+The next controlled run selected **76: 70 passed, 6 failed, zero skipped**:
+`isolation-f1f318f6f2cc4aee98d0f17db149888f/results.trx`. All ledger (26),
+Worker (24) and scope (20) cases passed. The six failures exclusively reach the
+unimplemented closed tool wrapper; root inspected each stub exception before
+releasing its implementation. Java positive request fixtures were corrected from
+character 0 to 1, matching the existing facade schema; returned location characters
+remain zero-based. Those earlier Java failures are not attributed solely to missing
+production behavior.
+
+Independent review identified two additional counterexamples before checkpoint
+acceptance: cancellation during the final awaited source verifier must withhold
+results/snapshots, and provider execution timing must exclude separately measured
+queue admission delay. Focused test authoring is underway; this checkpoint is not
+yet accepted. Full runner wiring and all PostgreSQL/native/provider/reader runtime
+qualification remain outstanding.
+
+The review counterexamples then ran in
+`isolation-62d89b43635f4ac09b38d8d86a7137fa/results.trx`: **61 selected,
+56 passed, 5 failed, zero skipped**. All six actual closed wrapper invocations
+passed over controlled runtime adapters. Four final-verifier cases reproduced
+disclosure/snapshot success after cancellation or pinned-origin mutation during
+the final await. The actual-client timing case measured approximately 1.009s
+admission delay incorrectly included in approximately 1.024s model execution.
+Root inspected all five failures and released the narrow corrections. Review also
+found that wrappers must reject a different root/approval of the same Repository;
+metadata-only results cannot supply that binding themselves. That counterexample
+is being added before the exact-binding correction.
+
+The corrected post-await/timing paths passed in
+`isolation-783b91cb4da04ba69d5c84adca2aaa01/results.trx`: **63 selected,
+61 passed, 2 failed, zero skipped**. Only the two same-Repository foreign-root/
+foreign-approval wrapper cases failed (no rejection). Root inspected those exact
+failures before releasing the narrow binding check. Independent review accepted
+the two earlier fixes contingent on this now-recorded GREEN. The positive wrapper
+fixtures now carry the actual runtime approval labels; their assertions are intact.
+
+Final affected verification in
+`isolation-b98f770bf8b84973afb94a6ca7fe9708/results.trx` selected **255:
+254 passed, 1 failed, zero skipped**. All **249 non-runtime-configuration** cases
+passed, including the reviewed ledger, exact-bound wrappers, F1, accounting,
+timing and retry changes and existing Scan/Generator/Headless regressions. The
+sole failure is the new positive RuntimeFile parser test against its deliberate
+fail-closed stub; its five invalid-input cases passed. That separate RED released
+the strict parser implementation, not a real run. Independent review and separate
+test/production final-shape assessments accept the input-ledger/tool/accounting
+component. The full Generate runner remains unimplemented and T020–T024 remain
+open; no S2 completion or real generation is claimed.
 
 ## Early composition decisions
 
