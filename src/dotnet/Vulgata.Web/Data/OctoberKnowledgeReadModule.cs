@@ -20,6 +20,9 @@ public static class OctoberKnowledgeReadModule
             provider.GetRequiredService<IServiceScopeFactory>(), trustedCurrentPrincipal, operationTimeout));
         services.AddScoped<IOctoberKnowledgeDisclosurePolicy, OctoberKnowledgeDisclosurePolicy>();
         services.AddSingleton<IOctoberKnowledgeTokenProtector, OctoberKnowledgeDataProtectionTokenProtector>();
+        services.AddSingleton<IOctoberKnowledgeDisclosureProtector, OctoberKnowledgeDisclosureDataProtectionProtector>();
+        services.AddScoped<OctoberKnowledgeDependencyAuthority>();
+        services.AddScoped<IOctoberKnowledgeDependencyAuthority>(provider => provider.GetRequiredService<OctoberKnowledgeDependencyAuthority>());
         // The existing host supplies Identity, management contexts and durable Data Protection keys.
         // Registration neither opens October storage nor migrates or constructs generator services.
         return services;

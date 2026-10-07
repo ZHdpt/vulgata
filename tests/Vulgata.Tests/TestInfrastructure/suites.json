@@ -1,4 +1,7 @@
 {
+  "October/Knowledge/OctoberDisclosureTests.cs": {
+    "suite": "SelfContained"
+  },
   "Explore/ExplorePersistedReaderTests.cs": {
     "suite": "PostgreSql"
   },
