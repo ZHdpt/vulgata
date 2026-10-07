@@ -158,6 +158,11 @@ verification before reuse.
   denied content without inventing a saved state. Actual page attachment/host
   activation and browser qualification remain open; Chat continues leaf rendering
   and reader links while root owns parent composition.
+  The encoded-text Chat renderer `bd51e764` is integrated at `97f428ec`;
+  combined affected controlled checks pass 1,505/1,505, zero skips. It supports a
+  bounded formatting subset with literal fallback, not full CommonMark or live
+  Chat activation. Exact authorized footer destinations remain under owner/consumer
+  agreement; a URL builder alone is not title or disclosure authority.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

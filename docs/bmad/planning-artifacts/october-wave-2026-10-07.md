@@ -749,3 +749,24 @@ regressions and corrections; the remaining provenance boundary was coherent on
 inspection. This candidate is not merged. Existing integrated capability remains
 at `964f5303`; Scan's unrelated runner/parser work, Business B2 and Chat rendering
 continue. No all-lane barrier or runtime/resource permission is introduced.
+
+## Safe leaf rendering integrated
+
+Chat `bd51e764e55a3783bcfc4d0b05b2e32db33122ad` is merged at `97f428ec` after
+independent source review. The leaf emits application-fixed tags with encoded text,
+not model HTML, attributes, image targets or links. Incomplete streamed syntax stays
+immediately readable. Character/node/scan limits fall back to the entire original
+encoded text rather than truncating it; no full CommonMark claim is made. Parent
+ChatPage, packages, routes, host execution and reader-link authority are unchanged.
+
+Combined affected verification passed **1,505/1,505 SelfContained** cases, zero
+failures/skips, 398 classified files:
+`TestResults/isolation-b9572b8e60be4951a22fdbd6ac1f279d/results.trx`.
+This is controlled rendering/integration evidence, not a real browser/provider run.
+
+Integration requested the exact E0 title/destination surface from Explorer for
+Chat T026/T027. Existing `ExactDocumentLinkBuilder.Build` supplies a validated URL,
+not fresh title/disclosure permission. Reuse the owner route and canonical Knowledge
+authorization; do not invent a parallel reader, purpose conversion or model URL.
+Controlled agreement/work need not wait for the shared real publication, while
+actual navigation qualification still does. Scan's held candidate remains separate.
