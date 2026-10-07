@@ -66,3 +66,38 @@ The canonical consumer's actual SDK request test found that the installed adapte
 `RunAsync(Func<string, CancellationToken, ValueTask> authorizedText, CancellationToken = default, Action<OctoberChatToolProgress>? onToolProgress = null)` is single-use. The text sink must honor cancellation and context/attachment ownership; the progress sink must synchronously enqueue bounded sanitized events without blocking. `OctoberChatGenerationResult` contains canonical terminal state/reason/provider-finish, answer, exact references/consumed proofs/full dependency capsule, actual generation end time and the same save operation ID. It is **generation facts only**, never a saved receipt or physical settlement certificate.
 
 Bind `ReauthorizeBeforeSendAsync(CancellationToken = default)` into Integration's request admission. It refuses outside active Run, verifies execution, then freshly reauthorizes the complete input union under the original lifetime. Invoke it after permit waiting and other awaited execution/profile checks immediately before physical send. A client-construction closure must refuse until the runner is assigned; construction sends no request. Keep root execution/profile fencing and both settlement owners. The public budget token/timer surfaces expose the original lifetime without resetting it. These APIs are controlled-qualified by 583 affected passes; production route, authoritative registry, final persistence and live qualification remain owner prerequisites.
+## Canonical coordinator attachment boundary — 2026-10-07
+
+`OctoberChatCoordinator` consumes the Business store/codec and the integration-owned
+`OctoberChatClientSession`; it does not issue execution authority or activate a route.
+The host freezes/registers the exact request, initial history dependency union,
+selected profile and original budget before calling `ExecuteAsync`. Its required
+generation observer attaches the actual `Task<OctoberChatGenerationResult>` before
+the post-permit callback can send. A throwing observer seals and drains the session.
+The original Admitted snapshot remains immutable; current phase is tracked separately.
+
+The host retains the whole execution task through factory, generation and physical
+settlement, even when a browser detaches. Canonical store calls use separate bounded
+persistence attempts. A terminal generation result is not a saved receipt. Root-owned
+registration, expected-operation checks and actual database-task settlement remain
+required in production; controlled authority doubles do not replace them.
+
+An uncertain transition is displayed as unknown, not the last confirmed phase or
+an idle slot. Exact admission lookup may complete only the first never-attempted save
+of this original lifecycle after the original phase task and owned work settle.
+It never restores dispatch. Once a save is attempted, even if invocation throws,
+the immutable payload is retained and recovery uses exact terminal lookup only.
+Missing owner rows do not prove absence or authorize resubmission.
+
+After physical drain, fresh full-capsule authorization precedes the first terminal
+freeze. Explicit owner denial/unavailability can produce the owner's sanctioned
+empty authorization-failure closure from a nonterminal phase. Missing context,
+unknown lineage, exceptions or unconfirmed cleanup cannot manufacture this exception.
+Provider finish and generation-end time remain actual facts. An already attempted
+payload is never rewritten. The host's commit guard must preserve this exact exception.
+
+T020/T021 still require a bounded presentation attachment. A queued delta needs live
+authorization at actual disclosure; an earlier runner check is not a lasting grant.
+Slow/throwing subscribers must not block owned generation. Confirmed sanitized closure
+must clear provisional prose/references, not describe them as retained. Existing
+controlled events do not yet supply this integration or browser qualification.
