@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Shared.Explore;
 using Vulgata.Web.ViewModels.Explore;
@@ -13,7 +15,7 @@ public static class ExploreModule
         services.TryAddScoped<IExploreContextProvider, UnavailableExploreContextProvider>();
         services.TryAddScoped<IExplorePresentationService>(provider => new ExplorePresentationService(
             provider.GetService<IOctoberKnowledgeReader>(), provider.GetRequiredService<IExploreContextProvider>(),
-            provider.GetService<AuthenticationStateProvider>()));
+            provider.GetService<AuthenticationStateProvider>(), provider.GetService<IOptions<IdentityOptions>>()));
         services.TryAddTransient<DocumentReaderViewModel>();
         services.TryAddTransient<DocumentBrowseViewModel>();
         return services;

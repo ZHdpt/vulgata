@@ -1,4 +1,7 @@
 {
+  "Explore/ExplorePersistedReaderTests.cs": {
+    "suite": "PostgreSql"
+  },
   "Explore/ReaderComponentTests.cs": {
     "suite": "SelfContained"
   },
