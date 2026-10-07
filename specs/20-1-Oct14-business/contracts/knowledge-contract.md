@@ -158,3 +158,9 @@ Integration imports the initial owner-published hash; each consumer acknowledges
 
 Planning review is not CP-K1/C0 completion or Scan concurrence. No C# contracts, fixture/probe code, compilation, tasks or implementation are authorized by these corrections. Later contract changes remain Business-owned small commits propagated by integration, never consumer forks. Current status: corrected Business proposal locally reviewable; Scan acknowledgement and cross-lane verification pending.
 
+
+### Finalization persistence diagnostics agreement
+
+Integrator and Scan accepted optional non-positional `BusinessFinalizationResult.PersistenceStatus` using existing `KnowledgeWriteStatus`; null is omitted and means no additional persistence observation, never confirmation of commit. Valid combinations must be checked at owner boundaries: conflicting request/outcome is Failed+Conflict without publication/content; confirmed Published/PublishedPartial/NoContent retains the exact authorized durable outcome when append fails and reports LogUnavailable; Committed/AlreadyCommitted must agree with replay state; unknown durable state remains CommitIndeterminate without invented artifacts or regeneration authority. Per-call append/replay diagnostics are excluded from immutable request/outcome identities. Fresh disclosure governs every returned handle and coverage projection.
+
+Scan's agreed future report mapping preserves confirmed publication or NoContent and completed stage, adds `operation_log_unavailable`, and reports Execution=Failed/exit1 for log failure. It must not silently report a completely clean run or confuse known publication with indeterminate storage. This compatibility agreement grants no new provider dispatch, S3 activation or runtime resources.
