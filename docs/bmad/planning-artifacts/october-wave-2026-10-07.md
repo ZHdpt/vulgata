@@ -1538,3 +1538,17 @@ Final-denial status must remain truthful; any missing typed transport outcome is
 bounded owner compatibility question. Scan owns the actual executor/factory delayed-
 dispatch regression. Complete real-client composition remains open pending the
 reviewed correction and that conformance evidence; no runtime/resource scope changes.
+
+Business and Scan concurred on the narrow final-denial seam: an Agents-only sealed
+OctoberBusinessAttemptDeniedException with immutable ProviderAdmissionStatus, accepting
+only defined non-Granted values. No attempt-interface signature changes. Business
+removes both early CheckBeforeSendAsync calls, retains disclosure/handoff/original
+deadline/cancellation checks and catches the final denial without retry. Scan maps
+only its own Business final-guard refusal; Worker behavior is unchanged. If SDK
+wrapping intervenes, any mapping is tied to that invocation's own refusal identity,
+never arbitrary nested exceptions or ambient state, and occurs after actual cleanup.
+Unrelated transport/cleanup failures retain their own classification. Observed dispatch
+remains sent/unknown on failure, never zero merely because a denial type is returned.
+Business is released to provide the isolated compiling declaration checkpoint first;
+root imports it before both consumers bind production changes. Actual SDK propagation
+and delayed-entry rate conformance remain Scan-owned controlled qualification.
