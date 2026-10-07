@@ -265,3 +265,32 @@ Metadata cannot require reading unavailable bytes or masquerade as content evide
 Until the owner contract is accepted, Scan fails closed before disclosing support it
 cannot represent, while primary-file/F1 work and other lanes continue. No broad plan
 restart, new root authority or all-lane barrier is authorized by this finding.
+
+## Worker/scope component integration
+
+Reviewed Scan `7b34147d8231ee43b6ae7cf162165d5fc101ae14` is integrated at
+`7c8e33ded88accc53f92f91f4427bfa787db1226`. It adds actual SDK/MAF Worker execution,
+strict model-local proposals, explicit protected-profile construction and shared
+Worker/Business execution-scope limits. The physical Worker transport disables redirects
+and SDK retries. Generate Main still awaits T022 composition and real qualification.
+
+Owner evidence remains accurately split: 238/239 affected tests, then correction of
+the fixture synchronization and 17/17 focused scope GREEN; independent/final owner
+reviews accepted. Integration reran the combined current source: **1,064/1,064 selected
+SelfContained October/Explore/PreparedSource cases passed**, zero failures/skips,
+367 classified files. Evidence:
+`TestResults/isolation-398266fa4f34414bad79506ceebf38c5/results.trx`.
+The first integration launcher became unaddressable before any build/test result
+in `isolation-df7eaa1204084d14b3d961511efee4df`; no success is attributed to it.
+The completed rerun above is the evidence. This is still controlled transport evidence,
+not paid provider, native tool, retained publication or ordinary-reader runtime proof.
+
+Supporting-source correction is still a proposal. Business owns the additive origin
+and separate metadata representation; Scan requires safe request parameters as well
+as the exact filtered admitted projection in the metadata digest. Equal file bytes at
+different paths remain distinct origins; primary-null/explicit-primary aliases must
+not double count. Prepared-version semantics must follow the existing October host
+binding, not a new snapshot registry or a blanket cross-file string-equality rule.
+Ordinary positively bound index metadata must not force whole-repository hashing;
+arbitrary free-form CodeGraph text is not automatically safe metadata. Until the
+exact owner checkpoint is accepted, unrepresentable support stays withheld.

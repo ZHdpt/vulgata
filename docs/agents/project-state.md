@@ -92,6 +92,9 @@ verification before reuse.
   Reviewed raw Chat guard `26a89712` is subsequently integrated: 509/509 selected
   related SelfContained cases pass (not another full-suite run). This supplies strict
   streaming validation and guard cleanup, not selected-client/admission composition.
+  Scan Worker/scope `7b34147d` is also integrated with 1,064/1,064 selected combined
+  October/Explore/PreparedSource passes. Actual SDK calls used controlled transports;
+  Generate Main, supporting-source acceptance compatibility and real S2 remain open.
   Chat generation remains disabled; owner disclosure/dialogue implementation, W1
   admission/client composition and real-source retained qualification remain open.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
