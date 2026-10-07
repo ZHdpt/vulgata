@@ -14,6 +14,7 @@ internal static class PreparedSourceTraversal
     private const uint ShareReadWriteDelete = 0x00000007;
     private const uint OpenExisting = 3;
     private const uint FileOpen = 1;
+    private const uint FileCreate = 2;
     private const uint FileReadAttributes = 0x80;
     private const uint FileListDirectory = 0x1;
     private const uint FileTraverse = 0x20;
@@ -74,7 +75,8 @@ internal static class PreparedSourceTraversal
             : null;
 
     internal static (OpenStatus Status, IReadOnlyList<ListedEntry> Entries, bool Complete)
-        ListImmediate(SafeFileHandle directory, int maximumEntries)
+        ListImmediate(SafeFileHandle directory, int maximumEntries,
+            DirectoryIdentity? excludedOwnedDirectory = null)
     {
         const int bufferLength = 64 * 1024;
         const int fullDirectoryInfo = 0x0e;
@@ -84,7 +86,7 @@ internal static class PreparedSourceTraversal
         var entries = new List<ListedEntry>();
         bool restart = true;
 
-        while (entries.Count < maximumEntries)
+        while (true)
         {
             if (!GetFileInformationByHandleEx(
                     directory,
@@ -126,10 +128,31 @@ internal static class PreparedSourceTraversal
                         return (OpenStatus.Unavailable, entries, false);
                     }
 
-                    entries.Add(new ListedEntry(name, attributes, length, lastWriteTime));
-                    if (entries.Count >= maximumEntries)
+                    bool excluded = false;
+                    if (excludedOwnedDirectory is not null &&
+                        name.Equals(".codegraph", StringComparison.OrdinalIgnoreCase))
+                    {
+                        (OpenStatus stateStatus, SafeFileHandle? state) = OpenRelativeDirectory(directory, name);
+                        using (state)
+                        {
+                            DirectoryIdentity? identity = state is null ? null : ObserveDirectory(state);
+                            if (stateStatus != OpenStatus.Opened || identity is null ||
+                                identity.VolumeSerialNumber != excludedOwnedDirectory.VolumeSerialNumber ||
+                                identity.FileIndexHigh != excludedOwnedDirectory.FileIndexHigh ||
+                                identity.FileIndexLow != excludedOwnedDirectory.FileIndexLow)
+                            {
+                                return (OpenStatus.Unavailable, entries, false);
+                            }
+                            excluded = true;
+                        }
+                    }
+                    if (!excluded && entries.Count >= maximumEntries)
                     {
                         return (OpenStatus.Opened, entries, false);
+                    }
+                    if (!excluded)
+                    {
+                        entries.Add(new ListedEntry(name, attributes, length, lastWriteTime));
                     }
                 }
 
@@ -147,7 +170,6 @@ internal static class PreparedSourceTraversal
             }
         }
 
-        return (OpenStatus.Opened, entries, false);
     }
 
     internal static (OpenStatus Status, SafeFileHandle? Handle) OpenRoot(string path)
@@ -226,18 +248,27 @@ internal static class PreparedSourceTraversal
 
     internal static (OpenStatus Status, SafeFileHandle? Handle) OpenRelativeFile(
         SafeFileHandle root,
-        string? relativePath) =>
-        OpenRelative(root, relativePath, requireDirectory: false);
+        string? relativePath,
+        DirectoryIdentity? excludedDirectory = null) =>
+        OpenRelative(root, relativePath, requireDirectory: false, excludedDirectory);
 
     internal static (OpenStatus Status, SafeFileHandle? Handle) OpenRelativeDirectory(
         SafeFileHandle root,
-        string? relativePath) =>
-        OpenRelative(root, relativePath, requireDirectory: true);
+        string? relativePath,
+        DirectoryIdentity? excludedDirectory = null) =>
+        OpenRelative(root, relativePath, requireDirectory: true, excludedDirectory);
+
+    internal static (OpenStatus Status, SafeFileHandle? Handle) CreateRelativeDirectory(
+        SafeFileHandle root, string name)
+        => !IsCanonicalRelativePath(name, allowEmpty: false) || name.Contains('/')
+            ? (OpenStatus.Denied, null)
+            : OpenChild(root, name, createDirectory: true);
 
     private static (OpenStatus Status, SafeFileHandle? Handle) OpenRelative(
         SafeFileHandle root,
         string? relativePath,
-        bool requireDirectory)
+        bool requireDirectory,
+        DirectoryIdentity? excludedDirectory)
     {
         if (!IsCanonicalRelativePath(relativePath, allowEmpty: false))
         {
@@ -265,6 +296,15 @@ internal static class PreparedSourceTraversal
                 current = next;
                 ownsCurrent = true;
                 if (IsReparsePoint(current))
+                {
+                    return (OpenStatus.Denied, null);
+                }
+
+                DirectoryIdentity? directoryIdentity = ObserveDirectory(current);
+                if (directoryIdentity is not null && excludedDirectory is not null &&
+                    directoryIdentity.VolumeSerialNumber == excludedDirectory.VolumeSerialNumber &&
+                    directoryIdentity.FileIndexHigh == excludedDirectory.FileIndexHigh &&
+                    directoryIdentity.FileIndexLow == excludedDirectory.FileIndexLow)
                 {
                     return (OpenStatus.Denied, null);
                 }
@@ -339,7 +379,8 @@ internal static class PreparedSourceTraversal
 
     private static (OpenStatus Status, SafeFileHandle? Handle) OpenChild(
         SafeFileHandle parent,
-        string name)
+        string name,
+        bool createDirectory = false)
     {
         IntPtr nameBuffer = Marshal.StringToHGlobalUni(name);
         IntPtr unicodeStringPointer = IntPtr.Zero;
@@ -375,8 +416,8 @@ internal static class PreparedSourceTraversal
                     IntPtr.Zero,
                     0,
                     ShareReadWriteDelete,
-                    FileOpen,
-                    OpenReparsePoint | SynchronousIoNonAlert,
+                    createDirectory ? FileCreate : FileOpen,
+                    OpenReparsePoint | SynchronousIoNonAlert | (createDirectory ? 1u : 0u),
                     IntPtr.Zero,
                     0);
             }
@@ -495,7 +536,9 @@ internal static class PreparedSourceTraversal
         public IntPtr Information;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    // BY_HANDLE_FILE_INFORMATION uses DWORD-aligned FILETIME pairs, not
+    // eight-byte aligned managed Int64 fields. Its native size is 52 bytes.
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     private struct FileInformation
     {
         public FileAttributes Attributes;

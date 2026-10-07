@@ -8,6 +8,20 @@ implementation_authorized: false
 
 # Integrate the four first deliverables
 
+## October 7 implementation checkpoint
+
+The later [controlled Chat integration](october-chat-integration-2026-10-07.md)
+imports `e4689f0b` at `10db709b`, with 2,775/2,775 combined SelfContained passes.
+It does not activate Chat or implement its missing owner contracts. The user has
+explicitly required a pause before further development.
+
+The user's instruction to execute item 1 authorizes the bounded integration now
+recorded in [the reader integration handoff](october-reader-integration-2026-10-07.md).
+Business through T018, Explorer E0 and Scan S1 are imported. The section below
+records the earlier October 6 contract checkpoint, not current implementation
+completeness. Real-source Scan S2 and retained source-backed publication remain
+later work; disposable persisted test data does not satisfy that evidence.
+
 ## Current integration checkpoint — October 6
 
 The user assigned OCT-Integrator to import Business's initial checkpoint and
@@ -19,29 +33,42 @@ to describe the broader plan, not this separately authorized checkpoint.
 - Imported candidate: `07c3fe4463e3228a6982fd106b58148ca87974bd` plus handoff
   `7a189c34aec625202f74846d4907ded787ccbdca`.
 - Integration merge: `3bcd815b09cfbac7418d6644a2a75816e0788ec0` on `oct14/main`.
-- Business T001–T005 are complete. T006 remains pending actual Scan, Chat and
-  Explore consumer acknowledgements; a merged candidate is not yet accepted K.
+- Initial K/CP-K1 is accepted at `12d92d80339ea622cd26c593ebdb74da59401f91`.
+  Business T001–T006 closure is recorded in `a836f359` and integrated.
 - Main current-source replay: `eng/test.ps1 -Filter
   'FullyQualifiedName~Vulgata.Tests.October.Knowledge'`, 50 selected/passed,
   zero failed/skipped, policy passed. Evidence:
   `TestResults/isolation-8e5356d9c6724a80821cccc36eabb4fc/results.trx`.
   This is controlled contract/fixture evidence, not PostgreSQL, native tools,
   providers, Web startup or full-suite qualification.
-- Scan is preparing T001–T004, Explore T001–T003 and Chat its K0 conformance.
-  Each imports the exact integration commit in its own worktree and preserves
-  its accepted planning artifacts. Each pauses before broader implementation.
+- Scan T001–T004 (`0f672891`), Explore T001–T003 (`aa63ca15`) and Chat K0
+  conformance (`6b4153d5`) are merged. The combined current-source replay passed
+  89/89 SelfContained tests, zero failures/skips; policy classified 324 files.
+  Evidence: `TestResults/isolation-248c5bd60813457c983eaf5b273842f6/results.trx`.
+  The inventory conflict was resolved by retaining all four new consumer files.
+  Production contracts and the common fixture did not change.
 - Chat's integration-owned W0 Web composition seam is separate from K0 and is
   not yet delivered. It must not block the other consumers' contract acceptance
   or be silently marked complete by passing fixture tests.
 
-Scan's import-only handoff `e62532d624400d547e7f7a113f9d04113189f3cb`
-records T001 complete, T002–T004 incomplete and zero consumer tests executed.
-Its approval layer rejected test authoring because an earlier direct user
-instruction stopped that lane before implementation. The coordinator did not
-bypass that rejection. The user must explicitly supersede that stop for the
-bounded conformance tasks in the Scan chat; this is not a failed contract test.
-Until its acknowledgement is available, T006 and accepted K remain incomplete.
-Chat and Explore's bounded preparation dispatches are still in progress.
+The earlier Scan authorization blocker is resolved by the user's direct bounded
+T002–T004 authorization. Its import-only handoff remains historical evidence.
+All lanes remain paused before broader implementation; readiness is not a new
+implementation or runtime grant.
+
+Next parallel development boundaries after explicit implementation authorization:
+
+| Lane | Next work | Remaining dependency |
+| --- | --- | --- |
+| Business | B0a T007–T013, then B0b | Real persistence/reader services and schema remain unbuilt; Business alone owns schema. |
+| Scan | S1 T005–T012 | Native/source/provider resource execution requires scoped authority; real acceptance needs Business services. |
+| Explore | E0 T004–T013 using labelled controlled dependencies | Real publication qualification waits for Business, not controlled E0 authoring. |
+| Chat | Controlled feature-local C0 T003–T006 after T002 ownership setup | W0 must be wired/verified at T007 before integrated C0 completion; D0/W1 still block live C1. |
+
+Integration owns W0. Do not create a fake ready module or treat fixture tests as
+Web composition proof. Chat's `b0e83069` clarification is integrated: K0 enables
+controlled T003–T006 authoring; W0 remains mandatory at T007. Its proposed API
+is not yet accepted or implemented. C0 acceptance is unchanged.
 
 Only Business owns shared Knowledge types and October schema/migrations.
 Integration serializes shared composition and test-inventory merges; consumers

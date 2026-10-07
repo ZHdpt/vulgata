@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.Analysis.CodeGraph;
 
 namespace Vulgata.Infrastructure.Source;
 
@@ -11,6 +12,7 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
     private readonly SafeFileHandle _rootHandle;
     private readonly PreparedSourceApproval _approval;
     private readonly IPreparedSourceCurrentAuthorityVerifier _authority;
+    private readonly PreparedCodeGraphConnection? _ownedState;
     private readonly long _deadlineStarted;
     private readonly TimeSpan _remainingDeadline;
     private readonly CancellationTokenSource _disposalCancellation = new();
@@ -18,6 +20,7 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
     private readonly SemaphoreSlim _listGate = new(1, 1);
     private readonly ConcurrentDictionary<string, ListCursor> _listCursors = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, SearchCursor> _searchCursors = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, PreparedSourceTraversal.FileIdentity> _readIdentities = new(StringComparer.Ordinal);
     private readonly object _budgetGate = new();
     private int _remainingOperations;
     private int _remainingMetadataEntries;
@@ -32,11 +35,13 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         SafeFileHandle rootHandle,
         IPreparedSourceCurrentAuthorityVerifier authority,
         PreparedSourceGrantLimits limits,
-        TimeSpan remainingDeadline)
+        TimeSpan remainingDeadline,
+        PreparedCodeGraphConnection? ownedState = null)
     {
         _approval = approval;
         _rootHandle = rootHandle;
         _authority = authority;
+        _ownedState = ownedState;
         _deadlineStarted = Stopwatch.GetTimestamp();
         _remainingDeadline = remainingDeadline;
         _disposalToken = _disposalCancellation.Token;
@@ -71,6 +76,10 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         }
 
         if (request.PageSize is < 1 or > PreparedSourceCallLimits.MaximumListEntries)
+        {
+            return Failure(operation, PreparedSourceOutcome.Denied);
+        }
+        if (IsOwnedStatePath(request.RelativeDirectory))
         {
             return Failure(operation, PreparedSourceOutcome.Denied);
         }
@@ -131,7 +140,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                 (PreparedSourceTraversal.OpenStatus openStatus, openedDirectory) =
                     PreparedSourceTraversal.OpenRelativeDirectory(
                         _rootHandle,
-                        request.RelativeDirectory);
+                        request.RelativeDirectory,
+                        _ownedState?.ExcludedStateFor(_rootHandle));
                 if (openStatus != PreparedSourceTraversal.OpenStatus.Opened ||
                     openedDirectory is null)
                 {
@@ -158,7 +168,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                 IReadOnlyList<PreparedSourceTraversal.ListedEntry> observed,
                 bool complete) = PreparedSourceTraversal.ListImmediate(
                     directory,
-                    _remainingMetadataEntries);
+                    _remainingMetadataEntries,
+                    _ownedState?.ExcludedStateFor(directory));
             _remainingMetadataEntries -= observed.Count;
             PreparedSourceTraversal.DirectoryIdentity? directoryAfter =
                 PreparedSourceTraversal.ObserveDirectory(directory);
@@ -224,6 +235,22 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                             : request.RelativeDirectory + "/" + entry.Name),
                     kind,
                     kind == PreparedSourceEntryKind.RegularFile ? entry.ByteLength : null);
+                if (kind == PreparedSourceEntryKind.RegularFile)
+                {
+                    (_, SafeFileHandle? listedFile) = PreparedSourceTraversal.OpenRelativeFile(
+                        _rootHandle, listed.Location.RelativePath, _ownedState?.ExcludedStateFor(_rootHandle));
+                    using (listedFile)
+                    {
+                        PreparedSourceTraversal.FileIdentity? identity = listedFile is null
+                            ? null : PreparedSourceTraversal.ObserveFile(listedFile);
+                        if (identity is null || identity.ByteLength != entry.ByteLength ||
+                            identity.LastWriteTime != entry.LastWriteTime ||
+                            _readIdentities.GetOrAdd(listed.Location.RelativePath, identity) != identity)
+                        {
+                            return Failure(operation, PreparedSourceOutcome.ChangedInput);
+                        }
+                    }
+                }
                 entries.Add(listed);
                 if (kind == PreparedSourceEntryKind.NonTraversableLink)
                 {
@@ -302,6 +329,10 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         {
             return Failure(operation, PreparedSourceOutcome.InvalidRange);
         }
+        if (IsOwnedStatePath(request.RelativePath))
+        {
+            return Failure(operation, PreparedSourceOutcome.Denied);
+        }
 
         PreparedSourceOutcome? authorization = await CheckAuthorityAsync(cancellationToken);
         if (authorization is { } denied)
@@ -325,7 +356,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         {
             (status, file) = PreparedSourceTraversal.OpenRelativeFile(
                 _rootHandle,
-                request.RelativePath);
+                request.RelativePath,
+                _ownedState?.ExcludedStateFor(_rootHandle));
         }
         catch (ObjectDisposedException) when (_disposalToken.IsCancellationRequested)
         {
@@ -356,7 +388,7 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
 
             PreparedSourceTraversal.FileIdentity? fileBefore =
                 PreparedSourceTraversal.ObserveFile(file);
-            if (fileBefore is null)
+            if (fileBefore is null || _readIdentities.GetOrAdd(request.RelativePath, fileBefore) != fileBefore)
             {
                 return Failure(operation, PreparedSourceOutcome.ChangedInput);
             }
@@ -550,6 +582,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             return Failure(operation, PreparedSourceOutcome.Denied);
         }
 
+        if (IsOwnedStatePath(request.RelativeDirectory))
+        {
+            return Failure(operation, PreparedSourceOutcome.Denied);
+        }
+
         PreparedSourceOutcome? authorization = await CheckAuthorityAsync(cancellationToken);
         if (authorization is { } denied)
         {
@@ -734,7 +771,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         if (relativeDirectory.Length != 0)
         {
             (PreparedSourceTraversal.OpenStatus status, opened) =
-                PreparedSourceTraversal.OpenRelativeDirectory(_rootHandle, relativeDirectory);
+                PreparedSourceTraversal.OpenRelativeDirectory(_rootHandle, relativeDirectory,
+                    _ownedState?.ExcludedStateFor(_rootHandle));
             if (status != PreparedSourceTraversal.OpenStatus.Opened || opened is null)
             {
                 run.FailureOutcome = status switch
@@ -775,7 +813,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                 IReadOnlyList<PreparedSourceTraversal.ListedEntry> observed,
                 bool complete) = PreparedSourceTraversal.ListImmediate(
                     directory,
-                    _remainingMetadataEntries);
+                    _remainingMetadataEntries,
+                    _ownedState?.ExcludedStateFor(directory));
             _remainingMetadataEntries -= observed.Count;
             if (status != PreparedSourceTraversal.OpenStatus.Opened)
             {
@@ -837,7 +876,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         CancellationToken cancellationToken)
     {
         (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? file) =
-            PreparedSourceTraversal.OpenRelativeFile(_rootHandle, relativePath);
+            PreparedSourceTraversal.OpenRelativeFile(_rootHandle, relativePath,
+                _ownedState?.ExcludedStateFor(_rootHandle));
         if (status != PreparedSourceTraversal.OpenStatus.Opened || file is null)
         {
             if (status == PreparedSourceTraversal.OpenStatus.Unreadable)
@@ -855,7 +895,7 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         {
             PreparedSourceTraversal.FileIdentity? fileIdentity =
                 PreparedSourceTraversal.ObserveFile(file);
-            if (fileIdentity is null ||
+            if (fileIdentity is null || _readIdentities.GetOrAdd(relativePath, fileIdentity) != fileIdentity ||
                 (run.Cursor?.ObservedFiles.TryGetValue(
                     relativePath,
                     out PreparedSourceTraversal.FileIdentity? expectedFile) == true &&
@@ -1010,6 +1050,7 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             _disposalCancellation.Cancel();
             _listCursors.Clear();
             _searchCursors.Clear();
+            _readIdentities.Clear();
             _rootHandle.Dispose();
             _disposalCancellation.Dispose();
         }
@@ -1017,11 +1058,71 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         return ValueTask.CompletedTask;
     }
 
+    internal async Task<string?> ObserveFileIdentityAsync(
+        IPreparedSourceCurrentAuthorityVerifier issuerAuthority, string relativePath,
+        CancellationToken cancellationToken)
+    {
+        if (!ReferenceEquals(issuerAuthority, _authority) ||
+            !PreparedSourceTraversal.IsCanonicalRelativePath(relativePath, allowEmpty: false) ||
+            IsOwnedStatePath(relativePath) || await CheckAuthorityAsync(cancellationToken) is not null)
+        {
+            return null;
+        }
+        await _listGate.WaitAsync(cancellationToken);
+        try
+        {
+            if (!ReserveOperation())
+            {
+                return null;
+            }
+            lock (_budgetGate)
+            {
+                if (_remainingMetadataEntries <= 0)
+                {
+                    return null;
+                }
+                _remainingMetadataEntries--;
+            }
+            (_, SafeFileHandle? file) = PreparedSourceTraversal.OpenRelativeFile(_rootHandle, relativePath,
+                _ownedState?.ExcludedStateFor(_rootHandle));
+            using (file)
+            {
+                PreparedSourceTraversal.FileIdentity? identity = file is null ? null : PreparedSourceTraversal.ObserveFile(file);
+                if (identity is null)
+                {
+                    return null;
+                }
+                if (_readIdentities.GetOrAdd(relativePath, identity) != identity)
+                {
+                    CloseAuthority(PreparedSourceOutcome.ChangedInput);
+                    return null;
+                }
+                if (await CheckAuthorityAsync(cancellationToken) is not null) return null;
+                if (PreparedSourceTraversal.ObserveFile(file!) != identity)
+                {
+                    CloseAuthority(PreparedSourceOutcome.ChangedInput);
+                    return null;
+                }
+                string value = FormattableString.Invariant($"{identity.VolumeSerialNumber}:{identity.FileIndexHigh}:{identity.FileIndexLow}:{identity.LastWriteTime}:{identity.ByteLength}");
+                return Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value)));
+            }
+        }
+        finally
+        {
+            _listGate.Release();
+        }
+    }
+
     private async Task<PreparedSourceOutcome?> CheckAuthorityAsync(CancellationToken cancellationToken)
     {
         if (Volatile.Read(ref _disposed) != 0)
         {
             return PreparedSourceOutcome.Cancelled;
+        }
+
+        if (_ownedState is not null && !_ownedState.IsCurrentOwnedState(_rootHandle))
+        {
+            return CloseAuthority(PreparedSourceOutcome.ChangedInput);
         }
 
         int closed = Volatile.Read(ref _closedOutcome);
@@ -1095,6 +1196,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             return CloseAuthority(PreparedSourceOutcome.Denied);
         }
 
+        if (_ownedState is not null && !_ownedState.IsCurrentOwnedState(_rootHandle))
+        {
+            return CloseAuthority(PreparedSourceOutcome.ChangedInput);
+        }
+
         if (Volatile.Read(ref _disposed) != 0)
         {
             return PreparedSourceOutcome.Cancelled;
@@ -1117,6 +1223,10 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         _searchCursors.Clear();
         return existing == 0 ? outcome : (PreparedSourceOutcome)existing;
     }
+
+    private bool IsOwnedStatePath(string relativePath) => _ownedState is not null &&
+        (relativePath.Equals(".codegraph", StringComparison.OrdinalIgnoreCase) ||
+         relativePath.StartsWith(".codegraph/", StringComparison.OrdinalIgnoreCase));
 
     private PreparedSourceOutcome CloseAuthority(PreparedSourceOutcome outcome)
     {

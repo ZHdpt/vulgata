@@ -1,6 +1,6 @@
 # OCT-SCAN boundary requirements
 
-**Checkpoint C0 status**: T001–T004 bounded preparation complete. Scan acknowledges the exact initial compiled owner contract/fixture after 69/69 filtered SelfContained cases passed (19 new Scan + 50 imported Business), with no blocking supported-conformance objection. Evidence and fixture limits are recorded in `../conformance-c0.md`. Final shared CP-K1 acceptance remains integration-owned; T005 is not authorized or started.
+**Checkpoint C0 status**: T001–T004 bounded preparation complete. Scan acknowledged the exact initial compiled owner contract/fixture after 69/69 filtered SelfContained cases passed (19 new Scan + 50 imported Business), with no blocking supported-conformance objection. Historical evidence and fixture limits are recorded in `../conformance-c0.md`. S1 subsequently imported integration's accepted common CP-K1 `12d92d80339ea622cd26c593ebdb74da59401f91` under the direct user instruction to implement T005–T012. S1 T005–T012 is implemented and qualified, including combined native JDT settlement, as recorded in `../verification-s1.md`. No shared contract or schema changed; S2 remains outside this instruction.
 
 ## Imported initial contract — bounded preparation
 

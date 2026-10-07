@@ -165,8 +165,7 @@ public sealed class PreparedCodeGraphConnectionQualificationTests
                 excerpt.Location.RelativePath.Equals("Beacon.cs", StringComparison.OrdinalIgnoreCase)));
             Assert.Contains("Story183Beacon", beacon.Text, StringComparison.Ordinal);
 
-            Task<ClientCompletionDetails> completion = Assert.IsType<NativeCodeGraphMcpClient>(session)
-                .Completion ?? throw new Xunit.Sdk.XunitException("The owned native session has no completion task.");
+            Task<ClientCompletionDetails> completion = Assert.Single(connection.NativeCompletions);
             await connection.DisposeAsync();
             StdioClientCompletionDetails exit = Assert.IsType<StdioClientCompletionDetails>(
                 await completion.WaitAsync(TimeSpan.FromSeconds(3)));

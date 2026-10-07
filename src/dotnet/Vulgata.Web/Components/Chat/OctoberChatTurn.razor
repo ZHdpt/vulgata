@@ -1,0 +1,57 @@
+@using Vulgata.Web.ViewModels.OctoberChat
+@implements IDisposable
+
+<article class="chat-message chat-message--assistant october-chat-turn"
+         data-answer-state="@(ViewModel.IsTerminal ? "saved" : ViewModel.IsSaveUncertain ? "save-uncertain" : "provisional")">
+    <div class="october-chat-answer">@ViewModel.AnswerText</div>
+    @if (ViewModel.ActivityMessage is not null)
+    {
+        <p class="october-chat-activity" role="status">@ViewModel.ActivityMessage</p>
+    }
+    @if (ViewModel.StatusMessage is not null)
+    {
+        <p class="october-chat-status" role="status">@ViewModel.StatusMessage</p>
+    }
+    @if (!ViewModel.References.IsEmpty)
+    {
+        <footer class="october-chat-references">
+            <span>参考文档：@ViewModel.References.Length</span>
+            @if (ViewModel.References.Any(reference => reference.IsPartial))
+            {
+                <span>（部分内容已读取）</span>
+            }
+        </footer>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public OctoberChatTurnViewModel ViewModel { get; set; } = null!;
+
+    private OctoberChatTurnViewModel? _subscribedModel;
+    private bool _disposed;
+
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(_subscribedModel, ViewModel)) return;
+        if (_subscribedModel is not null) _subscribedModel.StateChanged -= HandleStateChanged;
+        _subscribedModel = ViewModel;
+        _subscribedModel.StateChanged += HandleStateChanged;
+    }
+
+    private void HandleStateChanged()
+    {
+        if (_disposed) return;
+        _ = InvokeAsync(() =>
+        {
+            if (!_disposed) StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        if (_subscribedModel is not null) _subscribedModel.StateChanged -= HandleStateChanged;
+        _subscribedModel = null;
+    }
+}

@@ -7,11 +7,30 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Shared.Chat;
 using Vulgata.Web.Data;
+using Vulgata.Core.DomainServices.OctoberChat;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
 
 namespace Vulgata.Web.Components.Pages;
 
 public partial class ChatPage : IAsyncDisposable
 {
+    [Parameter]
+    public Vulgata.Web.ViewModels.OctoberChat.OctoberChatEntryViewModel? OctoberEntry { get; set; }
+
+    [Parameter]
+    public Vulgata.Core.DomainServices.OctoberKnowledge.ReadSelectionRequest? OctoberSelection { get; set; }
+
+    [Parameter]
+    public Vulgata.Web.ViewModels.OctoberChat.OctoberChatTurnViewModel? OctoberTurn { get; set; }
+
+    private ReadSelectionRequest? _lastOctoberSelection;
+    private ReadSelectionRequest? _pendingOctoberSelection;
+    private bool _newOctoberConversationRequested;
+    private Vulgata.Web.ViewModels.OctoberChat.OctoberChatEntryViewModel? _boundOctoberEntry;
+
+    private bool OctoberTransitionDisabled => OctoberEntry is null ||
+        OctoberEntry.WorkState != OctoberChatWorkState.Settled || OctoberEntry.LoadState == LoadState.Loading;
+
     private const string _validationMessage = "请选择业务模式，并输入 1 至 2000 个字符的问题。";
     private const string _unexpectedFailureMessage = "暂时无法生成回答，请稍后重试。";
 
@@ -91,6 +110,11 @@ public partial class ChatPage : IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        if (OctoberEntry is not null)
+        {
+            return;
+        }
+
         _editContext = new EditContext(_formRequest);
         _loadState = LoadState.Loading;
         try
@@ -112,6 +136,73 @@ public partial class ChatPage : IAsyncDisposable
         {
             _scopes = [];
             _loadState = LoadState.Error;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (OctoberEntry is not null && !ReferenceEquals(_boundOctoberEntry, OctoberEntry))
+        {
+            _boundOctoberEntry = OctoberEntry;
+            _lastOctoberSelection = OctoberSelection;
+            _pendingOctoberSelection = null;
+            _newOctoberConversationRequested = false;
+            await OctoberEntry.InitializeAsync(OctoberSelection);
+        }
+        else if (OctoberEntry is not null && !ReferenceEquals(_lastOctoberSelection, OctoberSelection))
+        {
+            _lastOctoberSelection = OctoberSelection;
+            _pendingOctoberSelection = OctoberSelection;
+            _newOctoberConversationRequested = false;
+            await OctoberEntry.RequestContextChangeAsync(OctoberSelection, confirmed: false);
+        }
+        else if (OctoberEntry is null && _boundOctoberEntry is not null)
+        {
+            // Once explicitly selected, missing October composition fails closed. It must
+            // not reveal a prior legacy conversation or silently choose the demo backend.
+            _lastOctoberSelection = null;
+            _pendingOctoberSelection = null;
+            _newOctoberConversationRequested = false;
+            await _boundOctoberEntry.RequestContextChangeAsync(null, confirmed: true);
+        }
+    }
+
+    private async Task RequestOctoberModeAsync(KnowledgeMode mode)
+    {
+        if (OctoberEntry?.Conversation is not { } conversation || OctoberTransitionDisabled)
+        {
+            return;
+        }
+
+        // Only the mode changes here; subject, purpose and exact binding remain host-issued.
+        _pendingOctoberSelection = conversation.Request with { Mode = mode };
+        _newOctoberConversationRequested = false;
+        await OctoberEntry.RequestContextChangeAsync(_pendingOctoberSelection, confirmed: false);
+    }
+
+    private async Task RequestNewOctoberConversationAsync()
+    {
+        if (OctoberEntry is not null)
+        {
+            _newOctoberConversationRequested = true;
+            await OctoberEntry.StartNewConversationAsync(confirmed: false);
+        }
+    }
+
+    private async Task ConfirmOctoberContextAsync()
+    {
+        if (OctoberEntry is null || !OctoberEntry.RequiresConfirmation)
+        {
+            return;
+        }
+
+        if (_newOctoberConversationRequested)
+        {
+            await OctoberEntry.StartNewConversationAsync(confirmed: true);
+        }
+        else
+        {
+            await OctoberEntry.RequestContextChangeAsync(_pendingOctoberSelection, confirmed: true);
         }
     }
 

@@ -176,13 +176,58 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanCodeGraphLifetimeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanSourcePolicyTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanToolRuntimeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanToolRuntimeQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "OctoberScan/OctoberScanJdtProcessSettlementTests.cs": {
+    "suite": "LocalTools"
+  },
+  "OctoberScan/OctoberScanOwnedProcessObservation.cs": {
+    "suite": "LocalTools"
+  },
   "OctoberScan/OctoberScanContractProbes.cs": {
     "suite": "SelfContained"
   },
   "OctoberScan/OctoberScanBoundaryProbes.cs": {
     "suite": "SelfContained"
   },
+  "October/Chat/ControlledChatFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatEntryTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Chat/OctoberChatKnowledgeConformanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatProviderTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatQualificationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatSelectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatStreamingUiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberContentContinuationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberWikiToolTests.cs": {
     "suite": "SelfContained"
   },
   "October/Knowledge/KnowledgeRequestValidatorTests.cs": {
@@ -196,6 +241,42 @@
   },
   "October/Knowledge/OctoberKnowledgeContractProbeTests.cs": {
     "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeAcceptanceFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFileAcceptanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeLogTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberFileAcceptancePostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberKnowledgeLogLocalToolsTests.cs": {
+    "suite": "LocalTools"
+  },
+  "October/Knowledge/OctoberPublicationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeReadTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeAuthorizationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgeWebTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberKnowledgePublicationFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberPublicationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
   },
   "October/OctoberPersistenceModelTests.cs": {
     "suite": "SelfContained"
@@ -996,6 +1077,18 @@
   },
   "PostgreSqlHeavyCollection.cs": {
     "suite": "PostgreSql"
+  },
+  "October/Integration/OctoberWikiCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberWikiPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Integration/OctoberWikiHostTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberWikiPublishedReaderTests.cs": {
+    "suite": "SelfContained"
   },
   "TestInfrastructure/OctoberOwnedIdentityFixture.cs": {
     "suite": "PostgreSql"

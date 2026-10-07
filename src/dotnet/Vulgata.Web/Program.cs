@@ -38,6 +38,7 @@ using Vulgata.Web.Components;
 using Vulgata.Web.Components.Account;
 using Vulgata.Web.Components.Pages;
 using Vulgata.Web.Data;
+using Vulgata.Web.Explore;
 using Vulgata.Web.Logging;
 using Vulgata.Web.RequestPipeline;
 using Vulgata.Web.Validators;
@@ -212,6 +213,7 @@ public static class VulgataWebComposition
                 throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
             services.AddSingleton(new DefaultConnectionSnapshot(connection));
+            services.AddOctoberWikiReader(hostContext.Configuration, GetContextConnection);
         });
         builder.Services.AddOptions<ChatProviderReasoningOptions>()
             .Bind(builder.Configuration.GetSection(ChatProviderReasoningOptions.SectionName))
