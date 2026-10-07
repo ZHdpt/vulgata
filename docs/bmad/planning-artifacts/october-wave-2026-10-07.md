@@ -1266,3 +1266,23 @@ Business owns the minimal canonical producer-read/callback signatures and wrappe
 Scan owns the private slot and runner lifecycle. Exact typed signatures/compiling
 checkpoint are next, not yet implemented. T032 remains independent; no new durable
 framework, UI surface, S3 execution or runtime resource grant is introduced.
+
+Both owners subsequently accepted the complete typed declaration shape:
+
+- `BusinessFinalizationInitialReadKind`: NoDispatchResult, ObservedAbsent, Unavailable.
+  NoDispatchResult requires a non-null exact-operation replay/conflict/denial result;
+  it neither authorizes generation nor necessarily proves a stored row exists.
+  ObservedAbsent/Unavailable require null Result; inconsistent combinations fail closed.
+- `IOctoberFlowPublicationInitialRead.ReadForOriginalDispatchAsync(CorpusHandle,
+  OperationKey, string canonicalPayloadDigest, CancellationToken)` returns the typed
+  BusinessFinalizationInitialRead. Only a successful exact live-authorized no-row
+  read can emit ObservedAbsent. It remains producer-only and never grants dispatch.
+- `IOctoberOriginalBusinessFinalizationSlot.RunOnceAsync(FinalizationRequest,
+  Func<CancellationToken, Task<BusinessFinalizationResult>> originalWork,
+  CancellationToken waitCancellation = default)` uses the already agreed private
+  original-run binding, including reference identity of the same execution scope.
+
+Business is released to produce an isolated compiling declaration checkpoint with
+contract documentation, excluding active schema/implementation changes. Root reviews
+and selectively integrates it before dispatching host implementation. This closes
+signature agreement only; it does not activate S3 or acquire runtime resources.
