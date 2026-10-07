@@ -839,3 +839,41 @@ failures/skips, 399 classified files:
 This qualifies the controlled planner combination only. Business has dispatched
 its bounded read-only trusted loader with separate test/production ownership; no
 migration window or real consumer activation follows from this checkpoint.
+
+## Scan correction/runner review and shared qualification boundary
+
+Scan offered correction `69c066b2` and runner `b63cae49`. Review confirms the
+original retry lifetime is preserved, absent Business dispatch observation is
+unknown rather than zero, and the controlled runner starts with setup rows only.
+It then uses actual owner Begin, Worker/tools, F1, writer/freeze/publication and
+stored exact reads. Model, native transport and authorization remain controlled;
+the reader assertion is not live Identity/Web qualification. Main still lacks the
+actual Generate composition/report path at this offered checkpoint.
+
+One accounting edge remains before import: the Worker factory records invocation
+only after HttpMessageInvoker.SendAsync returns a Task. A synchronous handler throw
+can skip observation and later falsely certify zero. Scan owns the narrow call-entry
+observation regression/correction; prior zero-send and Business-unknown cases remain.
+Neither offered checkpoint is integrated yet. Unrelated lane work continues.
+
+There is no implemented retained-run harness or new manifest API to consume.
+The agreed minimal authoring direction is one sequential guarded E2E run with
+`-WithPostgreSql`, one owning fixture lifetime and one production Generate call:
+
+- Reuse `OctoberHostSelectionTests.GeneratorPrepareFixture` for owned PostgreSQL,
+  actual setup/Identity/operator/keys. Its current provider configuration is dummy;
+  approved runtime/policy/protected-provider inputs require explicit child binding.
+- Scan owns the executable input adapter and actual Main/report path. Root owns
+  shared fixture extensions and Web/ordinary-reader composition. Existing
+  `OctoberScanReport` publication, document handles, origins and coverage are the
+  handoff; no parallel schema or accepted-publication seed is introduced.
+- A root reader-only helper consumes the same fixture/report, real ordinary User
+  login and exact reader destination. IT success, Business CL denial and Identity
+  revocation reuse that same database/publication. Do not regenerate per lane.
+- Standard fixture/runner cleanup removes its database/container/volume. This proves
+  durable publication during the run, not seven-day database or website retention.
+  Retain sanitized report/evidence only; a long-lived product dataset requires its
+  separately approved owned operation, not bypassing test cleanup.
+
+Runtime/resource permission remains outstanding. Authoring this boundary neither
+executes native tools/provider/hosts nor qualifies an in-process runner as Main.
