@@ -220,6 +220,12 @@
   "OctoberScan/OctoberScanClPublicationTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanEntryPointTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanClPublicationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
   "OctoberScan/OctoberScanRunSourceFactoryTests.cs": {
     "suite": "SelfContained"
   },

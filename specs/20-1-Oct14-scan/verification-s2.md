@@ -460,6 +460,24 @@ relative paths remain available to Integrator's strict fixture-bound hydration.
 CLI Ctrl+C signal/drain behavior is not qualified by the controlled API cancellation
 tests; its S3 task remains undispatched. No new S3 signal semantics are adopted.
 
+Output-projection RED selected **17: 15 passed, 2 failed, zero skipped** in
+`isolation-7fe9f3ff47944b5baef438c98c70aba8/results.trx`, reproducing model/source
+prose in coverage reasons; foreign binding tests passed. The explicit projection
+then passed all 17 cases in
+`isolation-f7ab8cbb499047bc9a79c02650b5bda4/results.trx`, whose sole failure among
+18 cases was the newly asserted planned CL-only matching/businessLogic labels.
+Those fields were added without any Business service resolution.
+
+Final Main/Generate affected verification passed **299/299, zero failed/skipped**:
+`isolation-8169a90f12ae44f5bdfa21bcd82a0b64/results.trx`. Independent Main review
+and separate production/test final-shape assessments accept the executable/control
+boundary. Main now composes the actual B0 admission/writer/log and source/Worker
+factories, settles before one exact safe report, and returns its matching exit code.
+Prepare/Select remain covered. The exact report protocol is documented in
+`contracts/scan-boundaries.md`. Two PostgreSQL full-route cases are authored, not
+executed. Broad SelfContained regression, owned PostgreSQL qualification and the
+single shared real E2E/reader run remain separately outstanding at this checkpoint.
+
 ## Early composition decisions
 
 The reviewed primary-frame/F1 component is committed at

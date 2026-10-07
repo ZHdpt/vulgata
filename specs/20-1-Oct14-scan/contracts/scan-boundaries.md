@@ -118,3 +118,50 @@ After separate authorization, Business first publishes an initial compiling cont
 The shared fixture/probes must demonstrate: valid/zero-unit whole file; invalid/failed drafts invisible; forged completion denied; seal→expiry→entry creates no transaction; expiry during staging submits no commit, even with delayed timer callback; already-submitted commit followed by hard-stop/revocation resolves committed or confirmed noncommit/indeterminate with fresh disclosure checks; temporary row absence cannot release freeze; identical replay/conflict and no provider recovery; pending/foreign handle freeze rejection; wrong selection no fallback; denied contributor and BL-only reads; all F2 cap=1/queued/rate/deadline/hard-stop/unknown-usage/cleanup probes above. Repeat submission/settlement rules for publication. PostgreSQL qualification later proves actual transactional behavior beyond controlled probes.
 
 F5 fixture additions: select CL-only with matching/BL services absent or call-count sentinels that must stay at zero; publish one accepted file through B0 and open the exact returned handle as ordinary IT; verify Business exclusion; reject missing/unknown stage; publication acknowledgement loss performs lookup without Worker rerun; acceptance without confirmed publication is not success; zero-unit/no-Document output is no-content; CL-and-BL without B1/B2 fails rather than downgrades; later separate CL+BL selection leaves the earlier CL handles unchanged. These are fixture descriptions only, not generated tests.
+
+## S2 settled CLI report projection
+
+Generate emits one complete JSON document followed by a newline on stdout, after
+owned settlement. Startup failure before a valid run/report may emit a sanitized
+stderr diagnostic and nonzero exit without JSON. Prepare/Select keep their existing
+output. Generate prompts/diagnostics use stderr; no provider banner precedes JSON.
+The process exit equals `exitCode` derived from that same settled report.
+
+Top-level fields are `requestedStage`, `completedStage`, `coverage`, `execution`,
+`publicationStatus`, `matching`, `businessLogic`, `publication`, `documents`,
+`acceptedFiles`, `terminalCoverage`, `inventory`, `gaps`, `timings`, `usage`,
+`exitCode`. Fields use camelCase; enum values retain exact C# names such as
+`Complete`, `Completed`, `Confirmed` and `CompletedZeroUnit`. TimeSpan values are
+invariant JSON strings; GUIDs use standard hyphenated strings. Null properties
+remain present; unknown requests/input/output tokens remain JSON null, never zero.
+For this S2 route, matching and businessLogic are both `not-requested`.
+
+`publication` is null or exactly the projected `targetId`, `batchId`,
+`selectionDigest`, `publicationId`. `documents` preserves the owner DocumentHandle
+fields: batch/publication/logical-document/version IDs and nullable section ID.
+Accepted summaries preserve manifest/admission IDs, proposal digest, DocumentVersion
+references and projected coverage. Coverage preserves admission ID, exact safe
+prepared-origin metadata and disposition, but uses only host reason codes:
+Accepted → null; CompletedZeroUnit → `completed-zero-unit`; Failed → `failed`;
+Cancelled → `cancelled`; otherwise `unprocessed`. Stored/model reason prose is
+never serialized. Invalid required origin/path or foreign target/batch/publication
+binding clears protected metadata and fails the output; it does not silently
+retain Complete with missing coverage.
+
+Inventory carries Repository ID, safe relative path, kind, disposition, priority,
+observed byte length and a host disposition reason. Gaps carry host code and safe
+optional scoped location. Timings retain elapsed/queue/tool/model/store waits.
+Usage retains nullable physical-invocation count, nullable actual input/output
+counts and explicit unknown signalling. Complete trusted Worker observation can
+prove zero sends; absence of a consumer observation capability means unknown.
+Neither transport invocation nor a report grants remote acceptance or write authority.
+
+Canonical database identity, connection strings, physical roots/tool/configuration
+paths, credentials, completion/capsule capabilities and source/model prose are
+omitted. Integrator hydrates only its already-held fixture database identity after
+strict target/batch/selection and publication/document consistency checks. CLI
+coverage is a safe summary, not byte-identical stored coverage or proposal authority;
+the owner remains authoritative. Failed/null/indeterminate publication is never
+replaced with guessed/current handles. The shared run uses one fixture, one Generate
+and the same exact publication for reader checks, followed by normal owned cleanup.
+CLI Ctrl+C/graceful-drain qualification remains deferred to undispatched S3.

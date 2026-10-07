@@ -294,9 +294,9 @@ public sealed class OctoberScanGenerateRunnerTests
                 async (_, _) => { ClientCreations++; if (HoldClientCreation) { FactoryEntered.TrySetResult(); await ReleaseFactory.Task; } return (IChatClient)Client; },
                 ports => new ObservedWriter(this, new OctoberKnowledgeWriter(database.Factory, ports.CompletionAuthority, ports.SourceVerifier, ports.ProducerAuthorization, ports.CommitGuard, database.Log, ports.FreezeAuthority)), database.Log));
         }
-        internal static async Task<Harness> CreateAsync()
+        internal static async Task<Harness> CreateAsync(OctoberKnowledgeAcceptanceFixture? suppliedDatabase = null)
         {
-            var database = await OctoberKnowledgeAcceptanceFixture.CreateSqliteAsync();
+            var database = suppliedDatabase ?? await OctoberKnowledgeAcceptanceFixture.CreateSqliteAsync();
             var files = await PreparedSourceFixture.CreateAsync();
             Directory.CreateDirectory(Path.Combine(files.PreparedRootPath, "src"));
             Directory.CreateDirectory(Path.Combine(files.PreparedRootPath, ".codegraph"));
