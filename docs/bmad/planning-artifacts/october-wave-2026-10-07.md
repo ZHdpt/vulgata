@@ -1304,3 +1304,15 @@ implement the same-store producer read within released T032 and prepare controll
 T033 consumption, without inventing a grant while real slot composition is absent.
 Each owner supplies an isolated reviewed checkpoint; runtime and migration execution
 remain subject to the outstanding consolidated resource authority.
+
+Scan's narrow baseline lacked FinalizationRequest.Selection and the accepted owner
+canonical helpers. Integration explicitly authorizes only these four Core files from
+full-qualified source `d92833c10de73868d644e6b68e1fdc490ff2907d` as its prerequisite:
+DomainServices/OctoberBusinessSynthesisPolicy.cs (owns proposal types),
+OctoberBusinessFinalizationContracts.cs, OctoberBusinessFinalizationPolicy.cs and
+OctoberKnowledgeContracts.cs. The latter adds only the non-positional Selection
+body relative to Scan's baseline; required flow/FileUncertainties types already exist.
+Import intact accepted files at a clean point, compile the actual consumer checkout,
+and commit this prerequisite separately. No competing type/canonicalizer, Agents or
+Infrastructure import, schema/stub ancestry, or full-main merge is required. Slot
+implementation remains within the existing controlled dispatch; no runtime grant.
