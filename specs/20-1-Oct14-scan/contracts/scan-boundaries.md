@@ -165,3 +165,19 @@ the owner remains authoritative. Failed/null/indeterminate publication is never
 replaced with guessed/current handles. The shared run uses one fixture, one Generate
 and the same exact publication for reader checks, followed by normal owned cleanup.
 CLI Ctrl+C/graceful-drain qualification remains deferred to undispatched S3.
+
+A confirmed publication and execution diagnostics remain independent: valid B0
+`LogUnavailable` after publication retains the exact authorized publication,
+Documents and completed `cl-only` stage, with `execution: Failed`,
+`operation_log_unavailable` and exit 1. Freeze-log failure cannot authorize the
+next publication write. Missing/foreign handles or uncertain settlement are never
+promoted to confirmation. Fresh disclosure still governs all returned metadata.
+
+The Scan qualification adapter consumes the imported shared fixture input API and
+`WaitForGenerateAsync(process, approvedPolicy.RunDeadlineSeconds)`. Its physical
+helper requires the E2E suite and validates the runner-owned target immediately
+before launching exactly one Generate. The fixture permits the original approved
+run deadline plus 120 seconds for observation/cleanup, at most 32 minutes; this
+adds no Scan/provider allowance. The combined scenario, credentials, resource
+approval, strict report hydration and ordinary-reader Web composition remain
+integration-owned.
