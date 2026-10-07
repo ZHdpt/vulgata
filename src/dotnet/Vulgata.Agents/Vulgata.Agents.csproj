@@ -31,6 +31,10 @@
                       LogicalName="Vulgata.Agents.Prompts.chat-business.v1.md" />
     <EmbeddedResource Include="Prompts\chat-it.v1.md"
                       LogicalName="Vulgata.Agents.Prompts.chat-it.v1.md" />
+    <EmbeddedResource Include="Prompts\OctoberChatBusiness.txt"
+                      LogicalName="Vulgata.Agents.Prompts.OctoberChatBusiness.txt" />
+    <EmbeddedResource Include="Prompts\OctoberChatIT.txt"
+                      LogicalName="Vulgata.Agents.Prompts.OctoberChatIT.txt" />
     <EmbeddedResource Include="PreparedFlows\demo-business-flow.v1.json"
                       LogicalName="Vulgata.Agents.PreparedFlows.demo-business-flow.v1.json" />
   </ItemGroup>
