@@ -112,6 +112,8 @@ public static class OctoberKnowledgePolicy
         if (p.Units.IsEmpty ? p.Coverage.Disposition != CoverageDisposition.CompletedZeroUnit || !Text(p.Coverage.Reason)
             : p.Coverage.Disposition != CoverageDisposition.Accepted)
             return false;
+        // The additive input declarations do not grant acceptance before verified-ledger support is implemented.
+        if (p.Contributors.Any(x => x.SourceOrigin is not null || x.MetadataOrigin is not null)) return false;
         if (p.Contributors.Distinct().Count() != p.Contributors.Length || p.Contributors.Any(x => !ContributorValid(x, p.Origin)) ||
             !p.Contributors.Any(x => x.Kind == ContributorKind.Source && SourceContributorMatches(x, p.Origin)))
             return false;
