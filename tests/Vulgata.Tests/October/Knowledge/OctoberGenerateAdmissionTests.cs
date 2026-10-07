@@ -385,7 +385,8 @@ public sealed class OctoberGenerateAdmissionTests
     {
         for (int attempt = 0; attempt < 100; attempt++)
         {
-            try { _ = context.Set<KnowledgeOperation>().ToArray(); }
+            // Database checks actual context disposal without issuing SQL concurrently with cleanup.
+            try { _ = context.Database; }
             catch (ObjectDisposedException) { return; }
             await Task.Delay(20);
         }
