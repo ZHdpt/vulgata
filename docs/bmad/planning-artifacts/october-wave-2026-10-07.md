@@ -214,3 +214,30 @@ retention, plus an exact approved provider endpoint/model/protected configuratio
 Docker Desktop Linux engine was absent at the observed check. No startup or paid
 request has been performed. Real registration/login source usefulness remains a
 separate scoped qualification even if the synthetic real-provider route succeeds.
+
+## Reviewed raw Chat transport imported
+
+Chat checkpoint `26a89712d2bc854df703a62cbf672962c6aab9c3` is integrated at
+`06af20c4a760d6d2d3e0086d462f60f62dee9a75`; the additive SelfContained inventory
+entry was preserved without conflict. The compiled public
+`OctoberChatStreamingHandler(admittedTransport, sameBudget)` supplies strict bounded
+raw SSE/UTF-8/native-fragment validation, early text and physical-EOF validation of
+the final marker. Its stable `SealAndWaitForSettlementAsync` tracks guard cleanup;
+integration must still seal/drain its own admission owner and retain borrowed transport.
+The installed SDK adaptation is `ChatClient.AsIChatClient()`, not the inaccessible
+direct adapter constructor. Framework stream-disposal callback multiplicity is not
+multiple resource ownership; the reviewed tests distinguish the two.
+
+Owner evidence: 455/455 affected controlled cases, including 35 actual-SDK/fake-HTTP
+transport cases and independent review. Main replay: **509/509 selected SelfContained
+Chat/Integration/Knowledge/Explore regression cases passed**, zero failures/skips,
+365 classified source files; evidence:
+`TestResults/isolation-fee30fb2772e420e93f4de4806cfffa6/results.trx`.
+This is an affected selection, not a new full-suite count. The last full result
+remains 2,859/2,859 at the prior checkpoint. No provider, database or host was activated.
+
+Chat continues canonical-port coordinator/disclosure work. Its next public Agents
+execution entry must accept integration's plain client/budget/session without a
+second MAF loop or reflection over internals. Integration retains selected-client,
+redirect/retry disabling, Web-local request admission and two-owner drain composition.
+Guard availability does not itself complete those responsibilities or enable sending.
