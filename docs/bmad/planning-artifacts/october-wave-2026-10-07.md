@@ -522,3 +522,34 @@ Root must register that exact no-content exception, not demand full-lineage cont
 permission for cleanup. It still requires original ownership/fence and real task
 settlement; a previously submitted payload cannot be rewritten. A cleanup receipt
 does not authorize disclosure of transcript content or metadata.
+
+## Admission correction accepted — previous hold lifted
+
+Business correction `7958a5e37ca1bcc94c400fbd350ae051e12e318f` is integrated at
+`7efdf67d`. An inner finally closes submission and captures submitted/settlement
+state under the callback's own gate before any normal or exceptional outcome is
+classified. Submitted-dependent exception filters are removed. Synchronous guard
+throws, non-submission returns, late callbacks and deferred cleanup use the same
+arbitration. The original independent reviewer audited those exits and closed the
+specific finding. The exact instruction-window race remains static evidence, not
+a fabricated runtime RED reproduction.
+
+The corrected source passed **1,404/1,404 affected SelfContained** cases, zero
+failures/skips, 390 classified files:
+`TestResults/isolation-48aa754086244d3f93b1a6d84fa10c7f/results.trx`.
+The six new PostgreSQL admission cases compile but remain NOT RUN. This supersedes
+the admission HOLD sections above for development/consumer composition only.
+
+Scan may now consume the actual admission store and canonical helper with the
+dedicated current held-operator authority, exact Kind5/BatchId key/RunId/digest F1
+registration and one dispatch for the original live run. Call it before any native
+preparation or source work. No receipt, replay or missing lookup grants another
+dispatch. Public Generate Main, complete trusted tool ledger/aggregate accounting
+and shared real qualification remain unfinished; resource approval is unchanged.
+
+Chat's lost-transition acknowledgement recovery is bounded to the same original
+intent: preserve uncertain phase, positive exact owner/request/fence matching and
+actual task settlement. Lookup never restores generation permission. A verified
+NotStarted failure or retained actual generation may reach its first never-attempted
+terminal save; once any save is attempted, preserve its exact payload and reconcile
+only. A matching row alone is not proof of physical write/task settlement.
