@@ -154,3 +154,19 @@ Acceptance was conditional on GREEN; root verified **22/22 focused** and
 Root registration/commit/death authority, PostgreSQL and current UI disclosure remain
 separate integration requirements. Cached terminal projection is host state, not
 lasting permission to display it. No full T016–T023 completion is claimed.
+## Bounded presentation adapter — accepted controlled boundary, 2026-10-07
+
+`wave_reviewer` independently accepted the entire adapter, opaque-lineage callback
+overloads, append-only suppression event, view-model terminal replacement and 12
+targeted cases. Review added active-item/capsule byte exhaustion and actual native-read
+snapshot checks. A fixture's incorrect initial-root expectation was corrected separately
+from production findings. Two observed RED rows reproduced queued-denial display
+retention; sequential content-free suppression now clears the bound view and rejects
+late restoration without fabricating a saved outcome or active-slot release.
+
+No remaining source blocker was reported, conditional on affected GREEN. Root verified
+**795/795, zero failed/skipped**, at
+`TestResults/isolation-d90c38a470d84f5e99363472087e653b/results.trx`.
+Callback cancellation and queue retention are bounded, honestly owned lifetimes;
+application handoff is not atomic network revocation. No route, browser or live provider
+qualification is accepted by this review.

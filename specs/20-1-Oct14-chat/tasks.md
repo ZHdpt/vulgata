@@ -162,7 +162,9 @@ verified by 22 coordinator and 720 affected SelfContained passes. These tasks re
 open overall for root execution/commit/death composition, guarded PostgreSQL consumer
 qualification and live history/disclosure integration. No competing Chat turn schema
 or persistence implementation is needed; Business declarations remain canonical.
-T020–T021 still require the bounded actual delivery adapter, authorized terminal
-projection and page/browser integration. T022 and T023 retain their distinct resource
+T020–T021 now include the reviewed bounded actual delivery adapter, opaque lineage
+snapshots, authorized terminal replacement and nonterminal display suppression,
+verified by 795 affected controlled passes. Safe Markdown, exact reader links and
+actual page/browser integration remain incomplete. T022 and T023 retain their distinct resource
 and qualification prerequisites. No additional human gate is introduced by these
 controlled increments.

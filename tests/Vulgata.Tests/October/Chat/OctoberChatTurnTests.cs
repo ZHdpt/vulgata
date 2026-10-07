@@ -10,6 +10,7 @@ using Vulgata.Core.DomainServices.OctoberDialogue;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data.October.Knowledge;
+using Vulgata.Shared.OctoberChat;
 using Vulgata.Tests.October.Knowledge;
 using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Web.Services.OctoberChat;
@@ -23,6 +24,73 @@ namespace Vulgata.Tests.October.Chat;
 /// </summary>
 public sealed class OctoberChatTurnTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteAsync_PresentationDeliversEarlyTextAndBlockedSubscriberCannotDelayOwnedSaveAsync()
+    {
+        await using Harness h = await Harness.OpenAsync();
+        h.Body.HoldAfterText = true;
+        var textDelivered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSubscriber = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var delivered = new List<OctoberChatEvent>();
+        OctoberChatTurnPresentation? attachment = null;
+        h.ObserveGeneration = task =>
+        {
+            Assert.False(task.IsCompleted);
+            Assert.Equal(DialogueTurnState.Running, h.Coordinator.State);
+            DialogueAdmission original = h.Coordinator.Begin!.Admission!;
+            var selection = new ReadSelectionRequest(h.Owner.Identity.Publication, h.Owner.Subject,
+                h.Owner.Identity.Mode, KnowledgePurpose.Chat, h.Owner.Identity.RepositoryScope);
+            var binding = new OctoberChatTurnBinding(h.Request.ConversationId, h.Request.ContextId, original.TurnId, selection, h.Selection);
+            attachment = new(binding, original, h.SaveId, h.Context, h.Owner.Dependencies, async (item, token) =>
+            {
+                token.ThrowIfCancellationRequested();
+                if (attachment?.IsDetached == true) return;
+                delivered.Add(item);
+                if (item.Kind == OctoberChatEventKind.AnswerDelta)
+                {
+                    textDelivered.TrySetResult();
+                    await releaseSubscriber.Task; // Actual subscriber lifetime deliberately ignores cancellation.
+                }
+            }, h.Clock);
+        };
+        Task<OctoberChatCoordinationResult> run = h.Coordinator.ExecuteAsync(h.Request, h.Budget, h.Selection,
+            h.History, h.Snapshot, h.SaveId,
+            (text, dependencies, _) =>
+            {
+                Assert.NotNull(attachment);
+                Assert.True(attachment.TryPublishText(text, dependencies));
+                return ValueTask.CompletedTask;
+            }, (progress, dependencies) => attachment!.TryPublishProgress(progress, dependencies));
+        try
+        {
+            Assert.Same(textDelivered.Task, await Task.WhenAny(textDelivered.Task, run).WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.Equal("受控即时回答😀。", Assert.Single(delivered.Where(item => item.Kind == OctoberChatEventKind.AnswerDelta)).Text);
+            Assert.False(run.IsCompleted);
+            Assert.Empty(h.Store.Saves);
+            h.Body.ReleaseText.TrySetResult();
+            OctoberChatCoordinationResult saved = await run.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(DialogueTurnState.Completed, saved.State);
+            Assert.Single(h.Store.Saves);
+            Assert.Equal(0, h.Requests.ActiveRequests);
+            Assert.True(attachment!.TryPublishResult(saved));
+            Assert.False(attachment.Completion.IsCompleted);
+            attachment.Detach();
+            Assert.False(attachment.Completion.IsCompleted);
+            Assert.DoesNotContain(delivered, item => item.Kind == OctoberChatEventKind.TurnSaved);
+        }
+        finally
+        {
+            h.Body.ReleaseText.TrySetResult();
+            releaseSubscriber.TrySetResult();
+            if (attachment is not null) await attachment.DisposeAsync();
+            await run;
+        }
+        Assert.Single(h.GenerationTasks);
+        Assert.Equal(1, h.Physical.Sends);
+        Assert.Null((await h.Owner.OpenAsync()).Conversation!.ActiveTurnId);
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_AdmittedSnapshotStreamsThenDrainsBeforeConfirmedAtomicSaveAsync()
