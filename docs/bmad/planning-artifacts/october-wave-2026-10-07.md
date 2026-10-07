@@ -51,6 +51,11 @@ context, selected provider/credential wiring and Web-local execution admission.
 Chat owns strict raw HTTP/SSE validation and bounds in its adapter; integration must
 not create a duplicate validator. Exact W0/W1 binding declarations are being settled
 with Chat. Borrowed request cleanup must settle before permit release.
+The agreed W1 seam starts both guard and admission `SealAndWaitForSettlementAsync`
+operations before awaiting them together. Successful drain is distinct from successful
+generation. Physical transport must disable automatic HTTP redirects as well as SDK
+retries: 302/307 cannot silently forward context or hide an extra request inside one
+admitted send. Controlled no-follow verification belongs to the integration factory.
 
 Serialize migrations under Business and shared build/project/inventory changes under
 integration. Lane-local builds use isolated outputs; do not kill unrelated processes.
@@ -148,6 +153,64 @@ schema/migrations; graph does not wait for those dialogue tables.
 Scan configuration/session checkpoint `8cc06035` is imported; it does not wire
 the complete Generate route yet. Reviewed Worker prompt `2106af16` is imported and
 registered unconditionally as `Vulgata.Agents.Prompts.OctoberFileWorker.md`.
-These additions await the next combined verification; they are not covered by the
-earlier 2,798 count. Provider binding remains in-progress until real tracked-read
-rotation regression and fresh-read correction are complete.
+These additions are covered by the final verification below, not the earlier 2,798 count.
+
+## Verified wave checkpoint and next owner actions
+
+The selected Web provider binding is now controlled-test qualified as a **preparation
+component**, not a registered outbound client or completed W1. It freezes only an
+explicit existing provider row, uses its existing Name-as-model convention, assigns
+a nonsecret immutable admission-snapshot revision and privately copies the configuration.
+Every production lookup uses a fresh DI scope: the management repository's tracked
+query must not hide another context's model/key rotation. Eligibility is checked both
+before and after decryption; observed drift latches invalidation without fallback.
+No ciphertext/plaintext fingerprint is used as a public identity. No credential was
+read from an actual application store during this work.
+
+Evidence: the initial missing API produced CS0246 in
+`TestResults/isolation-03c82215feef40ba98a9c6fd3c065df1/build.log`.
+Two actual owned-SQLite rotation regressions then reproduced stale eligibility
+(expected false, actual true) in
+`TestResults/isolation-324840e728644799abf2c96a3432550a/results.trx`.
+The corrected public fresh-scope path and a rotation-during-decryption case are
+included among 28 provider-binding cases. Test-owner and independent final source
+review accepted the correction.
+
+Full combined SelfContained verification, including all accepted contract/Scan/prompt
+changes above and the binding correction: **2,859/2,859 passed**, zero failures/skips;
+364 classified source files. Evidence:
+`TestResults/isolation-8dc832b33eee485f92a4a8112545468a/results.trx`.
+Business acceptance-only `c7e3aec2` was then imported; it changes documentation/task
+status only and marks T035 complete. PostgreSQL, LocalTools, External and E2E remain
+excluded from this controlled result.
+
+Next actions, without another routine approval round:
+
+- **Scan:** finish S2 Worker, scope/freeze/acceptance adapters and explicit Generate
+  composition; supply reviewed checkpoints. Its prompt is embedded and Agent reference
+  is available. S2 does not call B1 or depend on dialogue.
+- **Business:** implement owner-issued disclosure/consumed-proof/codec fixtures and
+  actual reader support; dialogue persistence and controlled B1 proceed in disjoint
+  groups, one schema writer. Scan accepted additive `AcceptResolution = 4` under
+  unchanged exact registration/F1 semantics; it is not registered by CL-only S2.
+  B2 follows real B1 prerequisites, not completion of Chat.
+- **Chat:** finish reviewed strict streaming guard; migrate facade/ledger/coordinator
+  to exact output bytes and owner dependency proofs. Controlled port doubles are not
+  actual lineage/serializer/store qualification.
+- **Explorer:** controlled bounded graph acquisition/finalization using the accepted
+  owner ports. Derive a Graph-purpose request only from trusted current server context,
+  open a fresh Graph selection and perform final aggregate authorization; never reuse
+  a Reader token as graph permission. No dialogue storage dependency.
+- **Integration:** compose the reviewed raw guard with retries-off/no-redirect selected
+  client, Web-local admission and two-owner drain; supply host execution/commit/owner-death
+  adapters and complete UI binding with Chat. These remain unimplemented, not waived.
+  Import further reviewed increments and serialize shared resources/migrations.
+
+There is no retained real dataset yet. The single consolidated resource request is
+still unanswered: a new owned synthetic Java source/isolated PostgreSQL 17 target,
+owned accounts/keys/logs and loopback Generator/Web/tools; at most three provider
+requests, no automatic retries, 100,000 input/12,000 output tokens total, seven-day
+retention, plus an exact approved provider endpoint/model/protected configuration source.
+Docker Desktop Linux engine was absent at the observed check. No startup or paid
+request has been performed. Real registration/login source usefulness remains a
+separate scoped qualification even if the synthetic real-provider route succeeds.
