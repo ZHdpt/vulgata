@@ -131,9 +131,8 @@ public sealed class OctoberBusinessSynthesisExecutor
                 if (authority != DisclosureStatus.Allowed) failure = AuthorityStatus(authority);
                 else
                 {
-                    var eligibility = await lease.CheckBeforeSendAsync(transportCancellation.Token);
-                    if (eligibility != ProviderAdmissionStatus.Granted) failure = eligibility;
-                    else if (HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted) failure = stopped;
+                    // The selected transport alone reserves the final send rate at its physical boundary.
+                    if (HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted) failure = stopped;
                     else if (Elapsed() >= TimeSpan.FromSeconds(180)) failure = ProviderAdmissionStatus.DeadlineExceeded;
                     else
                     {
@@ -145,6 +144,11 @@ public sealed class OctoberBusinessSynthesisExecutor
                                 new ChatOptions { Tools = [], ResponseFormat = ChatResponseFormat.Json, MaxOutputTokens = (int)Math.Min(maximumTokens, int.MaxValue) },
                                 lease, timestamp => Interlocked.CompareExchange(ref dispatchedAt, timestamp, 0),
                                 transportCancellation.Token);
+                        }
+                        catch (OctoberBusinessAttemptDeniedException denied)
+                        {
+                            failure = denied.Status;
+                            retry = false;
                         }
                         catch (Exception error) when (error is IOException or HttpRequestException or TimeoutException) { retry = true; }
                         finally { terminalAt = Stopwatch.GetTimestamp(); }

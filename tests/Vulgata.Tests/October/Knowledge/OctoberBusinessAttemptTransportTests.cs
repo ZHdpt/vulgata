@@ -124,6 +124,27 @@ public sealed class OctoberBusinessAttemptTransportTests
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task ExecuteAsync_EligibilityIsCheckedOnlyInsideSelectedTransport_NotReservedEarlyAsync(bool synthesis)
+    {
+        var f = new AttemptCase(synthesis);
+        using var scope = new AttemptScope();
+        using var client = new AttemptClient((_, _) => Task.FromResult(f.Response()));
+        var result = await f.ExecuteAsync(client, scope);
+        Assert.True(result.HasMaterial);
+        Assert.Null(result.Failure);
+        var lease = Assert.Single(scope.Leases);
+        Assert.Same(lease, Assert.Single(client.Leases));
+        Assert.Equal(0, Assert.Single(client.EligibilityChecksAtEntry));
+        Assert.Equal(1, lease.EligibilityChecks);
+        Assert.Equal(1, client.AttemptCalls);
+        Assert.Equal(0, client.PlainCalls);
+        Assert.Equal(new[] { "dispatch", "physical-terminal", "observation-complete", "settle", "dispose" }, lease.Events.ToArray());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task ExecuteAsync_ObservedFailureBeforeDispatch_SettlesZeroOnlyAfterTerminalObservationAsync(bool synthesis)
     {
         var f = new AttemptCase(synthesis);
@@ -158,6 +179,100 @@ public sealed class OctoberBusinessAttemptTransportTests
         Assert.Null(usage.Cost);
         Assert.Equal(1, client.AttemptCalls);
         Assert.Equal(1, Assert.Single(scope.Leases).Completions);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false, ProviderAdmissionStatus.Denied)]
+    [InlineData(false, ProviderAdmissionStatus.BudgetExhausted)]
+    [InlineData(false, ProviderAdmissionStatus.DeadlineExceeded)]
+    [InlineData(false, ProviderAdmissionStatus.HardStopped)]
+    [InlineData(false, ProviderAdmissionStatus.AuthorityUnavailable)]
+    [InlineData(true, ProviderAdmissionStatus.Denied)]
+    [InlineData(true, ProviderAdmissionStatus.BudgetExhausted)]
+    [InlineData(true, ProviderAdmissionStatus.DeadlineExceeded)]
+    [InlineData(true, ProviderAdmissionStatus.HardStopped)]
+    [InlineData(true, ProviderAdmissionStatus.AuthorityUnavailable)]
+    public async Task ExecuteAsync_TypedFinalGuardDenial_PreservesExactStatusWithoutDispatchOrRetryAsync(bool synthesis, ProviderAdmissionStatus status)
+    {
+        var f = new AttemptCase(synthesis);
+        using var scope = new AttemptScope();
+        int responseCalls = 0;
+        using var client = new AttemptClient((_, _) => { responseCalls++; return Task.FromResult(f.Response()); }) { FinalDenial = status };
+        var result = await f.ExecuteAsync(client, scope);
+        Assert.False(result.HasMaterial);
+        Assert.Equal(status, result.Failure);
+        Assert.Equal(1, client.AttemptCalls);
+        Assert.Equal(0, client.PlainCalls);
+        Assert.Equal(0, responseCalls);
+        Assert.Equal(0, client.DispatchCallbacks);
+        Assert.Single(scope.Requests);
+        var lease = Assert.Single(scope.Leases);
+        Assert.Same(lease, Assert.Single(client.Leases));
+        Assert.Equal(new[] { "physical-terminal", "observation-complete", "settle", "dispose" }, lease.Events.ToArray());
+        var usage = Assert.Single(result.Attempts);
+        Assert.Equal(0, usage.InputTokens);
+        Assert.Equal(0, usage.OutputTokens);
+        Assert.Equal(TimeSpan.Zero, usage.ExecutionDuration);
+        Assert.Equal(0, scope.Active);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteAsync_TypedDenialAfterDispatch_DoesNotInventUnsentUsageAsync(bool synthesis)
+    {
+        var f = new AttemptCase(synthesis);
+        using var scope = new AttemptScope();
+        using var client = new AttemptClient((_, _) => throw new OctoberBusinessAttemptDeniedException(ProviderAdmissionStatus.BudgetExhausted));
+        var result = await f.ExecuteAsync(client, scope);
+        Assert.False(result.HasMaterial);
+        Assert.Equal(ProviderAdmissionStatus.BudgetExhausted, result.Failure);
+        Assert.Equal(1, client.AttemptCalls);
+        Assert.Equal(0, client.PlainCalls);
+        Assert.Equal(1, client.DispatchCallbacks);
+        Assert.Single(scope.Requests);
+        var usage = Assert.Single(result.Attempts);
+        Assert.Null(usage.InputTokens);
+        Assert.Null(usage.OutputTokens);
+        Assert.Null(usage.Cost);
+        Assert.Equal(new[] { "dispatch", "physical-terminal", "observation-complete", "settle", "dispose" }, Assert.Single(scope.Leases).Events.ToArray());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteAsync_TypedDenialWithFailedObservation_ReportsUnavailableAndUnknownUsageAsync(bool synthesis)
+    {
+        var f = new AttemptCase(synthesis);
+        using var scope = new AttemptScope { FailObservation = true };
+        using var client = new AttemptClient((_, _) => Task.FromResult(f.Response())) { FinalDenial = ProviderAdmissionStatus.HardStopped };
+        var result = await f.ExecuteAsync(client, scope);
+        Assert.False(result.HasMaterial);
+        Assert.Equal(ProviderAdmissionStatus.AuthorityUnavailable, result.Failure);
+        Assert.Equal(1, client.AttemptCalls);
+        Assert.Equal(0, client.PlainCalls);
+        Assert.Equal(0, client.DispatchCallbacks);
+        Assert.Single(scope.Requests);
+        var usage = Assert.Single(result.Attempts);
+        Assert.Null(usage.InputTokens);
+        Assert.Null(usage.OutputTokens);
+        Assert.Null(usage.Cost);
+        Assert.Equal(new[] { "physical-terminal", "observation-failed", "settle", "dispose" }, Assert.Single(scope.Leases).Events.ToArray());
+        Assert.Equal(0, scope.Active);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(ProviderAdmissionStatus.Granted)]
+    [InlineData((ProviderAdmissionStatus)(-1))]
+    [InlineData((ProviderAdmissionStatus)999)]
+    public void AttemptDeniedException_RejectsGrantedAndUndefinedStatuses(ProviderAdmissionStatus status)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new OctoberBusinessAttemptDeniedException(status));
+        Assert.Equal("status", exception.ParamName);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -352,9 +467,12 @@ public sealed class OctoberBusinessAttemptTransportTests
     {
         public string ProviderProfileId { get; init; } = "attempt-profile";
         public bool Dispatch { get; init; } = true;
+        public ProviderAdmissionStatus? FinalDenial { get; init; }
+        public int DispatchCallbacks { get; private set; }
         public int AttemptCalls { get; private set; }
         public int PlainCalls { get; private set; }
         public List<IOctoberProviderAttemptLease> Leases { get; } = [];
+        public List<int> EligibilityChecksAtEntry { get; } = [];
         public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public CancellationToken LastCancellation { get; private set; }
         public async Task<ChatResponse> GetAttemptResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options,
@@ -362,6 +480,7 @@ public sealed class OctoberBusinessAttemptTransportTests
         {
             ArgumentNullException.ThrowIfNull(onDispatched);
             Leases.Add(lease);
+            EligibilityChecksAtEntry.Add(((AttemptLease)lease).EligibilityChecks);
             int call = ++AttemptCalls;
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
             LastCancellation = linked.Token;
@@ -370,9 +489,11 @@ public sealed class OctoberBusinessAttemptTransportTests
                 if (await lease.CheckBeforeSendAsync(linked.Token) != ProviderAdmissionStatus.Granted)
                     throw new InvalidOperationException("Controlled final eligibility refusal.");
                 linked.Token.ThrowIfCancellationRequested();
+                if (FinalDenial is { } denial) throw new OctoberBusinessAttemptDeniedException(denial);
                 if (Dispatch)
                 {
                     onDispatched(Stopwatch.GetTimestamp());
+                    DispatchCallbacks++;
                     ((IOctoberWorkerDispatchObserver)lease).RecordDispatch();
                 }
                 Entered.TrySetResult();
@@ -433,8 +554,9 @@ public sealed class OctoberBusinessAttemptTransportTests
         public List<ProviderAttemptUsage> Usage { get; } = [];
         public int Completions { get; private set; }
         public int Disposals { get; private set; }
+        public int EligibilityChecks { get; private set; }
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default)
-        { cancellationToken.ThrowIfCancellationRequested(); return Task.FromResult(ProviderAdmissionStatus.Granted); }
+        { EligibilityChecks++; cancellationToken.ThrowIfCancellationRequested(); return Task.FromResult(ProviderAdmissionStatus.Granted); }
         public void RecordDispatch() => Events.Add("dispatch");
         public void PhysicalTerminal() { _terminal = true; Events.Add("physical-terminal"); }
         public void CompleteDispatchObservation()
