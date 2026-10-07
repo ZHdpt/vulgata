@@ -221,6 +221,21 @@
   "OctoberScan/OctoberScanClPublicationTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanGenerateQualificationFixtureAdapter.cs": {
+    "suite": "E2E"
+  },
+  "OctoberScan/OctoberScanGenerateQualificationAdapter.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanGenerateQualificationAdapterTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanEntryPointTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanClPublicationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
   "OctoberScan/OctoberScanRunSourceFactoryTests.cs": {
     "suite": "SelfContained"
   },
@@ -306,6 +321,12 @@
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatReferenceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatHistoryTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatSavedOutcomeTests.cs": {
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatEntryTests.cs": {

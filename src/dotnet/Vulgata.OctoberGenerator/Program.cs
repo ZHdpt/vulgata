@@ -7,15 +7,77 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Configuration;
 using Vulgata.Infrastructure.Data.October;
+using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Web.Data;
 
 namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static OctoberGenerateRunner ComposeGenerate(OctoberRuntimeConfiguration runtime,
+        IOctoberLocalAuthority authority, IDbContextFactory<OctoberDbContext> contexts,
+        ISecretEncryptionService encryption, TimeProvider? timeProvider = null)
+    {
+        ArgumentNullException.ThrowIfNull(runtime);
+        ArgumentNullException.ThrowIfNull(authority);
+        ArgumentNullException.ThrowIfNull(contexts);
+        ArgumentNullException.ThrowIfNull(encryption);
+        if (!runtime.IsValid()) throw new InvalidOperationException("October runtime configuration is invalid.");
+        TimeProvider clock = timeProvider ?? TimeProvider.System;
+        var log = new OctoberKnowledgeOperationLog(runtime.LogDirectory, clock);
+        var sources = new OctoberScanRunSourceFactory(runtime, authority, clock);
+        var clients = new OctoberWorkerClientFactory(encryption);
+        return new OctoberGenerateRunner(new(authority, sources.ValidateSelection,
+            (admissionAuthority, guard) => new OctoberGenerateAdmissionStore(contexts, admissionAuthority, guard, log),
+            sources.OpenAsync, clients.CreateAsync,
+            ports => new OctoberKnowledgeWriter(contexts, ports.CompletionAuthority, ports.SourceVerifier,
+                ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log), clock);
+    }
+
+    internal static async Task<int> ExecuteConfiguredAsync(OctoberGeneratorCommand command,
+        IOctoberGeneratorModule module, TextWriter output, TextWriter error,
+        CancellationToken cancellationToken = default, Func<ValueTask>? settle = null)
+    {
+        OctoberGeneratorExecutionResult result;
+        try { result = await module.ExecuteAsync(command, cancellationToken); }
+        catch (OperationCanceledException) { result = new(OctoberGeneratorExecutionStatus.Cancelled); }
+        catch (Exception) { result = new(OctoberGeneratorExecutionStatus.TargetUnavailable); }
+        if (command.Mode == OctoberGeneratorMode.Generate)
+        {
+            OctoberScanReport report = result.Status == OctoberGeneratorExecutionStatus.GenerateFinished && result.Report is not null
+                ? result.Report : EntryFailure(command.ScanPolicy?.OutputStage, result.Status == OctoberGeneratorExecutionStatus.Cancelled);
+            if (!OutputBindingMatches(command, report))
+                report = report with
+                {
+                    CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
+                    PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
+                    TerminalCoverage = [], Inventory = [], Gaps = [new("output_binding_invalid")]
+                };
+            if (settle is not null)
+            {
+                try { await settle(); }
+                catch (Exception)
+                {
+                    report = report with { Execution = OctoberExecutionStatus.Indeterminate,
+                        Gaps = report.Gaps.Add(new("owned_cleanup_unconfirmed")) };
+                }
+            }
+            await output.WriteLineAsync(SerializeReport(report));
+            return report.ExitCode;
+        }
+        if (result.Status is OctoberGeneratorExecutionStatus.Denied or OctoberGeneratorExecutionStatus.AuthorityUnavailable or OctoberGeneratorExecutionStatus.TargetUnavailable)
+            await error.WriteLineAsync($"October setup failed: {result.Status}.");
+        if (result.Status == OctoberGeneratorExecutionStatus.Prepared && result.CommittedBatch is { } committed)
+            await output.WriteLineAsync($"October setup Prepared: batch {committed.BatchId:D}.");
+        if (result.Status == OctoberGeneratorExecutionStatus.Selected && result.BoundSetupData is { } selected)
+            await output.WriteLineAsync($"October setup Selected: batch {selected.BatchId:D}.");
+        return result.Status is OctoberGeneratorExecutionStatus.Prepared or OctoberGeneratorExecutionStatus.Selected ? 0 : 1;
+    }
+
     public static async Task<int> Main()
     {
         try
@@ -25,11 +87,14 @@ public static class OctoberGeneratorEntryPoint
                 .Build();
             OctoberGeneratorCommand command;
             OctoberAuthorityConfiguration authorityConfiguration;
+            OctoberRuntimeConfiguration? runtime = null;
             string keyRingPath;
             string applicationName;
             try
             {
                 command = ReadCommand(configuration);
+                if (command.Mode == OctoberGeneratorMode.Generate)
+                    runtime = await ReadRuntimeConfigurationAsync(configuration);
                 authorityConfiguration = ReadAuthorityConfiguration(configuration, command);
                 keyRingPath = Required(configuration, "DataProtection:KeyRingPath");
                 applicationName = Required(configuration, "DataProtection:ApplicationName");
@@ -85,7 +150,8 @@ public static class OctoberGeneratorEntryPoint
                     return 1;
                 }
             }
-            Console.Out.WriteLine("October provider configuration Bound.");
+            if (command.Mode != OctoberGeneratorMode.Generate)
+                Console.Out.WriteLine("October provider configuration Bound.");
 
             IOctoberOperatorCredentialSource credentialSource;
             try
@@ -93,7 +159,9 @@ public static class OctoberGeneratorEntryPoint
                 credentialSource = Required(configuration, "October:Operator:CredentialSource") switch
                 {
                     "console" when configuration["October:Operator:CredentialFile"] is null =>
-                        new OctoberConsoleCredentialSource(),
+                        command.Mode == OctoberGeneratorMode.Generate
+                            ? new OctoberConsoleCredentialSource(new GenerateCredentialTerminal())
+                            : new OctoberConsoleCredentialSource(),
                     "protected-file" => new OctoberProtectedFileCredentialSource(
                         Required(configuration, "October:Operator:CredentialFile"),
                         protection.GetRequiredService<IDataProtectionProvider>()),
@@ -122,28 +190,170 @@ public static class OctoberGeneratorEntryPoint
                 new OctoberSetupStore(database, TimeProvider.System),
                 new OctoberBatchSelector(database, authorityConfiguration.TargetId,
                     authorityConfiguration.CanonicalDatabaseIdentity));
-            OctoberGeneratorModule module = new(
-                scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>(),
-                target, authorityConfiguration.AuthorityId, provider: workerProvider);
-            OctoberGeneratorExecutionResult result = await module.ExecuteAsync(command);
-            if (result.Status == OctoberGeneratorExecutionStatus.Denied)
-                Console.Error.WriteLine("October setup failed: Denied.");
-            if (result.Status == OctoberGeneratorExecutionStatus.AuthorityUnavailable)
-                Console.Error.WriteLine("October setup failed: AuthorityUnavailable.");
-            if (result.Status == OctoberGeneratorExecutionStatus.TargetUnavailable)
-                Console.Error.WriteLine("October setup failed: TargetUnavailable.");
-            if (result.Status == OctoberGeneratorExecutionStatus.Prepared &&
-                result.CommittedBatch is { } committed)
-                Console.Out.WriteLine($"October setup Prepared: batch {committed.BatchId:D}.");
-            if (result.Status == OctoberGeneratorExecutionStatus.Selected &&
-                result.BoundSetupData is { } bound)
-                Console.Out.WriteLine($"October setup Selected: batch {bound.BatchId:D}.");
-            return result.Status is OctoberGeneratorExecutionStatus.Prepared or
-                OctoberGeneratorExecutionStatus.Selected ? 0 : 1;
+            IOctoberLocalAuthority localAuthority = scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>();
+            OctoberGenerateRunner? generate = command.Mode == OctoberGeneratorMode.Generate
+                ? ComposeGenerate(runtime!, localAuthority,
+                    new ConfiguredContextFactory(scope.ServiceProvider.GetRequiredService<DbContextOptions<OctoberDbContext>>()),
+                    protection.GetRequiredService<ISecretEncryptionService>()) : null;
+            OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
+            return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
+                settle: generate is null ? null : () => generate.DisposeAsync());
         }
         catch (Exception)
         {
             return 1;
+        }
+    }
+
+    private static OctoberScanReport EntryFailure(string? stage, bool cancelled) => new(stage ?? string.Empty, null,
+        OctoberCoverageStatus.None, cancelled ? OctoberExecutionStatus.Interrupted : OctoberExecutionStatus.Failed,
+        OctoberPublicationStatus.NotRequested, null, [], [], [],
+        new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+        new(null, null, null, true), [new(cancelled ? "run_interrupted" : "generate_terminal_report_unavailable")]);
+
+    private static bool OutputBindingMatches(OctoberGeneratorCommand command, OctoberScanReport report)
+    {
+        if (report.Documents.IsDefault || report.AcceptedFiles.IsDefault || report.TerminalCoverage.IsDefault)
+            return false;
+        if (report.Publication is { } publication &&
+            (publication.Knowledge.TargetId != command.TargetId || publication.Knowledge.BatchId != command.BatchId ||
+             publication.PublicationId == Guid.Empty || publication.Knowledge.SelectionDigest is not { Length: 64 } ||
+             !publication.Knowledge.SelectionDigest.All(char.IsAsciiHexDigit)))
+            return false;
+        return report.Documents.All(document => document is not null && report.Publication is { } selected &&
+                document.BatchId == command.BatchId && document.PublicationId == selected.PublicationId &&
+                document.LogicalDocumentId != Guid.Empty && document.DocumentVersionId != Guid.Empty) &&
+            report.AcceptedFiles.All(file => file is not null && file.ManifestId != Guid.Empty && file.AdmissionId != Guid.Empty &&
+                SafeCoverageIdentity(file.Coverage) && file.AdmissionId == file.Coverage.AdmissionId && Digest(file.ProposalDigest) &&
+                !file.Documents.IsDefault && file.Documents.All(document => document is not null &&
+                    document.BatchId == command.BatchId && document.LogicalDocumentId != Guid.Empty && document.DocumentVersionId != Guid.Empty)) &&
+            report.TerminalCoverage.All(SafeCoverageIdentity);
+    }
+
+    private static bool SafeCoverageIdentity(FileCoverage coverage) => coverage is { Origin: { } origin } &&
+        coverage.AdmissionId != Guid.Empty && origin.RepositoryId != Guid.Empty && Enum.IsDefined(coverage.Disposition) &&
+        SafeRelativePath(origin.RelativePath) is { Length: > 0 } && Digest(origin.SourceDigest) &&
+        OpaqueIdentity(origin.RootBindingIdentity) && OpaqueIdentity(origin.PreparedVersion);
+
+    private static bool Digest(string? value) => value is { Length: 64 } && value.All(char.IsAsciiHexDigit);
+    private static bool OpaqueIdentity(string? value) => !string.IsNullOrWhiteSpace(value) && value.Length <= 4096 &&
+        value == value.Trim() && !value.Any(char.IsControl) && !Path.IsPathFullyQualified(value) &&
+        !value.Contains(":/", StringComparison.Ordinal) && !value.Contains(":\\", StringComparison.Ordinal);
+
+    private static object ProjectCoverage(FileCoverage coverage) => new
+    {
+        coverage.AdmissionId,
+        Origin = new
+        {
+            coverage.Origin.RepositoryId,
+            coverage.Origin.RootBindingIdentity,
+            coverage.Origin.RelativePath,
+            coverage.Origin.SourceDigest,
+            coverage.Origin.PreparedVersion
+        },
+        coverage.Disposition,
+        Reason = coverage.Disposition switch
+        {
+            CoverageDisposition.Accepted => null,
+            CoverageDisposition.CompletedZeroUnit => "completed-zero-unit",
+            CoverageDisposition.Failed => "failed",
+            CoverageDisposition.Cancelled => "cancelled",
+            _ => "unprocessed"
+        }
+    };
+
+    private static string SerializeReport(OctoberScanReport report)
+    {
+        // Project the binding explicitly: its canonical database identity belongs
+        // to trusted composition and is never part of the console protocol.
+        object? publication = report.Publication is { } selected ? new
+        {
+            selected.Knowledge.TargetId,
+            selected.Knowledge.BatchId,
+            selected.Knowledge.SelectionDigest,
+            selected.PublicationId
+        } : null;
+        var projection = new
+        {
+            report.RequestedStage,
+            report.CompletedStage,
+            report.Coverage,
+            report.Execution,
+            report.PublicationStatus,
+            Matching = "not-requested",
+            BusinessLogic = "not-requested",
+            Publication = publication,
+            report.Documents,
+            AcceptedFiles = report.AcceptedFiles.Select(file => new
+            {
+                file.ManifestId,
+                file.AdmissionId,
+                file.ProposalDigest,
+                file.Documents,
+                Coverage = ProjectCoverage(file.Coverage)
+            }),
+            TerminalCoverage = report.TerminalCoverage.Select(ProjectCoverage),
+            Inventory = report.Inventory.Select(entry => new
+            {
+                entry.RepositoryId,
+                RelativePath = SafeRelativePath(entry.RelativePath),
+                entry.Kind,
+                entry.Disposition,
+                Reason = entry.Disposition switch
+                {
+                    "selected" => "configured-selected-source",
+                    "supporting" => "configured-supporting-source",
+                    "excluded" => "excluded-from-declared-source-scope",
+                    "unsupported" => "unsupported-source-kind",
+                    _ => "source-disposition-unavailable"
+                },
+                entry.Priority,
+                entry.ObservedByteLength
+            }),
+            Gaps = report.Gaps.Select(gap => new { Code = SafeGapCode(gap.Code), gap.RepositoryId, RelativePath = SafeRelativePath(gap.RelativePath) }),
+            report.Timings,
+            report.Usage,
+            report.ExitCode
+        };
+        return JsonSerializer.Serialize(projection, new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter() }
+        });
+    }
+
+    private static string? SafeRelativePath(string? path) => path is not null && path.Length <= 2048 &&
+        !path.StartsWith('/') && !path.Contains('\\') && !path.Contains(':') && !path.Any(char.IsControl) &&
+        (path.Length == 0 || path.Split('/').All(part => part is not ("" or "." or ".."))) ? path : null;
+
+    private static string SafeGapCode(string code) => code switch
+    {
+        "owned_cleanup_unconfirmed" or "coverage_incomplete" or "invalid_run_configuration" or "authority_unavailable" or
+        "begin_indeterminate" or "begin_settlement_pending" or "fresh_run_required" or "run_ineligible" or "run_interrupted" or
+        "run_unavailable" or "single_file_checkpoint_limit" or "source_frame_unavailable" or "source_frame_binding_changed" or
+        "file_deadline_exceeded" or "provider_settlement_unconfirmed" or "worker_not_completed" or "file_acceptance_unavailable" or
+        "generate_terminal_report_unavailable" or "output_binding_invalid" or "commit_indeterminate" or "operation_log_unavailable" or "phase_ineligible" or
+        "publication_failed" or "publication_interrupted" or "publication_unavailable" or "no_cl_content" or
+        "freeze_settlement_pending" or "publication_settlement_pending" or "phase_closed" or "unsupported_stage" or
+        "publication_not_started" or "source-authority-or-identity-lost" or "incomplete-directory" or "source-limitation" or
+        "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" => code,
+        _ => "source-or-execution-gap"
+    };
+
+    private sealed class ConfiguredContextFactory(DbContextOptions<OctoberDbContext> options) : IDbContextFactory<OctoberDbContext>
+    {
+        public OctoberDbContext CreateDbContext() => new(options);
+    }
+
+    private sealed class GenerateCredentialTerminal : IOctoberCredentialTerminal
+    {
+        public bool IsInteractive => !Console.IsInputRedirected && !Console.IsErrorRedirected && Environment.UserInteractive;
+        public void Write(string value) => Console.Error.Write(value);
+        public async ValueTask<ConsoleKeyInfo> ReadKeyAsync(bool intercept, CancellationToken cancellationToken)
+        {
+            while (!Console.KeyAvailable)
+                await Task.Delay(TimeSpan.FromMilliseconds(25), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return Console.ReadKey(intercept);
         }
     }
 

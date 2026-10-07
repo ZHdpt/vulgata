@@ -1958,10 +1958,17 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             return process;
         }
 
-        internal async Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGeneratorAsync(
-            Process process)
+        internal Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGeneratorAsync(
+            Process process) => WaitForGeneratorCoreAsync(process, TimeSpan.FromMinutes(3));
+
+        internal Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGenerateAsync(
+            Process process, int runDeadlineSeconds)
+            => WaitForGeneratorCoreAsync(process, OctoberGenerateFixtureInputs.GenerateWait(runDeadlineSeconds));
+
+        private async Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGeneratorCoreAsync(
+            Process process, TimeSpan maximumWait)
         {
-            using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(3));
+            using CancellationTokenSource timeout = new(maximumWait);
             Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync(timeout.Token);
             Task<string> stderrTask = process.StandardError.ReadToEndAsync(timeout.Token);
             try

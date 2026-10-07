@@ -1,0 +1,251 @@
+using System.Text.Json;
+using Vulgata.Core.DomainServices;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Infrastructure.Configuration;
+using Vulgata.OctoberGenerator;
+using Vulgata.Tests.TestInfrastructure;
+
+namespace Vulgata.Tests.OctoberScan;
+
+public sealed class OctoberScanEntryPointTests
+{
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    public async Task ConfiguredGenerate_ForwardsExactReportExitAndSafePublicationProjectionAsync(int expected)
+    {
+        var binding = new KnowledgeBinding("SECRET-CANONICAL-DATABASE", "explicit-target", Guid.NewGuid(), new string('a', 64));
+        var publication = new PublicationBinding(binding, Guid.NewGuid());
+        bool published = expected is 0 or 2;
+        var report = new OctoberScanReport("cl-only", published || expected == 5 ? "cl-only" : null,
+            expected == 2 ? OctoberCoverageStatus.Partial : OctoberCoverageStatus.Complete,
+            expected switch { 1 => OctoberExecutionStatus.Failed, 3 => OctoberExecutionStatus.Interrupted, 4 => OctoberExecutionStatus.Indeterminate, _ => OctoberExecutionStatus.Completed },
+            published ? OctoberPublicationStatus.Confirmed : expected == 5 ? OctoberPublicationStatus.NoContent : OctoberPublicationStatus.Failed,
+            published ? publication : null, published ? [new(binding.BatchId, publication.PublicationId, Guid.NewGuid(), Guid.NewGuid())] : [], [], [],
+            new(TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200), TimeSpan.FromMilliseconds(300), TimeSpan.FromMilliseconds(400)),
+            new(null, null, null, true), [new("coverage_incomplete")]);
+        using var output = new StringWriter(); using var error = new StringWriter();
+        var command = new OctoberGeneratorCommand(OctoberGeneratorMode.Generate, binding.TargetId, binding.BatchId, null, new() { OutputStage = "cl-only" });
+        var module = new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report));
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(command, module, output, error);
+        Assert.Equal(expected, exit);
+        Assert.Equal(1, module.Calls);
+        using var json = JsonDocument.Parse(output.ToString());
+        Assert.Equal("cl-only", json.RootElement.GetProperty("requestedStage").GetString());
+        Assert.DoesNotContain("SECRET-CANONICAL-DATABASE", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("SECRET-CANONICAL-DATABASE", error.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("canonicalDatabaseIdentity", output.ToString(), StringComparison.OrdinalIgnoreCase);
+        if (published)
+        {
+            var projected = json.RootElement.GetProperty("publication");
+            Assert.Equal(publication.PublicationId, projected.GetProperty("publicationId").GetGuid());
+            Assert.Equal(binding.BatchId, projected.GetProperty("batchId").GetGuid());
+            Assert.Equal(binding.TargetId, projected.GetProperty("targetId").GetString());
+            Assert.Equal(binding.SelectionDigest, projected.GetProperty("selectionDigest").GetString());
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task GenerateSelectedSentinel_IsFailureNotSuccessAsync()
+    {
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int result = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", Guid.NewGuid(), null),
+            new Module(new(OctoberGeneratorExecutionStatus.Selected)), output, error);
+        Assert.Equal(1, result);
+        Assert.DoesNotContain("Confirmed", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(OctoberGeneratorMode.Prepare, OctoberGeneratorExecutionStatus.Prepared)]
+    [InlineData(OctoberGeneratorMode.Select, OctoberGeneratorExecutionStatus.Selected)]
+    public async Task ExistingPrepareSelect_PreserveTheirSuccessAsync(OctoberGeneratorMode mode, OctoberGeneratorExecutionStatus status)
+    {
+        using var output = new StringWriter(); using var error = new StringWriter();
+        Assert.Equal(0, await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(mode, "target", Guid.NewGuid(), null), new Module(new(status)), output, error));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualComposition_InvalidSelectedRootStopsBeforeOwnerBeginOrSecretUseAsync()
+    {
+        await using var harness = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        string directory = Path.Combine(Path.GetTempPath(), "october-entrypoint-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(directory, "log"));
+        try
+        {
+            var configuration = new OctoberRuntimeConfiguration(
+                [new(harness.Execution.Setup.TargetId, Guid.NewGuid(), harness.Database.Origin.RepositoryId, harness.Database.Origin.RootBindingIdentity, Path.Combine(directory, "source"))],
+                Path.Combine(directory, "tools", "codegraph.ps1"),
+                new(Path.Combine(directory, "state"), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
+                new([Path.Combine(directory, "tools")], [Path.Combine(directory, "runtime")], Path.Combine(directory, "system", "cmd.exe"), [Path.Combine(directory, "tools")], Path.Combine(directory, "jdk", "bin")), Path.Combine(directory, "log"));
+            var secrets = new NoSecrets();
+            await using var actual = OctoberGeneratorEntryPoint.ComposeGenerate(configuration, harness.Authority, harness.Database.Factory, secrets);
+            var result = await actual.ExecuteAsync(harness.Execution);
+            Assert.NotEqual(0, result.Report!.ExitCode);
+            Assert.Equal(0, secrets.Accesses);
+            await harness.Database.AssertNoKnowledgeAsync();
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SettlementFailure_ProducesOneIndeterminateReportAndMatchingExitAsync()
+    {
+        var binding = new KnowledgeBinding("PRIVATE-DATABASE", "target", Guid.NewGuid(), new string('a', 64));
+        var publication = new PublicationBinding(binding, Guid.NewGuid());
+        var report = new OctoberScanReport("cl-only", "cl-only", OctoberCoverageStatus.Complete, OctoberExecutionStatus.Completed,
+            OctoberPublicationStatus.Confirmed, publication, [new(binding.BatchId, publication.PublicationId, Guid.NewGuid(), Guid.NewGuid())], [], [],
+            new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(1, 3, 2, false), []);
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int settlements = 0;
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", binding.BatchId, null),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error,
+            settle: () => { settlements++; return ValueTask.FromException(new InvalidOperationException("PRIVATE cleanup exception path")); });
+        Assert.Equal(1, settlements);
+        Assert.Equal(4, exit);
+        using var json = JsonDocument.Parse(output.ToString()); // Multiple success+failure documents cannot parse as one value.
+        Assert.Contains("Indeterminate", json.RootElement.GetProperty("execution").ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(publication.PublicationId, json.RootElement.GetProperty("publication").GetProperty("publicationId").GetGuid());
+        Assert.DoesNotContain("PRIVATE", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("PRIVATE", error.ToString(), StringComparison.Ordinal);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("publication-target")]
+    [InlineData("publication-batch")]
+    [InlineData("document-publication")]
+    [InlineData("document-batch")]
+    public async Task ForeignPublicationOrDocumentBinding_CannotEscapeAsSuccessfulHandlesAsync(string mismatch)
+    {
+        Guid batch = Guid.NewGuid();
+        var binding = new KnowledgeBinding("PRIVATE-DATABASE", mismatch == "publication-target" ? "foreign-target" : "exact-target",
+            mismatch == "publication-batch" ? Guid.NewGuid() : batch, new string('a', 64));
+        var publication = new PublicationBinding(binding, Guid.NewGuid());
+        var document = new DocumentHandle(mismatch == "document-batch" ? Guid.NewGuid() : batch,
+            mismatch == "document-publication" ? Guid.NewGuid() : publication.PublicationId, Guid.NewGuid(), Guid.NewGuid());
+        var report = new OctoberScanReport("cl-only", "cl-only", OctoberCoverageStatus.Complete, OctoberExecutionStatus.Completed,
+            OctoberPublicationStatus.Confirmed, publication, [document], [], [],
+            new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(1, 3, 2, false), []);
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "exact-target", batch, null),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        Assert.NotEqual(0, exit);
+        Assert.NotEqual(2, exit);
+        using var json = JsonDocument.Parse(output.ToString());
+        Assert.Equal(JsonValueKind.Null, json.RootElement.GetProperty("publication").ValueKind);
+        Assert.Equal(0, json.RootElement.GetProperty("documents").GetArrayLength());
+        Assert.DoesNotContain(document.DocumentVersionId.ToString(), output.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("PRIVATE-DATABASE", output.ToString(), StringComparison.Ordinal);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CoverageProjection_OmitsSourceProseAndPhysicalPaths_ButPreservesSafeIdentityAsync(bool physicalPath)
+    {
+        Guid batch = Guid.NewGuid(), admission = Guid.NewGuid(), manifest = Guid.NewGuid(), repository = Guid.NewGuid();
+        const string sourceSecret = "PRIVATE-SOURCE-SECRET-PROSE";
+        const string terminalSecret = "PRIVATE-TERMINAL-SECRET-PROSE";
+        const string unsafePath = "C:/PRIVATE-PHYSICAL-SOURCE/Order.cs";
+        string digest = new('b', 64);
+        var origin = new PreparedOrigin(repository, "opaque-root-binding", physicalPath ? unsafePath : "src/Order.cs", digest, "opaque-approval");
+        var acceptedCoverage = new FileCoverage(admission, origin, CoverageDisposition.CompletedZeroUnit, sourceSecret);
+        var terminalCoverage = acceptedCoverage with { Reason = terminalSecret };
+        var report = new OctoberScanReport("cl-only", "cl-only", OctoberCoverageStatus.Complete, OctoberExecutionStatus.Completed,
+            OctoberPublicationStatus.NoContent, null, [], [new(manifest, admission, digest, [], acceptedCoverage)], [terminalCoverage],
+            new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(1, 3, 2, false), []);
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", batch, null),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        using var json = JsonDocument.Parse(output.ToString());
+        Assert.DoesNotContain(sourceSecret, output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(terminalSecret, output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("PRIVATE-PHYSICAL-SOURCE", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("PRIVATE-", error.ToString(), StringComparison.Ordinal);
+        if (!physicalPath)
+        {
+            Assert.Equal(5, exit);
+            var accepted = json.RootElement.GetProperty("acceptedFiles")[0];
+            Assert.Equal(manifest, accepted.GetProperty("manifestId").GetGuid());
+            Assert.Equal(admission, accepted.GetProperty("admissionId").GetGuid());
+            Assert.Equal(digest, accepted.GetProperty("proposalDigest").GetString());
+            var projectedOrigin = accepted.GetProperty("coverage").GetProperty("origin");
+            Assert.Equal(repository, projectedOrigin.GetProperty("repositoryId").GetGuid());
+            Assert.Equal("src/Order.cs", projectedOrigin.GetProperty("relativePath").GetString());
+            Assert.Equal(digest, projectedOrigin.GetProperty("sourceDigest").GetString());
+            Assert.Equal("src/Order.cs", json.RootElement.GetProperty("terminalCoverage")[0].GetProperty("origin").GetProperty("relativePath").GetString());
+        }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ClOnlyReport_ExplicitlyMarksMatchingAndBusinessLogicNotRequestedAsync()
+    {
+        var report = new OctoberScanReport("cl-only", "cl-only", OctoberCoverageStatus.Complete, OctoberExecutionStatus.Completed,
+            OctoberPublicationStatus.NoContent, null, [], [], [],
+            new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(0, 0, 0, false), []);
+        using var output = new StringWriter(); using var error = new StringWriter();
+        var module = new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report));
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", Guid.NewGuid(), null), module, output, error);
+        Assert.Equal(5, exit);
+        Assert.Equal(1, module.Calls);
+        using var json = JsonDocument.Parse(output.ToString());
+        Assert.Equal("not-requested", json.RootElement.GetProperty("matching").GetString());
+        Assert.Equal("not-requested", json.RootElement.GetProperty("businessLogic").GetString());
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("throw")]
+    [InlineData("cancel")]
+    [InlineData("missing-report")]
+    public async Task LostModuleReport_AfterInvocation_DoesNotFabricateZeroUsageAsync(string failure)
+    {
+        using var output = new StringWriter(); using var error = new StringWriter();
+        var module = new LostReportModule(failure);
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", Guid.NewGuid(), null), module, output, error);
+        Assert.Equal(1, module.Calls);
+        Assert.NotEqual(0, exit);
+        Assert.NotEqual(2, exit);
+        using var json = JsonDocument.Parse(output.ToString());
+        var usage = json.RootElement.GetProperty("usage");
+        Assert.Equal(JsonValueKind.Null, usage.GetProperty("requests").ValueKind);
+        Assert.Equal(JsonValueKind.Null, usage.GetProperty("inputTokens").ValueKind);
+        Assert.Equal(JsonValueKind.Null, usage.GetProperty("outputTokens").ValueKind);
+        Assert.True(usage.GetProperty("hasUnknownUsage").GetBoolean());
+        Assert.DoesNotContain("PRIVATE-MODULE-FAILURE", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("PRIVATE-MODULE-FAILURE", error.ToString(), StringComparison.Ordinal);
+    }
+
+    private sealed class LostReportModule(string failure) : IOctoberGeneratorModule
+    {
+        internal int Calls;
+        public Task<OctoberGeneratorExecutionResult> ExecuteAsync(OctoberGeneratorCommand command, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return failure switch
+            {
+                "throw" => Task.FromException<OctoberGeneratorExecutionResult>(new InvalidOperationException("PRIVATE-MODULE-FAILURE")),
+                "cancel" => Task.FromException<OctoberGeneratorExecutionResult>(new OperationCanceledException("PRIVATE-MODULE-FAILURE")),
+                _ => Task.FromResult(new OctoberGeneratorExecutionResult(OctoberGeneratorExecutionStatus.GenerateFinished)),
+            };
+        }
+    }
+    private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
+    {
+        internal int Calls;
+        public Task<OctoberGeneratorExecutionResult> ExecuteAsync(OctoberGeneratorCommand command, CancellationToken cancellationToken = default) { Calls++; return Task.FromResult(result); }
+    }
+    private sealed class NoSecrets : ISecretEncryptionService
+    {
+        internal int Accesses;
+        public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default) { Accesses++; throw new InvalidOperationException("Unexpected secret access"); }
+        public Task<string> DecryptAsync(string purpose, string cipher, CancellationToken cancellationToken = default) { Accesses++; throw new InvalidOperationException("Unexpected secret access"); }
+    }
+}

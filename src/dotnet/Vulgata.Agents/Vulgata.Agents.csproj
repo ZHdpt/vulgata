@@ -39,6 +39,8 @@
                       LogicalName="Vulgata.Agents.Prompts.OctoberFileWorker.md" />
     <EmbeddedResource Include="Prompts\OctoberBusiness\Resolution.md"
                       LogicalName="Vulgata.Agents.Prompts.OctoberBusiness.Resolution.md" />
+    <EmbeddedResource Include="Prompts\OctoberBusiness\Synthesis.md"
+                      LogicalName="Vulgata.Agents.Prompts.OctoberBusiness.Synthesis.md" />
     <EmbeddedResource Include="PreparedFlows\demo-business-flow.v1.json"
                       LogicalName="Vulgata.Agents.PreparedFlows.demo-business-flow.v1.json" />
   </ItemGroup>

@@ -14,6 +14,14 @@ internal sealed record OctoberGenerateInputFiles(
 /// <summary>Explicit inputs for the owned qualification fixture, not a production authority port.</summary>
 internal static class OctoberGenerateFixtureInputs
 {
+    internal static TimeSpan GenerateWait(int runDeadlineSeconds)
+    {
+        if (runDeadlineSeconds is < 1 or > 1800)
+            throw new ArgumentOutOfRangeException(nameof(runDeadlineSeconds));
+        // This is a process-observation/cleanup margin, never a renewed Scan budget.
+        return TimeSpan.FromSeconds(runDeadlineSeconds + 120);
+    }
+
     internal static OctoberGenerateInputFiles? ValidateFiles(
         string ownedRoot, string mode, string? runtimeFilePath, string? scanPolicyFilePath,
         string? workerProviderConfigurationFilePath, bool hasBindingOverrides)

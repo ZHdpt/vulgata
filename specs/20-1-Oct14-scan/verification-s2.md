@@ -1,5 +1,10 @@
 # S2 execution and qualification
 
+## Current handoff status
+
+T013–T020 and T022 are implemented and independently reviewed. T021 controlled route coverage and the Scan-owned one-Generate adapter are complete; the integration-owned real Generate/ordinary-reader scenario remains pending. T023 and T024 remain unqualified. Full SelfContained run b94297a88ad0495086030aeb7fc47244 passed 3,617 of 3,618 cases with one Business-owned late-context disposal test failure; it is not GREEN. PostgreSQL readiness/resource approval and real source/provider/model/spend/database/key/log/host permissions remain unresolved. No S3 work is dispatched.
+
+
 ## Authority and starting boundary — 2026-10-07
 
 Direct user instruction authorizes S2 T013–T024, starting T013 immediately,
@@ -460,6 +465,43 @@ relative paths remain available to Integrator's strict fixture-bound hydration.
 CLI Ctrl+C signal/drain behavior is not qualified by the controlled API cancellation
 tests; its S3 task remains undispatched. No new S3 signal semantics are adopted.
 
+Output-projection RED selected **17: 15 passed, 2 failed, zero skipped** in
+`isolation-7fe9f3ff47944b5baef438c98c70aba8/results.trx`, reproducing model/source
+prose in coverage reasons; foreign binding tests passed. The explicit projection
+then passed all 17 cases in
+`isolation-f7ab8cbb499047bc9a79c02650b5bda4/results.trx`, whose sole failure among
+18 cases was the newly asserted planned CL-only matching/businessLogic labels.
+Those fields were added without any Business service resolution.
+
+Final Main/Generate affected verification passed **299/299, zero failed/skipped**:
+`isolation-8169a90f12ae44f5bdfa21bcd82a0b64/results.trx`. Independent Main review
+and separate production/test final-shape assessments accept the executable/control
+boundary. Main now composes the actual B0 admission/writer/log and source/Worker
+factories, settles before one exact safe report, and returns its matching exit code.
+Prepare/Select remain covered. The exact report protocol is documented in
+`contracts/scan-boundaries.md`. Two PostgreSQL full-route cases are authored, not
+executed. Broad SelfContained regression, owned PostgreSQL qualification and the
+single shared real E2E/reader run remain separately outstanding at this checkpoint.
+
+Main was committed at `b04313c393a2d0b33556e693152645c4e6e065ae`. The clean
+assigned branch merged approved integration
+`274d1f733c15d89a63969f53322514adbc24cac2`, producing
+`e873b8cbab7008262c724b6c65fd49651033367f`; the reviewed shared fixture API is
+now present. No reset/discard occurred and no imported migration was executed.
+An additional proposed documentation sync to `b9df7b70` was rejected by automatic
+approval review. Read-only ancestry inspection showed its delta from the imported
+checkpoint also includes unrelated Chat source changes; it is left unmerged, as
+Integrator confirmed. This does not block S2's already imported fixture API.
+
+Integration review then identified unjustified zero usage in Main's no-terminal-
+report fallback. Controlled RED
+`isolation-65ff138965b44c3b9eebb92c0c6215fb/results.trx` selected **21:
+18 passed, 3 failed, zero skipped**. Invoked module throw, cancellation and missing
+report each emitted numeric counts where JSON null was required. Root inspected
+the failures before releasing the narrow fallback change to unknown requests/input/
+output and `hasUnknownUsage=true`. Actual runner reports retain their proven zero
+or measured usage. Status/exit/safe output semantics are unchanged.
+
 ## Early composition decisions
 
 The reviewed primary-frame/F1 component is committed at
@@ -561,3 +603,51 @@ loopback processes, at most three provider requests with no retries, aggregate
 model/protected credential source and approval remain unresolved. Even when
 approved and successful, that synthetic run qualifies the real execution/store/
 reader route only; T024 registration/login source and usefulness remain separate.
+
+### Main fallback correction and qualification adapter RED
+
+- Independent review accepted Main's missing-terminal-report correction: requests/input/output tokens are null with `hasUnknownUsage=true`, rather than fabricated zero usage.
+- `eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberScanGenerateQualificationAdapterTests|FullyQualifiedName~OctoberScanEntryPointTests'` run `1880470bf0e0436c83d1810aa4aa5746`: 34 selected, 31 passed, 3 failed, 0 skipped. All 21 Main tests passed; the adapter's exact positive input and two one-dispatch cases failed on deliberate stubs. Negative fail-closed cases passing a stub are not implementation proof.
+- Initial adapter policy validation rejected a SelfContained reference to the E2E fixture before build. The physical factory was split into a separately classified E2E helper; no policy exception or weakened assertion was introduced. Controlled validation remains source-free and credential-free.
+
+### Qualification adapter and remaining S2 boundary
+
+The Scan-owned adapter validates the three fixture-owned input documents through the existing shared path validator and production runtime/policy/provider parsers. It binds the exact target/batch/Repository/root/source path, approved policy and selected protected Worker profile; `cl-only`, cap one and one exact selected file remain explicit. It never decrypts a credential or opens source during validation. One adapter instance consumes its dispatch once before validation, including failure/unknown outcomes. Physical dispatch is separately E2E-classified and rechecks E2E enablement plus the runner-owned database target immediately before starting the existing fixture child.
+
+Run `528cac9179994f3b9522f6c59564ca0d`: 34/34 SelfContained cases passed (13 adapter, 21 Main), zero failed/skipped. This is controlled input/dispatch evidence, not a real child/provider run. Independent review accepted validation/one-shot behavior and required the subsequently added immediate physical guards. The shared fixture's existing three-minute wait was returned to the integration owner for an explicit qualifying deadline/cleanup-margin decision; Scan did not widen it.
+
+T022's one-file composition is implemented and controlled-GREEN. T021's real-scenario authoring remains open: the integration owner explicitly reported the combined test is not yet implemented. Its planned path/case is `tests/Vulgata.Tests/October/Integration/OctoberGeneratedClReaderE2ETests.cs::GenerateOnce_OrdinaryItReaderOpensExactCl_BusinessDenied_RevocationClosesAccessAsync`; this is a planned binding, not a present or passing test. Root owns strict report hydration, ordinary Identity user, explicit frozen Wiki Web composition and exact read/denial/revocation assertions. Separate paid provider/reader runs are not introduced.
+
+The agreed combined qualification uses one disposable owning fixture and one production Generate with standard runner cleanup. It does not establish a seven-day retained site. Source usefulness for the approved registration/login scope, real provider/native behavior and ordinary-reader observations remain T024 obligations. Exact source/provider/model/spend, protected key/log paths, owned database/identities and process lifecycle permissions are still pending together with the integration owner; no resource grant is inferred from this adapter.
+
+Post-review guard correction verification: current-build SelfContained run `904f0922bd494544afe297d0392f27ee` passed all 13 adapter cases, zero failures/skips. The E2E helper compiled and its immediate suite/owned-target guards passed independent static review; physical execution remains unqualified.
+
+### Bounded shared scope compatibility correction
+
+Integrator-approved declaration-only checkpoint `6578a2d5b3d3d223208c963451313f225df17c5d` was selectively imported as `52a3c1e9a259cfa8728ead869998973d61f5aba6` after the clean adapter commit. Only the Business-owned interface and contract section were imported; no full-main/Chat merge, schema change or S3 dispatch occurred. Required `fad7f11` and `3bcd815b09cfbac7418d6644a2a75816e0788ec0` ancestry remains present.
+
+Actual-scope handoff RED `f86aeee3eac04780948cf992fe193c30`: 30 selected, 21 existing cases passed, 9 new cases failed because the actual scope did not implement the canonical interface. Two phase-authority cases then failed at the same missing interface in `c29a2a6ca0194a90b99ea52fb6d19bae` (2 selected, 0 passed, 2 failed). An intervening mistyped filter selected zero in `4406c7faf57d44d58475a16d454fe22d`; the launcher correctly rejected it, and it provides no verification evidence.
+
+The narrow correction keeps original run stop/deadline observation alive after attempt settlement, independently of future-call budgets. Business-phase authority denial remains monotonic; Worker-only drain denial does not globally revoke an eligible Business phase. No Business finalization or S3 consumer is composed by these tests or this interface implementation.
+
+Scope final GREEN and independent review: `ab90892449f844149ddb9c8eec11d22d` passed 92/92 affected scope/publication/runner/Main cases with zero failures/skips. Scope has 32 cases, including all 11 new handoff assertions. An initial GREEN attempt (`3c83809571924b68ba9487890646b3e0`, 57 selected/55 passed/2 failed) exposed a test setup error: a ten-second attempt was requested in a one-second run. The test owner corrected only that attempt duration to one second; delayed-timer expiry and cancellation assertions were retained. The other failure was the independent publication logging regression described next. Reviewer accepted cached lifetime, original monotonic deadlines, separate Worker/Business authority and no added provider budget. No Business/S3 execution was performed.
+
+### Confirmed CL publication with diagnostic-log failure
+
+Independent review found that the actual B0 writer returns `LogUnavailable` with the exact durable publication after fresh authorization, while Scan previously converted this to a failed/null publication report. Regression `3c83809571924b68ba9487890646b3e0` reproduced expected `Confirmed` versus actual `Failed`. The correction recognizes only a valid exact-operation/binding `PublishSelection` handle, preserves confirmed publication/Documents and completed `cl-only`, and separately reports `Execution=Failed`, `operation_log_unavailable`, exit 1. It does not treat unknown/malformed outcomes as confirmed or dispatch another write. Fresh revocation still suppresses publication and metadata. Freeze-log failure remains fail-closed and cannot progress to publication.
+
+The actual B0 controlled log-failure/replay/revocation and separate freeze-log-no-write tests pass in `ab90892449f844149ddb9c8eec11d22d` (92/92 affected cases). Independent review accepted the narrow change. This is controlled store/reporting evidence; no PostgreSQL or real provider qualification is inferred.
+
+### Final qualification helper binding and resource readiness
+
+Shared wait hook `4c36c5b26e3be83bb381bba93eed34c1b9f10627` was selectively imported as `ce488e55ed8341d50dbdf26c7f907f2323b8a9f9` at a clean checkpoint. Scan's one-line binding now passes the exact validated `approvedPolicy.RunDeadlineSeconds` to `WaitForGenerateAsync`; independent review accepts the binding pending complete regression. The shared helper bounds its wait to the original 1..1800-second deadline plus 120 seconds cleanup margin and keeps Prepare/Select's three-minute default. No runtime was launched.
+
+Read-only `docker info --format '{{.ServerVersion}}'` again failed because `dockerDesktopLinuxEngine` is absent. No Docker startup, container, volume, database, migration or provider/native/Web host run was attempted. The five T023 PostgreSQL cases remain authored but unexecuted. Although planned runner-owned qualification is part of T023, its resource readiness and exact resource grant remain unresolved with integration; neither a suite flag nor this helper supplies them. T024 source/provider/model/spend, owned database/schema/identity/key/log and process/host lifecycle approval remains pending as one consolidated inventory.
+
+### Full SelfContained regression result
+
+`pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -TestTimeoutSeconds 300 -CommandTimeoutSeconds 900` rebuilt current sources with zero compile errors and ran the enforced policy/guard checks. Run `b94297a88ad0495086030aeb7fc47244`: 4,722 discovered across suites; 3,618 SelfContained selected, 3,617 passed, 1 failed, zero skipped. This is a failed full regression, not GREEN. All Scan cases passed.
+
+The sole failure is Business-owned `OctoberGenerateAdmissionTests.AdmissionPublicCall_ContextFactoryIgnoresCancellation_ReturnsBoundedAndDisposesLateContextAsync(lookup: true)`: `RequireDisposedAsync` line 388 queries a context while its asynchronous disposal is in progress and receives `InvalidOperationException: ExecuteReader can only be called when the connection is open`. The exact failure/TRX was returned to Business through OCT-Integrator. This observation suggests a disposal-observation race; it is not an established causal diagnosis or authority to weaken the assertion. Scan does not change that test/store. Integration explicitly permits the independently reviewed adapter checkpoint with scoped passing evidence while retaining this unresolved full-suite result.
+
+Focused replay `3aae1cf1410142e690302b45475d14a8` rebuilt current sources and passed 47/47 cases, zero failures/skips: all 13 Scan adapter cases, 32 imported fixture-input/wait cases, and both late-context admission cases. Passing replay does not explain or erase the full-run failure; Business retains diagnosis. Independent review accepts the final adapter binding and its scoped passing evidence without waiving the full-suite result.

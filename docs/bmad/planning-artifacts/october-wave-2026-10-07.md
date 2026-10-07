@@ -1000,3 +1000,238 @@ under this agreement, not S3 dispatch or runtime resources:
   sends reviewed declarations/migration checkpoints for consumer compatibility and
   integration before activation. Main and controlled synthesis continue independently;
   no new generic receipt framework or all-Chat completion barrier is introduced.
+
+## Pending Main and synthesis integration reviews
+
+Scan Main candidate `b04313c3` has owner-controlled 299/299 evidence but is not yet
+imported. Integration review found EntryFailure reports known-zero usage when no
+terminal report survives; a module exception or operator-session disposal failure
+after dispatch does not prove zero calls. Scan owns a narrow regression and unknown
+fallback correction. Actual observed runner zeros remain valid. Other reviewed Main
+composition/report paths have no concrete must-fix; native/provider/PG qualification
+and complete process teardown remain distinct from settled runner report emission.
+
+Business T031 candidate `7d54544e` (clean offered checkpoint `d386ce7f`) has owner
+97/97 controlled evidence, not integration acceptance. Its final disclosure check
+runs after lease settlement/disposal; the actual execution scope then disposes the
+lease's linked cancellation source. A later original run stop/deadline during final
+authorization may no longer be observed. Business owns the actual-scope reproduction
+and correction, coordinating any minimum shared lifetime change with Scan. Provider
+capacity release and original run-stop observation must remain distinct; no fresh
+deadline is granted. This is separate from the already found contributor-revocation
+gap during settlement and the pending analogous Resolution correction. Prompt
+embedding remains root-owned and will accompany an accepted synthesis checkpoint.
+
+Scan's attempted merge of `b9df7b70` was rejected by execution approval. Read-only
+comparison confirms that from its `e873b8cb` the ancestry adds the 12-file Chat/footer
+and documentation delta, not merely the one document edited by `b9df7b70` itself.
+There are no Scan-file changes/deletions in that incoming delta. No retry/workaround
+is needed: Scan already has the required fixture API from `274d1f73`, and unaffected
+S2 adapter work continues. Shared contract agreement does not require unrelated
+source synchronization.
+
+Both owners subsequently concurred on the bounded lifetime correction:
+`IOctoberBusinessHandoffLifetime` exposes `CancellationToken HandoffCancellation`
+and `ProviderAdmissionStatus CheckHandoffEligibility(Guid runId,
+OperationKey finalizationOperation, string providerProfileId)`. Business owns the
+canonical declaration and both executor consumers; Scan implements it on the same
+OctoberExecutionScope. The cached signal links the original run deadline and scope
+stop independently of attempt settlement, and disposal cancels before cleanup. The
+synchronous check validates exact run/operation/profile and cl-and-bl mode, original
+monotonic deadline, stop/authority block and disposal under the scope lock. It does
+not reuse next-call admission status: unknown usage, exhausted future-call budget or
+capacity alone must not invalidate already completed results. It performs no I/O,
+permit acquisition, budget renewal or grant of execution authority.
+
+Business is released to commit the declaration separately from held synthesis and
+Resolution changes. Root will review/selectively integrate that checkpoint before
+Scan's scope implementation; Business's fail-closed consumers and actual-scope
+regressions follow the same declaration. Final awaited disclosure must remain under
+the original bounded lifetime, with a final synchronous check and actual late-task
+observation. This agreement resolves the design question, not the implementation
+hold. Main/S2 work remains independent; S3 and runtime resources remain undispatched.
+
+## History consumer integration and declaration release
+
+Chat `60060f28` passed independent integration review and is merged at `362d59ec`.
+It supplies unchanged canonical history snapshots and read-only saved-display VMs,
+not parent-page/admission/retry composition. Combined affected verification at that
+source passed 1,711/1,712 with one failure, zero skips:
+`TestResults/isolation-35fdbc067ab6439d9f3497fe8382ff2c/results.trx`.
+The failure is the existing root-owned Chat client test's immediate ActiveRequests
+assertion after SDK enumeration. Source inspection established that guard disposal
+schedules asynchronous physical response cleanup, so enumeration completion is not
+the promised permit-release boundary. Independent review accepted moving that
+assertion after the existing bounded stable SealAndWaitForSettlementAsync await.
+No production behavior, delay, early permit release or noncooperative-cleanup test
+is changed. This failed run remains recorded separately from subsequent verification.
+
+Business declaration-only `b2638f37` was selectively imported at `6578a2d5`, exactly
+the new Core interface and existing knowledge-contract section. Core build passed
+with zero errors and 671 warnings; no warning-free claim. Held synthesis, Resolution,
+finalization helpers and migrations were not imported. Both owners received this
+compile baseline, and Scan is released to implement the agreed same-scope lifetime.
+This independently verified declaration did not wait for the unrelated Chat test
+correction and does not certify the still-pending lifetime implementations.
+
+The reviewed assertion correction passed 27/27 focused client-session cases
+(`TestResults/isolation-397c25954d384a6ebb54e5fc9daa96d1/results.trx`), then the
+combined affected selection passed **1,712/1,712**, zero failures/skips, including
+the imported declaration and Chat history source:
+`TestResults/isolation-f8faa36c11d2463aaa6472b5503e1ab9/results.trx`.
+The earlier 1/1,712 failure is not erased or attributed to the new history code.
+This remains controlled verification, not full-suite or external qualification.
+
+Main fallback correction `0b16dc1b` closes the accounting hold: report loss preserves
+unknown request/token usage instead of fabricating zero. Its exception/cancellation/
+missing-report regressions passed owner review. The Main/report checkpoint is merged
+at `a3763827`; combined affected verification passes **1,733/1,733**, zero failures/
+skips, 412 classified sources:
+`TestResults/isolation-35587a20a993465e8fb4e0d8a9d39f6e/results.trx`.
+Actual production entry wiring and safe report emission are now implemented under
+controlled verification, not a real Generate/provider/PG/native/reader success.
+Business lifetime implementation and held synthesis/Resolution remain outstanding.
+
+The combined real scenario is still not implemented. Its planned root-owned file is
+`tests/Vulgata.Tests/October/Integration/OctoberGeneratedClReaderE2ETests.cs`, case
+`GenerateOnce_OrdinaryItReaderOpensExactCl_BusinessDenied_RevocationClosesAccessAsync`.
+Use one owning fixture and Scan adapter/Generate report; no seeded accepted Knowledge
+or separate paid dataset. Root supplies strict report binding, ordinary Identity user,
+frozen Wiki Web configuration and exact reader assertions. HTTP/Identity/server-rendered
+first-chunk evidence is not browser interaction, continuation or streaming evidence.
+
+Scan identified the existing three-minute fixture wait as inappropriate for longer
+Generate policies. Root will author a separate `WaitForGenerateAsync(Process, int
+runDeadlineSeconds)` hook, bounded to a valid 1..1800-second configured run plus
+120 seconds of cleanup margin. This hook is not implemented at this checkpoint.
+Prepare/Select defaults remain unchanged; the eventual explicit E2E test/command
+timeouts must cover the complete setup/Generate/Web/cleanup envelope. Extra cleanup
+time grants no renewed run/provider allowance, and timeout remains failure.
+
+The wait hook is now implemented at isolated checkpoint `4c36c5b2`, exactly the
+fixture, pure-input helper and helper tests. Focused verification passes **32/32**,
+zero failures/skips, including eight new boundary cases:
+`TestResults/isolation-5a7716b4cfee4e0c9b43ec5800a16e30/results.trx`.
+An earlier restricted launcher attempt failed before compilation/test evidence
+(`isolation-094741a3822b4f02942decd0c841ae25`); it was not behavioral RED. The
+successful retry used the same controlled launcher outside that sandbox. No live
+process, native tool, provider or database qualification follows from these tests.
+Scan must bind its owned adapter to the new wait before the shared real run.
+
+Shared reader authoring can reuse the real cookie-login helper and server-rendered
+first chunk of DocumentReaderPage; it still needs an ordinary User and frozen exact
+Wiki configuration in the fixture. Security-stamp rotation is a direct revocation
+check. Clearing Repository.Context is a contributor-revocation check ONLY when the
+actual generated Document includes that exact RepositoryAdvisory contributor:
+OctoberKnowledgeIdentityAdapter rejects a missing/blank current advisory context.
+A nonempty context edit does not revoke its historical snapshot, and clearing an
+unreferenced context or source-only contributor is not equivalent evidence.
+
+## Accepted finalization persistence-diagnostic mapping
+
+Business and Scan concurred on an optional non-positional nullable
+`KnowledgeWriteStatus PersistenceStatus` on BusinessFinalizationResult, omitted when
+null and preserving existing constructor/statuses. Business validates the allowed
+matrix and IsReplay consistency; null is absence of an additional observation, never
+proof of a commit. Per-call append/replay diagnostics do not enter immutable request
+or outcome identity.
+
+- Changed request/outcome for the same operation: Failed + Conflict, no content or
+  publication and no regeneration.
+- Confirmed Published/PublishedPartial/NoContent with diagnostic append failure:
+  retain the exact durable outcome and, only under fresh disclosure authority,
+  publication/handles/coverage/completed stage; PersistenceStatus is LogUnavailable.
+  Future S3 reports operation_log_unavailable, Execution=Failed (exit 1), while
+  PublicationStatus remains Confirmed or NoContent. It is neither a clean run nor
+  CommitIndeterminate and does not permit another synthesis attempt.
+- Ordinary observed commit/exact replay may report Committed/AlreadyCommitted.
+  Missing or unknown durable result remains CommitIndeterminate without invented
+  handles or a dispatch grant.
+
+This closes the bounded compatibility question, not the current lifetime prerequisite.
+Business may include the additive declaration with its next dependent reviewed
+checkpoint; no separate immediate commit is required. Schema/persistence work remains
+behind accepted actual lifetime correction. Scan's S2 work continues independently;
+no S3 implementation, migration execution or runtime resource permission is added.
+
+## Actual handoff lifetime and CL logging correction imported
+
+Scan's reviewed `ddcb1b0801eea9bd7ee3246a2f6ff81d3efac2de` lifetime correction
+and `8216439ce847c527408f380cca6f50b7e1897daa` publication-diagnostic correction
+are selectively integrated at `ab5161b3`. Only their four production/test files were
+applied; comparison with the offered checkpoint for those paths is empty. The
+pending qualification adapter and its history were not pulled into this boundary.
+Owner verification passed 92/92 controlled cases, including 32 scope cases and the
+publication log-failure/replay/revocation plus freeze-log-no-write checks.
+
+Independent scope review accepted persistent original run-stop/deadline observation,
+exact identity/phase checks and monotonic expiry without confusing future-call budget
+exhaustion with invalidation of a completed result. Publication review accepted exact
+confirmed handles plus diagnostic failure/exit 1, fresh denial withholding, and no
+freeze-log progression or repeated publication. These correct implemented S2/shared
+scope behavior; they do not compose Business/S3 or qualify external resources.
+
+Business received the exact integrated source checkpoint and is released to safely
+consume it and qualify both executor corrections against the actual scope. Owner
+controlled evidence and accepted source are explicit; root combined verification is
+recorded separately when complete. No unrelated adapter/Chat completion barrier or
+new human approval round applies. PostgreSQL prerequisite inspection remains read-only
+until the consolidated runtime resource grant is supplied.
+
+Root combined verification at `ab5161b3` passed **1,754/1,754 SelfContained**,
+zero failures/skips, 412 classified sources:
+`TestResults/isolation-e1da5bda16c4497a81f9773d650f6faf/results.trx`.
+This includes the fixture wait additions and both new Scan corrections. It is not
+a full-suite, Business consumer-lifetime, PostgreSQL, native/provider or E2E result.
+
+## Guarded adapter and corrected Business consumers integrated
+
+Scan's final adapter `8e9f8694` (initial source `68bc6ff0`) passed independent
+integration review and is merged at `e07b0fe1`. The inspected incoming delta was
+exactly its eight adapter/documentation/inventory files; already integrated scope,
+declaration and fixture patches were unchanged. It validates the approved exact
+inputs, guards E2E/owned database access immediately before launch, consumes one
+dispatch even on failure, and uses the Generate-specific wait. It is qualification
+infrastructure, not execution evidence. Scan's full SelfContained run remains
+3,617/3,618 with the admission-disposal observation failure; its isolated passing
+replay did not explain or erase that failure.
+
+Business checkpoint `bea53ddd` passed independent integration review and is merged
+at `a4e7e6f0`: both executors retain original run lifetime through final authorization,
+observe late tasks, recheck synchronous eligibility and preserve completed output
+despite unknown future spending capacity alone. Owner verification passed 115/115,
+including Synthesis 27/27 and Resolution handoff 10/10. Earlier invalid-fixture
+failures remain in owner evidence. The canonical finalization declarations/digest
+helpers are included with their actual SynthesisProposal prerequisite; they are not
+standalone storage authority and add no schema. The sole merge conflict was adjacent
+contract sections; both accepted lifetime and finalization sections were retained.
+
+Business admission-test correction `e2fec556` is selectively imported at `275fa035`.
+The bounded helper now observes actual ObjectDisposedException through the pinned
+EF Database getter without concurrent SQL. It does not swallow InvalidOperationException
+or relax public-call/no-submit/no-write assertions. Owner focused evidence is 24/24;
+that is not a successful full-suite rerun. Root registered the reviewed Synthesis.md
+logical resource at `d92833c1` and added an actual compiled-resource/source-content
+verification case.
+
+The lifetime prerequisite is accepted and Business is released for controlled
+T032/T033 schema/persistence implementation in its sole-owner boundary. Preserve
+populated CL constraints, shared exact Dialogue keys and typed full provenance.
+Reviewed migration checkpoints still precede activation; no runtime migration,
+PostgreSQL/provider acquisition or all-Chat/adapter completion gate is introduced.
+
+Full current **SelfContained** verification at `d92833c1` passed **3,727/3,727**,
+zero failures/skips, 417 classified sources:
+`TestResults/isolation-21ca12a7642346fba0b13feda8f47f82/results.trx`.
+This includes the actual embedded synthesis prompt check and isolated disposal-test
+correction. It does not rewrite Scan's earlier failed full run and does not qualify
+PostgreSQL, LocalTools, External, E2E or HistoricalBoundary suites.
+
+Business's T033 read-only check identifies one still-missing host composition:
+current CL-only Generate owns fresh BeginGenerate and its retained execution task,
+but has no first-finalization dispatch binding. Lifetime eligibility and absent/
+indeterminate durable lookup cannot supply that authority. Scan is asked for the
+smallest original-run one-shot binding over exact run/operation/corpus/request,
+without a new durable framework or caller boolean. The precise mechanism remains
+pending agreement. Enabled finalizer dispatch stays unavailable; independent T032
+store/schema work continues. No S3 or runtime activation follows from this discussion.

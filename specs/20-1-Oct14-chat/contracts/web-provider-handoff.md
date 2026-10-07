@@ -191,3 +191,40 @@ Explicit aggregate denial/unavailability suppresses the whole dependent display.
 Saved-view suppression must clear content while preserving terminal/save-indeterminate
 bookkeeping and reject another binding, without reusing the closed stream sequence.
 Root retains parent ChatPage, registry, route and runtime activation.
+## History and read-only saved-display handoff — 2026-10-07
+
+Integrator released bounded T024/T025 and the read-only saved-display portion of
+T028/T029. The lane consumes existing Business history/transcript reads; it does not
+select another history suffix, refill omitted turns, summarize, truncate text, build
+dependency capsules, issue admission or edit Coordinator callsites/parent ChatPage.
+
+The host-only history wrapper binds the unchanged canonical `DialogueHistoryResult`
+to the exact frozen `DialogueConversationIdentity` and trusted Chat-purpose selection
+used for the verified read. It retains owner-codec bytes/digest, original turn IDs,
+ContextOmitted and complete supplied lineage. A failed read is not a substituted
+successful empty history. A legitimate owner-selected empty history does not create
+a no-Knowledge attestation. Root alone prepares the initial question/history union,
+request IDs/execution/fence, original budget and admitted request, and rechecks fresh
+context/authority at actual use; the wrapper is not a reusable disclosure/admission grant.
+
+Business already selects the contiguous completed inference suffix, bounded to twelve
+turns and 48 KiB with whole-turn omission. Transcript selection is separate and can
+include permitted failed/interrupted display text. The consumer validates identities,
+ordering, documented field/count bounds and complete supplied lineage, preserving
+the original canonical results. It verifies exact inference-history encoding through
+the existing owner codec. No transcript encoder is exposed: the consumer relies on
+the owner's requested transcript byte-budget contract and does not invent a serializer
+or convert display rows into inference history to measure them.
+
+Both preparation and handoff share one original bounded ten-second read attempt with
+atomic start/seal ordering and actual late-task observation. Exact attachment/context
+checks apply at handoff; the trusted sink must check them again at actual UI application.
+Saved VMs are fresh instances initialized from authorized snapshots, without synthetic
+stream events, generation, retry controls or an idle-conversation claim. Existing bound
+display suppression continues to clear content without altering durable status.
+
+Null-lineage transcript rows are accepted only for exact owner-issued no-content
+shapes: supported sanitized authorization failures, or Interrupted/OwnerLost, with
+empty question, answer and references. The canonical orphan projection is display-only;
+accepting it neither proves owner death nor invokes cleanup, frees a slot or grants retry.
+Other missing-lineage content is refused. Root retains all execution and activation work.
