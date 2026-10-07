@@ -21,6 +21,7 @@ internal sealed record OctoberToolRuntimeDependencies(
 public sealed class OctoberToolRuntime : IAsyncDisposable
 {
     private readonly OctoberToolRuntimeDependencies _dependencies;
+    private readonly PreparedSourceApproval _approval;
     private readonly TimeProvider _clock;
     private readonly long _started;
     private readonly TimeSpan _lifetime;
@@ -126,6 +127,7 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             remainingRunLifetime > TimeSpan.FromMinutes(30))
             throw new ArgumentOutOfRangeException(nameof(remainingRunLifetime));
         RepositoryId = approval.RepositoryId;
+        _approval = approval;
         _clock = clock;
         _started = clock.GetTimestamp();
         _lifetime = remainingRunLifetime;
@@ -231,6 +233,32 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             return Available && !token.IsCancellationRequested && result.RepositoryId == RepositoryId
                 ? result : SourceFailure(PreparedSourceOperation.ReadTextRange, token.IsCancellationRequested);
         }, cancelled => SourceFailure(PreparedSourceOperation.ReadTextRange, cancelled), cancellationToken);
+
+    public Task<OctoberSourceFrameResult> AcquireFileFrameAsync(string relativePath,
+        OctoberSourceFrameLimits? limits = null, CancellationToken cancellationToken = default)
+    {
+        OctoberSourceFrameLimits bound = limits ?? new();
+        if (!OctoberPreparedSourceFrame.Valid(relativePath, bound))
+            return Task.FromResult(new OctoberSourceFrameResult(OctoberSourceFrameStatus.InvalidInput));
+        return RunAsync(async token =>
+        {
+            await EnsurePreparedAsync(token);
+            return await OctoberPreparedSourceFrame.AcquireAsync(this, _approval, relativePath, bound,
+                OpenSourceAsync, _dependencies.ObserveIdentity, token);
+        }, cancelled => new OctoberSourceFrameResult(cancelled ? OctoberSourceFrameStatus.Cancelled : OctoberSourceFrameStatus.Unavailable),
+            cancellationToken);
+    }
+
+    internal async Task<bool> VerifyFrameAsync(OctoberPreparedSourceFrame frame, OctoberSourceFrameLimits limits,
+        CancellationToken cancellationToken)
+    {
+        if (frame.Origin.RepositoryId != RepositoryId || frame.Origin.RootBindingIdentity != _approval.RootBindingIdentity ||
+            frame.Origin.PreparedVersion != _approval.ApprovalIdentity) return false;
+        OctoberSourceFrameResult current = await AcquireFileFrameAsync(frame.Origin.RelativePath, limits, cancellationToken);
+        return current.Status == OctoberSourceFrameStatus.Acquired && current.Frame is { } observed &&
+            observed.Origin == frame.Origin && observed.ByteLength == frame.ByteLength &&
+            observed.LineCount == frame.LineCount && observed.FileIdentity == frame.FileIdentity;
+    }
 
     private async Task<PreparedSourceResult> SequenceAsync(PreparedSourceOperation operation, string? incomingCursor,
         Func<IPreparedSourceReadContext, string?, CancellationToken, Task<PreparedSourceResult>> getPage,

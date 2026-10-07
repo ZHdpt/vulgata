@@ -206,6 +206,18 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanAcceptancePostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "OctoberScan/OctoberScanAcceptanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanAcceptanceHarness.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanPreparedSourceFrameTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanFileWorkerTests.cs": {
     "suite": "SelfContained"
   },

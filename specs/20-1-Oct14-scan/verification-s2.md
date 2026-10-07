@@ -172,6 +172,74 @@ solves dynamic tool provenance. Primary-file/F1 work can continue. Directory and
 unreadable/missing-path metadata also require an owner-approved representation or
 explicit bounded disposition; they cannot honestly be given a file-content hash.
 
+## Primary framing and F1 execution
+
+Reviewed T015–T018 is committed at
+`7b34147d8231ee43b6ae7cf162165d5fc101ae14`. The clean branch then merged approved
+integration `2ea9cc5d3c32f0ef53f5381f0827d07f44091680`, producing
+`12c9b9bcee331f2b5857d4cb9055883a8c3b0fbe`, before T019 edits.
+
+T019 primary RED: SelfContained filter for `OctoberScanPreparedSourceFrameTests`
+and `OctoberScanAcceptanceTests`, with 300/900-second test/command limits,
+compiled with zero errors and selected **21: 3 passed, 18 failed, zero skipped**.
+The malformed-frame controls passed; other cases expose missing acquisition,
+trusted seals, actual-writer dispatch and staged/late commit handling. Evidence:
+`TestResults/isolation-6060aaafac264d478d526f8ea5f996c0/results.trx`.
+Frame and F1 production were released after those failures were inspected.
+Three separately classified PostgreSQL cases are authored but unexecuted; this
+controlled run does not qualify them.
+
+The first primary-frame/F1 GREEN passed **21/21, zero failed/skipped** through
+the same current-build SelfContained launcher:
+`TestResults/isolation-325ed935895e40108551b1a1e92f200c/results.trx`.
+Independent review then required two lifecycle corrections before checkpoint
+acceptance: observed source/authority loss must irreversibly fence that attempt,
+and completed-but-indeterminate or possibly submitted writes must remain
+reconcilable instead of being disposed. Separate test and production owners are
+addressing these with explicit counterexample RED/GREEN. T019/T020 remain open.
+
+Review-counterexample RED selected **26: 21 passed, 5 failed, zero skipped**:
+`TestResults/isolation-05b74ad00ce147a98c64492926fcabd4/results.trx`.
+The three restored-state cases actually committed after observed denial,
+unavailability or changed source; both unresolved-submission cases incorrectly
+allowed disposal. Failures were inspected before releasing the minimal F1 fix.
+
+Corrected GREEN passed **26/26, zero failed/skipped**:
+`TestResults/isolation-f4ade2be3ae14031bc0108e33cc83445/results.trx`.
+Affected Scan/Generator/Headless regression passed **169/169, zero failed/skipped**:
+`TestResults/isolation-9aaabae272214d02951e377e24035323/results.trx`.
+Both used the current-build SelfContained launcher. Independent re-review accepts
+the primary prepared-frame/F1 component: irreversible observed loss now fences
+new submission, and unresolved submission blocks disposal while exact lookup and
+already-submitted settlement remain available. T019 test authoring is complete;
+T020's runner integration remains part of T021/T022 composition. The three authored
+PostgreSQL cases and real provider/reader milestone remain unqualified.
+
+T021 inventory semantics use the longest segment-boundary policy prefix; priority
+orders work rather than overriding source disposition. Equal prefixes are already
+invalid configuration. The host inventories each explicitly selected prepared
+Repository root under its existing source approval and reports that scope and
+selection predicate separately from semantic coverage. Unmatched files carry an
+explicit no-matching-rule exclusion; unknown extensions and index omissions never
+silently exclude selected files. Traversal limits or inaccessible regions produce
+visible inventory gaps, and tool-state exclusion relies on the existing positive
+owned binding. This does not expand runtime source permission.
+
+Existing approval identity is the intended host-derived root-session
+`PreparedVersion` label, not an immutable source-tree snapshot or permission by
+itself. Verify the complete existing approval tuple; exact file bytes rely on
+bounded contained reads, pinned file identity and digest. Context renewal may
+retain the same approval, but a new approval cannot relabel an existing attempt.
+No Git, copy, version registry or repository-wide hash is introduced.
+
+The owner also received the fresh-Generate admission gap: existing selected setup
+and exact-operation lookup cannot detect an earlier unknown run or safely claim
+a batch against competing starts before paid work. The accepted fresh-batch rule
+is specifically grounded in abrupt/host failure (`spec.md:117`, `data-model.md:21`,
+`quickstart.md:52`); it does not expressly consume a batch on a clean pre-execution
+validation failure. Business must settle the minimal compatible owner contract;
+Scan will not add SQL, a store, speculative claim DTOs or stricter restart policy.
+
 ## Early composition decisions
 
 The existing setup provider binder mandates both Worker and Chat profiles.
