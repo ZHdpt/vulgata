@@ -553,3 +553,31 @@ actual task settlement. Lookup never restores generation permission. A verified
 NotStarted failure or retained actual generation may reach its first never-attempted
 terminal save; once any save is attempted, preserve its exact payload and reconcile
 only. A matching row alone is not proof of physical write/task settlement.
+
+## Controlled B1 persistence and explicit publication integrated
+
+Business reviewed `cbb8051f` (implementation `a7641d65`, migration whitespace
+cleanup `09823eee`, approved integration ancestry) is merged at `f44d2449`.
+It adds immutable resolution evidence, outcome replay, exact inquiry-caller
+uncertainty ownership, complete input provenance and a new explicit B1 publication
+without changing the original B0 publication's membership or CL versions.
+The shared publication committer retains the same-gate outcome arbitration and
+actual physical settlement ownership. Independent cross-module review found no
+remaining must-fix in this bounded checkpoint.
+
+Combined affected verification passed **1,437/1,437 SelfContained** cases, zero
+failures/skips, 394 classified files:
+`TestResults/isolation-82a6777118a54565a9d0939671daafe4/results.trx`.
+The six-table additive October migration is source only: no migration was applied.
+The updated read adapter requires the latest October schema before runtime use;
+this is not permission for automatic migration at ordinary Web startup.
+The 13 resolution, 16 dialogue and six admission PostgreSQL cases remain NOT RUN.
+
+Release is for consumer composition, not completion of B1 runtime qualification.
+Scan still owns S3 finalization and exact AcceptResolution=4 operation/attempt/digest
+registration plus the actual selected Business client and shared execution scope.
+The existing Worker-only client is not implicitly a nonstreaming Business client.
+Connected-source/provider usefulness and the single shared retained CL qualification
+still need their actual adapters/resources. B2 follows its genuine accepted B1
+prerequisites, not completion of Chat; the owner will identify any remaining precise
+dependency rather than infer readiness from these controlled passes.
