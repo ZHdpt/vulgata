@@ -1050,3 +1050,34 @@ regressions follow the same declaration. Final awaited disclosure must remain un
 the original bounded lifetime, with a final synchronous check and actual late-task
 observation. This agreement resolves the design question, not the implementation
 hold. Main/S2 work remains independent; S3 and runtime resources remain undispatched.
+
+## History consumer integration and declaration release
+
+Chat `60060f28` passed independent integration review and is merged at `362d59ec`.
+It supplies unchanged canonical history snapshots and read-only saved-display VMs,
+not parent-page/admission/retry composition. Combined affected verification at that
+source passed 1,711/1,712 with one failure, zero skips:
+`TestResults/isolation-35fdbc067ab6439d9f3497fe8382ff2c/results.trx`.
+The failure is the existing root-owned Chat client test's immediate ActiveRequests
+assertion after SDK enumeration. Source inspection established that guard disposal
+schedules asynchronous physical response cleanup, so enumeration completion is not
+the promised permit-release boundary. Independent review accepted moving that
+assertion after the existing bounded stable SealAndWaitForSettlementAsync await.
+No production behavior, delay, early permit release or noncooperative-cleanup test
+is changed. This failed run remains recorded separately from subsequent verification.
+
+Business declaration-only `b2638f37` was selectively imported at `6578a2d5`, exactly
+the new Core interface and existing knowledge-contract section. Core build passed
+with zero errors and 671 warnings; no warning-free claim. Held synthesis, Resolution,
+finalization helpers and migrations were not imported. Both owners received this
+compile baseline, and Scan is released to implement the agreed same-scope lifetime.
+This independently verified declaration did not wait for the unrelated Chat test
+correction and does not certify the still-pending lifetime implementations.
+
+The reviewed assertion correction passed 27/27 focused client-session cases
+(`TestResults/isolation-397c25954d384a6ebb54e5fc9daa96d1/results.trx`), then the
+combined affected selection passed **1,712/1,712**, zero failures/skips, including
+the imported declaration and Chat history source:
+`TestResults/isolation-f8faa36c11d2463aaa6472b5503e1ab9/results.trx`.
+The earlier 1/1,712 failure is not erased or attributed to the new history code.
+This remains controlled verification, not full-suite or external qualification.
