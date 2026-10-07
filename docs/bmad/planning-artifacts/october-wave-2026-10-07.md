@@ -952,3 +952,19 @@ not a full-suite, PostgreSQL, native-tool, provider, browser or E2E qualificatio
 Scan may consume the fixture API after committing its own dirty Main work; no reset
 or all-lane barrier is required. Business continues synthesis, Chat completes its
 footer lifecycle correction, and Explorer awaits the same actual publication/run.
+
+Chat footer `d4d0b049` subsequently passed independent integration review and is
+merged at `bed683d9`. Complete affected verification passes **1,695/1,695**
+SelfContained cases, zero failures/skips, 408 classified sources, including all
+25 footer cases: `TestResults/isolation-a17314b828ef4e51b864b16cafd94e4b/results.trx`.
+This supplies saved-reference projection, the encoded exact-link leaf and saved-view
+suppression; parent ChatPage/runtime activation remains absent. The actual UI sink
+must still check attachment/cancellation when applying the authorized handoff.
+
+Chat is released for controlled T024/T025 canonical history consumption and the
+read-only saved-display part of T028/T029. It returns unchanged owner history with
+exact context/selection binding, codec facts, omission and full lineage. Root alone
+constructs the initial union/request/budget/execution and makes active-slot/retry/
+composer decisions. No duplicate suffix selection, new Core contract, caller-created
+capsule, stream replay or historical-row-as-new-admission is permitted. This work
+does not wait for Business BL synthesis and does not authorize provider/browser use.
