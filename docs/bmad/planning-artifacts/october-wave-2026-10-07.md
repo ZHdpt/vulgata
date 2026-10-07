@@ -118,3 +118,36 @@ Explorer's four new PostgreSQL cases are compiled, not executed. No retained
 publication, graph aggregate owner mechanism, live provider or browser qualification
 is claimed. Business canonical dialogue/disclosure candidate remains pending;
 preliminary consumer compatibility is not yet contract acceptance.
+
+## Canonical contract acceptance and dependent release
+
+Business candidate `d914fea842f322823c583b614fa1dd8662e27878` is now accepted
+for declaration/design compatibility. Root independent review found no contract
+must-fix; Chat acceptance is `49c5980657bfb2b4fc5fc9f9257a33999b311172`,
+Explorer acceptance is `4d7b91c431acce4edc7ac8c997dc57b6da3a5426`.
+All three are integrated. This supersedes the candidate-pending statement above,
+not its historical test boundary. Owner declarations passed 58 existing contract
+probes; actual capsule/codec/store behavior is not implemented by that evidence.
+
+The accepted contract covers all four nonterminal active states, atomic durable
+outcomes, exact retry/lookup, distinct transcript and inference-history reads,
+complete owner-protected dependency capsules and actual consumer-output encoding.
+Graph may use one opening, up to six acquisitions and one aggregate check within
+eight calls/ten seconds, independently of dialogue storage. Stable owner capsule
+identity is distinct from randomized protected bytes; keys must survive with history.
+The provider revision is an immutable nonsecret admission snapshot, not a new
+historical credential-version store or permission to replay old generation.
+
+Release Business disclosure/dialogue and disjoint controlled B1, Chat controlled
+coordinator/disclosure, and Explorer graph consumer work against these exact ports.
+Label port doubles honestly; actual owner-issued proof/codec fixtures and production
+implementations remain prerequisites for integrated qualification. No new routine
+human gate and no all-lane or all-Chat barrier is introduced. Business alone serializes
+schema/migrations; graph does not wait for those dialogue tables.
+
+Scan configuration/session checkpoint `8cc06035` is imported; it does not wire
+the complete Generate route yet. Reviewed Worker prompt `2106af16` is imported and
+registered unconditionally as `Vulgata.Agents.Prompts.OctoberFileWorker.md`.
+These additions await the next combined verification; they are not covered by the
+earlier 2,798 count. Provider binding remains in-progress until real tracked-read
+rotation regression and fresh-read correction are complete.
