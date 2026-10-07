@@ -475,3 +475,50 @@ The consumer is released on that exact supported boundary, not a new recovery le
 All lanes retain the same accepted scope. Their safe synchronization checkpoints
 will be sent with the integration commit. Pending host registry/commit/death wiring
 requires the actual coordinator lifecycle handshake; no fallback authority is added.
+
+## Supporting-input release and Generate admission hold
+
+Reviewed Business supporting-input `0ab10a77` and Generate-admission `0332399e`
+were source-merged together at `3f4a425c`, including generic Kind5 lookup refusal
+and the dedicated operator-authorized store. The pinned affected regression passed
+**1,369/1,369 SelfContained** cases, zero failures/skips, 387 classified files:
+`TestResults/isolation-e30289984fa34b6faee02f59ce31e517/results.trx`.
+Separate unfinished B1 lifetime tests were not imported. This count does not erase
+the integration review finding below or qualify PostgreSQL/runtime behavior.
+
+Supporting-input provenance passed cross-module review and may be consumed by Scan
+under its exact trusted ledger/root/source-verification requirements. Generate
+admission is **HOLD, not released for activation**: an unsynchronized catch filter
+can choose CancelledBeforeCommit before the finally block waits for a callback that
+has already passed cancellation checks under the submission gate. That callback
+can then submit commit, leaving an incorrect precommit result. Business must close
+submission and classify the actual submitted/settlement state under the same gate
+before selecting a precommit outcome; a volatile flag alone is insufficient.
+The owner has received the narrow finding and regression request. No reset/revert,
+new architecture gate, runtime activation or all-lane pause is implied by this hold.
+
+Reviewed Scan `49c18845` is independently integrated at `c359c1ce`: bounded
+contained inventory, explicit dispositions/gaps, independent stage reporting and
+the internal guarded CL publication phase. It requires settled file attempts,
+closed terminal inventory, mandatory freeze authority and the original remaining
+run lifetime. It does not implement public Generate Main, dynamic tool ledgers or
+the held atomic admission's host binding. Combined affected verification passed
+**1,404/1,404 SelfContained** cases, zero failures/skips, 389 classified files:
+`TestResults/isolation-5ac8bb38664a4d58949a4033f39e1aca/results.trx`.
+
+Scan is released to consume this exact source for supporting-input provenance,
+the now-implemented owner canonical Generate digest helper and controlled
+orchestration checks. No helper fork is needed. Actual admission-store activation
+remains on HOLD until Business's same-gate classification correction is accepted.
+The reported race is source-derived; no deterministic runtime reproduction of
+that precise instruction window has been claimed. Do not add a test-only hook or
+fabricate RED evidence; verify the corrected arbitration and all precommit exits
+with proportionate tests plus independent source review.
+
+The coordinator's sanitized-terminal edge was verified against the actual owner
+store: a denied Running-to-Saving transition need not prevent a fenced, settled,
+empty Interrupted/Failed authorization-failure closure from a nonterminal state.
+Root must register that exact no-content exception, not demand full-lineage content
+permission for cleanup. It still requires original ownership/fence and real task
+settlement; a previously submitted payload cannot be rewritten. A cleanup receipt
+does not authorize disclosure of transcript content or metadata.
