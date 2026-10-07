@@ -21,22 +21,30 @@ public interface IExploreContextProvider
 }
 
 /// <summary>Read-only presentation adapter. All contributor decisions remain in the Knowledge owner.</summary>
-public sealed class ExplorePresentationService : IExplorePresentationService, IDisposable
+public sealed partial class ExplorePresentationService : IExplorePresentationService, IExploreGraphService, IDisposable
 {
     private readonly IOctoberKnowledgeReader? _reader;
     private readonly IExploreContextProvider _contextProvider;
     private readonly AuthenticationStateProvider? _authentication;
     private readonly ClaimsIdentityOptions _claims;
+    private readonly IOctoberKnowledgeDisclosedReader? _disclosedReader;
+    private readonly IOctoberKnowledgeDependencyAuthority? _dependencyAuthority;
+    private readonly TimeProvider _timeProvider;
     private long _contextGeneration;
     private bool _disposed;
 
     public ExplorePresentationService(IOctoberKnowledgeReader? reader, IExploreContextProvider contextProvider,
-        AuthenticationStateProvider? authenticationStateProvider, IOptions<IdentityOptions>? identityOptions = null)
+        AuthenticationStateProvider? authenticationStateProvider, IOptions<IdentityOptions>? identityOptions = null,
+        IOctoberKnowledgeDisclosedReader? disclosedReader = null,
+        IOctoberKnowledgeDependencyAuthority? dependencyAuthority = null, TimeProvider? timeProvider = null)
     {
         _reader = reader;
         _contextProvider = contextProvider;
         _authentication = authenticationStateProvider;
         _claims = identityOptions?.Value.ClaimsIdentity ?? new ClaimsIdentityOptions();
+        _disclosedReader = disclosedReader;
+        _dependencyAuthority = dependencyAuthority;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         _contextProvider.ContextChanged += InvalidateContext;
         if (_authentication is not null)
         {
