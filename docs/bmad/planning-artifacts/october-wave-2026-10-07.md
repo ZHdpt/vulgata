@@ -1000,3 +1000,32 @@ under this agreement, not S3 dispatch or runtime resources:
   sends reviewed declarations/migration checkpoints for consumer compatibility and
   integration before activation. Main and controlled synthesis continue independently;
   no new generic receipt framework or all-Chat completion barrier is introduced.
+
+## Pending Main and synthesis integration reviews
+
+Scan Main candidate `b04313c3` has owner-controlled 299/299 evidence but is not yet
+imported. Integration review found EntryFailure reports known-zero usage when no
+terminal report survives; a module exception or operator-session disposal failure
+after dispatch does not prove zero calls. Scan owns a narrow regression and unknown
+fallback correction. Actual observed runner zeros remain valid. Other reviewed Main
+composition/report paths have no concrete must-fix; native/provider/PG qualification
+and complete process teardown remain distinct from settled runner report emission.
+
+Business T031 candidate `7d54544e` (clean offered checkpoint `d386ce7f`) has owner
+97/97 controlled evidence, not integration acceptance. Its final disclosure check
+runs after lease settlement/disposal; the actual execution scope then disposes the
+lease's linked cancellation source. A later original run stop/deadline during final
+authorization may no longer be observed. Business owns the actual-scope reproduction
+and correction, coordinating any minimum shared lifetime change with Scan. Provider
+capacity release and original run-stop observation must remain distinct; no fresh
+deadline is granted. This is separate from the already found contributor-revocation
+gap during settlement and the pending analogous Resolution correction. Prompt
+embedding remains root-owned and will accompany an accepted synthesis checkpoint.
+
+Scan's attempted merge of `b9df7b70` was rejected by execution approval. Read-only
+comparison confirms that from its `e873b8cb` the ancestry adds the 12-file Chat/footer
+and documentation delta, not merely the one document edited by `b9df7b70` itself.
+There are no Scan-file changes/deletions in that incoming delta. No retry/workaround
+is needed: Scan already has the required fixture API from `274d1f73`, and unaffected
+S2 adapter work continues. Shared contract agreement does not require unrelated
+source synchronization.
