@@ -209,7 +209,7 @@ public static class OctoberGeneratorEntryPoint
         OctoberCoverageStatus.None, cancelled ? OctoberExecutionStatus.Interrupted : OctoberExecutionStatus.Failed,
         OctoberPublicationStatus.NotRequested, null, [], [], [],
         new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
-        new(0, 0, 0, false), [new(cancelled ? "run_interrupted" : "generate_terminal_report_unavailable")]);
+        new(null, null, null, true), [new(cancelled ? "run_interrupted" : "generate_terminal_report_unavailable")]);
 
     private static bool OutputBindingMatches(OctoberGeneratorCommand command, OctoberScanReport report)
     {

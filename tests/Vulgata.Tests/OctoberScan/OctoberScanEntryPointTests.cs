@@ -200,6 +200,43 @@ public sealed class OctoberScanEntryPointTests
         Assert.Equal("not-requested", json.RootElement.GetProperty("matching").GetString());
         Assert.Equal("not-requested", json.RootElement.GetProperty("businessLogic").GetString());
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("throw")]
+    [InlineData("cancel")]
+    [InlineData("missing-report")]
+    public async Task LostModuleReport_AfterInvocation_DoesNotFabricateZeroUsageAsync(string failure)
+    {
+        using var output = new StringWriter(); using var error = new StringWriter();
+        var module = new LostReportModule(failure);
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", Guid.NewGuid(), null), module, output, error);
+        Assert.Equal(1, module.Calls);
+        Assert.NotEqual(0, exit);
+        Assert.NotEqual(2, exit);
+        using var json = JsonDocument.Parse(output.ToString());
+        var usage = json.RootElement.GetProperty("usage");
+        Assert.Equal(JsonValueKind.Null, usage.GetProperty("requests").ValueKind);
+        Assert.Equal(JsonValueKind.Null, usage.GetProperty("inputTokens").ValueKind);
+        Assert.Equal(JsonValueKind.Null, usage.GetProperty("outputTokens").ValueKind);
+        Assert.True(usage.GetProperty("hasUnknownUsage").GetBoolean());
+        Assert.DoesNotContain("PRIVATE-MODULE-FAILURE", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("PRIVATE-MODULE-FAILURE", error.ToString(), StringComparison.Ordinal);
+    }
+
+    private sealed class LostReportModule(string failure) : IOctoberGeneratorModule
+    {
+        internal int Calls;
+        public Task<OctoberGeneratorExecutionResult> ExecuteAsync(OctoberGeneratorCommand command, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return failure switch
+            {
+                "throw" => Task.FromException<OctoberGeneratorExecutionResult>(new InvalidOperationException("PRIVATE-MODULE-FAILURE")),
+                "cancel" => Task.FromException<OctoberGeneratorExecutionResult>(new OperationCanceledException("PRIVATE-MODULE-FAILURE")),
+                _ => Task.FromResult(new OctoberGeneratorExecutionResult(OctoberGeneratorExecutionStatus.GenerateFinished)),
+            };
+        }
+    }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {
         internal int Calls;
