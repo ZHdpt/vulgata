@@ -234,12 +234,61 @@ public sealed class OctoberResolutionHandoffTests
         Assert.Equal(0, client.Calls);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteAsync_ActualHostUnknownUsage_RetainsCompletedWitnessAndBlocksFutureWorkerAndResolutionAsync()
+    {
+        var fixture = new ResolutionCase();
+        Guid run = Guid.NewGuid();
+        var finalization = new OperationKey(fixture.Corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
+        var clock = new SynthesisClock();
+        await using var host = ActualScope(fixture, run, finalization, clock);
+        var original = fixture.Witness();
+        using var client = new ResolutionClient((_, _) => Task.FromResult(new ChatResponse(
+            new ChatMessage(ChatRole.Assistant, JsonSerializer.Serialize(original)))
+        {
+            FinishReason = ChatFinishReason.Stop, Usage = null
+        }));
+        var authority = new ResolutionDisclosure();
+        var executor = new OctoberResolutionExecutor(client, "Controlled accepted-evidence inquiry.", clock);
+
+        var completed = await executor.ExecuteAsync(fixture.Corpus, fixture.Inquiry(), finalization, run,
+            "controlled-profile", 40, host, authority);
+
+        Assert.Null(completed.AdmissionFailure);
+        Assert.Equal(ResolutionOutcomeKind.Supported, completed.Outcome!.Kind);
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(original),
+            OctoberKnowledgePolicy.SerializeCanonical(Assert.IsType<ResolutionWitness>(completed.Witness)));
+        var usage = Assert.Single(completed.Attempts);
+        Assert.Null(usage.InputTokens);
+        Assert.Null(usage.OutputTokens);
+        Assert.Null(usage.Cost);
+        Assert.Equal(ProviderAttemptOutcome.Completed, usage.Outcome);
+        Assert.Equal(ProviderAdmissionStatus.Granted,
+            host.CheckHandoffEligibility(run, finalization, "controlled-profile"));
+        var worker = await host.AcquireWorkerAttemptAsync(new(run, ResolutionCase.Id(98501), Guid.NewGuid(),
+            "controlled-profile", TimeSpan.FromSeconds(10), 1));
+        Assert.Equal(ProviderAdmissionStatus.BudgetExhausted, worker.Status);
+        Assert.Null(worker.Lease);
+        var next = await executor.ExecuteAsync(fixture.Corpus, fixture.Inquiry(), finalization, run,
+            "controlled-profile", 40, host, authority);
+        Assert.Equal(ProviderAdmissionStatus.BudgetExhausted, next.AdmissionFailure);
+        Assert.Null(next.Outcome);
+        Assert.Null(next.Witness);
+        Assert.Empty(next.Attempts);
+        Assert.Equal(1, client.Calls);
+        Assert.Equal(3, authority.Contributors.Count);
+        Assert.All(authority.Contributors, contributors => Assert.True(fixture.Corpus.Documents
+            .SelectMany(document => document.Contributors).ToHashSet().SetEquals(contributors)));
+    }
+
     private static OctoberExecutionScope ActualScope(ResolutionCase fixture, Guid run, OperationKey finalization,
         TimeProvider? clock = null, int runDeadlineSeconds = 1800) =>
         new(run, "controlled-profile", new OctoberScanPolicy
         {
             OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 100,
             MaximumRequestsPerMinute = 60, RunDeadlineSeconds = runDeadlineSeconds,
+            FileDeadlineSeconds = Math.Min(120, runDeadlineSeconds),
             SourceRules = [new(fixture.Corpus.Documents[0].RepositoryId, "src", "selected", "Controlled component qualification")]
         }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted), finalization, clock);
 
