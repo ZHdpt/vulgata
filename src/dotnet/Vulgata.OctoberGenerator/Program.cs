@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -47,26 +48,42 @@ public static class OctoberGeneratorEntryPoint
             registrations.AddSingleton<ISecretEncryptionService, SecretEncryptionService>();
             await using ServiceProvider protection = registrations.BuildServiceProvider(validateScopes: true);
             OctoberProviderConfiguration providerConfiguration;
+            OctoberSelectedWorkerProvider? workerProvider = null;
             try
             {
-                providerConfiguration = await ReadProviderConfigurationAsync(configuration);
+                providerConfiguration = command.Mode == OctoberGeneratorMode.Generate
+                    ? await ReadGenerateProviderConfigurationAsync(configuration)
+                    : await ReadProviderConfigurationAsync(configuration);
             }
             catch (InvalidOperationException)
             {
                 Console.Error.WriteLine("October provider configuration failed: InvalidConfiguration.");
                 return 1;
             }
-            OctoberProviderBindingResult providerBinding = await new OctoberProviderBinder(
+            if (command.Mode == OctoberGeneratorMode.Generate)
+            {
+                workerProvider = await BindWorkerProviderAsync(providerConfiguration,
+                    protection.GetRequiredService<ISecretEncryptionService>());
+                if (workerProvider is null)
+                {
+                    Console.Error.WriteLine("October Worker provider binding failed: InvalidConfiguration.");
+                    return 1;
+                }
+            }
+            else
+            {
+                OctoberProviderBindingResult providerBinding = await new OctoberProviderBinder(
                 protection.GetRequiredService<ISecretEncryptionService>())
                 .BindAsync(providerConfiguration);
-            if (providerBinding.Status != OctoberProviderBindingStatus.Bound ||
-                providerBinding.Binding is null)
-            {
-                if (providerBinding.Status == OctoberProviderBindingStatus.InvalidConfiguration)
-                    Console.Error.WriteLine("October provider binding failed: InvalidConfiguration.");
-                if (providerBinding.Status == OctoberProviderBindingStatus.CredentialUnavailable)
-                    Console.Error.WriteLine("October provider binding failed: CredentialUnavailable.");
-                return 1;
+                if (providerBinding.Status != OctoberProviderBindingStatus.Bound ||
+                    providerBinding.Binding is null)
+                {
+                    if (providerBinding.Status == OctoberProviderBindingStatus.InvalidConfiguration)
+                        Console.Error.WriteLine("October provider binding failed: InvalidConfiguration.");
+                    if (providerBinding.Status == OctoberProviderBindingStatus.CredentialUnavailable)
+                        Console.Error.WriteLine("October provider binding failed: CredentialUnavailable.");
+                    return 1;
+                }
             }
             Console.Out.WriteLine("October provider configuration Bound.");
 
@@ -107,7 +124,7 @@ public static class OctoberGeneratorEntryPoint
                     authorityConfiguration.CanonicalDatabaseIdentity));
             OctoberGeneratorModule module = new(
                 scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>(),
-                target, authorityConfiguration.AuthorityId);
+                target, authorityConfiguration.AuthorityId, provider: workerProvider);
             OctoberGeneratorExecutionResult result = await module.ExecuteAsync(command);
             if (result.Status == OctoberGeneratorExecutionStatus.Denied)
                 Console.Error.WriteLine("October setup failed: Denied.");
@@ -136,6 +153,7 @@ public static class OctoberGeneratorEntryPoint
         {
             "prepare" => OctoberGeneratorMode.Prepare,
             "select" => OctoberGeneratorMode.Select,
+            "generate" => OctoberGeneratorMode.Generate,
             _ => throw new InvalidOperationException("October generator mode is invalid.")
         };
         string targetId = Required(configuration, "October:TargetId");
@@ -158,7 +176,116 @@ public static class OctoberGeneratorEntryPoint
             throw new InvalidOperationException("October select request is invalid.");
         }
 
-        return new OctoberGeneratorCommand(mode, targetId, batchId, request);
+        return new OctoberGeneratorCommand(mode, targetId, batchId, request,
+            mode == OctoberGeneratorMode.Generate ? ReadScanPolicy(configuration) : null);
+    }
+
+    internal static OctoberScanPolicy ReadScanPolicy(IConfiguration configuration)
+    {
+        try
+        {
+            if (configuration["October:OutputStage"] is not null ||
+                configuration.GetSection("October:ScanPolicy").GetChildren().Any())
+                throw new InvalidOperationException();
+            string path = Required(configuration, "October:ScanPolicyFile");
+            if (configuration is IConfigurationRoot root)
+            {
+                var selectors = new HashSet<string>(StringComparer.Ordinal);
+                foreach (IConfigurationProvider source in root.Providers)
+                    if (source.TryGet("October:ScanPolicyFile", out string? supplied) && supplied is not null)
+                        selectors.Add(supplied);
+                if (selectors.Count > 1)
+                    throw new InvalidOperationException();
+            }
+
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (stream.Length is <= 0 or > 1_048_576)
+                throw new InvalidOperationException();
+            byte[] bytes = new byte[checked((int)stream.Length)];
+            stream.ReadExactly(bytes);
+            if (stream.ReadByte() != -1)
+                throw new InvalidOperationException();
+            int offset = bytes.AsSpan().StartsWith(new byte[] { 0xef, 0xbb, 0xbf }) ? 3 : 0;
+            string json = new UTF8Encoding(false, true).GetString(bytes, offset, bytes.Length - offset);
+            using JsonDocument document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 16 });
+            RequireUniqueProperties(document.RootElement);
+            OctoberScanPolicy? policy = document.RootElement.Deserialize<OctoberScanPolicy>(new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = false,
+                UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+                MaxDepth = 16
+            });
+            if (policy is null || !new OctoberScanPolicyValidator().Validate(policy).IsValid)
+                throw new InvalidOperationException();
+            return policy;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+            DecoderFallbackException or JsonException or InvalidOperationException or ArgumentException or
+            NotSupportedException or OverflowException)
+        {
+            throw new InvalidOperationException("October scan policy is invalid.");
+        }
+    }
+
+    internal static Task<OctoberProviderConfiguration> ReadGenerateProviderConfigurationAsync(
+        IConfigurationRoot configuration) => ReadProviderDocumentAsync(configuration, requireChat: false);
+
+    internal static async Task<OctoberSelectedWorkerProvider?> BindWorkerProviderAsync(
+        OctoberProviderConfiguration configuration, ISecretEncryptionService encryption,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(encryption);
+        if (cancellationToken.IsCancellationRequested || !Exact(configuration.SourceIdentity) ||
+            configuration.Precedence != "only-source" || !Exact(configuration.WorkerProfile))
+            return null;
+
+        var profiles = new Dictionary<string, OctoberProviderProfile>(StringComparer.Ordinal);
+        foreach (OctoberProviderProfile? profile in configuration.Profiles)
+            if (profile is null || !Exact(profile.Name) || !profiles.TryAdd(profile.Name, profile))
+                return null;
+        if (!profiles.TryGetValue(configuration.WorkerProfile, out OctoberProviderProfile? selected) ||
+            selected.ApiType is not (ApiType.ChatCompletions or ApiType.Responses or ApiType.Messages) ||
+            !Exact(selected.Model) || !Exact(selected.CredentialReference) || !Exact(selected.Endpoint) ||
+            !Uri.TryCreate(selected.Endpoint, UriKind.Absolute, out Uri? endpoint) ||
+            endpoint.Scheme is not ("http" or "https") || endpoint.UserInfo.Length != 0 ||
+            endpoint.Fragment.Length != 0 ||
+            !configuration.ProtectedCredentials.TryGetValue(selected.CredentialReference, out string? ciphertext) ||
+            string.IsNullOrWhiteSpace(ciphertext))
+            return null;
+        try
+        {
+            string credential = await encryption.DecryptAsync(
+                "Vulgata.LlmProviders.ApiKey", ciphertext, cancellationToken);
+            if (string.IsNullOrWhiteSpace(credential) || cancellationToken.IsCancellationRequested)
+                return null;
+            return new OctoberSelectedWorkerProvider(configuration.SourceIdentity,
+                configuration.Precedence, selected, ciphertext);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+
+        static bool Exact(string? value) => !string.IsNullOrWhiteSpace(value) && value.Trim() == value;
+    }
+
+    private static void RequireUniqueProperties(JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            HashSet<string> names = new(StringComparer.Ordinal);
+            foreach (JsonProperty property in value.EnumerateObject())
+            {
+                if (!names.Add(property.Name))
+                    throw new InvalidOperationException();
+                RequireUniqueProperties(property.Value);
+            }
+        }
+        else if (value.ValueKind == JsonValueKind.Array)
+            foreach (JsonElement item in value.EnumerateArray())
+                RequireUniqueProperties(item);
     }
 
     private static OctoberAuthorityConfiguration ReadAuthorityConfiguration(
@@ -198,8 +325,11 @@ public static class OctoberGeneratorEntryPoint
             throw new InvalidOperationException("October configuration is invalid.");
     }
 
-    private static async Task<OctoberProviderConfiguration> ReadProviderConfigurationAsync(
-        IConfigurationRoot configuration)
+    private static Task<OctoberProviderConfiguration> ReadProviderConfigurationAsync(
+        IConfigurationRoot configuration) => ReadProviderDocumentAsync(configuration, requireChat: true);
+
+    private static async Task<OctoberProviderConfiguration> ReadProviderDocumentAsync(
+        IConfigurationRoot configuration, bool requireChat)
     {
         HashSet<string> suppliedSelectors = new(StringComparer.Ordinal);
         foreach (IConfigurationProvider source in configuration.Providers)
@@ -246,7 +376,9 @@ public static class OctoberGeneratorEntryPoint
             }
             return new OctoberProviderConfiguration(
                 RequiredString(root, "sourceIdentity"), RequiredString(root, "precedence"),
-                RequiredString(root, "workerProfile"), RequiredString(root, "chatProfile"),
+                RequiredString(root, "workerProfile"), requireChat
+                    ? RequiredString(root, "chatProfile")
+                    : root.TryGetProperty("chatProfile", out JsonElement chat) ? chat.GetString() ?? string.Empty : string.Empty,
                 profiles, credentials);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
