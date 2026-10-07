@@ -113,6 +113,30 @@ Every Business matching/inquiry/synthesis **provider attempt**, including a retr
 
 Required checkpoint probes: with cap=1 and two concurrent Business inquiries, only one provider attempt is active, the other waits, counters are shared and both settle once; with hard stop during one active and one queued call, active receives cancellation, queued/late/retry calls never dispatch, a late model result is not published, usage remains actual/unknown and settlement is truthful. Also exercise a queued/rate-denied call that sends nothing until host rate admission permits it (or ends at its original deadline), a retry acquiring a fresh permit without resetting budgets/rate allowance, and missing scope failing before dispatch. Probes use controlled transports and the initial owner contract/fixture, not paid calls or completed consumer production implementations.
 
+### F2 — Completed Business result handoff lifetime
+
+The Business-owned `IOctoberBusinessHandoffLifetime` is a narrow companion to the
+host execution scope. Its cached `HandoffCancellation` is the original run's
+stop/deadline signal and remains observable after an individual provider attempt
+has settled and its lease has been disposed. Disposing an attempt must neither
+erase that signal nor grant a new lifetime.
+
+`CheckHandoffEligibility(runId, finalizationOperation, providerProfileId)` is a
+synchronous host check of the exact identities and the eligible CL-and-BL Business
+phase. Wrong identities, hard stop, original deadline expiry, host-scope disposal
+or authority denial fail closed. Stop/disposal/denial is monotonic for that
+lifetime: a later call cannot revive a completed result after invalidation.
+Consumers retain and check the original lifetime before returning a completed
+proposal; missing or incompatible lifetime is unavailable, not implicit success.
+
+This check is not provider admission and reserves no permit, request, rate,
+token or time allowance. Unknown usage, unavailable capacity or exhaustion of
+budgets for a *future* provider call alone does not invalidate an already completed
+result whose original handoff lifetime remains eligible. Settlement/accounting
+still records actual or explicitly unknown usage, and F1 independently rechecks
+eligibility at durable submission. No fresh allowance, regenerated proposal or
+acceptance authority follows from this interface.
+
 ## Shared diagnostic and dialogue boundaries
 
 Business owns a sanitized append-only `log.md` writer: UTC timestamp, correlation/operation ID, sanitized target token and outcome, no raw content/query/secrets. Cross-process writes serialize under an owned file lock. A failed append returns LogUnavailable; committed mutations remain recoverable by exact lookup and a retry never regenerates. Log is not transaction authority. Runtime must supply the owned path; no machine/global configuration change.
