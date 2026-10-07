@@ -372,3 +372,106 @@ session issuance, commit/owner-death adapters, coordinator binding and route act
 Chat's runner will expose `ReauthorizeBeforeSendAsync` for the callback without
 revealing capsules. Business durable dialogue and Scan final Generate composition
 continue independently. This component neither starts a host nor calls a live provider.
+
+## Controlled B1 component and combined checkpoint
+
+Business reviewed `407d6833bb525628776c8f5a965f5a5ab928645a` is imported at
+`11e1327a`: bounded resolution policy/semantic witness validation, explicit
+`AcceptResolution = 4` and an IChatClient executor using the shared F2 scope.
+Its feature factory accepts an explicit client and already embedded prompt; it
+does not register production execution. Owner evidence was 19 policy and 21
+executor controlled passes with independent review. Store/publication, real S3
+finalization guard, PostgreSQL and real-provider usefulness remain separate work.
+
+Current combined source (B1 plus Web client/session and the preceding graph/
+disclosure/Chat consumer integrations) passed **1,207/1,207 selected SelfContained**
+cases, no failures/skips, 377 classified files:
+`TestResults/isolation-6ae2dfcc5ae042fbb8c761fb8a7788b6/results.trx`.
+This is affected regression evidence, not a complete suite or real qualification.
+Explorer separately imported approved `2eff9d31` and passed 347/347 selected
+controlled compatibility cases at its `d2c24bfb` checkpoint. No duplicate data
+generation or runtime resources were started.
+
+The fresh-Generate agreement was narrowed by both owners: source-free validation
+then an atomic owner execution claim **before native preparation, source inventory
+or frame acquisition**, not merely before a paid call. Business proposes reusing
+KnowledgeOperations with `BeginGenerate = 5` and owner-derived `(BatchId, kind,
+OperationId = BatchId)`, exact original live RunId/digest and dedicated subject
+authority/lookup. No reservation/abort lifecycle, new table, takeover or restart
+permission is needed. The canonical declaration/implementation is still pending;
+this agreement is not permission to fabricate its APIs or widen runtime grants.
+
+The selected-client controlled SDK no-retry/no-follow extension passes 22/22:
+`TestResults/isolation-ca79b5bb855b4defa2fa977ebda99613/results.trx`.
+HTTP 429/302/307 each causes only one physical fake-transport send to the frozen
+endpoint. Production SocketsHttpHandler's redirects-disabled setting is inspected
+source, not a live loopback redirect experiment. A subsequent cross-owner review
+identified ignored-cancellation readiness waits; that narrow correction is pending,
+so the current factory evidence is explicitly cooperative-readiness qualification.
+
+## Accepted next components and corrected lifetime boundary
+
+Scan accepted the exact supporting-input/fresh-Generate declaration `ed0f2600`;
+it is integrated at `af5520d2`. Business may implement those accepted ports without
+another routine approval round. The digest helpers and extended provenance behavior
+remain pending/fail-closed; declarations do not complete Generate. Kind5 requires
+its dedicated subject/lookup authority and exact RunId registration, not AcceptFile
+authority or a generic operation-lookup bypass.
+
+Reviewed Scan frame/F1 `cffbe50e` is integrated at `602cf362`: exact primary frames,
+irreversible observed authority/source loss, guarded actual submission and honest
+uncertainty/disposal reconciliation. Reviewed Chat admitted runner `6de2d394` is
+integrated at `f54d45e5`; its only-narrowing deadline and public original-lifetime
+bridge are both retained. Reviewed Business dialogue `42cac3c4` is integrated at
+`1b599c70`: store/codec/entities plus sole-owner additive migration/snapshot.
+The migration has NOT been applied; its sixteen PostgreSQL cases remain NOT RUN.
+No permissive execution/commit/death fallback is registered.
+
+Chat's cross-owner review identified ignored-cancellation readiness. Root added
+bounded consumer waits with explicit late read-only task observation: no late key
+use, client creation or dispatch; only the unstarted transport can dispose promptly.
+Root also linked durable expiry to both settlement owners after complete session
+construction, because a guard timer created before runner deadline narrowing cannot
+be assumed to shorten retroactively. Already-dispatched reads still retain permits
+until physical completion/disposal. Five independent regressions reproduced the
+hangs in `isolation-747c69a271e44934852de5e64fdeb853` (22/27 passed).
+
+Both test/production assessment and independent source review accept the correction.
+Combined current source passed **1,303/1,303 selected SelfContained** cases, no
+failures/skips, 384 classified files, including all 27 client-session cases:
+`TestResults/isolation-96b8d4f3fd8c4d94aaf2a4a4e7dd603f/results.trx`.
+This supersedes the cooperative-only readiness limitation above, not the separate
+full-suite SQLite crash or any missing PostgreSQL/tool/provider/browser evidence.
+
+Next work is still scoped and parallel: Business implements accepted input/admission
+and B1 persistence behavior; Scan continues primary orchestration then consumes the
+real owner implementation; Chat can use the actual dialogue store/codec in controlled
+coordinator work; integration owns live execution registration, one-shot issuance,
+actual commit/death adapters and route composition. Explorer retains its accepted
+graph/reader and awaits the single shared real publication. No all-lane barrier or
+new routine permission gate applies. Runtime resource authority is still outstanding.
+
+## Latest combined checkpoint and consumer recovery clarification
+
+Chat actual-owner conformance `4057fb5b` is integrated at `556ac04f`; Business's
+accepted contract/task/model wording `613134c4` / `79eebaa5` is integrated at
+`f48f8744`. The final affected selection at that source boundary passed
+**1,306/1,306 SelfContained** cases, zero failures/skips, 385 classified files:
+`TestResults/isolation-9ec68daafd564547bb7471fd62c3e10f/results.trx`.
+This includes actual Business disclosure/crypto through the actual Chat wrapper:
+near-limit continuation/proof/report, ciphertext-independent replay accounting,
+and uncited-input revocation. Published data/policy remain controlled; no provider,
+PostgreSQL, native preparation or browser qualification is implied.
+
+Business confirmed its dialogue checkpoint intentionally never emits ConfirmedAbsent.
+A fresh in-memory lifecycle submits its frozen Begin once directly; requiring a
+missing-row lookup to prove absence first would block every new turn. After an
+uncertain/replayed Begin, lookup cannot grant another dispatch. Supported recovery
+is positive exact receipt reconciliation, or separately proven dead-and-settled
+orphan interruption under the current fence/lock. Missing terminal rows stay
+Indeterminate; neither Chat nor integration may invent a storage-retry permission.
+The consumer is released on that exact supported boundary, not a new recovery ledger.
+
+All lanes retain the same accepted scope. Their safe synchronization checkpoints
+will be sent with the integration commit. Pending host registry/commit/death wiring
+requires the actual coordinator lifecycle handshake; no fallback authority is added.

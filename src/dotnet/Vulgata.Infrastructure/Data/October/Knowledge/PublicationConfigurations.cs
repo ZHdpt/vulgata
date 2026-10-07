@@ -76,6 +76,7 @@ public sealed class PublicationMemberConfiguration : IEntityTypeConfiguration<Pu
     {
         b.ToTable("OctoberPublicationMembers");
         b.HasKey(x => new { x.BatchId, x.PublicationId, x.LogicalDocumentId });
+        b.HasAlternateKey(x => new { x.BatchId, x.PublicationId, x.LogicalDocumentId, x.VersionId }).HasName("AK_PublicationMember_ExactVersion");
         b.HasIndex(x => new { x.BatchId, x.PublicationId, x.VersionId }).IsUnique();
         b.HasIndex(x => new { x.BatchId, x.PublicationId, x.Ordinal }).IsUnique();
         b.HasOne<KnowledgePublicationRecord>().WithMany().HasForeignKey(x => new { x.BatchId, x.PublicationId, x.CorpusId })

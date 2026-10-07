@@ -1,4 +1,6 @@
 {
+  "October/Knowledge/OctoberDialoguePostgreSqlTests.cs": {"suite": "PostgreSql"},
+  "October/Knowledge/OctoberDialoguePersistenceTests.cs": {"suite": "SelfContained"},
   "October/Integration/OctoberChatClientSessionTests.cs": {
     "suite": "SelfContained"
   },
@@ -264,6 +266,12 @@
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatDisclosureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatTurnRunnerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatOwnerConformanceTests.cs": {
     "suite": "SelfContained"
   },
   "October/Chat/OctoberChatEntryTests.cs": {

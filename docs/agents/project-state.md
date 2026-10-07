@@ -106,6 +106,20 @@ verification before reuse.
   SDK/queue/cancellation/cleanup tests and independent review. It does not activate
   sending: live execution registration, commit/owner-death adapters and coordinator
   composition remain required. See the same wave handoff for its exact API and limits.
+  Business bounded B1 policy/executor `407d6833` is also integrated, without its
+  unfinished store/publication/S3 composition. The resulting affected combined
+  selection passes 1,207/1,207 SelfContained cases (not a complete suite or real run).
+  The next integrated boundary adds reviewed Scan frame/F1 `cffbe50e`, Chat admitted
+  runner `6de2d394`, Business dialogue store/codec/additive migration `42cac3c4` and
+  Scan-compatible input/Generate declarations `ed0f2600`. Combined affected source
+  passes 1,303/1,303 controlled cases, including noncooperative readiness/deadline
+  corrections. No migration or real host/provider run occurred. Generate owner helper/
+  provenance implementation, Scan Main composition and live Chat execution/commit/death
+  wiring remain incomplete; ordinary graph access does not wait for Chat persistence.
+  Final cross-owner Chat conformance and accepted task/model wording raise the affected
+  combined result to 1,306/1,306, zero skips. Real qualification remains pending.
+  Dialogue lookup currently supports positive receipt reconciliation, not ConfirmedAbsent
+  proof; a missing row never authorizes a retry or a second generation.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
