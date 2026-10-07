@@ -200,7 +200,34 @@
   "OctoberScan/OctoberScanBoundaryProbes.cs": {
     "suite": "SelfContained"
   },
+  "October/Chat/ControlledChatFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatEntryTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Chat/OctoberChatKnowledgeConformanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatProviderTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatQualificationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatSelectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatStreamingUiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberContentContinuationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberWikiToolTests.cs": {
     "suite": "SelfContained"
   },
   "October/Knowledge/KnowledgeRequestValidatorTests.cs": {

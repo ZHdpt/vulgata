@@ -1,0 +1,186 @@
+using System.Text;
+using System.Text.Json;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
+
+namespace Vulgata.Agents.ChatExecution.October;
+
+internal enum OctoberChatProviderStatus { Completed, Interrupted, Failed, Cancelled, BudgetExceeded }
+
+/// <summary>Controlled provider-loop outcome only; never a durable saved-turn receipt.</summary>
+internal sealed record OctoberChatProviderResult(OctoberChatProviderStatus Status, string AnswerText);
+
+/// <summary>
+/// Isolated installed-SDK capability seam. It is not registered in the host and has no
+/// production credential, admission, disclosure or persistence composition.
+/// </summary>
+internal sealed class OctoberChatAgent
+{
+    private static readonly UTF8Encoding _strictUtf8 = new(false, true);
+    private readonly IChatClient _client;
+    private readonly OctoberWikiTools _tools;
+    private readonly OctoberChatBudget _budget;
+    private int _used;
+
+    internal OctoberChatAgent(IChatClient client, OctoberWikiTools tools, OctoberChatBudget budget)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(tools);
+        ArgumentNullException.ThrowIfNull(budget);
+        if (!ReferenceEquals(tools.Budget, budget))
+        {
+            throw new ArgumentException("The controlled turn must use the facade's original budget.", nameof(budget));
+        }
+
+        if (client.GetService(typeof(FunctionInvokingChatClient)) is not null)
+        {
+            throw new ArgumentException("The controlled client must not contain another tool invocation loop.", nameof(client));
+        }
+
+        _client = client;
+        _tools = tools;
+        _budget = budget;
+    }
+
+    /// <summary>
+    /// Runs controlled typed-SDK mechanics. The application-owned onText sink must be
+    /// nonblocking; production subscriber isolation belongs to the deferred coordinator.
+    /// </summary>
+    public async Task<OctoberChatProviderResult> RunAsync(string question, string instructions, Action<string> onText,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(onText);
+        // Local instance protection only. D0 must still establish durable admission and
+        // cross-request fencing before any production-facing execution can use this seam.
+        if (Interlocked.Exchange(ref _used, 1) != 0) return new(OctoberChatProviderStatus.Failed, string.Empty);
+        if (cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested)
+        {
+            _budget.StopExecution();
+            return new(OctoberChatProviderStatus.Cancelled, string.Empty);
+        }
+
+        if (!ValidInstructions(instructions) || !_budget.TryValidateQuestion(question))
+        {
+            return new(OctoberChatProviderStatus.Failed, string.Empty);
+        }
+
+        var text = new StringBuilder();
+        using CancellationTokenSource deadline = _budget.CreateDeadlineCancellation();
+        using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, _budget.OriginalCancellationToken, deadline.Token);
+        using var adapter = new OctoberChatProviderAdapter(_client, _tools, _budget);
+        using var invoking = new FunctionInvokingChatClient(adapter)
+        {
+            // One final SDK iteration may encounter the original round budget; the
+            // adapter refuses it before the injected client is called. This allows the
+            // final admitted round's tool results to settle without another request.
+            MaximumIterationsPerRequest = _budget.Limits.ProviderRounds == int.MaxValue
+                ? int.MaxValue : _budget.Limits.ProviderRounds + 1,
+            MaximumConsecutiveErrorsPerRequest = 0,
+            AllowConcurrentInvocation = false,
+            IncludeDetailedErrors = false,
+            TerminateOnUnknownCalls = true,
+            FunctionInvoker = async (context, token) => await adapter.InvokeToolAsync(context, token),
+        };
+        var agent = new ChatClientAgent(invoking, new ChatClientAgentOptions
+        {
+            UseProvidedChatClientAsIs = true,
+            ChatOptions = new ChatOptions
+            {
+                Tools = OctoberChatProviderAdapter.ToolNames.Select(name => (AITool)new WikiDeclaration(name, CreateSchema(name))).ToList(),
+            },
+        });
+
+        try
+        {
+            ChatMessage[] messages = [new(ChatRole.System, instructions), new(ChatRole.User, question)];
+            await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(messages, cancellationToken: linked.Token))
+            {
+                linked.Token.ThrowIfCancellationRequested();
+                foreach (TextContent content in update.Contents.OfType<TextContent>())
+                {
+                    onText(content.Text);
+                    text.Append(content.Text);
+                }
+            }
+
+            linked.Token.ThrowIfCancellationRequested();
+            OctoberChatProviderStatus status = adapter.FailureStatus ??
+                (adapter.HasPendingCalls ? OctoberChatProviderStatus.Failed :
+                    adapter.LastFinishReason == ChatFinishReason.Stop ? OctoberChatProviderStatus.Completed :
+                    adapter.LastFinishReason == ChatFinishReason.Length || adapter.LastFinishReason == ChatFinishReason.ContentFilter
+                        ? OctoberChatProviderStatus.Interrupted : OctoberChatProviderStatus.Failed);
+            return new(status, text.ToString());
+        }
+        catch (OperationCanceledException) when (linked.IsCancellationRequested)
+        {
+            _budget.StopExecution();
+            return new(cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested
+                ? OctoberChatProviderStatus.Cancelled : OctoberChatProviderStatus.BudgetExceeded, text.ToString());
+        }
+        catch (Exception)
+        {
+            _budget.StopExecution();
+            linked.Cancel();
+            return new(adapter.FailureStatus ?? OctoberChatProviderStatus.Failed, text.ToString());
+        }
+    }
+
+    private static bool ValidInstructions(string instructions)
+    {
+        if (string.IsNullOrWhiteSpace(instructions)) return false;
+        try { return _strictUtf8.GetByteCount(instructions) <= OctoberChatPromptCatalog.MaximumPromptBytes; }
+        catch (ArgumentException) { return false; }
+    }
+
+    private static JsonElement CreateSchema(string name)
+    {
+        object text = new { type = "string" };
+        object optionalText = new { type = new[] { "string", "null" } };
+        object identifier = new { type = "string", format = "uuid" };
+        object document = new
+        {
+            type = "object",
+            properties = new Dictionary<string, object>
+            {
+                ["batchId"] = identifier, ["publicationId"] = identifier,
+                ["logicalDocumentId"] = identifier, ["documentVersionId"] = identifier, ["sectionId"] = optionalText,
+            },
+            required = new[] { "batchId", "publicationId", "logicalDocumentId", "documentVersionId" },
+            additionalProperties = false,
+        };
+        var properties = new Dictionary<string, object>();
+        string[] required = [];
+        if (name is "SearchWiki" or "BrowseWiki") properties["query"] = text;
+        if (name is "ReadWiki" or "GetRelatedDocuments")
+        {
+            properties["document"] = document;
+            required = ["document"];
+        }
+
+        if (name is "SearchWiki" or "BrowseWiki" or "GetRelatedDocuments")
+        {
+            properties["pageSize"] = new { type = "integer", minimum = 1 };
+        }
+
+        if (name == "ReportAnswerDocuments")
+        {
+            properties["documents"] = new { type = "array", items = document };
+            required = ["documents"];
+        }
+        else properties["continuation"] = optionalText;
+
+        return JsonSerializer.SerializeToElement(new { type = "object", properties, required, additionalProperties = false });
+    }
+
+    private sealed class WikiDeclaration(string name, JsonElement schema) : AIFunction
+    {
+        public override string Name => name;
+        public override JsonElement JsonSchema => schema;
+
+        // The single FunctionInvokingChatClient's explicit dispatcher owns invocation.
+        // Bypassing it cannot invoke a tool without original call-ID and argument checks.
+        protected override ValueTask<object?> InvokeCoreAsync(AIFunctionArguments arguments, CancellationToken cancellationToken) =>
+            ValueTask.FromException<object?>(new InvalidOperationException("The controlled native dispatcher is required."));
+    }
+}

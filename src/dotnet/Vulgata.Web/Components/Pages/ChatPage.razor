@@ -9,6 +9,67 @@
 
 <PageTitle>对话</PageTitle>
 
+@if (_boundOctoberEntry is { } october)
+{
+    <div class="chat-page @(october.ThemeName == "dark" ? "chat-page--it" : "chat-page--business")"
+         data-theme="@october.ThemeName" data-load-state="@october.LoadState">
+        <section class="chat-controls" aria-label="准备提问">
+            <div class="chat-controls__topbar">
+                <fieldset class="mode-selector">
+                    <legend class="visually-hidden">选择对话模式</legend>
+                    <FluentButton Type="ButtonType.Button"
+                                  Appearance="@(october.ThemeName == "light" ? Appearance.Accent : Appearance.Neutral)"
+                                  Disabled="@OctoberTransitionDisabled"
+                                  @onclick="() => RequestOctoberModeAsync(Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeMode.Business)">业务模式</FluentButton>
+                    <FluentButton Type="ButtonType.Button"
+                                  Appearance="@(october.ThemeName == "dark" ? Appearance.Accent : Appearance.Neutral)"
+                                  Disabled="@OctoberTransitionDisabled"
+                                  @onclick="() => RequestOctoberModeAsync(Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeMode.IT)">技术模式</FluentButton>
+                </fieldset>
+                <FluentButton Class="new-conversation-button" Appearance="Appearance.Stealth" Type="ButtonType.Button"
+                              Disabled="@OctoberTransitionDisabled" @onclick="RequestNewOctoberConversationAsync">＋ 新对话</FluentButton>
+            </div>
+        </section>
+        <section class="chat-surface" aria-label="对话记录" aria-live="polite"
+                 aria-busy="@(october.LoadState == LoadState.Loading ? "true" : "false")" tabindex="0">
+            @if (OctoberTurn is { } turn && october.Conversation is { } conversation &&
+                turn.Binding.ConversationId == conversation.ConversationId &&
+                turn.Binding.ContextId == conversation.ContextId &&
+                turn.Binding.Request == conversation.Request && turn.Binding.Selection == conversation.Selection)
+            {
+                <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="turn" />
+            }
+            <div class="chat-welcome">
+                <h1 class="display-serif display-serif-lg">@(october.ThemeName == "dark" ? "你好，需要追踪哪段逻辑？" : "你好，想了解什么业务流程？")</h1>
+                @if (october.Conversation is not null)
+                {
+                    <p>已选择 @october.Conversation.Request.RepositoryScope.Length 个仓库，@october.ModeLabel。</p>
+                }
+            </div>
+            @if (october.StatusMessage is not null)
+            {
+                <p class="chat-message chat-message--status" role="status">@october.StatusMessage</p>
+            }
+            @if (october.RequiresConfirmation)
+            {
+                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent"
+                              @onclick="ConfirmOctoberContextAsync">确认开始新对话</FluentButton>
+            }
+        </section>
+        <section class="question-composer" aria-label="问题输入">
+            <label class="visually-hidden" for="october-chat-question">问题</label>
+            <textarea id="october-chat-question" @bind="october.Question" @bind:event="oninput"
+                      placeholder="对话服务准备中" aria-label="问题" rows="3" disabled></textarea>
+            <div class="composer-context-row">
+                <p role="status">对话服务准备中，暂时无法发送问题。</p>
+                <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent"
+                              Type="ButtonType.Button" Disabled="true">发送</FluentButton>
+            </div>
+        </section>
+    </div>
+}
+else
+{
 <div class="chat-page @PageModeClass @ConversationStateClass" data-theme="@ThemeName" data-load-state="@_loadState">
     <EditForm class="chat-page__form" EditContext="_editContext" OnValidSubmit="SendAsync" OnInvalidSubmit="HandleInvalidSubmit">
         <FluentValidationValidator />
@@ -232,3 +293,4 @@
     </section>
     </EditForm>
 </div>
+}
