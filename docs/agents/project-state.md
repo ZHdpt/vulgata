@@ -77,8 +77,10 @@ verification before reuse.
   cases. October generation remains disabled; prompt embedding, raw transport and
   Web admission, full-contributor disclosure and durable dialogue remain missing.
   See the [Chat integration/next-step handoff](../bmad/planning-artifacts/october-chat-integration-2026-10-07.md).
-  The user explicitly paused before the next development action; the handoff's
-  recommendations are not implementation or runtime authorization.
+  The subsequent user-authorized [October 7 delivery wave](../bmad/planning-artifacts/october-wave-2026-10-07.md)
+  supersedes that pause: four-lane scoped development and incremental integration
+  may proceed under its dependency/ownership boundaries. Shared dialogue/disclosure
+  agreement precedes its consumers; real resource authority remains separate.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

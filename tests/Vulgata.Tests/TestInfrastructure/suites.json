@@ -1081,6 +1081,9 @@
   "October/Integration/OctoberWikiCompositionTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Integration/OctoberChatHostBindingTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberWikiPostgreSqlTests.cs": {
     "suite": "PostgreSql"
   },
