@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-07 (Business B0 reader, Explore E0 and Scan S1 integrated; reader-composition qualification retains its bounded scope).
+Updated: 2026-10-07 (Business B0 reader, Explore E0, Scan S1 and controlled Chat integrated; runtime qualification retains its bounded scope).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -71,6 +71,14 @@ verification before reuse.
   for configuration, evidence and remaining resource limits. Real Scan S2 adapters,
   retained source-backed publication, Business T020 and Explorer's real generated-CL
   qualification remain pending. This is not Chat W0/live Chat completion.
+  The subsequent controlled Chat checkpoint `e4689f0b` (including entry parent
+  `80314207`) is integrated at `10db709b`. Combined SelfContained verification
+  passed 2,775/2,775, zero skips, including 193 Chat and 15 reader-integration
+  cases. October generation remains disabled; prompt embedding, raw transport and
+  Web admission, full-contributor disclosure and durable dialogue remain missing.
+  See the [Chat integration/next-step handoff](../bmad/planning-artifacts/october-chat-integration-2026-10-07.md).
+  The user explicitly paused before the next development action; the handoff's
+  recommendations are not implementation or runtime authorization.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.

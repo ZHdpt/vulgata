@@ -10,6 +10,11 @@ implementation_authorized: false
 
 ## October 7 implementation checkpoint
 
+The later [controlled Chat integration](october-chat-integration-2026-10-07.md)
+imports `e4689f0b` at `10db709b`, with 2,775/2,775 combined SelfContained passes.
+It does not activate Chat or implement its missing owner contracts. The user has
+explicitly required a pause before further development.
+
 The user's instruction to execute item 1 authorizes the bounded integration now
 recorded in [the reader integration handoff](october-reader-integration-2026-10-07.md).
 Business through T018, Explorer E0 and Scan S1 are imported. The section below
