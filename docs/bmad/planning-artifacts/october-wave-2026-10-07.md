@@ -372,3 +372,39 @@ session issuance, commit/owner-death adapters, coordinator binding and route act
 Chat's runner will expose `ReauthorizeBeforeSendAsync` for the callback without
 revealing capsules. Business durable dialogue and Scan final Generate composition
 continue independently. This component neither starts a host nor calls a live provider.
+
+## Controlled B1 component and combined checkpoint
+
+Business reviewed `407d6833bb525628776c8f5a965f5a5ab928645a` is imported at
+`11e1327a`: bounded resolution policy/semantic witness validation, explicit
+`AcceptResolution = 4` and an IChatClient executor using the shared F2 scope.
+Its feature factory accepts an explicit client and already embedded prompt; it
+does not register production execution. Owner evidence was 19 policy and 21
+executor controlled passes with independent review. Store/publication, real S3
+finalization guard, PostgreSQL and real-provider usefulness remain separate work.
+
+Current combined source (B1 plus Web client/session and the preceding graph/
+disclosure/Chat consumer integrations) passed **1,207/1,207 selected SelfContained**
+cases, no failures/skips, 377 classified files:
+`TestResults/isolation-6ae2dfcc5ae042fbb8c761fb8a7788b6/results.trx`.
+This is affected regression evidence, not a complete suite or real qualification.
+Explorer separately imported approved `2eff9d31` and passed 347/347 selected
+controlled compatibility cases at its `d2c24bfb` checkpoint. No duplicate data
+generation or runtime resources were started.
+
+The fresh-Generate agreement was narrowed by both owners: source-free validation
+then an atomic owner execution claim **before native preparation, source inventory
+or frame acquisition**, not merely before a paid call. Business proposes reusing
+KnowledgeOperations with `BeginGenerate = 5` and owner-derived `(BatchId, kind,
+OperationId = BatchId)`, exact original live RunId/digest and dedicated subject
+authority/lookup. No reservation/abort lifecycle, new table, takeover or restart
+permission is needed. The canonical declaration/implementation is still pending;
+this agreement is not permission to fabricate its APIs or widen runtime grants.
+
+The selected-client controlled SDK no-retry/no-follow extension passes 22/22:
+`TestResults/isolation-ca79b5bb855b4defa2fa977ebda99613/results.trx`.
+HTTP 429/302/307 each causes only one physical fake-transport send to the frozen
+endpoint. Production SocketsHttpHandler's redirects-disabled setting is inspected
+source, not a live loopback redirect experiment. A subsequent cross-owner review
+identified ignored-cancellation readiness waits; that narrow correction is pending,
+so the current factory evidence is explicitly cooperative-readiness qualification.
