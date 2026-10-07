@@ -1,5 +1,7 @@
 # OCT-CHAT consumer boundaries and checkpoint
 
+The 2026-10-07 contract-only continuation is recorded in [Chat's joint dialogue/disclosure contribution](dialogue-disclosure-contribution.md): concrete proposed fields/limits, admission/save/history semantics, full-input lineage gaps and Business conformance decisions. It is a consumer proposal awaiting owner agreement, not implemented canonical declarations or authority to resume dependent tasks. Its baseline imports integrated Knowledge/reader implementations; earlier K0-import status below remains historical to that checkpoint.
+
 Status: consumer requirements mapped to the imported K0 declarations/controlled fixture in [imported-k0-and-w0.md](imported-k0-and-w0.md). Production Knowledge services and dialogue persistence are not delivered by that import. OCT-BUSINESS owns canonical Knowledge and persistence types. Chat owns only conversation/events and wiki adapter semantics. Integration owns composition and shared provider admission; Explore owns exact reader routing.
 
 ## K0 — required compiled contract checkpoint

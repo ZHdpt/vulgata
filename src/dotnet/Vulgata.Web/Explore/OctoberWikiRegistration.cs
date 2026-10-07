@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberChat;
 using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Web.Data;
+using Vulgata.Web.Services.OctoberChat;
 
 namespace Vulgata.Web.Explore;
 
@@ -26,6 +28,9 @@ public static class OctoberWikiRegistration
         if (selection is null)
         {
             services.AddOctoberKnowledgeReads(null);
+            services.AddScoped<IOctoberChatContextProvider, UnavailableOctoberChatContextProvider>();
+            services.AddScoped<IOctoberChatSelectionService, UnavailableOctoberChatSelectionService>();
+            services.AddOctoberChat();
             return services.AddExploreReader();
         }
 
@@ -43,6 +48,11 @@ public static class OctoberWikiRegistration
             selection, provider.GetRequiredService<AuthenticationStateProvider>(),
             provider.GetRequiredService<IOptions<IdentityOptions>>(),
             provider.GetRequiredService<IOctoberKnowledgeDisclosurePolicy>()));
+        services.AddScoped<IOctoberChatContextProvider>(provider => new OctoberChatContextProvider(
+            selection, provider.GetRequiredService<AuthenticationStateProvider>(),
+            provider.GetRequiredService<IOptions<IdentityOptions>>(),
+            provider.GetRequiredService<IOctoberKnowledgeDisclosurePolicy>()));
+        services.AddOctoberChat();
         return services.AddExploreReader();
     }
 
@@ -77,29 +87,31 @@ public static class OctoberWikiRegistration
 internal sealed record OctoberWikiSelection(PublicationBinding Publication, KnowledgeMode Mode,
     ImmutableArray<Guid> RepositoryIds, string LogDirectory);
 
-/// <summary>One frozen reader selection per circuit, with live identity and owner policy on every observation.</summary>
-internal sealed class OctoberExploreContextProvider : IExploreContextProvider, IDisposable
+/// <summary>Frozen selection, purpose-specific live identity checks; never a Document disclosure grant.</summary>
+internal abstract class OctoberLiveReadContext : IDisposable
 {
     private readonly OctoberWikiSelection _selection;
     private readonly AuthenticationStateProvider _authentication;
     private readonly ClaimsIdentityOptions _claims;
     private readonly IOctoberKnowledgeDisclosurePolicy _policy;
+    private readonly KnowledgePurpose _purpose;
     private long _generation;
     private bool _disposed;
 
-    public OctoberExploreContextProvider(OctoberWikiSelection selection, AuthenticationStateProvider authentication,
-        IOptions<IdentityOptions> identityOptions, IOctoberKnowledgeDisclosurePolicy policy)
+    protected OctoberLiveReadContext(OctoberWikiSelection selection, AuthenticationStateProvider authentication,
+        IOptions<IdentityOptions> identityOptions, IOctoberKnowledgeDisclosurePolicy policy, KnowledgePurpose purpose)
     {
         _selection = selection;
         _authentication = authentication;
         _claims = identityOptions.Value.ClaimsIdentity;
         _policy = policy;
+        _purpose = purpose;
         _authentication.AuthenticationStateChanged += OnAuthenticationChanged;
     }
 
     public event Action? ContextChanged;
 
-    public async Task<ExploreContext?> GetCurrentAsync(CancellationToken cancellationToken = default)
+    protected async Task<ReadSelectionRequest?> GetRequestAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (_disposed) return null;
@@ -111,13 +123,13 @@ internal sealed class OctoberExploreContextProvider : IExploreContextProvider, I
             var subject = Subject((await _authentication.GetAuthenticationStateAsync().WaitAsync(deadline.Token)).User);
             if (subject is null) return null;
             var request = new ReadSelectionRequest(_selection.Publication, subject, _selection.Mode,
-                KnowledgePurpose.Reader, _selection.RepositoryIds);
+                _purpose, _selection.RepositoryIds);
             if (await _policy.CheckAsync(new(request, [], null), deadline.Token).WaitAsync(deadline.Token) != DisclosureStatus.Allowed)
                 return null;
             var currentSubject = Subject((await _authentication.GetAuthenticationStateAsync().WaitAsync(deadline.Token)).User);
             deadline.Token.ThrowIfCancellationRequested();
             return !_disposed && generation == Volatile.Read(ref _generation) && currentSubject == subject
-                ? new(request) : null;
+                ? request : null;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception) { return null; }
@@ -145,5 +157,44 @@ internal sealed class OctoberExploreContextProvider : IExploreContextProvider, I
         _disposed = true;
         Interlocked.Increment(ref _generation);
         _authentication.AuthenticationStateChanged -= OnAuthenticationChanged;
+    }
+}
+
+internal sealed class OctoberExploreContextProvider(OctoberWikiSelection selection,
+    AuthenticationStateProvider authentication, IOptions<IdentityOptions> identityOptions,
+    IOctoberKnowledgeDisclosurePolicy policy)
+    : OctoberLiveReadContext(selection, authentication, identityOptions, policy, KnowledgePurpose.Reader), IExploreContextProvider
+{
+    public async Task<ExploreContext?> GetCurrentAsync(CancellationToken cancellationToken = default) =>
+        await GetRequestAsync(cancellationToken) is { } request ? new(request) : null;
+}
+
+internal sealed class OctoberChatContextProvider(OctoberWikiSelection selection,
+    AuthenticationStateProvider authentication, IOptions<IdentityOptions> identityOptions,
+    IOctoberKnowledgeDisclosurePolicy policy)
+    : OctoberLiveReadContext(selection, authentication, identityOptions, policy, KnowledgePurpose.Chat), IOctoberChatContextProvider
+{
+    public Task<ReadSelectionRequest?> GetCurrentAsync(CancellationToken cancellationToken = default) =>
+        GetRequestAsync(cancellationToken);
+}
+
+internal sealed class UnavailableOctoberChatContextProvider : IOctoberChatContextProvider
+{
+    public event Action? ContextChanged { add { } remove { } }
+
+    public Task<ReadSelectionRequest?> GetCurrentAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult<ReadSelectionRequest?>(null);
+    }
+}
+
+internal sealed class UnavailableOctoberChatSelectionService : IOctoberChatSelectionService
+{
+    public Task<OctoberChatSelectionResult> OpenAsync(ReadSelectionRequest? trustedSelection,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new OctoberChatSelectionResult(OctoberChatEntryStatus.Unavailable, null, null));
     }
 }

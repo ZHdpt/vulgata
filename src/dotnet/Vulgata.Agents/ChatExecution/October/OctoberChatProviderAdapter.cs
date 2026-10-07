@@ -13,14 +13,17 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         ["SearchWiki", "BrowseWiki", "ReadWiki", "GetRelatedDocuments", "ReportAnswerDocuments"];
     private readonly OctoberWikiTools _tools;
     private readonly OctoberChatBudget _budget;
+    private readonly Action<OctoberChatToolProgress>? _onToolProgress;
     private readonly HashSet<string> _seenCallIds = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PendingCall> _pendingCalls = new(StringComparer.Ordinal);
 
-    internal OctoberChatProviderAdapter(IChatClient client, OctoberWikiTools tools, OctoberChatBudget budget)
+    internal OctoberChatProviderAdapter(IChatClient client, OctoberWikiTools tools, OctoberChatBudget budget,
+        Action<OctoberChatToolProgress>? onToolProgress = null)
         : base(new BorrowedChatClient(client))
     {
         _tools = tools;
         _budget = budget;
+        _onToolProgress = onToolProgress;
     }
 
     internal ChatFinishReason? LastFinishReason { get; private set; }
@@ -129,8 +132,25 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
 
         // Forward all original fields, including unknown fields, to the strict facade.
         // A reflection binder must not silently discard an attempted authority override.
-        OctoberChatToolResult result = await _tools.InvokeAsync(call.Name, admitted.ArgumentsJson, cancellationToken);
+        // Application activity uses its own opaque identifier, never the provider's
+        // call ID, arguments or result. A throwing sink stops execution without a
+        // recursive attempt to notify that same sink about its own failure.
+        Guid operationId = Guid.NewGuid();
+        _onToolProgress?.Invoke(new(operationId, OctoberChatToolProgressKind.Started));
+        OctoberChatToolResult result;
+        try
+        {
+            result = await _tools.InvokeAsync(call.Name, admitted.ArgumentsJson, cancellationToken);
+        }
+        catch (Exception)
+        {
+            _onToolProgress?.Invoke(new(operationId, OctoberChatToolProgressKind.Failed));
+            throw;
+        }
+
         _pendingCalls.Remove(call.CallId);
+        _onToolProgress?.Invoke(new(operationId, result.Status == OctoberChatToolStatus.Succeeded
+            ? OctoberChatToolProgressKind.Completed : OctoberChatToolProgressKind.Failed));
         if (result.Status is OctoberChatToolStatus.BudgetExceeded or OctoberChatToolStatus.Cancelled or
             OctoberChatToolStatus.InvalidArguments or OctoberChatToolStatus.InvalidReport)
         {
