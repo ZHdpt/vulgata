@@ -236,7 +236,9 @@ internal sealed class OctoberClPublicationPhase : IOctoberCommitSubmissionGuard,
                     return Report(OctoberPublicationStatus.Indeterminate, "publication_settlement_pending", disclose: false);
                 if (await DisclosureAsync(cancellationToken) != DisclosureStatus.Allowed)
                     return Report(OctoberPublicationStatus.Failed, "authority_unavailable", disclose: false);
-                return Report(OctoberPublicationStatus.Confirmed, publication: published.Publication);
+                return Report(OctoberPublicationStatus.Confirmed,
+                    published.Status == KnowledgeWriteStatus.LogUnavailable ? "operation_log_unavailable" : null,
+                    publication: published.Publication);
             }
             if (await DisclosureAsync(cancellationToken) != DisclosureStatus.Allowed)
                 return Report(OctoberPublicationStatus.Failed, "authority_unavailable", disclose: false);
@@ -353,7 +355,9 @@ internal sealed class OctoberClPublicationPhase : IOctoberCommitSubmissionGuard,
             : result.Publication is { } publication && publication.Knowledge == _request.Binding && publication.PublicationId != Guid.Empty);
 
     private bool HasConfirmedHandle(PhaseWrite phase, KnowledgeWriteResult result) =>
-        result.Status is (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted) && ValidHandle(phase, result);
+        (result.Status is (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted) ||
+            result.Status == KnowledgeWriteStatus.LogUnavailable && phase.Operation.Kind == OperationKind.PublishSelection) &&
+        ValidHandle(phase, result);
 
     private async Task<CommitSettlement> ObserveCommitAsync(PhaseWrite phase, Task<CommitSettlement> settlement,
         CancellationTokenSource commitToken)
@@ -434,6 +438,7 @@ internal sealed class OctoberClPublicationPhase : IOctoberCommitSubmissionGuard,
                 ? OctoberCoverageStatus.Complete : OctoberCoverageStatus.Partial;
         var execution = status == OctoberPublicationStatus.Indeterminate ? OctoberExecutionStatus.Indeterminate :
             interrupted ? OctoberExecutionStatus.Interrupted :
+            gap == "operation_log_unavailable" ? OctoberExecutionStatus.Failed :
             status is OctoberPublicationStatus.Confirmed or OctoberPublicationStatus.NoContent
                 ? OctoberExecutionStatus.Completed : OctoberExecutionStatus.Failed;
         ImmutableArray<DocumentHandle> documents = disclose && publication is not null
