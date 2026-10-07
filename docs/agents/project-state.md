@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-07 (Business B0 reader, Explore E0, Scan S1 and controlled Chat integrated; runtime qualification retains its bounded scope).
+Updated: 2026-10-08 (controlled Business attempt consumers integrated; actual selected transport and runtime qualification remain separate).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -30,7 +30,7 @@ verification before reuse.
 
 ## Current authority and delivery
 
-Latest October integration checkpoint (October 7): `d92833c1` includes the reviewed
+Earlier October integration checkpoint (October 7): `d92833c1` includes the reviewed
 Business trusted flow-input loader, controlled CL-only Generate runner and actual
 Main/safe-report wiring, saved Chat reference footer and canonical history/display
 consumer. Shared explicit Generate fixture inputs are at `417c888f`; the behavior-free
@@ -55,6 +55,13 @@ an undisposed local logger/open handle after factory scope exit. Root owns this
 unresolved teardown defect; no test waiver or runtime readiness is claimed. Actual
 BL host composition, Web Chat activation and one-dataset ordinary-user qualification
 remain open. See the wave handoff for exact evidence and resource boundaries.
+
+Business attempt consumers `9950c8b` now implement the accepted lease-aware
+interface, exact profile checks, observed dispatch and terminal accounting. Root
+combined October/Explore/PreparedSource tests pass 2,008/2,008, zero skips
+(`1ce61f77cba84bf493b6890a5e13d5f6`). This does not replace the non-green full-suite
+result above. Scan's actual selected-client implementation/conformance must join
+these consumers before claiming a complete controlled B1/B2 route.
 
 - [PRD](../bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md): product scope
   and explicit Current/Deferred/History/Original unmet backlog dispositions.

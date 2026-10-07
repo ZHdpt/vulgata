@@ -1,9 +1,11 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.AI;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberScan;
 using Vulgata.Core.Entities.OctoberKnowledge;
 
 namespace Vulgata.Agents.OctoberBusiness;
@@ -47,6 +49,12 @@ public sealed class OctoberBusinessSynthesisExecutor
         ArgumentNullException.ThrowIfNull(disclosure);
         var attempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
         BusinessSynthesisResult Result(ProviderAdmissionStatus? failure) => new(null, null, failure, attempts.ToImmutable());
+        if (_client is not IOctoberBusinessAttemptClient attemptClient) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
+        try
+        {
+            if (!StringComparer.Ordinal.Equals(attemptClient.ProviderProfileId, providerProfileId)) return Result(ProviderAdmissionStatus.Denied);
+        }
+        catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
         if (executionScope is not IOctoberBusinessHandoffLifetime lifetime) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
         ProviderAdmissionStatus HandoffStatus()
         {
@@ -107,8 +115,9 @@ public sealed class OctoberBusinessSynthesisExecutor
             var leaseCancellation = lease.CancellationToken;
             using var transportCancellation = CancellationTokenSource.CreateLinkedTokenSource(admissionCancellation.Token, leaseCancellation);
             var wait = _time.GetElapsedTime(requested);
-            long executionStarted = _time.GetTimestamp();
-            bool sent = false;
+            long dispatchedAt = 0;
+            long terminalAt = 0;
+            var observer = lease as IOctoberWorkerDispatchObserver;
             bool retry = false;
             ChatResponse? response = null;
             BusinessSynthesisProposal? proposal = null;
@@ -117,6 +126,7 @@ public sealed class OctoberBusinessSynthesisExecutor
             ProviderAttemptOutcome outcome = ProviderAttemptOutcome.Failed;
             try
             {
+                if (observer is null) throw new InvalidOperationException("Business dispatch observation is unavailable.");
                 var authority = await CheckAuthorityAsync(disclosure, input.Corpus.Handle, group.Dependencies.Contributors, transportCancellation.Token);
                 if (authority != DisclosureStatus.Allowed) failure = AuthorityStatus(authority);
                 else
@@ -128,15 +138,16 @@ public sealed class OctoberBusinessSynthesisExecutor
                     else
                     {
                         transportCancellation.Token.ThrowIfCancellationRequested();
-                        sent = true;
                         try
                         {
                             // Keep physical transport owned until it settles, including ignored cancellation.
-                            response = await _client.GetResponseAsync([new(ChatRole.System, _instructions), new(ChatRole.User, payload)],
+                            response = await attemptClient.GetAttemptResponseAsync([new(ChatRole.System, _instructions), new(ChatRole.User, payload)],
                                 new ChatOptions { Tools = [], ResponseFormat = ChatResponseFormat.Json, MaxOutputTokens = (int)Math.Min(maximumTokens, int.MaxValue) },
+                                lease, timestamp => Interlocked.CompareExchange(ref dispatchedAt, timestamp, 0),
                                 transportCancellation.Token);
                         }
                         catch (Exception error) when (error is IOException or HttpRequestException or TimeoutException) { retry = true; }
+                        finally { terminalAt = Stopwatch.GetTimestamp(); }
                         if (transportCancellation.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(180))
                             failure = leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested
                                 ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
@@ -166,9 +177,29 @@ public sealed class OctoberBusinessSynthesisExecutor
             catch (Exception) { failure = ProviderAdmissionStatus.AuthorityUnavailable; }
             finally
             {
+                bool observationComplete = false;
+                try
+                {
+                    if (observer is not null)
+                    {
+                        observer.CompleteDispatchObservation();
+                        observationComplete = true;
+                    }
+                }
+                catch (Exception) { }
+                if (!observationComplete)
+                {
+                    failure = ProviderAdmissionStatus.AuthorityUnavailable;
+                    retry = false;
+                    validated = null;
+                    outcome = ProviderAttemptOutcome.Failed;
+                }
                 if (failure is ProviderAdmissionStatus.HardStopped or ProviderAdmissionStatus.DeadlineExceeded) outcome = ProviderAttemptOutcome.Cancelled;
-                var usage = new ProviderAttemptUsage(sent ? Nonnegative(response?.Usage?.InputTokenCount) : 0,
-                    sent ? Nonnegative(response?.Usage?.OutputTokenCount) : 0, null, wait, _time.GetElapsedTime(executionStarted), outcome);
+                long physicalStart = Volatile.Read(ref dispatchedAt);
+                bool sent = physicalStart != 0;
+                var usage = new ProviderAttemptUsage(!observationComplete ? null : sent ? Nonnegative(response?.Usage?.InputTokenCount) : 0,
+                    !observationComplete ? null : sent ? Nonnegative(response?.Usage?.OutputTokenCount) : 0, null, wait,
+                    sent && terminalAt >= physicalStart ? Stopwatch.GetElapsedTime(physicalStart, terminalAt) : TimeSpan.Zero, outcome);
                 attempts.Add(usage);
                 try { await lease.SettleAsync(usage, CancellationToken.None); }
                 catch (Exception) { failure = ProviderAdmissionStatus.AuthorityUnavailable; }

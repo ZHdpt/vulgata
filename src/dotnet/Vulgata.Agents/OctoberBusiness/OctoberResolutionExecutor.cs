@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberScan;
 
 namespace Vulgata.Agents.OctoberBusiness;
 
@@ -39,6 +41,12 @@ public sealed class OctoberResolutionExecutor
         var attempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
         ResolutionExecutionResult Result(ProviderAdmissionStatus? failure, ResolutionOutcome? outcome = null) =>
             new(outcome, failure, attempts.ToImmutable());
+        if (_client is not IOctoberBusinessAttemptClient attemptClient) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
+        try
+        {
+            if (!StringComparer.Ordinal.Equals(attemptClient.ProviderProfileId, providerProfileId)) return Result(ProviderAdmissionStatus.Denied);
+        }
+        catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
         if (executionScope is not IOctoberBusinessHandoffLifetime lifetime) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
         ProviderAdmissionStatus HandoffStatus()
         {
@@ -87,9 +95,10 @@ public sealed class OctoberResolutionExecutor
             CancellationToken leaseCancellation = lease.CancellationToken;
             using var transportCancellation = CancellationTokenSource.CreateLinkedTokenSource(admissionCancellation.Token, leaseCancellation);
             TimeSpan wait = _time.GetElapsedTime(requested);
-            long executionStarted = _time.GetTimestamp();
+            long dispatchedAt = 0;
+            long terminalAt = 0;
+            var observer = lease as IOctoberWorkerDispatchObserver;
             ChatResponse? response = null;
-            bool sent = false;
             bool retry = false;
             ResolutionOutcome? outcome = null;
             ResolutionWitness? parsedWitness = null;
@@ -97,6 +106,7 @@ public sealed class OctoberResolutionExecutor
             ProviderAttemptOutcome attemptOutcome = ProviderAttemptOutcome.Failed;
             try
             {
+                if (observer is null) throw new InvalidOperationException("Business dispatch observation is unavailable.");
                 var authority = await CheckAuthorityAsync(disclosure, corpus.Handle, actual.Contributors, transportCancellation.Token);
                 if (authority != DisclosureStatus.Allowed)
                     failure = authority == DisclosureStatus.Denied ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.AuthorityUnavailable;
@@ -109,12 +119,12 @@ public sealed class OctoberResolutionExecutor
                     else
                     {
                         transportCancellation.Token.ThrowIfCancellationRequested();
-                        sent = true;
                         // Await actual transport settlement even when it ignores cancellation. Never release its lease early.
                         try
                         {
-                            response = await _client.GetResponseAsync([new(ChatRole.System, _instructions), new(ChatRole.User, input)],
+                            response = await attemptClient.GetAttemptResponseAsync([new(ChatRole.System, _instructions), new(ChatRole.User, input)],
                                 new ChatOptions { ResponseFormat = ChatResponseFormat.Json, MaxOutputTokens = (int)Math.Min(maximumTokens, int.MaxValue), Tools = [] },
+                                lease, timestamp => Interlocked.CompareExchange(ref dispatchedAt, timestamp, 0),
                                 transportCancellation.Token);
                         }
                         catch (Exception exception) when (exception is IOException or HttpRequestException or TimeoutException)
@@ -123,6 +133,7 @@ public sealed class OctoberResolutionExecutor
                             // Authority, response validation and policy failures never repeat generation.
                             retry = true;
                         }
+                        finally { terminalAt = Stopwatch.GetTimestamp(); }
                         if (transportCancellation.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(120))
                             failure = leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested
                                 ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
@@ -154,11 +165,30 @@ public sealed class OctoberResolutionExecutor
             catch (Exception) { failure = ProviderAdmissionStatus.AuthorityUnavailable; }
             finally
             {
+                bool observationComplete = false;
+                try
+                {
+                    if (observer is not null)
+                    {
+                        observer.CompleteDispatchObservation();
+                        observationComplete = true;
+                    }
+                }
+                catch (Exception) { }
+                if (!observationComplete)
+                {
+                    failure = ProviderAdmissionStatus.AuthorityUnavailable;
+                    retry = false;
+                    outcome = null;
+                    attemptOutcome = ProviderAttemptOutcome.Failed;
+                }
                 if (failure is ProviderAdmissionStatus.HardStopped or ProviderAdmissionStatus.DeadlineExceeded)
                     attemptOutcome = ProviderAttemptOutcome.Cancelled;
-                var usage = new ProviderAttemptUsage(sent ? Nonnegative(response?.Usage?.InputTokenCount) : 0,
-                    sent ? Nonnegative(response?.Usage?.OutputTokenCount) : 0, null, wait,
-                    _time.GetElapsedTime(executionStarted), attemptOutcome);
+                long physicalStart = Volatile.Read(ref dispatchedAt);
+                bool sent = physicalStart != 0;
+                var usage = new ProviderAttemptUsage(!observationComplete ? null : sent ? Nonnegative(response?.Usage?.InputTokenCount) : 0,
+                    !observationComplete ? null : sent ? Nonnegative(response?.Usage?.OutputTokenCount) : 0, null, wait,
+                    sent && terminalAt >= physicalStart ? Stopwatch.GetElapsedTime(physicalStart, terminalAt) : TimeSpan.Zero, attemptOutcome);
                 attempts.Add(usage);
                 try { await lease.SettleAsync(usage, CancellationToken.None); }
                 catch (Exception) { failure = ProviderAdmissionStatus.AuthorityUnavailable; retry = false; outcome = null; }

@@ -1433,3 +1433,92 @@ service lifetime with the route still disabled; then durable conversation/histor
 preparation and parent UI activation. Those controlled tasks need no new provider
 grant. Live dataset generation and PostgreSQL/host qualification remain blocked on
 the consolidated explicit resource request.
+
+### Selected-client Business invocation agreement
+
+After synchronization, Scan identified and root verified a real composition gap:
+OctoberWorkerClientFactory.SelectedClient rejects ordinary IChatClient calls, while
+both Business executors used GetResponseAsync despite holding an explicit lease.
+Fixture-client results do not establish this real-client compatibility. Existing
+B1 stores/input discovery are available; this does not require another knowledge
+store or root-inference strategy.
+
+Business and Scan concurred on one additive Agents-only interface, owned by Business
+at OctoberBusiness/IOctoberBusinessAttemptClient.cs:
+
+```csharp
+string ProviderProfileId { get; }
+Task<ChatResponse> GetAttemptResponseAsync(
+    IEnumerable<ChatMessage> messages, ChatOptions? options,
+    IOctoberProviderAttemptLease lease, Action<long> onDispatched,
+    CancellationToken cancellationToken = default);
+```
+
+Microsoft.Extensions.AI types stay in Agents. Worker streaming is unchanged. Scan's
+selected client implements the interface using the same frozen configuration,
+existing LeaseHandler, retry-zero SDK and explicit already-acquired Business lease.
+No raw-client fallback, implicit lease or second permit/pool is allowed. Business
+fails closed for missing capability or mismatched profile. The mandatory callback
+observes the physical send boundary using the existing Stopwatch convention; a
+successful eligibility/rate check alone is not a send. The returned task retains
+actual HTTP/body/SDK cleanup even under ignored cancellation. Business then completes
+the same lease's existing dispatch observation before settlement and disposal.
+Failed/missing observation after invocation is unknown, never a zero-usage refund;
+positive unsent observation requires terminal physical settlement. Existing bounded
+Business retries still obtain fresh host admission within original budgets; the SDK
+does not add retries. Actual selected-factory tests use a controlled HTTP handler,
+not a permissive replacement client or live provider.
+
+Both owners also accepted these exact host bindings:
+
+- Validated `only-source` maps to projection Precedence 0; ChatCompletions maps to
+  the existing wire string `chat-completions`. Unknown values fail closed. Preserve
+  exact source identity, name, endpoint, model and credential reference, excluding
+  ciphertext/secrets. Use the existing owner fingerprint helper only; actual frozen
+  credential/client lifetime remains a separate host binding.
+- Discover real document handles through the existing owner reader bound to the
+  exact returned PublicationBinding, live IT selection, KnowledgePurpose.Reader
+  and authorized RepositoryScope. Empty-query SearchAsync supports discovery with
+  returned continuation tokens and existing page-size limits. Apply finite total
+  page/item/byte/time bounds and nonprogress detection; exact reads keep all-contributor
+  checks and content continuation when claiming a complete read. Empty, failed or
+  truncated discovery cannot turn a known publication into NoContent or prove
+  complete membership. No guessed IDs, current-publication fallback or new read purpose.
+
+Business is released to author the isolated compiling declaration checkpoint first;
+root will review/import and relay the exact hash. Consumer production changes use that
+declaration after import. Scan may meanwhile author the internal controlled host seam
+and tests using the agreed mapping, preserving explicit selection over owner Units,
+original scope/session/F1 and CL-only behavior, without Program activation. Runtime
+resources, migration execution and the shared real qualification remain unapproved.
+
+The exact two-file owner declaration `fc9e0c0245d985480697748a158763ba6d34a3ac`
+is selectively integrated at `8b170d8cf0491cc88df5869a43516d71e9b6bc2f`; both files
+compare equal to the owner checkpoint. Root Agents compilation passed with zero
+errors and 5,779 warnings. Business executor consumption/accounting and Scan selected
+transport implementation/conformance are now released against this exact declaration.
+This is compilation of an interface, not corrected-client runtime qualification;
+the existing full-suite logging teardown failure remains unresolved.
+
+### October 8 Business attempt consumers
+
+Business checkpoint `9950c8b371e52178e05a144cd3f571d58c63c009` changes the two
+executors and controlled test adapters against the exact accepted interface. Root
+independent review accepts capability/profile checks before acquisition, same-lease
+invocation, physical task ownership, terminal observation before settlement/release,
+and unknown/no-material/no-retry behavior when observation is missing or fails.
+Stopwatch dispatch/terminal measurements stay separate from injected TimeProvider
+wait/deadline/retry clocks. No ordinary IChatClient fallback is retained.
+
+Owner evidence: initial 22/22 RED (`7269f511fdc4470487c841e5ede82899`), 165/165
+affected GREEN (`4b1b96871531428f81ef456bec871416`) and final distinct-clock 24/24
+coverage (`d8e2c8b17e1542969b9bc0a45d67896b`). Later missing-observer/clock cases
+are additional coverage, not separately claimed RED. Scan must still provide its
+real selected-client implementation and actual-factory controlled HTTP conformance
+against this consumer checkpoint before claiming a complete controlled route.
+
+Root's combined October/Explore/PreparedSource SelfContained selection passes
+2,008/2,008, zero failures/skips (`1ce61f77cba84bf493b6890a5e13d5f6`), with 424
+classified files and compilation at zero errors/14,177 warnings. This is not a new
+full-suite pass; the previously captured logging teardown defect remains open.
+No PostgreSQL, native tool, external-provider or E2E suite was executed.
