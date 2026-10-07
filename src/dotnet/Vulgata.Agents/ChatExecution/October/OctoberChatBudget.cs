@@ -49,7 +49,7 @@ public sealed class OctoberChatBudget
     public long ToolResultBytes { get { lock (_gate) return _toolResultBytes; } }
     public long OutputBytes { get { lock (_gate) return _outputBytes; } }
     public long SseBytes { get { lock (_gate) return _sseBytes; } }
-    internal CancellationToken OriginalCancellationToken => _cancellationToken;
+    public CancellationToken OriginalCancellationToken => _cancellationToken;
     internal OctoberChatProviderStatus? TransportFailureStatus { get { lock (_gate) return _transportFailureStatus; } }
 
     internal void RecordTransportRejection(int observedAttempts, bool budgetExceeded)
@@ -63,7 +63,7 @@ public sealed class OctoberChatBudget
         }
     }
 
-    internal CancellationTokenSource CreateDeadlineCancellation()
+    public CancellationTokenSource CreateDeadlineCancellation()
     {
         lock (_gate)
         {
