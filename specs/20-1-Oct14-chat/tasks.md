@@ -164,7 +164,9 @@ qualification and live history/disclosure integration. No competing Chat turn sc
 or persistence implementation is needed; Business declarations remain canonical.
 T020–T021 now include the reviewed bounded actual delivery adapter, opaque lineage
 snapshots, authorized terminal replacement and nonterminal display suppression,
-verified by 795 affected controlled passes. Safe Markdown, exact reader links and
-actual page/browser integration remain incomplete. T022 and T023 retain their distinct resource
+verified by 795 affected controlled passes. A conservative encoded Markdown subset
+is also implemented and independently reviewed with 402 selected Chat/page passes;
+full CommonMark is not claimed. Exact reader links and actual page/browser integration
+remain incomplete. T022 and T023 retain their distinct resource
 and qualification prerequisites. No additional human gate is introduced by these
 controlled increments.
