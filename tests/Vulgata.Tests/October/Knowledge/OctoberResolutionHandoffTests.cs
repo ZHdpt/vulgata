@@ -33,7 +33,7 @@ public sealed class OctoberResolutionHandoffTests
         Guid run = Guid.NewGuid();
         var finalization = new OperationKey(request.Operation.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
         await using var scope = Scope(fixture, run, finalization);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(JsonSerializer.Serialize(original))));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(JsonSerializer.Serialize(original))));
         var executor = new OctoberResolutionExecutor(client, "Controlled inquiry: retain accepted facts, exact evidence and qualifications.");
 
         var execution = await executor.ExecuteAsync(corpus, inquiry, finalization, run, "controlled-profile", 40,
@@ -97,7 +97,7 @@ public sealed class OctoberResolutionHandoffTests
         var finalization = new OperationKey(fixture.Corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
         await using var scope = Scope(fixture, run, finalization);
         var disclosure = new ResolutionDisclosure();
-        using var client = new ResolutionClient((_, _) =>
+        using var client = new ResolutionClient("controlled-profile", (_, _) =>
         {
             if (failure == "final-denial") disclosure.Status = DisclosureStatus.Denied;
             if (failure == "hard-stop") scope.HardStop();
@@ -140,7 +140,7 @@ public sealed class OctoberResolutionHandoffTests
         }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted), finalization);
         var disclosure = new ResolutionDisclosure();
         var scope = new ResolutionSettlementRevocationScope(host, disclosure, changedAuthority);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(JsonSerializer.Serialize(original))));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(JsonSerializer.Serialize(original))));
 
         var result = await new OctoberResolutionExecutor(client, "Controlled accepted-evidence inquiry.")
             .ExecuteAsync(fixture.Corpus, inquiry, finalization, run, "controlled-profile", 40, scope, disclosure);
@@ -178,7 +178,7 @@ public sealed class OctoberResolutionHandoffTests
         if (runDeadline) clock.Advance(TimeSpan.FromSeconds(120));
         var fullLedger = fixture.Corpus.Documents.SelectMany(document => document.Contributors).Distinct().ToImmutableArray();
         var authority = new SynthesisHandoffDisclosure(fullLedger);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(JsonSerializer.Serialize(fixture.Witness()))));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(JsonSerializer.Serialize(fixture.Witness()))));
         var active = new OctoberResolutionExecutor(client, "Controlled accepted-evidence inquiry.", clock)
             .ExecuteAsync(fixture.Corpus, fixture.Inquiry(), finalization, run, "controlled-profile", 40, host, authority);
         OctoberWorkerProviderAttemptRequest Worker() => new(run, ResolutionCase.Id(98500), Guid.NewGuid(),
@@ -221,7 +221,7 @@ public sealed class OctoberResolutionHandoffTests
         var finalization = new OperationKey(fixture.Corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
         await using var host = ActualScope(fixture, run, finalization);
         var legacy = new ResolutionHandoffLegacyScope(host);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(JsonSerializer.Serialize(fixture.Witness()))));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(JsonSerializer.Serialize(fixture.Witness()))));
 
         var result = await new OctoberResolutionExecutor(client, "Controlled accepted-evidence inquiry.")
             .ExecuteAsync(fixture.Corpus, fixture.Inquiry(), finalization, run, "controlled-profile", 40, legacy, new ResolutionDisclosure());
@@ -244,7 +244,7 @@ public sealed class OctoberResolutionHandoffTests
         var clock = new SynthesisClock();
         await using var host = ActualScope(fixture, run, finalization, clock);
         var original = fixture.Witness();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(new ChatResponse(
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(new ChatResponse(
             new ChatMessage(ChatRole.Assistant, JsonSerializer.Serialize(original)))
         {
             FinishReason = ChatFinishReason.Stop, Usage = null
@@ -331,8 +331,12 @@ internal sealed class ResolutionSettlementRevocationScope(IOctoberExecutionScope
         CancellationAtTransition = cancellationToken.IsCancellationRequested;
         disclosure.Status = changedAuthority;
     }
-    private sealed class Lease(ResolutionSettlementRevocationScope owner, IOctoberProviderAttemptLease inner) : IOctoberProviderAttemptLease
+    private sealed class Lease(ResolutionSettlementRevocationScope owner, IOctoberProviderAttemptLease inner) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
+        private IOctoberWorkerDispatchObserver Observer => inner as IOctoberWorkerDispatchObserver
+            ?? throw new InvalidOperationException("Missing inner lease dispatch observer.");
+        public void RecordDispatch() => Observer.RecordDispatch();
+        public void CompleteDispatchObservation() => Observer.CompleteDispatchObservation();
         public Guid AttemptId => inner.AttemptId;
         public CancellationToken CancellationToken => inner.CancellationToken;
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default) => inner.CheckBeforeSendAsync(cancellationToken);

@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberScan;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.October.Knowledge;
@@ -14,7 +16,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     public async Task ExecuteAsync_QualifiedInput_DisclosesOnlyAcceptedContextWithoutToolsAndAccountsOnceAsync()
     {
         var fixture = new ResolutionCase();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture.Witness())));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(fixture.Witness())));
         var scope = new ResolutionScopeProbe();
         var authority = new ResolutionDisclosure();
         var result = await ExecuteAsync(fixture, client, scope, authority);
@@ -49,7 +51,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     public async Task ExecuteAsync_HostRefusesAdmission_SendsNothingAndNeverInventsUsageAsync(ProviderAdmissionStatus status)
     {
         var fixture = new ResolutionCase();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture.Witness())));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(fixture.Witness())));
         var scope = new ResolutionScopeProbe { AdmissionFailure = status };
         var result = await ExecuteAsync(fixture, client, scope);
         Assert.Equal(status, result.AdmissionFailure);
@@ -67,7 +69,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     public async Task ExecuteAsync_LiveContributorAuthorityFails_DoesNotDiscloseAcceptedInputsAsync(DisclosureStatus status)
     {
         var fixture = new ResolutionCase();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture.Witness())));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(fixture.Witness())));
         var result = await ExecuteAsync(fixture, client, new ResolutionScopeProbe(), new ResolutionDisclosure { Status = status });
         Assert.Equal(0, client.Calls);
         Assert.NotEqual(ResolutionOutcomeKind.Supported, result.Outcome?.Kind);
@@ -86,7 +88,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         Assert.Equal(ResolutionOutcomeKind.Supported,
             OctoberResolutionPolicy.Validate(fixture.Corpus, fixture.Inquiry(), witness).Kind);
         bool providerReturned = false;
-        using var client = new ResolutionClient((_, _) =>
+        using var client = new ResolutionClient("controlled-profile", (_, _) =>
         {
             var response = Response(witness);
             providerReturned = true;
@@ -117,7 +119,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     public async Task ExecuteAsync_GrantThenHardStop_RechecksBeforeSendAndReleasesOnlySettledLeaseAsync()
     {
         var fixture = new ResolutionCase();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture.Witness())));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(fixture.Witness())));
         var scope = new ResolutionScopeProbe();
         scope.AfterGrant = scope.Inner.HardStop;
         var result = await ExecuteAsync(fixture, client, scope);
@@ -135,7 +137,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     public async Task ExecuteAsync_RateQueuedThenDeniedOrExpired_NeverSendsAsync(bool expire)
     {
         var fixture = new ResolutionCase();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture.Witness())));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(fixture.Witness())));
         var scope = new ResolutionScopeProbe();
         scope.Inner.RateAllowed = false;
         var pending = ExecuteAsync(fixture, client, scope);
@@ -157,7 +159,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     {
         var fixture = new ResolutionCase();
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var client = new ResolutionClient(async (attempt, _) =>
+        using var client = new ResolutionClient("controlled-profile", async (attempt, _) =>
         {
             if (attempt == 1) await release.Task;
             return Response(fixture.Witness());
@@ -196,7 +198,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         var peer = (await scope.AcquireProviderAttemptAsync(new(ResolutionCase.Id(701), Operation,
             ResolutionCase.Id(702), BusinessWorkKind.Synthesis, "controlled-profile", TimeSpan.FromSeconds(30), 40))).Lease!;
         Assert.Equal(ProviderAdmissionStatus.Granted, await peer.CheckBeforeSendAsync());
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture.Witness())));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(fixture.Witness())));
         var inquiry = ExecuteAsync(fixture, client, scope);
         await scope.SecondRequested.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(0, client.Calls);
@@ -215,7 +217,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     {
         var fixture = new ResolutionCase();
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var client = new ResolutionClient(async (_, _) =>
+        using var client = new ResolutionClient("controlled-profile", async (_, _) =>
         {
             await release.Task; // Deliberately ignores cancellation until the owned transport settles.
             return Response(fixture.Witness());
@@ -251,7 +253,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     {
         var fixture = new ResolutionCase();
         var clock = new B0bReadClock();
-        using var client = new ResolutionClient((attempt, _) =>
+        using var client = new ResolutionClient("controlled-profile", (attempt, _) =>
         {
             if (attempt == 1)
             {
@@ -287,7 +289,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     {
         var fixture = new ResolutionCase();
         var clock = new B0bReadClock();
-        using var client = new ResolutionClient((_, _) =>
+        using var client = new ResolutionClient("controlled-profile", (_, _) =>
         {
             clock.Advance(TimeSpan.FromSeconds(121));
             throw new IOException("Controlled delayed failure.");
@@ -305,7 +307,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     public async Task ExecuteAsync_RepeatedTransportFailure_StopsAtTwoAttemptsAndSettlesUnknownUsageAsync()
     {
         var fixture = new ResolutionCase();
-        using var client = new ResolutionClient((_, _) => throw new IOException("Controlled failure."));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => throw new IOException("Controlled failure."));
         var scope = new ResolutionScopeProbe();
         var result = await ExecuteAsync(fixture, client, scope);
         Assert.Equal(2, client.Calls);
@@ -322,7 +324,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     public async Task ExecuteAsync_ProviderOmitsUsage_RetainsReservationAndBlocksFurtherConstrainedCallsAsync()
     {
         var fixture = new ResolutionCase();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture.Witness(), knownUsage: false)));
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(Response(fixture.Witness(), knownUsage: false)));
         var scope = new ResolutionScopeProbe();
         for (int invocation = 0; invocation < 2; invocation++)
         {
@@ -379,8 +381,12 @@ internal sealed class ResolutionScopeProbe : IOctoberExecutionScope, IOctoberBus
         if (admission.Status == ProviderAdmissionStatus.Granted) AfterGrant?.Invoke();
         return admission.Lease is { } lease ? admission with { Lease = new LeaseProbe(this, lease) } : admission;
     }
-    private sealed class LeaseProbe(ResolutionScopeProbe owner, IOctoberProviderAttemptLease lease) : IOctoberProviderAttemptLease
+    private sealed class LeaseProbe(ResolutionScopeProbe owner, IOctoberProviderAttemptLease lease) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
+        private IOctoberWorkerDispatchObserver Observer => lease as IOctoberWorkerDispatchObserver
+            ?? throw new InvalidOperationException("Missing inner lease dispatch observer.");
+        public void RecordDispatch() => Observer.RecordDispatch();
+        public void CompleteDispatchObservation() => Observer.CompleteDispatchObservation();
         public Guid AttemptId => lease.AttemptId;
         public CancellationToken CancellationToken => lease.CancellationToken;
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default) => lease.CheckBeforeSendAsync(cancellationToken);
@@ -430,9 +436,32 @@ internal sealed class ResolutionPostResponseOutage(Func<bool> providerReturned, 
     }
 }
 
-/// <summary>Controlled task-backed transport. Call count is independent of the host lease spy.</summary>
-internal sealed class ResolutionClient(Func<int, CancellationToken, Task<ChatResponse>> response) : IChatClient
+/// <summary>Explicitly profile-bound, controlled task transport. No HTTP, SDK retry or live-provider claim; the passed lease remains owned by the caller.</summary>
+internal sealed class ResolutionClient(string providerProfileId, Func<int, CancellationToken, Task<ChatResponse>> response) : IChatClient, IOctoberBusinessAttemptClient
 {
+    public string ProviderProfileId { get; } = !string.IsNullOrWhiteSpace(providerProfileId) && providerProfileId == providerProfileId.Trim()
+        ? providerProfileId : throw new ArgumentException("An explicit exact controlled provider profile is required.", nameof(providerProfileId));
+    public IOctoberProviderAttemptLease? LastAttemptLease { get; private set; }
+    public async Task<ChatResponse> GetAttemptResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options,
+        IOctoberProviderAttemptLease lease, Action<long> onDispatched, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(lease);
+        ArgumentNullException.ThrowIfNull(onDispatched);
+        var observer = lease as IOctoberWorkerDispatchObserver
+            ?? throw new InvalidOperationException("The same controlled lease must expose dispatch observation.");
+        LastAttemptLease = lease;
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
+        var eligibility = await lease.CheckBeforeSendAsync(linked.Token);
+        if (eligibility != ProviderAdmissionStatus.Granted)
+            throw new InvalidOperationException("Controlled final lease eligibility refused dispatch: " + eligibility);
+        linked.Token.ThrowIfCancellationRequested();
+        long dispatched = Stopwatch.GetTimestamp();
+        observer.RecordDispatch();
+        onDispatched(dispatched);
+        // Await the actual controlled body task even if it ignores cancellation. The executor owns
+        // CompleteDispatchObservation, SettleAsync and DisposeAsync after this task settles.
+        return await GetResponseAsync(messages, options, linked.Token);
+    }
     private int _calls;
     private int _active;
     public int Calls => Volatile.Read(ref _calls);

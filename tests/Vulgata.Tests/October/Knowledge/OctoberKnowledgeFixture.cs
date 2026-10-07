@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberScan;
 
 namespace Vulgata.Tests.October.Knowledge;
 
@@ -280,16 +281,34 @@ internal sealed class ControlledExecutionScope : IOctoberExecutionScope, IOctobe
         }
     }
     public void HardStop() { _hardStopped = true; _stop.Cancel(); Pump(); }
-    public sealed class ControlledLease(ControlledExecutionScope owner, Guid attemptId, long reservation) : IOctoberProviderAttemptLease
+    public sealed class ControlledLease(ControlledExecutionScope owner, Guid attemptId, long reservation) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
         private bool _settled;
         private bool _released;
+        private bool _sendReserved;
+        // Explicit controlled observer facts; these do not prove real HTTP dispatch.
+        public bool DispatchRecorded { get; private set; }
+        public bool DispatchObservationCompleted { get; private set; }
+        public void RecordDispatch()
+        {
+            if (_released || _settled || DispatchObservationCompleted || DispatchRecorded)
+                throw new InvalidOperationException("Controlled dispatch observation is closed or duplicated.");
+            DispatchRecorded = true;
+        }
+        public void CompleteDispatchObservation()
+        {
+            if (_released || _settled || DispatchObservationCompleted)
+                throw new InvalidOperationException("Controlled terminal observation is closed or duplicated.");
+            DispatchObservationCompleted = true;
+        }
         public Guid AttemptId => attemptId;
         public CancellationToken CancellationToken => owner._stopToken;
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default)
         {
             var status = owner._hardStopped ? ProviderAdmissionStatus.HardStopped : owner.DeadlineExpired ? ProviderAdmissionStatus.DeadlineExceeded : owner.RateDenied || !owner.RateAllowed ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.Granted;
-            if (status == ProviderAdmissionStatus.Granted) owner.Sends++;
+            // Legacy Sends counts admitted send reservations, not physical HTTP dispatch.
+            // Every check still observes current eligibility; a final transport check does not reserve twice.
+            if (status == ProviderAdmissionStatus.Granted && !_sendReserved) { _sendReserved = true; owner.Sends++; }
             return Task.FromResult(status);
         }
         public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default)

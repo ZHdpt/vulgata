@@ -21,7 +21,7 @@ public sealed class OctoberBusinessRealScopeTests
         var fixture = new ResolutionCase();
         var clock = new ScopeClock();
         await using var scope = Scope(clock, Policy() with { OutputStage = "cl-only" });
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture)));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(Response(fixture)));
         var result = await ExecuteAsync(fixture, client, scope, clock);
         Assert.Equal(ProviderAdmissionStatus.Denied, result.AdmissionFailure);
         Assert.Null(result.Outcome);
@@ -41,7 +41,7 @@ public sealed class OctoberBusinessRealScopeTests
         var clock = new ScopeClock();
         await using var scope = new OctoberExecutionScope(Run, "selected-profile", Policy(), Eligible,
             mismatch == "unregistered" ? null : Finalization, clock);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture)));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(Response(fixture)));
         var operation = mismatch switch
         {
             "operation-id" => Finalization with { OperationId = Guid.NewGuid() },
@@ -64,7 +64,7 @@ public sealed class OctoberBusinessRealScopeTests
         var clock = new ScopeClock();
         await using var scope = Scope(clock);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var client = new ResolutionClient(async (call, _) =>
+        using var client = new ResolutionClient("selected-profile", async (call, _) =>
         {
             if (call == 1) await release.Task;
             return Response(fixture);
@@ -100,7 +100,7 @@ public sealed class OctoberBusinessRealScopeTests
         Assert.Equal(ProviderAdmissionStatus.Granted, granted.Status);
         var worker = Assert.IsAssignableFrom<IOctoberProviderAttemptLease>(granted.Lease);
         Assert.Equal(ProviderAdmissionStatus.Granted, await worker.CheckBeforeSendAsync());
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture)));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(Response(fixture)));
         var inquiry = ExecuteAsync(fixture, client, scope, clock);
         Assert.False(inquiry.IsCompleted);
         Assert.Equal(0, client.Calls);
@@ -134,7 +134,7 @@ public sealed class OctoberBusinessRealScopeTests
         var clock = new ScopeClock();
         await using var scope = Scope(clock);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var client = new ResolutionClient(async (_, _) =>
+        using var client = new ResolutionClient("selected-profile", async (_, _) =>
         {
             await release.Task; // Controlled transport intentionally delays actual settlement after cancellation.
             return Response(fixture);
@@ -174,7 +174,7 @@ public sealed class OctoberBusinessRealScopeTests
         var fixture = new ResolutionCase();
         var clock = new ScopeClock();
         await using var scope = Scope(clock);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(Response(fixture, knownUsage: false)));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(Response(fixture, knownUsage: false)));
         var completed = await ExecuteAsync(fixture, client, scope, clock);
         Assert.Equal(ResolutionOutcomeKind.Supported, completed.Outcome!.Kind);
         var usage = Assert.Single(completed.Attempts);

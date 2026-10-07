@@ -22,7 +22,7 @@ public sealed class OctoberBusinessSynthesisTests
     {
         var f = new SynthesisCase();
         var scope = new SynthesisMissingLifetimeScope();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(f.Response()));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
         var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), new SynthesisClock());
         Assert.Equal(ProviderAdmissionStatus.AuthorityUnavailable, result.AdmissionFailure);
         Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
@@ -43,7 +43,7 @@ public sealed class OctoberBusinessSynthesisTests
         // The host run predates this synthesis call: 60 seconds remain from its original 180-second allowance.
         if (runDeadline) clock.Advance(TimeSpan.FromSeconds(120));
         var authority = new SynthesisHandoffDisclosure(f.Input.Contributors);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(f.Response()));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
         var active = f.ExecuteAsync(client, scope, authority, clock);
         try
         {
@@ -101,7 +101,7 @@ public sealed class OctoberBusinessSynthesisTests
                 return settled ? changedStatus : DisclosureStatus.Allowed;
             }
         };
-        using var client = new ResolutionClient((_, _) => Task.FromResult(f.Response()));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
 
         var result = await f.ExecuteAsync(client, scope, authority, clock);
 
@@ -263,7 +263,7 @@ public sealed class OctoberBusinessSynthesisTests
         await using var scope = f.Scope(clock);
         var spy = new SynthesisScopeSpy(scope);
         var authority = new SynthesisDisclosure();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(f.Response()));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
         var result = await f.ExecuteAsync(client, spy, authority, clock);
         Assert.NotNull(result.Content); Assert.NotNull(result.Dependencies); Assert.NotNull(result.Proposal);
         Assert.Null(result.AdmissionFailure);
@@ -306,7 +306,7 @@ public sealed class OctoberBusinessSynthesisTests
                 return boundary == "before" || providerReturned ? DisclosureStatus.Denied : DisclosureStatus.Allowed;
             }
         };
-        using var client = new ResolutionClient((_, _) => { providerReturned = true; return Task.FromResult(f.Response()); });
+        using var client = new ResolutionClient("selected-profile", (_, _) => { providerReturned = true; return Task.FromResult(f.Response()); });
         var result = await f.ExecuteAsync(client, scope, authority, clock);
         Assert.Null(result.Content); Assert.Null(result.Dependencies); Assert.Null(result.Proposal);
         Assert.Equal(boundary == "outage-after" ? ProviderAdmissionStatus.AuthorityUnavailable : ProviderAdmissionStatus.Denied, result.AdmissionFailure);
@@ -326,7 +326,7 @@ public sealed class OctoberBusinessSynthesisTests
         string before = OctoberKnowledgePolicy.SerializeCanonical(f.Input);
         var json = JsonSerializer.SerializeToNode(f.Proposal())!.AsObject();
         json[field] = field == "logicalDocumentId" ? JsonValue.Create(Guid.NewGuid().ToString()) : new JsonArray();
-        using var client = new ResolutionClient((_, _) => Task.FromResult(SynthesisCase.JsonResponse(json.ToJsonString())));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(SynthesisCase.JsonResponse(json.ToJsonString())));
         var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
         Assert.Null(result.Content); Assert.Null(result.Dependencies); Assert.Null(result.Proposal);
         Assert.Equal(1, client.Calls);
@@ -340,7 +340,7 @@ public sealed class OctoberBusinessSynthesisTests
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
         var scope = new ResolutionScopeProbe(); // Controlled host retains a conservative unknown reservation and explicitly permits one retry.
-        using var client = new ResolutionClient((attempt, _) =>
+        using var client = new ResolutionClient("selected-profile", (attempt, _) =>
         {
             if (attempt == 1) { clock.Advance(TimeSpan.FromSeconds(130)); throw new IOException("Controlled transient transport failure."); }
             return Task.FromResult(f.Response());
@@ -364,7 +364,7 @@ public sealed class OctoberBusinessSynthesisTests
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
         var scope = new ResolutionScopeProbe();
-        using var client = new ResolutionClient((_, _) => { clock.Advance(TimeSpan.FromSeconds(181)); throw new IOException("Controlled delayed failure."); });
+        using var client = new ResolutionClient("selected-profile", (_, _) => { clock.Advance(TimeSpan.FromSeconds(181)); throw new IOException("Controlled delayed failure."); });
         var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
         Assert.Equal(ProviderAdmissionStatus.DeadlineExceeded, result.AdmissionFailure);
         Assert.Null(result.Content);
@@ -379,7 +379,7 @@ public sealed class OctoberBusinessSynthesisTests
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
         await using var scope = f.Scope(clock);
-        using var client = new ResolutionClient((_, _) => Task.FromResult(f.Response(false)));
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response(false)));
         var first = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
         Assert.NotNull(first.Content);
         Assert.Null(Assert.Single(first.Attempts).InputTokens);
@@ -397,7 +397,7 @@ public sealed class OctoberBusinessSynthesisTests
         var clock = new SynthesisClock();
         await using var scope = f.Scope(clock);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var client = new ResolutionClient(async (_, _) => { await release.Task; return f.Response(); });
+        using var client = new ResolutionClient("selected-profile", async (_, _) => { await release.Task; return f.Response(); });
         var active = f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
         Task<BusinessSynthesisResult>? queued = null;
         try
@@ -548,8 +548,12 @@ internal sealed class SynthesisSettlementScope(IOctoberExecutionScope inner, Act
         var admission = await inner.AcquireProviderAttemptAsync(request, cancellationToken);
         return admission.Lease is { } lease ? admission with { Lease = new SettlementLease(this, lease) } : admission;
     }
-    private sealed class SettlementLease(SynthesisSettlementScope owner, IOctoberProviderAttemptLease innerLease) : IOctoberProviderAttemptLease
+    private sealed class SettlementLease(SynthesisSettlementScope owner, IOctoberProviderAttemptLease innerLease) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
+        private IOctoberWorkerDispatchObserver Observer => innerLease as IOctoberWorkerDispatchObserver
+            ?? throw new InvalidOperationException("Missing inner lease dispatch observer.");
+        public void RecordDispatch() => Observer.RecordDispatch();
+        public void CompleteDispatchObservation() => Observer.CompleteDispatchObservation();
         public Guid AttemptId => innerLease.AttemptId;
         public CancellationToken CancellationToken => innerLease.CancellationToken;
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default) => innerLease.CheckBeforeSendAsync(cancellationToken);

@@ -361,7 +361,7 @@ internal sealed class FinalizerCase : IDisposable
         Slot = new(Request);
         Store = new(this);
         Loader = new(Input);
-        Client = new((call, cancellation) => Provider?.Invoke(call, cancellation) ?? Task.FromResult(Response(call - 1)));
+        Client = new(ProfileId, (call, cancellation) => Provider?.Invoke(call, cancellation) ?? Task.FromResult(Response(call - 1)));
     }
     public static FinalizationRequest Seal(FinalizationRequest request) => request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
     public BusinessSynthesisProposal Proposal(int index) => new("业务环节" + index,

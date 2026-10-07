@@ -1499,3 +1499,26 @@ errors and 5,779 warnings. Business executor consumption/accounting and Scan sel
 transport implementation/conformance are now released against this exact declaration.
 This is compilation of an interface, not corrected-client runtime qualification;
 the existing full-suite logging teardown failure remains unresolved.
+
+### October 8 Business attempt consumers
+
+Business checkpoint `9950c8b371e52178e05a144cd3f571d58c63c009` changes the two
+executors and controlled test adapters against the exact accepted interface. Root
+independent review accepts capability/profile checks before acquisition, same-lease
+invocation, physical task ownership, terminal observation before settlement/release,
+and unknown/no-material/no-retry behavior when observation is missing or fails.
+Stopwatch dispatch/terminal measurements stay separate from injected TimeProvider
+wait/deadline/retry clocks. No ordinary IChatClient fallback is retained.
+
+Owner evidence: initial 22/22 RED (`7269f511fdc4470487c841e5ede82899`), 165/165
+affected GREEN (`4b1b96871531428f81ef456bec871416`) and final distinct-clock 24/24
+coverage (`d8e2c8b17e1542969b9bc0a45d67896b`). Later missing-observer/clock cases
+are additional coverage, not separately claimed RED. Scan must still provide its
+real selected-client implementation and actual-factory controlled HTTP conformance
+against this consumer checkpoint before claiming a complete controlled route.
+
+Root's combined October/Explore/PreparedSource SelfContained selection passes
+2,008/2,008, zero failures/skips (`1ce61f77cba84bf493b6890a5e13d5f6`), with 424
+classified files and compilation at zero errors/14,177 warnings. This is not a new
+full-suite pass; the previously captured logging teardown defect remains open.
+No PostgreSQL, native tool, external-provider or E2E suite was executed.
