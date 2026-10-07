@@ -1,4 +1,19 @@
 {
+  "Explore/KnowledgeGraphComponentTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphViewModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphProjectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/KnowledgeGraphAuthorizationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Explore/ControlledGraphFixture.cs": {
+    "suite": "SelfContained"
+  },
   "Explore/ExplorePersistedReaderTests.cs": {
     "suite": "PostgreSql"
   },
