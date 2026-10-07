@@ -36,7 +36,7 @@ internal sealed record OctoberGenerateRunnerDependencies(
     IOctoberKnowledgeOperationLog OperationLog);
 
 /// <summary>Owns the original single-file Generate run; a stored receipt is never a restart grant.</summary>
-internal sealed class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncDisposable,
+internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncDisposable,
     IOctoberGenerateAdmissionAuthority, IOctoberCommitSubmissionGuard, IOctoberCorpusFreezeAuthority,
     IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority
 {
@@ -507,6 +507,7 @@ internal sealed class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncD
 
     private async Task SettleResourcesAsync()
     {
+        await AwaitOriginalBusinessSettlementAsync();
         if (_resourcesSettled) return;
         if (Unresolved() || HasOutstandingCalls())
             throw new InvalidOperationException("october_run_settlement_unconfirmed");
@@ -517,12 +518,14 @@ internal sealed class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncD
         _cleanupFailure = null;
     }
 
-    private Task CloseAnalysisResourcesAsync()
+    private async Task CloseAnalysisResourcesAsync()
     {
-        if (_analysisCleanup is not null) return _analysisCleanup;
+        await AwaitOriginalBusinessSettlementAsync();
+        if (_analysisCleanup is not null) { await _analysisCleanup; return; }
         if (Unresolved() || HasOutstandingCalls())
             throw new InvalidOperationException("october_run_settlement_unconfirmed");
-        return _analysisCleanup = CloseAnalysisCoreAsync();
+        _analysisCleanup = CloseAnalysisCoreAsync();
+        await _analysisCleanup;
     }
 
     private async Task CloseAnalysisCoreAsync()
