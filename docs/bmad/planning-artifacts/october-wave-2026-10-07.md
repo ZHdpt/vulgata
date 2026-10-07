@@ -877,3 +877,20 @@ The agreed minimal authoring direction is one sequential guarded E2E run with
 
 Runtime/resource permission remains outstanding. Authoring this boundary neither
 executes native tools/provider/hosts nor qualifies an in-process runner as Main.
+
+Scan's proposed Main handoff is accepted as a transport projection of the existing
+report: one complete settled camelCase JSON document on Generate stdout, with the
+process exit matching report.exitCode and no interleaved progress/provider text.
+Unknown counts remain null. Canonical database identity and private paths/secrets/
+completion capabilities are omitted. Root hydrates identity only from the already
+owned fixture after exact target/batch/selection and handle consistency checks;
+it never overwrites mismatches or resolves a current publication instead. Startup
+failure before a report remains a sanitized nonzero failure, not a fabricated report.
+Scan must pin exact casing/enum/null conventions with its implementation.
+
+Explorer's minimum shared Web assertions are exact report/schema binding, ordinary
+Identity IT access without management/operator permissions, metadata-free rejection
+of mismatched versions/publications/sections, Business CL denial, and actual
+contributor/stamp revocation on subsequent disclosure. Long-content continuation,
+history versions and graph edges qualify only if this same real output contains
+them; no padding, fabricated relationships or second Generate is permitted.
