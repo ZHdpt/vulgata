@@ -25,6 +25,24 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
     public bool IsSaveUncertain { get; private set; }
     public event Action? StateChanged;
 
+    /// <summary>Trusted current-attachment suppression, including a saved display; never a new stream or terminal outcome.</summary>
+    public bool TrySuppressDisclosure(OctoberChatTurnBinding expectedBinding)
+    {
+        lock (_gate)
+        {
+            if (expectedBinding is null || expectedBinding.ConversationId != Binding.ConversationId ||
+                expectedBinding.ContextId != Binding.ContextId || expectedBinding.TurnId != Binding.TurnId ||
+                expectedBinding.Request.Subject.SubjectId != Binding.Request.Subject.SubjectId ||
+                expectedBinding.Request.Publication != Binding.Request.Publication || expectedBinding.Request.Mode != Binding.Request.Mode ||
+                expectedBinding.Request.Purpose != Binding.Request.Purpose || expectedBinding.Request.RepositoryScope.IsDefault ||
+                Binding.Request.RepositoryScope.IsDefault ||
+                !expectedBinding.Request.RepositoryScope.Order().SequenceEqual(Binding.Request.RepositoryScope.Order())) return false;
+            SuppressDisclosure();
+        }
+        StateChanged?.Invoke();
+        return true;
+    }
+
     public bool Apply(OctoberChatEvent item)
     {
         lock (_gate)
@@ -74,12 +92,7 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
                     StatusMessage = "保存状态待确认，暂时无法继续提问。";
                     break;
                 case OctoberChatEventKind.DisclosureSuppressed:
-                    _suppressed = true;
-                    AnswerText = string.Empty;
-                    References = [];
-                    ActivityMessage = null;
-                    _activeTools.Clear();
-                    StatusMessage = "当前内容暂不可用。";
+                    SuppressDisclosure();
                     break;
                 case OctoberChatEventKind.TurnSaved:
                     // An explicit canonical terminal projection replaces provisional
@@ -107,6 +120,17 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
 
         StateChanged?.Invoke();
         return true;
+    }
+
+    private void SuppressDisclosure()
+    {
+        _suppressed = true;
+        AnswerText = string.Empty;
+        References = [];
+        ActivityMessage = null;
+        _activeTools.Clear();
+        StatusMessage = "当前内容暂不可用。";
+        // Preserve durable terminal/uncertain flags and the original stream sequence.
     }
 
     private bool ValidPayload(OctoberChatEvent item)

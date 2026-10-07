@@ -305,6 +305,9 @@
   "October/Chat/OctoberChatPresentationTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Chat/OctoberChatReferenceTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Chat/OctoberChatEntryTests.cs": {
     "suite": "SelfContained"
   },
