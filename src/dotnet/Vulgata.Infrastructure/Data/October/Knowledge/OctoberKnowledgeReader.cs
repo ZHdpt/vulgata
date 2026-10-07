@@ -26,7 +26,7 @@ public sealed class OctoberKnowledgeReadBudgetException : Exception
 }
 
 /// <summary>Bounded immutable read projections. Selection and cursor tokens never replace live authorization.</summary>
-public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
+public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKnowledgeDisclosedReader
 {
     private const int MaximumDocuments = 10_000;
     private const int MaximumMaterializedBytes = 32 * 1024 * 1024;
@@ -35,6 +35,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
     private readonly IOctoberKnowledgeDisclosurePolicy _policy;
     private readonly OctoberKnowledgeCursorProtector _cursors;
     private readonly IOctoberKnowledgeReadLog _log;
+    private readonly OctoberKnowledgeDependencyAuthority? _dependencyAuthority;
 
     public OctoberKnowledgeReader(IOctoberPublishedKnowledgeSource source, PublicationBinding? configured,
         IOctoberKnowledgeDisclosurePolicy policy, OctoberKnowledgeCursorProtector cursors, IOctoberKnowledgeReadLog log)
@@ -46,6 +47,25 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
         _log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
+    public OctoberKnowledgeReader(IOctoberPublishedKnowledgeSource source, PublicationBinding? configured,
+        IOctoberKnowledgeDisclosurePolicy policy, OctoberKnowledgeCursorProtector cursors, IOctoberKnowledgeReadLog log,
+        OctoberKnowledgeDependencyAuthority dependencyAuthority) : this(source, configured, policy, cursors, log)
+    {
+        _dependencyAuthority = dependencyAuthority ?? throw new ArgumentNullException(nameof(dependencyAuthority));
+    }
+
+    public Task<KnowledgeDisclosureReadResult<SearchPage>> SearchAsync(KnowledgeSearchRequest request,
+        KnowledgeReadOutputBudget budget, CancellationToken cancellationToken = default) =>
+        DisclosedAsync(budget, token => SearchCoreAsync(request, budget, token), KnowledgeReadOperation.Search, cancellationToken);
+
+    public Task<KnowledgeDisclosureReadResult<ContentPage>> ReadExactAsync(ExactReadRequest request,
+        KnowledgeReadOutputBudget budget, CancellationToken cancellationToken = default) =>
+        DisclosedAsync(budget, token => ExactCoreAsync(request, budget, token), KnowledgeReadOperation.ReadExact, cancellationToken);
+
+    public Task<KnowledgeDisclosureReadResult<RelatedPage>> GetRelatedAsync(RelatedReadRequest request,
+        KnowledgeReadOutputBudget budget, CancellationToken cancellationToken = default) =>
+        DisclosedAsync(budget, token => RelatedCoreAsync(request, budget, token), KnowledgeReadOperation.GetRelated, cancellationToken);
+
     public Task<ReadSelectionResult> OpenReadSelectionAsync(ReadSelectionRequest request, CancellationToken cancellationToken = default) => RunAsync(async deadlineToken =>
     {
         ValidateSelection(request);
@@ -56,57 +76,112 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
         return new ReadSelectionResult(KnowledgeReadStatus.Success, _cursors.Issue(request));
     }, status => new ReadSelectionResult(status, null), cancellationToken);
 
-    public Task<SearchPage> SearchAsync(KnowledgeSearchRequest request, CancellationToken cancellationToken = default) => RunAsync(async deadlineToken =>
+    public Task<SearchPage> SearchAsync(KnowledgeSearchRequest request, CancellationToken cancellationToken = default) => RunAsync(async token =>
     {
-        var context = await ContextAsync(request.Selection, deadlineToken);
+        var result = await SearchCoreAsync(request, null, token);
+        await FinishAsync(result.Context, KnowledgeReadOperation.Search, token);
+        return result.Page;
+    }, status => new SearchPage(status, [], null, null), cancellationToken);
+
+    public Task<ContentPage> ReadExactAsync(ExactReadRequest request, CancellationToken cancellationToken = default) => RunAsync(async token =>
+    {
+        var result = await ExactCoreAsync(request, null, token);
+        await FinishAsync(result.Context, KnowledgeReadOperation.ReadExact, token);
+        return result.Page;
+    }, status => new ContentPage(status, null, null, [], null, null), cancellationToken);
+
+    public Task<RelatedPage> GetRelatedAsync(RelatedReadRequest request, CancellationToken cancellationToken = default) => RunAsync(async token =>
+    {
+        var result = await RelatedCoreAsync(request, null, token);
+        await FinishAsync(result.Context, KnowledgeReadOperation.GetRelated, token);
+        return result.Page;
+    }, status => new RelatedPage(status, [], [], null, null), cancellationToken);
+
+    private Task<KnowledgeDisclosureReadResult<T>> DisclosedAsync<T>(KnowledgeReadOutputBudget budget,
+        Func<CancellationToken, Task<ReadMaterialization<T>>> materialize, KnowledgeReadOperation operation, CancellationToken caller) where T : class =>
+        RunAsync(async token =>
+        {
+            if (_dependencyAuthority is null) throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
+            if (budget?.Encoder is null || budget.MaximumResultUtf8Bytes <= 0 || budget.RemainingAggregateUtf8Bytes <= 0)
+                throw new OctoberKnowledgeReadBudgetException();
+            string outputProfile = budget.Encoder.ProfileId;
+            if (string.IsNullOrWhiteSpace(outputProfile)) throw new OctoberKnowledgeReadBudgetException();
+            OctoberKnowledgeDisclosureCodec.LimitText(outputProfile, 1024);
+            var result = await materialize(token);
+            if (!string.Equals(outputProfile, budget.Encoder.ProfileId, StringComparison.Ordinal))
+                throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
+            token.ThrowIfCancellationRequested();
+            string pageDigest = OctoberKnowledgeDisclosureCodec.Hash("october.knowledge.page.v1\n" + typeof(T).Name + "\n" +
+                OctoberKnowledgeDisclosureCodec.Canonical(result.Page));
+            string outputDigest = OctoberKnowledgeDisclosureCodec.Hash(result.Output.AsSpan());
+            string kind = operation switch { KnowledgeReadOperation.Search => "search", KnowledgeReadOperation.ReadExact => "content", _ => "related" };
+            var dependencies = _dependencyAuthority.Issue(result.Context.Ticket.Selection, kind, pageDigest,
+                outputProfile, outputDigest, result.Context.Disclosures, result.Content);
+            // Protection/encoding can take time. The final post-log authorization is after both, not before them.
+            await FinishAsync(result.Context, operation, token);
+            return new KnowledgeDisclosureReadResult<T>(KnowledgeReadStatus.Success,
+                new(result.Page, dependencies, pageDigest, outputProfile, outputDigest, result.Output));
+        }, status => new KnowledgeDisclosureReadResult<T>(status, null), caller);
+
+    private async Task<ReadMaterialization<SearchPage>> SearchCoreAsync(KnowledgeSearchRequest request,
+        KnowledgeReadOutputBudget? budget, CancellationToken token)
+    {
+        var context = await ContextAsync(request.Selection, token);
         string query = NormalizeQuery(request.Query);
         ValidatePageSize(request.PageSize);
-        var visible = await VisibleAsync(context, deadlineToken);
+        var visible = await VisibleAsync(context, token);
         var matches = visible.Where(document => Matches(document, context.Ticket.Selection.Mode, query)).ToArray();
         string order = OrderDigest(matches.Select(document => Key(document.Reference)));
         int offset = Position(request.Selection, context.Ticket, request.Continuation, "search", query, request.PageSize, null, order, matches.Length);
-        var documents = matches.Skip(offset).Take(request.PageSize).Select(document => Summary(context, document, null, true)).ToImmutableArray();
-        int next = offset + documents.Length;
-        var continuation = next < matches.Length ? Next(request.Selection, context.Ticket, "search", query, request.PageSize, null, order, next) : null;
-        var coverage = await CoverageAsync(context, visible.Count != 0, deadlineToken);
-        var result = new SearchPage(KnowledgeReadStatus.Success, documents, continuation, coverage);
-        EnsureResponseBudget(result);
-        await FinishAsync(context, KnowledgeReadOperation.Search, deadlineToken);
-        return result;
-    }, status => new SearchPage(status, [], null, null), cancellationToken);
-
-    public Task<ContentPage> ReadExactAsync(ExactReadRequest request, CancellationToken cancellationToken = default) => RunAsync(async deadlineToken =>
-    {
-        var context = await ContextAsync(request.Selection, deadlineToken);
-        var visible = await VisibleAsync(context, deadlineToken);
-        var document = Exact(context, visible, request.Document);
-        var projection = Project(document, context.Ticket.Selection.Mode, request.Document.SectionId);
-        string order = OctoberKnowledgeCursorProtector.Digest(projection.Text);
-        int offset = Position(request.Selection, context.Ticket, request.Continuation, "exact", "", 0, request.Document, order, projection.Text.Length);
-        var coverage = await CoverageAsync(context, true, deadlineToken);
-        int end = Utf8End(projection.Text, offset, KnowledgeContract.MaximumContentBytes / 2);
-        ContentPage page;
+        var coverage = await CoverageAsync(context, visible.Count != 0, token);
+        int take = Math.Min(request.PageSize, matches.Length - offset);
         while (true)
         {
+            token.ThrowIfCancellationRequested();
+            var documents = matches.Skip(offset).Take(take).Select(document => Summary(context, document, null, true)).ToImmutableArray();
+            int next = offset + documents.Length;
+            var continuation = next < matches.Length ? Next(request.Selection, context.Ticket, "search", query, request.PageSize, null, order, next) : null;
+            var page = new SearchPage(KnowledgeReadStatus.Success, documents, continuation, coverage);
+            if (TryEncode(page, budget, token, out var output)) return new(page, context, null, output);
+            if (take <= 1 || budget is null) throw new OctoberKnowledgeReadBudgetException();
+            take /= 2;
+        }
+    }
+
+    private async Task<ReadMaterialization<ContentPage>> ExactCoreAsync(ExactReadRequest request,
+        KnowledgeReadOutputBudget? budget, CancellationToken token)
+    {
+        var context = await ContextAsync(request.Selection, token);
+        var visible = await VisibleAsync(context, token);
+        var document = Exact(context, visible, request.Document);
+        var projection = Project(document, context.Ticket.Selection.Mode, request.Document.SectionId);
+        string order = OctoberKnowledgeDisclosureCodec.Hash(projection.Text);
+        int offset = Position(request.Selection, context.Ticket, request.Continuation, "exact", "", 0, request.Document, order, projection.Text.Length);
+        var coverage = await CoverageAsync(context, true, token);
+        int end = Utf8End(projection.Text, offset, KnowledgeContract.MaximumContentBytes / 2);
+        while (true)
+        {
+            token.ThrowIfCancellationRequested();
             var claims = projection.Spans.Where(span => span.End > offset && span.Start < end)
                 .Select(span => span.Claim with { Text = projection.Text[Math.Max(offset, span.Start)..Math.Min(end, span.End)] }).ToImmutableArray();
             var continuation = end < projection.Text.Length ? Next(request.Selection, context.Ticket, "exact", "", 0, request.Document, order, end) : null;
-            page = new(KnowledgeReadStatus.Success, Summary(context, document, request.Document.SectionId, false),
-                projection.Text[offset..end], claims, continuation, coverage);
-            if (WithinBudget(page, KnowledgeContract.MaximumContentBytes)) break;
+            string content = projection.Text[offset..end];
+            var page = new ContentPage(KnowledgeReadStatus.Success, Summary(context, document, request.Document.SectionId, false), content, claims, continuation, coverage);
+            if (TryEncode(page, budget, token, out var output))
+                return new(page, context, new(request.Document, order, offset, end, projection.Text.Length,
+                    OctoberKnowledgeDisclosureCodec.Hash(content), OctoberKnowledgeDisclosureCodec.StrictUtf8.GetByteCount(content), coverage), output);
             int reduced = SafeEnd(projection.Text, offset + (end - offset) / 2);
             if (reduced <= offset) throw new OctoberKnowledgeReadBudgetException();
             end = reduced;
         }
-        await FinishAsync(context, KnowledgeReadOperation.ReadExact, deadlineToken);
-        return page;
-    }, status => new ContentPage(status, null, null, [], null, null), cancellationToken);
+    }
 
-    public Task<RelatedPage> GetRelatedAsync(RelatedReadRequest request, CancellationToken cancellationToken = default) => RunAsync(async deadlineToken =>
+    private async Task<ReadMaterialization<RelatedPage>> RelatedCoreAsync(RelatedReadRequest request,
+        KnowledgeReadOutputBudget? budget, CancellationToken token)
     {
-        var context = await ContextAsync(request.Selection, deadlineToken);
+        var context = await ContextAsync(request.Selection, token);
         ValidatePageSize(request.PageSize);
-        var visible = await VisibleAsync(context, deadlineToken);
+        var visible = await VisibleAsync(context, token);
         var document = Exact(context, visible, request.Document);
         var references = visible.Select(item => item.Reference).ToHashSet();
         var items = new List<RelatedItem>();
@@ -114,16 +189,15 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
         {
             var edge = item.Relationship;
             if ((edge.From != document.Reference && edge.To != document.Reference) || !references.Contains(edge.From) || !references.Contains(edge.To)) continue;
-            if (await PermitAsync(context, item.Contributors, document.Kind, deadlineToken))
+            if (await PermitAsync(context, item.Contributors, document.Kind, token))
                 items.Add(new("edge/" + edge.RelationshipVersionId.ToString("D"), edge, null));
         }
         if (context.Ticket.Selection.Mode == KnowledgeMode.IT)
         {
             foreach (var item in context.Source.Uncertainties)
             {
-                // Manifest ownership is distinct from cited evidence. A cited neighbor does not own the uncertainty.
                 if (item.Owners.IsDefaultOrEmpty || !item.Owners.Contains(document.Reference)) continue;
-                if (await PermitAsync(context, item.Contributors, null, deadlineToken))
+                if (await PermitAsync(context, item.Contributors, document.Kind, token))
                 {
                     string ownerKey = string.Join("/", item.Owners.Select(Key).Order(StringComparer.Ordinal));
                     items.Add(new("uncertainty/" + ownerKey + "/" + item.Value.Key, null, item.Value));
@@ -133,21 +207,48 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
         items.Sort((left, right) => StringComparer.Ordinal.Compare(left.Key, right.Key));
         string order = OrderDigest(items.Select(item => item.Key));
         int offset = Position(request.Selection, context.Ticket, request.Continuation, "related", "", request.PageSize, request.Document, order, items.Count);
-        var selected = items.Skip(offset).Take(request.PageSize).ToArray();
-        var results = selected.Where(item => item.Relationship is not null).Select(item => item.Relationship!)
-            .Select(edge => new RelatedDocument(edge.Kind, Handle(context, edge.From), Handle(context, edge.To),
-                context.Ticket.Selection.Mode == KnowledgeMode.Business
-                    ? (edge.Kind == RelationshipKind.GeneratedFrom ? "业务逻辑来源" : "业务逻辑引用")
-                    : edge.Meaning)).ToImmutableArray();
-        var uncertainties = selected.Where(item => item.Uncertainty is not null).Select(item => item.Uncertainty!).ToImmutableArray();
-        int next = offset + selected.Length;
-        var continuation = next < items.Count ? Next(request.Selection, context.Ticket, "related", "", request.PageSize, request.Document, order, next) : null;
-        var page = new RelatedPage(KnowledgeReadStatus.Success, results, uncertainties, continuation,
-            await CoverageAsync(context, true, deadlineToken));
-        EnsureResponseBudget(page);
-        await FinishAsync(context, KnowledgeReadOperation.GetRelated, deadlineToken);
-        return page;
-    }, status => new RelatedPage(status, [], [], null, null), cancellationToken);
+        var coverage = await CoverageAsync(context, true, token);
+        int take = Math.Min(request.PageSize, items.Count - offset);
+        while (true)
+        {
+            token.ThrowIfCancellationRequested();
+            var selected = items.Skip(offset).Take(take).ToArray();
+            var relationships = selected.Where(item => item.Relationship is not null).Select(item => item.Relationship!)
+                .Select(edge => new RelatedDocument(edge.Kind, Handle(context, edge.From), Handle(context, edge.To),
+                    context.Ticket.Selection.Mode == KnowledgeMode.Business
+                        ? (edge.Kind == RelationshipKind.GeneratedFrom ? "业务逻辑来源" : "业务逻辑引用") : edge.Meaning)
+                    { RelationshipVersionId = edge.RelationshipVersionId }).ToImmutableArray();
+            var uncertainties = selected.Where(item => item.Uncertainty is not null).Select(item => item.Uncertainty!).ToImmutableArray();
+            int next = offset + selected.Length;
+            var continuation = next < items.Count ? Next(request.Selection, context.Ticket, "related", "", request.PageSize, request.Document, order, next) : null;
+            var page = new RelatedPage(KnowledgeReadStatus.Success, relationships, uncertainties, continuation, coverage);
+            if (TryEncode(page, budget, token, out var output)) return new(page, context, null, output);
+            if (take <= 1 || budget is null) throw new OctoberKnowledgeReadBudgetException();
+            take /= 2;
+        }
+    }
+
+    private static bool TryEncode<T>(T page, KnowledgeReadOutputBudget? budget, CancellationToken token, out ImmutableArray<byte> output)
+    {
+        output = [];
+        if (!WithinBudget(page, KnowledgeContract.MaximumContentBytes)) return false;
+        if (budget is null) return true;
+        token.ThrowIfCancellationRequested();
+        output = page switch
+        {
+            SearchPage search => budget.Encoder.EncodeSearch(search),
+            ContentPage content => budget.Encoder.EncodeContent(content),
+            RelatedPage related => budget.Encoder.EncodeRelated(related),
+            _ => throw new ReadFailure(KnowledgeReadStatus.UnavailableService),
+        };
+        token.ThrowIfCancellationRequested();
+        if (output.IsDefaultOrEmpty || output.Length > KnowledgeContract.MaximumContentBytes ||
+            output.Length > budget.MaximumResultUtf8Bytes || output.Length > budget.RemainingAggregateUtf8Bytes) return false;
+        string json = OctoberKnowledgeDisclosureCodec.StrictUtf8.GetString(output.AsSpan());
+        using var parsed = JsonDocument.Parse(json);
+        if (parsed.RootElement.ValueKind != JsonValueKind.Object) throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
+        return true;
+    }
 
     private void ValidateSelection(ReadSelectionRequest request)
     {
@@ -385,6 +486,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
         catch (OperationCanceledException) { return failure(callerCancellation.IsCancellationRequested ? KnowledgeReadStatus.Cancelled : KnowledgeReadStatus.UnavailableService); }
         catch (OctoberInvalidContinuationException) { return failure(KnowledgeReadStatus.InvalidContinuation); }
         catch (OctoberKnowledgeReadBudgetException) { return failure(KnowledgeReadStatus.ReadBudgetExceeded); }
+        catch (DisclosureFailure exception) { return failure(exception.Status == KnowledgeDependencyStatus.BudgetExceeded ? KnowledgeReadStatus.ReadBudgetExceeded : KnowledgeReadStatus.UnavailableService); }
         catch (ReadFailure exception) { return failure(exception.Status); }
         catch (Exception) { return failure(KnowledgeReadStatus.UnavailableService); }
     }
@@ -395,6 +497,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader
         public List<DisclosureRequest> Disclosures { get; } = [];
     }
     private sealed class ReadFailure(KnowledgeReadStatus status) : Exception { public KnowledgeReadStatus Status { get; } = status; }
+    private sealed record ReadMaterialization<T>(T Page, ReadContext Context, DisclosureContent? Content, ImmutableArray<byte> Output);
     private sealed record RelatedItem(string Key, AcceptedRelationship? Relationship, Uncertainty? Uncertainty);
     private sealed record ClaimSpan(int Start, int End, QualifiedClaimGroup Claim);
     private sealed record Projection(string Text, ImmutableArray<ClaimSpan> Spans);
