@@ -2,11 +2,13 @@ using Microsoft.Extensions.AI;
 using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using OpenAI;
 using OpenAI.Chat;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Core.DomainServices.OctoberScan;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.OctoberGenerator;
@@ -65,12 +67,13 @@ public sealed class OctoberWorkerClientFactory
 
         public async IAsyncEnumerable<ChatResponseUpdate> GetAttemptStreamingResponseAsync(
             IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options,
-            IOctoberProviderAttemptLease lease, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            IOctoberProviderAttemptLease lease, [EnumeratorCancellation] CancellationToken cancellationToken = default,
+            Action<long>? onDispatched = null)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             ArgumentNullException.ThrowIfNull(lease);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
-            using var http = new HttpClient(new LeaseHandler(_transport, lease), disposeHandler: true)
+            using var http = new HttpClient(new LeaseHandler(_transport, lease, onDispatched), disposeHandler: true)
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
@@ -102,7 +105,7 @@ public sealed class OctoberWorkerClientFactory
         }
     }
 
-    private sealed class LeaseHandler(HttpMessageHandler transport, IOctoberProviderAttemptLease lease) : HttpMessageHandler
+    private sealed class LeaseHandler(HttpMessageHandler transport, IOctoberProviderAttemptLease lease, Action<long>? onDispatched) : HttpMessageHandler
     {
         private readonly HttpMessageInvoker _invoker = new(transport, disposeHandler: false);
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -110,7 +113,10 @@ public sealed class OctoberWorkerClientFactory
             if (await lease.CheckBeforeSendAsync(cancellationToken) != ProviderAdmissionStatus.Granted)
                 throw new InvalidOperationException("The Worker attempt is no longer eligible.");
             cancellationToken.ThrowIfCancellationRequested();
-            return await _invoker.SendAsync(request, cancellationToken);
+            onDispatched?.Invoke(Stopwatch.GetTimestamp());
+            (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
+            Task<HttpResponseMessage> response = _invoker.SendAsync(request, cancellationToken);
+            return await response;
         }
         protected override void Dispose(bool disposing)
         {

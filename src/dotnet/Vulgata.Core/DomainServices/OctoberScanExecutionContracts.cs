@@ -24,3 +24,11 @@ public interface IOctoberWorkerExecutionScope
         OctoberWorkerProviderAttemptRequest request,
         CancellationToken cancellationToken = default);
 }
+
+/// <summary>Trusted Worker transport observation; eligibility alone is not a physical request.</summary>
+public interface IOctoberWorkerDispatchObserver
+{
+    void RecordDispatch();
+    /// <summary>Called only after physical transport and iterator disposal have settled.</summary>
+    void CompleteDispatchObservation();
+}

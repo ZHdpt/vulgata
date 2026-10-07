@@ -30,6 +30,12 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
     private TimeSpan _nextSend;
     private ProviderAdmissionStatus? _blocked;
     private bool _unknownUsage;
+    private int _dispatchedRequests;
+    private bool _unknownDispatch;
+    private long? _actualInputTokens = 0;
+    private long? _actualOutputTokens = 0;
+    private TimeSpan _queueWait;
+    private TimeSpan _modelWait;
     private bool _disposed;
 
     public OctoberExecutionScope(Guid runId, string providerProfileId,
@@ -57,6 +63,19 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
         _slots = new SemaphoreSlim(policy.WorkerCap, policy.WorkerCap);
         _runDeadline = new CancellationTokenSource(_runLifetime, _time);
         _externalStop = hardStop.Register(HardStop);
+    }
+
+    public OctoberExecutionSnapshot GetSnapshot()
+    {
+        lock (_sync)
+        {
+            bool pending = _leases.Values.Any(lease => lease.HasUnconfirmedSettlement);
+            bool unknownRequests = _unknownDispatch || _leases.Values.Any(lease => lease.DispatchUnknown);
+            return new(new(unknownRequests ? null : _dispatchedRequests, pending ? null : _actualInputTokens,
+                    pending ? null : _actualOutputTokens,
+                    pending || unknownRequests || _actualInputTokens is null || _actualOutputTokens is null),
+                _queueWait, _modelWait, _leases.Count + _pendingAcquisitions, pending);
+        }
     }
 
     public Task<ProviderAdmission> AcquireWorkerAttemptAsync(
@@ -114,6 +133,7 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
         Guid? fileWorkstreamId, Guid attemptId, TimeSpan duration, long tokens,
         CancellationToken cancellationToken)
     {
+        long waitStarted = _time.GetTimestamp();
         TimeSpan effectiveDuration = duration;
         lock (_sync)
         {
@@ -193,7 +213,10 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
             if (!granted)
                 state?.Dispose();
             lock (_sync)
+            {
                 _pendingAcquisitions--;
+                _queueWait = AddDuration(_queueWait, _time.GetElapsedTime(waitStarted));
+            }
         }
     }
 
@@ -298,6 +321,14 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
 
     private static ProviderAdmission Denied(ProviderAdmissionStatus status) => new(status, null);
 
+    private static TimeSpan AddDuration(TimeSpan accumulated, TimeSpan duration) => duration < TimeSpan.Zero
+        ? accumulated : accumulated.Ticks > long.MaxValue - duration.Ticks
+            ? TimeSpan.MaxValue : accumulated + duration;
+
+    private static long? AddTokens(long? accumulated, long? tokens) =>
+        accumulated is { } current && tokens is >= 0 && current <= long.MaxValue - tokens.Value
+            ? current + tokens.Value : null;
+
     private sealed class FileBudget(long started)
     {
         internal long Started { get; } = started;
@@ -338,13 +369,17 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
     }
 
     private sealed class AttemptLease(OctoberExecutionScope owner, AttemptState state)
-        : IOctoberProviderAttemptLease
+        : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
         private readonly SemaphoreSlim _sendGate = new(1, 1);
         private bool _sent;
+        private bool _dispatched;
+        private bool _dispatchObservationComplete;
         private bool _released;
         private ProviderAttemptUsage? _settled;
         private Exception? _disposalFailure;
+        internal bool HasUnconfirmedSettlement => _sent && _settled is null;
+        internal bool DispatchUnknown => _sent && !_dispatched && !_dispatchObservationComplete;
 
         public Guid AttemptId => state.AttemptId;
         public CancellationToken CancellationToken => state.Token;
@@ -352,6 +387,9 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
         public async Task<ProviderAdmissionStatus> CheckBeforeSendAsync(
             CancellationToken cancellationToken = default)
         {
+            long waitStarted = owner._time.GetTimestamp();
+            bool alreadySent;
+            lock (owner._sync) alreadySent = _sent;
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(state.Token, cancellationToken);
             bool gateHeld = false;
             try
@@ -394,6 +432,30 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
             finally
             {
                 if (gateHeld) _sendGate.Release();
+                if (!alreadySent)
+                    lock (owner._sync)
+                        owner._queueWait = AddDuration(owner._queueWait, owner._time.GetElapsedTime(waitStarted));
+            }
+        }
+
+        public void RecordDispatch()
+        {
+            lock (owner._sync)
+            {
+                if (_dispatched) return;
+                if (!_sent || _released) throw new InvalidOperationException("october_provider_dispatch_without_live_lease");
+                _dispatched = true;
+                owner._dispatchedRequests++;
+            }
+        }
+
+        public void CompleteDispatchObservation()
+        {
+            lock (owner._sync)
+            {
+                if (_dispatchObservationComplete) return;
+                if (_released) throw new InvalidOperationException("october_dispatch_observation_after_release");
+                _dispatchObservationComplete = true;
             }
         }
 
@@ -433,6 +495,13 @@ public sealed class OctoberExecutionScope : IOctoberExecutionScope,
                         owner._unknownUsage = true;
                     }
                     _settled = usage;
+                    if (_sent)
+                    {
+                        if (!_dispatched && !_dispatchObservationComplete) owner._unknownDispatch = true;
+                        owner._actualInputTokens = AddTokens(owner._actualInputTokens, usage.InputTokens);
+                        owner._actualOutputTokens = AddTokens(owner._actualOutputTokens, usage.OutputTokens);
+                        owner._modelWait = AddDuration(owner._modelWait, usage.ExecutionDuration);
+                    }
                     ReleaseLocked();
                 }
             }

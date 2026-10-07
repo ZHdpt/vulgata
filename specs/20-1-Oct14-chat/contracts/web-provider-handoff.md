@@ -151,3 +151,43 @@ budget. Exceeding a bound renders the entire original encoded text, without trun
 or partial syntax-tree output. These are renderer limits, not new generation budgets.
 Styling is local to the turn and inherits the existing theme. Parent ChatPage, routes,
 dependencies and exact authorized reader-link projection are unchanged by this leaf.
+## Saved-reference footer agreement — 2026-10-07
+
+Integrator released the bounded controlled T026/T027 slice after Business confirmed
+the existing contracts and limits. Explorer has no combined authorized title/destination
+API. Chat's local adapter composes canonical disclosed exact reads with the unchanged
+`ExploreGraphOutputEncoder` and `ExactDocumentLinkBuilder`; neither helper grants
+disclosure authority. Reader-purpose opening is not substituted for fresh Chat authority.
+
+Initial inputs are trusted owner-issued saved `DialogueTerminalProjection` values with
+their complete original turn/history lineage and exact original reference facts.
+Live preterminal reference projection remains deferred behind actual consumed-proof
+validation. A title read is one initial exact content page, not a metadata-only API:
+charge every encoded byte and retain the whole page capsule, but do not add model
+consumption, coverage/read-completeness credit or change original partial flags.
+The title is the server document title, never an invented section title. Exact section
+identity remains in the original handle and local destination.
+
+The adapter verifies outer/page success, non-null exact server document, all five handle
+parts, unchanged encoder profile, complete output bytes and output/page digests.
+It reauthorizes the complete original lineage even for zero references, merges every
+successful display-page capsule through the owner, and uses the resulting single union
+for fresh final authorization and exact current-attachment/context checks at handoff.
+No contributor reconstruction, missing-lineage root, stale title cache, retargeting,
+new route, Core contract or schema is permitted.
+
+One fresh display attempt allows 10 seconds total across Prepare and Handoff, serial
+acquisition of at most 16 initial pages, 64 KiB per complete result and 256 KiB aggregate,
+with the canonical 256-reference bound. There is no continuation, retry, cache, eviction
+or renewed model budget. Owner capsule/contributor/origin bounds still apply. Ended
+generation alone does not deny a fresh saved-history display attempt. Late results do
+not renew the deadline or publish Ready data; actual pending owner/sink work remains
+observed until settlement without holding generation or terminal persistence.
+
+Prepared data stays private until the bounded local footer handoff. Closed
+`TurnPresentation` is not reopened. A trusted UI sink rechecks the exact attachment
+at actual apply; generic footer failure contains no stale titles, links or counts.
+Explicit aggregate denial/unavailability suppresses the whole dependent display.
+Saved-view suppression must clear content while preserving terminal/save-indeterminate
+bookkeeping and reject another binding, without reusing the closed stream sequence.
+Root retains parent ChatPage, registry, route and runtime activation.

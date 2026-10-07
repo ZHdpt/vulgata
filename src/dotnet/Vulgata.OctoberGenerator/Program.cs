@@ -147,6 +147,52 @@ public static class OctoberGeneratorEntryPoint
         }
     }
 
+    internal static async Task<OctoberRuntimeConfiguration> ReadRuntimeConfigurationAsync(
+        IConfigurationRoot configuration, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (configuration.GetSection("October:Runtime").GetChildren().Any())
+                throw new InvalidOperationException();
+            string path = Required(configuration, "October:RuntimeFile");
+            if (!Path.IsPathFullyQualified(path) || path != path.Trim())
+                throw new InvalidOperationException();
+            var selectors = new HashSet<string>(StringComparer.Ordinal);
+            foreach (IConfigurationProvider source in configuration.Providers)
+                if (source.TryGet("October:RuntimeFile", out string? value) && value is not null)
+                    selectors.Add(value);
+            if (selectors.Count != 1) throw new InvalidOperationException();
+
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+                4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            if (stream.Length is <= 0 or > 1_048_576) throw new InvalidOperationException();
+            byte[] bytes = new byte[checked((int)stream.Length)];
+            await stream.ReadExactlyAsync(bytes, cancellationToken);
+            if (await stream.ReadAsync(new byte[1], cancellationToken) != 0)
+                throw new InvalidOperationException();
+            int offset = bytes.AsSpan().StartsWith(new byte[] { 0xef, 0xbb, 0xbf }) ? 3 : 0;
+            string json = new UTF8Encoding(false, true).GetString(bytes, offset, bytes.Length - offset);
+            using JsonDocument document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 16 });
+            RequireUniqueProperties(document.RootElement);
+            OctoberRuntimeConfiguration? runtime = document.RootElement.Deserialize<OctoberRuntimeConfiguration>(new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = false,
+                UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+                MaxDepth = 16
+            });
+            if (runtime is null || !runtime.IsValid()) throw new InvalidOperationException();
+            cancellationToken.ThrowIfCancellationRequested();
+            return runtime;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or DecoderFallbackException or
+            JsonException or InvalidOperationException or ArgumentException or NotSupportedException or OverflowException)
+        {
+            throw new InvalidOperationException("October runtime configuration is invalid.");
+        }
+    }
+
     private static OctoberGeneratorCommand ReadCommand(IConfiguration configuration)
     {
         OctoberGeneratorMode mode = configuration["October:Mode"] switch

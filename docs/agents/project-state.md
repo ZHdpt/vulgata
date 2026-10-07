@@ -30,6 +30,16 @@ verification before reuse.
 
 ## Current authority and delivery
 
+Latest October integration checkpoint (October 7): `bed683d9` includes the reviewed
+Business trusted flow-input loader, corrected controlled CL-only Generate runner
+and authorized saved Chat reference footer. Shared explicit Generate fixture inputs
+are at `417c888f`. Combined affected SelfContained verification passes 1,695/1,695,
+zero failures/skips; this is not a full
+suite or real runtime qualification. Generate Main/report wiring, shared ordinary-user
+reader qualification, BL synthesis/publication and final Web Chat composition remain
+open. Source/provider/database/host permission for the shared real run is still
+outstanding. See the current delivery-wave handoff below for exact ownership and evidence.
+
 - [PRD](../bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md): product scope
   and explicit Current/Deferred/History/Original unmet backlog dispositions.
 - [Glossary](../UBIQUITOUS_LANGUAGE.md): canonical domain terms.

@@ -839,3 +839,164 @@ failures/skips, 399 classified files:
 This qualifies the controlled planner combination only. Business has dispatched
 its bounded read-only trusted loader with separate test/production ownership; no
 migration window or real consumer activation follows from this checkpoint.
+
+## Scan correction/runner review and shared qualification boundary
+
+Scan offered correction `69c066b2` and runner `b63cae49`. Review confirms the
+original retry lifetime is preserved, absent Business dispatch observation is
+unknown rather than zero, and the controlled runner starts with setup rows only.
+It then uses actual owner Begin, Worker/tools, F1, writer/freeze/publication and
+stored exact reads. Model, native transport and authorization remain controlled;
+the reader assertion is not live Identity/Web qualification. Main still lacks the
+actual Generate composition/report path at this offered checkpoint.
+
+One accounting edge remains before import: the Worker factory records invocation
+only after HttpMessageInvoker.SendAsync returns a Task. A synchronous handler throw
+can skip observation and later falsely certify zero. Scan owns the narrow call-entry
+observation regression/correction; prior zero-send and Business-unknown cases remain.
+Neither offered checkpoint is integrated yet. Unrelated lane work continues.
+
+There is no implemented retained-run harness or new manifest API to consume.
+The agreed minimal authoring direction is one sequential guarded E2E run with
+`-WithPostgreSql`, one owning fixture lifetime and one production Generate call:
+
+- Reuse `OctoberHostSelectionTests.GeneratorPrepareFixture` for owned PostgreSQL,
+  actual setup/Identity/operator/keys. Its current provider configuration is dummy;
+  approved runtime/policy/protected-provider inputs require explicit child binding.
+- Scan owns the executable input adapter and actual Main/report path. Root owns
+  shared fixture extensions and Web/ordinary-reader composition. Existing
+  `OctoberScanReport` publication, document handles, origins and coverage are the
+  handoff; no parallel schema or accepted-publication seed is introduced.
+- A root reader-only helper consumes the same fixture/report, real ordinary User
+  login and exact reader destination. IT success, Business CL denial and Identity
+  revocation reuse that same database/publication. Do not regenerate per lane.
+- Standard fixture/runner cleanup removes its database/container/volume. This proves
+  durable publication during the run, not seven-day database or website retention.
+  Retain sanitized report/evidence only; a long-lived product dataset requires its
+  separately approved owned operation, not bypassing test cleanup.
+
+Runtime/resource permission remains outstanding. Authoring this boundary neither
+executes native tools/provider/hosts nor qualifies an in-process runner as Main.
+
+Scan's proposed Main handoff is accepted as a transport projection of the existing
+report: one complete settled camelCase JSON document on Generate stdout, with the
+process exit matching report.exitCode and no interleaved progress/provider text.
+Unknown counts remain null. Canonical database identity and private paths/secrets/
+completion capabilities are omitted. Root hydrates identity only from the already
+owned fixture after exact target/batch/selection and handle consistency checks;
+it never overwrites mismatches or resolves a current publication instead. Startup
+failure before a report remains a sanitized nonzero failure, not a fabricated report.
+Scan must pin exact casing/enum/null conventions with its implementation.
+
+Explorer's minimum shared Web assertions are exact report/schema binding, ordinary
+Identity IT access without management/operator permissions, metadata-free rejection
+of mismatched versions/publications/sections, Business CL denial, and actual
+contributor/stamp revocation on subsequent disclosure. Long-content continuation,
+history versions and graph edges qualify only if this same real output contains
+them; no padding, fabricated relationships or second Generate is permitted.
+
+## Trusted flow input and explicit Generate fixture inputs
+
+Business loader `f61abf0d` (offered merge `60b6e79f`) is independently reviewed
+and integrated at `6f5b1816`. It loads exact persisted corpus units, primary source
+anchors, original B1 resolution witnesses and complete dependencies, manifest/coverage
+contributors and composite file uncertainties. Zero-unit files remain represented.
+Its 32 MiB payload budget is not a total managed-memory ceiling; separate row limits
+also apply. This checkpoint changes no schema and does not activate real B2.
+Business continues controlled T031 synthesis; its subsequent BL schema checkpoint
+must preserve existing CL exact-handle constraints and populated data. Integration
+owns embedding the reviewed Synthesis prompt when that file is delivered.
+
+The shared fixture extension has three optional named `StartGenerator` inputs:
+`runtimeFilePath`, `scanPolicyFilePath`, `workerProviderConfigurationFilePath`.
+They are all absent for existing behavior, or all supplied for exact `generate`
+mode with no conflicting identity/target/batch/negative-configuration overrides.
+Only existing absolute regular files under the owned fixture root are accepted;
+the fixture does not expose an arbitrary child-environment override dictionary.
+Its database, operator, application name and keyring remain fixture-owned.
+
+`WriteGenerateWorkerProviderAsync(approvedProfile, readApprovedCredential, token)`
+creates a distinct Worker-only protected configuration using that same fixture
+protector and `SecretPurposes.LlmApiKey`. It never assumes external ciphertext can
+be decrypted by fixture keys. The supplied credential reader is invoked once and
+must be separately authorized before any real use; no actual secret reader is
+selected yet. Only protected credentials reach the file. Controlled qualification
+uses synthetic strings and an ephemeral protector, not a live provider or database.
+An ignored-cancellation credential read remains awaited; its cancelled late result
+cannot create a configuration file. This is owned test-fixture plumbing, not a
+replacement production source-containment boundary.
+
+Main's report must also omit raw `FileCoverage.Reason` text, which can contain
+model-derived uncertainty/source prose. Safe identifiers, digests, relative paths,
+dispositions and host reason codes are report summaries, not byte-identical canonical
+coverage/proposal authority. Root checks publication/document/origin bindings and
+uses the canonical reader for actual content. CLI Ctrl+C drain semantics are not
+qualified by S2 API cancellation tests and remain a distinct S3 obligation.
+
+## Combined controlled checkpoint: trusted loader and CL-only runner
+
+The fixture hook is committed at `417c888f`. Independent review accepted its
+test-only boundary; focused verification passed 24/24. Scan's final synchronous
+invocation correction `b19a6816` is independently accepted and merged, with the
+previously held input-ledger, retry-lifetime and CL-only runner checkpoints, at
+`2cca4913`. The original accounting hold is resolved: attempted transport calls
+include synchronous throws, while token usage remains unknown. This does not prove
+remote provider acceptance. Main's executable Generate/report wiring is still a
+separate pending Scan checkpoint, not completed by importing the internal runner.
+
+At `2cca4913`, combined affected verification passed **1,670/1,670 SelfContained**
+cases, zero failures/skips, 407 classified sources. Evidence:
+`TestResults/isolation-abb08056811e47dbae6a60b7fccbc6ae/results.trx`.
+This includes the trusted Business loader and final fixture cleanup guard, and is
+not a full-suite, PostgreSQL, native-tool, provider, browser or E2E qualification.
+Scan may consume the fixture API after committing its own dirty Main work; no reset
+or all-lane barrier is required. Business continues synthesis, Chat completes its
+footer lifecycle correction, and Explorer awaits the same actual publication/run.
+
+Chat footer `d4d0b049` subsequently passed independent integration review and is
+merged at `bed683d9`. Complete affected verification passes **1,695/1,695**
+SelfContained cases, zero failures/skips, 408 classified sources, including all
+25 footer cases: `TestResults/isolation-a17314b828ef4e51b864b16cafd94e4b/results.trx`.
+This supplies saved-reference projection, the encoded exact-link leaf and saved-view
+suppression; parent ChatPage/runtime activation remains absent. The actual UI sink
+must still check attachment/cancellation when applying the authorized handoff.
+
+Chat is released for controlled T024/T025 canonical history consumption and the
+read-only saved-display part of T028/T029. It returns unchanged owner history with
+exact context/selection binding, codec facts, omission and full lineage. Root alone
+constructs the initial union/request/budget/execution and makes active-slot/retry/
+composer decisions. No duplicate suffix selection, new Core contract, caller-created
+capsule, stream replay or historical-row-as-new-admission is permitted. This work
+does not wait for Business BL synthesis and does not authorize provider/browser use.
+
+## Accepted bounded Scan-to-B2 finalization agreement
+
+Business's T032/T033 proposal and Scan's compatibility response agree on the missing
+finalization selection. Integration releases controlled declarations/implementation
+under this agreement, not S3 dispatch or runtime resources:
+
+- Add non-positional Selection to FinalizationRequest. Existing
+  CanonicalPayloadDigest is the single canonical request digest over exact Operation,
+  Corpus and Selection; do not add a competing request-digest field.
+- Missing selection/default roots is invalid. Explicit empty roots means a settled
+  selection with durable NoContent, honest original coverage and zero provider calls;
+  it does not assert no roots exist. Bound selected roots to 256, reject duplicate
+  stable identities/conflicting versions and verify exact corpus membership before
+  dispatch. Existing 256-node/512-edge/depth-16 per-flow caps may only be reduced.
+- Pin RunId, profile ID, frozen non-secret configuration fingerprint, PromptDigest
+  and token ceiling. Business publishes one versioned canonical helper/projection
+  over source identity, precedence, profile name, API type, exact endpoint, model
+  and credential-reference identifier. Exclude secrets, ciphertext, credential hashes,
+  prompt text and live objects. The fingerprint is configuration identity, not proof
+  of credential rotation or execution authority. Scan's original live host binds
+  it to the actual selected client/credential lifetime and checks it before dispatch.
+- Business owns trusted input loading/planning/policy, derived BL identities, typed
+  full dependencies and atomic exact request/outcome/result persistence. Scan owns
+  original live-run single flight, F1 and remaining shared request/token/deadline
+  budget. A 256-root bound never grants 256 provider calls. Persisted exact lookup
+  replays the original result; missing/indeterminate lookup grants neither generation
+  nor owner-death/restart authority.
+- CL-only S2 remains unchanged. Business remains sole migration/schema owner and
+  sends reviewed declarations/migration checkpoints for consumer compatibility and
+  integration before activation. Main and controlled synthesis continue independently;
+  no new generic receipt framework or all-Chat completion barrier is introduced.

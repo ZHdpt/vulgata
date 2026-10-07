@@ -417,7 +417,222 @@ public sealed class OctoberScanFileWorkerTests
         public string FileIdentity => "trusted-controlled-file-identity";
         internal bool Current { get; set; } = true;
         internal int Verifications { get; private set; }
-        public Task<bool> VerifyCurrentAsync(CancellationToken cancellationToken = default) { Verifications++; return Task.FromResult(Current); }
+        internal Func<CancellationToken, Task<bool>>? Verify { get; set; }
+        public Task<bool> VerifyCurrentAsync(CancellationToken cancellationToken = default) { Verifications++; return Verify?.Invoke(cancellationToken) ?? Task.FromResult(Current); }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Execute_TransientFailure_RetryClassificationRequiresKnownSettledUsageAsync(bool knownUsage)
+    {
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var scope = new Scope();
+        using var client = new TransientClient(knownUsage);
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(frame), []);
+        Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(knownUsage ? OctoberWorkerRetryDisposition.KnownSafeTransient : OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Null(result.Proposal);
+        Assert.True(client.DisposedStream);
+        Assert.Equal(1, Assert.Single(scope.Leases).Settlements);
+    }
+
+    private sealed class TransientClient(bool knownUsage) : IChatClient
+    {
+        internal bool DisposedStream { get; private set; }
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                await Task.Yield();
+                if (knownUsage) yield return new ChatResponseUpdate { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 0 })] };
+                throw new HttpRequestException("Controlled transient unavailable", null, HttpStatusCode.ServiceUnavailable);
+            }
+            finally { DisposedStream = true; }
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualFactory_AdmissionDelay_IsQueueWaitNotModelWaitAsync()
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        bool acquired = false;
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var actual = new OctoberExecutionScope(request.RunId, request.ProviderProfileId, RealScopePolicy(), async (_, token) =>
+        {
+            if (acquired)
+            {
+                entered.TrySetResult();
+                await release.Task.WaitAsync(token);
+            }
+            return ProviderAdmissionStatus.Granted;
+        });
+        var scope = new AfterAcquireScope(actual, () => acquired = true);
+        using var transport = new ControlledHttp();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var pending = new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Empty(transport.Requests);
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            await Task.Delay(TimeSpan.FromSeconds(1)); // Intentional controlled admission delay; transport itself responds immediately.
+            var held = System.Diagnostics.Stopwatch.GetElapsedTime(started);
+            release.TrySetResult();
+            await pending.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Single(transport.Requests);
+            var snapshot = actual.GetSnapshot();
+            Assert.True(snapshot.QueueWait >= held - TimeSpan.FromMilliseconds(25));
+            Assert.True(snapshot.ModelWait < held / 2,
+                $"The controlled admission hold {held} must not also count as model execution ({snapshot.ModelWait}).");
+        }
+        finally { release.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(3)); }
+    }
+
+    private sealed class AfterAcquireScope(IOctoberWorkerExecutionScope inner, Action acquired) : IOctoberWorkerExecutionScope
+    {
+        public async Task<ProviderAdmission> AcquireWorkerAttemptAsync(OctoberWorkerProviderAttemptRequest request, CancellationToken cancellationToken = default)
+        {
+            var result = await inner.AcquireWorkerAttemptAsync(request, cancellationToken);
+            acquired();
+            return result;
+        }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GrantedButNotDispatched_DoesNotCountAProviderRequestAsync(bool actualFactory)
+    {
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var request = Request(frame);
+        using var cancellation = new CancellationTokenSource();
+        await using var actual = new OctoberExecutionScope(request.RunId, request.ProviderProfileId, RealScopePolicy(), (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted));
+        var scope = new AfterGrantScope(actual, () => { if (actualFactory) cancellation.Cancel(); else frame.Current = false; });
+        using var transport = new ControlledHttp();
+        using IChatClient client = actualFactory
+            ? await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected())
+            : new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [], cancellation.Token);
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.Proposal);
+        Assert.Empty(transport.Requests);
+        if (client is ScriptedClient controlled) Assert.Empty(controlled.Requests);
+        Assert.Equal(0, actual.GetSnapshot().Usage.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RetryFinalVerification_UncooperativeAfterCancellation_CannotRenewLifetimeOrReturnSafeRetryAsync()
+    {
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        using var client = new TransientClient(true);
+        using var cancellation = new CancellationTokenSource();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        frame.Verify = _ =>
+        {
+            if (!client.DisposedStream) return Task.FromResult(true);
+            entered.TrySetResult();
+            return release.Task; // Deliberately ignores cancellation; test owns and releases the callback.
+        };
+        var pending = new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(frame), [], cancellation.Token);
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            cancellation.Cancel();
+            var result = await pending.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+            Assert.Null(result.Proposal);
+            Assert.False(release.Task.IsCompleted);
+            release.TrySetResult(true);
+            Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        }
+        finally { release.TrySetResult(true); await pending.WaitAsync(TimeSpan.FromSeconds(3)); }
+    }
+
+    private sealed class AfterGrantScope(IOctoberWorkerExecutionScope inner, Action granted) : IOctoberWorkerExecutionScope
+    {
+        public async Task<ProviderAdmission> AcquireWorkerAttemptAsync(OctoberWorkerProviderAttemptRequest request, CancellationToken cancellationToken = default)
+        {
+            var result = await inner.AcquireWorkerAttemptAsync(request, cancellationToken);
+            return result.Lease is null ? result : result with { Lease = new AfterGrantLease(result.Lease, granted) };
+        }
+        private sealed class AfterGrantLease(IOctoberProviderAttemptLease inner, Action granted) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
+        {
+            public void RecordDispatch() { if (inner is IOctoberWorkerDispatchObserver observer) observer.RecordDispatch(); }
+            public void CompleteDispatchObservation() { if (inner is IOctoberWorkerDispatchObserver observer) observer.CompleteDispatchObservation(); }
+            public Guid AttemptId => inner.AttemptId;
+            public CancellationToken CancellationToken => inner.CancellationToken;
+            public async Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default)
+            {
+                var status = await inner.CheckBeforeSendAsync(cancellationToken);
+                if (status == ProviderAdmissionStatus.Granted) granted();
+                return status;
+            }
+            public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default) => inner.SettleAsync(usage, cancellationToken);
+            public ValueTask DisposeAsync() => inner.DisposeAsync();
+        }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RetryVerification_AfterLeaseSettlement_RetainsOriginalFileDeadlineAsync()
+    {
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var request = Request(frame);
+        request = request with { Limits = request.Limits with { RequestTimeout = TimeSpan.FromSeconds(10) } };
+        await using var scope = new OctoberExecutionScope(request.RunId, request.ProviderProfileId,
+            RealScopePolicy() with { FileDeadlineSeconds = 1 }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted));
+        using var client = new TransientClient(true);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        frame.Verify = _ =>
+        {
+            if (!client.DisposedStream) return Task.FromResult(true);
+            entered.TrySetResult();
+            return release.Task;
+        };
+        var pending = new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            var result = await pending.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+            Assert.Null(result.Proposal);
+            Assert.False(release.Task.IsCompleted);
+        }
+        finally { release.TrySetResult(true); await pending.WaitAsync(TimeSpan.FromSeconds(3)); }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualFactory_SynchronousTransportThrow_CountsAttemptedDispatchWithUnknownTokensAsync()
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        await using var scope = new OctoberExecutionScope(request.RunId, request.ProviderProfileId, RealScopePolicy(), (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted));
+        using var transport = new SynchronousFailureTransport();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(1, transport.Calls);
+        var snapshot = scope.GetSnapshot();
+        Assert.Equal(1, snapshot.Usage.Requests);
+        Assert.True(snapshot.Usage.HasUnknownUsage);
+        Assert.Null(snapshot.Usage.InputTokens);
+        Assert.Null(snapshot.Usage.OutputTokens);
+    }
+
+    private sealed class SynchronousFailureTransport : HttpMessageHandler
+    {
+        internal int Calls;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Calls++;
+            throw new HttpRequestException("Controlled synchronous transport invocation failure");
+        }
     }
     private sealed record Round(string? Text, ChatFinishReason? Finish, IReadOnlyList<AIContent>? Calls = null);
     private sealed class ScriptedClient(IReadOnlyList<Round> rounds, Action? afterRequest = null) : IChatClient
