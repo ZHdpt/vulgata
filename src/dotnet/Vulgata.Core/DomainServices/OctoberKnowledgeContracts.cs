@@ -168,7 +168,11 @@ public sealed record SearchPage(KnowledgeReadStatus Status, ImmutableArray<Docum
 /// <summary>Next continues this exact content stream; consumers cannot guess offsets or tokens.</summary>
 public sealed record ContentPage(KnowledgeReadStatus Status, DocumentSummary? Document, string? Content,
     ImmutableArray<QualifiedClaimGroup> Claims, ContinuationToken? Next, CoverageProjection? Coverage);
-public sealed record RelatedDocument(RelationshipKind Kind, DocumentHandle From, DocumentHandle To, string Meaning);
+public sealed record RelatedDocument(RelationshipKind Kind, DocumentHandle From, DocumentHandle To, string Meaning)
+{
+    /// <summary>Exact accepted edge identity. Null legacy results are not eligible graph edges.</summary>
+    public Guid? RelationshipVersionId { get; init; }
+}
 public sealed record RelatedPage(KnowledgeReadStatus Status, ImmutableArray<RelatedDocument> Relationships,
     ImmutableArray<Uncertainty> PermittedUncertainties, ContinuationToken? Next, CoverageProjection? Coverage);
 
