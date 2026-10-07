@@ -241,3 +241,27 @@ execution entry must accept integration's plain client/budget/session without a
 second MAF loop or reflection over internals. Integration retains selected-client,
 redirect/retry disabling, Web-local request admission and two-owner drain composition.
 Guard availability does not itself complete those responsibilities or enable sending.
+
+Business prompt-only `861e349118b89c87d37c72563b0efad4956b6b81` is also imported;
+the shared project now embeds `Prompts/OctoberBusiness/Resolution.md` as
+`Vulgata.Agents.Prompts.OctoberBusiness.Resolution.md`. Direct Agents build with
+`--no-restore` succeeded with zero errors and 4,410 warnings; warning severity was
+not changed. This is resource/build verification, not a resolution/provider test.
+
+## Newly identified narrow Scan/Knowledge dependency
+
+Scan reported, and integration verified, that `OctoberKnowledgePolicy` currently
+requires every Source contributor and source anchor to match the primary file's
+origin. Supporting source/JDT/CodeGraph results can legitimately expose other files
+under the accepted tool scope, so their complete provenance cannot currently be
+accepted. Business owns the minimal compatible origin/verification/persistence
+correction; Scan must not alter the policy or relabel support as Advisory.
+
+The owner assessment must distinguish actual supporting content from metadata-only
+directory listings, paths and missing/unreadable limitations. Typed locations are
+available; free-text parsing must not invent source identity. Source-byte proof needs
+one identity-pinned read sequence, not success across renewed per-call contexts.
+Metadata cannot require reading unavailable bytes or masquerade as content evidence.
+Until the owner contract is accepted, Scan fails closed before disclosing support it
+cannot represent, while primary-file/F1 work and other lanes continue. No broad plan
+restart, new root authority or all-lane barrier is authorized by this finding.
