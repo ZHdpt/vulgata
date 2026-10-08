@@ -22,6 +22,7 @@ using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Infrastructure.Configuration;
 using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Infrastructure.Source;
 using Vulgata.OctoberGenerator;
 using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
@@ -35,6 +36,96 @@ namespace Vulgata.Tests.October;
 
 public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
 {
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task PreparedSource_RealOwnedAuthorityListsSyntheticFileWithoutGenerateOrToolsAsync()
+    {
+        await using var fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        const string source = """
+            public final class AccountPolicy {
+                private AccountPolicy() { }
+
+                public static boolean canRegister(boolean phoneVerified, boolean accountExists) {
+                    return phoneVerified && !accountExists;
+                }
+
+                public static boolean canLogin(boolean accountActive, boolean passwordMatches, int failedAttempts) {
+                    if (!accountActive || failedAttempts >= 5) {
+                        return false;
+                    }
+                    return passwordMatches;
+                }
+            }
+            """;
+        Assert.Empty(Directory.EnumerateFileSystemEntries(fixture.OwnedSourceRoot));
+        await File.WriteAllTextAsync(Path.Combine(fixture.OwnedSourceRoot, "AccountPolicy.java"), source, new UTF8Encoding(false, true));
+        using (var process = fixture.StartGenerator(JsonSerializer.Serialize(fixture.CreatePrepareRequest())))
+        {
+            var prepared = await fixture.WaitForGeneratorAsync(process);
+            output.WriteLine($"source-diagnostic-prepare-exit={prepared.ExitCode}");
+            Assert.Equal(0, prepared.ExitCode);
+            string? executableExtensions = Environment.GetEnvironmentVariable("PATHEXT");
+            Assert.False(string.IsNullOrWhiteSpace(executableExtensions));
+            Assert.True(process.StartInfo.Environment.TryGetValue("PATHEXT", out string? childExtensions));
+            Assert.Equal(executableExtensions, childExtensions);
+        }
+
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var authority = scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>();
+        var authentication = await authority.AuthenticateAsync(CancellationToken.None);
+        output.WriteLine($"source-diagnostic-authentication={authentication.Status}");
+        Assert.Equal(OctoberAuthenticationStatus.Authenticated, authentication.Status);
+        await using var session = Assert.IsAssignableFrom<IOctoberOperatorSession>(authentication.Session);
+        var authorized = await authority.AuthorizeSelectionAsync(session, new(fixture.TargetId, fixture.BatchId, null), CancellationToken.None);
+        output.WriteLine($"source-diagnostic-selection-authority={authorized.Status}");
+        Assert.Equal(OctoberAuthorityDecisionStatus.Authorized, authorized.Status);
+        await using var database = fixture.CreateOctoberContext();
+        var selected = await new OctoberBatchSelector(database, fixture.TargetId, fixture.CanonicalDatabaseIdentity)
+            .BindAsync(new(fixture.TargetId, fixture.BatchId, Assert.IsType<OctoberAuthorizedSelection>(authorized.Authority)), CancellationToken.None);
+        output.WriteLine($"source-diagnostic-bound-selection={selected.Status}");
+        Assert.Equal(OctoberSelectionStatus.Selected, selected.Status);
+        var setup = Assert.IsAssignableFrom<IOctoberHistoricalBoundSetupData>(selected.BoundSetupData);
+        var issued = await authority.IssueSourceApprovalAsync(session, setup, fixture.RepositoryId, CancellationToken.None);
+        output.WriteLine($"source-diagnostic-approval={issued.Status}");
+        Assert.Equal(OctoberSourceApprovalStatus.Issued, issued.Status);
+        var approval = Assert.IsType<PreparedSourceApproval>(issued.Approval);
+        var verified = await authority.VerifySourceApprovalAsync(session, fixture.TargetId, approval, CancellationToken.None);
+        output.WriteLine($"source-diagnostic-direct-verification={verified.Status}");
+        Assert.Equal(PreparedSourceAuthorityStatus.Current, verified.Status);
+        Assert.Equal(approval, verified.CurrentApproval);
+        int liveChecks = 0;
+        var verifier = new OctoberPreparedSourceAuthorityVerifier(fixture.TargetId, async (target, candidate, token) =>
+        {
+            var current = await authority.VerifySourceApprovalAsync(session, target, candidate, token);
+            Interlocked.Increment(ref liveChecks);
+            output.WriteLine($"source-diagnostic-live-verification={current.Status}");
+            return current;
+        }, candidate => candidate == approval && approval.BatchId == fixture.BatchId && approval.RepositoryId == fixture.RepositoryId
+            && approval.SubjectId == session.SubjectId && approval.RootBindingIdentity == setup.Snapshot.Request.Repositories.Single().RootBindingIdentity
+            && issued.ExpiresAtUtc > DateTimeOffset.UtcNow && session.ExpiresAtUtc > DateTimeOffset.UtcNow);
+        var binding = new PreparedSourceBinding(new PreparedSourceContextIssuer(verifier), fixture.TargetId,
+            [new(fixture.TargetId, fixture.BatchId, fixture.RepositoryId, approval.RootBindingIdentity, fixture.OwnedSourceRoot)]);
+        var scoped = await binding.IssueAsync(approval, PreparedSourceGrantLimits.Default);
+        output.WriteLine($"source-diagnostic-context={scoped.Status}");
+        Assert.Equal(PreparedSourceIssueStatus.Issued, scoped.Status);
+        await using (var context = Assert.IsAssignableFrom<IPreparedSourceReadContext>(scoped.Context))
+        {
+            var listed = await context.ListAsync(new("", 10));
+            output.WriteLine($"source-diagnostic-list={listed.Outcome}; entries={listed.Entries.Count}; limitations={listed.Limitations.Count}; live-checks={liveChecks}");
+            Assert.Equal(PreparedSourceOutcome.Complete, listed.Outcome);
+            Assert.Equal(fixture.RepositoryId, listed.RepositoryId);
+            var entry = Assert.Single(listed.Entries);
+            Assert.Equal(PreparedSourceEntryKind.RegularFile, entry.Kind);
+            Assert.Equal("AccountPolicy.java", entry.Location.RelativePath);
+            Assert.Empty(listed.Limitations);
+            Assert.Null(listed.Continuation);
+            Assert.True(liveChecks >= 2, "Issuance and listing must use actual current authority.");
+        }
+        Assert.Equal(0, await database.KnowledgeOperations.CountAsync(x => x.Kind == OperationKind.BeginGenerate));
+        Assert.Equal(0, await database.AcceptedFileManifests.CountAsync());
+        Assert.Equal(0, await database.KnowledgePublications.CountAsync());
+    }
+
     [Trait("Suite", "E2E")]
     [SuiteFact("E2E")]
     public async Task GeneratorPrepare_WithWebStopped_CommitsOwnedBatch()
@@ -2146,12 +2237,15 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 CreateNoWindow = true,
             };
             string? path = Environment.GetEnvironmentVariable("PATH");
+            string? pathExtensions = Environment.GetEnvironmentVariable("PATHEXT");
             string? systemRoot = Environment.GetEnvironmentVariable("SystemRoot");
             string? temp = Environment.GetEnvironmentVariable("TEMP");
             string? tmp = Environment.GetEnvironmentVariable("TMP");
             string? dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
             startInfo.Environment.Clear();
             if (!string.IsNullOrWhiteSpace(path)) startInfo.Environment["PATH"] = path;
+            // The pinned PowerShell shim needs native executable detection to await its Node child.
+            if (!string.IsNullOrWhiteSpace(pathExtensions)) startInfo.Environment["PATHEXT"] = pathExtensions;
             if (!string.IsNullOrWhiteSpace(systemRoot)) startInfo.Environment["SystemRoot"] = systemRoot;
             if (!string.IsNullOrWhiteSpace(temp)) startInfo.Environment["TEMP"] = temp;
             if (!string.IsNullOrWhiteSpace(tmp)) startInfo.Environment["TMP"] = tmp;

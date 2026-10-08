@@ -40,6 +40,14 @@ resolution before ordinary-reader assertions; owned cleanup passed. Generate rep
 and provider usage were not retained, so underlying cause/dispatch remain unknown.
 Root's reviewed qualification diagnostics now pass 53/53 affected source-free
 cases (`b35ffd84f2f74f42845d2263dc6b3605`); no automatic external retry is allowed.
+The user approved one additional B and subsequent diagnosis/fix. That attempt
+`ea77060cab984234a9a5de09ec6b2324` failed before inventory, reporting zero provider
+requests. Diagnosis reproduced native launch failure when the Generator fixture
+omitted Windows `PATHEXT`; restoring only that key passed the native probe.
+Root's fixture-only correction and exact real authority/contained-list regression
+pass 1/1 (`3ddd767908e04d738097eca9f131d8b5`), with owned cleanup. Production Scan
+and persistent machine configuration are unchanged. Corrected full B remains
+unverified; native and provider-free passes are not generated-content evidence.
 C remains separate and pending B; no production source disclosure is approved.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted

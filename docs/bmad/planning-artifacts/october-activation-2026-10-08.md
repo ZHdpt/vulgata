@@ -286,3 +286,69 @@ Final affected SelfContained verification: **53/53**, zero failures/skips, run
 and Generate qualification adapter classes, including eight new diagnostics cases.
 The prior full 4,121/4,121 remains pinned before this test-helper-only addition;
 the failed live B result is not superseded by these controlled passes.
+
+### Additional B authority
+
+The user explicitly approved one additional B attempt under the same synthetic
+source/provider/disposable boundaries, maximum three requests, no automatic retry,
+and 12,000 combined tokens, then authorized diagnosis and scoped correction if it
+fails again. This allows investigation and relevant fixes, not production-source
+disclosure, retained C operation, or an unlimited provider-spend allowance.
+
+Additional B run `ea77060cab984234a9a5de09ec6b2324` failed **0/1**, zero skips.
+Sanitized child report: exit 5, execution Completed, coverage None, publication
+NoContent, zero inventory/accepted files/terminal coverage; gaps `no_cl_content`
+and `source-authority-or-identity-lost`. Reported usage is zero requests/input/output
+with unknown=false. DB observations: batch 1, source approval 1, accepted manifest
+0, BeginGenerate operation 1. Owned database/temp/container/volume cleanup passed.
+
+Diagnosis must not equate this gap with proven Identity failure: listing first
+prepares CodeGraph, and OctoberToolRuntime currently maps any preparation exception
+to AuthorityUnavailable. Root verified current Node/pwsh lookup candidates and
+installed CodeGraph package versions 1.5.0 without modifying persistent settings.
+Scan owns an exact synthetic native/no-provider reproduction; root retains real
+authority/fixture diagnosis. No further paid Generate attempt is dispatched.
+
+Under the user's failure-diagnosis authorization, the two existing source-free
+PostgreSQL checks `IssueSourceApprovalAsync_IssuesExactApprovalForCommittedRepository`
+and `VerifySourceApprovalAsync_ReturnsCurrentIssuedApproval` passed **2/2** in
+`ef76d773174143789d24e1dc4524a09d`, with runner-owned container/volume cleanup.
+This independently exercises issuance/current verification; it neither proves
+every recheck in B nor qualifies the separate BL operator-reader binding.
+
+Root's provider-free real fixture diagnostic
+`PreparedSource_RealOwnedAuthorityListsSyntheticFileWithoutGenerateOrToolsAsync`
+passed **1/1** in `80c1410cd25e4ef582c61bd29e8a2302`: actual Prepare child,
+PostgreSQL/Identity, original session, source approval and four live verification
+checks reached a Complete one-file contained listing. It asserts zero Generate,
+accepted manifests and publications; no CodeGraph/JDT/LLM call. Owned cleanup
+passed. This narrows B's failure without claiming full Generate qualification.
+
+Scan separately reproduced a native launch environment discriminator: the exact
+bare Java inventory-first case passed under normal testhost environment, while
+the reduced CodeGraph child environment returned exit 0 with no output and no
+required database, causing the preparation exception/AuthorityUnavailable mapping.
+That paired diagnostic remains failed evidence, not a readiness pass; a scoped
+retained test fixture/cleanup failure is owned by Scan pending resolution.
+
+Scan proved the single-key correction in native run
+`b62fa986d5354e04b641713930cf1915` (**1/1**, original inventory/cleanup assertions):
+the reduced environment plus only `PATHEXT` restored awaited initialization,
+required `codegraph.db`, one-file inventory and owned cleanup. The paired failing
+run `7ece1dd28e194985a24827a90b681989` had omitted that key. No application,
+source, profile, parser, database or LLM change was needed for this discriminator.
+
+Root corrected only the qualification fixture's `StartGenerator` environment
+allowlist to forward existing nonempty process `PATHEXT` alongside `PATH`.
+No persistent environment change, arbitrary inheritance, extra sleep, readiness
+bypass or production tool-adapter change. The corrected full B/provider/reader
+path still needs a separately authorized verification; native correction does
+not retroactively turn either failed B run into a pass.
+
+The corrected real fixture authority/list test, now asserting exact explicit
+Generator child `PATHEXT` forwarding after child exit, passed **1/1** in
+`3ddd767908e04d738097eca9f131d8b5`, with owned database/temp/container/volume cleanup.
+Independent review accepted the narrow fixture change. Scan also verified that
+the one retained failed-probe directory had no live owned process/reparse points
+or open file handles before deleting that exact owned root and checking absence;
+no unrelated process was stopped. Full corrected B remains unexecuted.
