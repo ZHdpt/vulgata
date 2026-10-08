@@ -335,9 +335,11 @@ concrete/interface aliases pointing to the same instance, registry execution aut
 and CommitGuard, canonical reader/disclosed-reader/dependency/policy ports, exact
 selected provider binding and request admission. Its final disposal callback must
 await that same store's idempotent DisposeAsync, attempt remaining context/child-scope
-cleanup in finally, and retain any cleanup failure. Use the original authenticated
-operator accessor for a fresh Chat-purpose context and actual current security stamp;
-a child default circuit context or Reader-purpose context is not a substitute.
+cleanup in finally, and retain any cleanup failure. Use the originating ordinary
+Chat user's live authenticated accessor and its authentication-bound security stamp
+for a fresh Chat-purpose context. Never substitute Scan's operator session or refresh
+a stale captured stamp to prolong authority. A child default circuit context or
+Reader-purpose context is not a substitute.
 
 Adapt Agents `OctoberChatInputDigests.CreateAsync` to the Web digest record without
 copying embedded prompts. Missing explicit configuration, selected provider/credential,
@@ -358,3 +360,41 @@ no seed dump, no real credentials/provider calls and no Web startup. Integrator 
 obtain the expanded resource grant before execution; cleanup must verify exact owned
 container/volume/database removal. Live Chat/provider/browser qualification remains a
 separate later authorization even after these controlled and PostgreSQL checks pass.
+
+### Shared host configuration and composition
+
+Root integrates the application through `OctoberWikiRegistration` and
+`OctoberChatHostRegistration`; no separate startup generation action is added.
+For an already configured exact `October:Wiki` publication, these host settings opt
+into executable Chat:
+
+| Setting | Meaning |
+| --- | --- |
+| `October:Chat:Enabled` | Explicit `true`; configuration alone is not runtime permission. |
+| `October:Chat:ProviderId` | Nonempty ID of the actual configured Web provider; no default provider fallback. |
+| `October:Chat:MaximumConcurrentRequests` | Optional Web Chat request limit, 1–4; default 4. Not a cross-process Scan quota. |
+| `October:Chat:MaximumConcurrentExecutions` | Optional retained host execution limit, 1–16; default 16. Unknown outcomes retain capacity. |
+
+Missing/invalid/disabled Chat configuration with a valid October Wiki registers an
+inert application, not the legacy composer. An explicit Chat configuration with an
+invalid/missing Wiki binding is also inert. When neither October binding nor Chat
+intent is configured, ordinary Web behavior is unchanged. No provider is contacted
+or credential decrypted by registration or scope construction.
+
+The scoped host factory captures the originating ordinary user's authentication
+accessor. A fresh operation uses the exact configured publication/repository scope,
+Chat purpose and its original subject/stamp, with actual Identity revalidation through
+fresh service scopes. It never resolves an unrelated child circuit authentication
+provider or substitutes the Scan operator. Reader, disclosed reader, dependencies,
+canonical store and scope share the same live policy. Each operation owns its unique
+canonical store and provider binding; codec, finite registry and request permits are
+shared by the host. The same store is explicitly disposed before all remaining owned
+context/service-scope cleanup attempts; cleanup failure remains observable.
+
+The circuit attachment follows an explicitly selected operation mode only after the
+host validates its binding. It rejects a late authorization result if its underlying
+context was replaced or disposed. Actual authentication changes still detach output.
+Operation contexts remain independently pinned and Explorer's Reader mode is not
+changed. No strict application mode/subject/scope comparison is weakened. Locator
+reload still requires a matching authorized server-selected context; it does not
+infer permission to switch modes from conversation IDs.

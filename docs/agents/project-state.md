@@ -25,8 +25,15 @@ Generate, live Chat, browser or retained presentation qualification. Narrow Scan
 command activation is subsequently integrated at `c00db2cd` from reviewed `28902685`:
 source/tests/build files match the owner's 2,170/2,170 affected controlled boundary,
 and root policy checks pass (431 files). The 3,991 full-suite result remains pinned
-before this Scan addition. Chat parent/application and root shared Web composition
-remain pending their reviewed lane checkpoint; real B/C holds are unchanged.
+before this Scan addition. Chat parent/application checkpoints are integrated at
+`71cdd7a0` and `589d78b4`. Reviewed root Web composition now passes the combined
+SelfContained suite **4,121/4,121**, zero failures/skips, run
+`488bd10080be4d9cba87308df3ccf8aa`; this includes the narrow Scan activation.
+The user subsequently approved A+ (seven source-free Chat/Explorer PostgreSQL
+cases) and resumed B (one synthetic CL-only Generate using the protected root
+`.env` provider binding, at most three requests/no retries and cumulative
+100,000 input/12,000 output tokens). Both are awaiting execution, not passed.
+C remains separate and pending B; no production source disclosure is approved.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.

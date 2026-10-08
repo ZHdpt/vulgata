@@ -171,3 +171,59 @@ and root shared Web composition are still pending. B remains explicitly paused f
 exact LLM configuration/authorization, with the fixture bundle still to be installed;
 C remains separate and pending B. Positive genuine-session PostgreSQL binding is
 outside A's 62-case grant and remains unexecuted.
+
+## Chat application and shared Web composition
+
+Chat cancellation checkpoint `3cb9fbad` and application checkpoint `f38d1d69` are
+integrated as `71cdd7a0` and `589d78b4`. Independent integration review accepted the
+original-token cancellation correction, parent locator handling, finite execution
+ownership and canonical cleanup. The owner reports 594/594 affected SelfContained
+passes (`9e380300c462417c9d70df23f948d282`); this does not qualify root DI or live use.
+
+Root's explicit host registration, unique operation factory and attachment context
+are described in the [provider handoff](../../../specs/20-1-Oct14-chat/contracts/web-provider-handoff.md).
+No default provider or Scan-operator authentication is used. Shared tests first
+observed missing-API compile RED (`d613143339fb456692d1ee6fcd2bdb9f`), then 21/21
+controlled passes. Review exposed a fixed-mode attachment mismatch and invalid
+explicit activation falling back to ordinary Web; added regressions produced 20/23
+(`f1f569b3a692436f8ad6a603bc32315f`). After correction, 35/35 host/Wiki composition
+cases pass (`3cc08819c16142b5aaf84c75bb62ccdd`). Two additional stale-authorization
+boundary cases are included in the pending combined full run; no artificial RED is
+claimed for that coverage-only addition.
+
+An A+ permission request has been presented for exactly seven source-free cases:
+`OctoberChatApplicationPostgreSqlTests` (3) and `ExplorePersistedReaderTests` (4),
+one fresh runner-owned PG17 container/volume, generated credentials and disposable
+test databases/temporary data with verified cleanup. No source, seed, real provider,
+Web host or retained dataset. **A+ is pending, not included in A's existing 62-case
+grant.** B remains explicitly paused and C remains pending B. No orphan/death issuer
+or automatic restart recovery is added by this activation.
+
+## Current qualification checkpoint and subsequent authorization
+
+Combined SelfContained run `488bd10080be4d9cba87308df3ccf8aa` passed
+**4,121/4,121**, zero failures/skips, launcher exit 0. It includes the reviewed
+shared Chat host registration, mode-aware attachment, both stale-authorization
+checks and integrated narrow Scan activation. PostgreSQL/native/provider/E2E
+suites were excluded; no live generated-content or streaming claim follows.
+
+The user subsequently answered **"Confirm two authorizations. Proceed pushing
+our work."** in the integration chat, accepting the immediately preceding scopes:
+
+- **A+ approved:** exactly three `OctoberChatApplicationPostgreSqlTests` and four
+  `ExplorePersistedReaderTests`, fresh owned PG17 container/volume, generated
+  credentials, disposable owned databases/temp and verified cleanup. No source,
+  seed, provider, Web host or retained dataset. Business coordinates one run.
+- **B resumed:** one synthetic `source/AccountPolicy.java`, CL-only Generate,
+  maximum three requests/no retries and cumulative 100,000 input/12,000 output
+  tokens. The protected binding is root `.env` keys `VULGATA_TEST_LLM_ENDPOINT`,
+  `VULGATA_TEST_LLM_MODEL`, `VULGATA_TEST_LLM_KEY`. Never print the key or commit
+  credentials. Existing disposable fixture/source/tool/host/user/cleanup scope
+  above applies. Root owns execution and one shared Scan/Business/Explorer proof.
+- **C still pending B:** the user identified `G:\AIplayground\vulgata\sample\mbs_account`
+  and `G:\AIplayground\vulgata\sample\mbs_channel` for eventual login/registration
+  presentation data, not approval to disclose production source or create the
+  retained host now. B cleanup must remain enabled.
+
+These later decisions supersede the earlier A+/B holds only within their exact
+scope. Positive BL operator-binding PostgreSQL qualification is not added to A+.

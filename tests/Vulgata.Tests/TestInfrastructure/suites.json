@@ -1,4 +1,7 @@
 {
+  "October/Integration/OctoberChatHostCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberGeneratedClReaderE2ETests.cs": {
     "suite": "E2E"
   },
