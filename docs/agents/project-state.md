@@ -22,7 +22,11 @@ digests, shared E2E compilation and the Business cleanup. The earlier logger and
 streaming-inactivity fixture races were diagnosed and corrected without weakening
 assertions; see the activation record for failed and passing runs. This is not real
 Generate, live Chat, browser or retained presentation qualification. Narrow Scan
-command and Chat parent/application integration remain active in their owning lanes.
+command activation is subsequently integrated at `c00db2cd` from reviewed `28902685`:
+source/tests/build files match the owner's 2,170/2,170 affected controlled boundary,
+and root policy checks pass (431 files). The 3,991 full-suite result remains pinned
+before this Scan addition. Chat parent/application and root shared Web composition
+remain pending their reviewed lane checkpoint; real B/C holds are unchanged.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
