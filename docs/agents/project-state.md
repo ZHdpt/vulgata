@@ -14,11 +14,15 @@ Current activation authority and ownership are in the [October 8 activation reco
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
 its reviewed tests/evidence are integrated at `9271f8f0`. This supersedes older
 "unrun PostgreSQL" statements for exactly those cases, not real generated content.
-Operation B is explicitly paused; retained operation C waits for B. The subsequent
-full SelfContained run `1a2acec76b9545f4b87ac56ae7c40444` passes 3,981/3,982,
-zero skips: both logger tests now pass, but one legacy streaming-inactivity test
-receives unexpected cancellation. Full-suite status remains non-green; the activation
-record identifies the exact failure and independent diagnosis.
+Operation B is explicitly paused; retained operation C waits for B. Reviewed Business
+per-turn cleanup is integrated at `260c5706`, with its own 62/62 PostgreSQL rerun and
+verified cleanup. Final combined SelfContained `9e0129e1d5d54b94bc5df77ed6e57ffb`
+passes **3,991/3,991**, zero failures/skips, including Identity reader binding, prompt
+digests, shared E2E compilation and the Business cleanup. The earlier logger and
+streaming-inactivity fixture races were diagnosed and corrected without weakening
+assertions; see the activation record for failed and passing runs. This is not real
+Generate, live Chat, browser or retained presentation qualification. Narrow Scan
+command and Chat parent/application integration remain active in their owning lanes.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.

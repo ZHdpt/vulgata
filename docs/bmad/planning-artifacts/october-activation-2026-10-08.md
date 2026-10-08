@@ -119,3 +119,33 @@ selection is explicit, frozen per turn, and rechecked before sending. Shared req
 permits and registry are host-owned; canonical store and provider binding are uniquely
 turn-owned. Business's pending concrete store disposal joins its actual deferred work;
 bounded response completion alone never releases execution ownership.
+
+## Accepted combined support checkpoint
+
+Business lifecycle `7b4e312f` is integrated at `260c5706` after independent integration
+review. Its owner evidence is 500/500 controlled and 62/62 source-free PostgreSQL on
+the revised store (`204fd6b29988499699c3a4124e14f49c`), with fresh owned container and
+volume absence verified. No Core/schema/constructor change. This later A evidence
+does not extend the approved category selection or authorize B/C.
+
+Explorer compilation/guard evidence `1fc79bf3` is integrated at `aee65989`: 191/191
+affected SelfContained, combined E2E discovered but not executed.
+
+The remaining legacy stream test failure was diagnosed from the full-run stack:
+its 25 ms timer could expire before the first keepalive was processed. The test-only
+correction starts that same timer after keepalive consumption and before the silent
+read. All original assertions remain; no production code, timeout increase or retry.
+
+Final combined SelfContained `9e0129e1d5d54b94bc5df77ed6e57ffb` is **3,991/3,991**,
+zero failures/skips, launcher exit 0; 430 classified files and 5,103 discovered cases.
+It includes the Identity binding, prompt helper, logger repair, fixture compilation
+and revised Business lifecycle. This supersedes the preceding failed full-suite
+status on this tested source, not its historical evidence. External/native/E2E
+categories remain excluded and unqualified by this run.
+
+Scan's narrow CL-and-BL command activation and Chat's application/registry/parent
+composition remain lane-owned pending reviewed checkpoints. Root's shared Chat
+registration must supply the exact same canonical disclosure policy to the turn
+scope, preserve originating live authentication, and await the uniquely owned store.
+No live Chat or generated CL/BL is claimed. No routine implementation permission
+round is required when these reviewed checkpoints arrive; runtime holds remain B/C.
