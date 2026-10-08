@@ -110,7 +110,9 @@ public partial class ChatPage : IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        if (OctoberEntry is not null)
+        await ResolveOctoberCompositionAsync();
+        _octoberApplicationSelected = OctoberApplication is not null || _octoberLocatorSupplied;
+        if (OctoberEntry is not null || _octoberApplicationSelected)
         {
             return;
         }
@@ -141,6 +143,7 @@ public partial class ChatPage : IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
+        _octoberApplicationSelected |= OctoberApplication is not null;
         if (OctoberEntry is not null && !ReferenceEquals(_boundOctoberEntry, OctoberEntry))
         {
             _boundOctoberEntry = OctoberEntry;
@@ -151,6 +154,7 @@ public partial class ChatPage : IAsyncDisposable
         }
         else if (OctoberEntry is not null && !ReferenceEquals(_lastOctoberSelection, OctoberSelection))
         {
+            if (OctoberApplication is not null) ClearOctoberLocator();
             _lastOctoberSelection = OctoberSelection;
             _pendingOctoberSelection = OctoberSelection;
             _newOctoberConversationRequested = false;
@@ -165,6 +169,7 @@ public partial class ChatPage : IAsyncDisposable
             _newOctoberConversationRequested = false;
             await _boundOctoberEntry.RequestContextChangeAsync(null, confirmed: true);
         }
+        await BindOctoberApplicationAsync();
     }
 
     private async Task RequestOctoberModeAsync(KnowledgeMode mode)
@@ -196,6 +201,12 @@ public partial class ChatPage : IAsyncDisposable
             return;
         }
 
+        if (OctoberApplication is not null)
+        {
+            ClearOctoberLocator();
+            _boundOctoberApplication?.Detach();
+        }
+
         if (_newOctoberConversationRequested)
         {
             await OctoberEntry.StartNewConversationAsync(confirmed: true);
@@ -204,6 +215,7 @@ public partial class ChatPage : IAsyncDisposable
         {
             await OctoberEntry.RequestContextChangeAsync(_pendingOctoberSelection, confirmed: true);
         }
+        await BindOctoberApplicationAsync();
     }
 
     private void ToggleRepositoryPicker()
@@ -649,6 +661,7 @@ public partial class ChatPage : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        DetachOctoberApplication();
         CancellationTokenSource? reveal = Interlocked.Exchange(ref _revealCancellation, null);
         reveal?.Cancel();
         reveal?.Dispose();
