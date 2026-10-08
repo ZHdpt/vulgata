@@ -1,23 +1,26 @@
 using System.Collections.Immutable;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.OctoberBusiness;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 
 namespace Vulgata.OctoberGenerator;
 
-/// <summary>Trusted controlled composition; the command entry point does not supply it.</summary>
+/// <summary>Trusted command composition over the existing Business owner services and verified reader binding.</summary>
 internal sealed record OctoberBusinessRunComposition(
     Func<IOctoberKnowledgeProducerAuthorization, IOctoberCommitSubmissionGuard, IOctoberResolutionStore> CreateResolutionStore,
     Func<IOctoberKnowledgeProducerAuthorization, IOctoberFlowPlanningInputLoader> CreatePlanningInputLoader,
     Func<IOctoberKnowledgeProducerAuthorization, IOctoberCommitSubmissionGuard, IOctoberFlowPublicationStore> CreatePublicationStore,
-    Func<PublicationBinding, IOctoberKnowledgeReader> CreateReader,
     Func<FlowPlanningInput, ImmutableArray<FlowRootSelection>> SelectRoots,
     BusinessProviderConfigurationProjection ProviderConfiguration,
     string ResolutionInstructions,
     string SynthesisInstructions,
     FlowPlanningLimits Limits,
-    long MaximumAttemptTokens);
+    long MaximumAttemptTokens)
+{
+    internal Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? BindReader { get; init; }
+}
 
 internal sealed partial class OctoberGenerateRunner
 {
@@ -28,7 +31,11 @@ internal sealed partial class OctoberGenerateRunner
     private bool _businessPublicationLogUnavailable;
     private bool _businessResolutionFailed;
     private bool _businessResolutionLimited;
+    private OctoberPhaseStatus _matchingPhase = OctoberPhaseStatus.NotStarted;
+    private OctoberPhaseStatus _businessLogicPhase = OctoberPhaseStatus.NotStarted;
     private readonly HashSet<Task> _businessOwnerCalls = [];
+    private readonly List<IAsyncDisposable> _businessReaderLifetimes = [];
+    private Task? _businessReaderCleanup;
 
     private bool BusinessRunAvailable => _execution is not null && RunAvailable &&
         _execution.Session.ExpiresAtUtc > _time.GetUtcNow() && _runToken is { IsCancellationRequested: false };
@@ -37,7 +44,7 @@ internal sealed partial class OctoberGenerateRunner
     {
         if (execution.Policy.OutputStage != "cl-and-bl" || _dependencies.Business is not { } business ||
             business.CreateResolutionStore is null || business.CreatePlanningInputLoader is null ||
-            business.CreatePublicationStore is null || business.CreateReader is null || business.SelectRoots is null ||
+            business.CreatePublicationStore is null || business.BindReader is null || business.SelectRoots is null ||
             business.ProviderConfiguration is not { } configuration || business.Limits is not { } limits ||
             string.IsNullOrWhiteSpace(business.ResolutionInstructions) || string.IsNullOrWhiteSpace(business.SynthesisInstructions) ||
             business.ResolutionInstructions.Length > KnowledgeContract.MaximumContentBytes ||
@@ -94,6 +101,7 @@ internal sealed partial class OctoberGenerateRunner
             return Failure("business_client_unavailable");
         var resolutionStore = new ObservedBusinessResolutionStore(this, business.CreateResolutionStore(this, _businessGuard));
         var disclosure = new BusinessDisclosure(this);
+        _matchingPhase = OctoberPhaseStatus.Indeterminate;
         var loaded = await StoreAsync(() => resolutionStore.LoadCorpusAsync(corpus, cancellationToken), cancellationToken);
         if (loaded.Status != KnowledgeReadStatus.Success || loaded.Corpus is not { } acceptedCorpus || acceptedCorpus.Handle != corpus)
             return Failure("business_corpus_unavailable", disclose: false);
@@ -125,12 +133,14 @@ internal sealed partial class OctoberGenerateRunner
             if (saved.Outcome.Kind == ResolutionOutcomeKind.Failed)
             {
                 _businessResolutionFailed = true;
+                _matchingPhase = OctoberPhaseStatus.Failed;
                 if (!_gaps.Any(gap => gap.Code == "business_resolution_failed"))
                     _gaps = _gaps.Add(new("business_resolution_failed"));
             }
             if (notEvaluatedForLimit && saved.Outcome.Kind == ResolutionOutcomeKind.NotEvaluated)
             {
                 _businessResolutionLimited = true;
+                if (!_businessResolutionFailed) _matchingPhase = OctoberPhaseStatus.Partial;
                 if (!_gaps.Any(gap => gap.Code == "business_resolution_limit"))
                     _gaps = _gaps.Add(new("business_resolution_limit"));
             }
@@ -140,6 +150,7 @@ internal sealed partial class OctoberGenerateRunner
         var planning = await StoreAsync(() => loader.LoadAsync(corpus, [], cancellationToken), cancellationToken);
         if (planning.Status != KnowledgeReadStatus.Success || planning.Input is not { } input || input.Corpus.Handle != corpus || input.Contributors.IsDefault)
             return Failure("business_planning_inputs_unavailable", disclose: false);
+        if (!_businessResolutionFailed && !_businessResolutionLimited) _matchingPhase = OctoberPhaseStatus.Completed;
         _observedContributors = input.Contributors;
         if (!BusinessRunAvailable || await CheckPermissionsAsync(input.Contributors, cancellationToken) != DisclosureStatus.Allowed)
             return Failure("business_authority_unavailable", interrupted: IsCancelled, disclose: false);
@@ -160,6 +171,7 @@ internal sealed partial class OctoberGenerateRunner
         _businessGuard.Register(new(request.Operation, request.Operation.OperationId, request.CanonicalPayloadDigest));
         var finalizer = new OctoberBusinessFinalizer(slot, publications, loader, _businessClient,
             execution.Provider.Profile.Name, business.ProviderConfiguration, business.SynthesisInstructions, disclosure, _time);
+        _businessLogicPhase = OctoberPhaseStatus.Indeterminate;
         try { await finalizer.FinalizeAsync(request, cancellationToken); }
         finally { await AwaitBusinessOwnerCallsAsync(); }
         // Bounded orchestration may finish before an actual owner call returns.
@@ -177,6 +189,12 @@ internal sealed partial class OctoberGenerateRunner
         if (outcome.Operation != request.Operation || !completed || outcome.PersistenceStatus is not (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted or KnowledgeWriteStatus.LogUnavailable))
             return Failure("business_publication_unavailable", indeterminate: outcome.Status == BusinessFinalizationStatus.CommitIndeterminate,
                 interrupted: outcome.Status == BusinessFinalizationStatus.HardStopped || IsCancelled, disclose: false);
+        _businessLogicPhase = outcome.Status switch
+        {
+            BusinessFinalizationStatus.Published => OctoberPhaseStatus.Completed,
+            BusinessFinalizationStatus.PublishedPartial => OctoberPhaseStatus.Partial,
+            _ => OctoberPhaseStatus.NoContent
+        };
         _businessGuard.ConfirmCommitted(request.Operation);
         if (outcome.PersistenceStatus == KnowledgeWriteStatus.LogUnavailable) _businessPublicationLogUnavailable = true;
         if (_businessPublicationLogUnavailable) _gaps = _gaps.Add(new("operation_log_unavailable"));
@@ -195,7 +213,8 @@ internal sealed partial class OctoberGenerateRunner
             _businessPublicationLogUnavailable || _businessResolutionFailed || _businessResolutionLimited ? OctoberExecutionStatus.Failed : OctoberExecutionStatus.Completed,
             outcome.Status == BusinessFinalizationStatus.NoContent ? OctoberPublicationStatus.NoContent : OctoberPublicationStatus.Confirmed,
             outcome.Publication, documents, _accepted, _coverage,
-            new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(0, 0, 0, false), []);
+            new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(0, 0, 0, false), [])
+        { Matching = _matchingPhase, BusinessLogic = _businessLogicPhase };
     }
 
     private OctoberScanReport? BusinessHandoffFailure(FinalizationRequest request)
@@ -211,11 +230,26 @@ internal sealed partial class OctoberGenerateRunner
     private async Task<ImmutableArray<DocumentHandle>> ReadBusinessPublicationAsync(OctoberBusinessRunComposition business,
         PublicationBinding publication, CancellationToken token)
     {
-        var reader = business.CreateReader(publication);
         var execution = _execution!;
-        var opened = await StoreAsync(() => RetainBusinessOwnerCall(() => reader.OpenReadSelectionAsync(new(publication,
-            new(execution.Session.SubjectId, execution.Session.ManagementAuthorityId), KnowledgeMode.IT, KnowledgePurpose.Reader,
-            execution.Authority.RepositoryIds.ToImmutableArray()), token)), token);
+        var binding = await StoreAsync(() => RetainBusinessOwnerCall(async () =>
+        {
+            var acquired = await business.BindReader!(execution.Session, publication, token);
+            if (acquired?.Lifetime is { } lifetime)
+                lock (_sync) _businessReaderLifetimes.Add(lifetime);
+            return acquired;
+        }), token);
+        token.ThrowIfCancellationRequested();
+        if (!BusinessRunAvailable || binding is null || binding.Subject is null || binding.Selection is null ||
+            binding.Reader is null || binding.Lifetime is null || binding.Subject.SubjectId != execution.Session.SubjectId ||
+            string.IsNullOrWhiteSpace(binding.Subject.AuthenticationBinding) ||
+            binding.Selection.Subject != binding.Subject || binding.Selection.Publication != publication ||
+            binding.Selection.Mode != KnowledgeMode.IT || binding.Selection.Purpose != KnowledgePurpose.Reader ||
+            binding.Selection.RepositoryScope.IsDefault ||
+            binding.Selection.RepositoryScope.Distinct().Count() != binding.Selection.RepositoryScope.Length ||
+            !binding.Selection.RepositoryScope.Order().SequenceEqual(execution.Authority.RepositoryIds.Order()))
+            return [];
+        var reader = binding.Reader;
+        var opened = await StoreAsync(() => RetainBusinessOwnerCall(() => reader.OpenReadSelectionAsync(binding.Selection, token)), token);
         if (opened.Status != KnowledgeReadStatus.Success || opened.Selection is null) return [];
         var handles = ImmutableArray.CreateBuilder<DocumentHandle>();
         var continuations = new HashSet<string>(StringComparer.Ordinal);
@@ -239,6 +273,17 @@ internal sealed partial class OctoberGenerateRunner
             if (cursor is not null && !continuations.Add(cursor.Value)) return [];
         } while (cursor is not null);
         return handles.ToImmutable();
+    }
+
+    private Task DisposeBusinessReadersAsync() => _businessReaderCleanup ??= DisposeBusinessReadersCoreAsync();
+
+    private async Task DisposeBusinessReadersCoreAsync()
+    {
+        // Every acquisition registers its eventual lifetime before completing its
+        // retained task; callers drain real reads before entering this cleanup.
+        IAsyncDisposable[] lifetimes;
+        lock (_sync) lifetimes = _businessReaderLifetimes.ToArray();
+        foreach (var lifetime in lifetimes) await lifetime.DisposeAsync();
     }
 
     private static bool KnownCommitted(KnowledgeWriteStatus status) => status is

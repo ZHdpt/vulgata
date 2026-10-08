@@ -63,6 +63,21 @@ internal sealed class OctoberChatDialogueCommitGuard(
         }
     }
 
+    // The finite host registration may discard only already closed, physically settled entries.
+    internal void ForgetClosed(DialogueCommitAttempt attempt)
+    {
+        lock (_gate)
+        {
+            if (TryFind(attempt, out var entry) && entry.Closed && entry.Closure.Task.IsCompletedSuccessfully)
+                _entries.Remove(Key(attempt));
+        }
+    }
+
+    internal bool SubmissionStarted(DialogueCommitAttempt attempt)
+    {
+        lock (_gate) return !TryFind(attempt, out var entry) || entry.SubmissionStarted;
+    }
+
     public async Task<CommitEligibilityStatus> CheckBeforeTransactionAsync(DialogueCommitAttempt attempt,
         CancellationToken cancellationToken = default)
     {

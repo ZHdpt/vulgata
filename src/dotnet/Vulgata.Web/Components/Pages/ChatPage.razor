@@ -32,13 +32,33 @@
         </section>
         <section class="chat-surface" aria-label="对话记录" aria-live="polite"
                  aria-busy="@(october.LoadState == LoadState.Loading ? "true" : "false")" tabindex="0">
-            @if (OctoberTurn is { } turn && october.Conversation is { } conversation &&
+            @if (_octoberLocatorInvalid)
+            {
+                <p class="chat-message chat-message--status" role="status">对话链接暂不可用，请开始新对话。</p>
+            }
+            @if (_boundOctoberApplication is { } application)
+            {
+                @foreach (var item in application.Turns)
+                {
+                    <div class="chat-turn" @key="item.ViewModel.Binding.TurnId">
+                        <div class="chat-message chat-message--user">@item.Question</div>
+                        <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="item.ViewModel" />
+                        @if (item.Footer is { } footer)
+                        {
+                            <Vulgata.Web.Components.Chat.OctoberChatReferenceFooter State="footer" />
+                        }
+                    </div>
+                }
+            }
+            else if (OctoberTurn is { } turn && october.Conversation is { } conversation &&
                 turn.Binding.ConversationId == conversation.ConversationId &&
                 turn.Binding.ContextId == conversation.ContextId &&
                 turn.Binding.Request == conversation.Request && turn.Binding.Selection == conversation.Selection)
             {
                 <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="turn" />
             }
+            @if (_boundOctoberApplication?.Turns.Count is null or 0)
+            {
             <div class="chat-welcome">
                 <h1 class="display-serif display-serif-lg">@(october.ThemeName == "dark" ? "你好，需要追踪哪段逻辑？" : "你好，想了解什么业务流程？")</h1>
                 @if (october.Conversation is not null)
@@ -46,6 +66,7 @@
                     <p>已选择 @october.Conversation.Request.RepositoryScope.Length 个仓库，@october.ModeLabel。</p>
                 }
             </div>
+            }
             @if (october.StatusMessage is not null)
             {
                 <p class="chat-message chat-message--status" role="status">@october.StatusMessage</p>
@@ -59,12 +80,40 @@
         <section class="question-composer" aria-label="问题输入">
             <label class="visually-hidden" for="october-chat-question">问题</label>
             <textarea id="october-chat-question" @bind="october.Question" @bind:event="oninput"
-                      placeholder="对话服务准备中" aria-label="问题" rows="3" disabled></textarea>
+                      placeholder="@(OctoberComposerDisabled ? "对话服务准备中" : october.ThemeName == "dark" ? "输入技术问题…" : "描述你想了解的业务流程…")"
+                      aria-label="问题" rows="3" disabled="@OctoberComposerDisabled"></textarea>
             <div class="composer-context-row">
-                <p role="status">对话服务准备中，暂时无法发送问题。</p>
+                @if (_boundOctoberApplication is null)
+                {
+                    <p role="status">对话服务准备中，暂时无法发送问题。</p>
+                }
+                else if (_boundOctoberApplication.StatusMessage is { } applicationStatus)
+                {
+                    <p role="status">@applicationStatus</p>
+                }
+                @if (_boundOctoberApplication?.IsSaveUncertain == true)
+                {
+                    <FluentButton Type="ButtonType.Button" @onclick="ReconcileOctoberAsync">核对保存状态</FluentButton>
+                }
+                else if (_boundOctoberApplication?.IsBusy == true)
+                {
+                    <FluentButton Type="ButtonType.Button" @onclick="CancelOctober">取消生成</FluentButton>
+                }
                 <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent"
-                              Type="ButtonType.Button" Disabled="true">发送</FluentButton>
+                              Type="ButtonType.Button" Disabled="@OctoberComposerDisabled" @onclick="SendOctoberAsync">发送</FluentButton>
             </div>
+        </section>
+    </div>
+}
+else if (_octoberApplicationSelected)
+{
+    <div class="chat-page chat-page--business" data-theme="light" data-load-state="Error">
+        <section class="chat-surface" aria-label="对话记录">
+            <p class="chat-message chat-message--status" role="status">对话服务暂不可用。</p>
+        </section>
+        <section class="question-composer" aria-label="问题输入">
+            <textarea aria-label="问题" placeholder="对话服务准备中" rows="3" disabled></textarea>
+            <FluentButton Type="ButtonType.Button" Disabled="true">发送</FluentButton>
         </section>
     </div>
 }

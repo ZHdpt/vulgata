@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities;
@@ -18,24 +19,150 @@ namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static void AddBusinessReaderDependencies(IServiceCollection services, string ownedLogDirectory,
+        TimeProvider? timeProvider = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddScoped<IDbContextFactory<OctoberDbContext>>(provider =>
+            new ConfiguredContextFactory(provider.GetRequiredService<DbContextOptions<OctoberDbContext>>()));
+        services.AddSingleton<IOctoberKnowledgeTokenProtector, OctoberKnowledgeDataProtectionTokenProtector>();
+        services.AddSingleton<IOctoberKnowledgeReadLog>(new OctoberKnowledgeOperationLog(ownedLogDirectory, timeProvider));
+    }
+
+    internal static OctoberBusinessRunComposition? ComposeBusiness(OctoberScanPolicy policy,
+        OctoberSelectedWorkerProvider provider, OctoberBusinessSettings? settings,
+        IDbContextFactory<OctoberDbContext> contexts, IOctoberKnowledgeOperationLog log,
+        Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader)
+    {
+        ArgumentNullException.ThrowIfNull(policy);
+        if (policy.OutputStage == "cl-only") return null;
+        if (policy.OutputStage != "cl-and-bl" || !new OctoberScanPolicyValidator().Validate(policy).IsValid ||
+            settings is null || !settings.IsValid() || settings.MaximumAttemptTokens > policy.MaximumTotalTokens ||
+            provider is null || provider.Precedence != "only-source" || provider.Profile.ApiType != ApiType.ChatCompletions ||
+            contexts is null || log is null || bindReader is null)
+            throw new InvalidOperationException("October Business composition is invalid.");
+        var profile = provider.Profile;
+        var projection = new BusinessProviderConfigurationProjection(provider.SourceIdentity, 0, profile.Name,
+            "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference);
+        _ = OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(projection);
+        return new(
+            (authorization, guard) => new OctoberResolutionStore(contexts, authorization, guard, log),
+            authorization => new OctoberFlowPlanningInputLoader(contexts, authorization),
+            (authorization, guard) => new OctoberFlowPublicationStore(contexts, authorization, guard, log),
+            settings.SelectRoots, projection, LoadBusinessInstructions("Resolution"), LoadBusinessInstructions("Synthesis"),
+            settings.Limits, settings.MaximumAttemptTokens) { BindReader = bindReader };
+    }
+
+    private static string LoadBusinessInstructions(string name)
+    {
+        using var stream = typeof(OctoberBusinessModule).Assembly.GetManifestResourceStream(
+            $"Vulgata.Agents.Prompts.OctoberBusiness.{name}.md") ?? throw new InvalidOperationException("October Business instructions are unavailable.");
+        if (stream.Length is <= 0 or > KnowledgeContract.MaximumContentBytes)
+            throw new InvalidOperationException("October Business instructions are invalid.");
+        using var reader = new StreamReader(stream, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true);
+        return reader.ReadToEnd();
+    }
+
+    internal static OctoberGenerateRunner ComposeGenerate(OctoberRuntimeConfiguration runtime,
+        IOctoberLocalAuthority authority, IDbContextFactory<OctoberDbContext> contexts,
+        ISecretEncryptionService encryption, OctoberScanPolicy policy, OctoberSelectedWorkerProvider provider,
+        OctoberBusinessSettings? settings,
+        Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
+        TimeProvider? timeProvider = null)
+    {
+        TimeProvider clock = timeProvider ?? TimeProvider.System;
+        var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock);
+        return new OctoberGenerateRunner(dependencies with
+        {
+            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader)
+        }, clock);
+    }
+
+    internal static async Task<OctoberBusinessSettings?> ReadBusinessSettingsForPolicyAsync(IConfiguration configuration,
+        OctoberScanPolicy policy, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(policy);
+        if (policy.OutputStage == "cl-only") return null;
+        if (policy.OutputStage != "cl-and-bl" || !new OctoberScanPolicyValidator().Validate(policy).IsValid)
+            throw new InvalidOperationException("October Business activation is invalid.");
+        var settings = await ReadBusinessSettingsAsync(configuration, cancellationToken);
+        if (settings.MaximumAttemptTokens > policy.MaximumTotalTokens)
+            throw new InvalidOperationException("October Business attempt exceeds the original Scan policy.");
+        return settings;
+    }
+
+    internal static async Task<OctoberBusinessSettings> ReadBusinessSettingsAsync(IConfiguration configuration,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (configuration.GetSection("October:BusinessSettings").GetChildren().Any()) throw new InvalidOperationException();
+            string path = Required(configuration, "October:BusinessSettingsFile");
+            if (!Path.IsPathFullyQualified(path) || path.Trim() != path) throw new InvalidOperationException();
+            if (configuration is IConfigurationRoot root)
+            {
+                var selectors = new HashSet<string>(StringComparer.Ordinal);
+                foreach (IConfigurationProvider provider in root.Providers)
+                    if (provider.TryGet("October:BusinessSettingsFile", out string? value) && value is not null) selectors.Add(value);
+                if (selectors.Count > 1) throw new InvalidOperationException();
+            }
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+                4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            if (stream.Length is <= 0 or > 1_048_576) throw new InvalidOperationException();
+            byte[] bytes = new byte[checked((int)stream.Length)];
+            await stream.ReadExactlyAsync(bytes, cancellationToken);
+            if (await stream.ReadAsync(new byte[1], cancellationToken) != 0) throw new InvalidOperationException();
+            int offset = bytes.AsSpan().StartsWith(new byte[] { 0xef, 0xbb, 0xbf }) ? 3 : 0;
+            string json = new UTF8Encoding(false, true).GetString(bytes, offset, bytes.Length - offset);
+            using var document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 16 });
+            RequireUniqueProperties(document.RootElement);
+            if (!document.RootElement.TryGetProperty("limits", out var limits) || limits.ValueKind != JsonValueKind.Object ||
+                !limits.TryGetProperty("maxNodes", out _) || !limits.TryGetProperty("maxEdges", out _) ||
+                !limits.TryGetProperty("maxDepth", out _)) throw new InvalidOperationException();
+            if (!document.RootElement.TryGetProperty("roots", out var roots) || roots.ValueKind != JsonValueKind.Array ||
+                roots.EnumerateArray().Any(item => item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("kind", out _)))
+                throw new InvalidOperationException();
+            var settings = document.RootElement.Deserialize<OctoberBusinessSettings>(new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = false,
+                UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 16,
+                Converters = { new JsonStringEnumConverter<FlowRootKind>() }
+            });
+            if (settings is null || !settings.IsValid()) throw new InvalidOperationException();
+            cancellationToken.ThrowIfCancellationRequested();
+            return settings;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or DecoderFallbackException or
+            JsonException or InvalidOperationException or ArgumentException or NotSupportedException or OverflowException)
+        { throw new InvalidOperationException("October Business settings are invalid."); }
+    }
+
     internal static OctoberGenerateRunner ComposeGenerate(OctoberRuntimeConfiguration runtime,
         IOctoberLocalAuthority authority, IDbContextFactory<OctoberDbContext> contexts,
         ISecretEncryptionService encryption, TimeProvider? timeProvider = null)
+    {
+        TimeProvider clock = timeProvider ?? TimeProvider.System;
+        return new OctoberGenerateRunner(ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock), clock);
+    }
+
+    private static OctoberGenerateRunnerDependencies ComposeGenerateDependencies(OctoberRuntimeConfiguration runtime,
+        IOctoberLocalAuthority authority, IDbContextFactory<OctoberDbContext> contexts,
+        ISecretEncryptionService encryption, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(authority);
         ArgumentNullException.ThrowIfNull(contexts);
         ArgumentNullException.ThrowIfNull(encryption);
         if (!runtime.IsValid()) throw new InvalidOperationException("October runtime configuration is invalid.");
-        TimeProvider clock = timeProvider ?? TimeProvider.System;
         var log = new OctoberKnowledgeOperationLog(runtime.LogDirectory, clock);
         var sources = new OctoberScanRunSourceFactory(runtime, authority, clock);
         var clients = new OctoberWorkerClientFactory(encryption);
-        return new OctoberGenerateRunner(new(authority, sources.ValidateSelection,
+        return new(authority, sources.ValidateSelection,
             (admissionAuthority, guard) => new OctoberGenerateAdmissionStore(contexts, admissionAuthority, guard, log),
             sources.OpenAsync, clients.CreateAsync,
             ports => new OctoberKnowledgeWriter(contexts, ports.CompletionAuthority, ports.SourceVerifier,
-                ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log), clock);
+                ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log);
     }
 
     internal static async Task<int> ExecuteConfiguredAsync(OctoberGeneratorCommand command,
@@ -55,7 +182,9 @@ public static class OctoberGeneratorEntryPoint
                 {
                     CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
                     PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
-                    TerminalCoverage = [], Inventory = [], Gaps = [new("output_binding_invalid")]
+                    TerminalCoverage = [], Inventory = [], Gaps = [new("output_binding_invalid")],
+                    Matching = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable,
+                    BusinessLogic = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable
                 };
             if (settle is not null)
             {
@@ -88,13 +217,17 @@ public static class OctoberGeneratorEntryPoint
             OctoberGeneratorCommand command;
             OctoberAuthorityConfiguration authorityConfiguration;
             OctoberRuntimeConfiguration? runtime = null;
+            OctoberBusinessSettings? businessSettings = null;
             string keyRingPath;
             string applicationName;
             try
             {
                 command = ReadCommand(configuration);
                 if (command.Mode == OctoberGeneratorMode.Generate)
+                {
                     runtime = await ReadRuntimeConfigurationAsync(configuration);
+                    businessSettings = await ReadBusinessSettingsForPolicyAsync(configuration, command.ScanPolicy!);
+                }
                 authorityConfiguration = ReadAuthorityConfiguration(configuration, command);
                 keyRingPath = Required(configuration, "DataProtection:KeyRingPath");
                 applicationName = Required(configuration, "DataProtection:ApplicationName");
@@ -178,6 +311,8 @@ public static class OctoberGeneratorEntryPoint
             registrations.AddDbContext<OctoberDbContext>(options =>
                 options.UseNpgsql(authorityConfiguration.DataConnectionString, npgsql =>
                     npgsql.MigrationsHistoryTable("__OctoberMigrationsHistory", "october")));
+            if (command.Mode == OctoberGeneratorMode.Generate && command.ScanPolicy!.OutputStage == "cl-and-bl")
+                AddBusinessReaderDependencies(registrations, runtime!.LogDirectory);
 
             await using ServiceProvider host = registrations.BuildServiceProvider(validateScopes: true);
             await using AsyncServiceScope scope = host.CreateAsyncScope();
@@ -191,10 +326,23 @@ public static class OctoberGeneratorEntryPoint
                 new OctoberBatchSelector(database, authorityConfiguration.TargetId,
                     authorityConfiguration.CanonicalDatabaseIdentity));
             IOctoberLocalAuthority localAuthority = scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>();
+            Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader = null;
+            if (command.Mode == OctoberGeneratorMode.Generate && command.ScanPolicy!.OutputStage == "cl-and-bl")
+            {
+                var originalIssuer = scope.ServiceProvider.GetRequiredService<OctoberLocalAuthority>();
+                if (!ReferenceEquals(originalIssuer, localAuthority))
+                    throw new InvalidOperationException("October operator reader issuer is inconsistent.");
+                bindReader = async (originalSession, publication, token) =>
+                {
+                    var bound = await originalIssuer.TryBindReaderAsync(originalSession, publication, token);
+                    return bound is null ? null : new(bound.Subject, bound.Selection, bound.Reader, bound);
+                };
+            }
             OctoberGenerateRunner? generate = command.Mode == OctoberGeneratorMode.Generate
                 ? ComposeGenerate(runtime!, localAuthority,
                     new ConfiguredContextFactory(scope.ServiceProvider.GetRequiredService<DbContextOptions<OctoberDbContext>>()),
-                    protection.GetRequiredService<ISecretEncryptionService>()) : null;
+                    protection.GetRequiredService<ISecretEncryptionService>(), command.ScanPolicy!, workerProvider!,
+                    businessSettings, bindReader) : null;
             OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
             return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
                 settle: generate is null ? null : () => generate.DisposeAsync());
@@ -280,8 +428,8 @@ public static class OctoberGeneratorEntryPoint
             report.Coverage,
             report.Execution,
             report.PublicationStatus,
-            Matching = "not-requested",
-            BusinessLogic = "not-requested",
+            Matching = PhaseStatus(report.Matching),
+            BusinessLogic = PhaseStatus(report.BusinessLogic),
             Publication = publication,
             report.Documents,
             AcceptedFiles = report.AcceptedFiles.Select(file => new
@@ -324,6 +472,15 @@ public static class OctoberGeneratorEntryPoint
     private static string? SafeRelativePath(string? path) => path is not null && path.Length <= 2048 &&
         !path.StartsWith('/') && !path.Contains('\\') && !path.Contains(':') && !path.Any(char.IsControl) &&
         (path.Length == 0 || path.Split('/').All(part => part is not ("" or "." or ".."))) ? path : null;
+
+    private static string PhaseStatus(OctoberPhaseStatus status) => status switch
+    {
+        OctoberPhaseStatus.NotRequested => "not-requested", OctoberPhaseStatus.NotStarted => "not-started",
+        OctoberPhaseStatus.Completed => "completed", OctoberPhaseStatus.Partial => "partial",
+        OctoberPhaseStatus.NoContent => "no-content", OctoberPhaseStatus.Failed => "failed",
+        OctoberPhaseStatus.Interrupted => "interrupted", OctoberPhaseStatus.Indeterminate => "indeterminate",
+        _ => "unavailable"
+    };
 
     private static string SafeGapCode(string code) => code switch
     {

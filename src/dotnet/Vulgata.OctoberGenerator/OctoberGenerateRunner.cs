@@ -546,6 +546,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         if (_resourcesSettled) return;
         if (Unresolved() || HasOutstandingCalls())
             throw new InvalidOperationException("october_run_settlement_unconfirmed");
+        await DisposeBusinessReadersAsync();
         foreach (OctoberAttemptState attempt in _attempts) await attempt.DisposeAsync();
         if (_publication is not null) await _publication.DisposeAsync();
         if (_businessGuard is not null) await _businessGuard.DisposeAsync();
@@ -664,12 +665,22 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             null, [], disclose ? _accepted : [], disclose ? _coverage : [],
             new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
             new(0, 0, 0, false), disclose ? _gaps.Add(new(code)) : [new(code)])
-        { Inventory = disclose ? _inventory : [] };
+        {
+            Inventory = disclose ? _inventory : [],
+            Matching = FailurePhase(_matchingPhase, stage, interrupted, indeterminate, disclose),
+            BusinessLogic = FailurePhase(_businessLogicPhase, stage, interrupted, indeterminate, disclose)
+        };
+    private OctoberPhaseStatus FailurePhase(OctoberPhaseStatus phase, string? stage, bool interrupted, bool indeterminate, bool disclose) =>
+        (stage ?? _execution?.Policy.OutputStage) != "cl-and-bl" ? OctoberPhaseStatus.NotRequested :
+        !disclose || _fenced ? OctoberPhaseStatus.Unavailable : phase == OctoberPhaseStatus.Indeterminate && !indeterminate
+            ? interrupted ? OctoberPhaseStatus.Interrupted : OctoberPhaseStatus.Failed : phase;
     private static OctoberScanReport Hide(OctoberScanReport report, string code) => report with
     {
         CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
         PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
-        TerminalCoverage = [], Inventory = [], Gaps = [new(code)]
+        TerminalCoverage = [], Inventory = [], Gaps = [new(code)],
+        Matching = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested,
+        BusinessLogic = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested
     };
     private OctoberScanReport MergeMetrics(OctoberScanReport report)
     {

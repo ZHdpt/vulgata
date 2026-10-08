@@ -31,6 +31,8 @@ public static class OctoberWikiRegistration
             services.AddScoped<IOctoberChatContextProvider, UnavailableOctoberChatContextProvider>();
             services.AddScoped<IOctoberChatSelectionService, UnavailableOctoberChatSelectionService>();
             services.AddOctoberChat();
+            if (configuration.GetSection("October:Chat").Exists())
+                services.AddOctoberChatHost(configuration, null);
             return services.AddExploreReader();
         }
 
@@ -51,11 +53,13 @@ public static class OctoberWikiRegistration
             selection, provider.GetRequiredService<AuthenticationStateProvider>(),
             provider.GetRequiredService<IOptions<IdentityOptions>>(),
             provider.GetRequiredService<IOctoberKnowledgeDisclosurePolicy>()));
-        services.AddScoped<IOctoberChatContextProvider>(provider => new OctoberChatContextProvider(
+        services.AddScoped(provider => new OctoberChatAttachmentContext(
             selection, provider.GetRequiredService<AuthenticationStateProvider>(),
             provider.GetRequiredService<IOptions<IdentityOptions>>(),
             provider.GetRequiredService<IOctoberKnowledgeDisclosurePolicy>()));
+        services.AddScoped<IOctoberChatContextProvider>(provider => provider.GetRequiredService<OctoberChatAttachmentContext>());
         services.AddOctoberChat();
+        services.AddOctoberChatHost(configuration, selection);
         return services.AddExploreReader();
     }
 
@@ -174,11 +178,14 @@ internal sealed class OctoberExploreContextProvider(OctoberWikiSelection selecti
 
 internal sealed class OctoberChatContextProvider(OctoberWikiSelection selection,
     AuthenticationStateProvider authentication, IOptions<IdentityOptions> identityOptions,
-    IOctoberKnowledgeDisclosurePolicy policy)
+    IOctoberKnowledgeDisclosurePolicy policy, KnowledgeSubject? pinnedSubject = null)
     : OctoberLiveReadContext(selection, authentication, identityOptions, policy, KnowledgePurpose.Chat), IOctoberChatContextProvider
 {
-    public Task<ReadSelectionRequest?> GetCurrentAsync(CancellationToken cancellationToken = default) =>
-        GetRequestAsync(cancellationToken);
+    public async Task<ReadSelectionRequest?> GetCurrentAsync(CancellationToken cancellationToken = default)
+    {
+        var request = await GetRequestAsync(cancellationToken);
+        return pinnedSubject is null || request?.Subject == pinnedSubject ? request : null;
+    }
 }
 
 internal sealed class UnavailableOctoberChatContextProvider : IOctoberChatContextProvider
