@@ -1522,3 +1522,115 @@ Root's combined October/Explore/PreparedSource SelfContained selection passes
 classified files and compilation at zero errors/14,177 warnings. This is not a new
 full-suite pass; the previously captured logging teardown defect remains open.
 No PostgreSQL, native tool, external-provider or E2E suite was executed.
+
+### Rate reservation correction during actual-client composition
+
+Scan's actual-client review identified a defect in the imported Business consumers:
+their early CheckBeforeSendAsync reserves the scope's rate slot, while the selected
+transport repeats the check at HTTP dispatch. The same lease's already-reserved
+branch can reuse that stale slot after another request sends. Root verified this
+source path; passing controlled consumer tests did not qualify actual send spacing.
+This supersedes the earlier instruction to retain that early rate-bearing precheck.
+Business owns removing/repairing premature reservation while retaining disclosure,
+original lifetime, deadline and cancellation checks. The selected HTTP boundary
+retains the mandatory final gate. No scheduler rewrite or second permit is authorized.
+Final-denial status must remain truthful; any missing typed transport outcome is a
+bounded owner compatibility question. Scan owns the actual executor/factory delayed-
+dispatch regression. Complete real-client composition remains open pending the
+reviewed correction and that conformance evidence; no runtime/resource scope changes.
+
+Business and Scan concurred on the narrow final-denial seam: an Agents-only sealed
+OctoberBusinessAttemptDeniedException with immutable ProviderAdmissionStatus, accepting
+only defined non-Granted values. No attempt-interface signature changes. Business
+removes both early CheckBeforeSendAsync calls, retains disclosure/handoff/original
+deadline/cancellation checks and catches the final denial without retry. Scan maps
+only its own Business final-guard refusal; Worker behavior is unchanged. If SDK
+wrapping intervenes, any mapping is tied to that invocation's own refusal identity,
+never arbitrary nested exceptions or ambient state, and occurs after actual cleanup.
+Unrelated transport/cleanup failures retain their own classification. Observed dispatch
+remains sent/unknown on failure, never zero merely because a denial type is returned.
+Business is released to provide the isolated compiling declaration checkpoint first;
+root imports it before both consumers bind production changes. Actual SDK propagation
+and delayed-entry rate conformance remain Scan-owned controlled qualification.
+
+Owner denial declaration `699979a3633d32c91cabe2a1ea2e0b47e5a3d468` is selectively
+integrated at `2aeb2d4c699dc45c834cfafe2af58769e56bc5e0`; the two files match the
+owner exactly. Root Agents compilation passed, zero errors/5,793 warnings. Both
+owners received this hash and are released for their disjoint executor/transport
+corrections. The declaration itself does not remove the premature reservation or
+prove SDK propagation; those implementation/regression checkpoints remain pending.
+
+Business correction `b3edb9e0dcb2dd2638582977744e06a5a0ba0b79` removes both early
+rate-bearing checks and catches the canonical final-denial status without retry.
+Root independent review accepted preserved disclosure/lifetime/deadline checks and
+callback/observer-based usage. Root controlled Business/Resolution/FlowPublication/
+ScanExecutionScope selection passed 292/292, zero failures/skips
+(`511b8ee42a664b94b77e309ba2383275`). One earlier launcher attempt exited 1 before
+output or a new results directory; the identical retry passed, with no environment
+or test change and no asserted cause. Scan's actual delayed-entry spacing and SDK
+propagation remain separate qualification against this corrected consumer.
+
+### Failed B1 outcome versus retained publication
+
+Business owner guidance, independently reviewed, preserves canonical coverage:
+file coverage accounts for source input; B1 admission to B2 requires every selected
+inquiry to have a settled outcome/disposition, not every inquiry to succeed; BL
+publication coverage describes selected BL-root/file gaps rather than aggregate
+execution success. Planner and synthesis already retain failed/uncertain frontiers
+and the full dependency ledger. Do not broaden IsPartial or invent a Scan policy.
+
+Root adopts the narrow host mapping: inspect accepted Outcome.Kind equally on direct
+acknowledgement and exact lost-ack lookup. Failed means execution failure/exit 1 and
+a sanitized resolution-processing gap, retaining its durable receipt and any still-
+authorized confirmed BL publication. Do not regenerate, erase BL or manufacture
+CommitIndeterminate. Unresolved and Supported-with-limitations can be valid bounded
+conclusions; they are not failures merely because no edge is confirmed. NotEvaluated
+retains its actual incompleteness/limit cause and is not blanket-mapped to Failed.
+Scope evidence: owner resolution persistence tests for uncheckable witness and
+explicit host dispositions; FlowPlanner non-supported frontiers; SynthesisPolicy's
+app-owned uncertain gap section. Scan owns direct-ack/lookup parity and nonfailure
+Unresolved controls. No schema, owner coverage redefinition or new runtime authority.
+
+Business additionally confirmed the zero-attempt limit classification: no witness,
+BudgetExhausted and Attempts.Length==0 is NotEvaluated, not Failed. The tuple also
+occurs at the payload-size ceiling; report generic bounded-resolution budget/limit
+wording unless exact host provenance identifies admission refusal. Attempt count
+alone does not prove physical sends. Persist only via the existing eligible owner
+write/F1 guard, retaining a truthful gap/non-success and unchanged authorized
+publication/owner coverage equally on direct acknowledgement and exact lookup.
+Attempted invalid/no-witness remains Failed. Do not generalize to authority denial,
+unavailability or hard stop, or grant new admission/recovery after abort. Scan is
+released for the bounded classification regression/correction at a safe build boundary.
+
+### Internal natural-completion checkpoint
+
+Scan `95864e555ff3e747464eb8051d5c0eb853a7b314` supplies only the dispatched internal
+natural-completion subgroup. Independent root host and transport reviews accept
+original scope/session/client/budget retention, F1 submission, actual owner-call
+settlement including replay disclosure, explicit roots, exact publication reads,
+direct/lost-ack outcome classification and late log diagnostics. Actual selected-SDK
+controlled tests cover own final denial versus foreign markers, delayed rate checks,
+ignored HTTP/body cancellation and unchanged Worker streaming. No Program/CLI
+activation, scheduler/stop expansion or external qualification is included.
+
+An explicit root-owned activation dependency remains: ReadBusinessPublicationAsync
+currently constructs KnowledgeSubject.AuthenticationBinding from ManagementAuthorityId.
+Production OctoberKnowledgeIdentityAdapter requires the verified Identity security
+stamp in both the authenticated principal and current user record. The controlled
+reader adapter does not establish that binding. Supply a trusted authenticated
+headless Reader context before live activation; do not treat these controlled reads
+as ordinary-user Identity qualification or copy management authority into that path.
+The separate shared ordinary-user Generate/read milestone remains unqualified.
+
+Owner final affected evidence is 2,086/2,086 with all 35 new cases (23 natural host,
+12 selected SDK transport), run `847611c106e14f01ba6f4ab798a9227b`. Earlier fixture
+corrections and incomplete clock-fixture runs remain in verification-s3.md. This is
+controlled HTTP/SQLite, not live provider/native/PostgreSQL or a full-suite pass.
+
+Root combined verification `dd3b1f95502e4ab888e69e0c86ca365d` passes 2,062/2,062,
+zero failures/skips, with the namespace-specific filter
+`FullyQualifiedName~Vulgata.Tests.October|FullyQualifiedName~Vulgata.Tests.Explore|FullyQualifiedName~PreparedSource`.
+The owner's broader `~October|~Explore|~PreparedSource` filter reports 2,086;
+these are separate selections, not interchangeable counts. The root build and
+inventory/outcome guards passed; external suites and the known full-suite logging
+teardown defect remain outside this passing selection.

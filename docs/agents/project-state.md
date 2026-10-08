@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-08 (controlled Business attempt consumers integrated; actual selected transport and runtime qualification remain separate).
+Updated: 2026-10-08 (internal natural-completion host and actual selected transport integrated under controlled tests; activation and real qualification remain open).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -52,16 +52,22 @@ correction `bf3ca6ca` are now reviewed for controlled integration; seven Postgre
 facts remain authored/unrun. Final combined SelfContained run `a3c026a8b3f042ab8d6e8ca5e4be3a16`
 is 3,876/3,877, zero skips, NOT green: the sole logging-test cleanup failure captures
 an undisposed local logger/open handle after factory scope exit. Root owns this
-unresolved teardown defect; no test waiver or runtime readiness is claimed. Actual
-BL host composition, Web Chat activation and one-dataset ordinary-user qualification
+unresolved teardown defect; no test waiver or runtime readiness is claimed. Production
+command composition, Web Chat activation and one-dataset ordinary-user qualification
 remain open. See the wave handoff for exact evidence and resource boundaries.
 
 Business attempt consumers `9950c8b` now implement the accepted lease-aware
 interface, exact profile checks, observed dispatch and terminal accounting. Root
 combined October/Explore/PreparedSource tests pass 2,008/2,008, zero skips
 (`1ce61f77cba84bf493b6890a5e13d5f6`). This does not replace the non-green full-suite
-result above. Scan's actual selected-client implementation/conformance must join
-these consumers before claiming a complete controlled B1/B2 route.
+result above. Consumer correction `b3edb9e0` subsequently removed premature rate
+reservation and preserved typed final denial. Scan `95864e55` now supplies internal
+natural-completion and actual selected-client controlled conformance; root selection
+passes 2,062/2,062 (`dd3b1f95502e4ab888e69e0c86ca365d`). Program/CLI remains inactive
+for that composition. Its controlled reader authentication binding is not production
+Identity proof: root must supply a trusted headless Reader context/security-stamp
+binding before live activation. Native/provider/PostgreSQL and ordinary-user E2E
+qualification remain open; see the wave handoff for exact boundaries.
 
 - [PRD](../bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md): product scope
   and explicit Current/Deferred/History/Original unmet backlog dispositions.
