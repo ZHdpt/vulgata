@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
@@ -13,13 +15,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
+using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Infrastructure.Configuration;
+using Vulgata.OctoberGenerator;
 using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Tests.October.Integration;
+using Vulgata.Tests.OctoberScan;
 using Vulgata.Web.Data;
 using Xunit.Abstractions;
 using SystemEntity = Vulgata.Core.Entities.System;
@@ -189,11 +195,11 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Equal(TimeSpan.Zero, actual.SelectedAtUtc.Offset);
     }
 
-    internal static async Task<Dictionary<string, string>> GetLoginFormFieldsAsync(HttpClient client)
+    internal static async Task<Dictionary<string, string>> GetLoginFormFieldsAsync(HttpClient client, CancellationToken cancellationToken = default)
     {
-        using HttpResponseMessage response = await client.GetAsync("/Account/Login");
+        using HttpResponseMessage response = await client.GetAsync("/Account/Login", cancellationToken);
         response.EnsureSuccessStatusCode();
-        string html = await response.Content.ReadAsStringAsync();
+        string html = await response.Content.ReadAsStringAsync(cancellationToken);
         Match[] loginForms = Regex.Matches(
                 html,
                 @"<form\b(?<attributes>[^>]*)>(?<content>.*?)</form>",
@@ -471,7 +477,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Equal(expected.RowCounts, actual.RowCounts);
     }
 
-    private static int ReserveOwnedLoopbackPort()
+    internal static int ReserveOwnedLoopbackPort()
     {
         using TcpListener listener = new(IPAddress.Loopback, 0);
         listener.Start();
@@ -639,7 +645,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         }
     }
 
-    private static async Task WaitForWebStartupAsync(
+    internal static async Task WaitForWebStartupAsync(
         Process process,
         int port,
         GeneratorPrepareFixture fixture,
@@ -713,7 +719,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             "The ordinary Web process must not emit the owned physical source root.");
     }
 
-    private static async Task StopOwnedWebProcessAsync(Process process)
+    internal static async Task StopOwnedWebProcessAsync(Process process)
     {
         if (!process.HasExited)
         {
@@ -1150,6 +1156,113 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         private readonly string _databaseName;
         private readonly string _runId;
         private bool _disposed;
+        private readonly Dictionary<string, string> _ordinaryReaders = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, (string Stamp, ClaimsPrincipal Principal)> _authenticatedReaders = new(StringComparer.Ordinal);
+        private readonly HashSet<int> _readerPorts = [];
+        private readonly object _readerLock = new();
+        private ApprovedClInputBundle? _approvedClInputs;
+        private (KnowledgeBinding Binding, ApprovedClSource Source)? _preparedClExpectation;
+        private int _prepareClStarted;
+
+        internal sealed record ApprovedClSource(Guid RepositoryId, string RootBindingIdentity, string RelativePath, string SourceDigest);
+
+        /// <summary>Installed only by the root's explicitly authorized qualification composition; contains no credential value.</summary>
+        internal sealed record ApprovedClInputBundle(OctoberProviderProfile Profile, OctoberScanPolicy Policy,
+            string RuntimeFilePath, string ScanPolicyFilePath, string RelativeFile,
+            Func<CancellationToken, Task<string>> ReadApprovedCredential);
+
+        internal void InstallApprovedClInputs(ApprovedClInputBundle inputs)
+        {
+            ArgumentNullException.ThrowIfNull(inputs);
+            ArgumentNullException.ThrowIfNull(inputs.Profile);
+            ArgumentNullException.ThrowIfNull(inputs.Policy);
+            ArgumentNullException.ThrowIfNull(inputs.ReadApprovedCredential);
+            if (!new OctoberScanPolicyValidator().Validate(inputs.Policy).IsValid || inputs.Policy.OutputStage != "cl-only"
+                || inputs.Policy.WorkerCap != 1 || inputs.Policy.SourceRules.Length != 1
+                || inputs.Policy.SourceRules[0].RepositoryId != RepositoryId
+                || inputs.Policy.SourceRules[0].RelativePathPrefix != inputs.RelativeFile
+                || inputs.Policy.SourceRules[0].Disposition != "selected"
+                || string.IsNullOrWhiteSpace(inputs.RelativeFile) || inputs.RelativeFile.Contains('\\') || inputs.RelativeFile.Contains(':')
+                || inputs.RelativeFile.Any(char.IsControl) || inputs.RelativeFile.Split('/').Any(part => part is "" or "." or ".."))
+                throw new ArgumentException("Approved inputs must identify exactly one fixture source file and finite CL-only policy.");
+            lock (_readerLock)
+            {
+                if (_approvedClInputs is not null || _prepareClStarted != 0)
+                    throw new InvalidOperationException("The approved qualification inputs cannot be replaced.");
+                _approvedClInputs = inputs;
+            }
+        }
+
+        internal async Task<(KnowledgeBinding Binding, ApprovedClSource Source, OctoberProviderProfile Profile,
+            OctoberScanPolicy Policy, OctoberGenerateInputFiles Files)> PrepareApprovedClInputsAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ApprovedClInputBundle inputs;
+            lock (_readerLock)
+            {
+                inputs = _approvedClInputs ?? throw new InvalidOperationException("Explicit approved Generate inputs are not installed.");
+                if (_prepareClStarted != 0) throw new InvalidOperationException("This fresh fixture preparation is single-use.");
+                _prepareClStarted = 1;
+            }
+            if (!SuiteAuthorization.IsEnabled("E2E")) throw new InvalidOperationException("E2E qualification is not authorized.");
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            string sourcePath = Path.Combine(OwnedSourceRoot, inputs.RelativeFile.Replace('/', Path.DirectorySeparatorChar));
+            // Validate all paths and reparse ancestors before reading source or acquiring a credential.
+            _ = OctoberGenerateFixtureInputs.ValidateFiles(OwnedRoot, "generate", inputs.RuntimeFilePath, inputs.ScanPolicyFilePath, sourcePath, false);
+            string digest = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(sourcePath, cancellationToken)));
+            string rootBinding = CreatePrepareRequest().Repositories.Single().RootBindingIdentity;
+            var source = new ApprovedClSource(RepositoryId, rootBinding, inputs.RelativeFile, digest);
+            string providerFile = await WriteGenerateWorkerProviderAsync(inputs.Profile, inputs.ReadApprovedCredential, cancellationToken);
+            var files = new OctoberGenerateInputFiles(inputs.RuntimeFilePath, inputs.ScanPolicyFilePath, providerFile);
+            await OctoberScanGenerateQualificationAdapter.ValidateAsync(OwnedRoot, OwnedSourceRoot, CreatePrepareRequest(),
+                inputs.Profile, inputs.Policy, inputs.RelativeFile, files, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            using (var process = StartGenerator(JsonSerializer.Serialize(CreatePrepareRequest())))
+            {
+                // Retain owned process cleanup; do not turn cancellation into an abandoned child.
+                var prepared = await WaitForGeneratorAsync(process);
+                if (prepared.ExitCode != 0) throw new InvalidOperationException("Owned batch preparation failed.");
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            var snapshot = await ReadBoundSnapshotAsync();
+            cancellationToken.ThrowIfCancellationRequested();
+            var binding = new KnowledgeBinding(CanonicalDatabaseIdentity, TargetId, BatchId, snapshot.Request.SelectionDigest);
+            await using var context = CreateOctoberContext();
+            if (await context.PreparedSourceApprovals.AnyAsync(x => x.BatchId == BatchId, cancellationToken)
+                || await context.AcceptedFileManifests.AnyAsync(x => x.BatchId == BatchId, cancellationToken)
+                || await context.KnowledgeOperations.AnyAsync(x => x.BatchId == BatchId && x.Kind == OperationKind.BeginGenerate, cancellationToken))
+                throw new InvalidOperationException("Generate qualification requires an untouched fresh batch.");
+            lock (_readerLock) _preparedClExpectation = (binding, source);
+            return (binding, source, inputs.Profile, inputs.Policy, files);
+        }
+
+        /// <summary>Fresh-fixture, one-dispatch proof only; not a general replay or latest-approval lookup.</summary>
+        internal async Task<PreparedOrigin> ResolveGeneratedOriginAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            (KnowledgeBinding Binding, ApprovedClSource Source) expected;
+            lock (_readerLock) expected = _preparedClExpectation
+                ?? throw new InvalidOperationException("No prepared fresh-run expectation exists.");
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using var context = CreateOctoberContext();
+            var batches = await context.Batches.AsNoTracking().Where(x => x.BatchId == BatchId).Take(2).ToArrayAsync(cancellationToken);
+            var approvals = await context.PreparedSourceApprovals.AsNoTracking().Where(x => x.BatchId == BatchId).Take(2).ToArrayAsync(cancellationToken);
+            var manifests = await context.AcceptedFileManifests.AsNoTracking().Where(x => x.BatchId == BatchId).Take(2).ToArrayAsync(cancellationToken);
+            int begins = await context.KnowledgeOperations.CountAsync(x => x.BatchId == BatchId && x.Kind == OperationKind.BeginGenerate, cancellationToken);
+            if (batches.Length != 1 || approvals.Length != 1 || manifests.Length != 1 || begins != 1)
+                throw new InvalidOperationException("Generated source provenance is missing or ambiguous.");
+            var batch = batches[0]; var approval = approvals[0]; var manifest = manifests[0]; var source = expected.Source;
+            if (batch.TargetId != TargetId || batch.CanonicalDatabaseIdentity != CanonicalDatabaseIdentity
+                || batch.SelectionDigest != expected.Binding.SelectionDigest || batch.SubjectId != SubjectId
+                || approval.RepositoryId != source.RepositoryId || approval.SubjectId != SubjectId
+                || approval.RootBindingIdentity != source.RootBindingIdentity || approval.Purpose != (int)PreparedSourcePurpose.WorkerSourceRead
+                || string.IsNullOrWhiteSpace(approval.ApprovalIdentity) || manifest.RepositoryId != source.RepositoryId
+                || manifest.RootBindingIdentity != source.RootBindingIdentity || manifest.RelativePath != source.RelativePath
+                || manifest.SourceDigest != source.SourceDigest || manifest.PreparedVersion != approval.ApprovalIdentity
+                || manifest.CoverageDisposition != CoverageDisposition.Accepted || manifest.UnitCount <= 0)
+                throw new InvalidOperationException("Generated source provenance differs from the approved fresh-run binding.");
+            return new(source.RepositoryId, source.RootBindingIdentity, source.RelativePath, source.SourceDigest, approval.ApprovalIdentity);
+        }
 
         private GeneratorPrepareFixture(
             ITestOutputHelper output,
@@ -1375,6 +1488,126 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 new OctoberContextSelection(OctoberContextScope.Repository, RepositoryId),
             ],
             string.Empty);
+
+        internal async Task<(string SubjectId, string UserName, string Password, string SecurityStamp)> CreateOrdinaryReaderAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using var scope = Services.CreateAsyncScope();
+            var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            if (!await roles.RoleExistsAsync(RoleNames.User).WaitAsync(cancellationToken))
+                RequireIdentity(await roles.CreateAsync(new IdentityRole(RoleNames.User)).WaitAsync(cancellationToken));
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            string userName = $"owned-reader-{Guid.NewGuid():N}@example.invalid";
+            string password = $"Valid1!Reader-{Guid.NewGuid():N}";
+            var user = new ApplicationUser { UserName = userName, Email = userName, EmailConfirmed = true };
+            RequireIdentity(await users.CreateAsync(user, password).WaitAsync(cancellationToken));
+            RequireIdentity(await users.AddToRoleAsync(user, RoleNames.User).WaitAsync(cancellationToken));
+            Assert.Equal(new[] { RoleNames.User }, await users.GetRolesAsync(user).WaitAsync(cancellationToken));
+            string stamp = await users.GetSecurityStampAsync(user).WaitAsync(cancellationToken);
+            lock (_readerLock) _ordinaryReaders.Add(userName, user.Id);
+            return (user.Id, userName, password, stamp);
+        }
+
+        internal async Task RotateReaderSecurityStampAsync(string subjectId, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            lock (_readerLock)
+                if (!_ordinaryReaders.ContainsValue(subjectId)) throw new ArgumentException("Reader is not owned by this fixture.");
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using var scope = Services.CreateAsyncScope();
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await users.FindByIdAsync(subjectId).WaitAsync(cancellationToken)
+                ?? throw new InvalidOperationException("Owned reader is unavailable.");
+            RequireIdentity(await users.UpdateSecurityStampAsync(user).WaitAsync(cancellationToken));
+            // Captured authentication deliberately remains unchanged; subsequent reads must revoke it.
+        }
+
+        internal async Task<HttpResponseMessage> LoginReaderAsync(HttpClient client, string userName, string password,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string subjectId;
+            lock (_readerLock)
+            {
+                if (!_ordinaryReaders.TryGetValue(userName, out subjectId!) || client.BaseAddress is not { } address
+                    || address.Scheme != "http" || address.Host != "127.0.0.1" || !_readerPorts.Contains(address.Port))
+                    throw new ArgumentException("Login requires this fixture's owned reader and Web endpoint.");
+            }
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using var scope = Services.CreateAsyncScope();
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var signIn = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
+            var user = await users.FindByIdAsync(subjectId).WaitAsync(cancellationToken)
+                ?? throw new InvalidOperationException("Owned reader is unavailable.");
+            if (!(await signIn.CheckPasswordSignInAsync(user, password, false).WaitAsync(cancellationToken)).Succeeded)
+                throw new InvalidOperationException("Owned reader authentication failed.");
+            var principal = await signIn.CreateUserPrincipalAsync(user).WaitAsync(cancellationToken);
+            string stamp = await users.GetSecurityStampAsync(user).WaitAsync(cancellationToken);
+            var fields = await GetLoginFormFieldsAsync(client, cancellationToken);
+            fields["Input.Email"] = userName; fields["Input.Password"] = password; fields["Input.RememberMe"] = "false";
+            var response = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(fields), cancellationToken);
+            var location = response.Headers.Location;
+            bool home = location is not null && (location.IsAbsoluteUri
+                ? location.GetLeftPart(UriPartial.Authority) == client.BaseAddress!.GetLeftPart(UriPartial.Authority) && location.PathAndQuery == "/"
+                : location.OriginalString == "/");
+            if (response.StatusCode != HttpStatusCode.Redirect || !home)
+            {
+                response.Dispose();
+                throw new InvalidOperationException("The production reader login did not succeed.");
+            }
+            lock (_readerLock) _authenticatedReaders[subjectId] = (stamp, principal.Clone());
+            return response;
+        }
+
+        internal async Task<ContentPage> ReadExactAsReaderAsync(PublicationBinding publication, DocumentHandle handle,
+            string subjectId, string capturedStamp, KnowledgeMode mode, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ValidateReaderPublication(publication, mode);
+            ClaimsPrincipal principal;
+            lock (_readerLock)
+            {
+                if (!_authenticatedReaders.TryGetValue(subjectId, out var authenticated) || authenticated.Stamp != capturedStamp)
+                    return new(KnowledgeReadStatus.Unavailable, null, null, [], null, null);
+                principal = authenticated.Principal.Clone();
+            }
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            var factory = new ReaderContextFactory(new DbContextOptionsBuilder<OctoberDbContext>()
+                .UseNpgsql(ConnectionString, options => options.MigrationsHistoryTable("__OctoberMigrationsHistory", "october")).Options);
+            var live = new OctoberKnowledgeIdentityAdapter(Services.GetRequiredService<IServiceScopeFactory>(),
+                token => { token.ThrowIfCancellationRequested(); return Task.FromResult<ClaimsPrincipal?>(principal); });
+            var policy = new OctoberKnowledgeDisclosurePolicy(live, new OctoberKnowledgeSelectionAuthority(factory));
+            string log = Path.Combine(OwnedRoot, "reader-logs"); Directory.CreateDirectory(log);
+            var reader = new OctoberKnowledgeReader(new OctoberKnowledgePublishedSource(factory), publication, policy,
+                new OctoberKnowledgeCursorProtector(new OctoberKnowledgeDataProtectionTokenProtector(_protection.Provider)),
+                new OctoberKnowledgeOperationLog(log));
+            var opened = await reader.OpenReadSelectionAsync(new(publication, new(subjectId, capturedStamp), mode,
+                KnowledgePurpose.Reader, [RepositoryId]), cancellationToken);
+            return opened.Selection is null ? new(KnowledgeReadStatus.Unavailable, null, null, [], null, null)
+                : await reader.ReadExactAsync(new(opened.Selection, handle), cancellationToken);
+        }
+
+        private void ValidateReaderPublication(PublicationBinding publication, KnowledgeMode mode)
+        {
+            if (publication?.Knowledge is not { } binding || binding.CanonicalDatabaseIdentity != CanonicalDatabaseIdentity
+                || binding.TargetId != TargetId || binding.BatchId != BatchId || publication.PublicationId == Guid.Empty
+                || binding.SelectionDigest is not { Length: 64 } || !binding.SelectionDigest.All(char.IsAsciiHexDigit)
+                || !Enum.IsDefined(mode)) throw new ArgumentException("Reader selection does not belong to this fixture.");
+        }
+
+        private static void RequireIdentity(IdentityResult result)
+        {
+            if (!result.Succeeded) throw new InvalidOperationException("Owned reader Identity operation failed.");
+        }
+
+        private sealed class ReaderContextFactory(DbContextOptions<OctoberDbContext> options) : IDbContextFactory<OctoberDbContext>
+        {
+            public OctoberDbContext CreateDbContext() => new(options);
+            public Task<OctoberDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+            { cancellationToken.ThrowIfCancellationRequested(); return Task.FromResult(CreateDbContext()); }
+        }
 
         internal async Task AssertOwnedOperatorCanPrepareAsync(OctoberSetupRequest request)
         {
@@ -1909,6 +2142,15 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         }
 
         internal Process StartWeb(int port)
+            => StartWebCore(port, null, KnowledgeMode.IT);
+
+        internal Process StartWeb(int port, PublicationBinding publication, KnowledgeMode mode)
+        {
+            ValidateReaderPublication(publication, mode);
+            return StartWebCore(port, publication, mode);
+        }
+
+        private Process StartWebCore(int port, PublicationBinding? publication, KnowledgeMode mode)
         {
             Assert.InRange(port, 1, 65535);
             string webAssembly = Path.Combine(AppContext.BaseDirectory, "Vulgata.Web.dll");
@@ -1950,11 +2192,25 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             startInfo.Environment["ConnectionStrings__DefaultConnection"] = ConnectionString;
             startInfo.Environment["DataProtection__KeyRingPath"] = KeyRingPath;
             startInfo.Environment["DataProtection__ApplicationName"] = DataProtectionApplicationName;
+            if (publication is not null)
+            {
+                string log = Path.Combine(OwnedRoot, "reader-logs"); Directory.CreateDirectory(log);
+                startInfo.Environment["October__Wiki__Enabled"] = "true";
+                startInfo.Environment["October__Wiki__CanonicalDatabaseIdentity"] = CanonicalDatabaseIdentity;
+                startInfo.Environment["October__Wiki__TargetId"] = TargetId;
+                startInfo.Environment["October__Wiki__BatchId"] = BatchId.ToString("D");
+                startInfo.Environment["October__Wiki__SelectionDigest"] = publication.Knowledge.SelectionDigest;
+                startInfo.Environment["October__Wiki__PublicationId"] = publication.PublicationId.ToString("D");
+                startInfo.Environment["October__Wiki__RepositoryIds__0"] = RepositoryId.ToString("D");
+                startInfo.Environment["October__Wiki__Mode"] = mode.ToString();
+                startInfo.Environment["October__Wiki__LogDirectory"] = log;
+            }
             startInfo.ArgumentList.Add(webAssembly);
             Assert.DoesNotContain(OperatorPassword, string.Join(' ', startInfo.ArgumentList),
                 StringComparison.Ordinal);
             Process process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("The owned ordinary Web child did not start.");
+            if (publication is not null) lock (_readerLock) _readerPorts.Add(port);
             return process;
         }
 
