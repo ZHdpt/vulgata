@@ -4,7 +4,7 @@ namespace Vulgata.OctoberGenerator;
 
 internal sealed partial class OctoberGenerateRunner
 {
-    // Reserved for a future host phase that retains the original live scope after
+    // The optional internal Business route retains the original live scope after
     // confirmed freeze. The CL-only command does not populate or issue this slot.
     private FinalizationRequest? _originalBusinessRequest = null;
     private CorpusHandle? _confirmedBusinessCorpus = null;

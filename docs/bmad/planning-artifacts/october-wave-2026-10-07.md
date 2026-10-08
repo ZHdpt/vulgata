@@ -1601,3 +1601,36 @@ publication/owner coverage equally on direct acknowledgement and exact lookup.
 Attempted invalid/no-witness remains Failed. Do not generalize to authority denial,
 unavailability or hard stop, or grant new admission/recovery after abort. Scan is
 released for the bounded classification regression/correction at a safe build boundary.
+
+### Internal natural-completion checkpoint
+
+Scan `95864e555ff3e747464eb8051d5c0eb853a7b314` supplies only the dispatched internal
+natural-completion subgroup. Independent root host and transport reviews accept
+original scope/session/client/budget retention, F1 submission, actual owner-call
+settlement including replay disclosure, explicit roots, exact publication reads,
+direct/lost-ack outcome classification and late log diagnostics. Actual selected-SDK
+controlled tests cover own final denial versus foreign markers, delayed rate checks,
+ignored HTTP/body cancellation and unchanged Worker streaming. No Program/CLI
+activation, scheduler/stop expansion or external qualification is included.
+
+An explicit root-owned activation dependency remains: ReadBusinessPublicationAsync
+currently constructs KnowledgeSubject.AuthenticationBinding from ManagementAuthorityId.
+Production OctoberKnowledgeIdentityAdapter requires the verified Identity security
+stamp in both the authenticated principal and current user record. The controlled
+reader adapter does not establish that binding. Supply a trusted authenticated
+headless Reader context before live activation; do not treat these controlled reads
+as ordinary-user Identity qualification or copy management authority into that path.
+The separate shared ordinary-user Generate/read milestone remains unqualified.
+
+Owner final affected evidence is 2,086/2,086 with all 35 new cases (23 natural host,
+12 selected SDK transport), run `847611c106e14f01ba6f4ab798a9227b`. Earlier fixture
+corrections and incomplete clock-fixture runs remain in verification-s3.md. This is
+controlled HTTP/SQLite, not live provider/native/PostgreSQL or a full-suite pass.
+
+Root combined verification `dd3b1f95502e4ab888e69e0c86ca365d` passes 2,062/2,062,
+zero failures/skips, with the namespace-specific filter
+`FullyQualifiedName~Vulgata.Tests.October|FullyQualifiedName~Vulgata.Tests.Explore|FullyQualifiedName~PreparedSource`.
+The owner's broader `~October|~Explore|~PreparedSource` filter reports 2,086;
+these are separate selections, not interchangeable counts. The root build and
+inventory/outcome guards passed; external suites and the known full-suite logging
+teardown defect remain outside this passing selection.
