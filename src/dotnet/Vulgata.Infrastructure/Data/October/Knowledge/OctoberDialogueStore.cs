@@ -12,7 +12,7 @@ using Vulgata.Core.Entities.OctoberDialogue;
 namespace Vulgata.Infrastructure.Data.October.Knowledge;
 
 /// <summary>Durable, fenced dialogue on the owned October database. No generation or provider I/O occurs here.</summary>
-public sealed class OctoberDialogueStore : IOctoberDialogueStore
+public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposable
 {
     private static readonly UTF8Encoding _utf8 = new(false, true);
     private readonly IDbContextFactory<OctoberDbContext> _contexts;
@@ -23,6 +23,11 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     private readonly IOctoberDialogueCommitGuard _guard;
     private readonly IOctoberDialoguePayloadCodec _codec;
     private readonly TimeProvider _clock;
+    private readonly object _lifetimeGate = new();
+    private int _ownedOperations;
+    private bool _closing;
+    private bool _cleanupFailed;
+    private TaskCompletionSource? _disposal;
 
     public OctoberDialogueStore(IDbContextFactory<OctoberDbContext> contexts, KnowledgeBinding configuredBinding,
         IOctoberKnowledgeDisclosurePolicy disclosure, IOctoberKnowledgeDependencyAuthority dependencies,
@@ -44,7 +49,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     {
         if (request.ConversationId == Guid.Empty || request.ContextId == Guid.Empty || !Text(subject.SubjectId, 1024, true))
             return new DialogueConversationResult(DialogueStatus.Invalid, null);
-        await using var read = await OpenContextAsync(ct);
+        await using var readOwner = await OpenReadContextAsync(ct);
+        var read = readOwner.Context;
         var prior = await read.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId, ct);
         if (prior is not null) return await ProjectConversationAsync(read, prior, request, subject, DialogueStatus.Existing, ct);
         if (request.CreateIfMissing is null) return new(DialogueStatus.Indeterminate, null);
@@ -69,7 +75,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             return DialogueStatus.Succeeded;
         }, token => AuthorizeFreshAsync(identity, subject, null, token), ct);
         if (status is not (DialogueStatus.Succeeded or DialogueStatus.Existing or DialogueStatus.Indeterminate)) return new(status, null);
-        await using var final = await OpenContextAsync(ct);
+        await using var finalOwner = await OpenReadContextAsync(ct);
+        var final = finalOwner.Context;
         var row = await final.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == identity.ConversationId, ct);
         return row is null ? new(DialogueStatus.Indeterminate, null) : await ProjectConversationAsync(final, row, request, subject,
             status == DialogueStatus.Succeeded ? DialogueStatus.Succeeded : DialogueStatus.Existing, ct);
@@ -78,7 +85,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     public Task<DialogueBeginResult> BeginTurnAsync(DialogueBeginRequest request, KnowledgeSubject subject,
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
-        await using var read = await OpenContextAsync(ct);
+        await using var readOwner = await OpenReadContextAsync(ct);
+        var read = readOwner.Context;
         var row = await read.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId, ct);
         if (row is null) return new DialogueBeginResult(DialogueStatus.Indeterminate, null, false);
         var identity = Identity(row);
@@ -125,7 +133,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             return DialogueStatus.Succeeded;
         }, token => AuthorizeFreshAsync(identity, subject, request.InitialDependencies, token), ct);
         if (status is not (DialogueStatus.Succeeded or DialogueStatus.Existing or DialogueStatus.Indeterminate)) return new(status, null, false);
-        await using var final = await OpenContextAsync(ct);
+        await using var finalOwner = await OpenReadContextAsync(ct);
+        var final = finalOwner.Context;
         var saved = await final.DialogueTurns.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == identity.ConversationId && x.ClientRequestKey == request.ClientRequestKey, ct);
         return saved is null ? new(DialogueStatus.Indeterminate, null, false) : await ProjectAdmissionAsync(final, identity, saved,
             request.RequestDigest, subject, status == DialogueStatus.Succeeded, ct);
@@ -134,7 +143,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     public Task<DialogueBeginResult> LookupAdmissionAsync(DialogueAdmissionLookup request, KnowledgeSubject subject,
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
-        await using var db = await OpenContextAsync(ct);
+        await using var dbOwner = await OpenReadContextAsync(ct);
+        var db = dbOwner.Context;
         var row = await db.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId, ct);
         if (row is null) return new DialogueBeginResult(DialogueStatus.Indeterminate, null, false);
         var identity = Identity(row);
@@ -148,7 +158,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     public Task<DialogueTransitionResult> TransitionTurnAsync(DialogueTransitionRequest request, KnowledgeSubject subject,
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
-        await using var read = await OpenContextAsync(ct);
+        await using var readOwner = await OpenReadContextAsync(ct);
+        var read = readOwner.Context;
         var row = await read.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.Owner.ConversationId, ct);
         if (row is null) return new DialogueTransitionResult(DialogueStatus.Indeterminate, null);
         var identity = Identity(row);
@@ -172,7 +183,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             return DialogueStatus.Succeeded;
         }, token => AuthorizeFreshAsync(identity, subject, begin.InitialDependencies, token), ct);
         if (status is not (DialogueStatus.Succeeded or DialogueStatus.Existing or DialogueStatus.Indeterminate)) return new(status, null);
-        await using var final = await OpenContextAsync(ct);
+        await using var finalOwner = await OpenReadContextAsync(ct);
+        var final = finalOwner.Context;
         var actual = await final.DialogueTurns.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == row.ConversationId && x.TurnId == turn.TurnId, ct);
         auth = await AuthorizeAsync(final, identity, subject, begin.InitialDependencies, ct);
         return auth != DialogueStatus.Succeeded ? new(auth, null) : new(status, actual?.State);
@@ -181,7 +193,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     public Task<DialogueTerminalResult> SaveTerminalAsync(DialogueTerminalSaveRequest request, KnowledgeSubject subject,
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
-        await using var read = await OpenContextAsync(ct);
+        await using var readOwner = await OpenReadContextAsync(ct);
+        var read = readOwner.Context;
         var row = await read.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.Owner.ConversationId, ct);
         if (row is null) return new DialogueTerminalResult(DialogueStatus.Indeterminate, null, null);
         var identity = Identity(row);
@@ -217,7 +230,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             return sanitized ? DialogueStatus.Succeeded : await AuthorizeFreshAsync(identity, subject, request.InferenceDependencies, token);
         }, ct);
         if (status is not (DialogueStatus.Succeeded or DialogueStatus.Existing or DialogueStatus.Indeterminate)) return new(status, null, null);
-        await using var final = await OpenContextAsync(ct);
+        await using var finalOwner = await OpenReadContextAsync(ct);
+        var final = finalOwner.Context;
         var saved = await final.DialogueTerminals.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == row.ConversationId && x.TurnId == turn.TurnId, ct);
         if (saved is null) return new(DialogueStatus.Indeterminate, null, null);
         var savedTurn = await final.DialogueTurns.AsNoTracking().SingleAsync(x => x.ConversationId == row.ConversationId && x.TurnId == turn.TurnId, ct);
@@ -229,7 +243,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     public Task<DialogueTerminalResult> LookupTerminalAsync(DialogueTerminalLookup request, KnowledgeSubject subject,
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
-        await using var db = await OpenContextAsync(ct);
+        await using var dbOwner = await OpenReadContextAsync(ct);
+        var db = dbOwner.Context;
         var row = await db.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId, ct);
         if (row is null) return new DialogueTerminalResult(DialogueStatus.Indeterminate, null, null);
         var identity = Identity(row);
@@ -246,7 +261,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     public Task<DialogueHistoryResult> ReadHistoryAsync(DialogueHistoryRequest request, KnowledgeSubject subject,
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
-        await using var db = await OpenContextAsync(ct);
+        await using var dbOwner = await OpenReadContextAsync(ct);
+        var db = dbOwner.Context;
         var row = await db.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId, ct);
         return row is null ? new DialogueHistoryResult(DialogueStatus.Indeterminate, [], false, null, null) :
             await HistoryAsync(db, Identity(row), request, subject, ct);
@@ -255,7 +271,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     public Task<DialogueTranscriptResult> ReadTranscriptAsync(DialogueHistoryRequest request, KnowledgeSubject subject,
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
-        await using var db = await OpenContextAsync(ct);
+        await using var dbOwner = await OpenReadContextAsync(ct);
+        var db = dbOwner.Context;
         var row = await db.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId, ct);
         if (row is null) return new DialogueTranscriptResult(DialogueStatus.Indeterminate, [], false);
         var identity = Identity(row);
@@ -292,7 +309,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
         CancellationToken cancellationToken = default) => BoundedAsync(async ct =>
     {
         if (request.OrphanOperationId == Guid.Empty) return new DialogueOrphanResult(DialogueStatus.Invalid, null);
-        await using var read = await OpenContextAsync(ct);
+        await using var readOwner = await OpenReadContextAsync(ct);
+        var read = readOwner.Context;
         var row = await read.DialogueConversations.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId, ct);
         if (row is null) return new(DialogueStatus.Indeterminate, null);
         var identity = Identity(row);
@@ -326,7 +344,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
         }, async token => await VerifyOwnerDeathAsync(request.ExpectedExecution, token) == DialogueExecutionStatus.Verified
             ? DialogueStatus.Succeeded : DialogueStatus.AuthorityUnavailable, ct);
         if (status is not (DialogueStatus.Succeeded or DialogueStatus.Existing or DialogueStatus.Indeterminate)) return new(status, null);
-        await using var final = await OpenContextAsync(ct);
+        await using var finalOwner = await OpenReadContextAsync(ct);
+        var final = finalOwner.Context;
         var saved = await final.DialogueTerminals.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == row.ConversationId && x.TurnId == request.TurnId, ct);
         var turn = await final.DialogueTurns.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == row.ConversationId && x.TurnId == request.TurnId, ct);
         return saved is null || turn is null ? new(DialogueStatus.Indeterminate, null) : new(status == DialogueStatus.Succeeded ? status : DialogueStatus.Existing, Receipt(identity, turn, saved));
@@ -352,7 +371,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
         try
         {
             db = await OpenContextAsync(ct);
-            var eligibility = await _guard.CheckBeforeTransactionAsync(attempt, ct).WaitAsync(ct);
+            var eligibility = await TrackAsync(() => _guard.CheckBeforeTransactionAsync(attempt, ct)).WaitAsync(ct);
             ct.ThrowIfCancellationRequested();
             if (eligibility != CommitEligibilityStatus.Eligible) return Eligibility(eligibility);
             transaction = await db.Database.BeginTransactionAsync(ct);
@@ -369,7 +388,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             CommitGuardResult guarded;
             try
             {
-                var guardCall = _guard.SubmitAsync(attempt, token =>
+                var guardCall = TrackAsync(() => _guard.SubmitAsync(attempt, token =>
                 {
                     TaskCompletionSource<CommitSettlement> owned;
                     lock (submissionGate)
@@ -387,7 +406,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
                         token.ThrowIfCancellationRequested();
                         // Still synchronous under the host guard; never hold our local gate across provider code.
                         Task actualCommit = transaction.GetDbTransaction().CommitAsync(token);
-                        _ = CompleteSettlementAsync(actualCommit, owned);
+                        _ = TrackAsync(() => CompleteSettlementAsync(actualCommit, owned));
                         // The ownership promise is not exposed as SubmittedCommit until the actual API was invoked.
                         return new SubmittedCommit(owned.Task);
                     }
@@ -396,7 +415,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
                         owned.TrySetResult(CommitSettlement.Indeterminate);
                         throw;
                     }
-                }, ct);
+                }, ct));
                 _ = ObserveGuardAsync(guardCall);
                 guarded = await guardCall.WaitAsync(ct);
             }
@@ -427,25 +446,21 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
             if (settlement is { IsCompleted: false })
             {
                 // This includes a claimed provider invocation that has not returned its Task yet.
-                _ = DisposeAfterSettlementAsync(settlement, transaction, db);
+                _ = TrackAsync(() => DisposeAfterSettlementAsync(settlement, transaction, db));
             }
             else
             {
-                if (transaction is not null) await transaction.DisposeAsync();
-                if (db is not null) await db.DisposeAsync();
+                await DisposeOwnedAsync(transaction, db);
             }
         }
     }
 
-    private static async Task DisposeAfterSettlementAsync(Task<CommitSettlement> settlement, IDbContextTransaction? transaction, OctoberDbContext? db)
+    private async Task DisposeAfterSettlementAsync(Task<CommitSettlement> settlement, IDbContextTransaction? transaction, OctoberDbContext? db)
     {
         try { await settlement; }
         finally
         {
-            try { if (transaction is not null) await transaction.DisposeAsync(); }
-            catch (Exception) { /* Cleanup cannot change the already-submitted durable outcome. */ }
-            try { if (db is not null) await db.DisposeAsync(); }
-            catch (Exception) { /* The caller already has an indeterminate result; do not leak a detached exception. */ }
+            await DisposeOwnedAsync(transaction, db);
         }
     }
 
@@ -594,7 +609,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     private async Task<DialogueStatus> AuthorizeFreshAsync(DialogueConversationIdentity identity, KnowledgeSubject subject,
         KnowledgeDependencyHandle? dependencies, CancellationToken ct)
     {
-        await using var db = await OpenContextAsync(ct);
+        await using var dbOwner = await OpenReadContextAsync(ct);
+        var db = dbOwner.Context;
         return await AuthorizeAsync(db, identity, subject, dependencies, ct);
     }
 
@@ -742,10 +758,10 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     private Task<DisclosureStatus> CheckDisclosureAsync(DisclosureRequest request, CancellationToken ct) =>
         ExternalAsync(() => _disclosure.CheckAsync(request, ct), ct);
 
-    private static async Task<T> ExternalAsync<T>(Func<Task<T>> operation, CancellationToken ct)
+    private async Task<T> ExternalAsync<T>(Func<Task<T>> operation, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        T result = await operation().WaitAsync(ct);
+        T result = await TrackAsync(operation).WaitAsync(ct);
         ct.ThrowIfCancellationRequested();
         return result;
     }
@@ -753,7 +769,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
     private async Task<OctoberDbContext> OpenContextAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        Task<OctoberDbContext> pending = _contexts.CreateDbContextAsync(ct);
+        Task<OctoberDbContext> pending = TrackAsync(() => _contexts.CreateDbContextAsync(ct));
         OctoberDbContext? result = null;
         try
         {
@@ -763,25 +779,118 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore
         }
         catch
         {
-            if (result is not null) await result.DisposeAsync();
-            else _ = DisposeLateContextAsync(pending);
+            if (result is not null) await DisposeOwnedAsync(null, result);
+            else _ = TrackAsync(() => DisposeLateContextAsync(pending));
             throw;
         }
     }
 
-    private static async Task DisposeLateContextAsync(Task<OctoberDbContext> pending)
+    private async Task DisposeLateContextAsync(Task<OctoberDbContext> pending)
     {
-        try { await (await pending).DisposeAsync(); }
-        catch (Exception) { /* Failed creation owns no context and exposes no result. */ }
+        OctoberDbContext context;
+        try { context = await pending; }
+        catch (Exception) { return; } // A failed factory produced no owned context.
+        await DisposeOwnedAsync(null, context);
     }
 
-    private static async Task<T> BoundedAsync<T>(Func<CancellationToken, Task<T>> action, Func<DialogueStatus, T> failure, CancellationToken cancellationToken)
+    private Task<T> BoundedAsync<T>(Func<CancellationToken, Task<T>> action, Func<DialogueStatus, T> failure, CancellationToken cancellationToken)
+    {
+        lock (_lifetimeGate)
+        {
+            if (_closing) return Task.FromResult(failure(DialogueStatus.Indeterminate));
+            _ownedOperations++;
+        }
+        return RunBoundedAsync(action, failure, cancellationToken);
+    }
+
+    private async Task<T> RunBoundedAsync<T>(Func<CancellationToken, Task<T>> action, Func<DialogueStatus, T> failure, CancellationToken cancellationToken)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(OctoberDialogueLimits.MaximumPersistenceAttempt);
-        try { return await action(deadline.Token); }
+        // The bounded response and underlying operation have distinct lifetimes. The admitted
+        // operation retains its contexts and may register children before retiring its ownership.
+        Task<T> pending = RunOwnedAsync(() => action(deadline.Token));
+        _ = ObserveGuardAsync(pending);
+        try { return await pending.WaitAsync(deadline.Token); }
         catch (Exception ex) when (ex is ArgumentException or JsonException or OverflowException)
         { return failure(DialogueStatus.Invalid); }
         catch (Exception) { return failure(DialogueStatus.Indeterminate); }
+    }
+
+    /// <summary>Closes new calls and awaits all admitted work and physical cleanup. Cancellation is not settlement.</summary>
+    public ValueTask DisposeAsync()
+    {
+        lock (_lifetimeGate)
+        {
+            _closing = true;
+            _disposal ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+            CompleteDisposalIfDrained();
+            return new(_disposal.Task);
+        }
+    }
+
+    private Task<T> TrackAsync<T>(Func<Task<T>> action)
+    {
+        // Internal children remain admissible while their registered parent drains after close.
+        lock (_lifetimeGate) _ownedOperations++;
+        Task<T> pending = RunOwnedAsync(action);
+        _ = ObserveGuardAsync(pending);
+        return pending;
+    }
+
+    private Task TrackAsync(Func<Task> action)
+    {
+        lock (_lifetimeGate) _ownedOperations++;
+        Task pending = RunOwnedAsync(action);
+        _ = ObserveGuardAsync(pending);
+        return pending;
+    }
+
+    private async Task<T> RunOwnedAsync<T>(Func<Task<T>> action)
+    {
+        try { return await action(); }
+        finally { RetireOwnedOperation(); }
+    }
+
+    private async Task RunOwnedAsync(Func<Task> action)
+    {
+        try { await action(); }
+        finally { RetireOwnedOperation(); }
+    }
+
+    private void RetireOwnedOperation()
+    {
+        lock (_lifetimeGate)
+        {
+            _ownedOperations--;
+            CompleteDisposalIfDrained();
+        }
+    }
+
+    private void CompleteDisposalIfDrained()
+    {
+        if (!_closing || _ownedOperations != 0 || _disposal is null) return;
+        if (_cleanupFailed) _disposal.TrySetException(new InvalidOperationException("october_dialogue_cleanup_unconfirmed"));
+        else _disposal.TrySetResult();
+    }
+
+    private async Task<ReadContextLease> OpenReadContextAsync(CancellationToken ct) => new(this, await OpenContextAsync(ct));
+
+    private sealed class ReadContextLease(OctoberDialogueStore owner, OctoberDbContext context) : IAsyncDisposable
+    {
+        public OctoberDbContext Context { get; } = context;
+        public ValueTask DisposeAsync() => new(owner.DisposeOwnedAsync(null, Context));
+    }
+
+    private async Task DisposeOwnedAsync(IDbContextTransaction? transaction, OctoberDbContext? context)
+    {
+        bool failed = false;
+        try { if (transaction is not null) await transaction.DisposeAsync(); }
+        catch (Exception) { failed = true; }
+        try { if (context is not null) await context.DisposeAsync(); }
+        catch (Exception) { failed = true; }
+        if (!failed) return;
+        lock (_lifetimeGate) _cleanupFailed = true;
+        throw new InvalidOperationException("october_dialogue_cleanup_unconfirmed");
     }
 }
