@@ -31,18 +31,24 @@ public sealed class OctoberGeneratedClReaderE2ETests(ITestOutputHelper output)
 
         // The integration-owned helper guards approval before acquiring native/provider inputs.
         // No profile, credential, source approval or policy value is inferred in this test.
+        // Installing the exact approved input bundle is a root-owned prerequisite for this invocation.
         var approved = await fixture.PrepareApprovedClInputsAsync(CancellationToken.None);
         await fixture.AssertOctoberSchemaPresentAsync();
         Assert.Equal(fixture.CanonicalDatabaseIdentity, approved.Binding.CanonicalDatabaseIdentity);
         Assert.Equal(fixture.TargetId, approved.Binding.TargetId);
         Assert.Equal(fixture.BatchId, approved.Binding.BatchId);
-        Assert.Equal(fixture.RepositoryId, approved.Origin.RepositoryId);
+        Assert.Equal(fixture.RepositoryId, approved.Source.RepositoryId);
         var adapter = OctoberScanGenerateQualificationFixtureAdapter.ForFixture(fixture, approved.Profile,
-            approved.Policy, approved.Origin.RelativePath, approved.Files);
+            approved.Policy, approved.Source.RelativePath, approved.Files);
         var execution = await adapter.ExecuteOnceAsync();
+        var generatedOrigin = await fixture.ResolveGeneratedOriginAsync(CancellationToken.None);
+        Assert.Equal(approved.Source.RepositoryId, generatedOrigin.RepositoryId);
+        Assert.Equal(approved.Source.RootBindingIdentity, generatedOrigin.RootBindingIdentity);
+        Assert.Equal(approved.Source.RelativePath, generatedOrigin.RelativePath);
+        Assert.Equal(approved.Source.SourceDigest, generatedOrigin.SourceDigest);
         // Parse also rejects nonzero process exits. Never retry: failure may follow a committed publication.
         var report = OctoberGeneratedClReport.Parse(execution.ExitCode, execution.StandardOutput,
-            approved.Binding, approved.Origin);
+            approved.Binding, generatedOrigin);
         Assert.NotEmpty(report.Documents);
         Assert.Equal(approved.Binding, report.Publication.Knowledge);
 
@@ -124,9 +130,16 @@ public sealed class OctoberGeneratedClReaderE2ETests(ITestOutputHelper output)
                 await AssertUnavailableRouteAsync(client, ExactDocumentLinkBuilder.Build(wrong), token);
             }
 
-            var currentStamp = await fixture.RotateReaderSecurityStampAsync(ordinary.SubjectId, token);
-            Assert.True(!string.Equals(ordinary.SecurityStamp, currentStamp, StringComparison.Ordinal),
-                "The live Identity security stamp must change.");
+            await fixture.RotateReaderSecurityStampAsync(ordinary.SubjectId, token);
+            await using (var scope = fixture.Services.CreateAsyncScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var user = Assert.IsType<ApplicationUser>(await users.FindByIdAsync(ordinary.SubjectId));
+                var currentStamp = await users.GetSecurityStampAsync(user);
+                Assert.True(!string.IsNullOrWhiteSpace(currentStamp) &&
+                    !string.Equals(ordinary.SecurityStamp, currentStamp, StringComparison.Ordinal),
+                    "The live Identity security stamp must change.");
+            }
             var revoked = await fixture.ReadExactAsReaderAsync(report.Publication, exact,
                 ordinary.SubjectId, ordinary.SecurityStamp, KnowledgeMode.IT, token);
             AssertMetadataFree(revoked);
