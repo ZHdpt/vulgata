@@ -8,6 +8,9 @@
   "October/OctoberOperatorReaderBindingTests.cs": {
     "suite": "SelfContained"
   },
+  "October/Knowledge/OctoberDialogueLifetimeTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberBusinessAttemptTransportTests.cs": {
     "suite": "SelfContained"
   },
