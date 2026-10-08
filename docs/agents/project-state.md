@@ -32,7 +32,14 @@ SelfContained suite **4,121/4,121**, zero failures/skips, run
 The user subsequently approved A+ (seven source-free Chat/Explorer PostgreSQL
 cases) and resumed B (one synthetic CL-only Generate using the protected root
 `.env` provider binding, at most three requests/no retries and cumulative
-100,000 input/12,000 output tokens). Both are awaiting execution, not passed.
+100,000 input/12,000 output tokens). A+ passed **7/7**, zero failures/skips, run
+`4afa67195cbc4ada8ecf1f84ef40bb9b`, with owned container/volume removal verified;
+its evidence is integrated at `3316505d`. B run
+`aed6ea62f99b48038de105aa787834d1` failed (0/1) at generated-source provenance
+resolution before ordinary-reader assertions; owned cleanup passed. Generate report
+and provider usage were not retained, so underlying cause/dispatch remain unknown.
+Root's reviewed qualification diagnostics now pass 53/53 affected source-free
+cases (`b35ffd84f2f74f42845d2263dc6b3605`); no automatic external retry is allowed.
 C remains separate and pending B; no production source disclosure is approved.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted

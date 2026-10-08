@@ -227,3 +227,62 @@ our work."** in the integration chat, accepting the immediately preceding scopes
 
 These later decisions supersede the earlier A+/B holds only within their exact
 scope. Positive BL operator-binding PostgreSQL qualification is not added to A+.
+
+A+ subsequently passed **7/7**, zero failures/skips, run
+`4afa67195cbc4ada8ecf1f84ef40bb9b` on the `075956e9` source boundary; Business's
+evidence-only checkpoints are integrated at `42d41d53` and `3316505d`. Initial
+Docker-readiness attempts acquired no resources; after the user restored Docker,
+the successful run verified owned container/volume absence. No production/schema
+fix was required, and live content remains a separate claim.
+
+The root-owned B fixture now installs its synthetic inputs only under explicit
+`account-policy-cl-v1` process opt-in, E2E suite and matching owned-run/database
+guards. Existing Explorer assertions and cleanup are unchanged. The actual
+approved provider is `https://api.deepseek.com/`, model `deepseek-flash`; credential
+values are never recorded. Three approved `.env` entries become process-only
+`VULGATA_OCTOBER_B_LLM_*` aliases because the standard runner intentionally clears
+ambient `VULGATA_TEST_*` configuration. A conservative **12,000 combined tokens**
+cap is stricter than the separate grant; maximum three requests, zero retries.
+Only process-local PATH is normalized for already qualified tools. Independent
+helper review accepted; policy checks and 13/13 adapter SelfContained cases pass
+in `cdbc1c23c79e40a388a60cb8b8b4d056`. This helper verification is not a live result.
+
+### B first execution: failed before ordinary-reader qualification
+
+Run `aed6ea62f99b48038de105aa787834d1` selected one E2E case: **0/1 passed**,
+one failure, zero skips, launcher exit 1. `ResolveGeneratedOriginAsync` raised
+`Generated source provenance is missing or ambiguous` before the exact Document
+and ordinary-reader assertions. The test did not retain the Generate child's
+sanitized report before this check; the available evidence cannot establish its
+exit/status, provider request count, token usage or underlying failure cause.
+Do not infer a provider outage, budget rejection or production acceptance defect
+from this exception alone. No generated CL or successful live Worker is claimed.
+
+Fixture database and temporary-root cleanup were recorded; runner removed the
+owned container and verified named-volume absence. The source was synthetic only;
+no production repository or retained host was accessed. No automatic rerun was
+made under the one-run/no-retry grant. Root is adding sanitized qualification
+diagnostics without weakening the original assertions; another external invocation
+requires explicit renewed permission because previous usage cannot be recovered.
+
+Explorer independently confirmed that provenance resolution precedes strict
+report parsing. Scan's read-only assessment found no proven one-Java-file blocker:
+native CodeGraph preparation/MCP discovery occurs before Worker execution, but
+the earlier S1 native evidence used Java plus C# beacon/project files rather than
+this exact bare Java shape. This is a qualification difference, not proof of
+unsupported Java or this failure's cause. No production workaround is adopted.
+
+The fixture now records only process exit, fixed stderr classifications,
+allowlisted reported statuses/gap codes, bounded counts and nullable usage before
+provenance resolution; DB-observed cardinalities are separate. Raw output, secrets,
+source paths/content and provider error prose stay suppressed. Eight controlled
+diagnostic cases cover redaction, malformed/oversized/duplicate JSON and unknown
+usage. Independent review accepted the change; original acceptance/read/revocation
+assertions and disposable cleanup remain intact. These diagnostics cannot recover
+the failed run retroactively and do not authorize another live invocation.
+
+Final affected SelfContained verification: **53/53**, zero failures/skips, run
+`b35ffd84f2f74f42845d2263dc6b3605`, launcher exit 0. This covers the fixture-input
+and Generate qualification adapter classes, including eight new diagnostics cases.
+The prior full 4,121/4,121 remains pinned before this test-helper-only addition;
+the failed live B result is not superseded by these controlled passes.

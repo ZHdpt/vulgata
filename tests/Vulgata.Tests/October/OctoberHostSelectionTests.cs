@@ -21,6 +21,7 @@ using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Infrastructure.Configuration;
+using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.OctoberGenerator;
 using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
@@ -1163,6 +1164,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         private ApprovedClInputBundle? _approvedClInputs;
         private (KnowledgeBinding Binding, ApprovedClSource Source)? _preparedClExpectation;
         private int _prepareClStarted;
+        private static int _operationBInstallation;
 
         internal sealed record ApprovedClSource(Guid RepositoryId, string RootBindingIdentity, string RelativePath, string SourceDigest);
 
@@ -1197,6 +1199,9 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             OctoberScanPolicy Policy, OctoberGenerateInputFiles Files)> PrepareApprovedClInputsAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            bool needsInputs;
+            lock (_readerLock) needsInputs = _approvedClInputs is null;
+            if (needsInputs) await TryInstallApprovedOperationBInputsAsync(cancellationToken);
             ApprovedClInputBundle inputs;
             lock (_readerLock)
             {
@@ -1236,6 +1241,95 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             return (binding, source, inputs.Profile, inputs.Policy, files);
         }
 
+        private async Task TryInstallApprovedOperationBInputsAsync(CancellationToken cancellationToken)
+        {
+            // Only this explicitly opted-in qualification path may install a synthetic input.
+            // Ordinary fixture tests and absent configuration retain the original fail-closed path.
+            if (Environment.GetEnvironmentVariable("VULGATA_OCTOBER_OPERATION_B") != "account-policy-cl-v1") return;
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!SuiteAuthorization.IsEnabled("E2E") || Environment.GetEnvironmentVariable("VULGATA_TEST_RESOURCE_RUN") != _runId
+                || !Guid.TryParseExact(_runId, "N", out _))
+                throw new InvalidOperationException("Operation B requires its explicit owned E2E run.");
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            if (Interlocked.CompareExchange(ref _operationBInstallation, 1, 0) != 0)
+                throw new InvalidOperationException("Operation B is limited to one installation per qualification process.");
+
+            // These aliases are installed by the root's approved process wrapper, never loaded from .env here.
+            string endpoint = Environment.GetEnvironmentVariable("VULGATA_OCTOBER_B_LLM_ENDPOINT") ?? string.Empty;
+            string model = Environment.GetEnvironmentVariable("VULGATA_OCTOBER_B_LLM_MODEL") ?? string.Empty;
+            if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) || uri.AbsoluteUri != "https://api.deepseek.com/"
+                || model != "deepseek-flash")
+                throw new InvalidOperationException("Operation B provider configuration does not match its approved profile.");
+            const string graph = @"G:\packages\npm\prefix\codegraph.ps1";
+            const string jdt = @"G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository";
+            const string javaBin = @"C:\Program Files\Java\jdk-21.0.12\bin";
+            string localBin = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin");
+            string systemDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            string cmd = Path.Combine(systemDirectory, "cmd.exe");
+            if (!File.Exists(graph) || !File.Exists(Path.Combine(javaBin, "java.exe")) || !File.Exists(cmd)
+                || !File.Exists(Path.Combine(localBin, "jdtls.bat")) || !File.Exists(Path.Combine(localBin, "python.exe"))
+                || !File.Exists(Path.Combine(jdt, "bin", "jdtls.py")) || !Directory.Exists(Path.Combine(jdt, "plugins")))
+                throw new InvalidOperationException("Operation B approved local tool prerequisites are unavailable.");
+            if (Directory.EnumerateFileSystemEntries(OwnedSourceRoot).Any())
+                throw new InvalidOperationException("Operation B requires a fresh owned synthetic source directory.");
+
+            const string relativeFile = "AccountPolicy.java";
+            const string syntheticSource = """
+                public final class AccountPolicy {
+                    private AccountPolicy() { }
+
+                    public static boolean canRegister(boolean phoneVerified, boolean accountExists) {
+                        return phoneVerified && !accountExists;
+                    }
+
+                    public static boolean canLogin(boolean accountActive, boolean passwordMatches, int failedAttempts) {
+                        if (!accountActive || failedAttempts >= 5) {
+                            return false;
+                        }
+                        return passwordMatches;
+                    }
+                }
+                """;
+            var policy = new OctoberScanPolicy
+            {
+                OutputStage = "cl-only", WorkerCap = 1, RunDeadlineSeconds = 600, FileDeadlineSeconds = 480,
+                GracefulDrainSeconds = 30, MaximumContinuationWindows = 3, MaximumModelRequestsPerFile = 3,
+                MaximumTransientRetries = 0, MaximumProviderRequests = 3, MaximumRequestsPerMinute = 3,
+                // Combined reservation is stricter than the separate 100k input / 12k output approval.
+                MaximumTotalTokens = 12000,
+                SourceRules = [new(RepositoryId, relativeFile, "selected", "Explicit operation B synthetic account policy")]
+            };
+            string state = Path.Combine(OwnedRoot, "operation-b-jdt-state");
+            string logs = Path.Combine(OwnedRoot, "operation-b-logs");
+            string[] executableDirectories = [localBin, javaBin, systemDirectory];
+            var runtime = new OctoberRuntimeConfiguration(
+                [new(TargetId, BatchId, RepositoryId, CreatePrepareRequest().Repositories.Single().RootBindingIdentity, OwnedSourceRoot)], graph,
+                new PreparedJavaNavigationProfile(state, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
+                new PreparedJdtHostPolicy(executableDirectories, [jdt, Directory.GetParent(javaBin)!.FullName], cmd,
+                    executableDirectories, javaBin), logs);
+            if (!runtime.IsValid()) throw new InvalidOperationException("Operation B runtime binding is invalid.");
+            Directory.CreateDirectory(state);
+            Directory.CreateDirectory(logs);
+            string runtimePath = Path.Combine(OwnedRoot, "operation-b-runtime.json");
+            string policyPath = Path.Combine(OwnedRoot, "operation-b-policy.json");
+            var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+            await File.WriteAllTextAsync(Path.Combine(OwnedSourceRoot, relativeFile), syntheticSource, new UTF8Encoding(false, true), cancellationToken);
+            await File.WriteAllTextAsync(runtimePath, JsonSerializer.Serialize(runtime, json), new UTF8Encoding(false, true), cancellationToken);
+            await File.WriteAllTextAsync(policyPath, JsonSerializer.Serialize(policy, json), new UTF8Encoding(false, true), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            InstallApprovedClInputs(new(new("operation-b-worker", ApiType.ChatCompletions, endpoint, model, "operation-b-worker-key"),
+                policy, runtimePath, policyPath, relativeFile, token =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (!SuiteAuthorization.IsEnabled("E2E") || Environment.GetEnvironmentVariable("VULGATA_TEST_RESOURCE_RUN") != _runId
+                        || Environment.GetEnvironmentVariable("VULGATA_OCTOBER_OPERATION_B") != "account-policy-cl-v1")
+                        throw new InvalidOperationException("Operation B credential access is not authorized.");
+                    TestResourceScope.ValidateOwnedTarget(ConnectionString);
+                    string key = Environment.GetEnvironmentVariable("VULGATA_OCTOBER_B_LLM_KEY") ?? string.Empty;
+                    return Task.FromResult(key);
+                }));
+        }
+
         /// <summary>Fresh-fixture, one-dispatch proof only; not a general replay or latest-approval lookup.</summary>
         internal async Task<PreparedOrigin> ResolveGeneratedOriginAsync(CancellationToken cancellationToken = default)
         {
@@ -1250,7 +1344,10 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             var manifests = await context.AcceptedFileManifests.AsNoTracking().Where(x => x.BatchId == BatchId).Take(2).ToArrayAsync(cancellationToken);
             int begins = await context.KnowledgeOperations.CountAsync(x => x.BatchId == BatchId && x.Kind == OperationKind.BeginGenerate, cancellationToken);
             if (batches.Length != 1 || approvals.Length != 1 || manifests.Length != 1 || begins != 1)
+            {
+                _output.WriteLine($"generate-provenance: batches-capped2={batches.Length}; approvals-capped2={approvals.Length}; manifests-capped2={manifests.Length}; begin-operations={begins}");
                 throw new InvalidOperationException("Generated source provenance is missing or ambiguous.");
+            }
             var batch = batches[0]; var approval = approvals[0]; var manifest = manifests[0]; var source = expected.Source;
             if (batch.TargetId != TargetId || batch.CanonicalDatabaseIdentity != CanonicalDatabaseIdentity
                 || batch.SelectionDigest != expected.Binding.SelectionDigest || batch.SubjectId != SubjectId
@@ -2217,9 +2314,14 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         internal Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGeneratorAsync(
             Process process) => WaitForGeneratorCoreAsync(process, TimeSpan.FromMinutes(3));
 
-        internal Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGenerateAsync(
+        internal async Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGenerateAsync(
             Process process, int runDeadlineSeconds)
-            => WaitForGeneratorCoreAsync(process, OctoberGenerateFixtureInputs.GenerateWait(runDeadlineSeconds));
+        {
+            var result = await WaitForGeneratorCoreAsync(process, OctoberGenerateFixtureInputs.GenerateWait(runDeadlineSeconds));
+            foreach (string line in OctoberGenerateFixtureInputs.GenerateDiagnostics(result.ExitCode, result.StandardOutput, result.StandardError))
+                _output.WriteLine(line);
+            return result;
+        }
 
         private async Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGeneratorCoreAsync(
             Process process, TimeSpan maximumWait)
