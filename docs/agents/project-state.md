@@ -14,8 +14,11 @@ Current activation authority and ownership are in the [October 8 activation reco
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
 its reviewed tests/evidence are integrated at `9271f8f0`. This supersedes older
 "unrun PostgreSQL" statements for exactly those cases, not real generated content.
-Operation B is explicitly paused; retained operation C waits for B. The prior
-full-suite logger failure still requires a new full-suite run despite focused repair.
+Operation B is explicitly paused; retained operation C waits for B. The subsequent
+full SelfContained run `1a2acec76b9545f4b87ac56ae7c40444` passes 3,981/3,982,
+zero skips: both logger tests now pass, but one legacy streaming-inactivity test
+receives unexpected cancellation. Full-suite status remains non-green; the activation
+record identifies the exact failure and independent diagnosis.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.

@@ -5,6 +5,9 @@
   "October/Chat/OctoberChatInputDigestsTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberOperatorReaderBindingTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberBusinessAttemptTransportTests.cs": {
     "suite": "SelfContained"
   },

@@ -72,3 +72,50 @@ Next usable milestone: one genuinely generated CL opened by an ordinary authenti
 IT user. Its real execution is paused for B; source-free implementation/verification
 continues. BL and streaming Chat/graph follow their actual dependencies, not routine
 permission rounds. Runtime permission remains separate from integration approval.
+
+## Activation-support implementation boundary
+
+Explorer authoring checkpoints `c145a61b` and `f6973f52` are imported as `385fb548`
+and `dbef0fe9`; Scan's command handoff `ca0b68eb` is imported as `386bf793`.
+The combined test remains E2E-classified and unexecuted. Root installs the explicit
+approved input bundle for its exact invocation only after B configuration and
+authority exist; the current no-default guard is not a runnable configured dataset.
+
+`OctoberChatInputDigests.CreateAsync(mode, exactQuestion, token)` reuses the existing
+embedded prompt catalog and owner canonical hash. Initial input binds a versioned
+array of mode, exact prompt digest and exact question; history dependencies remain
+separate. Missing-type compilation RED was observed in `92f4cb0741d74a47aca06803d0fa64b8`;
+16 controlled prompt cases passed in `e5760adfec934b70804f21423cfa92bb`.
+
+`OctoberLocalAuthority.TryBindReaderAsync(originalSession, exactPublication, token)`
+returns a host-only original-stamp Reader binding, never a management-authority ID
+substituted for an Identity stamp. Its issuer is the same scoped concrete/interface
+instance. Actual PostgreSQL authentication checks remain unchanged. Successful genuine
+session issuance/revocation is still pending separately authorized PostgreSQL evidence;
+controlled refusal and lifetime probes do not establish it.
+
+Independent review found that a valid ticket from another reader could bypass the
+binding's fixed purpose/scope after Open. Three controlled counterexamples genuinely
+failed with Success instead of Unavailable in `e5760adfec934b70804f21423cfa92bb`
+(26 selected, 23 passed, 3 failed). The correction admits one successful owned ticket
+only, shares concurrent Open, rejects foreign tickets on all reads, and never renews
+expiry. Binding disposal joins tracked reader API tasks, not proof of every underlying
+cancellation-ignoring database/log operation physically settling.
+
+Combined full SelfContained `1a2acec76b9545f4b87ac56ae7c40444`: **3,981/3,982**,
+zero skips; NOT green. Both logger tests, all ten binding cases and sixteen prompt
+cases pass, and the E2E/helper sources compile without activating their resources.
+The sole failure is
+`ChatProviderStreamAssemblerTests.StreamAsync_KeepAliveWithoutDecodedData_ExpiresInactivityWithoutPartialAnswerAsync`:
+an OperationCanceledException reached a test expecting null. This is a separately
+open diagnosis, not a waiver or proof that isolated replay repairs the full failure.
+
+Chat's application/registry/parent remains lane-owned. Root composition must preserve
+the originating circuit's live authentication accessor and context-change events;
+a new per-turn DI scope must not resolve an unrelated circuit authentication provider.
+The exact mode and publication/scope are freshly authorized for each conversation/turn.
+Use the disclosed-reader constructor with the actual dependency authority. Provider
+selection is explicit, frozen per turn, and rechecked before sending. Shared request
+permits and registry are host-owned; canonical store and provider binding are uniquely
+turn-owned. Business's pending concrete store disposal joins its actual deferred work;
+bounded response completion alone never releases execution ownership.
