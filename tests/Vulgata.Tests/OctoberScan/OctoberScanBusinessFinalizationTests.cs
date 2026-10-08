@@ -36,7 +36,6 @@ public sealed class OctoberScanBusinessFinalizationTests
             (authority, guard) => new OctoberResolutionStore(host.Database.Factory, authority, guard, host.Database.Log),
             authority => new OctoberFlowPlanningInputLoader(host.Database.Factory, authority),
             (authority, guard) => new OctoberFlowPublicationStore(host.Database.Factory, authority, guard, host.Database.Log),
-            publication => Reader(host, publication, execution.Session.SubjectId),
             input =>
             {
                 rootSelections++;
@@ -45,6 +44,11 @@ public sealed class OctoberScanBusinessFinalizationTests
                 transport.Root = unit.Document;
                 return [new FlowRootSelection(unit.UnitId, unit.Document, FlowRootKind.SelectedCodeUnit, unit.SemanticSelector)];
             }, projection, "Controlled resolution: use accepted evidence only.", "Controlled synthesis: preserve accepted evidence and qualifications.", new(), 32768);
+        composition = composition with { BindReader = (session, publication, _) =>
+        {
+            Assert.Same(execution.Session, session);
+            return Task.FromResult<OctoberVerifiedReaderBinding?>(ControlledBinding(host, publication, session, null));
+        } };
         var dependencies = host.Dependencies with
         {
             Business = composition,
@@ -68,6 +72,8 @@ public sealed class OctoberScanBusinessFinalizationTests
         }
         Assert.Equal(0, report.ExitCode);
         Assert.Equal("cl-and-bl", report.CompletedStage);
+        Assert.Equal(OctoberPhaseStatus.Completed, report.Matching);
+        Assert.Equal(OctoberPhaseStatus.Completed, report.BusinessLogic);
         Assert.Equal(1, clientCreations);
         Assert.Equal(1, rootSelections);
         Assert.Equal(1, transport.WorkerRequests);
@@ -101,6 +107,8 @@ public sealed class OctoberScanBusinessFinalizationTests
     [SuiteTheory("SelfContained")]
     [InlineData("freeze-unknown")]
     [InlineData("publication-ack")]
+    [InlineData("publication-foreign-operation")]
+    [InlineData("publication-uncommitted")]
     [InlineData("empty-roots")]
     [InlineData("default-roots")]
     [InlineData("revoked")]
@@ -114,6 +122,16 @@ public sealed class OctoberScanBusinessFinalizationTests
     [InlineData("publication-held-revoked")]
     [InlineData("publication-held-scope-stop")]
     [InlineData("replay-authority-held")]
+    [InlineData("binding-valid")]
+    [InlineData("cl-only-binding-unused")]
+    [InlineData("binding-null")]
+    [InlineData("binding-subject")]
+    [InlineData("binding-publication")]
+    [InlineData("binding-mode")]
+    [InlineData("binding-purpose")]
+    [InlineData("binding-scope")]
+    [InlineData("binding-held-acquire")]
+    [InlineData("binding-held-read")]
     [InlineData("scope-stop-before-commit")]
     [InlineData("freeze-log")]
     [InlineData("publication-log")]
@@ -129,13 +147,13 @@ public sealed class OctoberScanBusinessFinalizationTests
         var clock = boundary is "session-expired" or "replay-authority-held" ? new OctoberScanAcceptanceHarness.ManualClock() : null;
         var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
         if (boundary == "session-expired") execution = execution with { Session = new FixedSession(execution.Session.SubjectId, execution.Session.ManagementAuthorityId, clock!.GetUtcNow().AddSeconds(5)) };
+        if (boundary == "cl-only-binding-unused") execution = execution with { Policy = execution.Policy with { OutputStage = "cl-only" } };
         var profile = execution.Provider.Profile;
         int clients = 0;
         var composition = new OctoberBusinessRunComposition(
             (authority, guard) => new ResolutionBoundary(state, new OctoberResolutionStore(host.Database.Factory, authority, guard, host.Database.Log)),
             authority => new OctoberFlowPlanningInputLoader(host.Database.Factory, authority),
             (authority, guard) => new PublicationBoundary(state, new OctoberFlowPublicationStore(host.Database.Factory, authority, guard, host.Database.Log)),
-            publication => boundary is "reader-nonprogress" or "reader-empty-fresh-cursor" ? new NonprogressReader(state, Reader(host, publication, execution.Session.SubjectId)) : Reader(host, publication, execution.Session.SubjectId),
             input =>
             {
                 state.RootSelections++;
@@ -150,6 +168,20 @@ public sealed class OctoberScanBusinessFinalizationTests
             }, new(execution.Provider.SourceIdentity, 0, profile.Name, "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference),
             "Controlled accepted resolution only.", "Controlled accepted synthesis only.", new(),
             boundary is "budget-b1-direct" or "budget-b1-ack" ? execution.Policy.MaximumTotalTokens!.Value : 32768);
+        composition = composition with { BindReader = async (session, publication, token) =>
+        {
+            Assert.Same(execution.Session, session);
+            if (boundary == "cl-only-binding-unused") throw new InvalidOperationException("CL-only must not bind Business readers");
+            state.ReaderBindings++;
+            var binding = state.Boundary == "binding-null" ? null : ControlledBinding(host, publication, session, state);
+            if (state.Boundary == "binding-held-acquire")
+            {
+                using var registration = token.Register(() => state.ReaderCancelled.TrySetResult());
+                state.ReaderHeld.TrySetResult();
+                await state.ReleaseReader.Task; // Deliberately late physical binding acquisition.
+            }
+            return binding;
+        } };
         var replayAuthority = new HeldReplayAuthority(host.Dependencies.Authority);
         await using var runner = new OctoberGenerateRunner(host.Dependencies with
         {
@@ -161,7 +193,21 @@ public sealed class OctoberScanBusinessFinalizationTests
         if (boundary is "publication-log" or "publication-held-log") state.BeforePublication = () => host.Database.Log.Succeeds = false;
         if (boundary == "scope-stop-before-freeze") state.BeforeFreeze = () => ((OctoberExecutionScope)typeof(OctoberGenerateRunner).GetField("_scope", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(runner)!).HardStop();
         if (boundary == "scope-stop-before-commit") state.BeforePublication = () => ((OctoberExecutionScope)typeof(OctoberGenerateRunner).GetField("_scope", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(runner)!).HardStop();
-        var pending = runner.ExecuteAsync(execution);
+        using var callerCancellation = new CancellationTokenSource();
+        var pending = runner.ExecuteAsync(execution, callerCancellation.Token);
+        if (boundary is "binding-held-acquire" or "binding-held-read")
+        {
+            try
+            {
+                await state.ReaderHeld.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                callerCancellation.Cancel();
+                await state.ReaderCancelled.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(1)));
+                Assert.False(pending.IsCompleted);
+                Assert.Equal(0, state.ReaderDisposals);
+            }
+            finally { state.ReleaseReader.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
+        }
         if (boundary is "publication-held-log" or "publication-held-revoked" or "publication-held-scope-stop")
         {
             try
@@ -182,7 +228,28 @@ public sealed class OctoberScanBusinessFinalizationTests
         var report = Assert.IsType<OctoberScanReport>((await pending).Report);
         Assert.Equal(1, clients);
         Assert.Equal(1, transport.WorkerRequests);
-        if (boundary == "replay-authority-held")
+        if (boundary == "cl-only-binding-unused")
+        {
+            Assert.Equal(0, report.ExitCode); Assert.Equal("cl-only", report.CompletedStage);
+            Assert.Equal(0, state.ReaderBindings); Assert.Equal(0, state.RootSelections); Assert.Equal(0, transport.BusinessRequests);
+            Assert.Equal(OctoberPhaseStatus.NotRequested, report.Matching); Assert.Equal(OctoberPhaseStatus.NotRequested, report.BusinessLogic);
+        }
+        else if (boundary.StartsWith("binding-", StringComparison.Ordinal))
+        {
+            Assert.Equal(1, state.ReaderBindings);
+            Assert.Equal(boundary == "binding-null" ? 0 : 1, state.ReaderDisposals);
+            Assert.Equal(1, state.Publications);
+            if (boundary == "binding-valid") { Assert.Equal(0, report.ExitCode); Assert.Equal(1, state.ReaderOpens); Assert.Equal(2, report.Documents.Length); }
+            else { Assert.NotEqual(0, report.ExitCode); Assert.Null(report.Publication); Assert.Empty(report.Documents); Assert.Equal(boundary == "binding-held-read" ? 1 : 0, state.ReaderOpens); }
+        }
+        else if (boundary is "publication-foreign-operation" or "publication-uncommitted")
+        {
+            Assert.NotEqual(0, report.ExitCode); Assert.Null(report.Publication); Assert.Empty(report.Documents);
+            Assert.Equal(OctoberPhaseStatus.Unavailable, report.Matching);
+            Assert.Equal(OctoberPhaseStatus.Unavailable, report.BusinessLogic);
+            Assert.Equal(1, state.Publications);
+        }
+        else if (boundary == "replay-authority-held")
         {
             Assert.Equal(0, report.ExitCode);
             replayAuthority.Armed = true;
@@ -199,6 +266,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             var hidden = Assert.IsType<OctoberScanReport>((await replay).Report);
             Assert.Null(hidden.Publication); Assert.Empty(hidden.Documents); Assert.Empty(hidden.Inventory);
             Assert.Empty(hidden.AcceptedFiles); Assert.Empty(hidden.TerminalCoverage);
+            Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.Matching); Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.BusinessLogic);
             Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
             await using var context = host.Database.Factory.CreateDbContext();
             Assert.Equal(1, await context.KnowledgePublications.CountAsync());
@@ -231,6 +299,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.NotEqual(0, report.ExitCode);
             Assert.Null(report.Publication);
             Assert.Empty(report.Documents);
+            Assert.Equal(OctoberPhaseStatus.Unavailable, report.Matching); Assert.Equal(OctoberPhaseStatus.Unavailable, report.BusinessLogic);
             if (boundary == "publication-held-revoked")
             {
                 Assert.Empty(report.Inventory);
@@ -314,11 +383,62 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Equal(boundary == "unresolved-b1" ? 0 : 1, report.ExitCode);
             Assert.Equal(boundary == "unresolved-b1" ? OctoberExecutionStatus.Completed : OctoberExecutionStatus.Failed, report.Execution);
             if (boundary == "unresolved-b1") Assert.NotNull(outcome.Uncertainty);
+            Assert.Equal(boundary == "unresolved-b1" ? OctoberPhaseStatus.Completed : OctoberPhaseStatus.Failed, report.Matching);
+            Assert.Equal(OctoberPhaseStatus.Completed, report.BusinessLogic);
             Assert.Equal(OctoberPublicationStatus.Confirmed, report.PublicationStatus);
             Assert.NotNull(report.Publication);
         }
     }
 
+    // Explicit controlled binding: verifies Scan consumption only, not real Identity authentication.
+    private static OctoberVerifiedReaderBinding ControlledBinding(OctoberScanGenerateRunnerTests.Harness host, PublicationBinding publication, IOctoberOperatorSession session, BoundaryState? state)
+    {
+        var subject = new KnowledgeSubject(session.SubjectId, "controlled-verified-reader-stamp");
+        var selection = new ReadSelectionRequest(publication, subject, KnowledgeMode.IT, KnowledgePurpose.Reader, [host.Database.Origin.RepositoryId]);
+        selection = state?.Boundary switch
+        {
+            "binding-subject" => selection with { Subject = new("foreign-subject", subject.AuthenticationBinding) },
+            "binding-publication" => selection with { Publication = publication with { PublicationId = Guid.NewGuid() } },
+            "binding-mode" => selection with { Mode = KnowledgeMode.Business },
+            "binding-purpose" => selection with { Purpose = KnowledgePurpose.Synthesis },
+            "binding-scope" => selection with { RepositoryScope = [Guid.NewGuid()] },
+            _ => selection,
+        };
+        var lifetime = new ReaderLifetime(state);
+        IOctoberKnowledgeReader reader = Reader(host, publication, session.SubjectId);
+        if (state?.Boundary is "reader-nonprogress" or "reader-empty-fresh-cursor") reader = new NonprogressReader(state, reader);
+        return new(subject, selection, new BoundReader(reader, selection, lifetime, state), lifetime);
+    }
+    private sealed class ReaderLifetime(BoundaryState? state) : IAsyncDisposable
+    {
+        internal bool Disposed;
+        public ValueTask DisposeAsync() { Assert.False(Disposed); Disposed = true; if (state is not null) state.ReaderDisposals++; return ValueTask.CompletedTask; }
+    }
+    private sealed class BoundReader(IOctoberKnowledgeReader inner, ReadSelectionRequest expected, ReaderLifetime lifetime, BoundaryState? state) : IOctoberKnowledgeReader
+    {
+        public Task<ReadSelectionResult> OpenReadSelectionAsync(ReadSelectionRequest request, CancellationToken token = default)
+        {
+            Assert.False(lifetime.Disposed); Assert.Equal(expected, request);
+            Assert.Equal("controlled-verified-reader-stamp", request.Subject.AuthenticationBinding);
+            if (state is not null) state.ReaderOpens++;
+            return inner.OpenReadSelectionAsync(request, token);
+        }
+        public async Task<SearchPage> SearchAsync(KnowledgeSearchRequest request, CancellationToken token = default)
+        {
+            Assert.False(lifetime.Disposed);
+            var result = await inner.SearchAsync(request, token);
+            if (state?.Boundary == "binding-held-read")
+            {
+                using var registration = token.Register(() => state.ReaderCancelled.TrySetResult());
+                state.ReaderHeld.TrySetResult();
+                await state.ReleaseReader.Task; // Actual owner read finished; its physical return is still owned.
+            }
+            Assert.False(lifetime.Disposed);
+            return result;
+        }
+        public Task<ContentPage> ReadExactAsync(ExactReadRequest request, CancellationToken token = default) => inner.ReadExactAsync(request, token);
+        public Task<RelatedPage> GetRelatedAsync(RelatedReadRequest request, CancellationToken token = default) => inner.GetRelatedAsync(request, token);
+    }
     private sealed class HeldReplayAuthority(IOctoberLocalAuthority inner) : IOctoberLocalAuthority
     {
         internal bool Armed;
@@ -358,12 +478,15 @@ public sealed class OctoberScanBusinessFinalizationTests
     private sealed class BoundaryState
     {
         internal string Boundary = "";
+        internal TaskCompletionSource ReaderHeld { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal TaskCompletionSource ReaderCancelled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal TaskCompletionSource ReleaseReader { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource PublicationLookupCompleted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource PublicationHeld { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource PublicationBoundExpired { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource ReleasePublication { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal Action? BeforeFreeze, BeforePublication;
-        internal int RootSelections, Publications, PublicationLookups, ResolutionAccepts, ResolutionLookups, ReaderCalls;
+        internal int RootSelections, Publications, PublicationLookups, ResolutionAccepts, ResolutionLookups, ReaderCalls, ReaderBindings, ReaderDisposals, ReaderOpens;
     }
     private sealed record FixedSession(string SubjectId, string ManagementAuthorityId, DateTimeOffset ExpiresAtUtc) : IOctoberOperatorSession
     {
@@ -395,9 +518,15 @@ public sealed class OctoberScanBusinessFinalizationTests
                 state.PublicationHeld.TrySetResult();
                 await state.ReleasePublication.Task; // Retain actual completed-owner result until controlled physical return.
             }
-            return state.Boundary == "publication-ack" ? result with { Status = BusinessFinalizationStatus.CommitIndeterminate, Publication = null } : result;
+            return state.Boundary == "publication-ack" ? result with { Status = BusinessFinalizationStatus.CommitIndeterminate, Publication = null } : Result(result);
         }
-        public async Task<BusinessFinalizationResult> LookupAsync(CorpusHandle corpus, OperationKey operation, string digest, CancellationToken token = default) { state.PublicationLookups++; var result = await inner.LookupAsync(corpus, operation, digest, token); state.PublicationLookupCompleted.TrySetResult(); return result; }
+        public async Task<BusinessFinalizationResult> LookupAsync(CorpusHandle corpus, OperationKey operation, string digest, CancellationToken token = default) { state.PublicationLookups++; var result = await inner.LookupAsync(corpus, operation, digest, token); state.PublicationLookupCompleted.TrySetResult(); return Result(result); }
+        private BusinessFinalizationResult Result(BusinessFinalizationResult result) => state.Boundary switch
+        {
+            "publication-foreign-operation" => result with { Operation = result.Operation with { OperationId = Guid.NewGuid() } },
+            "publication-uncommitted" => result with { PersistenceStatus = KnowledgeWriteStatus.StorageUnavailable },
+            _ => result,
+        };
     }
     private sealed class ResolutionBoundary(BoundaryState state, IOctoberResolutionStore inner) : IOctoberResolutionStore
     {

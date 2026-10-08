@@ -1,3 +1,10 @@
+using System.Collections.Immutable;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Infrastructure.Data.October;
+using Vulgata.Infrastructure.Data.October.Knowledge;
+using Vulgata.Web.Data;
 using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
@@ -72,8 +79,10 @@ public sealed class OctoberScanEntryPointTests
     }
 
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task ActualComposition_InvalidSelectedRootStopsBeforeOwnerBeginOrSecretUseAsync()
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActualComposition_InvalidSelectedRootStopsBeforeOwnerBeginOrSecretUseAsync(bool business)
     {
         await using var harness = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
         string directory = Path.Combine(Path.GetTempPath(), "october-entrypoint-test-" + Guid.NewGuid().ToString("N"));
@@ -86,8 +95,14 @@ public sealed class OctoberScanEntryPointTests
                 new(Path.Combine(directory, "state"), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
                 new([Path.Combine(directory, "tools")], [Path.Combine(directory, "runtime")], Path.Combine(directory, "system", "cmd.exe"), [Path.Combine(directory, "tools")], Path.Combine(directory, "jdk", "bin")), Path.Combine(directory, "log"));
             var secrets = new NoSecrets();
-            await using var actual = OctoberGeneratorEntryPoint.ComposeGenerate(configuration, harness.Authority, harness.Database.Factory, secrets);
-            var result = await actual.ExecuteAsync(harness.Execution);
+            int readerBindings = 0;
+            var execution = harness.Execution with { Policy = harness.Execution.Policy with { OutputStage = business ? "cl-and-bl" : "cl-only" } };
+            await using var actual = business
+                ? OctoberGeneratorEntryPoint.ComposeGenerate(configuration, harness.Authority, harness.Database.Factory, secrets, execution.Policy, execution.Provider,
+                    new OctoberBusinessSettings([], new(), 32768), (_, _, _) => { readerBindings++; throw new InvalidOperationException("Reader must not bind before exact source configuration"); })
+                : OctoberGeneratorEntryPoint.ComposeGenerate(configuration, harness.Authority, harness.Database.Factory, secrets);
+            var result = await actual.ExecuteAsync(execution);
+            Assert.Equal(0, readerBindings);
             Assert.NotEqual(0, result.Report!.ExitCode);
             Assert.Equal(0, secrets.Accesses);
             await harness.Database.AssertNoKnowledgeAsync();
@@ -236,6 +251,59 @@ public sealed class OctoberScanEntryPointTests
                 _ => Task.FromResult(new OctoberGeneratorExecutionResult(OctoberGeneratorExecutionStatus.GenerateFinished)),
             };
         }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(OctoberPhaseStatus.Completed, OctoberPhaseStatus.Completed, "completed", "completed")]
+    [InlineData(OctoberPhaseStatus.Partial, OctoberPhaseStatus.NoContent, "partial", "no-content")]
+    [InlineData(OctoberPhaseStatus.Unavailable, OctoberPhaseStatus.Unavailable, "unavailable", "unavailable")]
+    public async Task BusinessReport_ProjectsActualPhaseStatusesInsteadOfNotRequestedAsync(OctoberPhaseStatus matching, OctoberPhaseStatus business, string expectedMatching, string expectedBusiness)
+    {
+        var batch = Guid.NewGuid();
+        var report = new OctoberScanReport("cl-and-bl", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(null, null, null, true), []) { Matching = matching, BusinessLogic = business };
+        using var output = new StringWriter(); using var error = new StringWriter();
+        await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", batch, null, new() { OutputStage = "cl-and-bl" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        using var json = JsonDocument.Parse(output.ToString());
+        Assert.Equal(expectedMatching, json.RootElement.GetProperty("matching").GetString());
+        Assert.Equal(expectedBusiness, json.RootElement.GetProperty("businessLogic").GetString());
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualBusinessReaderRegistrations_ResolveSameAuthorityAndOwnedAdaptersWithoutOpeningDatabaseAsync()
+    {
+        // DI resolution only: no PostgreSQL, authenticated Identity session, credential read or reader acquisition.
+        const string identity = "postgres://localhost:1/controlled-di";
+        const string connection = "Host=localhost;Port=1;Database=controlled_di;Username=unused;Password=unused";
+        string directory = Path.Combine(Path.GetTempPath(), "october-reader-di-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var configuration = new OctoberAuthorityConfiguration("controlled-authority", "controlled-target", Guid.NewGuid(), identity,
+                connection, connection, identity, ImmutableDictionary<string, string>.Empty.Add("controlled-target", identity),
+                TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(1));
+            var services = new ServiceCollection();
+            services.AddSingleton<IDataProtectionProvider>(new EphemeralDataProtectionProvider());
+            OctoberHeadlessAuthorityRegistration.AddOctoberLocalAuthority(services, configuration, new ForbiddenReaderCredentials(), TimeProvider.System);
+            services.AddDbContext<OctoberDbContext>(options => options.UseNpgsql(connection));
+            OctoberGeneratorEntryPoint.AddBusinessReaderDependencies(services, directory);
+            await using var provider = services.BuildServiceProvider(validateScopes: true);
+            await using var scope = provider.CreateAsyncScope();
+            Assert.Same(scope.ServiceProvider.GetRequiredService<OctoberLocalAuthority>(), scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>());
+            var contexts = scope.ServiceProvider.GetRequiredService<IDbContextFactory<OctoberDbContext>>();
+            await using var context = await contexts.CreateDbContextAsync();
+            Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", context.Database.ProviderName);
+            Assert.Equal(System.Data.ConnectionState.Closed, context.Database.GetDbConnection().State);
+            Assert.IsType<OctoberKnowledgeDataProtectionTokenProtector>(scope.ServiceProvider.GetRequiredService<IOctoberKnowledgeTokenProtector>());
+            Assert.IsType<OctoberKnowledgeOperationLog>(scope.ServiceProvider.GetRequiredService<IOctoberKnowledgeReadLog>());
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+    private sealed class ForbiddenReaderCredentials : IOctoberOperatorCredentialSource
+    {
+        public ValueTask<OctoberOperatorCredentials?> ReadAsync(CancellationToken cancellationToken) => throw new InvalidOperationException("DI verification must not read credentials");
     }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {
