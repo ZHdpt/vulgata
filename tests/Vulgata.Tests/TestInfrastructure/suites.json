@@ -266,6 +266,9 @@
   "OctoberScan/OctoberScanGenerateRunnerTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanBusinessSettingsTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanRuntimeConfigurationTests.cs": {
     "suite": "SelfContained"
   },

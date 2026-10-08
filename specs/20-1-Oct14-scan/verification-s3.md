@@ -1,6 +1,6 @@
 # Bounded internal natural-completion composition
 
-**Current status:** The dispatched internal controlled subgroup is implemented and independently accepted. Final current-source affected verification passed 2,086/2,086, including all 35 new cases. This does not complete S3 or T021/T023/T024, activate Program/CLI, or qualify real resources.
+**Retained internal checkpoint:** The dispatched internal controlled subgroup is implemented and independently accepted. Its affected verification passed 2,086/2,086, including all 35 new cases. This evidence does not complete S3 or T021/T023/T024, activate Program/CLI, or qualify real resources. The subsequent October 8 narrow command activation dispatch and its separate verification are recorded in `generator-activation.md`; historical exclusions below apply to this earlier internal checkpoint.
 
 ## Authority and exact dependency boundary
 
