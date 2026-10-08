@@ -1590,3 +1590,14 @@ Scope evidence: owner resolution persistence tests for uncheckable witness and
 explicit host dispositions; FlowPlanner non-supported frontiers; SynthesisPolicy's
 app-owned uncertain gap section. Scan owns direct-ack/lookup parity and nonfailure
 Unresolved controls. No schema, owner coverage redefinition or new runtime authority.
+
+Business additionally confirmed the zero-attempt limit classification: no witness,
+BudgetExhausted and Attempts.Length==0 is NotEvaluated, not Failed. The tuple also
+occurs at the payload-size ceiling; report generic bounded-resolution budget/limit
+wording unless exact host provenance identifies admission refusal. Attempt count
+alone does not prove physical sends. Persist only via the existing eligible owner
+write/F1 guard, retaining a truthful gap/non-success and unchanged authorized
+publication/owner coverage equally on direct acknowledgement and exact lookup.
+Attempted invalid/no-witness remains Failed. Do not generalize to authority denial,
+unavailability or hard stop, or grant new admission/recovery after abort. Scan is
+released for the bounded classification regression/correction at a safe build boundary.
