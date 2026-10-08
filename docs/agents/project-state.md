@@ -8,7 +8,14 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-08 (internal natural-completion host and actual selected transport integrated under controlled tests; activation and real qualification remain open).
+Updated: 2026-10-08 (source-free October PostgreSQL qualification integrated; real Generate paused by the user pending LLM configuration).
+
+Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
+The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
+its reviewed tests/evidence are integrated at `9271f8f0`. This supersedes older
+"unrun PostgreSQL" statements for exactly those cases, not real generated content.
+Operation B is explicitly paused; retained operation C waits for B. The prior
+full-suite logger failure still requires a new full-suite run despite focused repair.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
