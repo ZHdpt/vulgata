@@ -1,4 +1,13 @@
 {
+  "October/Integration/OctoberGeneratedClReaderE2ETests.cs": {
+    "suite": "E2E"
+  },
+  "October/Chat/OctoberChatInputDigestsTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberOperatorReaderBindingTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Knowledge/OctoberDialogueLifetimeTests.cs": {
     "suite": "SelfContained"
   },

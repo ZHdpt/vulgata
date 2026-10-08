@@ -46,7 +46,8 @@ public static class OctoberHeadlessAuthorityRegistration
         services.AddSingleton(configuration);
         services.AddSingleton(credentialSource);
         services.AddSingleton(clock);
-        services.AddScoped<IOctoberLocalAuthority, OctoberLocalAuthority>();
+        services.AddScoped<OctoberLocalAuthority>();
+        services.AddScoped<IOctoberLocalAuthority>(provider => provider.GetRequiredService<OctoberLocalAuthority>());
         return services;
     }
 }

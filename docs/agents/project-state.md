@@ -8,7 +8,21 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-08 (internal natural-completion host and actual selected transport integrated under controlled tests; activation and real qualification remain open).
+Updated: 2026-10-08 (source-free October PostgreSQL qualification integrated; real Generate paused by the user pending LLM configuration).
+
+Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
+The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
+its reviewed tests/evidence are integrated at `9271f8f0`. This supersedes older
+"unrun PostgreSQL" statements for exactly those cases, not real generated content.
+Operation B is explicitly paused; retained operation C waits for B. Reviewed Business
+per-turn cleanup is integrated at `260c5706`, with its own 62/62 PostgreSQL rerun and
+verified cleanup. Final combined SelfContained `9e0129e1d5d54b94bc5df77ed6e57ffb`
+passes **3,991/3,991**, zero failures/skips, including Identity reader binding, prompt
+digests, shared E2E compilation and the Business cleanup. The earlier logger and
+streaming-inactivity fixture races were diagnosed and corrected without weakening
+assertions; see the activation record for failed and passing runs. This is not real
+Generate, live Chat, browser or retained presentation qualification. Narrow Scan
+command and Chat parent/application integration remain active in their owning lanes.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
