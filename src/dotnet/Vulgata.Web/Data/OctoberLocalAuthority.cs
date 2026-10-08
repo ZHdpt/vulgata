@@ -92,7 +92,7 @@ public sealed class OctoberAuthorityConfiguration
             : throw new ArgumentException("An explicit connection is required.", parameterName);
 }
 
-public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
+public sealed partial class OctoberLocalAuthority : IOctoberLocalAuthority
 {
     private readonly IServiceScopeFactory _scopes;
     private readonly OctoberAuthorityConfiguration _configuration;
@@ -335,6 +335,9 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
 
         public bool HasSecurityStamp(string currentStamp) =>
             string.Equals(_securityStamp, currentStamp, StringComparison.Ordinal);
+
+        // Only the enclosing issuer can reach this private session type.
+        public string OriginalSecurityStamp => _securityStamp;
 
         public void Close() => _closed = true;
 
