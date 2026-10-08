@@ -352,3 +352,11 @@ Independent review accepted the narrow fixture change. Scan also verified that
 the one retained failed-probe directory had no live owned process/reparse points
 or open file handles before deleting that exact owned root and checking absence;
 no unrelated process was stopped. Full corrected B remains unexecuted.
+
+Final native regression checkpoint `5f11846f` is reviewed and integrated at
+`bd5ece07`, alongside root fix `ef23a26e`. Both valid environment profiles passed
+**2/2** in `cd45c26426cb4b2795be8bc1b73009a8`; the intentionally invalid profile's
+RED remains historical evidence, not a permanently failing routine test. See
+[the native diagnosis](../../../specs/20-1-Oct14-scan/native-inventory-diagnosis.md).
+Post-import source policy passes (435 classified files); no combined full-suite
+or corrected live Generate result is claimed for this later test-only checkpoint.
