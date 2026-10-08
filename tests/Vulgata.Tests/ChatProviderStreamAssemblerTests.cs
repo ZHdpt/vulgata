@@ -357,12 +357,12 @@ public sealed class ChatProviderStreamAssemblerTests
     [SuiteFact("SelfContained")]
     public async Task StreamAsync_KeepAliveWithoutDecodedData_ExpiresInactivityWithoutPartialAnswerAsync()
     {
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(25));
+        using var cancellation = new CancellationTokenSource();
         var signals = new List<ChatProviderStreamSignal>();
         Exception? exception = await Record.ExceptionAsync(async () =>
         {
             await foreach (ChatProviderStreamSignal signal in ChatProviderStreamAssembler.StreamAsync(
-                SilentAfterKeepAlive(),
+                SilentAfterKeepAlive(() => cancellation.CancelAfter(TimeSpan.FromMilliseconds(25))),
                 cancellation.Token))
             {
                 signals.Add(signal);
@@ -408,9 +408,13 @@ public sealed class ChatProviderStreamAssemblerTests
     }
 
     private static async IAsyncEnumerable<ReadOnlyMemory<byte>> SilentAfterKeepAlive(
+        Action beginSilentWait,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         yield return Wire(": keepalive\n\n");
+        // Start the unchanged timer only after the assembler consumes the keepalive.
+        // Otherwise a busy test host can expire it before the first chunk is processed.
+        beginSilentWait();
         await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
     }
 
