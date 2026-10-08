@@ -33,7 +33,10 @@ internal sealed record OctoberGenerateRunnerDependencies(
     Func<OctoberGenerateExecution, TimeSpan, CancellationToken, Task<IOctoberScanRunSource>> OpenSource,
     Func<OctoberSelectedWorkerProvider, CancellationToken, Task<IChatClient>> CreateWorkerClient,
     Func<OctoberKnowledgeHostPorts, IOctoberKnowledgeWriter> CreateKnowledgeWriter,
-    IOctoberKnowledgeOperationLog OperationLog);
+    IOctoberKnowledgeOperationLog OperationLog)
+{
+    internal OctoberBusinessRunComposition? Business { get; init; }
+}
 
 /// <summary>Owns the original single-file Generate run; a stored receipt is never a restart grant.</summary>
 internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncDisposable,
@@ -121,9 +124,13 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         // task alive until cleanup settles so the module retains its session.
         OctoberGeneratorExecutionResult result = await task;
         // Returning a cached run never repeats dispatch, but remains a new disclosure.
-        if (result.Report is { } report && HasMetadata(report) &&
-            await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
-            return Finished(Hide(report, "authority_unavailable"));
+        if (result.Report is { } report && HasMetadata(report))
+        {
+            DisclosureStatus disclosure = await DisclosureAsync(CancellationToken.None);
+            await AwaitBusinessOwnerCallsAsync();
+            if (disclosure != DisclosureStatus.Allowed)
+                return Finished(Hide(report, "authority_unavailable"));
+        }
         return result;
     }
 
@@ -144,6 +151,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         }
         if (HasMetadata(report) && await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
             report = Hide(report, "authority_unavailable");
+        await AwaitBusinessOwnerCallsAsync();
         report = MergeMetrics(report);
         completion.TrySetResult(Finished(report));
     }
@@ -152,7 +160,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
     {
         OctoberGenerateExecution execution = _execution!;
         if (!new OctoberScanPolicyValidator().Validate(execution.Policy).IsValid ||
-            execution.Policy.OutputStage != "cl-only" || execution.Policy.WorkerCap != 1 ||
+            (execution.Policy.OutputStage != "cl-only" && !BusinessConfigurationMatches(execution)) || execution.Policy.WorkerCap != 1 ||
             !_dependencies.ValidateSourceConfiguration(execution) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
             return Failure("invalid_run_configuration", disclose: false);
         _binding = new(execution.Authority.CanonicalDatabaseIdentity, execution.Authority.TargetId,
@@ -161,10 +169,12 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _runToken = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, _stop.Token, _caller);
         CancellationToken token = _runToken.Token;
         Guid runId = Guid.NewGuid();
+        if (execution.Policy.OutputStage == "cl-and-bl")
+            _businessFinalizationOperation = new(_binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
         // Construction precedes Begin and all preparation, so no later phase receives
         // a fresh run allowance. The callback also checks the original host stopwatch.
         _scope = new(runId, execution.Provider.Profile.Name, execution.Policy,
-            CheckProviderEligibilityAsync, timeProvider: _time, hardStop: token);
+            CheckProviderEligibilityAsync, _businessFinalizationOperation, timeProvider: _time, hardStop: token);
         if (await CheckPermissionsAsync([], token) != DisclosureStatus.Allowed)
             return Failure("authority_unavailable", disclose: false);
         var begin = new GenerateAdmissionRequest(_binding, execution.Session.SubjectId, runId, Guid.NewGuid(), "");
@@ -259,8 +269,12 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 var accounting = _scope.GetSnapshot();
                 if (accounting.HasUnconfirmedSettlement || accounting.OutstandingAttempts != 0)
                     return Failure("provider_settlement_unconfirmed", indeterminate: true);
-                client.Dispose();
-                _clients.Remove(client);
+                if (execution.Policy.OutputStage == "cl-only" || submission is null)
+                {
+                    client.Dispose();
+                    _clients.Remove(client);
+                }
+                else _businessClient = client;
                 if (submission is null)
                 {
                     OctoberFileWorkerResult? observed = attempt.WorkerResult;
@@ -299,6 +313,14 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             }
         }
         _admissionClosed = true;
+        if (execution.Policy.OutputStage == "cl-and-bl")
+        {
+            await CloseSourceResourcesAsync();
+            var business = await RunBusinessCompletionAsync(token);
+            if (await DisclosureAsync(token) != DisclosureStatus.Allowed) return Hide(business, "authority_unavailable");
+            return business with { Inventory = _inventory, Gaps = business.Gaps.AddRange(_gaps),
+                Coverage = !complete && business.Coverage == OctoberCoverageStatus.Complete ? OctoberCoverageStatus.Partial : business.Coverage };
+        }
         // Accepted provenance and fresh permissions suffice from here. Disposable
         // source grants and native processes must settle before publication starts.
         await CloseAnalysisResourcesAsync();
@@ -336,6 +358,13 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
 
     private async Task<ProviderAdmissionStatus> CheckProviderEligibilityAsync(OctoberProviderPhase phase, CancellationToken token)
     {
+        if (phase == OctoberProviderPhase.Business)
+        {
+            if (!BusinessRunAvailable) return IsCancelled ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
+            var allowed = await CheckPermissionsAsync(_observedContributors, token);
+            if (allowed != DisclosureStatus.Allowed) return allowed == DisclosureStatus.Denied ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.AuthorityUnavailable;
+            return BusinessRunAvailable ? ProviderAdmissionStatus.Granted : ProviderAdmissionStatus.HardStopped;
+        }
         if (phase != OctoberProviderPhase.Worker) return ProviderAdmissionStatus.Denied;
         if (!FileAvailable) return IsCancelled ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
         if (_activeLedger is null || !await BoundedAsync(_activeLedger.VerifyCurrentAsync(token), token)) return ProviderAdmissionStatus.Denied;
@@ -348,8 +377,12 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         if (_execution is null || _disposed) return DisclosureStatus.Denied;
         try
         {
-            OctoberAuthoritySelectionResult current = await BoundedAsync(_dependencies.Authority.AuthorizeSelectionAsync(_execution.Session,
-                new(_execution.Authority.TargetId, _execution.Authority.BatchId, null), token), token);
+            Task<OctoberAuthoritySelectionResult> selecting = _businessGuard is null
+                ? _dependencies.Authority.AuthorizeSelectionAsync(_execution.Session,
+                    new(_execution.Authority.TargetId, _execution.Authority.BatchId, null), token)
+                : RetainBusinessOwnerCall(() => _dependencies.Authority.AuthorizeSelectionAsync(_execution.Session,
+                    new(_execution.Authority.TargetId, _execution.Authority.BatchId, null), token));
+            OctoberAuthoritySelectionResult current = await BoundedAsync(selecting, token);
             if (current.Status != OctoberAuthorityDecisionStatus.Authorized || current.Request is null || current.Authority is null ||
                 !BindingMatches(current.Request, current.Authority)) return Deny(current.Status == OctoberAuthorityDecisionStatus.Unavailable);
             var allowedAdvisory = _execution.Authority.RepositoryIds.SelectMany(repository => Advisory(repository)).Select(item => item.Contributor).ToHashSet();
@@ -508,11 +541,14 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
     private async Task SettleResourcesAsync()
     {
         await AwaitOriginalBusinessSettlementAsync();
+        await AwaitBusinessOwnerCallsAsync();
+        if (_businessGuard is not null) await _businessGuard.ObservePendingAsync();
         if (_resourcesSettled) return;
         if (Unresolved() || HasOutstandingCalls())
             throw new InvalidOperationException("october_run_settlement_unconfirmed");
         foreach (OctoberAttemptState attempt in _attempts) await attempt.DisposeAsync();
         if (_publication is not null) await _publication.DisposeAsync();
+        if (_businessGuard is not null) await _businessGuard.DisposeAsync();
         await CloseAnalysisResourcesAsync();
         _resourcesSettled = true;
         _cleanupFailure = null;
@@ -532,7 +568,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
     {
         foreach (IChatClient client in _clients) client.Dispose();
         _clients.Clear();
-        if (_source is not null) await _source.DisposeAsync();
+        await CloseSourceResourcesAsync();
         if (_scope is not null) await _scope.DisposeAsync();
     }
 
@@ -576,7 +612,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         finally { Observe(acquisition); }
     }
 
-    private bool Unresolved() => _beginUncertain || _beginCommit is { IsCompleted: false } ||
+    private bool Unresolved() => _businessGuard?.HasUnsettledWrites == true || _beginUncertain || _beginCommit is { IsCompleted: false } ||
         _beginSettlement == CommitSettlement.Indeterminate || _attempts.Any(attempt =>
             attempt.HasSubmitted && !attempt.IsSettledForFreeze) || _scope?.GetSnapshot().HasUnconfirmedSettlement == true;
     private TimeSpan RemainingRun => TimeSpan.FromSeconds(_execution!.Policy.RunDeadlineSeconds) - _time.GetElapsedTime(_started);

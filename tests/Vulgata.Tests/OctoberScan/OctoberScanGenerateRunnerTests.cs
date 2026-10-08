@@ -252,6 +252,7 @@ public sealed class OctoberScanGenerateRunnerTests
         internal OctoberKnowledgeAcceptanceFixture Database { get; }
         internal OctoberGenerateExecution Execution { get; }
         internal OctoberGenerateRunner Runner { get; }
+        internal OctoberGenerateRunnerDependencies Dependencies { get; }
         internal Model Client { get; } = new();
         internal bool ConfigurationValid { get; set; } = true;
         internal bool HoldBegin { get; set; }
@@ -280,7 +281,7 @@ public sealed class OctoberScanGenerateRunnerTests
                 SourceRules = [new(database.Origin.RepositoryId, "src", "selected", "Explicit owned one-file scope")] };
             Execution = new(Session, new Bound(setup.TargetId, setup.BatchId, new(setup, selection, DateTimeOffset.UtcNow)), selection, policy,
                 new("controlled-explicit-provider", "only-source", new("selected", ApiType.ChatCompletions, "https://never-contacted.invalid/v1", "controlled-model", "credential://controlled"), "unused-protected-test-secret"));
-            Runner = new(new(_authority, _ => ConfigurationValid,
+            Dependencies = new(_authority, _ => ConfigurationValid,
                 (authority, guard) => new Admission(this, new OctoberGenerateAdmissionStore(database.Factory, authority, guard, database.Log)),
                 async (_, remaining, token) =>
                 {
@@ -292,7 +293,8 @@ public sealed class OctoberScanGenerateRunnerTests
                     return new ObservedSource(this, source);
                 },
                 async (_, _) => { ClientCreations++; if (HoldClientCreation) { FactoryEntered.TrySetResult(); await ReleaseFactory.Task; } return (IChatClient)Client; },
-                ports => new ObservedWriter(this, new OctoberKnowledgeWriter(database.Factory, ports.CompletionAuthority, ports.SourceVerifier, ports.ProducerAuthorization, ports.CommitGuard, database.Log, ports.FreezeAuthority)), database.Log));
+                ports => new ObservedWriter(this, new OctoberKnowledgeWriter(database.Factory, ports.CompletionAuthority, ports.SourceVerifier, ports.ProducerAuthorization, ports.CommitGuard, database.Log, ports.FreezeAuthority)), database.Log);
+            Runner = new(Dependencies);
         }
         internal static async Task<Harness> CreateAsync(OctoberKnowledgeAcceptanceFixture? suppliedDatabase = null)
         {
