@@ -142,7 +142,11 @@ public sealed class OctoberResolutionPostgreSqlTests
             await AssertRejectedAsync(owned.Database, $"DELETE FROM october.\"{table}\"", PostgresErrorCodes.CheckViolation);
             await AssertRejectedAsync(owned.Database, $"INSERT INTO october.\"{table}\" SELECT * FROM october.\"{table}\" LIMIT 1", PostgresErrorCodes.CheckViolation);
         }
-        await AssertRejectedAsync(owned.Database, "TRUNCATE " + string.Join(", ", _tables.Select(table => $"october.\"{table}\"")), PostgresErrorCodes.CheckViolation);
+        string truncate = "TRUNCATE " + string.Join(", ", _tables.Select(table => $"october.\"{table}\""));
+        // Incoming flow FKs reject RESTRICT before triggers; CASCADE must still hit the immutable guard.
+        var restricted = await AssertRejectedAsync(owned.Database, truncate, PostgresErrorCodes.FeatureNotSupported);
+        Assert.Contains("cannot truncate a table referenced in a foreign key constraint", restricted.MessageText, StringComparison.OrdinalIgnoreCase);
+        await AssertRejectedAsync(owned.Database, truncate + " CASCADE", PostgresErrorCodes.CheckViolation);
         foreach (var table in before) Assert.Equal(table.Value, await CaptureAsync(owned.Database, table.Key));
     }
 
@@ -377,12 +381,13 @@ public sealed class OctoberResolutionPostgreSqlTests
         await command.ExecuteNonQueryAsync();
     }
 
-    private static async Task AssertRejectedAsync(DisposablePostgreSqlDatabase database, string sql, string expected)
+    private static async Task<PostgresException> AssertRejectedAsync(DisposablePostgreSqlDatabase database, string sql, string expected)
     {
         await using var connection = await database.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         var error = await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync());
         Assert.Equal(expected, error.SqlState);
+        return error;
     }
 
     private static async Task WaitForCommitLockAsync(NpgsqlConnection observer)

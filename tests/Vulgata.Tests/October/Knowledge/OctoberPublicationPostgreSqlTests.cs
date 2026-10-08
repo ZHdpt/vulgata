@@ -80,7 +80,10 @@ public sealed class OctoberPublicationPostgreSqlTests
             await AssertRejectedAsync(owned.Database, $"INSERT INTO october.\"{table}\" SELECT * FROM october.\"{table}\" LIMIT 1", PostgresErrorCodes.CheckViolation);
         }
         string truncate = "TRUNCATE " + string.Join(", ", _publicationTables.Select(table => $"october.\"{table}\""));
-        await AssertRejectedAsync(owned.Database, truncate, PostgresErrorCodes.CheckViolation);
+        // Incoming history FKs reject RESTRICT before triggers; CASCADE must still hit the immutable guard.
+        var restricted = await AssertRejectedAsync(owned.Database, truncate, PostgresErrorCodes.FeatureNotSupported);
+        Assert.Contains("cannot truncate a table referenced in a foreign key constraint", restricted.MessageText, StringComparison.OrdinalIgnoreCase);
+        await AssertRejectedAsync(owned.Database, truncate + " CASCADE", PostgresErrorCodes.CheckViolation);
         var after = await CaptureAsync(owned.Database, _publicationTables);
         foreach (string table in _publicationTables) Assert.Equal(retained[table], after[table]);
     }
@@ -365,12 +368,13 @@ public sealed class OctoberPublicationPostgreSqlTests
         return result;
     }
 
-    private static async Task AssertRejectedAsync(DisposablePostgreSqlDatabase database, string sql, string state)
+    private static async Task<PostgresException> AssertRejectedAsync(DisposablePostgreSqlDatabase database, string sql, string state)
     {
         await using var connection = await database.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         var failure = await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync());
         Assert.Equal(state, failure.SqlState);
+        return failure;
     }
 
     private static async Task<NpgsqlConnection> HoldCommitAsync(DisposablePostgreSqlDatabase database)
