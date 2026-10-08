@@ -149,3 +149,25 @@ registration must supply the exact same canonical disclosure policy to the turn
 scope, preserve originating live authentication, and await the uniquely owned store.
 No live Chat or generated CL/BL is claimed. No routine implementation permission
 round is required when these reviewed checkpoints arrive; runtime holds remain B/C.
+
+## Narrow Scan command activation integrated
+
+Reviewed Scan checkpoint `28902685` is imported at `c00db2cd`. Root independently
+reviewed the original-session/provider/budget binding, strict explicit SelectedCodeUnit
+roots, finite limits, phase reporting and retained reader lifetime. CL-only does not
+read Business settings or acquire its reader. No broad S3 expansion or schema change.
+
+`src`, `tests`, `eng` and root build/package properties match the owner checkpoint
+exactly. Reuse owner affected SelfContained `1b7d725384054ae28aef59a18e92dca0`:
+**2,170/2,170**, zero failures/skips, including 93 activation and 10 binding cases.
+Root's post-import `eng/test.ps1 -PolicyOnly` passes with 431 classified files and
+guard/outcome regressions. No duplicate real qualification was run. The previous
+3,991/3,991 full-suite result is pinned before this Scan addition, not relabelled as
+a full run of the new tree.
+
+Narrow CL-and-BL command activation is now integrated at the controlled boundary;
+useful generated BL remains unqualified. Chat application/registry/parent checkpoint
+and root shared Web composition are still pending. B remains explicitly paused for
+exact LLM configuration/authorization, with the fixture bundle still to be installed;
+C remains separate and pending B. Positive genuine-session PostgreSQL binding is
+outside A's 62-case grant and remains unexecuted.
