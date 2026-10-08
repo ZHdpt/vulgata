@@ -5,6 +5,7 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.ChatExecution.October;
 using Vulgata.Core.DomainServices.OctoberChat;
+using Vulgata.Core.DomainServices.OctoberDialogue;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Tests.TestInfrastructure;
 
@@ -16,6 +17,91 @@ namespace Vulgata.Tests.October.Chat;
 /// </summary>
 public sealed class OctoberChatProviderTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task RunAsync_OriginalCancellationBeforeLinkedPropagationPreservesCauseAndLateCancellationCannotRewriteFailureAsync(bool cancellationFirst)
+    {
+        var fixture = new ControlledChatFixture();
+        using var original = new CancellationTokenSource();
+        var budget = new OctoberChatBudget(cancellationToken: original.Token);
+        var wiki = await fixture.OpenWikiAsync(budget: budget);
+        var streamEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var failStream = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var propagationBlocked = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releasePropagation = new ManualResetEventSlim(false);
+        CancellationToken observedLinked = default;
+        bool? originalAtFailure = null;
+        bool? linkedAtFailure = null;
+        CancellationToken exceptionToken = default;
+        using var client = new ScriptedChatClient([token => OriginalAwareFailureAsync(token)]);
+        var visible = new StringBuilder();
+        var pending = new OctoberChatAgent(client, wiki.Tools, budget)
+            .RunAsync("问题", "controlled instructions", text => visible.Append(text));
+        CancellationTokenRegistration blocker = default;
+        Task cancel = Task.CompletedTask;
+        try
+        {
+            await streamEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (cancellationFirst)
+            {
+                // Registered after the agent's linked source: CancellationTokenSource's
+                // LIFO callback order holds propagation while the original signal is true.
+                blocker = original.Token.Register(() =>
+                {
+                    propagationBlocked.TrySetResult();
+                    releasePropagation.Wait();
+                });
+                cancel = original.CancelAsync();
+                await propagationBlocked.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.True(original.IsCancellationRequested);
+                Assert.False(observedLinked.IsCancellationRequested);
+            }
+            failStream.TrySetResult();
+            var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(cancellationFirst, originalAtFailure);
+            Assert.False(linkedAtFailure);
+            Assert.Equal("可保留部分。", visible.ToString());
+            Assert.Equal("可保留部分。", result.AnswerText);
+            Assert.Equal(cancellationFirst ? OctoberChatProviderStatus.Cancelled : OctoberChatProviderStatus.Failed, result.Status);
+            Assert.Equal(cancellationFirst ? DialogueProviderFinish.Cancelled : DialogueProviderFinish.Unknown, result.ProviderFinish);
+            if (cancellationFirst) Assert.Equal(original.Token, exceptionToken);
+            else
+            {
+                original.Cancel();
+                Assert.Equal(OctoberChatProviderStatus.Failed, result.Status);
+                Assert.Equal(DialogueProviderFinish.Unknown, result.ProviderFinish);
+            }
+            Assert.Single(client.Requests);
+            Assert.Equal(0, client.DisposeCalls);
+        }
+        finally
+        {
+            failStream.TrySetResult();
+            releasePropagation.Set();
+            await cancel.WaitAsync(TimeSpan.FromSeconds(5));
+            blocker.Dispose();
+            _ = await Record.ExceptionAsync(() => pending.WaitAsync(TimeSpan.FromSeconds(5)));
+        }
+
+        async IAsyncEnumerable<ChatResponseUpdate> OriginalAwareFailureAsync([EnumeratorCancellation] CancellationToken token)
+        {
+            observedLinked = token;
+            yield return Update("original-lifetime", new TextContent("可保留部分。"));
+            streamEntered.TrySetResult();
+            await failStream.Task;
+            originalAtFailure = original.IsCancellationRequested;
+            linkedAtFailure = token.IsCancellationRequested;
+            if (original.IsCancellationRequested)
+            {
+                exceptionToken = original.Token;
+                throw new OperationCanceledException("Controlled original-lifetime cancellation before linked propagation.", original.Token);
+            }
+            throw new InvalidOperationException("Controlled failure before any cancellation signal.");
+        }
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task InstalledMaf_NativeToolContinuation_InvokesApprovedFacadeAndExposesTextBeforeFinalStopAsync()
