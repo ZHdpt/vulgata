@@ -186,6 +186,168 @@ public sealed class OctoberScanToolRuntimeQualificationTests(ITestOutputHelper o
         }
     }
 
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
+    [InlineData("full")]
+    [InlineData("reduced-plus-PATHEXT")]
+    public async Task OctoberRuntime_BareAccountPolicy_InventoryFirst_PreparesAndSelectsExactOwnedFileAsync(string environmentScenario)
+    {
+        Assert.True(OperatingSystem.IsWindows());
+        Assert.True(File.Exists(CodeGraphCommand));
+        const string relative = "AccountPolicy.java";
+        // Exact synthetic Operation B body from committed ec493fcf; no provider, DB or real source.
+        const string source = """
+            public final class AccountPolicy {
+                private AccountPolicy() { }
+
+                public static boolean canRegister(boolean phoneVerified, boolean accountExists) {
+                    return phoneVerified && !accountExists;
+                }
+
+                public static boolean canLogin(boolean accountActive, boolean passwordMatches, int failedAttempts) {
+                    if (!accountActive || failedAttempts >= 5) {
+                        return false;
+                    }
+                    return passwordMatches;
+                }
+            }
+            """;
+        var fixture = await PreparedSourceFixture.CreateAsync();
+        string root = Path.Combine(fixture.SiblingPath, "bare-account-policy");
+        string state = Path.Combine(fixture.SiblingPath, "bare-account-policy-jdt-state");
+        Assert.True(fixture.OwnsPath(root)); Assert.True(fixture.OwnsPath(state));
+        OctoberToolRuntime? runtime = null;
+        bool cleaned = false;
+        string? originalPath = Environment.GetEnvironmentVariable("PATH");
+        var marker = new AsyncLocal<bool>();
+        var exceptions = new System.Collections.Concurrent.ConcurrentQueue<string>();
+        int observed = 0;
+        void Observe(object? sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs args)
+        {
+            if (!marker.Value || Interlocked.Increment(ref observed) > 24) return;
+            var exception = args.Exception;
+            string message = exception.Message;
+            string safeCode = message switch
+            {
+                "Current source approval is unavailable." => "source_approval_unavailable",
+                "Current CodeGraph authority is unavailable." => "codegraph_authority_unavailable",
+                "CodeGraph preparation authority expired." => "codegraph_preparation_authority_expired",
+                "CodeGraph preparation binding changed." => "codegraph_preparation_binding_changed",
+                "The pinned CodeGraph shim requires a declared Node launcher on PATH." => "codegraph_node_launcher_missing",
+                "CodeGraph preparation did not complete." => "codegraph_preparation_incomplete",
+                "The declared CodeGraph command is unavailable." => "codegraph_command_unavailable",
+                "The declared CodeGraph bundle is not pinned 1.5.0." => "codegraph_bundle_not_pinned",
+                "The prepared root identity is unavailable." => "prepared_root_identity_unavailable",
+                "Exclusive CodeGraph state creation failed; existing state is not adopted." => "codegraph_exclusive_state_creation_failed",
+                "codegraph_cleanup_unconfirmed" or "jdt_cleanup_unconfirmed" or "source_authority_unavailable" => message,
+                _ => "withheld",
+            };
+            var method = exception.TargetSite;
+            exceptions.Enqueue($"type={exception.GetType().FullName}; HResult=0x{exception.HResult:X8}; site={method?.DeclaringType?.FullName}.{method?.Name}; code={safeCode}");
+        }
+        try
+        {
+            Directory.CreateDirectory(root); Directory.CreateDirectory(state);
+            await File.WriteAllTextAsync(Path.Combine(root, relative), source, new UTF8Encoding(false, true));
+            Assert.Equal(new[] { Path.Combine(root, relative) }, Directory.EnumerateFileSystemEntries(root).ToArray());
+            fixture.Authority.Approve(fixture.Approval);
+            var issuer = new PreparedSourceContextIssuer(fixture.Authority);
+            const string target = "october-bare-account-policy-diagnostic";
+            var binding = new PreparedSourceBinding(issuer, target, [new(target, fixture.Approval.BatchId, fixture.Approval.RepositoryId, fixture.Approval.RootBindingIdentity, root)]);
+            const string javaBin = @"C:\Program Files\Java\jdk-21.0.12\bin";
+            string localBin = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin");
+            string systemDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            string[] executables = [localBin, javaBin, systemDirectory];
+            var javaProfile = new PreparedJavaNavigationProfile(state, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024);
+            var javaPolicy = new PreparedJdtHostPolicy(executables, [JdtRuntimeRoot, Directory.GetParent(javaBin)!.FullName], Path.Combine(systemDirectory, "cmd.exe"), executables, javaBin);
+            var graph = new PreparedCodeGraphConnectionFactory(CodeGraphCommand);
+            if (environmentScenario != "full")
+            {
+                // Retain the exact production pin/preflight delegate; only native child environment differs.
+                var preflight = Assert.IsType<Func<string, CancellationToken, Task>>(typeof(PreparedCodeGraphConnectionFactory)
+                    .GetField("_preflight", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(graph));
+                graph = new PreparedCodeGraphConnectionFactory(CodeGraphCommand, new SanitizedNativeEnvironmentRunner(output, environmentScenario == "reduced-plus-PATHEXT"), preflight);
+            }
+            output.WriteLine("inventory-first environmentScenario={0}; only native init environment is compared, not full Generator parity", environmentScenario);
+            runtime = new OctoberToolRuntime(fixture.Approval, binding,
+                new PreparedToolWorkspaceIssuer(fixture.Authority, new FixtureToolAuthorizer(fixture.Approval)),
+                new PreparedJavaNavigationContextFactory(javaProfile, new PreparedJdtLsRuntime(new PreparedJdtCommandResolver(), new PreparedJdtProcessLauncher(), new PreparedJdtProtocolFactory(), javaPolicy)),
+                graph, TimeSpan.FromSeconds(600));
+            Assert.Null(runtime.PreparedConnection);
+            var inventory = new OctoberScanInventory(async (repository, request, token) =>
+            {
+                Assert.Equal(fixture.Approval.RepositoryId, repository);
+                var listed = await runtime.ListAsync(request, token);
+                output.WriteLine("inventory-first list outcome={0}; entries={1}; limitations={2}", listed.Outcome, listed.Entries.Count, listed.Limitations.Count);
+                return listed;
+            });
+            OctoberScanInventoryResult result;
+            AppDomain.CurrentDomain.FirstChanceException += Observe;
+            marker.Value = true;
+            try
+            {
+                result = await inventory.BuildAsync(fixture.Approval.RepositoryId, "", [new(fixture.Approval.RepositoryId, relative, "selected", "Explicit synthetic account policy")]);
+            }
+            finally
+            {
+                marker.Value = false;
+                AppDomain.CurrentDomain.FirstChanceException -= Observe;
+                foreach (string diagnostic in exceptions) output.WriteLine("inventory-first exception: {0}", diagnostic);
+                output.WriteLine("inventory-first observedExceptions={0}; descriptorPresent={1}", observed, runtime.PreparedConnection is not null);
+            }
+            Assert.True(result.IsComplete);
+            Assert.Empty(result.Gaps);
+            var selected = Assert.Single(result.Entries);
+            Assert.Equal(relative, selected.RelativePath); Assert.Equal("selected", selected.Disposition);
+            Assert.Equal(fixture.Approval.RepositoryId, selected.RepositoryId);
+            Assert.NotNull(runtime.PreparedConnection);
+            Assert.Empty(runtime.JdtLeases);
+            Assert.Equal(source, await File.ReadAllTextAsync(Path.Combine(root, relative)));
+            await runtime.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(30));
+            await VerifyCleanupAsync(runtime);
+            cleaned = true;
+            Assert.Equal(originalPath, Environment.GetEnvironmentVariable("PATH"));
+        }
+        finally
+        {
+            marker.Value = false;
+            AppDomain.CurrentDomain.FirstChanceException -= Observe;
+            if (runtime is not null && !cleaned)
+            {
+                await runtime.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(30));
+                await VerifyCleanupAsync(runtime);
+                cleaned = true;
+            }
+            if (runtime is null || cleaned)
+            {
+                await fixture.DisposeAsync();
+                Assert.False(Directory.Exists(fixture.SandboxPath));
+            }
+        }
+    }
+    private sealed class SanitizedNativeEnvironmentRunner(ITestOutputHelper output, bool retainPathExt) : ICodeGraphProcessRunner
+    {
+        public async Task<CodeGraphProcessResult> RunAsync(CodeGraphProcessRequest request, CancellationToken cancellationToken)
+        {
+            var allowed = new HashSet<string>(["PATH", "SystemRoot", "TEMP", "TMP", "DOTNET_ROOT", "DO_NOT_TRACK", "GIT_CONFIG_GLOBAL"], StringComparer.OrdinalIgnoreCase);
+            output.WriteLine("native init incoming environment keys={0}", string.Join(",", request.EnvironmentVariables.Keys.Order(StringComparer.OrdinalIgnoreCase)));
+            if (retainPathExt)
+            {
+                Assert.Contains(request.EnvironmentVariables, pair => pair.Key.Equals("PATHEXT", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(pair.Value));
+                allowed.Add("PATHEXT");
+            }
+            var environment = request.EnvironmentVariables.Where(pair => allowed.Contains(pair.Key) || pair.Key.StartsWith("CODEGRAPH", StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+            var filtered = new CodeGraphProcessRequest(request.FileName, request.Arguments, request.WorkingDirectory, request.Timeout,
+                request.StandardOutputByteLimit, request.StandardErrorByteLimit, environment, request.CloseStandardInput, inheritEnvironmentVariables: false);
+            output.WriteLine("native init environment keys={0}; timeoutMs={1}; stdoutLimit={2}; stderrLimit={3}",
+                string.Join(",", environment.Keys.Order(StringComparer.OrdinalIgnoreCase)), filtered.Timeout.TotalMilliseconds,
+                filtered.StandardOutputByteLimit, filtered.StandardErrorByteLimit);
+            var result = await new CodeGraphProcessRunner().RunAsync(filtered, cancellationToken);
+            output.WriteLine("native init exit={0}; timedOut={1}; stdoutBytes={2}; stderrBytes={3}", result.ExitCode, result.TimedOut, result.StandardOutput.Length, result.StandardError.Length);
+            return result;
+        }
+    }
     private static string DescribeLeases(OctoberToolRuntime runtime) => string.Join(",", runtime.JdtLeases.Select((lease, index) => $"{index}:{lease.Lifetime}/settled={lease.OwnedResourcesSettled}"));
 
     // Transparent lifecycle observation: all process operations delegate to the same real launcher/process.

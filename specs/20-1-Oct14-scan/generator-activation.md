@@ -1,6 +1,6 @@
 # Generator activation and shared qualification
 
-**Controlled implementation accepted:** The narrow CL-and-BL command path is executable through the existing Generator entry point, with original-session verified reader composition. Independent final code review accepted the implementation; current-source affected SelfContained verification passed 2,170/2,170 with no failures or skips. Real source/provider/native generation and positive authenticated-session PostgreSQL reader qualification remain unqualified. CL-only remains independent and its shared real run is user-paused pending LLM configuration.
+**Controlled implementation accepted:** The narrow CL-and-BL command path is executable through the existing Generator entry point, with original-session verified reader composition. Independent final code review accepted the implementation; its affected SelfContained verification passed 2,170/2,170 with no failures or skips. CL-only remains independent. Subsequent authorized B attempts failed; the later source-free native diagnosis and minimal Integrator-owned environment correction are recorded in [native-inventory-diagnosis.md](native-inventory-diagnosis.md). No useful generated Knowledge is claimed. Resource decisions below describe the activation checkpoint; current runtime authority remains with the coordinated Integrator dispatch.
 
 ## Current authority and priority
 
