@@ -1235,3 +1235,402 @@ smallest original-run one-shot binding over exact run/operation/corpus/request,
 without a new durable framework or caller boolean. The precise mechanism remains
 pending agreement. Enabled finalizer dispatch stays unavailable; independent T032
 store/schema work continues. No S3 or runtime activation follows from this discussion.
+
+## Settled original-run finalization semantics; signatures pending
+
+Both owners agreed to a private Scan-owned one-shot slot within the original live
+Generate runner, bound to exact run/operation/corpus/canonical request and original
+scope. It is issued only from that runner's accepted Begin execution, including
+reconciliation of its own tracked submission; a restarted receipt reader cannot
+recreate it. Install and retain the task, permanently consuming the slot, before
+any callback or await. Exact duplicate callers await that task; changed binding
+cannot invoke the callback or stop the original execution. Fault/cancellation/
+indeterminate completion never resets it or renews an allowance.
+
+The first callback performs a bounded Business-owned exact read: existing same
+request replays only; conflict performs no work; a positively observed missing row
+can permit first generation ONLY because the callback already holds the original
+independently issued grant. Failed/ambiguous reads produce no generation and leave
+the slot consumed. Public recovery lookup remains indeterminate for missing or
+unavailable results. FINAL choice is a narrow producer-internal actual-read
+distinction from the same owner store, with exact binding/live authority checks.
+The crossed proposal to use public PersistenceStatus=NotCompleted for absence was
+withdrawn and is NOT adopted. No absence result creates dispatch authority.
+
+Every invocation token cancels only its wait, including the first waiter. Execution
+uses the original host stop/deadline; the runner retains the actual task and its
+session/scope/resource cleanup even with no waiters. Explicit authorized host stop
+remains separate. Cached outcomes require fresh Business disclosure before each
+exposure; separate lookup reconciliation does not replace the generation task.
+Business owns the minimal canonical producer-read/callback signatures and wrapper;
+Scan owns the private slot and runner lifecycle. Exact typed signatures/compiling
+checkpoint are next, not yet implemented. T032 remains independent; no new durable
+framework, UI surface, S3 execution or runtime resource grant is introduced.
+
+Both owners subsequently accepted the complete typed declaration shape:
+
+- `BusinessFinalizationInitialReadKind`: NoDispatchResult, ObservedAbsent, Unavailable.
+  NoDispatchResult requires a non-null exact-operation replay/conflict/denial result;
+  it neither authorizes generation nor necessarily proves a stored row exists.
+  ObservedAbsent/Unavailable require null Result; inconsistent combinations fail closed.
+- `IOctoberFlowPublicationInitialRead.ReadForOriginalDispatchAsync(CorpusHandle,
+  OperationKey, string canonicalPayloadDigest, CancellationToken)` returns the typed
+  BusinessFinalizationInitialRead. Only a successful exact live-authorized no-row
+  read can emit ObservedAbsent. It remains producer-only and never grants dispatch.
+- `IOctoberOriginalBusinessFinalizationSlot.RunOnceAsync(FinalizationRequest,
+  Func<CancellationToken, Task<BusinessFinalizationResult>> originalWork,
+  CancellationToken waitCancellation = default)` uses the already agreed private
+  original-run binding, including reference identity of the same execution scope.
+
+Business is released to produce an isolated compiling declaration checkpoint with
+contract documentation, excluding active schema/implementation changes. Root reviews
+and selectively integrates it before dispatching host implementation. This closes
+signature agreement only; it does not activate S3 or acquire runtime resources.
+
+Business declaration `d074bd21` is selectively imported at `c1505ba9`; only the
+new Core file and its contract section were included, not parent T032 stubs/schema.
+A documentation-context conflict included an ancestor-only diagnostics section.
+After approval review questioned possible loss, read-only comparison established
+the resolved main delta was seven insertions and zero deletions; the selective
+import was then approved. Existing diagnostics agreement remains recorded above.
+Core compilation passed with zero errors and 721 warnings. This is declaration
+compilation, not an implementation or runtime qualification.
+
+Scan is now dispatched for controlled private-slot mechanics and conformance tests
+against this exact declaration, preserving original Begin provenance, immutable
+binding/same scope, permanent retained task and wait-only cancellation. No public
+unconditional issuer or CL-and-BL command activation is authorized. Business may
+implement the same-store producer read within released T032 and prepare controlled
+T033 consumption, without inventing a grant while real slot composition is absent.
+Each owner supplies an isolated reviewed checkpoint; runtime and migration execution
+remain subject to the outstanding consolidated resource authority.
+
+Scan's narrow baseline lacked FinalizationRequest.Selection and the accepted owner
+canonical helpers. Integration explicitly authorizes only these four Core files from
+full-qualified source `d92833c10de73868d644e6b68e1fdc490ff2907d` as its prerequisite:
+DomainServices/OctoberBusinessSynthesisPolicy.cs (owns proposal types),
+OctoberBusinessFinalizationContracts.cs, OctoberBusinessFinalizationPolicy.cs and
+OctoberKnowledgeContracts.cs. The latter adds only the non-positional Selection
+body relative to Scan's baseline; required flow/FileUncertainties types already exist.
+Import intact accepted files at a clean point, compile the actual consumer checkout,
+and commit this prerequisite separately. No competing type/canonicalizer, Agents or
+Infrastructure import, schema/stub ancestry, or full-main merge is required. Slot
+implementation remains within the existing controlled dispatch; no runtime grant.
+
+### Controlled original-run slot checkpoint
+
+Scan checkpoint `ba43236bed012d806986ee6d81c3227513916567` passed independent
+source review and imports exactly six files. Its private slot binds the original
+Begin submission, confirmed corpus, canonical request and same live execution
+scope; it retains one callback task permanently, distinguishes waiter cancellation
+from host cancellation, and waits for actual callback settlement before cleanup.
+Positive tests construct explicitly synthetic future host state. Actual CL-only
+and fresh-host paths cannot issue it; this is not S3 activation or live BL proof.
+Business must still perform fresh disclosure checks before exposing cached results.
+
+Scan's 34 slot cases and 37-case scoped replay passed. Its earlier full selection
+remains 3,649/3,652: two admission-test database cleanup failures and one log-file
+cleanup failure. Importing the already accepted admission-observation correction
+subsequently passed both admission cases (`3f0bc7acaa994732b320b96782230fbf`);
+neither isolated replay establishes the cause of the prior cleanup failures.
+
+Root's first combined verification attempt
+`494bdbda019b43dd989d1bf3707dc7c1` stopped during compilation: CS0009 reported invalid
+managed metadata in the generated Core reference assembly, followed by dependent
+missing-type errors. Rebuilding that project's outputs passed (zero errors, 721
+warnings), without source changes; this failed attempt remains recorded separately
+from the subsequent verification result.
+
+Combined main verification `e35d387415e34dc699e485edfb542b49` then passed
+1,868/1,868 selected SelfContained cases, zero failures/skips (October, Explore and
+PreparedSource filter; 418 classified files). Compilation had zero errors and
+12,896 warnings. This is the integrated slot checkpoint's controlled verification,
+not a repeat of the full suite or external qualification. The earlier full-main
+3,727/3,727 result remains bound to source `d92833c1`.
+
+The shared real milestone still uses one Generate result for all three lanes.
+Remaining root test glue is strict safe-report hydration against the owned fixture,
+frozen Wiki host selection, ordinary User creation, exact IT read, Business CL
+denial and security-stamp revocation. This is initial HTTP/SSR qualification, not
+interactive browser proof. No duplicate generated dataset or fixture publication
+substitution is permitted. The consolidated source/provider/database/host authority
+request remains outstanding; no live run is authorized by this checkpoint.
+
+### Business persistence integration review
+
+Business submitted `a0c9676b15bfbc58ba61140cf1e2331548103b20` (T032/T033 controlled
+publication and finalizer). Root staged the authored branch delta without replacing
+newer main files. The only conflict was additive contract documentation; both the
+accepted persistence diagnostics and original-run callback agreement were retained.
+Independent schema review found no blocking issue in the inspected CL manifest
+keys, Dialogue exact-version keys, explicit CL/BL ownership, typed dependencies or
+immutability guards. Seven PostgreSQL migration/constraint facts are authored and
+compiled, not executed; no migration was applied.
+
+Independent producer/store review found a real mismatch: the finalizer could offer
+NotEvaluated for unsupported roots while the loader/store rejected those roots.
+The bounded owner correction must retain exact unit/document/selector/source
+membership for every root, permit only recomputed known deferred-kind UnsupportedKind
+as NotEvaluated with no group, and continue rejecting invalid or foreign identities.
+Completed results still require the actual planned group. Business owns the two-file
+loader/store correction and actual finalizer-to-loader-to-store regression, with no
+schema change. The checkpoint is not accepted until this correction is reviewed.
+
+Correction `bf3ca6ca69cd11ada852015117363fd48e889db1` was subsequently imported
+exactly (four affected files compare equal to the owner's commit) and independently
+accepted. The identity probe validates exact primary-source membership, discards its
+temporary groups and retains original root kinds. Store acceptance permits only
+the recomputed unsupported disposition with no group/content. The owner's genuine
+RED `1a518c89603749e9b49d0a8ea3d46eb3` became 198/198 GREEN
+(`63144e3d62ff4978841160c1be75aedd`), including actual finalizer/loader/store/reader
+partial publication and replay, plus wrong-identity/fabricated-outcome negatives.
+This closes the concrete review finding without adding supported synthesis kinds.
+
+The staged full SelfContained run `30d03d7aeed0418b9ef2343550093874` compiled with
+zero errors and finished 3,827/3,828, zero skips. Its sole failure was
+LoggingConfigurationTests.ProductionHost_CriticalLog_WritesConfiguredLocalFileAsync:
+Directory.Delete at line 52 raised IOException because vulgata.log remained open.
+This matches the earlier Scan full-run cleanup failure, not a newly proven Business
+regression. Root owns diagnosis; the cause remains unknown. A test-only diagnostic
+captures the actual provider's disposal and file-handle state on failure and
+rethrows the original exception without retries, sleeps or cleanup suppression.
+
+The diagnostic-enabled isolated logging replay passed 1/1
+(`363aae39cd784a63a86c921440661030`); it does not establish the cause of the failed
+full-run cleanup or erase that result.
+
+Root's test-only `OctoberGeneratedClReport` now validates the clean one-file
+qualification protocol against trusted KnowledgeBinding and PreparedOrigin inputs.
+It supports multiple exact document versions for that file and never accepts a
+database identity from stdout. Independent review accepted it; 42/42 controlled
+cases passed (`55a5aaf064744874a9a5e7b343373141`), including actual
+ExecuteConfiguredAsync projection compatibility. Initial missing-API compile RED
+(`579e346648dd48dcaf89180eb669e888`) and an intermediate test enum-name compile error
+(`9be9335f46634699ba4ef2efece5ab7e`) remain separate evidence, not behavioral RED.
+This helper yields exact handles for the future read test, not proof of persisted,
+useful generated Knowledge. Expected source digest/prepared version must come from
+the owned prepared input, never be copied from the untrusted console report.
+
+Final combined controlled run `a3c026a8b3f042ab8d6e8ca5e4be3a16` selected 3,877:
+3,876 passed, one failed, zero skipped; build zero errors (13,367 warnings).
+Only the same logging cleanup test failed. New diagnostic: provider-count=1,
+provider-disposed=False, safe-file-handle-closed=False after the await-using scope
+exited. This establishes that the captured application provider remained undisposed;
+it does not yet explain why (including possible disposal exceptions masked by
+cleanup). Root retains the host-test lifetime defect. The full suite is NOT green.
+All selected Business/Scan/Chat/Explore/report-helper checks passed. The reviewed
+Business contract/implementation checkpoint is accepted for incremental controlled
+consumer work, not whole-release completion or runtime qualification. No failing
+test was removed, weakened or waived.
+
+Next ready Scan work is controlled natural-completion composition of the existing
+owner finalizer with the original live scope/corpus, exact selection/profile/client/
+prompt and F1; no new root-inference strategy or schema ownership. Preserve S2 and
+do not treat pending external S2 checks as passed. Any missing owner input/port
+returns as a concrete bounded dependency, not a consumer substitute or broad plan.
+Root's next Web work is execution registry/store observation and retained per-turn
+service lifetime with the route still disabled; then durable conversation/history
+preparation and parent UI activation. Those controlled tasks need no new provider
+grant. Live dataset generation and PostgreSQL/host qualification remain blocked on
+the consolidated explicit resource request.
+
+### Selected-client Business invocation agreement
+
+After synchronization, Scan identified and root verified a real composition gap:
+OctoberWorkerClientFactory.SelectedClient rejects ordinary IChatClient calls, while
+both Business executors used GetResponseAsync despite holding an explicit lease.
+Fixture-client results do not establish this real-client compatibility. Existing
+B1 stores/input discovery are available; this does not require another knowledge
+store or root-inference strategy.
+
+Business and Scan concurred on one additive Agents-only interface, owned by Business
+at OctoberBusiness/IOctoberBusinessAttemptClient.cs:
+
+```csharp
+string ProviderProfileId { get; }
+Task<ChatResponse> GetAttemptResponseAsync(
+    IEnumerable<ChatMessage> messages, ChatOptions? options,
+    IOctoberProviderAttemptLease lease, Action<long> onDispatched,
+    CancellationToken cancellationToken = default);
+```
+
+Microsoft.Extensions.AI types stay in Agents. Worker streaming is unchanged. Scan's
+selected client implements the interface using the same frozen configuration,
+existing LeaseHandler, retry-zero SDK and explicit already-acquired Business lease.
+No raw-client fallback, implicit lease or second permit/pool is allowed. Business
+fails closed for missing capability or mismatched profile. The mandatory callback
+observes the physical send boundary using the existing Stopwatch convention; a
+successful eligibility/rate check alone is not a send. The returned task retains
+actual HTTP/body/SDK cleanup even under ignored cancellation. Business then completes
+the same lease's existing dispatch observation before settlement and disposal.
+Failed/missing observation after invocation is unknown, never a zero-usage refund;
+positive unsent observation requires terminal physical settlement. Existing bounded
+Business retries still obtain fresh host admission within original budgets; the SDK
+does not add retries. Actual selected-factory tests use a controlled HTTP handler,
+not a permissive replacement client or live provider.
+
+Both owners also accepted these exact host bindings:
+
+- Validated `only-source` maps to projection Precedence 0; ChatCompletions maps to
+  the existing wire string `chat-completions`. Unknown values fail closed. Preserve
+  exact source identity, name, endpoint, model and credential reference, excluding
+  ciphertext/secrets. Use the existing owner fingerprint helper only; actual frozen
+  credential/client lifetime remains a separate host binding.
+- Discover real document handles through the existing owner reader bound to the
+  exact returned PublicationBinding, live IT selection, KnowledgePurpose.Reader
+  and authorized RepositoryScope. Empty-query SearchAsync supports discovery with
+  returned continuation tokens and existing page-size limits. Apply finite total
+  page/item/byte/time bounds and nonprogress detection; exact reads keep all-contributor
+  checks and content continuation when claiming a complete read. Empty, failed or
+  truncated discovery cannot turn a known publication into NoContent or prove
+  complete membership. No guessed IDs, current-publication fallback or new read purpose.
+
+Business is released to author the isolated compiling declaration checkpoint first;
+root will review/import and relay the exact hash. Consumer production changes use that
+declaration after import. Scan may meanwhile author the internal controlled host seam
+and tests using the agreed mapping, preserving explicit selection over owner Units,
+original scope/session/F1 and CL-only behavior, without Program activation. Runtime
+resources, migration execution and the shared real qualification remain unapproved.
+
+The exact two-file owner declaration `fc9e0c0245d985480697748a158763ba6d34a3ac`
+is selectively integrated at `8b170d8cf0491cc88df5869a43516d71e9b6bc2f`; both files
+compare equal to the owner checkpoint. Root Agents compilation passed with zero
+errors and 5,779 warnings. Business executor consumption/accounting and Scan selected
+transport implementation/conformance are now released against this exact declaration.
+This is compilation of an interface, not corrected-client runtime qualification;
+the existing full-suite logging teardown failure remains unresolved.
+
+### October 8 Business attempt consumers
+
+Business checkpoint `9950c8b371e52178e05a144cd3f571d58c63c009` changes the two
+executors and controlled test adapters against the exact accepted interface. Root
+independent review accepts capability/profile checks before acquisition, same-lease
+invocation, physical task ownership, terminal observation before settlement/release,
+and unknown/no-material/no-retry behavior when observation is missing or fails.
+Stopwatch dispatch/terminal measurements stay separate from injected TimeProvider
+wait/deadline/retry clocks. No ordinary IChatClient fallback is retained.
+
+Owner evidence: initial 22/22 RED (`7269f511fdc4470487c841e5ede82899`), 165/165
+affected GREEN (`4b1b96871531428f81ef456bec871416`) and final distinct-clock 24/24
+coverage (`d8e2c8b17e1542969b9bc0a45d67896b`). Later missing-observer/clock cases
+are additional coverage, not separately claimed RED. Scan must still provide its
+real selected-client implementation and actual-factory controlled HTTP conformance
+against this consumer checkpoint before claiming a complete controlled route.
+
+Root's combined October/Explore/PreparedSource SelfContained selection passes
+2,008/2,008, zero failures/skips (`1ce61f77cba84bf493b6890a5e13d5f6`), with 424
+classified files and compilation at zero errors/14,177 warnings. This is not a new
+full-suite pass; the previously captured logging teardown defect remains open.
+No PostgreSQL, native tool, external-provider or E2E suite was executed.
+
+### Rate reservation correction during actual-client composition
+
+Scan's actual-client review identified a defect in the imported Business consumers:
+their early CheckBeforeSendAsync reserves the scope's rate slot, while the selected
+transport repeats the check at HTTP dispatch. The same lease's already-reserved
+branch can reuse that stale slot after another request sends. Root verified this
+source path; passing controlled consumer tests did not qualify actual send spacing.
+This supersedes the earlier instruction to retain that early rate-bearing precheck.
+Business owns removing/repairing premature reservation while retaining disclosure,
+original lifetime, deadline and cancellation checks. The selected HTTP boundary
+retains the mandatory final gate. No scheduler rewrite or second permit is authorized.
+Final-denial status must remain truthful; any missing typed transport outcome is a
+bounded owner compatibility question. Scan owns the actual executor/factory delayed-
+dispatch regression. Complete real-client composition remains open pending the
+reviewed correction and that conformance evidence; no runtime/resource scope changes.
+
+Business and Scan concurred on the narrow final-denial seam: an Agents-only sealed
+OctoberBusinessAttemptDeniedException with immutable ProviderAdmissionStatus, accepting
+only defined non-Granted values. No attempt-interface signature changes. Business
+removes both early CheckBeforeSendAsync calls, retains disclosure/handoff/original
+deadline/cancellation checks and catches the final denial without retry. Scan maps
+only its own Business final-guard refusal; Worker behavior is unchanged. If SDK
+wrapping intervenes, any mapping is tied to that invocation's own refusal identity,
+never arbitrary nested exceptions or ambient state, and occurs after actual cleanup.
+Unrelated transport/cleanup failures retain their own classification. Observed dispatch
+remains sent/unknown on failure, never zero merely because a denial type is returned.
+Business is released to provide the isolated compiling declaration checkpoint first;
+root imports it before both consumers bind production changes. Actual SDK propagation
+and delayed-entry rate conformance remain Scan-owned controlled qualification.
+
+Owner denial declaration `699979a3633d32c91cabe2a1ea2e0b47e5a3d468` is selectively
+integrated at `2aeb2d4c699dc45c834cfafe2af58769e56bc5e0`; the two files match the
+owner exactly. Root Agents compilation passed, zero errors/5,793 warnings. Both
+owners received this hash and are released for their disjoint executor/transport
+corrections. The declaration itself does not remove the premature reservation or
+prove SDK propagation; those implementation/regression checkpoints remain pending.
+
+Business correction `b3edb9e0dcb2dd2638582977744e06a5a0ba0b79` removes both early
+rate-bearing checks and catches the canonical final-denial status without retry.
+Root independent review accepted preserved disclosure/lifetime/deadline checks and
+callback/observer-based usage. Root controlled Business/Resolution/FlowPublication/
+ScanExecutionScope selection passed 292/292, zero failures/skips
+(`511b8ee42a664b94b77e309ba2383275`). One earlier launcher attempt exited 1 before
+output or a new results directory; the identical retry passed, with no environment
+or test change and no asserted cause. Scan's actual delayed-entry spacing and SDK
+propagation remain separate qualification against this corrected consumer.
+
+### Failed B1 outcome versus retained publication
+
+Business owner guidance, independently reviewed, preserves canonical coverage:
+file coverage accounts for source input; B1 admission to B2 requires every selected
+inquiry to have a settled outcome/disposition, not every inquiry to succeed; BL
+publication coverage describes selected BL-root/file gaps rather than aggregate
+execution success. Planner and synthesis already retain failed/uncertain frontiers
+and the full dependency ledger. Do not broaden IsPartial or invent a Scan policy.
+
+Root adopts the narrow host mapping: inspect accepted Outcome.Kind equally on direct
+acknowledgement and exact lost-ack lookup. Failed means execution failure/exit 1 and
+a sanitized resolution-processing gap, retaining its durable receipt and any still-
+authorized confirmed BL publication. Do not regenerate, erase BL or manufacture
+CommitIndeterminate. Unresolved and Supported-with-limitations can be valid bounded
+conclusions; they are not failures merely because no edge is confirmed. NotEvaluated
+retains its actual incompleteness/limit cause and is not blanket-mapped to Failed.
+Scope evidence: owner resolution persistence tests for uncheckable witness and
+explicit host dispositions; FlowPlanner non-supported frontiers; SynthesisPolicy's
+app-owned uncertain gap section. Scan owns direct-ack/lookup parity and nonfailure
+Unresolved controls. No schema, owner coverage redefinition or new runtime authority.
+
+Business additionally confirmed the zero-attempt limit classification: no witness,
+BudgetExhausted and Attempts.Length==0 is NotEvaluated, not Failed. The tuple also
+occurs at the payload-size ceiling; report generic bounded-resolution budget/limit
+wording unless exact host provenance identifies admission refusal. Attempt count
+alone does not prove physical sends. Persist only via the existing eligible owner
+write/F1 guard, retaining a truthful gap/non-success and unchanged authorized
+publication/owner coverage equally on direct acknowledgement and exact lookup.
+Attempted invalid/no-witness remains Failed. Do not generalize to authority denial,
+unavailability or hard stop, or grant new admission/recovery after abort. Scan is
+released for the bounded classification regression/correction at a safe build boundary.
+
+### Internal natural-completion checkpoint
+
+Scan `95864e555ff3e747464eb8051d5c0eb853a7b314` supplies only the dispatched internal
+natural-completion subgroup. Independent root host and transport reviews accept
+original scope/session/client/budget retention, F1 submission, actual owner-call
+settlement including replay disclosure, explicit roots, exact publication reads,
+direct/lost-ack outcome classification and late log diagnostics. Actual selected-SDK
+controlled tests cover own final denial versus foreign markers, delayed rate checks,
+ignored HTTP/body cancellation and unchanged Worker streaming. No Program/CLI
+activation, scheduler/stop expansion or external qualification is included.
+
+An explicit root-owned activation dependency remains: ReadBusinessPublicationAsync
+currently constructs KnowledgeSubject.AuthenticationBinding from ManagementAuthorityId.
+Production OctoberKnowledgeIdentityAdapter requires the verified Identity security
+stamp in both the authenticated principal and current user record. The controlled
+reader adapter does not establish that binding. Supply a trusted authenticated
+headless Reader context before live activation; do not treat these controlled reads
+as ordinary-user Identity qualification or copy management authority into that path.
+The separate shared ordinary-user Generate/read milestone remains unqualified.
+
+Owner final affected evidence is 2,086/2,086 with all 35 new cases (23 natural host,
+12 selected SDK transport), run `847611c106e14f01ba6f4ab798a9227b`. Earlier fixture
+corrections and incomplete clock-fixture runs remain in verification-s3.md. This is
+controlled HTTP/SQLite, not live provider/native/PostgreSQL or a full-suite pass.
+
+Root combined verification `dd3b1f95502e4ab888e69e0c86ca365d` passes 2,062/2,062,
+zero failures/skips, with the namespace-specific filter
+`FullyQualifiedName~Vulgata.Tests.October|FullyQualifiedName~Vulgata.Tests.Explore|FullyQualifiedName~PreparedSource`.
+The owner's broader `~October|~Explore|~PreparedSource` filter reports 2,086;
+these are separate selections, not interchangeable counts. The root build and
+inventory/outcome guards passed; external suites and the known full-suite logging
+teardown defect remain outside this passing selection.

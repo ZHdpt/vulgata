@@ -224,6 +224,15 @@
   "OctoberScan/OctoberScanClPublicationTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanBusinessTransportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanBusinessFinalizationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanOriginalBusinessSlotTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanGenerateQualificationFixtureAdapter.cs": {
     "suite": "E2E"
   },
@@ -1275,5 +1284,11 @@
   },
   "October/Knowledge/OctoberFlowPublicationPostgreSqlTests.cs": {
     "suite": "PostgreSql"
+  },
+  "October/Integration/OctoberGeneratedClReportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberGeneratedClReport.cs": {
+    "suite": "SelfContained"
   }
 }

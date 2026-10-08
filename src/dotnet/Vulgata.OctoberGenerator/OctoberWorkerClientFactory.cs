@@ -6,6 +6,7 @@ using System.Diagnostics;
 using OpenAI;
 using OpenAI.Chat;
 using Vulgata.Agents.WorkerExecution;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.DomainServices.OctoberScan;
@@ -51,7 +52,7 @@ public sealed class OctoberWorkerClientFactory
     }
 
     private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied)
-        : IChatClient, IOctoberWorkerAttemptClient
+        : IChatClient, IOctoberWorkerAttemptClient, IOctoberBusinessAttemptClient
     {
         private readonly HttpMessageHandler _transport = supplied ?? new SocketsHttpHandler { AllowAutoRedirect = false };
         private bool _disposed;
@@ -64,6 +65,43 @@ public sealed class OctoberWorkerClientFactory
         public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages,
             ChatOptions? options = null, CancellationToken cancellationToken = default)
             => throw new InvalidOperationException("An explicit Worker attempt lease is required.");
+
+        public async Task<ChatResponse> GetAttemptResponseAsync(
+            IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options,
+            IOctoberProviderAttemptLease lease, Action<long> onDispatched,
+            CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ArgumentNullException.ThrowIfNull(lease);
+            ArgumentNullException.ThrowIfNull(onDispatched);
+            if (lease is not IOctoberWorkerDispatchObserver)
+                throw new InvalidOperationException("An observable Business attempt lease is required.");
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
+            var handler = new LeaseHandler(_transport, lease, onDispatched, businessAttempt: true);
+            using var http = new HttpClient(handler, disposeHandler: true)
+            {
+                Timeout = Timeout.InfiniteTimeSpan
+            };
+            var settings = new OpenAIClientOptions
+            {
+                Endpoint = endpoint,
+                RetryPolicy = new ClientRetryPolicy(0),
+                Transport = new HttpClientPipelineTransport(http, false, null),
+                EnableDistributedTracing = false,
+                ClientLoggingOptions = new ClientLoggingOptions
+                {
+                    EnableLogging = false, EnableMessageLogging = false, EnableMessageContentLogging = false
+                }
+            };
+            using IChatClient client = new ChatClient(model, new ApiKeyCredential(secret), settings).AsIChatClient();
+            // Await the actual SDK task through its body read and per-call wrapper cleanup.
+            // The Business caller alone completes observation and settles the supplied lease.
+            try { return await client.GetResponseAsync(messages, options, linked.Token); }
+            catch (OctoberBusinessAttemptDeniedException error) when (!ReferenceEquals(error, handler.BusinessRefusal))
+            {
+                throw new InvalidOperationException("The selected Business transport failed.");
+            }
+        }
 
         public async IAsyncEnumerable<ChatResponseUpdate> GetAttemptStreamingResponseAsync(
             IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options,
@@ -105,13 +143,20 @@ public sealed class OctoberWorkerClientFactory
         }
     }
 
-    private sealed class LeaseHandler(HttpMessageHandler transport, IOctoberProviderAttemptLease lease, Action<long>? onDispatched) : HttpMessageHandler
+    private sealed class LeaseHandler(HttpMessageHandler transport, IOctoberProviderAttemptLease lease,
+        Action<long>? onDispatched, bool businessAttempt = false) : HttpMessageHandler
     {
         private readonly HttpMessageInvoker _invoker = new(transport, disposeHandler: false);
+        internal OctoberBusinessAttemptDeniedException? BusinessRefusal { get; private set; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (await lease.CheckBeforeSendAsync(cancellationToken) != ProviderAdmissionStatus.Granted)
+            ProviderAdmissionStatus eligibility = await lease.CheckBeforeSendAsync(cancellationToken);
+            if (eligibility != ProviderAdmissionStatus.Granted)
+            {
+                if (businessAttempt)
+                    throw BusinessRefusal = new OctoberBusinessAttemptDeniedException(eligibility);
                 throw new InvalidOperationException("The Worker attempt is no longer eligible.");
+            }
             cancellationToken.ThrowIfCancellationRequested();
             onDispatched?.Invoke(Stopwatch.GetTimestamp());
             (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
