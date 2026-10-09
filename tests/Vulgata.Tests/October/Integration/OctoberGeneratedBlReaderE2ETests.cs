@@ -19,11 +19,16 @@ public sealed class OctoberGeneratedBlReaderE2ETests
     private const long MaximumAggregateBytes = 8 * 1024 * 1024;
 
     internal sealed record ReconstructedBusinessStream(DocumentHandle Document, string Content,
-        ImmutableArray<string> OrderedClaimTexts, int Pages);
+        ImmutableArray<string> OrderedClaimTexts, int Pages, ContinuationToken? FirstContinuation);
 
+    /// <summary>
+    /// Borrows the caller's successfully opened actual ordinary Business session. The caller holds it through
+    /// verification and actual Identity revocation, then disposes it after the revocation assertions.
+    /// </summary>
     internal static async Task<ImmutableArray<ReconstructedBusinessStream>> AssertBusinessPublicationAsync(
         OctoberHostSelectionTests.GeneratorPrepareFixture fixture, PublicationBinding publication,
-        string subjectId, string capturedSecurityStamp, CancellationToken cancellationToken)
+        OctoberHostSelectionTests.GeneratorPrepareFixture.OrdinaryReaderSession session,
+        CancellationToken cancellationToken)
     {
         var original = await fixture.LoadExactPublicationAsync(publication, cancellationToken);
         Assert.Equal(publication, original.Publication);
@@ -32,8 +37,6 @@ public sealed class OctoberGeneratedBlReaderE2ETests
         Assert.NotEmpty(expected);
         Assert.Equal(original.Documents.Length, original.Documents.Select(document => document.Reference).Distinct().Count());
         var budget = new VerificationBudget();
-        await using var session = await fixture.OpenReaderSessionAsync(publication, subjectId,
-            capturedSecurityStamp, KnowledgeMode.Business, cancellationToken);
         Assert.NotNull(session);
         Assert.NotNull(session.Selection);
 
@@ -103,22 +106,35 @@ public sealed class OctoberGeneratedBlReaderE2ETests
         return reconstructed.ToImmutable();
     }
 
-    /// <summary>The caller rotates/revokes actual Identity first. This helper never logs in or mints a fresh stamp.</summary>
+    /// <summary>
+    /// The caller rotates/revokes actual Identity first and supplies the SAME borrowed session used above.
+    /// No login, new stamp or new session is allowed; the caller disposes the session after these assertions.
+    /// </summary>
     internal static async Task AssertRevokedBusinessReaderAsync(
-        OctoberHostSelectionTests.GeneratorPrepareFixture fixture, PublicationBinding publication,
-        DocumentHandle previouslyReadBusinessDocument, string subjectId, string originalCapturedStamp,
+        OctoberHostSelectionTests.GeneratorPrepareFixture.OrdinaryReaderSession session,
+        PublicationBinding publication, ImmutableArray<ReconstructedBusinessStream> previouslyReadStreams,
         CancellationToken cancellationToken)
     {
-        Assert.Equal(publication.PublicationId, previouslyReadBusinessDocument.PublicationId);
-        Assert.Equal(publication.Knowledge.BatchId, previouslyReadBusinessDocument.BatchId);
+        Assert.NotNull(session);
+        Assert.False(previouslyReadStreams.IsDefaultOrEmpty, "Revocation requires the successful stream observations.");
+        Assert.Equal(previouslyReadStreams.Length, previouslyReadStreams.Select(stream => stream.Document).Distinct().Count());
         var budget = new VerificationBudget();
-        await using var denied = await fixture.OpenReaderSessionAsync(publication, subjectId,
-            originalCapturedStamp, KnowledgeMode.Business, cancellationToken);
-        if (denied is null) { return; }
-        var content = await denied.ReadExactAsync(previouslyReadBusinessDocument, null, cancellationToken);
-        budget.Admit(content);
-        AssertUnavailable(content);
-        var browse = await denied.SearchAsync("", 20, null, cancellationToken);
+        foreach (var stream in previouslyReadStreams)
+        {
+            Assert.True(stream.Pages > 0, "Revocation requires a previously successful exact stream.");
+            Assert.Equal(publication.PublicationId, stream.Document.PublicationId);
+            Assert.Equal(publication.Knowledge.BatchId, stream.Document.BatchId);
+            var content = await session.ReadExactAsync(stream.Document, null, cancellationToken);
+            budget.Admit(content);
+            AssertUnavailable(content);
+            if (stream.FirstContinuation is { } continuation)
+            {
+                var continued = await session.ReadExactAsync(stream.Document, continuation, cancellationToken);
+                budget.Admit(continued);
+                AssertUnavailable(continued);
+            }
+        }
+        var browse = await session.SearchAsync("", 20, null, cancellationToken);
         budget.Admit(browse);
         Assert.Equal(KnowledgeReadStatus.Unavailable, browse.Status);
         Assert.Empty(browse.Documents);
@@ -140,6 +156,7 @@ public sealed class OctoberGeneratedBlReaderE2ETests
         var cursors = new HashSet<string>(StringComparer.Ordinal);
         var claimIndex = 0;
         var pages = 0;
+        ContinuationToken? firstContinuation = null;
         ContinuationToken? cursor = null;
         while (true)
         {
@@ -171,6 +188,7 @@ public sealed class OctoberGeneratedBlReaderE2ETests
                 if (reconstructed[claimIndex].Length == original.Text.Length) { claimIndex++; }
             }
             if (page.Next is null) { break; }
+            firstContinuation ??= page.Next;
             Assert.True(cursors.Add(page.Next.Value), "Exact content repeated an opaque continuation.");
             cursor = page.Next;
         }
@@ -178,7 +196,7 @@ public sealed class OctoberGeneratedBlReaderE2ETests
         var claimTexts = reconstructed.Select(value => value.ToString()).ToImmutableArray();
         Assert.Equal(expected.Select(claim => claim.Text).ToArray(), claimTexts.ToArray());
         Assert.Equal(ExpectedBusinessNarrative(document, sectionId), content.ToString());
-        return new(handle, content.ToString(), claimTexts, pages);
+        return new(handle, content.ToString(), claimTexts, pages, firstContinuation);
     }
 
     // Independent mechanical projection oracle from the accepted Business read contract.
