@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: one prior real CL remains accepted but unpublished. The latest phase-
-diagnostic retry reached `ProposalParse` failure. Controlled contract assessment is
-complete and one bounded correction is authorized; paid retries remain paused.
+Status: one prior real CL remains accepted but unpublished. Consolidated Worker
+correction is integrated and controlled-tested, but real retry failed in local
+`ToolInvocation`. Paid retries are paused for bounded tool-path diagnosis.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -266,3 +266,24 @@ review. No added parser diagnostic/status normalization, SDK/charging changes or
 live resources. Root decides qualification only after reviewed affected GREEN.
 This addresses proven contract gaps, not a proven identification of the last
 malformed proposal field. Existing partial data and keys remain retained.
+
+## Consolidated correction qualification
+
+Reviewed Scan `ab0de7fd` integrated as `500e2f07`. Main's eleven affected controlled
+classes passed **328/328**, zero skips (isolation
+`ac98f025e95d44ea8a683ae81dc8a4ed`). No full regression or native/runtime success claim.
+
+Fresh run `phone-1f2243ae6f6e`, batch `28a58dcc-16f2-4dbe-a399-1d2165d362a7`,
+database `vulgata_oct_pilot_3098051296684929a4800ec6bed276b8`:
+
+- **37.17 seconds** wall /34.91 seconds pipeline; exit1, no timeout/cleanup doubt.
+- **2 requests**, 6,727 input /676 output tokens, usage known; inventory77, accepted0.
+- `ProviderFailed / ToolInvocation / None`; no terminal/budget reason. This locates
+  the escaping exception in the local tool invocation path, not provider transport.
+  It does not identify the tool, argument binding, body, internal serialization or
+  ledger refusal. Tool25.50s/model4.86s does not prove a particular tool failed.
+- Paid runs held. Scan has bounded source-free diagnosis-only authority over actual
+  tool/runtime/ledger handling of non-success results: distinguish required fatal
+  authority/provenance refusal from ordinary unavailable-tool fallback. No new
+  diagnostic/behavior change or live resource use before a reviewed proposal.
+- Prior accepted partial CL/database/keys remain intact; no publication yet.

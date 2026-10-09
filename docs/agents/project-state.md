@@ -90,6 +90,13 @@ exposure, and sanitized malformed-input refusal within existing budgets. Shared
 facades, Knowledge schemas, authorization/provenance fail-closed checks and primary
 evidence boundaries stay unchanged. Reviewed controlled GREEN is required before
 root decides live qualification. Prior accepted CL remains preserved and unpublished.
+Consolidated correction now integrated as `500e2f07`; main affected328/328 passed
+(isolation `ac98f025e95d44ea8a683ae81dc8a4ed`). Real `phone-1f2243ae6f6e` failed
+after37.17s at **ProviderFailed/ToolInvocation**:2requests6,727input/676output,
+inventory77accepted0. This identifies local tool execution, not exact tool or cause.
+Paid runs held; Scan has source-free diagnosis-only scope on tool/runtime/ledger
+non-success handling. Preserve genuine authority/provenance failures and prior
+partial CL; no ordinary-user publication or presentation-ready dataset yet.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
