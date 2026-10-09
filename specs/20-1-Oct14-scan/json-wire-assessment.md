@@ -1,0 +1,124 @@
+# Final proposal JSON wire assessment
+
+2026-10-09. OCT-Integrator (`01a1109d-ec4c-7500-8b73-642a5e22f59b`)
+dispatched source-free assessment after the real run reported
+`InvalidOutput / ProposalParse / Syntax / Root`, retry `None`. The reported run
+took 54.94 seconds and three requests, with 15,195 input and 3,696 output tokens
+known, 77 inventory files and zero accepted files. These are report facts, not
+evidence of the response's text or of provider JSON-mode compliance. The raw
+response was not retained. No source, response fragments, arguments or secrets
+were inspected or printed in this assessment.
+
+Scan started clean on `oct14/scan` at
+`268c5aea050866dc2e05366af70fdf1305d959dc`. Its executor, prompt and Worker client
+factory match approved integration `52fa489b`; no replacement or reset was needed.
+Integrator's later `faa3cd88` records the failed run. This checkpoint changes only
+an existing controlled test file and this assessment, preserving production.
+
+## Actual SDK wire controls
+
+The tests execute `OctoberWorkerClientFactory` and `OctoberFileWorkerExecutor`
+through the installed MAF and OpenAI SDK with the existing controlled HTTP handler.
+They inspect only synthetic request JSON in memory. They do not capture headers,
+real requests, native output or provider traffic. Assertions run after execution,
+so a failed wire assertion cannot be swallowed as a Worker transport failure.
+
+| Control | Observed behavior |
+| --- | --- |
+| Initial request and request after a tool result | Both carry exactly `response_format: {"type":"json_object"}`; the strict proposal prompt and final-window metadata remain present. The second includes tool history. |
+| Two application source windows | Both carry JSON mode; the exact synthetic source reconstructs from the windows, with ordinals 1/2 and `finalWindow` false/true. |
+| Initial tool leaf contains prose, final leaf contains a valid proposal | Only the final proposal is parsed; expected controlled unit and source binding are retained. |
+| Initial tool leaf contains a valid proposal, final leaf is empty | The earlier proposal is not reused. Rejected as `Syntax/Root`, with no proposal. |
+| Final leaf contains fenced JSON or prose | Both are strictly rejected as `Syntax/Root`, with no proposal. |
+| JSON nesting depth 32/33, using an unknown synthetic property | Depth 32 reaches the closed-field guard; depth 33 fails as `Syntax/Root`. Neither is an admissible proposal. |
+
+All tool-continuation cases assert known usage and exactly-once settlement/disposal
+for both leaves. The multiwindow control deliberately returns non-JSON `continue`
+at the first Stop leaf: this demonstrates parsing occurs after the final window;
+it does not demonstrate that a real provider honors JSON mode on intermediate
+windows. No new fixture, dataset, test source or suite inventory entry is needed.
+
+Static inspection agrees with the wire evidence: the bounded Worker client clones
+ChatOptions and changes MaxOutputTokens without removing ResponseFormat. The
+factory forwards those options to the actual SDK. JSON mode requests generic JSON,
+not the application's closed proposal schema. The deployed provider's compliance
+is not established by serialization controls.
+
+## Prompt and final text selection
+
+The prompt defines the exact closed schema, case sensitivity, explicit nullable
+members, integer rules, primary-file anchors and JSON without fences/prose. It
+requests a whole-file proposal when the application requests the final proposal,
+and says not to substitute a final proposal for unread windows. Every user window
+contains `finalWindow`, window ordinal/count and the source coordinates. The prompt
+does not explicitly equate `finalWindow: true` with that final request, and there
+is no separate final natural-language instruction. This is a clarity opportunity,
+not an established cause of the live syntax rejection. No prompt change is made.
+
+Each provider leaf starts a fresh text buffer. TextContent contributes to LastText;
+reasoning content is separately accounted and does not contribute to that buffer.
+The settled leaf replaces LastText even when empty. Only the last leaf after all
+source windows is passed to the proposal parser; whole history and initial tool
+prose are not concatenated into it. Empty Stop with no pending calls can therefore
+reach the JSON parser and receive Syntax/Root. Existing terminal guards continue
+to reject unsettled, length-limited or pending-call completions. Their absence in
+the live failure does not prove the actual text was complete JSON.
+
+The parser uses MaxDepth 32 before root/schema guards. Syntax/Root thus includes
+empty input, malformed JSON and excessive nesting. It cannot establish fences,
+prose, truncation, depth overflow or a provider defect on its own. There is no
+demonstrated need to raise the depth limit or repair/normalize model output.
+
+## Consolidated decision proposal (not implemented)
+
+No controlled SDK wire or final-text assembly defect was reproduced. Do not spend
+another full batch to obtain the same coarse rejection or apply a speculative
+prompt/schema/normalization fix. There is no retained raw response to replay.
+
+If Integrator chooses one further observation, approve it as one bounded operation
+with all needed content-free discriminators together:
+
+- Final leaf text empty/whitespace-only flags and strict UTF-8 byte count (nullable
+  if encoding fails), bound to the actual leaf passed to ParseProposal.
+- Fixed parser outcome: syntax invalid, proven depth limit, parsed object, parsed
+  array or parsed scalar. A depth label requires observing the depth boundary;
+  otherwise report depth indeterminate. Do not classify from exception messages.
+- Preserve the already available terminal, budget, tool and parser-stage facts;
+  no response fragments, dynamic keys, paths, indices, exception text or reasoning.
+
+A diagnostic-only bounded token walk on the rejected text could establish the
+33rd nesting open without changing acceptance. This is a proposed mechanism that
+needs its own reviewed controls, not existing capability or authority. If that
+observation cannot be established safely, retain indeterminate depth rather than
+parse with relaxed settings and accept the result. Empty output would focus the
+next assessment on final-leaf/provider behavior; proven excessive depth on the
+emitted structure; nonempty syntax failure would still require a separately
+authorized bounded inspection to distinguish malformed shapes. Counts alone do
+not establish fences or truncation.
+
+Any privileged local observation must be explicitly scoped by Integrator to the
+approved source/provider/spend and owned resource lifetime, with only the agreed
+fixed summary retained. Reuse its existing qualification fixture/resources and
+preserve the real execution path; do not create a second dataset, bypass acceptance
+or silently replace the batch with a new scheduling mode. This assessment grants
+no instrumentation, paid retry, native/host, source-root or PostgreSQL authority.
+Earlier retained partial CL remains untouched. The original run/session/provider,
+explicit roots, budget, trusted acceptance and reader authorization stay intact.
+
+## Verification and review
+
+Standard launcher, current build:
+
+```powershell
+pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberScanFileWorkerTests|FullyQualifiedName~OctoberScanExecutionScopeTests|FullyQualifiedName~OctoberScanGenerateRunnerTests' -TestTimeoutSeconds 300 -CommandTimeoutSeconds 900
+```
+
+Isolation `713d966f101f4845b6839990ac68f82f`: **199 selected, 199 passed, zero
+failed/skipped**, exit zero. Seven added characterization cases pass against
+unchanged production. Test policy and launcher regressions passed. This is
+controlled evidence only; PostgreSQL, native, provider and ordinary-reader
+qualification are not claimed. The separate test owner accepted the boundary.
+Independent review accepted the tests and assessment with no actionable findings;
+it confirmed the distinction between serialized requests, provider compliance and
+live-cause attribution. Build completed with zero errors; existing analyzer
+warnings remain. `git diff --check` passed. No production change was made.
