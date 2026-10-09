@@ -748,3 +748,14 @@ lookup failures `f792194df3a34415931a16af0f6fab6f` /
 Only the successful invocation's process-local PATH was adjusted and restored.
 No provider, PostgreSQL, native qualification or E2E was run for this correction.
 The full-suite failure remains open; the live BL grant remains consumed.
+
+### Corrected-selector live qualification authorized — October 9
+
+After the correction was committed at `abd371e1`, the user said **Proceed** in
+response to the proposed newly authorized live BL qualification. This authorizes
+one additional run under the previously stated unchanged synthetic AccountPolicy,
+DeepSeek endpoint/model, protected credential, 8-request/48,000-token ceilings,
+900/480/120/30-second limits and disposable PG17/Generator/Web/identity/tool/key
+cleanup boundaries. It does not authorize production sources, retained operation C
+or automatic retry. Prior grants remain consumed. The checkout was verified clean
+at `abd371e1`; the corrected source-coverage selector is the intended tested change.
