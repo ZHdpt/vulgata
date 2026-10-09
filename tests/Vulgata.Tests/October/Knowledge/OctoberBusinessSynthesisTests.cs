@@ -1,12 +1,16 @@
 using System.Collections.Immutable;
+using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.OctoberBusiness;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.DomainServices.OctoberScan;
 using Vulgata.Core.Entities.OctoberKnowledge;
+using ApiType = Vulgata.Core.Entities.ApiType;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.OctoberGenerator;
 using Vulgata.Tests.TestInfrastructure;
@@ -16,6 +20,96 @@ namespace Vulgata.Tests.October.Knowledge;
 
 public sealed class OctoberBusinessSynthesisTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("plain")]
+    [InlineData("answer-and-reasoning")]
+    [InlineData("reasoning-only")]
+    [InlineData("invalid-answer")]
+    public async Task ExecuteAsync_ActualSelectedSdkMapping_KeepsReasoningSeparateFromValidatedAnswerAsync(string shape)
+    {
+        var f = new SynthesisCase();
+        string answer = JsonSerializer.Serialize(f.Proposal());
+        using var transport = new SynthesisSdkResponseHandler(answer, shape);
+        using var client = await new OctoberWorkerClientFactory(new SynthesisSdkSecret(), transport).CreateAsync(
+            new("controlled-sdk-response", "only-source", new("selected-profile", ApiType.ChatCompletions,
+                "https://never-contacted.invalid/v1", "controlled-model", "credential://controlled-sdk"), "controlled-protected"));
+        var attemptClient = Assert.IsAssignableFrom<IOctoberBusinessAttemptClient>(client);
+        var clock = new SynthesisClock();
+        await using (var mappingScope = f.Scope(clock))
+        {
+            var admission = await mappingScope.AcquireProviderAttemptAsync(new(f.Run, f.Operation, Guid.NewGuid(),
+                BusinessWorkKind.Synthesis, "selected-profile", TimeSpan.FromSeconds(30), 40));
+            Assert.Equal(ProviderAdmissionStatus.Granted, admission.Status);
+            var lease = Assert.IsAssignableFrom<IOctoberProviderAttemptLease>(admission.Lease);
+            int dispatches = 0;
+            try
+            {
+                var mapped = await attemptClient.GetAttemptResponseAsync([new(ChatRole.User, "Controlled mapping probe.")],
+                    new ChatOptions { ResponseFormat = ChatResponseFormat.Json, Tools = [] }, lease, _ => dispatches++);
+                // Assertion diagnostics contain only role/type categories, never answer or reasoning values.
+                Assert.All(mapped.Messages, message => Assert.Equal(ChatRole.Assistant, message.Role));
+                var categories = mapped.Messages.SelectMany(message => message.Contents).Select(content => content.GetType().Name)
+                    .Order(StringComparer.Ordinal).ToArray();
+                string[] expected = shape switch
+                {
+                    "plain" => [nameof(TextContent)],
+                    "reasoning-only" => [nameof(TextReasoningContent)],
+                    _ => [nameof(TextContent), nameof(TextReasoningContent)]
+                };
+                Assert.Equal(expected, categories);
+                Assert.True(shape == "reasoning-only" ? string.IsNullOrEmpty(mapped.Text) :
+                    string.Equals(shape == "invalid-answer" ? "{" : answer, mapped.Text, StringComparison.Ordinal));
+                Assert.Equal(1, dispatches);
+            }
+            finally
+            {
+                ((IOctoberWorkerDispatchObserver)lease).CompleteDispatchObservation();
+                await lease.SettleAsync(new(10, 5, null, TimeSpan.Zero, TimeSpan.Zero, ProviderAttemptOutcome.Completed));
+                await lease.DisposeAsync();
+            }
+        }
+        await using var scope = f.Scope(clock);
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
+        Assert.Equal(2, transport.Calls);
+        Assert.Equal(10, Assert.Single(result.Attempts).InputTokens);
+        Assert.Equal(5, result.Attempts[0].OutputTokens);
+        if (shape is "reasoning-only" or "invalid-answer")
+        {
+            Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        }
+        else
+        {
+            Assert.NotNull(result.Content); Assert.NotNull(result.Proposal); Assert.NotNull(result.Dependencies);
+            Assert.Null(result.AdmissionFailure);
+            Assert.True(string.Equals(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal()),
+                OctoberKnowledgePolicy.SerializeCanonical(result.Proposal), StringComparison.Ordinal));
+            Assert.False(result.Content.ContentJson.Contains(SynthesisSdkResponseHandler.ReasoningMarker, StringComparison.Ordinal));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("tool")]
+    [InlineData("unknown")]
+    [InlineData("non-assistant")]
+    public async Task ExecuteAsync_ReasoningCompatibility_DoesNotPermitToolsUnknownContentOrOtherRolesAsync(string shape)
+    {
+        var f = new SynthesisCase();
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        List<AIContent> contents = [new TextContent(JsonSerializer.Serialize(f.Proposal())), new TextReasoningContent("Controlled non-answer metadata.")];
+        if (shape == "tool") contents.Add(new FunctionCallContent("controlled-call", "unexpected-tool", new Dictionary<string, object?>()));
+        if (shape == "unknown") contents.Add(new SynthesisUnknownContent());
+        var response = new ChatResponse(new ChatMessage(shape == "non-assistant" ? ChatRole.User : ChatRole.Assistant, contents))
+        { FinishReason = ChatFinishReason.Stop, Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5 } };
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(response));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal("ResponseShape", SynthesisDiagnosticProbe.Read(result));
+        Assert.Equal(1, client.Calls);
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("ordinal", "SectionOrder")]
@@ -556,6 +650,38 @@ public sealed class OctoberBusinessSynthesisTests
         Assert.Equal(1, client.Calls); Assert.Equal(1, client.PeakActive);
     }
 }
+
+/// <summary>Installed SDK over controlled HTTP only; response values are never written to diagnostics.</summary>
+internal sealed class SynthesisSdkResponseHandler(string answer, string shape) : HttpMessageHandler
+{
+    public const string ReasoningMarker = "controlled-private-non-answer-metadata";
+    public int Calls { get; private set; }
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Calls++;
+        var message = new JsonObject { ["role"] = "assistant", ["content"] = shape == "reasoning-only" ? null : shape == "invalid-answer" ? "{" : answer };
+        if (shape != "plain") message["reasoning_content"] = shape is "reasoning-only" or "invalid-answer" ? answer : ReasoningMarker;
+        string json = JsonSerializer.Serialize(new
+        {
+            id = "controlled-sdk", @object = "chat.completion", created = 1, model = "controlled-model",
+            choices = new[] { new { index = 0, message, finish_reason = "stop" } },
+            usage = new { prompt_tokens = 10, completion_tokens = 5, total_tokens = 15 }
+        });
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+    }
+}
+internal sealed class SynthesisSdkSecret : ISecretEncryptionService
+{
+    public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public Task<string> DecryptAsync(string purpose, string cipher, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Assert.True(cipher == "controlled-protected");
+        return Task.FromResult("controlled-synthetic-token");
+    }
+}
+internal sealed class SynthesisUnknownContent : AIContent { }
 
 /// <summary>Controlled accepted-input fixture; real pure planner and real host scope, without source/provider runtime qualification.</summary>
 internal sealed class SynthesisCase

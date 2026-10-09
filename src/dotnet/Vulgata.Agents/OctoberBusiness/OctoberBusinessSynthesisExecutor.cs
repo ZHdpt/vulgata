@@ -173,7 +173,7 @@ public sealed class OctoberBusinessSynthesisExecutor
                         else if (response.FinishReason != ChatFinishReason.Stop)
                             failureReason = response.FinishReason == ChatFinishReason.Length
                                 ? BusinessSynthesisFailureReason.ResponseLengthLimit : BusinessSynthesisFailureReason.FinishReasonNotStop;
-                        else if (!response.Messages.All(x => x.Role == ChatRole.Assistant && x.Contents.All(c => c is TextContent or UsageContent)))
+                        else if (!response.Messages.All(x => x.Role == ChatRole.Assistant && x.Contents.All(c => c is TextContent or UsageContent or TextReasoningContent)))
                             failureReason = BusinessSynthesisFailureReason.ResponseShape;
                         else if (_utf8.GetByteCount(response.Text) > OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes)
                             failureReason = BusinessSynthesisFailureReason.ResponsePayloadLimit;
