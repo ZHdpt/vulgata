@@ -188,12 +188,19 @@ public sealed partial class OctoberHostSelectionTests
             OctoberOperatorRootSelectionResponse? response = null;
             string temporary = Path.Combine(directory, "operator-response.tmp");
             bool ownsTemporary = false;
+            bool published = false;
+            string stage = "waiting-request";
+            var elapsed = Stopwatch.StartNew();
+            void Report(string reason) => _output.WriteLine(
+                $"bl-operator: stage={stage}; reason={reason}; request-present={request is not null}; response-present={response is not null}; response-published={published}; candidates={(request is null || request.Candidates.IsDefault ? 0 : request.Candidates.Length)}; elapsed-ms={elapsed.ElapsedMilliseconds}");
             try
             {
                 string path = Path.Combine(directory, "root-selection.request.json");
                 while (!File.Exists(path)) { token.ThrowIfCancellationRequested(); await Task.Delay(25, token); }
+                stage = "contained-file-check";
                 _ = OctoberGenerateFixtureInputs.ValidateFiles(OwnedRoot, "generate", inputs.Files.RuntimeFilePath,
                     inputs.Files.ScanPolicyFilePath, path, false);
+                stage = "request-read-parse";
                 await using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
                 {
                     if (stream.Length is <= 0 or > 1024 * 1024) throw new InvalidOperationException();
@@ -202,21 +209,26 @@ public sealed partial class OctoberHostSelectionTests
                     RejectDuplicateBlProperties(json.RootElement);
                     request = json.RootElement.Deserialize<OctoberOperatorRootSelectionRequest>(BlJson) ?? throw new InvalidOperationException();
                 }
+                stage = "request-shape";
                 if (request.Version != 1 || request.RequestId == Guid.Empty || request.RunId == Guid.Empty || request.CorpusId == Guid.Empty
                     || request.ExpiresAtUtc <= DateTimeOffset.UtcNow || request.Candidates.IsDefaultOrEmpty || request.Candidates.Length > 1024
                     || request.Candidates.Any(x => x is null || x.UnitId == Guid.Empty || x.Document is null
                         || x.Document.BatchId != BatchId || x.RepositoryId != RepositoryId || x.RelativePath != inputs.Source.RelativePath)
                     || request.Candidates.Select(x => x.UnitId).Distinct().Count() != request.Candidates.Length)
                     throw new InvalidOperationException();
+                stage = "source-provenance";
                 _ = await ResolveGeneratedOriginAsync(token);
                 await using (var context = CreateOctoberContext())
                 {
+                    stage = "corpus-binding";
                     var corpus = await context.CorpusSelections.AsNoTracking().SingleAsync(x => x.BatchId == BatchId && x.CorpusId == request.CorpusId, token);
                     foreach (var candidate in request.Candidates)
                     {
+                        stage = "candidate-corpus-binding";
                         if (!await context.CorpusDocuments.AsNoTracking().AnyAsync(x => x.BatchId == BatchId && x.CorpusId == corpus.CorpusId
                             && x.LogicalDocumentId == candidate.Document.LogicalDocumentId && x.VersionId == candidate.Document.DocumentVersionId, token))
                             throw new InvalidOperationException();
+                        stage = "candidate-unit-binding";
                         var logical = await context.LogicalDocuments.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
                             && x.LogicalDocumentId == candidate.Document.LogicalDocumentId, token);
                         var unit = await context.CodeUnits.AsNoTracking().SingleAsync(x => x.BatchId == BatchId && x.UnitId == candidate.UnitId, token);
@@ -227,24 +239,30 @@ public sealed partial class OctoberHostSelectionTests
                             throw new InvalidOperationException();
                     }
                 }
+                stage = "operator-callback";
                 using var expiry = CancellationTokenSource.CreateLinkedTokenSource(token);
                 expiry.CancelAfter(request.ExpiresAtUtc - DateTimeOffset.UtcNow);
                 _blOperatorRequest = request;
                 var ids = await select(request, expiry.Token);
                 expiry.Token.ThrowIfCancellationRequested();
+                stage = "response-validation";
                 if (ids.IsDefault || ids.Length != 1 || !request.Candidates.Any(x => x.UnitId == ids[0])) throw new InvalidOperationException();
                 response = new(1, request.RequestId, request.RunId, ids);
                 byte[] payload = JsonSerializer.SerializeToUtf8Bytes(response, BlJson);
                 if (payload.Length > 64 * 1024) throw new InvalidOperationException();
+                stage = "response-temp-write";
                 await using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 { ownsTemporary = true; await output.WriteAsync(payload, expiry.Token); await output.FlushAsync(expiry.Token); }
                 expiry.Token.ThrowIfCancellationRequested();
+                stage = "response-atomic-publish";
                 File.Move(temporary, Path.Combine(directory, "root-selection.response.json"), false);
                 ownsTemporary = false;
+                published = true;
+                Report("completed");
                 return (request, response, null);
             }
-            catch (OperationCanceledException) { return (request, response, "operator-cancelled-or-expired"); }
-            catch (Exception) { return (request, response, "operator-exchange-rejected"); }
+            catch (OperationCanceledException) { Report("cancelled-or-expired"); return (request, response, "operator-cancelled-or-expired"); }
+            catch (Exception) { Report("rejected"); return (request, response, "operator-exchange-rejected"); }
             finally { _blOperatorRequest = null; if (ownsTemporary && File.Exists(temporary)) File.Delete(temporary); }
         }
 
@@ -252,10 +270,18 @@ public sealed partial class OctoberHostSelectionTests
         internal async Task<Guid> ResolveApprovedRegistrationRootAsync(OctoberOperatorRootSelectionRequest request,
             CancellationToken cancellationToken = default)
         {
+            string stage = "held-request";
+            string reason = "rejected";
+            int inspected = 0, invalidOrigin = 0, withinMethod = 0, coversDeclaration = 0, coversReturn = 0, eligible = 0;
+            var elapsed = Stopwatch.StartNew();
+            void Report() => _output.WriteLine($"bl-registration-selector: stage={stage}; reason={reason}; offered={(request is null || request.Candidates.IsDefault ? 0 : request.Candidates.Length)}; inspected={inspected}; invalid-origin={invalidOrigin}; within-method={withinMethod}; covers-declaration={coversDeclaration}; covers-return={coversReturn}; eligible={eligible}; elapsed-ms={elapsed.ElapsedMilliseconds}");
+            try
+            {
             cancellationToken.ThrowIfCancellationRequested();
             if (!ReferenceEquals(request, _blOperatorRequest) || _blPrepared is not { } prepared
                 || request.ExpiresAtUtc <= DateTimeOffset.UtcNow || prepared.Source.RelativePath != "AccountPolicy.java")
                 throw new InvalidOperationException("No held approved synthetic operator request exists.");
+            stage = "source-validation";
             string path = Path.Combine(OwnedSourceRoot, prepared.Source.RelativePath);
             _ = OctoberGenerateFixtureInputs.ValidateFiles(OwnedRoot, "generate", prepared.Files.RuntimeFilePath,
                 prepared.Files.ScanPolicyFilePath, path, false);
@@ -263,6 +289,7 @@ public sealed partial class OctoberHostSelectionTests
             string[] lines = new UTF8Encoding(false, true).GetString(bytes).Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
             if (Convert.ToHexString(SHA256.HashData(bytes)) != prepared.Source.SourceDigest)
                 throw new InvalidOperationException("The approved synthetic registration source has changed.");
+            stage = "method-snippet";
             int[] declarations = Enumerable.Range(0, Math.Max(0, lines.Length - 2)).Where(index =>
                 lines[index].Trim() == "public static boolean canRegister(boolean phoneVerified, boolean accountExists) {"
                 && lines[index + 1].Trim() == "return phoneVerified && !accountExists;"
@@ -270,11 +297,14 @@ public sealed partial class OctoberHostSelectionTests
             if (declarations.Length != 1)
                 throw new InvalidOperationException("The approved synthetic registration method is absent or ambiguous.");
             int declarationLine = declarations[0] + 1, returnLine = declarationLine + 1, endLine = declarationLine + 2;
+            stage = "source-provenance";
             PreparedOrigin origin = await ResolveGeneratedOriginAsync(cancellationToken);
             await using var context = CreateOctoberContext();
             List<Guid> matches = [];
             foreach (var candidate in request.Candidates)
             {
+                stage = "candidate-document";
+                inspected++;
                 var corpusDocument = await context.CorpusDocuments.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
                     && x.CorpusId == request.CorpusId && x.LogicalDocumentId == candidate.Document.LogicalDocumentId
                     && x.VersionId == candidate.Document.DocumentVersionId, cancellationToken);
@@ -283,17 +313,34 @@ public sealed partial class OctoberHostSelectionTests
                     cancellationToken);
                 if (version.Kind != DocumentKind.CodeLogic || version.ManifestId != corpusDocument.ManifestId)
                     throw new InvalidOperationException("The offered candidate is not exact accepted Code Logic.");
+                stage = "candidate-anchors";
                 var anchors = JsonSerializer.Deserialize<ImmutableArray<Vulgata.Core.DomainServices.OctoberKnowledge.SourceAnchor>>(version.AnchorsJson, BlJson);
                 if (anchors.IsDefaultOrEmpty || anchors.Any(anchor => anchor is null || anchor.Origin != origin))
+                {
+                    invalidOrigin++;
+                    reason = "candidate-origin-invalid";
                     throw new InvalidOperationException("The offered candidate has unexpected source origins.");
+                }
+                if (anchors.All(anchor => anchor.StartLine >= declarationLine && anchor.EndLine <= endLine && anchor.StartLine <= anchor.EndLine)) withinMethod++;
+                if (anchors.Any(anchor => anchor.StartLine <= declarationLine && anchor.EndLine >= declarationLine)) coversDeclaration++;
+                if (anchors.Any(anchor => anchor.StartLine <= returnLine && anchor.EndLine >= returnLine)) coversReturn++;
                 if (anchors.All(anchor => anchor.StartLine >= declarationLine && anchor.EndLine <= endLine && anchor.StartLine <= anchor.EndLine)
                     && anchors.Any(anchor => anchor.StartLine <= declarationLine && anchor.EndLine >= declarationLine)
                     && anchors.Any(anchor => anchor.StartLine <= returnLine && anchor.EndLine >= returnLine))
-                    matches.Add(candidate.UnitId);
+                { matches.Add(candidate.UnitId); eligible++; }
             }
+            stage = "unique-registration-root";
             if (matches.Count != 1)
+            {
+                reason = matches.Count == 0 ? "registration-absent" : "registration-ambiguous";
                 throw new InvalidOperationException("The offered registration root is absent or ambiguous.");
+            }
+            reason = "selected";
+            Report();
             return matches[0];
+            }
+            catch (OperationCanceledException) { reason = "cancelled-or-expired"; Report(); throw; }
+            catch (Exception) { Report(); throw; }
         }
 
         private static void RejectDuplicateBlProperties(JsonElement element)

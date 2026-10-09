@@ -654,3 +654,18 @@ All Chat cases passed. The remaining failure is Scan's
 `ForeignConcurrentExecution_CannotMutateActiveOriginalFileCoverageAsync` at its
 line-139 wait (13.9045-second test); Scan owns separate controlled diagnosis.
 No full-suite GREEN or timing waiver is claimed.
+
+Safe BL fixture diagnostics are now independently reviewed and compiled: fixed
+stage/reason codes, flags/counts and monotonic elapsed time are emitted before
+cleanup, with no raw model/source content, identifiers or secrets. The selector,
+limits and assertions are unchanged. Affected source-free verification passes
+26/26 in `f37822dfc1f8439c896f84b12dce8686`; it does not execute the live fixture.
+Explorer's matching assertion diagnostics were imported at `34940125`.
+
+Scan reports a reviewed controlled pair passing 2/2 in
+`8a9ce4e107784656bedc3b488934c663`: observed request plus rejected/no response
+reproduces the hidden-count Interrupted report, while owned SQLite retains one
+accepted file and one frozen corpus; valid response completes normally. This
+demonstrates the mechanism, not the original live rejection reason. Its owner
+checkpoint is pending import. Another live diagnostic attempt requires new user
+approval; the earlier grant remains consumed.
