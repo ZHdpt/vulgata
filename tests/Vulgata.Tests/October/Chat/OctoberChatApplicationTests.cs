@@ -271,16 +271,20 @@ public sealed class OctoberChatApplicationTests
         fixture.EnqueueComplete(Text("会话乙回答。") + Stop + Done);
         fixture.Application.Attach(callback => callback().AsTask());
         Assert.True(await fixture.Application.OpenAsync(fixture.Conversation));
+        int requestsBeforeA = fixture.RequestBodies.Count;
+        long startedA = Stopwatch.GetTimestamp();
         var first = Assert.IsType<OctoberChatCoordinationResult>(await fixture.Application.SubmitAsync("会话甲问题")
             .WaitAsync(TimeSpan.FromSeconds(10)));
-        var a = first.Terminal!.Receipt!;
+        var a = RequireSuccessfulSetup(first, "A", "会话甲回答。", requestsBeforeA, startedA);
         fixture.Application.Detach();
         var secondAttachment = await fixture.CreateReattachmentAsync();
         secondAttachment.Application.Attach(callback => callback().AsTask());
         Assert.True(await secondAttachment.Application.OpenAsync(secondAttachment.Entry.Conversation!));
+        int requestsBeforeB = fixture.RequestBodies.Count;
+        long startedB = Stopwatch.GetTimestamp();
         var second = Assert.IsType<OctoberChatCoordinationResult>(await secondAttachment.Application.SubmitAsync("会话乙问题")
             .WaitAsync(TimeSpan.FromSeconds(10)));
-        var b = second.Terminal!.Receipt!;
+        var b = RequireSuccessfulSetup(second, "B", "会话乙回答。", requestsBeforeB, startedB);
         secondAttachment.Application.Detach();
 
         var reload = await fixture.CreateReattachmentAsync();
@@ -327,6 +331,27 @@ public sealed class OctoberChatApplicationTests
         Assert.Equal(beforeUnavailable, fixture.OpenRequests.Count);
         Assert.Equal(2, fixture.RequestBodies.Count);
         Assert.Empty(page.FindAll("#chat-question"));
+
+        DialogueTerminalReceipt RequireSuccessfulSetup(OctoberChatCoordinationResult result, string label,
+            string expectedAnswer, int requestsBefore, long started)
+        {
+            var terminal = result.Terminal;
+            var receipt = terminal?.Receipt;
+            var projection = terminal?.Projection;
+            bool succeeded = result.State == DialogueTurnState.Completed &&
+                terminal?.Status is DialogueStatus.Succeeded or DialogueStatus.Existing &&
+                receipt is { TerminalState: DialogueTerminalState.Completed, Reason: DialogueTerminalReason.None } &&
+                projection is { TerminalState: DialogueTerminalState.Completed, Reason: DialogueTerminalReason.None } &&
+                string.Equals(projection.AnswerText, expectedAnswer, StringComparison.Ordinal);
+            if (!succeeded)
+            {
+                // Fail at invalid setup, before navigation can disguise a failed turn as a render delay.
+                // Never include the actual or expected answer, request body, identifiers or capabilities.
+                string snapshot = FormattableString.Invariant($"turn={label}; submitMs={Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1}; beginStatus={result.Begin.Status}; mayDispatch={result.Begin.MayDispatch}; state={result.State}; terminalStatus={terminal?.Status}; receiptPresent={receipt is not null}; terminalState={receipt?.TerminalState}; terminalReason={receipt?.Reason}; projectionPresent={projection is not null}; projectionAnswerLength={projection?.AnswerText?.Length}; saveStatus={fixture.LastSaveResult?.Status}; saveState={fixture.LastSaveRequest?.TerminalState}; saveReason={fixture.LastSaveRequest?.Reason}; providerFinish={fixture.LastSaveRequest?.ProviderFinish}; saveAnswerLength={fixture.LastSaveRequest?.AnswerText?.Length}; requestsBefore={requestsBefore}; requestsAfter={fixture.RequestBodies.Count}; requestsForTurn={fixture.RequestBodies.Count - requestsBefore}; activeRegistrations={fixture.Registry.ActiveRegistrations}; activeRequests={fixture.Requests.ActiveRequests}; disposedScopes={fixture.DisposedScopes}");
+                Assert.True(succeeded, "Controlled navigation setup did not produce its required completed answer. " + snapshot);
+            }
+            return receipt!;
+        }
     }
 
     [Trait("Suite", "SelfContained")]
