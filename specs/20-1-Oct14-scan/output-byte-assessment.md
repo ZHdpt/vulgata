@@ -1,6 +1,7 @@
 # Output-byte accounting assessment
 
-2026-10-09. Assessment only: production and limits are unchanged. Base Scan
+2026-10-09. The original assessment below left production and limits unchanged;
+the subsequently authorized correction and its evidence follow at the end. Base Scan
 `b5aff0ef0737dae0a8d9296d947976097e1f31c3` matches the affected production in
 integration `449e00bf874c9e864b5a848369d891e33bade4cc`.
 
@@ -153,3 +154,85 @@ no new qualification dataset, native/provider/PostgreSQL operation or runtime
 resource binding was introduced. The next decision is the explicit bounded
 accounting correction above, followed by its own RED/GREEN and review. Paid repeats
 and any claim about the latest live byte contributors remain held.
+
+## Authorized bounded correction
+
+After assessment commit `d3240f85fc3a24cfa530268661dbf381414b2721`, OCT-Integrator
+(`01a1109d-ec4c-7500-8b73-642a5e22f59b`) explicitly approved the correction above,
+including informational-call and payload-bearing usage-metadata gap closure.
+Integration records the decision at `1b1306398df749830285481ad4b4290cb42be9a4`;
+its executor and Worker tests match this lane's committed baseline. No reset or
+replacement of the completed implementation was needed.
+The original assessment and measurements remain historical evidence. The approved
+write boundary is the executor accounting helpers, existing Worker tests and this
+record, with separate test/production owners, RED/GREEN and independent review.
+Measurement must itself be bounded by the remaining allowance; it must not create
+an arbitrarily large serialized representation merely to measure its size.
+No provider configuration, shared contract, schema, tool capability or execution
+limit change is authorized. Real provider/native/PostgreSQL/source-root operations
+remain with Integrator; the controlled defect is not proof of the last live run's
+byte contributors. Verification and review for the correction are recorded below
+when complete.
+
+The first correction build (`5d784608949743059c02180f84d73e69`) caught a test-only
+attempt to subclass sealed SDK `TextContent`; that impossible case was removed,
+with unknown-content coverage preserved. This build failure was not behavioral RED.
+Behavioral RED on unchanged production is `841f889d2c9c4a23a34d42cc318e190d`:
+**180 selected, 165 passed, 15 failed, zero skipped**, build zero errors. Failures
+cover reasoning fragmentation/exact cap, ignored informational/text/usage metadata,
+malformed scalar handling, cyclic/deep metadata and missing bounded traversal.
+
+Initial correction GREEN is `8ef779d7726543e5adc82869b62d7069`: **184/184 passed**,
+zero failures/skips and build zero errors. After RED, the traversal probe gained a
+valid final proposal/terminal (the omitted metadata previously led to a missing
+terminal), and four exact metadata/informational-charge controls were added.
+Those added controls are GREEN coverage, not claimed as separate RED evidence.
+
+Recognized text and opaque reasoning strings now use strict UTF-8. Present
+annotations/additional properties are charged as their serialized collections;
+usage `AdditionalCounts` is charged too. Fixed usage counters are observed before
+metadata charging, so actually observed usage survives a later metadata failure.
+Informational calls charge their full polymorphic JSON without executable authority.
+Executable arguments and tool results retain their original serialized byte costs.
+
+Structured measurement uses a private bounded buffer and charges actual written
+bytes, not reservation sizes. Scratch reservations are limited to 18 times the
+remaining allowance plus 4 KiB (sixfold escaping and conservative threefold
+transcoding reservation). Strings are checked before escaping; retained
+`JsonElement` content is checked against six times the remaining allowance plus
+4 KiB before writing/unescaping, without a new DOM or full string copy. Unsupported
+content fails closed. These are finite measurement bounds, not a raw-wire,
+exact peak-memory or scan-time guarantee: reading an already-retained oversized
+scalar still takes work. Serializer metadata resolution and trusted host getters
+are not a general sandbox for arbitrary CLR execution.
+
+Independent review identified that arbitrary custom CLR metadata converters could
+bypass the string precheck by writing directly. A finite, source-free converter
+probe established RED at `3fb9e30da66d4149aae0673422c4b936` (**one selected, one
+failed**, unexpectedly completed). This is a trusted-host extensibility case, not
+evidence that provider JSON can instantiate CLR converter types. A measurement-only
+type/property converter guard rejects unsupported converters before their `Write`
+method is invoked; built-in serialization and the two bounded converters remain
+available. Metadata resolution/getters are still not sandboxed. A property-level
+control supplements the initial type-level RED.
+
+Final expanded controlled run `f60d5b3cbab2443b888176ebc1ae846d` selected all
+October Scan SelfContained tests: **727 selected, 726 passed, one failed, zero
+skipped**, build zero errors. All **187/187** affected Worker/ExecutionScope/
+GenerateRunner checks passed, including both custom-converter rejection cases and
+the built-in property-converter exact-cap compatibility control.
+
+The broader run is **not GREEN**: unchanged
+`OctoberScanBusinessTransportTests.ActualExecutor_DelayBeforeFactoryFinalGuard_CannotSpendAnOldRateReservationAsync`
+failed at line 204 (expected two HTTP calls, observed one). Its path invokes
+`OctoberResolutionExecutor`, not the modified file Worker. Integrator received the
+failure; its assertions and timing were not changed. The same case passed alone
+at `7d606bccf57b4a03b616ee5c82e26011` (**1/1**, zero failures/skips). That isolated
+pass neither explains nor erases the expanded-run failure. Independent review accepts the owned accounting boundary on
+187/187 affected GREEN; it does not waive the broader failure.
+
+The correction remains confined to the executor, existing Worker tests and this
+record. No shared bindings, migrations, provider settings or runtime permissions
+changed. Integrator owns integration and any subsequent real qualification; the
+last live run's byte contributors and native JDT fallback remain unproven by this
+controlled evidence. Earlier retained partial CL and resources remain untouched.
