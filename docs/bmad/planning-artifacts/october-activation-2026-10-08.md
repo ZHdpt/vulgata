@@ -473,3 +473,20 @@ Generate stub; orchestration and dependency assertions remain owner work.
 Current compilation and the existing affected SelfContained selection pass
 **26/26**, run `ef63d2749a5f4049a79d290152de5cc6`, with 436 classified files.
 This is compilation/controlled evidence only, not executed BL E2E qualification.
+
+### Multi-file uncertainty owner correction integrated
+
+Reviewed Business checkpoint `fc449f03` is imported at `3b74c758`. The existing
+payload-only publication request may select a complete multiset of identical file
+uncertainties while preserving every manifest/key identity. Partial/excess counts
+remain invalid; resolution selection, digests, authorization and schema are unchanged.
+Scan must retain each occurrence rather than deduplicate or rename uncertainties.
+
+Main's combined affected selection passes **130/130**, zero failures/skips, run
+`8b63c38e682949cb95e353de1d33d660`, on source checkpoint `3b74c758` (build zero errors,
+existing warnings retained). This includes publication/resolution/flow/disclosure
+and unchanged Chat application tests. It is not full-suite GREEN or PostgreSQL proof.
+Business's full run `b82cd8568e5e49f5832593ce15a1db13` remains **4,123/4,124**, with
+an initial Chat SubmitAsync ten-second timeout before unknown-locator assertions.
+Focused nonreproduction does not explain it. Chat owns bounded failure diagnostics
+preserving that assertion and timeout; no production correction or waiver is claimed.
