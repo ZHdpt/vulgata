@@ -332,3 +332,24 @@ Fresh `phone-5dabccf9027c`, batch `021f168d-97e4-4cbf-9f3e-201da9c862d6`, databa
   text/call arguments/tool-result contributions. No limit increase, reasoning
   exclusion, production edit or paid retry before an evidence-backed decision.
 - Earlier partial acceptedCL database/keys remain retained; no successful publication.
+
+## Byte-accounting correction decision
+
+Reviewed test-only `d3240f85` integrated as `723f6fce`. Lane controlled164/164 GREEN
+proves chunk-envelope inflation: identical7,500-byte ASCII reasoning plus413-byte
+finaltext costs8,012 bytes in one delta versus750,413 in7,500 deltas, both below
+the existing update-count cap. Chinese/emoji comparisons likewise reproduce it.
+This proves a defect, not the last live run's exact byte contributors.
+
+Integrator approved strictUTF8 charging for recognized text/reasoning while keeping
+the same262,144-byte file-global cap. Opaque ProtectedData, payload-bearing metadata
+on both text types, executable arguments and full toolresults remain charged.
+Informational calls remain non-executable but their serialized payload counts;
+extensible usage metadata counts while fixednumericusage retains its existing role.
+Unknown/unmeasurable payloads remain bounded or failclosed. Measurement itself must
+be bounded; no arbitrary large temporary serialization/newgeneralframework.
+
+No update/input/provider-token/tool/lifetime/settlement limit, retry, acceptance or
+authority change. Executor helpers/existingtests/assessment only, separate owners,
+RED/GREEN and independent review. Paid/native/PG/source-root operations remain held
+until root accepts a reviewed implementation and decides qualification.
