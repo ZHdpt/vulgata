@@ -41,7 +41,9 @@ failed Interrupted without successful operator selection/publication after one p
 (2,095 input/2,889 output tokens); all owned resources were removed. The one-run
 grant is consumed, with no automatic retry. Scan owns interruption diagnosis;
 hidden zero report counts do not establish absence of accepted CL. Safe fixture
-stage diagnostics are pending before any separately approved repeat.
+stage diagnostics and a controlled no-response reproducer are now integrated and
+compiled (75/75 affected checks, `262bd0272fed4e79b66657488b2ab783`). Another live
+diagnostic attempt is awaiting separate user approval; no repeat has started.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).

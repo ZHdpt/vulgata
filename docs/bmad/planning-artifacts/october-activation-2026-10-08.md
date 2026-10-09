@@ -666,6 +666,13 @@ Scan reports a reviewed controlled pair passing 2/2 in
 `8a9ce4e107784656bedc3b488934c663`: observed request plus rejected/no response
 reproduces the hidden-count Interrupted report, while owned SQLite retains one
 accepted file and one frozen corpus; valid response completes normally. This
-demonstrates the mechanism, not the original live rejection reason. Its owner
-checkpoint is pending import. Another live diagnostic attempt requires new user
+demonstrates the mechanism, not the original live rejection reason. Owner checkpoint
+`2265978d` is imported at `706c9284`. Another live diagnostic attempt requires new user
 approval; the earlier grant remains consumed.
+
+Main combined affected verification of the imported operator pair and reader/binding
+checks passes **75/75**, zero failures/skips, in
+`262bd0272fed4e79b66657488b2ab783`. Compilation passed with 439 classified sources.
+The diagnostic fixture itself has not been rerun live. A concrete request for one
+additional attempt under the same synthetic/provider/resource ceilings was presented
+to the user; approval is pending, not inferred from previous grants.
