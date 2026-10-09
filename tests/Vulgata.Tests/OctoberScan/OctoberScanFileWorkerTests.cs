@@ -795,13 +795,14 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     private sealed class Scope : IOctoberWorkerExecutionScope
     {
         internal bool Denied;
+        internal Exception? SettleFailure, DisposeFailure;
         internal List<OctoberWorkerProviderAttemptRequest> Requests { get; } = [];
         internal List<Lease> Leases { get; } = [];
         public Task<ProviderAdmission> AcquireWorkerAttemptAsync(OctoberWorkerProviderAttemptRequest request, CancellationToken cancellationToken = default)
         {
             Requests.Add(request);
             if (Denied) return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.Denied, null));
-            var lease = new Lease(request.AttemptId); Leases.Add(lease);
+            var lease = new Lease(request.AttemptId) { SettleFailure = SettleFailure, DisposeFailure = DisposeFailure }; Leases.Add(lease);
             return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.Granted, lease));
         }
     }
@@ -814,13 +815,15 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         internal ProviderAttemptUsage? Usage { get; private set; }
         internal int Checks { get; private set; }
         internal int DenyAfterChecks { get; init; } = int.MaxValue;
+        internal Exception? SettleFailure { get; init; }
+        internal Exception? DisposeFailure { get; init; }
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default)
         {
             Checks++;
             return Task.FromResult(Checks <= DenyAfterChecks ? ProviderAdmissionStatus.Granted : ProviderAdmissionStatus.Denied);
         }
-        public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default) { Settlements++; Usage = usage; return Task.CompletedTask; }
-        public ValueTask DisposeAsync() { Disposals++; return ValueTask.CompletedTask; }
+        public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default) { Settlements++; Usage = usage; if (SettleFailure is not null) throw SettleFailure; return Task.CompletedTask; }
+        public ValueTask DisposeAsync() { Disposals++; if (DisposeFailure is not null) throw DisposeFailure; return ValueTask.CompletedTask; }
     }
     private sealed class Secrets : ISecretEncryptionService
     {
@@ -966,14 +969,126 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(expected, result.TerminalFailure); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         Assert.Null(result.Proposal); Assert.Equal(0, toolCalls); Assert.Equal(1, client.Calls);
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing-argument")]
+    [InlineData("tool-invalid-operation")]
+    [InlineData("cyclic-result")]
+    [InlineData("raw-cyclic-result")]
+    [InlineData("tool-not-supported")]
+    [InlineData("normal")]
+    public async Task ActualSdk_ToolInvocationBoundary_ReportsSafeObservedOutcomeAsync(string condition)
+    {
+        using var transport = new FragmentedToolHttp { MissingRequiredArgument = condition == "missing-argument" };
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        int invoked = 0;
+        object Invoke(string relativePath)
+        {
+            invoked++;
+            Assert.Equal("src/Order.cs", relativePath);
+            if (condition == "tool-invalid-operation") throw new InvalidOperationException("PRIVATE_CONTROLLED_TOOL_FAILURE");
+            if (condition == "tool-not-supported") throw new NotSupportedException("PRIVATE_CONTROLLED_UNSUPPORTED");
+            if (condition is "cyclic-result" or "raw-cyclic-result") { var cycle = new CyclicToolResult(); cycle.Next = cycle; return cycle; }
+            return "contained result";
+        }
+        AIFunction tool = AIFunctionFactory.Create((Func<string, object>)Invoke, "read_prepared_source");
+        if (condition == "raw-cyclic-result") tool = new RawResultFunction(tool, () => Invoke("src/Order.cs"));
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        output.WriteLine("case={0}; status={1}; stage={2}; terminal={3}; budget={4}; retry={5}; requests={6}; invoked={7}; settledTools={8}",
+            condition, result.Status, result.FailureStage?.ToString() ?? "none", result.TerminalFailure?.ToString() ?? "none",
+            result.BudgetFailure?.ToString() ?? "none", result.RetryDisposition, transport.Calls, invoked, result.SettledToolCalls);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(condition == "normal" ? 2 : 1, transport.Calls);
+        Assert.Equal(condition == "missing-argument" ? 0 : 1, invoked);
+        Assert.Equal(condition == "normal" ? 1 : 0, result.SettledToolCalls);
+        Assert.Equal(transport.Calls, scope.Leases.Count);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+        var firstUsage = Assert.IsType<ProviderAttemptUsage>(scope.Leases[0].Usage);
+        Assert.Equal(20, firstUsage.InputTokens); Assert.Equal(10, firstUsage.OutputTokens);
+        output.WriteLine("firstInput={0}; firstOutput={1}; firstSettlements={2}; firstDisposals={3}", firstUsage.InputTokens, firstUsage.OutputTokens, scope.Leases[0].Settlements, scope.Leases[0].Disposals);
+        if (condition == "normal") { Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.NotNull(result.Proposal); Assert.Null(result.FailureStage); }
+        else
+        {
+            Assert.Equal(condition is "missing-argument" or "cyclic-result" or "raw-cyclic-result" ? OctoberFileWorkerStatus.InvalidOutput : OctoberFileWorkerStatus.ProviderFailed, result.Status);
+            Assert.Equal(condition == "raw-cyclic-result" ? OctoberWorkerFailureStage.ToolResultSerialization : OctoberWorkerFailureStage.ToolInvocation, result.FailureStage);
+            Assert.Null(result.Proposal);
+        }
+    }
+
+    // Default AIFunctionFactory marshals inside InvokeAsync. This transparent declaration wrapper
+    // returns a raw result instead, isolating the executor's own post-invocation serializer.
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SourceVerificationException_ReportsActualBoundaryBeforeOrAfterToolAsync(bool afterTool)
+    {
+        bool toolReturned = false;
+        var frame = new Frame("if (enabled) Run();\nreturn;") { Verify = _ => !afterTool || toolReturned ? throw new InvalidOperationException("PRIVATE_SOURCE_CHECK") : Task.FromResult(true) };
+        var tool = AIFunctionFactory.Create(() => { toolReturned = true; return "contained"; }, "read_prepared_source");
+        using var client = new ScriptedClient([new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("controlled", tool.Name, new Dictionary<string, object?>())])]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(frame), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.SourceVerification, result.FailureStage);
+        Assert.Equal(afterTool, toolReturned); Assert.Equal(afterTool ? 1 : 0, client.Requests.Count);
+        Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SuccessfulToolThenTransportFailure_DoesNotRetainPriorToolPhaseAsync()
+    {
+        using var transport = new FragmentedToolHttp { FailSecondRequest = true };
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        int calls = 0;
+        var tool = AIFunctionFactory.Create((string relativePath) => { calls++; return "contained"; }, "read_prepared_source");
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status); Assert.Equal(OctoberWorkerFailureStage.Transport, result.FailureStage);
+        Assert.Equal(1, calls); Assert.Equal(2, transport.Calls); Assert.Equal(1, result.SettledToolCalls);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Null(result.Proposal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("settle")]
+    [InlineData("dispose")]
+    [InlineData("replace-stream")]
+    [InlineData("dispose-replaces-settle")]
+    public async Task AttemptSettlementException_ClassifiesEscapingFinallyWithoutChangingOutcomeAsync(string defect)
+    {
+        var scope = new Scope
+        {
+            SettleFailure = defect is "settle" or "replace-stream" ? new InvalidOperationException("PRIVATE_SETTLE") : defect == "dispose-replaces-settle" ? new InvalidDataException("PRIVATE_PRIOR_SETTLE") : null,
+            DisposeFailure = defect is "dispose" or "dispose-replaces-settle" ? new InvalidOperationException("PRIVATE_DISPOSE") : null,
+        };
+        using var client = new ScriptedClient([new(UnitJson, defect == "replace-stream" ? ChatFinishReason.Length : ChatFinishReason.Stop)]);
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(defect == "replace-stream" ? OctoberFileWorkerStatus.InvalidOutput : OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.AttemptSettlement, result.FailureStage);
+        Assert.Equal(1, Assert.Single(scope.Leases).Settlements); Assert.Equal(1, scope.Leases[0].Disposals);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Null(result.Proposal);
+    }
+    private sealed class RawResultFunction(AIFunction inner, Func<object?> invoke) : DelegatingAIFunction(inner)
+    {
+        protected override ValueTask<object?> InvokeCoreAsync(AIFunctionArguments arguments, CancellationToken cancellationToken) => ValueTask.FromResult(invoke());
+    }
+    private sealed class CyclicToolResult
+    {
+        public CyclicToolResult? Next { get; set; }
+    }
     private sealed class FragmentedToolHttp : HttpMessageHandler
     {
+        internal bool MissingRequiredArgument;
+        internal bool FailSecondRequest;
         internal int Calls;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Assert.Equal("selected.example.test", request.RequestUri!.Host);
             int call = Calls++;
             Assert.InRange(call, 0, 1);
+            if (call == 1 && FailSecondRequest) throw new HttpRequestException("PRIVATE_SECOND_TRANSPORT", null, HttpStatusCode.ServiceUnavailable);
             string[] chunks;
             if (call == 0)
             {
@@ -989,6 +1104,16 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-terminal", @object = "chat.completion.chunk", created = 1, model = "selected-model",
                     choices = new[] { new { index = 0, delta = new { role = "assistant", content = UnitJson }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
+            }
+            if (call == 0 && MissingRequiredArgument)
+            {
+                // Preserve the exact SDK envelope, changing only the argument fragments to {}.
+                for (int index = 0; index < 2; index++)
+                {
+                    var fragment = System.Text.Json.Nodes.JsonNode.Parse(chunks[index])!;
+                    fragment["choices"]![0]!["delta"]!["tool_calls"]![0]!["function"]!["arguments"] = index == 0 ? "{" : "}";
+                    chunks[index] = fragment.ToJsonString();
+                }
             }
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new StringContent(string.Join("", chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n", Encoding.UTF8, "text/event-stream") });
