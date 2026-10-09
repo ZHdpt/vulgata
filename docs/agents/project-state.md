@@ -38,6 +38,13 @@ will use nonbinding values while deadlines and physical per-call limits remain.
 An elapsed/deadline console watchdog is implemented and controlled-tested; kill only
 the owned Generator tree at the 30-minute boundary, then assess settlement/remaining
 time. See the retained-pilot plan for exact bounds and source scope.
+Retained pilot bootstrap now exists in new database
+`vulgata_oct_pilot_mv0r9q4b_e19qg1` within the unchanged existing container.
+Production registration/setup and Generator prepare/select passed. The Generate
+launch was blocked by execution auto-review BEFORE dispatch because supporting
+rules could disclose the remaining 68 files beyond nine generated files. Seek
+explicit supporting-source confirmation; do not bypass the rejection. Temporary
+Web stopped; protected local run `phone-mv0r8ity` and database/keys retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

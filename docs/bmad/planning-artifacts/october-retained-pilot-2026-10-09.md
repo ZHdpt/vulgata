@@ -1,8 +1,10 @@
 # Retained phone-verification pilot
 
-Status: source verified and pilot selected. User amended runtime authority to reuse
-the existing PostgreSQL container/volume with a new database. No real-source
-Generate or retained host has started at this checkpoint.
+Status: retained database and production bootstrap prepared. The Generate launch
+was rejected by execution auto-review before starting: nine selected files plus
+empty-prefix supporting rules could disclose content from the other 68 slice files.
+Explicit confirmation of that supporting-source egress boundary is pending. No
+real-source provider request or Generate was executed; do not bypass the rejection.
 
 ## Scope
 
@@ -86,3 +88,18 @@ after settled outcome and sanitized evidence; indeterminate state is preserved.
 Measure setup/tool/Worker/Business/publication/reader times separately where available.
 Claim cross-repository resolution only if actual source-backed accepted results
 demonstrate it. Compare generated content with evaluation answers after generation.
+
+## Bootstrap checkpoint
+
+Existing container `vulgata-postgres` was reused unchanged. Created only database
+`vulgata_oct_pilot_mv0r9q4b_e19qg1`. The dedicated temporary loopback Web host applied
+existing migrations; production registration and System/Repository APIs succeeded.
+Keys and encrypted provider/operator files are in the protected local run directory
+`phone-mv0r8ity`, outside Git. Generator prepare/select passed without a provider call.
+The temporary Web process was stopped after the blocked launch; keep the database,
+keys and configuration for continuation. Do not delete the shared container/volume.
+
+The generic credential packager uses stdin-only secrets and production Data
+Protection purposes; its controlled synthetic roundtrip/overwrite refusal passed
+review. The watchdog's completion/output/environment/timeout controls passed; timeout
+remains an indeterminate-settlement signal, never proof of database rollback.
