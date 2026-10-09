@@ -86,6 +86,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Contains("unique", deliveredPrompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("acyclic", deliveredPrompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("nonempty", deliveredPrompt, StringComparison.OrdinalIgnoreCase);
+        foreach (string term in new[] { "case-sensitive", "duplicate", "explicit null", "32-bit", "primary file", "Unicode scalar", "exclusive" }) Assert.Contains(term, deliveredPrompt, StringComparison.OrdinalIgnoreCase);
         Assert.All(scope.Leases, lease => Assert.Equal(1, lease.Settlements));
     }
 
@@ -434,7 +435,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         public PreparedOrigin Origin { get; init; } = new(Guid.NewGuid(), "owned-root-version", "Sample.cs", Digest(text), "prepared-version");
         public string Text => text;
         public long ByteLength => Encoding.UTF8.GetByteCount(text);
-        public int LineCount => text.Count(value => value == '\n') + 1;
+        public int LineCount => text.Length == 0 ? 0 : System.Text.RegularExpressions.Regex.Split(text, "\\r\\n|\\r|\\n").Length;
         public string FileIdentity => "trusted-controlled-file-identity";
         internal bool Current { get; set; } = true;
         internal int Verifications { get; private set; }
@@ -813,7 +814,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [SuiteTheory("SelfContained")]
     [InlineData(4, 5)]
     [InlineData(11, 2)]
-    public async Task CurrentContract_WindowMetadata_ReconstructsUtf8AcrossSplitLinesAndCrLfAsync(int windowBytes, int windows)
+    public async Task TrustedWindowMetadata_ReconstructsUtf8AcrossSplitLinesAndCrLfAsync(int windowBytes, int windows)
     {
         const string source = "中😀abc\r\nreturn;";
         var frame = new Frame(source);
@@ -830,8 +831,11 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             Assert.Equal(index + 1, root.GetProperty("windowOrdinal").GetInt32()); Assert.Equal(windows, root.GetProperty("windowCount").GetInt32());
             Assert.Equal(offset, root.GetProperty("byteStart").GetInt64()); Assert.Equal(index == windows - 1, root.GetProperty("finalWindow").GetBoolean());
             Assert.Empty(root.GetProperty("advisory").EnumerateArray());
-            // Current delivered metadata has byte offset only. This is not a requirement to omit line metadata forever.
-            Assert.False(root.TryGetProperty("lineStart", out _)); Assert.False(root.TryGetProperty("lineCount", out _)); Assert.False(root.TryGetProperty("relativePath", out _));
+            // Authorized correction replaces the earlier explicit metadata-omission characterization.
+            Assert.Equal(frame.Origin.RelativePath, root.GetProperty("primaryRelativePath").GetString());
+            Assert.Equal(2, root.GetProperty("wholeFileLineCount").GetInt32());
+            int[][] coordinates = windowBytes == 4 ? [[1,1,1,2], [1,2,1,3], [1,3,2,1], [2,1,2,4], [2,4,2,8]] : [[1,1,2,1], [2,1,2,8]];
+            AssertWindowCoordinates(root, coordinates[index]);
             string text = root.GetProperty("sourceText").GetString()!;
             Assert.DoesNotContain("\uFFFD", text); Assert.InRange(Encoding.UTF8.GetByteCount(text), 1, windowBytes);
             if (windowBytes == 11 && index == 0) Assert.EndsWith("\r", text);
@@ -844,6 +848,67 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(1, anchor.StartLine); Assert.Equal(2, anchor.EndLine); Assert.Equal(frame.Origin, anchor.Origin);
         // Scripted citations prove parser/host coordinate handling, not that a live model counted correctly.
         Assert.Equal("The retained source spans two lines.", Assert.Single(Assert.Single(unit.Sections).Claims).Text);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PrimaryCitationContract_ToolSupportingPathCannotReplaceAnchorOriginAsync(bool modelAddsPath)
+    {
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var tool = AIFunctionFactory.Create(() => "{\"relativePath\":\"src/Supporting.cs\",\"text\":\"supporting text\"}", "read_prepared_source");
+        string final = modelAddsPath ? UnitJson.Replace("\"startLine\":1,\"endLine\":2", "\"startLine\":1,\"endLine\":2,\"relativePath\":\"src/Supporting.cs\"") : UnitJson;
+        using var client = new ScriptedClient([new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("supporting", tool.Name, new Dictionary<string, object?>())]), new(final, ChatFinishReason.Stop)]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(frame), [tool]);
+        Assert.Equal(1, result.SettledToolCalls); Assert.Equal(2, client.Requests.Count);
+        if (modelAddsPath)
+        {
+            Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage); Assert.Null(result.Proposal);
+        }
+        else
+        {
+            Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+            var unit = Assert.Single(result.Proposal!.Units); Assert.Equal(frame.Origin, Assert.Single(unit.Anchors).Origin);
+            Assert.Equal(frame.Origin, Assert.Single(Assert.Single(Assert.Single(unit.Sections).Claims).Evidence).Source!.Origin);
+        }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("", 0, "1,1,1,1")]
+    [InlineData("a\rb\nc", 3, "1,1,3,1;3,1,3,2")]
+    [InlineData("a\r", 2, "1,1,2,1")]
+    [InlineData("a\n", 2, "1,1,2,1")]
+    [InlineData("a\r\n", 2, "1,1,2,1")]
+    [InlineData("😀\r\n", 2, "1,1,1,2;1,2,2,1")]
+    [InlineData("abcd", 1, "1,1,1,5")]
+    public async Task TrustedWindowMetadata_HandlesEmptyTrailingAndMixedLineEndingsAsync(string source, int lineCount, string expectedCoordinates)
+    {
+        var expected = expectedCoordinates.Split(';').Select(row => row.Split(',').Select(int.Parse).ToArray()).ToArray();
+        var frame = new Frame(source); Assert.Equal(lineCount, frame.LineCount);
+        string zero = ZeroJson.Replace("{\"startLine\":1,\"endLine\":1}", "");
+        using var client = new ScriptedClient(Enumerable.Range(0, expected.Length).Select(index => new Round(index == expected.Length - 1 ? zero : "continue", ChatFinishReason.Stop)).ToArray());
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(frame) with { Limits = new(MaximumWindowUtf8Bytes: 4, MaximumContinuationWindows: expected.Length) }, []);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(expected.Length, client.Requests.Count);
+        var reconstructed = new StringBuilder(); long offset = 0;
+        for (int index = 0; index < expected.Length; index++)
+        {
+            using var document = JsonDocument.Parse(client.Requests[index].Last(message => message.Role == ChatRole.User).Text);
+            var payload = document.RootElement;
+            Assert.Equal(frame.Origin.RelativePath, payload.GetProperty("primaryRelativePath").GetString()); Assert.Equal(lineCount, payload.GetProperty("wholeFileLineCount").GetInt32());
+            AssertWindowCoordinates(payload, expected[index]); Assert.Equal(offset, payload.GetProperty("byteStart").GetInt64());
+            Assert.Equal(index == expected.Length - 1, payload.GetProperty("finalWindow").GetBoolean());
+            string text = payload.GetProperty("sourceText").GetString()!; reconstructed.Append(text); offset += Encoding.UTF8.GetByteCount(text);
+        }
+        Assert.Equal(source, reconstructed.ToString()); Assert.Equal(frame.ByteLength, result.CoveredUtf8Bytes);
+        Assert.Empty(result.Proposal!.Units); Assert.NotEmpty(result.Proposal.Uncertainties);
+    }
+
+    private static void AssertWindowCoordinates(JsonElement payload, int[] expected)
+    {
+        Assert.Equal(expected[0], payload.GetProperty("windowStartLine").GetInt32());
+        Assert.Equal(expected[1], payload.GetProperty("windowStartColumn").GetInt32());
+        Assert.Equal(expected[2], payload.GetProperty("windowEndLineExclusive").GetInt32());
+        Assert.Equal(expected[3], payload.GetProperty("windowEndColumnExclusive").GetInt32());
     }
     private sealed record Round(string? Text, ChatFinishReason? Finish, IReadOnlyList<AIContent>? Calls = null);
     private sealed class ScriptedClient(IReadOnlyList<Round> rounds, Action? afterRequest = null) : IChatClient
@@ -1192,6 +1257,56 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var evidence = Assert.Single(claim.Evidence); var source = Assert.IsType<Vulgata.Core.DomainServices.OctoberKnowledge.SourceAnchor>(evidence.Source);
         Assert.Equal(frame.Origin, source.Origin); Assert.Equal(1, source.StartLine); Assert.Equal(2, source.EndLine);
         Assert.DoesNotContain("PRIVATE_", unit.ContentJson);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("corrected")]
+    [InlineData("provider-limit")]
+    [InlineData("tool-limit")]
+    public async Task ActualSdk_ExtraToolFieldRefusal_AllowsCorrectionWithinOriginalLimitsAsync(string scenario)
+    {
+        using var transport = new ArgumentCorrectionHttp();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        int invocations = 0;
+        var tool = AIFunctionFactory.Create((string relativePath) => { Assert.Equal("Sample.cs", relativePath); invocations++; return "contained result"; }, "read_prepared_source");
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var request = Request(frame) with { Limits = new(MaximumProviderRounds: scenario == "provider-limit" ? 1 : 8, MaximumToolCalls: scenario == "tool-limit" ? 1 : 16) };
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(scenario == "corrected" ? 1 : 0, invocations); // The malformed call never reaches the tool.
+        Assert.Equal(scenario == "corrected" ? 2 : 1, result.SettledToolCalls);
+        Assert.Equal(scenario == "provider-limit" ? 1 : scenario == "tool-limit" ? 2 : 3, transport.Calls);
+        Assert.Equal(transport.Calls, scope.Requests.Count); Assert.All(scope.Leases, lease => Assert.Equal(1, lease.Settlements));
+        if (scenario == "corrected") { Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(frame.Origin, result.Proposal!.Origin); }
+        else
+        {
+            Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status); Assert.Null(result.Proposal);
+            Assert.Equal(scenario == "tool-limit" ? OctoberWorkerBudgetFailure.ToolCalls : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+        }
+        if (transport.Calls > 1) Assert.True(transport.SawExactRefusal);
+    }
+
+    private sealed class ArgumentCorrectionHttp : HttpMessageHandler
+    {
+        internal int Calls;
+        internal bool SawExactRefusal;
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Assert.Equal("selected.example.test", request.RequestUri!.Host);
+            int call = Calls++; Assert.InRange(call, 0, 2);
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+            if (call == 1)
+            {
+                var toolMessage = body.RootElement.GetProperty("messages").EnumerateArray().First(message => message.GetProperty("role").GetString() == "tool");
+                using var refusal = JsonDocument.Parse(toolMessage.GetProperty("content").GetString()!);
+                Assert.Single(refusal.RootElement.EnumerateObject()); Assert.Equal("InvalidArguments", refusal.RootElement.GetProperty("status").GetString());
+                SawExactRefusal = true;
+            }
+            object delta = call < 2 ? new { role = "assistant", tool_calls = new[] { new { index = 0, id = "controlled-call-" + call, type = "function", function = new { name = "read_prepared_source", arguments = call == 0 ? "{\"relativePath\":\"Sample.cs\",\"unsupported\":true}" : "{\"relativePath\":\"Sample.cs\"}" } } } } : new { role = "assistant", content = UnitJson };
+            string chunk = JsonSerializer.Serialize(new { id = "controlled-correction-" + call, @object = "chat.completion.chunk", created = 1, model = "selected-model", choices = new[] { new { index = 0, delta, finish_reason = call < 2 ? "tool_calls" : "stop" } }, usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } });
+            return new(HttpStatusCode.OK) { Content = new StringContent("data: " + chunk + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
+        }
     }
     private sealed class FragmentedToolHttp : HttpMessageHandler
     {

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using System.Text.Json;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
@@ -77,8 +78,8 @@ public sealed class OctoberScanWorkerToolsTests
         Assert.Equal(0, controlled.SourceIssues);
         Assert.Empty(controlled.CodeGraphSessions);
     }
-    // Current behavior characterization: the facade denies malformed arguments, while
-    // the composed ledger wrapper reads the required path before reaching that facade.
+    // Raw facade denial is preserved; the composed Worker boundary returns a fixed
+    // non-data refusal and allows a corrected call without admitting invented input.
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("list_prepared_source", "missing")]
@@ -90,7 +91,7 @@ public sealed class OctoberScanWorkerToolsTests
     [InlineData("search_prepared_source", "missing")]
     [InlineData("search_prepared_source", "null")]
     [InlineData("search_prepared_source", "number")]
-    public async Task CurrentBehavior_MalformedPath_FacadeDeniesButWrapperThrowsBeforeSourceAsync(string name, string defect)
+    public async Task InvalidPath_FacadeDeniesAndWorkerRefusesBeforeSource_ThenCorrectedCallSucceedsAsync(string name, string defect)
     {
         await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
         await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
@@ -111,17 +112,15 @@ public sealed class OctoberScanWorkerToolsTests
 
         await using var runtime = controlled.CreateRuntime();
         var tools = await new OctoberWorkerTools(runtime, ledger).CreateAsync();
-        Exception? error = await Record.ExceptionAsync(async () => await tools.Single(tool => tool.Name == name).InvokeAsync(arguments));
-        Assert.NotNull(error);
-        Assert.Equal(defect switch
-        {
-            "missing" => typeof(KeyNotFoundException),
-            "null" => typeof(NullReferenceException),
-            _ => typeof(InvalidOperationException)
-        }, error.GetType());
+        var wrapped = tools.Single(tool => tool.Name == name);
+        AssertRefusal(await wrapped.InvokeAsync(arguments));
         Assert.Equal(0, controlled.SourceIssues);
+        Assert.True(await ledger.VerifyCurrentAsync());
+        QueueEmptySearch(controlled, name);
+        Assert.IsType<PreparedSourceResult>(await wrapped.InvokeAsync(SourceArguments(name)));
+        Assert.Equal(1, controlled.SourceIssues);
         var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
-        Assert.DoesNotContain(snapshot.Contributors, contributor => contributor.Kind == ContributorKind.SourceMetadata);
+        Assert.Single(snapshot.Contributors.Where(contributor => contributor.Kind == ContributorKind.SourceMetadata));
     }
 
     // Current behavior characterization: direct facade cursors belong to its held
@@ -130,7 +129,7 @@ public sealed class OctoberScanWorkerToolsTests
     [SuiteTheory("SelfContained")]
     [InlineData("list_prepared_source")]
     [InlineData("search_prepared_source")]
-    public async Task CurrentBehavior_Pagination_DirectFacadeContinuesButComposedRuntimeDrainsAndWithholdsCallerCursorAsync(string name)
+    public async Task Pagination_RawSchemaPreserved_WorkerHidesCursorAndRefusesWithoutLosingLedgerAsync(string name)
     {
         await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
         await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
@@ -145,6 +144,8 @@ public sealed class OctoberScanWorkerToolsTests
         directContext.Search = request => DirectPage(request.Continuation);
         await using var direct = new CountingSource(directContext);
         var facade = new PreparedSourceFunctions(direct).Create().Single(tool => tool.Name == name);
+        Assert.Contains("string", facade.JsonSchema.GetProperty("properties").GetProperty("continuation")
+            .GetProperty("type").EnumerateArray().Select(value => value.GetString()));
         var arguments = SourceArguments(name);
         var first = Assert.IsType<PreparedSourceResult>(await facade.InvokeAsync(arguments));
         Assert.Equal("controlled-cursor", first.Continuation);
@@ -166,8 +167,8 @@ public sealed class OctoberScanWorkerToolsTests
         var ledger = Ledger(host, controlled);
         await using var runtime = controlled.CreateRuntime();
         var wrapped = (await new OctoberWorkerTools(runtime, ledger).CreateAsync()).Single(tool => tool.Name == name);
-        Assert.Contains("string", wrapped.JsonSchema.GetProperty("properties").GetProperty("continuation")
-            .GetProperty("type").EnumerateArray().Select(value => value.GetString()));
+        Assert.False(wrapped.JsonSchema.GetProperty("properties").TryGetProperty("continuation", out _));
+        Assert.DoesNotContain("continuation", wrapped.JsonSchema.GetProperty("required").EnumerateArray().Select(value => value.GetString()));
         var drained = Assert.IsType<PreparedSourceResult>(await wrapped.InvokeAsync(SourceArguments(name)));
         Assert.Equal(PreparedSourceOutcome.CompleteEmpty, drained.Outcome);
         Assert.Null(drained.Continuation);
@@ -175,19 +176,33 @@ public sealed class OctoberScanWorkerToolsTests
         Assert.Equal(1, controlled.SourceIssues);
         Assert.True(await ledger.VerifyCurrentAsync());
 
-        // This advertised string cursor still invokes the wrapper/facade, but the runtime
-        // denies it before another source grant or page. The ledger withholds that denial.
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await wrapped.InvokeAsync(arguments));
+        AssertRefusal(await wrapped.InvokeAsync(arguments));
+        arguments["continuation"] = null;
+        AssertRefusal(await wrapped.InvokeAsync(arguments));
         Assert.Equal(2, runtimePages);
         Assert.Equal(1, controlled.SourceIssues);
-        Assert.Null(await ledger.FreezeForCompletionAsync());
+        Assert.True(await ledger.VerifyCurrentAsync());
+        QueueEmptySearch(controlled, name);
+        Assert.IsType<PreparedSourceResult>(await wrapped.InvokeAsync(SourceArguments(name)));
+        Assert.Equal(2, controlled.SourceIssues);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == ContributorKind.SourceMetadata));
+
+        // Explicit null remains a supported optional cursor on the raw facade itself.
+        int nullCalls = 0;
+        var nullContext = controlled.Context(request => { Assert.Null(request.Continuation); nullCalls++; return Page(controlled.RepositoryId, operation, false); });
+        nullContext.Search = request => { Assert.Null(request.Continuation); nullCalls++; return Page(controlled.RepositoryId, operation, false); };
+        await using var rawNull = new CountingSource(nullContext);
+        Assert.IsType<PreparedSourceResult>(await new PreparedSourceFunctions(rawNull).Create().Single(tool => tool.Name == name).InvokeAsync(arguments));
+        Assert.Equal(1, nullCalls);
+        Assert.Equal(1, rawNull.Calls);
     }
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task CurrentBehavior_CodeGraphOptionalMaximum_OmittedIsAcceptedButExplicitNullIsWithheldAsync(bool explicitNull)
+    public async Task CodeGraphOptionalMaximum_OmittedIsAccepted_ExplicitNullRefusesWithoutPoisoningLedgerAsync(bool explicitNull)
     {
         await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
         await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
@@ -198,8 +213,12 @@ public sealed class OctoberScanWorkerToolsTests
         if (explicitNull) arguments["maxFiles"] = null;
         if (explicitNull)
         {
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await function.InvokeAsync(arguments));
-            Assert.Null(await ledger.FreezeForCompletionAsync());
+            AssertRefusal(await function.InvokeAsync(arguments));
+            Assert.True(await ledger.VerifyCurrentAsync());
+            arguments.Remove("maxFiles");
+            Assert.IsType<CodeGraphToolInvocationResult>(await function.InvokeAsync(arguments));
+            var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+            Assert.Single(snapshot.Contributors.Where(item => item.Kind == ContributorKind.SourceMetadata));
         }
         else
         {
@@ -211,6 +230,109 @@ public sealed class OctoberScanWorkerToolsTests
         }
         Assert.Equal(0, controlled.SourceIssues);
     }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("navigate_java_definition", "relativePath", "missing")]
+    [InlineData("navigate_java_definition", "relativePath", "null")]
+    [InlineData("navigate_java_definition", "relativePath", "number")]
+    [InlineData("navigate_java_references", "relativePath", "missing")]
+    [InlineData("navigate_java_references", "relativePath", "null")]
+    [InlineData("navigate_java_references", "relativePath", "number")]
+    [InlineData("codegraph_explore", "query", "missing")]
+    [InlineData("codegraph_explore", "query", "null")]
+    [InlineData("codegraph_explore", "query", "number")]
+    [InlineData("list_prepared_source", "pageSize", "zero")]
+    [InlineData("read_prepared_source", "byteCount", "null")]
+    [InlineData("search_prepared_source", "literal", "null")]
+    [InlineData("navigate_java_definition", "line", "zero")]
+    [InlineData("navigate_java_references", "maximumLocations", "null")]
+    [InlineData("codegraph_explore", "query", "oversize")]
+    [InlineData("read_prepared_source", "unexpected", "number")]
+    public async Task InvalidClosedScalars_RefuseWithoutInputContribution_ThenCorrectedCallSucceedsAsync(string name, string key, string defect)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
+        controlled.Java.Started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        var ledger = Ledger(host, controlled);
+        await using var runtime = controlled.CreateRuntime();
+        var function = (await new OctoberWorkerTools(runtime, ledger).CreateAsync()).Single(tool => tool.Name == name);
+        var arguments = ToolArguments(name);
+        if (defect == "missing") arguments.Remove(key);
+        else arguments[key] = defect switch { "null" => null, "zero" => 0, "oversize" => new string('x', 513), _ => 42 };
+        AssertRefusal(await function.InvokeAsync(arguments));
+        Assert.Equal(0, controlled.SourceIssues);
+        Assert.False(controlled.Java.Started.Task.IsCompleted);
+        Assert.True(await ledger.VerifyCurrentAsync());
+        QueueEmptySearch(controlled, name);
+        object? result = await function.InvokeAsync(ToolArguments(name));
+        Assert.NotNull(result);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == ContributorKind.Source));
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == ContributorKind.SourceMetadata));
+        Assert.Equal(2, snapshot.Contributors.Length);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("authority")]
+    [InlineData("source-denial")]
+    [InlineData("foreign-repository")]
+    public async Task GenuineAuthorityOrSourceFailure_RemainsFatalAndCannotBeRepairedAsArgumentsAsync(string failure)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
+        bool allowed = true;
+        var ledger = Ledger(host, controlled, () => allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied);
+        int sourceCalls = 0;
+        controlled.Sources.Enqueue(controlled.Context(_ =>
+        {
+            sourceCalls++;
+            return new PreparedSourceResult
+            {
+                RepositoryId = failure == "foreign-repository" ? Guid.NewGuid() : controlled.RepositoryId,
+                Operation = PreparedSourceOperation.List,
+                Outcome = failure == "source-denial" ? PreparedSourceOutcome.Denied : PreparedSourceOutcome.CompleteEmpty
+            };
+        }));
+        await using var runtime = controlled.CreateRuntime();
+        var function = (await new OctoberWorkerTools(runtime, ledger).CreateAsync()).Single(tool => tool.Name == "list_prepared_source");
+        if (failure == "authority") allowed = false;
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await function.InvokeAsync(SourceArguments(function.Name)));
+        Assert.Equal(failure == "authority" ? 0 : 1, sourceCalls);
+        Assert.Equal(sourceCalls, controlled.SourceIssues);
+        allowed = true;
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await function.InvokeAsync(SourceArguments(function.Name)));
+        Assert.Equal(failure == "authority" ? 0 : 1, sourceCalls);
+        Assert.Null(await ledger.FreezeForCompletionAsync());
+    }
+
+    private static void AssertRefusal(object? result)
+    {
+        Assert.NotNull(result);
+        JsonElement json = JsonSerializer.SerializeToElement(result);
+        Assert.Equal(JsonValueKind.Object, json.ValueKind);
+        JsonProperty property = Assert.Single(json.EnumerateObject());
+        Assert.Equal("status", property.Name);
+        Assert.Equal("InvalidArguments", property.Value.GetString());
+    }
+
+    private static void QueueEmptySearch(OctoberScanToolRuntimeTests.RuntimeHarness controlled, string name)
+    {
+        if (name != "search_prepared_source") return;
+        var context = controlled.Context(_ => throw new InvalidOperationException("Unexpected listing"));
+        context.Search = _ => new PreparedSourceResult { RepositoryId = controlled.RepositoryId,
+            Operation = PreparedSourceOperation.SearchText, Outcome = PreparedSourceOutcome.CompleteEmpty };
+        controlled.Sources.Enqueue(context);
+    }
+
+    private static AIFunctionArguments ToolArguments(string name) => name switch
+    {
+        "codegraph_explore" => new() { ["query"] = "source" },
+        "navigate_java_definition" or "navigate_java_references" => new()
+        { ["relativePath"] = "a.java", ["line"] = 1, ["character"] = 1, ["maximumLocations"] = 10 },
+        _ => SourceArguments(name)
+    };
 
     private static AIFunctionArguments SourceArguments(string name) => name == "read_prepared_source"
         ? new() { ["relativePath"] = "a.java", ["byteOffset"] = 0L, ["byteCount"] = 6 }
@@ -226,7 +348,8 @@ public sealed class OctoberScanWorkerToolsTests
         StoppingLimit = first ? PreparedSourceStoppingLimit.PageSize : null
     };
 
-    private static OctoberWorkerInputLedger Ledger(OctoberScanAcceptanceHarness host, OctoberScanToolRuntimeTests.RuntimeHarness controlled)
+    private static OctoberWorkerInputLedger Ledger(OctoberScanAcceptanceHarness host, OctoberScanToolRuntimeTests.RuntimeHarness controlled,
+        Func<DisclosureStatus>? authority = null)
     {
         var source = new Frame(host.Source.Origin with
         {
@@ -235,7 +358,7 @@ public sealed class OctoberScanWorkerToolsTests
         });
         var request = host.Request with { Source = source, Contributors = [new(ContributorKind.Source, source.Origin.RepositoryId,
             null, source.Origin.RootBindingIdentity, null, source.Origin.SourceDigest)], Advisory = [] };
-        return new(request, (_, _) => Task.FromResult<IOctoberVerifiedFileFrame?>(source), (_, _) => Task.FromResult(DisclosureStatus.Allowed));
+        return new(request, (_, _) => Task.FromResult<IOctoberVerifiedFileFrame?>(source), (_, _) => Task.FromResult(authority?.Invoke() ?? DisclosureStatus.Allowed));
     }
 
     private sealed class CountingSource(IPreparedSourceReadContext inner) : IPreparedSourceReadContext

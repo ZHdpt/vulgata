@@ -1,6 +1,7 @@
 using Microsoft.Extensions.AI;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
@@ -38,9 +39,10 @@ public sealed class OctoberWorkerTools
     private sealed class LedgerFunction(AIFunction function, OctoberWorkerInputLedger ledger) : AIFunction
     {
         private static readonly UTF8Encoding Utf8 = new(false, true);
+        private readonly JsonElement _schema = WorkerSchema(function);
         public override string Name => function.Name;
         public override string Description => function.Description;
-        public override JsonElement JsonSchema => function.JsonSchema;
+        public override JsonElement JsonSchema => _schema;
         public override JsonElement? ReturnJsonSchema => function.ReturnJsonSchema;
 
         protected override async ValueTask<object?> InvokeCoreAsync(AIFunctionArguments arguments, CancellationToken cancellationToken)
@@ -50,9 +52,17 @@ public sealed class OctoberWorkerTools
                 throw new InvalidOperationException("Worker input authority is unavailable.");
             // Freeze exactly the closed invocation seen by the facade; a mutable caller
             // dictionary must not change between native use and provenance recording.
-            string safeRequest = JsonSerializer.Serialize(arguments);
-            if (Utf8.GetByteCount(safeRequest) > OctoberKnowledgeInputLimits.MaximumSafeRequestUtf8Bytes)
-                throw new InvalidOperationException("The Worker tool request exceeds its bound.");
+            string safeRequest;
+            try
+            {
+                safeRequest = JsonSerializer.Serialize(arguments);
+                if (Utf8.GetByteCount(safeRequest) > OctoberKnowledgeInputLimits.MaximumSafeRequestUtf8Bytes)
+                    return new { status = "InvalidArguments" };
+            }
+            catch (Exception error) when (error is JsonException or NotSupportedException or EncoderFallbackException)
+            { return new { status = "InvalidArguments" }; }
+            using JsonDocument request = JsonDocument.Parse(safeRequest);
+            if (!ValidArguments(Name, request.RootElement)) return new { status = "InvalidArguments" };
             Dictionary<string, object?> snapshot = JsonSerializer.Deserialize<Dictionary<string, object?>>(safeRequest)!;
             SourceMetadataOperation operation = Name switch
             {
@@ -64,7 +74,6 @@ public sealed class OctoberWorkerTools
                 "codegraph_explore" => SourceMetadataOperation.CodeGraphExplore,
                 _ => throw new InvalidOperationException("The Worker tool is not declared.")
             };
-            using JsonDocument request = JsonDocument.Parse(safeRequest);
             string scope = operation switch
             {
                 SourceMetadataOperation.CodeGraphExplore => ".",
@@ -80,6 +89,48 @@ public sealed class OctoberWorkerTools
             if (admitted.Status != DisclosureStatus.Allowed || admitted.Result is null)
                 throw new InvalidOperationException("The Worker tool input was withheld.");
             return admitted.Result;
+        }
+
+        private static JsonElement WorkerSchema(AIFunction tool)
+        {
+            if (tool.Name is not ("list_prepared_source" or "search_prepared_source")) return tool.JsonSchema;
+            JsonObject schema = JsonNode.Parse(tool.JsonSchema.GetRawText())!.AsObject();
+            schema["properties"]!.AsObject().Remove("continuation");
+            if (schema["required"] is JsonArray required)
+                for (int index = required.Count - 1; index >= 0; index--)
+                    if (required[index]?.GetValue<string>() == "continuation") required.RemoveAt(index);
+            return JsonSerializer.SerializeToElement(schema);
+        }
+
+        private static bool ValidArguments(string name, JsonElement value) => name switch
+        {
+            "list_prepared_source" => Only(value, "relativeDirectory", "pageSize") &&
+                Text(value, "relativeDirectory") && Integer(value, "pageSize", 1, PreparedSourceCallLimits.MaximumListEntries),
+            "read_prepared_source" => Only(value, "relativePath", "byteOffset", "byteCount") &&
+                Text(value, "relativePath") && Integer(value, "byteOffset", 0, long.MaxValue) && Integer(value, "byteCount", 1, PreparedSourceCallLimits.MaximumReadBytes),
+            "search_prepared_source" => Only(value, "relativeDirectory", "literal", "pageSize") &&
+                Text(value, "relativeDirectory") && Text(value, "literal") && Integer(value, "pageSize", 1, PreparedSourceCallLimits.MaximumSearchMatches),
+            "navigate_java_definition" or "navigate_java_references" => Only(value, "relativePath", "line", "character", "maximumLocations") &&
+                Text(value, "relativePath") && Integer(value, "line", 1, int.MaxValue) && Integer(value, "character", 1, int.MaxValue) &&
+                Integer(value, "maximumLocations", 1, 100),
+            "codegraph_explore" => Only(value, "query", "maxFiles") && Query(value) &&
+                (!value.TryGetProperty("maxFiles", out _) || Integer(value, "maxFiles", 1, 12)),
+            _ => false
+        };
+
+        private static bool Only(JsonElement value, params string[] names) => value.ValueKind == JsonValueKind.Object &&
+            value.EnumerateObject().All(property => names.Contains(property.Name, StringComparer.Ordinal));
+        private static bool Text(JsonElement value, string name) => value.TryGetProperty(name, out var member) && member.ValueKind == JsonValueKind.String;
+        private static bool Integer(JsonElement value, string name, long minimum, long maximum) =>
+            value.TryGetProperty(name, out var member) && member.ValueKind == JsonValueKind.Number &&
+            member.TryGetInt64(out long integer) && integer >= minimum && integer <= maximum;
+        private static bool Query(JsonElement value)
+        {
+            if (!Text(value, "query")) return false;
+            string query = value.GetProperty("query").GetString()!;
+            if (string.IsNullOrWhiteSpace(query)) return false;
+            try { return Utf8.GetByteCount(query) <= 512; }
+            catch (EncoderFallbackException) { return false; }
         }
     }
 

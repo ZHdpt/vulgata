@@ -164,11 +164,31 @@ public sealed class OctoberFileWorkerExecutor
                 }
             });
             var history = new List<ChatMessage> { new(ChatRole.System, prompt) };
+            int sourceLine = 1, sourceColumn = 1;
+            bool previousCarriageReturn = false;
             for (int index = 0; index < windows.Count; index++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                int windowStartLine = sourceLine, windowStartColumn = sourceColumn;
+                foreach (Rune scalar in windows[index].EnumerateRunes())
+                {
+                    if (scalar.Value == '\r') { sourceLine++; sourceColumn = 1; previousCarriageReturn = true; }
+                    else if (scalar.Value == '\n')
+                    {
+                        if (!previousCarriageReturn) sourceLine++;
+                        sourceColumn = 1;
+                        previousCarriageReturn = false;
+                    }
+                    else { sourceColumn++; previousCarriageReturn = false; }
+                }
                 string input = JsonSerializer.Serialize(new
                 {
+                    primaryRelativePath = request.Source.Origin.RelativePath,
+                    wholeFileLineCount = request.Source.LineCount,
+                    windowStartLine,
+                    windowStartColumn,
+                    windowEndLineExclusive = sourceLine,
+                    windowEndColumnExclusive = sourceColumn,
                     windowOrdinal = index + 1,
                     windowCount = windows.Count,
                     byteStart = covered,
@@ -613,10 +633,10 @@ public sealed class OctoberFileWorkerExecutor
                 throw Fail(OctoberFileWorkerStatus.InvalidOutput);
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(token), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
             AIFunction function = tools.Single(tool => tool.Name == call.Name);
-            if (function.JsonSchema.TryGetProperty("properties", out JsonElement properties) &&
-                call.Arguments?.Keys.Any(key => !properties.TryGetProperty(key, out _)) == true)
-                throw Fail(OctoberFileWorkerStatus.InvalidOutput);
-            object? result = await observations.RunAsync(() => function.InvokeAsync(new AIFunctionArguments(call.Arguments ?? new Dictionary<string, object?>()), token).AsTask(), OctoberWorkerFailureStage.ToolInvocation);
+            bool unsupported = function.JsonSchema.TryGetProperty("properties", out JsonElement properties) &&
+                call.Arguments?.Keys.Any(key => !properties.TryGetProperty(key, out _)) == true;
+            object? result = unsupported ? new { status = "InvalidArguments" } :
+                await observations.RunAsync(() => function.InvokeAsync(new AIFunctionArguments(call.Arguments ?? new Dictionary<string, object?>()), token).AsTask(), OctoberWorkerFailureStage.ToolInvocation);
             ChargeOutput(observations.Run(() => JsonSerializer.Serialize(result), OctoberWorkerFailureStage.ToolResultSerialization));
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(token), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
             _pending.Remove(call.CallId);

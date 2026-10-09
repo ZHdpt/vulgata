@@ -1,8 +1,12 @@
-# Worker contract characterization and proposed correction
+# Worker contract characterization and bounded correction
 
-Date: 2026-10-09. Status: controlled evidence complete; production correction awaits Integrator decision.
+Date: 2026-10-09. Status: characterization accepted; bounded correction approved by
+OCT-Integrator (`01a1109d-ec4c-7500-8b73-642a5e22f59b`), implemented and independently
+reviewed with controlled GREEN. Real provider/native qualification remains held.
+The sections below retain the pre-correction evidence and proposal; the execution
+record at the end distinguishes the approved correction from that baseline.
 
-## Boundary and evidence
+## Characterization baseline and evidence
 
 The source-free matrix uses existing fixtures in `OctoberScanFileWorkerTests.cs` and
 `OctoberScanWorkerToolsTests.cs`. No production, prompt, tool contract, Knowledge
@@ -81,3 +85,67 @@ Integrator owns the implementation dispatch and any subsequent shared qualificat
 decision, exact resources and paid-run authorization. The current evidence supports
 the above bounded correction proposal; it does not identify which exact malformed
 field caused the real rejection. Existing retained accepted CL must be preserved.
+
+## Approved correction execution
+
+Integrator explicitly approved the single bounded correction after accepting the
+characterization checkpoint `5eb0a4d32333e1135e1461eee731f92a691bd308`.
+Separate test and production owners retain their file boundaries. Shared facades,
+Knowledge schemas, source snapshots, SDK behavior, charging, parser diagnostics and
+numeric failure classification are outside the correction.
+
+The agreed Worker payload adds `primaryRelativePath`, `wholeFileLineCount`,
+`windowStartLine`, `windowStartColumn`, `windowEndLineExclusive` and
+`windowEndColumnExclusive`. Lines and Unicode-scalar columns are one-based; end
+coordinates are exclusive boundaries. CR advances the line and a following LF does
+not advance again, including across windows. Empty source has zero lines and both
+boundaries at (1, 1). Byte offsets and byte-limited splitting remain unchanged.
+
+Malformed or unsupported tool arguments receive exactly
+`{"status":"InvalidArguments"}` without echoed input, source result or contributor.
+Authority checks precede this refusal. Actual runtime authorization/provenance
+failure is not converted into recoverable input refusal. The executor's earlier
+unknown-field guard also returns this finite refusal without invoking the function;
+normal source rechecks, output charging, pending-call settlement and tool/provider
+limits still apply. Unknown tools and malformed terminal streams remain fatal.
+
+The Worker schema omits continuation; any supplied continuation, including null,
+is unsupported. The shared facade retains its own null/omission/cursor semantics.
+CodeGraph `maxFiles` omission retains its existing default; explicit null is refused,
+not normalized. No extra retry allowance is created.
+
+RED run `618a5710bf4d43b39d037dc23f3be356` built successfully and executed the three
+affected controlled classes: **170 selected, 129 passed, 41 failed, zero skipped**.
+Failures were the absent metadata/prompt rules, exposed cursor schema and fatal
+malformed/unsupported argument handling. The new genuine authority/source-failure
+controls passed. Both test owners checked the failures against unchanged production;
+no compile/setup/timeout failure substitutes for RED. Production edits started only
+after this result.
+
+Final GREEN run `c51a65b3d62d40f4ae2ad5d99e854d99` passed **328/328**, zero failures
+and skips; build completed with zero errors (10,471 analyzer warnings reported).
+The standard `eng/test.ps1 -Suite SelfContained` launcher selected the full classes
+`OctoberScanFileWorkerTests`, `OctoberScanWorkerToolsTests`,
+`OctoberScanWorkerInputLedgerTests`, `OctoberScanToolRuntimeTests`,
+`OctoberScanExecutionScopeTests`, `OctoberScanAcceptanceTests`,
+`OctoberScanGenerateRunnerTests`, `OctoberScanClPublicationTests`,
+`PreparedSourceToolFunctionTests`, `PreparedJavaNavigationFunctionsTests` and
+`CodeGraphFunctionsTests`. Policy and guard probes passed; `git diff --check` passed.
+
+Both test owners assessed the final production shape. Independent review accepted
+it with no blocking findings after GREEN. The actual installed-SDK controlled test
+proves executor refusal, corrected invocation and proposal completion in the same
+run, plus exhaustion of unchanged provider/tool limits. Separate composed-wrapper
+tests prove no fabricated contributor and fatal authority/source/provenance failure.
+Source/Java execution counters are directly observed; malformed CodeGraph arguments
+are statically verified to return before facade invocation (startup readiness remains
+unchanged). This is not one combined live-tool execution test or real generated knowledge.
+
+Only the three proposed Scan production files, two existing test files and this
+record changed. No shared-facade API, Knowledge schema, migration, new resource or
+integration binding is required. Existing verified Identity reader bindings and
+original run/provider/budget/source bindings remain mandatory. Integrator owns
+merging this checkpoint and deciding the subsequent exact live qualification;
+retained accepted CL stays intact. No additional provider/native/PostgreSQL/source-root
+operation was performed, and no claim is made that this resolves the exact last
+real `ProposalParse` cause or the separate full-suite sequential timeout.
