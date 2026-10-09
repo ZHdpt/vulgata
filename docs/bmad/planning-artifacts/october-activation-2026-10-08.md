@@ -396,3 +396,69 @@ Fixture database/temp cleanup was recorded; runner container removal and named
 volume absence were verified. No presentation dataset was retained, no production
 repository was accessed, and no credential values were recorded. Operation C is
 now eligible for a concrete separate approval request, not automatically approved.
+
+## Approved limited extension after B — October 9
+
+After read-only Scan/Business readiness assessment, the user explicitly approved:
+
+- sequential multi-file processing across explicitly selected Repositories;
+- bounded operator selection of actual accepted Code Units within the same
+  original run, preserving identity, deadline and remaining budget;
+- extending qualification to real BL content and ordinary-user Business reading.
+
+This releases that limited multi-file prerequisite beyond the earlier single-file
+hold; it does not activate cap-2 concurrency, a generic fairness scheduler, durable
+resume, broader recovery or automatic root discovery. WorkerCap remains 1. Preserve
+per-file ownership/ledgers, accumulated contributors, exact terminal coverage and
+one original shared request/token/time allowance. No acceptance/persistence bypass.
+
+Scan owns Generator/CLI/command-local operator interaction and its tests. Existing
+exact root settings remain supported. The new bounded async selection occurs at
+the existing hook after freeze/B1, over authorized owner-projected units, before
+the final request digest/original slot. No guessed/all/first-unit default, foreign
+or stale selection, renewed deadline/budget, held provider permit/DB transaction,
+or abandoned interaction. Business owns contract compatibility and all schema;
+no schema/Core contract redesign is approved. Explorer owns the new BL reader E2E
+assertions; Integration owns shared fixture/host/resource wiring and merges.
+
+Current CL-only qualification guards remain intact; BL gets an explicit additive
+input/verification path and shares one coordinated data run. Implementation and
+SelfContained verification proceed under this approval. New live BL spend limits
+and retained presentation source/host/retention details still need one concrete
+resource authorization; the synthetic B's finished one-run grant is not reused.
+
+### Additive ordinary-reader fixture checkpoint
+
+Integration added a fixture-owned reader session retaining the genuine authenticated
+principal, captured stamp and one canonical ReadSelection across Search, ReadExact
+and GetRelated continuations. Disposal closes admission and drains returned API
+tasks; it does not claim settlement of physical work escaped by an owner timeout.
+A separate internal test oracle loads only the exact owned publication through the
+existing published source; it is not ordinary-user authorization. Existing CL
+qualification APIs and assertions remain unchanged. Independent review accepted
+this bounded addition with no must-fix findings.
+
+Current sources compile and the affected SelfContained selection passes **26/26**,
+zero failures/skips, run `bed774db8bef46328bc6793c06e6f006`. This validates compilation
+and surrounding controlled reader/binding behavior, not execution of the new
+PostgreSQL-backed session or real BL content. Full-suite and external qualification
+are not claimed. Earlier build attempts stopped before tests: one restricted build
+had no compiler diagnostic, and two subsequent attempts reported policy-hook
+`pwsh` lookup failure (MSB3073/9009). A short process-only PATH containing the
+installed PowerShell/.NET and Windows directories passed command lookup and the
+standard launcher; no machine/user configuration or build policy was changed.
+
+Scan's bounded file-exchange operator protocol is agreed with Business; implementation
+is still underway. Explorer owns additive BL reader assertions. Business is checking
+duplicate uncertainty payloads across accepted manifests; mandatory occurrences must
+not be dropped or renamed by Scan. These are not yet integrated runtime capabilities.
+
+The subsequent fixture oracle validates each actual BL Document's exact
+publication/member/group/corpus/finalization binding and returns all persisted
+CL Document Version dependencies, including supplemental non-member dependencies.
+It fails on missing or inconsistent rows, never infers directed graph edges and
+does not require supplemental CL evidence to be publicly selected. Business
+confirmed the mapping; independent source review accepted the implementation.
+Current compilation and 26/26 affected SelfContained tests pass in
+`7ca0e24daad649ce84791f7b406a121c`. The new storage oracle itself remains unexecuted
+against real BL until the separately authorized shared qualification run.
