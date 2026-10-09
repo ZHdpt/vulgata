@@ -76,6 +76,11 @@ internal static class OctoberGenerateFixtureInputs
                     _ => "unavailable"
                 } : "unavailable";
             output.Add($"generate-reported-original-synthesis-failure={synthesis}");
+            if (!report.TryGetProperty("workerDiagnostics", out var worker)) worker = default;
+            string WorkerValue(string name, params string[] allowed) => worker.ValueKind == JsonValueKind.Object
+                && worker.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+                && allowed.Contains(value.GetString(), StringComparer.Ordinal) ? value.GetString()! : "unavailable";
+            output.Add($"generate-reported-worker-diagnostics: status={WorkerValue("status", "Completed", "InvalidInput", "InvalidOutput", "ProviderFailed", "BudgetExceeded", "Cancelled", "SourceChanged", "Denied")}; retry-disposition={WorkerValue("retryDisposition", "None", "KnownSafeTransient")}; failure-stage={WorkerValue("failureStage", "Admission", "StreamTerminal", "ProposalParse", "ProposalValidation", "Transport", "HostSealing")}");
         }
         catch (JsonException) { output.Add("generate-report=unavailable-or-malformed"); }
         return output;

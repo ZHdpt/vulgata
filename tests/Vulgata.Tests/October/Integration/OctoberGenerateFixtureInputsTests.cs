@@ -11,6 +11,53 @@ public sealed class OctoberGenerateFixtureInputsTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_WorkerFieldsAllowOnlyDeclaredStatusRetryAndFixedStages()
+    {
+        string[] statuses = ["Completed", "InvalidInput", "InvalidOutput", "ProviderFailed", "BudgetExceeded", "Cancelled", "SourceChanged", "Denied"];
+        string[] retries = ["None", "KnownSafeTransient"];
+        string[] stages = ["Admission", "StreamTerminal", "ProposalParse", "ProposalValidation", "Transport", "HostSealing"];
+        Assert.Equal(Enum.GetNames<Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus>(), statuses);
+        Assert.Equal(Enum.GetNames<Vulgata.Agents.WorkerExecution.OctoberWorkerRetryDisposition>(), retries);
+        foreach (string status in statuses)
+        foreach (string retry in retries)
+        foreach (string stage in stages)
+        {
+            string json = JsonSerializer.Serialize(new { workerDiagnostics = new { status, retryDisposition = retry, failureStage = stage } });
+            Assert.Contains($"generate-reported-worker-diagnostics: status={status}; retry-disposition={retry}; failure-stage={stage}",
+                OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, ""));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("{}")]
+    [InlineData("{\"workerDiagnostics\":null}")]
+    [InlineData("{\"workerDiagnostics\":[]}")]
+    [InlineData("{\"workerDiagnostics\":{\"status\":null,\"retryDisposition\":null,\"failureStage\":null}}")]
+    [InlineData("{\"workerDiagnostics\":{\"status\":0,\"retryDisposition\":1,\"failureStage\":999}}")]
+    [InlineData("{\"workerDiagnostics\":{\"status\":\"completed\",\"retryDisposition\":\"none\",\"failureStage\":\"transport\"}}")]
+    [InlineData("{\"workerDiagnostics\":{\"status\":\"0\",\"retryDisposition\":\"None, KnownSafeTransient\",\"failureStage\":\"Unknown\"}}")]
+    [InlineData("{\"workerDiagnostics\":{\"status\":\"PRIVATE-secret\",\"retryDisposition\":{\"key\":\"PRIVATE-secret\"},\"failureStage\":[\"PRIVATE-secret\"]}}")]
+    public void GenerateDiagnostics_InvalidWorkerValuesAreUnavailableWithoutPayloadEcho(string json)
+    {
+        var output = OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, "");
+        Assert.Contains("generate-reported-worker-diagnostics: status=unavailable; retry-disposition=unavailable; failure-stage=unavailable", output);
+        Assert.DoesNotContain("PRIVATE-secret", string.Join('\n', output));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_DuplicateWorkerFieldRejectsEntireReport()
+    {
+        var output = OctoberGenerateFixtureInputs.GenerateDiagnostics(1,
+            "{\"workerDiagnostics\":{\"status\":\"Completed\",\"status\":\"PRIVATE-secret\"}}", "");
+        Assert.Contains("generate-report=unavailable-or-malformed", output);
+        Assert.DoesNotContain(output, line => line.StartsWith("generate-reported-worker-diagnostics:", StringComparison.Ordinal));
+        Assert.DoesNotContain("PRIVATE-secret", string.Join('\n', output));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GenerateDiagnostics_OriginalSynthesisReasonAcceptsOnlyExplicitNonNoneNames()
     {
         string[] reasons = ["InvalidInput", "ProposalShape", "SectionOrder", "ClaimShape", "DocumentReference",

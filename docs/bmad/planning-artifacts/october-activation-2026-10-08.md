@@ -882,3 +882,13 @@ Usage: 1 request, 2,095 input / 558 output tokens, unknown=false. Series totals:
 **2/5 attempts, 3 requests, 33,240 tokens**; three attempts remain. Fixture DB/temp
 cleanup passed; exact run-label Docker queries confirmed zero containers/volumes.
 Scan owns bounded source-free Worker-path diagnosis before another attempt.
+
+Scan's source-free diagnosis found `worker_not_completed` collapses the existing
+Worker status and host sealing refusals. Even ProviderFailed can include local
+JSON type errors; token counts do not distinguish causes. A bounded observation
+change is authorized: existing status/retry disposition plus one fixed stage,
+under current disclosure/replay fences, with unchanged retries/status/acceptance.
+Worker prompt clarification is limited to already-enforced invariants.
+Root strict three-field fixture extraction passed independent review and **69/69**
+source-free tests (`60aac9264f3f420197c5d21c8d635b92`); producer integration remains
+pending. No additional runtime attempts were consumed.
