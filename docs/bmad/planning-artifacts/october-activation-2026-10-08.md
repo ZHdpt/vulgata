@@ -615,4 +615,25 @@ zero failures/skips, `8ec3561c312d41a7ab045ec1a03e9673`, 439 classified sources.
 The prior compile attempt `91fc5d7182a0407aa2c0aa6a6ef5f791` failed on an ambiguous
 SourceAnchor type; explicit October type qualification corrected it, with no runtime
 execution. This is not a full-suite or real BL result. The approved one-run operation
-is now ready for root-controlled execution and remains unused at this checkpoint.
+was ready for root-controlled execution and remained unused at that checkpoint.
+
+### Approved BL attempt failed — no automatic retry
+
+The approved one-run grant was used on source checkpoint `cafedace`, E2E run
+`3bde4a7267ca4d7d9ecb5c38d50f6a7b` (**0/1**, zero skips). An earlier invocation
+stopped at Docker CLI lookup before provisioning or Generate; correcting only
+that invocation's PATH allowed the still-unused operation to start.
+
+The actual Generate exited 3 and reported Interrupted, `run_interrupted`,
+publication NotRequested, zero accepted files/Documents and no successful operator
+exchange. Reported provider use was **1 request, 2,095 input / 2,889 output tokens,
+unknown=false**. The E2E failed at the operator-exchange assertion before ordinary
+Business reading, BL content review or revocation checks. Its duration was 3m24.868s.
+The reason for interruption is under Scan-owned diagnosis; the report is not proof
+that any particular deadline fired. No BL or real Business-reader success is claimed.
+
+The fixture verified database and temporary-root cleanup; the runner removed its
+container and volume. A subsequent exact run-label lookup found zero remaining
+containers/volumes. Keys/source/tool/exchange state were disposable, not retained
+presentation data. The one-Generate grant is consumed; no automatic whole-run retry
+or additional provider request is authorized. Source-free diagnosis may continue.
