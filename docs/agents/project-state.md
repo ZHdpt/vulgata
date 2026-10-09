@@ -82,9 +82,14 @@ Latest phase diagnostics `a1afb9e3` passed main affected **205/205**
 (isolation `2bc0e6efb6b14f25be9eca71bc9a410d`). Run `phone-6216c2bfaa55`
 ended72.11s at `InvalidOutput/ProposalParse`:4requests15,437input/4,845output,
 accepted0. Earlier budget/provider failure causes remain unresolved. Paid runs
-are held; Scan now has **assessment-only** scope across Worker prompt/parser/tool
-contracts and actual SDK output handling, returning a consolidated proposal before
-more edits/spend. Prior acceptedCL remains preserved and unpublished.
+are held. Controlled contract assessment is now integrated as `4b466447` (lane
+139/139 affected tests; no production change in that checkpoint). Integrator
+authorized one bounded Scan correction: explicit existing parser prompt rules,
+trusted primary relative-path/window line metadata, accurate Worker-only cursor
+exposure, and sanitized malformed-input refusal within existing budgets. Shared
+facades, Knowledge schemas, authorization/provenance fail-closed checks and primary
+evidence boundaries stay unchanged. Reviewed controlled GREEN is required before
+root decides live qualification. Prior accepted CL remains preserved and unpublished.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
 Status: one prior real CL remains accepted but unpublished. The latest phase-
-diagnostic retry instead reached `ProposalParse` failure. Paid retries are paused
-for a consolidated, source-free Worker contract assessment; preserve partial data.
+diagnostic retry reached `ProposalParse` failure. Controlled contract assessment is
+complete and one bounded correction is authorized; paid retries remain paused.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -242,3 +242,27 @@ database `vulgata_oct_pilot_6873d244d5b84c30bb7c513f20383a2d`:
   repeat another isolated diagnostic-field/paid-run cycle without that decision.
 - Previous partial accepted CL and its database/keys remain retained. Only generated
   tool state from the settled prior run was archived; all77 source hashes matched.
+
+## Consolidated correction decision
+
+Test-only characterization `5eb0a4d` integrated as `4b466447`; lane controlled
+139/139 passed and independent review accepted. Affected production matches main.
+See `specs/20-1-Oct14-scan/worker-contract-assessment.md` for evidence and limits.
+Integrator authorized the proposed narrow correction under existing October scope:
+
+- Explicit prompt rules for the existing exact parser; no relaxed acceptance.
+- Verified primary relative path and precise whole-file/window line metadata;
+  no physical paths, extra source authority or Knowledge schema change.
+- Omit unsupported caller cursors from Worker-facing schemas; retain internal page
+  draining and leave the shared direct facade's cursor support unchanged.
+- Sanitize malformed input before source execution, permitting correction only
+  within existing round/tool/byte/time limits. Authority/provenance failures stay
+  fatal; refusal must not invent evidence/contributors or bypass the ledger.
+- Keep primary anchors primary and preserve supporting provenance; richer supporting
+  citation semantics are outside this correction.
+
+Scan owns scoped implementation with separate test/production owners and independent
+review. No added parser diagnostic/status normalization, SDK/charging changes or
+live resources. Root decides qualification only after reviewed affected GREEN.
+This addresses proven contract gaps, not a proven identification of the last
+malformed proposal field. Existing partial data and keys remain retained.
