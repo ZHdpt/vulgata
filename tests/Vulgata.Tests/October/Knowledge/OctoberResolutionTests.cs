@@ -1,11 +1,54 @@
 using System.Collections.Immutable;
+using System.Text.Json;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using ApiType = Vulgata.Core.Entities.ApiType;
+using Vulgata.OctoberGenerator;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.October.Knowledge;
 
 public sealed class OctoberResolutionTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("plain")]
+    [InlineData("answer-and-reasoning")]
+    [InlineData("reasoning-only")]
+    [InlineData("invalid-answer")]
+    public async Task ExecuteAsync_ActualSelectedSdkReasoning_IsNotAcceptedWitnessContentAsync(string shape)
+    {
+        var f = new ResolutionCase();
+        using var transport = new SynthesisSdkResponseHandler(JsonSerializer.Serialize(f.Witness()), shape);
+        using var client = await new OctoberWorkerClientFactory(new SynthesisSdkSecret(), transport).CreateAsync(
+            new("controlled-sdk-response", "only-source", new("selected-profile", ApiType.ChatCompletions,
+                "https://never-contacted.invalid/v1", "controlled-model", "credential://controlled-sdk"), "controlled-protected"));
+        Guid run = Guid.NewGuid();
+        var operation = new OperationKey(f.Corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
+        await using var scope = new OctoberExecutionScope(run, "selected-profile", new()
+        {
+            OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 100,
+            SourceRules = [new(f.Corpus.Documents[0].RepositoryId, "src", "selected", "Controlled accepted-input qualification")]
+        }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted), operation);
+        var result = await new OctoberResolutionExecutor(client, "Controlled accepted-input instructions.")
+            .ExecuteAsync(f.Corpus, f.Inquiry(), operation, run, "selected-profile", 40, scope, new ResolutionDisclosure());
+        Assert.Equal(1, transport.Calls);
+        Assert.Equal(10, Assert.Single(result.Attempts).InputTokens);
+        Assert.Equal(5, result.Attempts[0].OutputTokens);
+        if (shape is "reasoning-only" or "invalid-answer")
+        {
+            Assert.Null(result.Outcome); Assert.Null(result.Witness);
+        }
+        else
+        {
+            Assert.NotNull(result.Outcome); Assert.Equal(ResolutionOutcomeKind.Supported, result.Outcome.Kind);
+            Assert.NotNull(result.Witness); Assert.Null(result.AdmissionFailure);
+            Assert.True(string.Equals(OctoberKnowledgePolicy.SerializeCanonical(f.Witness()),
+                OctoberKnowledgePolicy.SerializeCanonical(result.Witness), StringComparison.Ordinal));
+            Assert.False(OctoberKnowledgePolicy.SerializeCanonical(result.Witness).Contains(SynthesisSdkResponseHandler.ReasoningMarker, StringComparison.Ordinal));
+        }
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public void Plan_InputOrderChanges_RetainsExactInquiryFingerprintAndContributorUnion()
