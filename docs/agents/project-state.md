@@ -84,6 +84,12 @@ and reported ResponseShape: an envelope role/content-kind rejection before JSON
 parsing. The exact rejected type remains unknown. Worker diagnostic integration
 passed main 144/144 beforehand. Series totals are five requests/58,108 tokens;
 two attempts remain, cleanup verified. Business owns bounded envelope diagnosis.
+The installed-SDK ancillary reasoning compatibility defect was reproduced/fixed
+at `4b555cc7` (owner 403/403, main 80/80). Attempt 4
+(`d38660c31adc4a49b1dd7ea0b9000233`, source `1bb6b0ba`) passed the envelope guard
+but failed exact SectionReference validation. Business is diagnosing reference
+supply/prompt semantics, without weakening validation. Series totals seven
+requests/90,944 tokens; one live attempt remains. All disposable cleanup verified.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).

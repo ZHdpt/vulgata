@@ -930,3 +930,19 @@ Owner GREEN 403/403 (`e746098488be4bc3a28e21ad0b053d92`), independent integratio
 review accepted. Main SDK/compatibility plus fixture checks passed **80/80**, zero
 skips, `a69283e0cdb8436f89336ba4d5a96c9f`. This proves the compatibility defect,
 not the unretained exact content shape of attempt 3. Attempt 4 uses the correction.
+
+#### Attempt 4 of 5 — semantic input-section reference rejection
+
+Run `d38660c31adc4a49b1dd7ea0b9000233` on `1bb6b0ba`: **0/1**, duration
+2m24.675s. Worker/selection succeeded and synthesis passed the prior envelope guard.
+Original failure reason is **SectionReference**, with finalizer/lookup both
+Failed / AlreadyCommitted and exact operation. The validator emits this when the
+input reference's exact Document has not exactly one section with the supplied
+SectionId. It is not evidence of missing database data or a specific mistaken ID;
+the generated payload was not retained. Exact validation remains mandatory.
+
+Usage: 2 requests, 17,422 input / 15,414 output tokens, unknown=false. Series
+totals: **4/5 attempts, 7 requests, 90,944 tokens**; one attempt remains.
+Owned database/temp and zero remaining run-labelled containers/volumes verified.
+Business is tracing serialized source-reference supply and prompt semantics before
+the final attempt. No permission to repair references by guessing or relax validation.
