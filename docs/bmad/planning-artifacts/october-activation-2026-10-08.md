@@ -462,3 +462,71 @@ confirmed the mapping; independent source review accepted the implementation.
 Current compilation and 26/26 affected SelfContained tests pass in
 `7ca0e24daad649ce84791f7b406a121c`. The new storage oracle itself remains unexecuted
 against real BL until the separately authorized shared qualification run.
+
+Explorer's reviewed assertion helpers (`0315b087`, correction `78deae7b`) are
+imported at `a83daa2a`/`9424130a` and classified E2E. They reconstruct complete
+canonical Business reading with bounded pagination, check BL-only disclosure and
+use the same previously successful session/actual cursors across stamp revocation.
+The rejected draft's nullable reopen shortcut was removed: service failure cannot
+count as successful revocation. These helpers have no discoverable test or fake
+Generate stub; orchestration and dependency assertions remain owner work.
+Current compilation and the existing affected SelfContained selection pass
+**26/26**, run `ef63d2749a5f4049a79d290152de5cc6`, with 436 classified files.
+This is compilation/controlled evidence only, not executed BL E2E qualification.
+
+### Multi-file uncertainty owner correction integrated
+
+Reviewed Business checkpoint `fc449f03` is imported at `3b74c758`. The existing
+payload-only publication request may select a complete multiset of identical file
+uncertainties while preserving every manifest/key identity. Partial/excess counts
+remain invalid; resolution selection, digests, authorization and schema are unchanged.
+Scan must retain each occurrence rather than deduplicate or rename uncertainties.
+
+Main's combined affected selection passes **130/130**, zero failures/skips, run
+`8b63c38e682949cb95e353de1d33d660`, on source checkpoint `3b74c758` (build zero errors,
+existing warnings retained). This includes publication/resolution/flow/disclosure
+and unchanged Chat application tests. It is not full-suite GREEN or PostgreSQL proof.
+Business's full run `b82cd8568e5e49f5832593ce15a1db13` remains **4,123/4,124**, with
+an initial Chat SubmitAsync ten-second timeout before unknown-locator assertions.
+Focused nonreproduction does not explain it. Chat owns bounded failure diagnostics
+preserving that assertion and timeout; no production correction or waiver is claimed.
+
+### Combined integration regression — October 9
+
+Explorer's exact dependency assertions are imported at `42703cff`; current main
+compilation and 26 affected SelfContained cases passed in
+`48279b982426496493397a887cdc93ee`. These partial helpers still have no live BL test.
+Reviewed Chat failure-only diagnostics are imported at `0e78cbd9`: the original
+ten-second wait/assertions remain, with safe counters/state sampled before teardown.
+
+The full SelfContained run on `0e78cbd9`,
+`8c2117b463a54d0785e50dec48cbaf82`, passed **4,130/4,132**, zero skips, build zero
+errors. It is **NOT GREEN**. The earlier initial-submit timeout did not recur,
+which does not establish its cause. Two current failures remain:
+
+- `CodeGraphAdapter_UsesApprovedIdentity_AndClosedPublicSeamWithoutStartupIndexing`:
+  expected Ready, observed NotReady at line 149; Integration owns diagnosis.
+- `ChatPage_SameInstanceLocatorNavigationReopensExactContextAndCannotSilentlyCreateOnRemovalAsync`
+  (`?conversationId=invalid`): expected the second answer but rendered a failed-answer
+  state; Chat owns diagnosis. A longer render wait is not an established fix.
+
+No assertion/timeout waiver, production remedy or new provider/database operation
+is authorized by this regression result. The process-only short PATH used for
+build lookup is part of the recorded test environment and must be considered
+when diagnosing environment-sensitive failures.
+
+CodeGraph failure diagnosis is confirmed for the test environment: the integrity
+probe resolves `codegraph.ps1` only from process PATH; Integration's short PATH
+omitted the installed `G:\packages\npm\prefix`. Restoring only that directory
+to the same short invocation-local PATH passed the exact failing check **1/1**
+in `6799cb7c8bdf4a588a327362ebfa9124`, with unchanged assertions and production
+code. This was a file/hash integrity check, not a native CodeGraph launch. Future
+combined runs must retain that required lookup; no persistent environment changed.
+The failed full run remains recorded, and a corrected full run is still needed.
+
+The second Chat failure took 2.953 seconds and had no receipt/status diagnostics
+in TRX. Source inspection places it after selecting the second valid conversation
+but before using the invalid final locator; the UI had a Failed/empty saved answer.
+Chat owns test-only assertions that validate both synthetic setup turns before
+navigation, with safe terminal/result counters on failure. No timer or product
+fix has been established, and the earlier initial-submit timeout remains distinct.
