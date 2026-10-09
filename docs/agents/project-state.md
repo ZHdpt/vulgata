@@ -28,6 +28,14 @@ Integration the shared fixture/host/resources. No broad scheduler/recovery resta
 or automatic root discovery. See the activation record for the exact scope;
 implementation approval does not supply missing live-spend/retained-host limits.
 
+Sequential/operator Scan is now integrated at `b270bfba` (owner 103/103 affected
+tests). Main combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` is
+**4,185/4,186, not GREEN**: a Chat seed fails before provider dispatch with
+ExecutionFailure and zero requests. Chat owns diagnosis; BL fixture work proceeds
+independently. One separately bounded synthetic BL qualification run is now
+approved (8 total requests/48,000 combined tokens), but remains unused until its
+additive fixture is reviewed/compiled. Presentation operation C remains unapproved.
+
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
 its reviewed tests/evidence are integrated at `9271f8f0`. This supersedes older

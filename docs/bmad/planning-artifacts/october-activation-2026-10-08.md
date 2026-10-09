@@ -571,3 +571,23 @@ fixture support; it does not reuse completed B or authorize presentation operati
 
 Approval is recorded but the operation has **not started**. Root remains sole
 runtime/resource owner; lanes must not generate duplicate qualification data.
+
+### Scan integration and shared setup diagnostic result
+
+Reviewed Scan `ad322bb5` is integrated at `b270bfba`; its source, owner 103/103
+controlled evidence and protocol are retained. Independent integration review
+accepted the original Identity binding, same-run budgets, accumulated coverage and
+operator lifecycle. No native/provider/BL qualification is implied.
+
+Combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` on that source
+passed **4,185/4,186**, zero skips/build errors, 438 classified sources. The only
+failure is Chat's same-instance seed A: admitted successfully, then saved with
+ExecutionFailure/Unknown finish, zero provider requests, zero active registrations
+or requests and two disposed scopes. It took 540.4 ms for submission, 1.4408 seconds
+for the test. This localizes the fault before provider dispatch; it is not evidence
+of an invalid-locator/render delay or provider timeout. Chat owns further causal
+diagnosis; full-suite GREEN remains unachieved.
+
+Main source-write/build serialization is released for the additive BL fixture.
+Runtime authority remains the exact one-run approval above; no runtime dispatch
+has occurred. Independent fixture work does not waive the Chat regression.
