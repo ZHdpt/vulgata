@@ -917,3 +917,16 @@ totals: **3/5 attempts, 5 requests, 58,108 tokens**; two attempts remain.
 Fixture DB/temp cleanup and exact run-label zero containers/volumes were verified.
 Business owns bounded source-free envelope compatibility diagnosis/correction;
 no JSON semantic validator relaxation or raw reasoning logging is authorized.
+
+The actual installed SDK over controlled HTTP reproduced an envelope compatibility
+defect: valid answer text plus TextReasoningContent was rejected by both synthesis
+and resolution. Controlled RED: 9/11 passed, two expected rejection failures,
+`c5411055a3cd48f1a787ed3b4d2f957b`; an earlier compile-only fixture import error is
+not RED. Business checkpoint `1e7dcf13819aacc5e59d5a5a581289b41891b59f` integrated
+at `4b555cc7`: exactly two production allowlist additions for recognized reasoning
+content. Only response.Text is parsed; all role/finish/size/JSON/semantic rules and
+accounting remain unchanged. No reasoning is logged, persisted or accepted as claims.
+Owner GREEN 403/403 (`e746098488be4bc3a28e21ad0b053d92`), independent integration
+review accepted. Main SDK/compatibility plus fixture checks passed **80/80**, zero
+skips, `a69283e0cdb8436f89336ba4d5a96c9f`. This proves the compatibility defect,
+not the unretained exact content shape of attempt 3. Attempt 4 uses the correction.
