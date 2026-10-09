@@ -8,7 +8,17 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-08 (source-free October PostgreSQL qualification integrated; real Generate paused by the user pending LLM configuration).
+Updated: 2026-10-09 (first real synthetic Generate-to-ordinary-reader milestone passed; retained presentation operation remains separately pending).
+
+Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
+`ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
+CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,
+Business-mode CL denial and revocation checks passed. Reported usage was
+2,095 input/1,888 output tokens, unknown=false. All fixture resources were cleaned.
+This supersedes earlier B-failure/pending statements below for this exact synthetic
+scenario only. Useful BL, two-Repository resolution, interactive streaming Chat,
+graph and retained presentation operation C remain unqualified/unapproved as
+applicable; no production-source disclosure is implied.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;

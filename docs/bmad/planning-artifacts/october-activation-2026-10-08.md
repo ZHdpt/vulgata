@@ -360,3 +360,39 @@ RED remains historical evidence, not a permanently failing routine test. See
 [the native diagnosis](../../../specs/20-1-Oct14-scan/native-inventory-diagnosis.md).
 Post-import source policy passes (435 classified files); no combined full-suite
 or corrected live Generate result is claimed for this later test-only checkpoint.
+
+## October 9 corrected B verification authorization
+
+The user explicitly approved one corrected B run from clean `e3804063`, under
+the same synthetic AccountPolicy.java/provider/disposable-resource boundary,
+maximum three requests, no automatic retries and 12,000 combined tokens.
+The PATHEXT correction is present. C and production-source disclosure remain
+pending; this approval does not turn the disposable fixture into retained data.
+
+Initial October 9 preflight `a752ced7bdde4e4697f5dcf372bb15fd` stopped at Docker
+readiness before provisioning/build/discovery/provider execution. Root started
+the installed Docker Desktop without configuration changes; bounded readiness
+then returned server 29.8.2. The still-unused approved qualification resumed with
+fresh resources, not as a retry of an executed provider request.
+
+### Corrected B passed
+
+Run `ba60d34f60a54c40b14b46b5b00ef629` on source checkpoint `e3804063` passed
+**1/1 E2E**, zero failures/skips, launcher exit 0. One actual Generate returned
+exit 0, CL-only Completed, Complete coverage and Confirmed publication: one
+inventory file, one accepted file, one exact Document and no gaps. Reported provider
+usage: **one request, 2,095 input tokens, 1,888 output tokens, unknown=false**.
+
+The unchanged test resolved actual persisted origin, verified the exact publication,
+logged in an ordinary User via production Identity, read the exact generated CL
+through HTTP/SSR and checked Business-mode CL denial and stamp revocation. This
+achieves the first real Generate-to-ordinary-reader technical milestone, not an
+independent semantic-quality evaluation or interactive browser/circuit proof.
+Continuation, BL, cross-Repository resolution, graph rendering and live Chat are
+not qualified by this case. Native inventory/Worker execution was real; this run
+does not assert that the Worker invoked every available analysis tool.
+
+Fixture database/temp cleanup was recorded; runner container removal and named
+volume absence were verified. No presentation dataset was retained, no production
+repository was accessed, and no credential values were recorded. Operation C is
+now eligible for a concrete separate approval request, not automatically approved.
