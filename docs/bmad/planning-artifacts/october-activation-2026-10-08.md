@@ -514,3 +514,19 @@ No assertion/timeout waiver, production remedy or new provider/database operatio
 is authorized by this regression result. The process-only short PATH used for
 build lookup is part of the recorded test environment and must be considered
 when diagnosing environment-sensitive failures.
+
+CodeGraph failure diagnosis is confirmed for the test environment: the integrity
+probe resolves `codegraph.ps1` only from process PATH; Integration's short PATH
+omitted the installed `G:\packages\npm\prefix`. Restoring only that directory
+to the same short invocation-local PATH passed the exact failing check **1/1**
+in `6799cb7c8bdf4a588a327362ebfa9124`, with unchanged assertions and production
+code. This was a file/hash integrity check, not a native CodeGraph launch. Future
+combined runs must retain that required lookup; no persistent environment changed.
+The failed full run remains recorded, and a corrected full run is still needed.
+
+The second Chat failure took 2.953 seconds and had no receipt/status diagnostics
+in TRX. Source inspection places it after selecting the second valid conversation
+but before using the invalid final locator; the UI had a Failed/empty saved answer.
+Chat owns test-only assertions that validate both synthetic setup turns before
+navigation, with safe terminal/result counters on failure. No timer or product
+fix has been established, and the earlier initial-submit timeout remains distinct.
