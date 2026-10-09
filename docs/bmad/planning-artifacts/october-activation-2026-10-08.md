@@ -530,3 +530,14 @@ but before using the invalid final locator; the UI had a Failed/empty saved answ
 Chat owns test-only assertions that validate both synthetic setup turns before
 navigation, with safe terminal/result counters on failure. No timer or product
 fix has been established, and the earlier initial-submit timeout remains distinct.
+
+Chat's reviewed setup assertions are imported at `bc8a4d8d`, preserving all waits
+and navigation expectations. The next full SelfContained run,
+`7ab2d78fd18e46b799d4179acce47c84`, passed **4,131/4,132**, zero skips/build errors,
+with the CodeGraph lookup directory restored. It remains **NOT GREEN**. CodeGraph
+and the earlier Chat cases passed; the sole failure moved to
+`ChatPage_ValidDurableLocatorReloadsExactOwnerTranscriptWithoutCreateOrGenerationAsync`:
+the expected saved answer was empty (3.8967-second case). Its setup did not capture
+terminal diagnostics. Chat now owns common controlled seed/lifecycle diagnosis
+across these navigation cases; another unchanged full rerun is not an explanation.
+No production fix, timing waiver, external execution or BL success is claimed.
