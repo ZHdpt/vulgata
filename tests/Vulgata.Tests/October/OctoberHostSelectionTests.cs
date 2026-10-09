@@ -34,7 +34,7 @@ using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Tests.October;
 
-public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
+public sealed partial class OctoberHostSelectionTests(ITestOutputHelper output)
 {
     [Trait("Suite", "E2E")]
     [SuiteFact("E2E")]
@@ -1238,7 +1238,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         output.WriteLine("invalid-operator-password-october-schema=absent");
     }
 
-    internal sealed class GeneratorPrepareFixture : IAsyncDisposable
+    internal sealed partial class GeneratorPrepareFixture : IAsyncDisposable
     {
         private const string DatabasePrefix = "vulgata_story184_generator_";
         private const string DataProtectionApplicationName = "Vulgata.Tests.Story184.GeneratorPrepare";
@@ -2365,8 +2365,22 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             string? targetIdOverride = null,
             string? runtimeFilePath = null,
             string? scanPolicyFilePath = null,
-            string? workerProviderConfigurationFilePath = null)
+            string? workerProviderConfigurationFilePath = null,
+            string? businessSettingsFilePath = null,
+            string? businessRootSelectionDirectory = null,
+            int? businessRootSelectionTimeoutSeconds = null)
         {
+            if (businessSettingsFilePath is not null || businessRootSelectionDirectory is not null || businessRootSelectionTimeoutSeconds is not null)
+            {
+                if (mode != "generate" || businessSettingsFilePath is null || businessRootSelectionDirectory is null
+                    || businessRootSelectionTimeoutSeconds is not (>= 1 and <= 300))
+                    throw new ArgumentException("Explicit complete Generate Business configuration is required.");
+                _ = OctoberGenerateFixtureInputs.ValidateFiles(OwnedRoot, mode, runtimeFilePath, scanPolicyFilePath,
+                    businessSettingsFilePath, false);
+                if (Path.GetDirectoryName(Path.GetFullPath(businessRootSelectionDirectory)) != OwnedRoot
+                    || Directory.Exists(businessRootSelectionDirectory) || File.Exists(businessRootSelectionDirectory))
+                    throw new ArgumentException("The operator exchange must be a fresh owned child.");
+            }
             OctoberGenerateInputFiles? generateInputs = OctoberGenerateFixtureInputs.ValidateFiles(
                 OwnedRoot, mode, runtimeFilePath, scanPolicyFilePath, workerProviderConfigurationFilePath,
                 includeCompetingProviderSource || identityConnectionStringOverride is not null ||
@@ -2437,6 +2451,14 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 startInfo.Environment["October__ScanPolicyFile"] = generateInputs.ScanPolicyFilePath;
                 startInfo.Environment["October__Providers__ConfigurationFile"] =
                     generateInputs.WorkerProviderConfigurationFilePath;
+            }
+            if (businessSettingsFilePath is not null)
+            {
+                startInfo.Environment["October__BusinessSettingsFile"] = businessSettingsFilePath;
+                startInfo.Environment["October__BusinessRootSelectionMode"] = "operator";
+                startInfo.Environment["October__BusinessRootSelectionDirectory"] = businessRootSelectionDirectory;
+                startInfo.Environment["October__BusinessRootSelectionTimeoutSeconds"] =
+                    businessRootSelectionTimeoutSeconds!.Value.ToString(CultureInfo.InvariantCulture);
             }
             if (includeCompetingProviderSource)
                 startInfo.Environment["October__Providers__SourceIdentity"] = "competing-flattened-source";

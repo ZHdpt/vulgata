@@ -591,3 +591,28 @@ diagnosis; full-suite GREEN remains unachieved.
 Main source-write/build serialization is released for the additive BL fixture.
 Runtime authority remains the exact one-run approval above; no runtime dispatch
 has occurred. Independent fixture work does not waive the Chat regression.
+
+### Reviewed BL fixture and Chat causal correction
+
+Chat's deterministic pre-dispatch regression reproduced the registration-order
+race without using a timeout as proof. Reviewed correction `fa693815` is imported
+at `3feca6fb`: retain early closure refusal, await the existing coordinator
+registration/reauthorization callback, then require actual generation ownership
+and recheck closure before physical dispatch. Negative controls preserve refusal
+without observation and closure during a non-cooperative callback. Owner affected
+evidence is 597/597; this does not prove every historical failure had that cause.
+
+Explorer's single-run BL scenario is imported at `3dcbd975`. The additive fixture
+uses its own grant gate, preserves the original AccountPolicy source bytes, derives
+registration anchors from their verified digest, resolves one actual accepted root,
+and independently validates persisted finalization/publication. Temporary response
+cleanup now requires successful file creation ownership. It keeps the original
+ordinary-reader session across complete Business reads and actual stamp rotation.
+Independent final source review accepted the fixture and scenario.
+
+Current compilation and the affected reader/Chat ownership selection pass **83/83**,
+zero failures/skips, `8ec3561c312d41a7ab045ec1a03e9673`, 439 classified sources.
+The prior compile attempt `91fc5d7182a0407aa2c0aa6a6ef5f791` failed on an ambiguous
+SourceAnchor type; explicit October type qualification corrected it, with no runtime
+execution. This is not a full-suite or real BL result. The approved one-run operation
+is now ready for root-controlled execution and remains unused at this checkpoint.
