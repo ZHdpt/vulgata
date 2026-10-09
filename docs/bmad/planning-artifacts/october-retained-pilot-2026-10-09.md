@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: one prior real CL remains accepted but unpublished. CRLF comparison fix is
-integrated; latest retry passed tool execution but failed `ProposalParse`. Paid
-runs held pending bounded parser-category/schema-slot diagnostics, without raw output.
+Status: one prior real CL remains accepted but unpublished. Parser diagnostics
+identify `Syntax / Root`; paid runs held for source-free outbound JSON-mode and
+final-text assessment. No malformed-output repair or acceptance relaxation approved.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -429,3 +429,20 @@ observation. No dynamic keys/values/indices/paths/exceptiontext/responsebody. Pr
 parser acceptance/status, distinguish later validation and existing disclosurefences.
 Existingtests, separateowners and independentreview; no repair/retry/schema change.
 Paid/native/PG/source-root operations held pending root integration decision.
+
+## Parser diagnostic qualification
+
+Reviewed `268c5aea` integrated as `52fa489b`; main221/221 affected controlled tests
+passed, no skips (isolation `4a2bb3b23dec470a9a58a810180290fb`). Fresh
+`phone-64d5fbe0a2b9`, batch `f54f2248-f539-4b85-8002-c376dd7e9980`, database
+`vulgata_oct_pilot_8317b9d466a04945afa27707a11751cb`:
+
+- **54.94s wall /52.75s pipeline**, exit1, no timeout/cleanup doubt.
+- Inventory77,accepted0; **3requests,15,195input/3,696output**, usageknown.
+- `InvalidOutput / ProposalParse / None`, **parseFailure Syntax/Root**; other
+  diagnostic reasons null. This identifies the JSONparse boundary, not the response
+  contents: empty/fenced/malformed/depth-exceeded hypotheses remain unproved.
+- Paidruns held. Scan authorized source-free actualSDK/MAF outboundJSON-mode,
+  post-tool finalcall and final-text/depth assessment. Return one evidence-backed
+  proposal/minimalmissingobservation; no repair/stripfences/schema/status change or
+  raw response capture in current scope. Existing partialCL remains preserved.
