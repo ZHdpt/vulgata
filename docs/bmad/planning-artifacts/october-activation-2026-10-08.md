@@ -1002,3 +1002,32 @@ Database/temp cleanup passed; exact final run-label queries confirmed zero
 containers and volumes. No retained presentation database or real repository source
 was used. Operation C remains separately pending. Earlier CL qualification remains
 valid; full SelfContained GREEN remains unconfirmed (prior 4,188/4,189 failure).
+
+## Real login/registration slice authorization — October 9
+
+The user delegated sample preparation to the existing MBS preparation chat and
+confirmed disclosure of the selected real source to `https://api.deepseek.com`,
+model `deepseek-flash`, through the existing protected credential reference.
+Available credential balance is the authorized spending ceiling for normal project
+LLM use; it is not a requirement to exhaust the balance or an instruction to retry
+unchanged failures. Use finite per-run limits and report measured/unknown usage;
+stop on insufficient credit rather than changing provider or purchasing funds.
+
+Machine-specific source paths must remain outside tracked code/configuration.
+Use command-line bindings or a verified Git-ignored local run configuration;
+tracked examples/evidence use logical repository names or placeholders, never the
+actual prepared-root paths. Sample preparation is not authority to hardcode paths.
+
+Successful presentation datasets are retained until the user explicitly requests
+deletion. Each later run uses a fresh owned database and never resets/overwrites a
+successful one. Failed incomplete owned run data may be deleted after settlement
+and sanitized diagnostics; ambiguous/possibly successful state must be preserved
+until classified. Required source/key artifacts for a retained success must not
+be removed by disposable-fixture cleanup. This remains a separate production-path
+operation, not reuse of a qualification fixture with cleanup disabled.
+
+The sample-preparation chat was dispatched with separate real repository roots,
+bounded source-grounded login/registration scope, provenance manifest and external
+gap reporting. It has no runtime/credential authority from this dispatch. Exact
+scope and local retained database/host bindings will be resolved after delivery;
+no real-source batch, shared-database mutation or retained host was started here.

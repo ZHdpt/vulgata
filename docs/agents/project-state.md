@@ -22,6 +22,16 @@ exhausted. Do not launch a sixth run. Production-source operation C needs separa
 authority. Full-suite GREEN is still unconfirmed; the prior 4,188/4,189 result is
 not replaced by focused or E2E passing checks.
 
+Newer user authority (October 9): selected real login/registration source may use
+the approved DeepSeek endpoint/model and protected credential; normal LLM use may
+consume the available balance, with finite execution limits and no blind retry.
+Preparation is delegated to the MBS sample chat. Keep actual prepared-root paths
+out of tracked code/config; use CLI or ignored local configuration. Successful
+presentation data is retained until explicit deletion; later runs use fresh owned
+databases. Failed incomplete owned runs may be cleaned after settlement/diagnostics.
+Exact sample scope and retained runtime bindings remain pending preparation; no
+real-source run is implied by the completed disposable synthetic qualification.
+
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
 CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,
