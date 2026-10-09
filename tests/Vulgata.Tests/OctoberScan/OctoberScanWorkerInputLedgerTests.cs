@@ -502,21 +502,28 @@ public sealed class OctoberScanWorkerInputLedgerTests
     [SuiteTheory("SelfContained")]
     [InlineData("lf", "first();\nsecond();", "first();\nsecond();", true)]
     [InlineData("crlf-exact", "first();\r\nsecond();", "first();\r\nsecond();", true)]
-    [InlineData("crlf-normalized", "first();\r\nsecond();", "first();\nsecond();", false)]
+    [InlineData("crlf-normalized", "first();\r\nsecond();", "first();\nsecond();", true)]
     [InlineData("crlf-single-line", "first();\r\nsecond();", "second();", true)]
-    public async Task CurrentContract_CodeGraphCompleteExcerptRequiresRawSubstringAsync(
+    [InlineData("excerpt-crlf", "first();\nsecond();", "first();\r\nsecond();", true)]
+    [InlineData("mixed", "first();\r\nsecond();\nthird();", "first();\nsecond();\r\nthird();", true)]
+    [InlineData("space", "first();\r\nsecond();", "first(); \nsecond();", false)]
+    [InlineData("bare-cr", "first();\rsecond();", "first();\nsecond();", false)]
+    [InlineData("case", "first();\r\nsecond();", "First();\nsecond();", false)]
+    [InlineData("unicode", "café();\r\nsecond();", "cafe\u0301();\nsecond();", false)]
+    [InlineData("no-trim", "first();\r\nsecond();", " first();\nsecond(); ", false)]
+    public async Task CodeGraphCompleteExcerpt_ComparesOnlyCrLfNormalizedOrdinalTextAsync(
         string scenario, string retainedText, string excerptText, bool allowed)
     {
         await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
         var support = new Frame(host.Source.Origin with
         {
             RelativePath = "src/Support.java", SourceDigest = OctoberKnowledgePolicy.Hash(retainedText)
-        }, retainedText) { ObservedLineCount = 2 };
+        }, retainedText) { ObservedLineCount = System.Text.RegularExpressions.Regex.Matches(retainedText, "\\r\\n|\\r|\\n").Count + 1 };
         var ledger = Ledger(host, support);
         var location = new PreparedSourceLocation(support.Origin.RepositoryId, support.Origin.RelativePath);
         // Hand-constructed producer-shaped projection, not native qualification. The actual
         // ParseContainedResultAsync accepts LF excerpts against CRLF-normalized source;
-        // this characterization records the ledger's stricter raw-substring behavior.
+        // approved comparison normalizes CRLF on both strings without changing retained bytes.
         var result = new CodeGraphToolInvocationResult
         {
             Status = CodeGraphToolInvocationStatus.Complete, RepositoryId = location.RepositoryId,
@@ -527,6 +534,8 @@ public sealed class OctoberScanWorkerInputLedgerTests
         var admitted = await ledger.AdmitToolResultAsync(SourceMetadataOperation.CodeGraphExplore,
             ".", "{\"query\":\"support\"}", result);
         Assert.True(admitted.Status == (allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied), scenario);
+        Assert.Equal(retainedText, support.Text);
+        Assert.Equal(OctoberKnowledgePolicy.Hash(retainedText), support.Origin.SourceDigest);
         if (!allowed)
         {
             Assert.Null(admitted.Result);
@@ -549,6 +558,8 @@ public sealed class OctoberScanWorkerInputLedgerTests
     [InlineData("foreign-location", false)]
     [InlineData("unmatched-text", false)]
     [InlineData("empty-excerpt", false)]
+    [InlineData("line-start-zero", false)]
+    [InlineData("line-end-overflow", false)]
     [InlineData("stale-frame", false)]
     [InlineData("foreign-root", false)]
     [InlineData("foreign-version", false)]
@@ -577,7 +588,7 @@ public sealed class OctoberScanWorkerInputLedgerTests
                 "foreign-location" => [new(Guid.NewGuid(), location.RelativePath)],
                 _ => [location]
             },
-            Excerpts = [new(location, scenario == "unmatched-text" ? "absent();" : scenario == "empty-excerpt" ? string.Empty : support.Text)]
+            Excerpts = [new(location, scenario == "unmatched-text" ? "absent();" : scenario == "empty-excerpt" ? string.Empty : support.Text, scenario == "line-start-zero" ? 0 : null, scenario == "line-end-overflow" ? 2 : null)]
         };
         string request = scenario == "null-max-files" ? "{\"query\":\"support\",\"maxFiles\":null}"
             : scenario is "duplicate-location" or "distinct-path-limit" ? "{\"query\":\"support\",\"maxFiles\":1}"
