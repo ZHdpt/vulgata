@@ -66,7 +66,13 @@ Reviewed command-local Business diagnostics are integrated at `ec7af241`; they
 retain fixed failure codes and exact-operation enum observations behind live
 disclosure/replay checks. Root fixture extraction is allowlisted and independently
 reviewed. This improves the next run's evidence, not the prior failure's diagnosis;
-no new provider run or retained dataset has been authorized.
+The user subsequently authorized up to five further synthetic attempts with bounded
+diagnosis/correction, retaining all per-run limits and disposable boundaries.
+Attempt 1 (`bbc63f6cdeb149319856274b6af025fc`, source `45ed7f65`) failed after
+successful selection: finalizer and exact lookup both Failed / AlreadyCommitted,
+operation mismatch false, `business_publication_unavailable`. Detailed synthesis
+cause remains under Business-owned source-free diagnosis. Usage 2 requests/30,587
+tokens; all cleanup verified. Four attempts remain; no retained dataset authorized.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).

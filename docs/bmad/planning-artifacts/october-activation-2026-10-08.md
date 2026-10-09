@@ -825,3 +825,19 @@ is 40 requests/240,000 tokens. No unchanged blind retries, production source,
 retained dataset or expanded runtime authority. Stop on success, after five
 attempts, or on a blocker requiring broader authority. Earlier grants remain
 consumed. Attempt 1 will use the reviewed diagnostics at `dc993768`.
+
+#### Attempt 1 of 5 — persisted Failed finalization
+
+Run `bbc63f6cdeb149319856274b6af025fc` on `45ed7f65`: **0/1**, duration
+2m13.381s. Unique root selection and atomic response publication succeeded.
+Exact failure code is `business_publication_unavailable`; finalizer and exact
+lookup both report Failed / AlreadyCommitted, boundary ExactLookup, operation
+mismatch false. This establishes the observed persisted failed finalization,
+not the detailed synthesis rejection reason. No ordinary Business reader checks
+or BL semantic qualification were reached.
+
+Usage: 2 requests, 17,734 input / 12,853 output tokens, unknown=false. Attempt
+series totals: **1/5 attempts, 2 requests, 30,587 tokens**; four attempts remain.
+Database/temp cleanup passed; exact run-label queries confirmed zero containers
+and volumes. Business owns source-free synthesis diagnosis and bounded correction;
+Scan coordinates any safe fixed-code propagation. No unchanged retry is planned.
