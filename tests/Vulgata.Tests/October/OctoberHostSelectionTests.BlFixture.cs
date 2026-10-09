@@ -324,9 +324,7 @@ public sealed partial class OctoberHostSelectionTests
                 if (anchors.All(anchor => anchor.StartLine >= declarationLine && anchor.EndLine <= endLine && anchor.StartLine <= anchor.EndLine)) withinMethod++;
                 if (anchors.Any(anchor => anchor.StartLine <= declarationLine && anchor.EndLine >= declarationLine)) coversDeclaration++;
                 if (anchors.Any(anchor => anchor.StartLine <= returnLine && anchor.EndLine >= returnLine)) coversReturn++;
-                if (anchors.All(anchor => anchor.StartLine >= declarationLine && anchor.EndLine <= endLine && anchor.StartLine <= anchor.EndLine)
-                    && anchors.Any(anchor => anchor.StartLine <= declarationLine && anchor.EndLine >= declarationLine)
-                    && anchors.Any(anchor => anchor.StartLine <= returnLine && anchor.EndLine >= returnLine))
+                if (OctoberRegistrationRootEvidence.CoversRegistration(anchors, origin, lines.Length, declarationLine, returnLine))
                 { matches.Add(candidate.UnitId); eligible++; }
             }
             stage = "unique-registration-root";
@@ -337,7 +335,7 @@ public sealed partial class OctoberHostSelectionTests
             }
             reason = "selected";
             Report();
-            return matches[0];
+            return OctoberRegistrationRootEvidence.RequireUnique(matches);
             }
             catch (OperationCanceledException) { reason = "cancelled-or-expired"; Report(); throw; }
             catch (Exception) { Report(); throw; }

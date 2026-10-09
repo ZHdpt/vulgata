@@ -725,3 +725,26 @@ was retained. Root is assessing a source-grounded fixture-selector correction;
 production Scan selection and reader assertions are not waived. Scan and Explorer
 were notified. No automatic additional Generate/provider request is authorized.
 The previous combined SelfContained result remains 4,188/4,189, not GREEN.
+
+### Registration-coverage fixture correction
+
+The user authorized execution of the correction. The actual fixture now uses a
+small tested evidence predicate: all anchors must have the exact approved origin
+and valid in-file ranges, and their coverage must include the verified registration
+declaration and return. Anchors may extend beyond the method. Exactly one offered
+candidate must qualify; broad and method-specific candidates both qualifying remain
+ambiguous. No first-candidate fallback, guessed selector/title, source/corpus bypass
+or production change was introduced. Broader evidence proves registration coverage,
+not exclusive method identity; actual BL faithfulness still requires live review.
+
+Independent source review accepted the correction. Current-source compilation and
+focused SelfContained verification passed **11/11**, zero skips, run
+`06acf5e8b4aa45e893b1c8940e7cdde6`. Coverage includes method/broader anchors,
+partial/unrelated evidence, invalid ranges, each origin-field mismatch, missing
+anchors and ambiguous candidates. Suite policy now classifies 441 files.
+Earlier restricted build `d7736b5dcca340c7aa33d7574c556c49` and child PowerShell
+lookup failures `f792194df3a34415931a16af0f6fab6f` /
+`872c31650c3b4b68bc3b351af5a493af` did not reach tests and are not behavioral RED.
+Only the successful invocation's process-local PATH was adjusted and restored.
+No provider, PostgreSQL, native qualification or E2E was run for this correction.
+The full-suite failure remains open; the live BL grant remains consumed.

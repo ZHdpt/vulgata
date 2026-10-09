@@ -51,7 +51,11 @@ registration declaration/return, but its anchors exceeded the method-only bounda
 The fixture rejected it, published no operator response, and Generate subsequently
 reported Interrupted. One request used 2,095 input/2,064 output tokens; all owned
 resources were cleaned. This identifies the initiating rejection for this attempt,
-not a BL engine failure. Root owns fixture-selection alignment; no BL qualification
+not a BL engine failure. The fixture-selection correction now accepts valid broader
+anchors covering the registration declaration and return while retaining exact
+source/corpus validation and requiring exactly one eligible offered candidate.
+Independent source review accepted this test-only correction; its focused source-free
+checks pass 11/11 (`06acf5e8b4aa45e893b1c8940e7cdde6`). No BL qualification
 or further live retry is authorized by the consumed grant.
 Presentation operation C remains unapproved.
 

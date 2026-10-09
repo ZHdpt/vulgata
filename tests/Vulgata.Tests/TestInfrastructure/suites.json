@@ -1327,6 +1327,12 @@
   "October/Chat/OctoberChatApplicationPostgreSqlTests.cs": {
     "suite": "PostgreSql"
   },
+  "October/Integration/OctoberRegistrationRootEvidence.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberRegistrationRootEvidenceTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberGeneratedClReport.cs": {
     "suite": "SelfContained"
   }
