@@ -759,3 +759,26 @@ DeepSeek endpoint/model, protected credential, 8-request/48,000-token ceilings,
 cleanup boundaries. It does not authorize production sources, retained operation C
 or automatic retry. Prior grants remain consumed. The checkout was verified clean
 at `abd371e1`; the corrected source-coverage selector is the intended tested change.
+
+### Corrected selector succeeded; later Generate failure remains
+
+Run `ca1f324058864d41b9d8d6684b28b0ef` on `028534d2` completed **0/1**,
+duration 1m47.304s. Actual selector diagnostics: offered=1, inspected=1,
+invalid-origin=0, within-method=0, covers-declaration=1, covers-return=1,
+eligible=1, selected. The operator response was atomically published at 75,346 ms;
+InteractionFailure was null. This is real evidence the corrected selector handles
+the broader accepted anchor case; the former root-selection blocker is cleared.
+
+Generate subsequently exited 1 with execution Failed, publication NotRequested,
+matching/business unavailable, inventory=1 and generic `source-or-execution-gap`.
+The test failed the exit-zero assertion at line 80, before BL publication hydration,
+ordinary Business reading and semantic review. Sanitized metadata counts do not
+establish absence of accepted work. Reported use was **2 requests, 14,393 input /
+6,274 output tokens, unknown=false**. Exact later failure cause is not yet known;
+this does not prove provider outage, malformed BL, or a particular owner defect.
+
+Fixture database/temp cleanup passed. Independent exact run-label Docker checks
+found zero containers and volumes remaining. Scan and Business were asked for
+bounded source-free diagnosis, with no source edits or duplicate runtime requested.
+No BL content or reader success, retained presentation dataset, or full-suite GREEN
+is claimed. This latest approval is consumed; another live run requires approval.

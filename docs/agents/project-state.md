@@ -55,8 +55,13 @@ not a BL engine failure. The fixture-selection correction now accepts valid broa
 anchors covering the registration declaration and return while retaining exact
 source/corpus validation and requiring exactly one eligible offered candidate.
 Independent source review accepted this test-only correction; its focused source-free
-checks pass 11/11 (`06acf5e8b4aa45e893b1c8940e7cdde6`). No BL qualification
-or further live retry is authorized by the consumed grant.
+checks pass 11/11 (`06acf5e8b4aa45e893b1c8940e7cdde6`). A newly approved corrected
+run on `028534d2`, `ca1f324058864d41b9d8d6684b28b0ef`, confirmed successful unique
+root selection and operator-response publication, then failed later in Generate
+(exit 1, source-or-execution-gap). It used two requests, 14,393 input/6,274 output
+tokens; all owned resources were cleaned. Scan and Business own source-free
+diagnosis of the later failure. BL publication/reading remains unqualified;
+the latest one-run grant is consumed with no automatic retry.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
