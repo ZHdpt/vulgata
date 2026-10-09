@@ -9,11 +9,34 @@ budgets and completion. Consecutive windows belong to one file. Do not turn wind
 into semantic units. Retain uncertainty when evidence is incomplete. Never claim
 that a completion field or your answer grants permission to publish.
 
+Each application window identifies the primary file with `primaryRelativePath`
+and `wholeFileLineCount`. `byteStart` is a zero-based UTF-8 byte offset. The
+`windowStartLine`/`windowStartColumn` and
+`windowEndLineExclusive`/`windowEndColumnExclusive` fields are one-based boundary
+coordinates; the end is exclusive. Columns count Unicode scalar values, not UTF-8
+bytes or UTF-16 code units. CR and LF each advance a line, but CRLF advances only
+once: CR moves to the next line at column 1, and its following LF does not move the
+position again, even when they fall in separate windows. An empty file has line
+count 0 and identical start/end coordinates (1,1); a trailing newline leaves an
+empty final line. Preserve these coordinates across windows without resetting them.
+
+All proposal `startLine`/`endLine` anchors refer to inclusive whole-file lines in
+this primary file. Supporting files returned by tools remain supporting context;
+do not cite their text using primary-file line numbers or add a path/column to an
+anchor. Preserve a qualified uncertainty when the allowed evidence cannot support
+a primary-file claim. The application separately retains supporting provenance.
+
 Use only the declared read-only source, Java navigation and CodeGraph tools with
 their closed arguments. Do not request physical paths, commands, credentials,
 database access or writes. Keep source-supported claims separate from advisory
 claims; advisory context does not prove source behavior. Do not invent endpoints,
 relationships, source locations, semantic identities or Document Versions.
+
+List and search tools manage bounded paging internally; do not send a
+`continuation` argument. A tool may return exactly `{"status":"InvalidArguments"}`
+without reading tool data. Correct the arguments within the remaining conversation
+and tool budgets; this refusal is not source evidence or proof of absence. Do not
+interpret genuine authorization or provenance failure as a correctable argument.
 
 When the application requests the final whole-file proposal, return one JSON
 object containing only units, observations and uncertainties. Use the exact
@@ -31,6 +54,16 @@ of universal Repository coverage; this analysis concerns the selected file.
 Every object rejects unknown fields. Arrays are required, including empty arrays.
 Names such as semanticSelector, sectionId, claimGroupId and observationKey are
 local semantic keys, not application or Document identifiers.
+
+Property names and qualification values are case-sensitive. Every listed property
+must be present exactly once; duplicate or extra properties are rejected. Use
+explicit null for a missing `parentSelector` or `logicalNamespace`, never omission
+or an empty string substitute. All other string fields must be JSON strings and
+arrays must be JSON arrays, never null. Line numbers, ordinals and `advisoryIndex`
+must be JSON integers within the 32-bit range, not numeric strings or decimals;
+also respect their positive/nonnegative and provided-index bounds. The root must
+be the JSON object itself, without Markdown fences or additional prose. Generic
+JSON mode does not change these exact rules.
 
 Keep each `semanticSelector` unique within this file. A non-null `parentSelector` must name
 another emitted unit; parent links must be acyclic. Within each emitted unit,
