@@ -1,7 +1,8 @@
 # Retained phone-verification pilot
 
-Status: source verified and pilot selected; retained runtime bindings await explicit
-resource confirmation. No real-source Generate or retained host has started.
+Status: source verified and pilot selected. User amended runtime authority to reuse
+the existing PostgreSQL container/volume with a new database. No real-source
+Generate or retained host has started at this checkpoint.
 
 ## Scope
 
@@ -30,23 +31,36 @@ offered channel/account entrypoint roots from accepted CL, not invented IDs.
 
 ## Proposed bounded runtime
 
-- One fresh, exclusively owned postgres:17-alpine container/volume, random loopback
-  database port and a new uniquely named pilot database. No shared database access.
+- Reuse the existing running PostgreSQL 17 container and volume; do not create,
+  restart or delete a container/volume. Only create a new uniquely named owned pilot
+  database. No mutation of existing databases. Read-only verification found PostgreSQL
+  17.10 and the configured role has database-creation authority.
 - Existing Web Identity/domain migrations and Generator October migrations only;
   no schema changes. Dedicated bootstrap Administrator and ordinary User accounts.
 - Temporary Web on an unused loopback port for production registration/setup/login
   and exact reader verification. Stop host after qualification; successful data and
   required keys remain retained. No externally accessible listener.
-- Existing approved provider/model and protected credential reference. One Generate,
-  WorkerCap 1, run deadline 1,800 seconds, file deadline 300 seconds, no Worker
-  transient retry, at most three model requests per file, 64 total provider requests
-  and 750,000 combined tokens. Business existing at-most-two attempts per work item
-  remain inside these cumulative limits. Operator selection 120 seconds; drain 30.
+- Existing approved provider/model and protected credential reference. The user
+  removed the proposed cumulative request/token budgets. The implementation still
+  requires positive finite fields: use nonbinding configuration values (1,000,000
+  total/per-file requests and continuation windows; 1,000,000,000,000 tokens), not
+  a claim of literal infinite limits. With concurrency 1, a 30-minute deadline,
+  existing rate control and per-call context/output bounds, these must not be the
+  practical stopping condition. No change to semantic validation or automatic
+  transient retry policy. Business existing two-attempt policy remains unchanged.
+  Run deadline 1,800 seconds, file deadline 300 seconds, operator selection 120
+  seconds, drain 30. Stop on provider credit exhaustion rather than buying credit.
 - Pinned CodeGraph/offline JDT profile with owned tool state only. Do not install
   tools, change persistent PATH or modify business source. Recheck source hashes.
 - Runtime configuration, credentials, keys, source paths, process IDs and physical
   bindings stay in protected local files outside Git; tracked material uses logical
   names only. Never print secrets. Retain sanitized timing/usage/status evidence.
+- Use `eng/watch-october-batch.ps1` with explicit 1,800-second timeout. Console
+  progress is elapsed/deadline, not an invented work-completion percentage. At the
+  wall-clock limit terminate only the launched Generator tree and check settlement.
+  A hard kill does not prove rollback; preserve ambiguous state and remaining-time
+  assessment before any retry or cleanup. The user's ten-minute constraint was
+  monitor implementation effort, not a ten-minute batch deadline.
 
 ## Production bootstrap prerequisites
 

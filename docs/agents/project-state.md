@@ -31,6 +31,13 @@ presentation data is retained until explicit deletion; later runs use fresh owne
 databases. Failed incomplete owned runs may be cleaned after settlement/diagnostics.
 Exact sample scope and retained runtime bindings remain pending preparation; no
 real-source run is implied by the completed disposable synthetic qualification.
+Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
+volume, creating only a new isolated database; do not stop/delete shared resources.
+The user removed cumulative request/token caps for this run; current finite fields
+will use nonbinding values while deadlines and physical per-call limits remain.
+An elapsed/deadline console watchdog is implemented and controlled-tested; kill only
+the owned Generator tree at the 30-minute boundary, then assess settlement/remaining
+time. See the retained-pilot plan for exact bounds and source scope.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
