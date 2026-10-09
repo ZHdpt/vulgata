@@ -901,3 +901,19 @@ Main current-source Worker, entrypoint and fixture tests passed **144/144**, zer
 skips, `71f23857d5b5452aa95f3d104aa77fec`. Attempt 3 will exercise this diagnostic
 change and the Worker prompt's clarification of existing constraints. No causal
 claim about attempt 2 is made from controlled checks alone.
+
+#### Attempt 3 of 5 — Business response-envelope shape rejection
+
+Run `a77616cdda8844d3b1d684ff301330d5` on `ce7340a8`: **0/1**, duration
+2m2.417s. Worker acceptance, unique root selection and atomic response succeeded.
+Finalizer/lookup again returned Failed / AlreadyCommitted with exact operation;
+this time original reason is **ResponseShape**. The code emits that reason before
+JSON parsing when a response message is not Assistant or contains something other
+than TextContent/UsageContent. The exact rejected content type was not retained;
+reasoning-content incompatibility is a hypothesis, not observed runtime proof.
+
+Usage: 2 requests, 13,125 input / 11,743 output tokens, unknown=false. Series
+totals: **3/5 attempts, 5 requests, 58,108 tokens**; two attempts remain.
+Fixture DB/temp cleanup and exact run-label zero containers/volumes were verified.
+Business owns bounded source-free envelope compatibility diagnosis/correction;
+no JSON semantic validator relaxation or raw reasoning logging is authorized.

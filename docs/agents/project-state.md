@@ -79,6 +79,11 @@ one request/2,653 tokens and cleanup passed. Three attempts remain; series total
 three requests/33,240 tokens. Scan owns Worker-path diagnosis. The reviewed new
 Business reason and prompt clarification are integrated (`9814268d`, `e0b99bbc`),
 with main controlled verification 248/248; they were not exercised by attempt 2.
+Attempt 3 (`a77616cdda8844d3b1d684ff301330d5`, source `ce7340a8`) reached Business
+and reported ResponseShape: an envelope role/content-kind rejection before JSON
+parsing. The exact rejected type remains unknown. Worker diagnostic integration
+passed main 144/144 beforehand. Series totals are five requests/58,108 tokens;
+two attempts remain, cleanup verified. Business owns bounded envelope diagnosis.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
