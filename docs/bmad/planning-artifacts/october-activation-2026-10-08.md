@@ -699,3 +699,29 @@ cleanup boundary. No production Repository, shared database, retained presentati
 dataset, persistent configuration change or automatic further retry is authorized.
 Checkout was clean at `34a8d93a`; provider endpoint/model were reverified unchanged.
 This new grant is unused at this approval checkpoint; the first grant stays consumed.
+
+### Instrumented additional attempt completed — selector mismatch
+
+The additional grant was consumed on `d1088d46`, run
+`38f6d3a06bcc4b40be260eeb932f5346`: **0/1**, duration 3m16.880s.
+The exact initiating failure is now observed in fixture diagnostics:
+`registration-absent`, offered=1, inspected=1, invalid-origin=0,
+within-method=0, covers-declaration=1, covers-return=1, eligible=0.
+The actual candidate covers registration source but fails the fixture's stronger
+all-anchors-within-method requirement. These counts do not reveal the complete
+anchor shape or establish whether it is specifically a whole-class Document.
+
+The callback rejected at 68,678 ms; request present, response absent/unpublished.
+Generate subsequently exited 3, Interrupted / `run_interrupted`, with disclosure
+disabled and hidden zero metadata counts. This is not evidence of no accepted CL,
+nor a demonstrated failure of BL synthesis. No Business reader or BL semantic
+qualification was reached. Provider usage: **1 request, 2,095 input / 2,064 output
+tokens, unknown=false**. The earlier failed attempt's exact initiating rejection
+remains unknown; this observation must not be retroactively substituted for it.
+
+The fixture verified owned database and temporary-root cleanup. Independent exact
+run-label Docker queries found zero remaining containers and volumes. No dataset
+was retained. Root is assessing a source-grounded fixture-selector correction;
+production Scan selection and reader assertions are not waived. Scan and Explorer
+were notified. No automatic additional Generate/provider request is authorized.
+The previous combined SelfContained result remains 4,188/4,189, not GREEN.

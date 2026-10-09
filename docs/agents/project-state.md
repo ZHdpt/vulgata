@@ -44,7 +44,15 @@ hidden zero report counts do not establish absence of accepted CL. Safe fixture
 stage diagnostics and a controlled no-response reproducer are now integrated and
 compiled (75/75 affected checks, `262bd0272fed4e79b66657488b2ab783`). Another live
 diagnostic attempt was explicitly approved on October 9 under the same bounded
-synthetic/provider/disposable-resource limits; it has not started at this checkpoint.
+synthetic/provider/disposable-resource limits. That attempt is now complete:
+`38f6d3a06bcc4b40be260eeb932f5346` failed at the fixture's registration-root selector.
+The single offered candidate had the correct source origin and covered the
+registration declaration/return, but its anchors exceeded the method-only boundary.
+The fixture rejected it, published no operator response, and Generate subsequently
+reported Interrupted. One request used 2,095 input/2,064 output tokens; all owned
+resources were cleaned. This identifies the initiating rejection for this attempt,
+not a BL engine failure. Root owns fixture-selection alignment; no BL qualification
+or further live retry is authorized by the consumed grant.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
