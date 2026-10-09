@@ -1308,6 +1308,180 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             return new(HttpStatusCode.OK) { Content = new StringContent("data: " + chunk + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
         }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("ascii", "A")]
+    [InlineData("chinese", "中")]
+    [InlineData("emoji", "😀")]
+    public async Task CurrentAccounting_IdenticalReasoningChunkingCanCrossUnchangedDefaultOutputCapAsync(string label, string scalar)
+    {
+        const int pieces = 7500;
+        string reasoning = string.Concat(Enumerable.Repeat(scalar, pieces));
+        var one = await ObserveAccountingSdkAsync([reasoning], [UnitJson]);
+        var many = await ObserveAccountingSdkAsync(Enumerable.Repeat(scalar, pieces).ToArray(), [UnitJson]);
+        Assert.Equal(reasoning, one.Reasoning); Assert.Equal(reasoning, many.Reasoning);
+        Assert.Equal(UnitJson, one.Text); Assert.Equal(UnitJson, many.Text);
+        Assert.Equal(1, one.ReasoningPieces); Assert.Equal(pieces, many.ReasoningPieces);
+        Assert.True(many.Updates < 8192); Assert.True(many.ChargedBytes > one.ChargedBytes);
+        int semantic = Encoding.UTF8.GetByteCount(reasoning) + Encoding.UTF8.GetByteCount(UnitJson);
+        int reasonSemantic = Encoding.UTF8.GetByteCount(reasoning);
+        int escapedPayload = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(reasoning)) - 2;
+        int scalarEscapedPayload = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(scalar)) - 2;
+        int finalSemantic = Encoding.UTF8.GetByteCount(UnitJson);
+        int oneEnvelope = one.ChargedBytes - finalSemantic - escapedPayload;
+        int manyEnvelopes = many.ChargedBytes - finalSemantic - pieces * scalarEscapedPayload;
+        Assert.True(oneEnvelope > 0); Assert.True(manyEnvelopes > oneEnvelope);
+        output.WriteLine("reasoningBreakdown case={0}; rawReasonBytes={1}; escapedReasonBytes={2}; oneEnvelopeBytes={3}; manyEnvelopeBytes={4}; finalTextBytes={5}", label, reasonSemantic, escapedPayload, oneEnvelope, manyEnvelopes, finalSemantic);
+        int cap = new OctoberFileWorkerLimits().MaximumOutputUtf8Bytes;
+        output.WriteLine("reasoningChunking case={0}; semanticBytes={1}; oneCharge={2}; manyCharge={3}; oneUpdates={4}; manyUpdates={5}; defaultCap={6}", label, semantic, one.ChargedBytes, many.ChargedBytes, one.Updates, many.Updates, cap);
+        // This is a measured current-behavior default-cap claim, never a reason to raise or silently replace the cap.
+        Assert.True(one.ChargedBytes <= cap && many.ChargedBytes > cap, $"Measured default crossing absent: one={one.ChargedBytes}; many={many.ChargedBytes}; cap={cap}");
+        foreach (bool fragmented in new[] { false, true })
+        {
+            using var transport = new AccountingSseHttp(fragmented ? Enumerable.Repeat(scalar, pieces).ToArray() : [reasoning], [UnitJson]);
+            using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+            var scope = new Scope();
+            var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+            Assert.Equal(fragmented ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+            Assert.Equal(fragmented ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+            Assert.Equal(fragmented ? OctoberWorkerFailureStage.StreamTerminal : (OctoberWorkerFailureStage?)null, result.FailureStage);
+            Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Equal(1, transport.Calls);
+            var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+            if (fragmented) { Assert.Null(result.Proposal); Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens); }
+            else { Assert.NotNull(result.Proposal); Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens); }
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("ascii", "A")]
+    [InlineData("chinese", "中")]
+    [InlineData("emoji", "😀")]
+    public async Task CurrentAccounting_FinalTextFragmentationChargesSemanticUtf8WithoutPerDeltaEnvelopeAsync(string label, string scalar)
+    {
+        string final = UnitJson.Replace("Conditional execution", string.Concat(Enumerable.Repeat(scalar, 12)));
+        string[] fragments = final.EnumerateRunes().Select(rune => rune.ToString()).ToArray();
+        var one = await ObserveAccountingSdkAsync([], [final]);
+        var many = await ObserveAccountingSdkAsync([], fragments);
+        Assert.Equal(final, one.Text); Assert.Equal(final, many.Text); Assert.Empty(one.Reasoning); Assert.Empty(many.Reasoning);
+        Assert.Equal(Encoding.UTF8.GetByteCount(final), one.ChargedBytes); Assert.Equal(one.ChargedBytes, many.ChargedBytes);
+        Assert.True(many.Updates < 8192);
+        output.WriteLine("finalTextRepresentation case={0}; defaultJsonStringBytes={1}; actualTextCharge={2}", label, Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(final)), one.ChargedBytes);
+        output.WriteLine("finalTextChunking case={0}; semanticBytes={1}; oneCharge={2}; manyCharge={3}; manyUpdates={4}", label, Encoding.UTF8.GetByteCount(final), one.ChargedBytes, many.ChargedBytes, many.Updates);
+        using var transport = new AccountingSseHttp([], fragments);
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(string.Concat(Enumerable.Repeat(scalar, 12)), Assert.Single(result.Proposal!.Units).Title);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CurrentAccounting_ToolArgumentsResultAndFinalTextAccumulateAcrossLeavesAsync()
+    {
+        const string toolResult = "contained 中文😀 result";
+        int invocations = 0;
+        var tool = AIFunctionFactory.Create((string relativePath) => { Assert.Equal("src/Order.cs", relativePath); invocations++; return toolResult; }, "read_prepared_source");
+        object? actualMarshaledResult = await tool.InvokeAsync(new AIFunctionArguments(new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs" }));
+        int resultBytes = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(actualMarshaledResult)); invocations = 0;
+        int argumentBytes;
+        using (var wire = new FragmentedToolHttp())
+        using (var selected = await new OctoberWorkerClientFactory(new Secrets(), wire).CreateAsync(Selected()))
+        {
+            var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(selected);
+            FunctionCallContent? observed = null;
+            await foreach (var update in admitted.GetAttemptStreamingResponseAsync([new(ChatRole.User, "controlled charge observation")], new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid())))
+                foreach (var call in update.Contents.OfType<FunctionCallContent>().Where(call => !call.InformationalOnly)) { Assert.Null(observed); observed = call; }
+            argumentBytes = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(Assert.IsType<FunctionCallContent>(observed).Arguments));
+        }
+        int finalBytes = Encoding.UTF8.GetByteCount(UnitJson); int total = argumentBytes + resultBytes + finalBytes;
+        output.WriteLine("cumulativeCharge: argumentBytes={0}; resultBytes={1}; finalBytes={2}; total={3}; explicitComparisonCaps={3}/{4}", argumentBytes, resultBytes, finalBytes, total, total - 1);
+        foreach (bool under in new[] { false, true })
+        {
+            using var wire = new FragmentedToolHttp();
+            using var client = await new OctoberWorkerClientFactory(new Secrets(), wire).CreateAsync(Selected());
+            var scope = new Scope(); int before = invocations;
+            var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputUtf8Bytes: total - (under ? 1 : 0)) }, [tool]);
+            Assert.Equal(under ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+            Assert.Equal(under ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+            Assert.Equal(1, result.SettledToolCalls); Assert.Equal(before + 1, invocations); Assert.Equal(2, wire.Calls);
+            Assert.Equal(2, scope.Leases.Count); Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+            Assert.Equal(20, scope.Leases[0].Usage!.InputTokens); Assert.Equal(10, scope.Leases[0].Usage!.OutputTokens);
+            if (under) { Assert.Null(scope.Leases[1].Usage!.InputTokens); Assert.Null(scope.Leases[1].Usage!.OutputTokens); Assert.Null(result.Proposal); }
+            else { Assert.Equal(30, scope.Leases[1].Usage!.InputTokens); Assert.Equal(20, scope.Leases[1].Usage!.OutputTokens); Assert.NotNull(result.Proposal); }
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CurrentAccounting_InformationalCallPayloadIsUncharged_RecordsExistingGapAsync()
+    {
+        // Characterizes the current gap; this is not an endorsement that arbitrary informational data should be unbounded.
+        int cap = new OctoberFileWorkerLimits().MaximumOutputUtf8Bytes;
+        var informational = new FunctionCallContent("controlled", "not-executable", new Dictionary<string, object?> { ["opaque"] = new string('x', cap + 1) }) { InformationalOnly = true };
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [informational, new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(0, result.SettledToolCalls); Assert.Null(result.BudgetFailure); Assert.NotNull(result.Proposal);
+        output.WriteLine("informationalCurrentGap: suppliedArgumentChars={0}; outputCap={1}; settledTools=0", cap + 1, cap);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CurrentAccounting_EmptyReasoningStillChargesOpaqueAndAdditionalPropertiesAsync()
+    {
+        const int size = 131073;
+        AIContent baseline = new TextReasoningContent("");
+        AIContent opaque = new TextReasoningContent("") { ProtectedData = new string('p', size) };
+        AIContent metadata = new TextReasoningContent("") { AdditionalProperties = new() { ["controlled"] = new string('m', size) } };
+        AIContent both = new TextReasoningContent("") { ProtectedData = new string('p', size), AdditionalProperties = new() { ["controlled"] = new string('m', size) } };
+        int Charge(AIContent value) => Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(value));
+        int before = Charge(both); both.RawRepresentation = new { ignored = new string('r', size) };
+        Assert.Equal(before, Charge(both)); Assert.True(Charge(opaque) > Charge(baseline)); Assert.True(Charge(metadata) > Charge(baseline));
+        int cap = new OctoberFileWorkerLimits().MaximumOutputUtf8Bytes; Assert.True(Charge(both) > cap);
+        output.WriteLine("opaqueReasoningCharge: textBytes=0; baseline={0}; opaque={1}; metadata={2}; combined={3}; cap={4}", Charge(baseline), Charge(opaque), Charge(metadata), Charge(both), cap);
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [both] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+        var scope = new Scope(); var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status); Assert.Equal(OctoberWorkerBudgetFailure.OutputBytes, result.BudgetFailure);
+        Assert.Null(result.Proposal); Assert.Null(Assert.Single(scope.Leases).Usage!.InputTokens); Assert.Null(scope.Leases[0].Usage!.OutputTokens);
+        Assert.Equal(1, scope.Leases[0].Settlements); Assert.Equal(1, scope.Leases[0].Disposals); Assert.True(client.StreamDisposed);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+    }
+    private async Task<(string Text, string Reasoning, int ChargedBytes, int Updates, int ReasoningPieces)> ObserveAccountingSdkAsync(string[] reasoning, string[] text)
+    {
+        using var transport = new AccountingSseHttp(reasoning, text);
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        var observedText = new StringBuilder(); var observedReasoning = new StringBuilder(); int charged = 0, updates = 0, reasoningPieces = 0;
+        await foreach (var update in admitted.GetAttemptStreamingResponseAsync([new(ChatRole.User, "controlled accounting")], new ChatOptions(), new Lease(Guid.NewGuid())))
+        {
+            updates++; Assert.True(updates < 8192);
+            foreach (AIContent content in update.Contents)
+            {
+                if (content is TextReasoningContent thought) { observedReasoning.Append(thought.Text); reasoningPieces++; }
+                // Measure the current public SDK content representation using the executor's existing charge categories.
+                // These are characterization counts, not a proposed accounting algorithm.
+                if (content is TextContent value) { observedText.Append(value.Text); charged += Encoding.UTF8.GetByteCount(value.Text); }
+                else if (content is FunctionCallContent call && !call.InformationalOnly) charged += Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(call.Arguments));
+                else if (content is not UsageContent && content is not FunctionCallContent) charged += Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(content));
+            }
+        }
+        return (observedText.ToString(), observedReasoning.ToString(), charged, updates, reasoningPieces);
+    }
+
+    private sealed class AccountingSseHttp(string[] reasoning, string[] text) : HttpMessageHandler
+    {
+        internal int Calls;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Assert.Equal("selected.example.test", request.RequestUri!.Host); Calls++; Assert.Equal(1, Calls);
+            var body = new StringBuilder();
+            void Append(object delta, string? finish) => body.Append("data: ").Append(JsonSerializer.Serialize(new { id = "controlled-accounting", @object = "chat.completion.chunk", created = 1, model = "selected-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } })).Append("\n\n");
+            Append(new { role = "assistant" }, null);
+            foreach (string part in reasoning) Append(new { reasoning_content = part }, null);
+            for (int index = 0; index < text.Length; index++) Append(new { content = text[index] }, index == text.Length - 1 ? "stop" : null);
+            body.Append("data: {\"id\":\"controlled-accounting\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"selected-model\",\"choices\":[],\"usage\":{\"prompt_tokens\":100,\"completion_tokens\":50,\"total_tokens\":150}}\n\ndata: [DONE]\n\n");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body.ToString(), Encoding.UTF8, "text/event-stream") });
+        }
+    }
     private sealed class FragmentedToolHttp : HttpMessageHandler
     {
         internal bool MissingRequiredArgument;
