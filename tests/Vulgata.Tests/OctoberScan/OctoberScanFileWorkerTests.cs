@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
+using Xunit.Abstractions;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
@@ -17,7 +18,7 @@ using Vulgata.Tests.TestInfrastructure;
 namespace Vulgata.Tests.OctoberScan;
 
 /// <summary>Actual SDK/MAF with controlled transports and a labelled host-frame fake; no live provider or source acquisition.</summary>
-public sealed class OctoberScanFileWorkerTests
+public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 {
     private const string UnitJson = """
         {"units":[{"semanticSelector":"file","parentSelector":null,"title":"Conditional execution","anchors":[{"startLine":1,"endLine":2}],"sections":[{"sectionId":"logic","ordinal":0,"title":"Behavior","claims":[{"claimGroupId":"rule","text":"Run executes when enabled, then returns.","qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":2}],"limitations":[]}]}]}],"observations":[],"uncertainties":[]}
@@ -832,6 +833,127 @@ public sealed class OctoberScanFileWorkerTests
         public void Dispose() { }
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualSdk_FragmentedToolSse_ObservesFiniteSafeUpdateSequenceAsync()
+    {
+        using var transport = new FragmentedToolHttp();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (var update in admitted.GetAttemptStreamingResponseAsync([new(ChatRole.User, "controlled tool request")], new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid())))
+        {
+            Assert.True(updates.Count < 16, "Controlled SDK response exceeded finite update bound");
+            output.WriteLine("event={0}; finish={1}; kinds={2}", updates.Count,
+                update.FinishReason is null ? "none" : update.FinishReason == ChatFinishReason.ToolCalls ? "tool_calls" : "other",
+                string.Join(",", update.Contents.Select(content => content is FunctionCallContent call ? (call.InformationalOnly ? "FunctionCall:informational" : "FunctionCall:executable") : content is UsageContent ? "Usage" : content is TextContent ? "Text" : "Other")));
+            updates.Add(update);
+        }
+        Assert.Equal(1, transport.Calls);
+        Assert.Equal(5, updates.Count);
+        Assert.Null(updates[0].FinishReason); Assert.Empty(updates[0].Contents);
+        Assert.Null(updates[1].FinishReason); Assert.Empty(updates[1].Contents);
+        Assert.Equal(ChatFinishReason.ToolCalls, updates[2].FinishReason); Assert.Empty(updates[2].Contents);
+        Assert.Equal(ChatFinishReason.ToolCalls, updates[3].FinishReason); Assert.IsType<UsageContent>(Assert.Single(updates[3].Contents));
+        Assert.Equal(ChatFinishReason.ToolCalls, updates[4].FinishReason);
+        Assert.False(Assert.IsType<FunctionCallContent>(Assert.Single(updates[4].Contents)).InformationalOnly);
+        Assert.Contains(updates, update => update.FinishReason == ChatFinishReason.ToolCalls);
+        Assert.Single(updates.SelectMany(update => update.Contents).OfType<FunctionCallContent>().Where(call => !call.InformationalOnly));
+        Assert.Contains(updates.SelectMany(update => update.Contents), content => content is UsageContent);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualSdk_FragmentedToolSse_ExecutesOneToolAndCompletesWholeFileAsync()
+    {
+        using var transport = new FragmentedToolHttp();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        int toolCalls = 0;
+        var tool = AIFunctionFactory.Create((string relativePath) =>
+        {
+            Assert.Equal("src/Order.cs", relativePath); toolCalls++; return "contained result";
+        }, "read_prepared_source");
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.NotNull(result.Proposal); Assert.Null(result.FailureStage); Assert.Null(result.TerminalFailure);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(1, toolCalls); Assert.Equal(1, result.SettledToolCalls); Assert.Equal(2, transport.Calls);
+        Assert.Equal(2, scope.Leases.Count); Assert.All(scope.Leases, lease => Assert.Equal(1, lease.Settlements));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("text", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("empty-text", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("mixed", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("informational", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("repeated-aggregate", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("already-accepted", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("missing-finish", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("conflicting-finish", OctoberWorkerTerminalFailure.ContentAfterFinish)]
+    [InlineData("unknown", OctoberWorkerTerminalFailure.UnknownTool)]
+    [InlineData("duplicate", OctoberWorkerTerminalFailure.RepeatedToolCallId)]
+    [InlineData("malformed", OctoberWorkerTerminalFailure.ToolCallError)]
+    public async Task PostFinishAggregate_RejectsEveryBroaderEnvelopeAndInvalidCallAsync(string defect, OctoberWorkerTerminalFailure expected)
+    {
+        int toolCalls = 0;
+        var tool = AIFunctionFactory.Create(() => { toolCalls++; return "controlled result"; }, "read_prepared_source");
+        FunctionCallContent Call(string name = "read_prepared_source") => new("PRIVATE_CALL", name, new Dictionary<string, object?>());
+        var contents = new List<AIContent>();
+        switch (defect)
+        {
+            case "text": contents.Add(new TextContent("PRIVATE_TRAILING_TEXT")); break;
+            case "empty-text": contents.Add(new TextContent("")); break;
+            case "mixed": contents.Add(Call()); contents.Add(new TextContent("PRIVATE_MIXED_TEXT")); break;
+            case "informational": contents.Add(new FunctionCallContent("PRIVATE_CALL", tool.Name, new Dictionary<string, object?>()) { InformationalOnly = true }); break;
+            case "unknown": contents.Add(Call("PRIVATE_UNKNOWN_TOOL")); break;
+            case "duplicate": contents.Add(Call()); contents.Add(Call()); break;
+            case "malformed": contents.Add(new FunctionCallContent("PRIVATE_CALL", tool.Name, new Dictionary<string, object?>()) { Exception = new JsonException("PRIVATE_ARGUMENT_ERROR") }); break;
+            default: contents.Add(Call()); break;
+        }
+        var updates = new List<ChatResponseUpdate>
+        {
+            new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.ToolCalls, Contents = defect == "already-accepted" ? [Call()] : [] },
+            new() { Role = ChatRole.Assistant, FinishReason = defect == "missing-finish" ? null : defect == "conflicting-finish" ? ChatFinishReason.Stop : ChatFinishReason.ToolCalls, Contents = contents },
+        };
+        if (defect == "repeated-aggregate") updates.Add(new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.ToolCalls, Contents = [Call()] });
+        using var client = new UpdateClient([.. updates]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(expected, result.TerminalFailure); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Null(result.Proposal); Assert.Equal(0, toolCalls); Assert.Equal(1, client.Calls);
+    }
+    private sealed class FragmentedToolHttp : HttpMessageHandler
+    {
+        internal int Calls;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Assert.Equal("selected.example.test", request.RequestUri!.Host);
+            int call = Calls++;
+            Assert.InRange(call, 0, 1);
+            string[] chunks;
+            if (call == 0)
+            {
+                chunks = [
+                    """{"id":"controlled-tool","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"controlled-call","type":"function","function":{"name":"read_prepared_source","arguments":"{\"relativePath\":"}}]},"finish_reason":null}]}""",
+                    """{"id":"controlled-tool","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\"src/Order.cs\"}"}}]},"finish_reason":null}]}""",
+                    """{"id":"controlled-tool","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}""",
+                    """{"id":"controlled-tool","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[],"usage":{"prompt_tokens":20,"completion_tokens":10,"total_tokens":30}}""",
+                ];
+            }
+            else
+            {
+                chunks = [JsonSerializer.Serialize(new { id = "controlled-terminal", @object = "chat.completion.chunk", created = 1, model = "selected-model",
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = UnitJson }, finish_reason = "stop" } },
+                    usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
+            }
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(string.Join("", chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n", Encoding.UTF8, "text/event-stream") });
+        }
+    }
     private sealed class ControlledHttp : HttpMessageHandler
     {
         internal bool Fail { get; init; }
