@@ -892,3 +892,12 @@ Worker prompt clarification is limited to already-enforced invariants.
 Root strict three-field fixture extraction passed independent review and **69/69**
 source-free tests (`60aac9264f3f420197c5d21c8d635b92`); producer integration remains
 pending. No additional runtime attempts were consumed.
+
+Worker producer checkpoint `9c0c9cc8b94b2ddfd4710f3a07ad9ff0b3bc2b0c` integrated
+at `16314779`, preserving existing statuses/retry/acceptance and live metadata
+fences. Owner controlled checks passed 157/157 (`8e042d55ff5745a486cdf003598c74d8`).
+Independent integration review accepted the producer/fixture field alignment.
+Main current-source Worker, entrypoint and fixture tests passed **144/144**, zero
+skips, `71f23857d5b5452aa95f3d104aa77fec`. Attempt 3 will exercise this diagnostic
+change and the Worker prompt's clarification of existing constraints. No causal
+claim about attempt 2 is made from controlled checks alone.
