@@ -65,6 +65,7 @@ public enum OctoberFileWorkerStatus
 
 public enum OctoberWorkerRetryDisposition { None, KnownSafeTransient }
 public enum OctoberWorkerFailureStage { Admission, StreamTerminal, ProposalParse, ProposalValidation, Transport, HostSealing }
+public enum OctoberWorkerBudgetFailure { OutputBytes, ToolCalls, StreamUpdates }
 public enum OctoberWorkerTerminalFailure
 {
     ContentAfterFinish, ConflictingFinish, NonAssistantRole, ToolCallError, MissingToolCallId,
@@ -84,6 +85,7 @@ public sealed record OctoberFileWorkerResult(
     public TimeSpan? RetryAfter { get; init; }
     public OctoberWorkerFailureStage? FailureStage { get; init; }
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
+    public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
 }
 
 public sealed class OctoberFileWorkerExecutor
@@ -206,7 +208,8 @@ public sealed class OctoberFileWorkerExecutor
                 RetryDisposition = status == OctoberFileWorkerStatus.ProviderFailed
                     ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None,
                 FailureStage = stage ?? adapter?.FailureStage,
-                TerminalFailure = terminalFailure ?? adapter?.TerminalFailure
+                TerminalFailure = terminalFailure ?? adapter?.TerminalFailure,
+                BudgetFailure = status == OctoberFileWorkerStatus.BudgetExceeded ? adapter?.BudgetFailure : null
             };
     }
 
@@ -309,6 +312,7 @@ public sealed class OctoberFileWorkerExecutor
         internal OctoberFileWorkerStatus? Failure { get; private set; }
         internal OctoberWorkerFailureStage? FailureStage { get; private set; }
         internal OctoberWorkerTerminalFailure? TerminalFailure { get; private set; }
+        internal OctoberWorkerBudgetFailure? BudgetFailure { get; private set; }
         private OctoberWorkerFailureStage? _observedStage;
 
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
@@ -426,7 +430,8 @@ public sealed class OctoberFileWorkerExecutor
                                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.UnknownTool);
                             if (!_seen.Add(call.CallId))
                                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.RepeatedToolCallId);
-                            if (++_toolCount > request.Limits.MaximumToolCalls) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+                            if (++_toolCount > request.Limits.MaximumToolCalls)
+                                throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.ToolCalls);
                             var arguments = JsonSerializer.Deserialize<Dictionary<string, object?>>(
                                 JsonSerializer.Serialize(call.Arguments ?? new Dictionary<string, object?>()))!;
                             var copy = new FunctionCallContent(call.CallId, call.Name, arguments);
@@ -441,7 +446,8 @@ public sealed class OctoberFileWorkerExecutor
                             ChargeOutput(JsonSerializer.Serialize(content));
                     }
                     if (update.FinishReason is { } currentFinish) finish = currentFinish;
-                    if (buffered.Count >= 8192) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+                    if (buffered.Count >= 8192)
+                        throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.StreamUpdates);
                     buffered.Add(update);
                 }
                 _observedStage = OctoberWorkerFailureStage.StreamTerminal;
@@ -575,7 +581,8 @@ public sealed class OctoberFileWorkerExecutor
         private void ChargeOutput(string value)
         {
             _outputBytes = checked(_outputBytes + Utf8.GetByteCount(value));
-            if (_outputBytes > request.Limits.MaximumOutputUtf8Bytes) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+            if (_outputBytes > request.Limits.MaximumOutputUtf8Bytes)
+                throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.OutputBytes);
         }
 
         private static int MeasureInput(IEnumerable<ChatMessage> messages, ChatOptions? options)
@@ -593,11 +600,13 @@ public sealed class OctoberFileWorkerExecutor
             return bytes;
         }
 
-        private WorkerFailure Fail(OctoberFileWorkerStatus status, OctoberWorkerTerminalFailure? terminalFailure = null)
+        private WorkerFailure Fail(OctoberFileWorkerStatus status, OctoberWorkerTerminalFailure? terminalFailure = null,
+            OctoberWorkerBudgetFailure? budgetFailure = null)
         {
             Failure = status;
             FailureStage ??= _observedStage;
             TerminalFailure ??= terminalFailure;
+            BudgetFailure ??= budgetFailure;
             return new(status, TerminalFailure);
         }
 

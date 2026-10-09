@@ -49,20 +49,22 @@ public sealed class OctoberScanGenerateRunnerTests
     }
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task InvalidWorkerProposal_DiagnosticOnlyReplayReauthorizesWithoutDispatchAsync(bool terminal)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task InvalidWorkerProposal_DiagnosticOnlyReplayReauthorizesWithoutDispatchAsync(bool terminal, bool budget)
     {
         await using var harness = await Harness.CreateAsync();
         if (terminal) harness.Client.OmitTerminalFinish = true;
-        else harness.Client.TerminalTextOverride = "{PRIVATE_INVALID_OUTPUT";
+        else harness.Client.TerminalTextOverride = budget ? new string('x', 262145) : "{PRIVATE_INVALID_OUTPUT";
         var result = await harness.Runner.ExecuteAsync(harness.Execution);
         var report = Assert.IsType<OctoberScanReport>(result.Report);
         var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
-        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status);
+        Assert.Equal(budget ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status);
         Assert.Equal(OctoberWorkerRetryDisposition.None, diagnostic.RetryDisposition);
-        Assert.Equal(terminal ? OctoberWorkerFailureStage.StreamTerminal : OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
+        Assert.Equal((terminal || budget) ? OctoberWorkerFailureStage.StreamTerminal : OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
         Assert.Equal(terminal ? OctoberWorkerTerminalFailure.MissingFinish : (OctoberWorkerTerminalFailure?)null, diagnostic.TerminalFailure);
+        Assert.Equal(budget ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, diagnostic.BudgetFailure);
         Assert.NotEqual(0, report.ExitCode); Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication);
         Assert.Equal(0, harness.FreezeCalls); Assert.Equal(2, harness.Client.Calls);
         // Isolate the metadata predicate with the actual observed immutable snapshot.

@@ -410,7 +410,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 result.FailureStage is { } stage && Enum.IsDefined(stage) ? stage : null)
         {
             TerminalFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
-                result.TerminalFailure is { } terminal && Enum.IsDefined(terminal) ? terminal : null
+                result.TerminalFailure is { } terminal && Enum.IsDefined(terminal) ? terminal : null,
+            BudgetFailure = result.Status == OctoberFileWorkerStatus.BudgetExceeded &&
+                result.BudgetFailure is { } budget && Enum.IsDefined(budget) ? budget : null
         };
     }
 

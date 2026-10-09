@@ -374,6 +374,8 @@ public sealed class OctoberScanEntryPointTests
     [InlineData("terminal")]
     [InlineData("completed-terminal")]
     [InlineData("undefined-terminal")]
+    [InlineData("budget")]
+    [InlineData("undefined-budget")]
     [InlineData("undefined")]
     [InlineData("absent")]
     [InlineData("foreign-binding")]
@@ -381,6 +383,8 @@ public sealed class OctoberScanEntryPointTests
     {
         var snapshot = condition == "absent" ? null : new OctoberWorkerDiagnosticSnapshot(
             OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerRetryDisposition.None, OctoberWorkerFailureStage.ProposalParse);
+        if (snapshot is not null) snapshot = snapshot with { BudgetFailure = OctoberWorkerBudgetFailure.OutputBytes };
+        if (condition is "budget" or "undefined-budget") snapshot = snapshot! with { Status = OctoberFileWorkerStatus.BudgetExceeded, FailureStage = OctoberWorkerFailureStage.StreamTerminal, BudgetFailure = condition == "budget" ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure)99999 };
         if (condition == "terminal") snapshot = snapshot! with { FailureStage = OctoberWorkerFailureStage.StreamTerminal, TerminalFailure = OctoberWorkerTerminalFailure.MissingFinish };
         if (condition == "completed-terminal") snapshot = snapshot! with { Status = OctoberFileWorkerStatus.Completed, TerminalFailure = OctoberWorkerTerminalFailure.MissingFinish };
         if (condition == "undefined-terminal") snapshot = snapshot! with { TerminalFailure = (OctoberWorkerTerminalFailure)99999 };
@@ -398,13 +402,15 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "absent" or "foreign-binding") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "failureStage", "retryDisposition", "status", "terminalFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "budgetFailure", "failureStage", "retryDisposition", "status", "terminalFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined") { Assert.All(diagnostic.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
-        Assert.Equal(condition == "completed-terminal" ? "Completed" : "InvalidOutput", diagnostic.GetProperty("status").GetString());
+        Assert.Equal(condition is "budget" or "undefined-budget" ? "BudgetExceeded" : condition == "completed-terminal" ? "Completed" : "InvalidOutput", diagnostic.GetProperty("status").GetString());
         Assert.Equal("None", diagnostic.GetProperty("retryDisposition").GetString());
-        Assert.Equal(condition == "terminal" ? "StreamTerminal" : "ProposalParse", diagnostic.GetProperty("failureStage").GetString());
+        Assert.Equal(condition is "terminal" or "budget" or "undefined-budget" ? "StreamTerminal" : "ProposalParse", diagnostic.GetProperty("failureStage").GetString());
         if (condition == "terminal") Assert.Equal("MissingFinish", diagnostic.GetProperty("terminalFailure").GetString());
         else Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("terminalFailure").ValueKind);
+        if (condition == "budget") Assert.Equal("OutputBytes", diagnostic.GetProperty("budgetFailure").GetString());
+        else Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("budgetFailure").ValueKind);
     }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {
