@@ -395,7 +395,14 @@ public sealed class OctoberFileWorkerExecutor
                     if (!next) break;
                     _observedStage = OctoberWorkerFailureStage.StreamTerminal;
                     ChatResponseUpdate update = iterator.Current;
-                    if (finish is not null && update.Contents.Any(content => content is not UsageContent))
+                    // The qualified OpenAI adapter emits complete calls in one
+                    // aggregate after its empty ToolCalls finish and usage updates.
+                    // Validate that narrow envelope, then apply every call guard.
+                    bool terminalCallAggregate = finish == ChatFinishReason.ToolCalls &&
+                        update.FinishReason == ChatFinishReason.ToolCalls && calls.Count == 0 &&
+                        update.Contents.Any(content => content is FunctionCallContent { InformationalOnly: false }) &&
+                        update.Contents.All(content => content is UsageContent or FunctionCallContent { InformationalOnly: false });
+                    if (finish is not null && update.Contents.Any(content => content is not UsageContent) && !terminalCallAggregate)
                         throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ContentAfterFinish);
                     if (finish is not null && update.FinishReason is { } repeated && repeated != finish)
                         throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ConflictingFinish);
