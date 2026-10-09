@@ -270,6 +270,87 @@ public sealed class OctoberScanCodeGraphLifetimeTests
         Assert.Equal(0, harness.Connects);
         Assert.Equal(0, harness.Transport.Calls);
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CurrentContract_ActualContainedAdapterCompleteLfExcerpt_MeetsLedgerOnlyForLfSourceAsync(bool crlf)
+    {
+        await using var native = await NativeHarness.CreateAsync();
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        native.Source.Content = crlf ? "café\r\nsource fixture\r\n" : "café\nsource fixture\n";
+        await using var client = native.CreateClient();
+        Assert.True((await client.DiscoverAsync(CancellationToken.None)).IsReady);
+        var actual = await client.ExploreAsync("source", 4, CancellationToken.None);
+        Assert.Equal(CodeGraphToolInvocationStatus.Complete, actual.Status);
+        Assert.Equal(native.Descriptor.RepositoryId, actual.RepositoryId);
+        var excerpt = Assert.Single(actual.Excerpts);
+        Assert.Equal("café\nsource fixture", excerpt.Text);
+        Assert.Null(actual.Text);
+        Assert.Equal(!crlf, native.Source.Content.Contains(excerpt.Text, StringComparison.Ordinal));
+        Assert.True(native.Source.Content.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Contains(excerpt.Text, StringComparison.Ordinal));
+        Assert.Null(excerpt.LineStart);
+        Assert.Null(excerpt.LineEnd);
+        Assert.Equal(excerpt.Location, Assert.Single(actual.Locations));
+        Assert.Equal(1, native.Transport.Calls);
+        Assert.True(native.Source.Reads >= 2);
+
+        // Actual contained parser with inert transport; controlled frame/authority only.
+        // The request is rebound solely for ledger admission, never accepted or published.
+        var origin = host.Source.Origin with
+        {
+            RepositoryId = native.Descriptor.RepositoryId, RelativePath = excerpt.Location.RelativePath,
+            SourceDigest = Vulgata.Core.DomainServices.OctoberKnowledge.OctoberKnowledgePolicy.Hash(native.Source.Content)
+        };
+        var frame = new ParserLedgerFrame(origin, native.Source.Content);
+        var source = new Vulgata.Core.DomainServices.OctoberKnowledge.Contributor(
+            Vulgata.Core.DomainServices.OctoberKnowledge.ContributorKind.Source, origin.RepositoryId,
+            null, origin.RootBindingIdentity, null, origin.SourceDigest);
+        var request = host.Request with { Source = frame, Contributors = [source], Advisory = [] };
+        int unexpectedAcquisitions = 0;
+        var ledger = new Vulgata.OctoberGenerator.OctoberWorkerInputLedger(request,
+            (_, _) => { unexpectedAcquisitions++; return Task.FromResult<Vulgata.Agents.WorkerExecution.IOctoberVerifiedFileFrame?>(null); },
+            (_, _) => Task.FromResult(Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Allowed));
+        var admission = await ledger.AdmitToolResultAsync(
+            Vulgata.Core.DomainServices.OctoberKnowledge.SourceMetadataOperation.CodeGraphExplore,
+            ".", "{\"query\":\"source\",\"maxFiles\":4}", actual);
+        Assert.Equal(crlf ? Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Denied
+            : Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Allowed, admission.Status);
+        Assert.Equal(0, unexpectedAcquisitions);
+        Assert.Equal(origin.SourceDigest, Vulgata.Core.DomainServices.OctoberKnowledge.OctoberKnowledgePolicy.Hash(frame.Text));
+        Assert.Equal(native.Source.Content, frame.Text);
+        if (crlf)
+        {
+            Assert.Null(admission.Result);
+            Assert.Null(await ledger.FreezeForCompletionAsync());
+        }
+        else
+        {
+            Assert.Equal(excerpt, Assert.Single(Assert.IsType<CodeGraphToolInvocationResult>(admission.Result).Excerpts));
+            var snapshot = Assert.IsType<Vulgata.OctoberGenerator.OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+            Assert.Equal(origin, Assert.Single(snapshot.VerifiedSources).Origin);
+            Assert.Contains(source, snapshot.Contributors);
+            Assert.Single(snapshot.Contributors.Where(item => item.Kind == Vulgata.Core.DomainServices.OctoberKnowledge.ContributorKind.SourceMetadata));
+            Assert.True(await ledger.VerifySnapshotAsync(snapshot));
+        }
+    }
+
+    private sealed class ParserLedgerFrame(
+        Vulgata.Core.DomainServices.OctoberKnowledge.PreparedOrigin origin, string text)
+        : Vulgata.Agents.WorkerExecution.IOctoberVerifiedFileFrame
+    {
+        public Vulgata.Core.DomainServices.OctoberKnowledge.PreparedOrigin Origin => origin;
+        public string Text => text;
+        public long ByteLength => Encoding.UTF8.GetByteCount(Text);
+        public int LineCount => 3;
+        public string FileIdentity => "controlled-parser-ledger-frame";
+        public Task<bool> VerifyCurrentAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(true);
+        }
+    }
     private sealed class NativeHarness : IAsyncDisposable
     {
         private readonly PreparedSourceFixture _fixture;
