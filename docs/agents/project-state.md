@@ -30,11 +30,15 @@ implementation approval does not supply missing live-spend/retained-host limits.
 
 Sequential/operator Scan is now integrated at `b270bfba` (owner 103/103 affected
 tests). Main combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` is
-**4,185/4,186, not GREEN**: a Chat seed fails before provider dispatch with
-ExecutionFailure and zero requests. Chat owns diagnosis; BL fixture work proceeds
-independently. One separately bounded synthetic BL qualification run is now
-approved (8 total requests/48,000 combined tokens), but remains unused until its
-additive fixture is reviewed/compiled. Presentation operation C remains unapproved.
+**4,185/4,186, not GREEN**: a Chat seed failed before provider dispatch with
+ExecutionFailure and zero requests. A deterministic registration-order race was
+subsequently reproduced and the reviewed fix integrated at `3feca6fb`; combined
+verification is pending. The reviewed BL fixture/scenario compiled at `cafedace`
+(83/83 affected checks). Its approved live run `3bde4a7267ca4d7d9ecb5c38d50f6a7b`
+failed Interrupted before operator selection/publication after one provider request
+(2,095 input/2,889 output tokens); all owned resources were removed. The one-run
+grant is consumed, with no automatic retry. Scan owns interruption diagnosis.
+Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
