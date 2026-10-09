@@ -848,3 +848,23 @@ missing/invalid/unknown values unavailable and no raw payload output. Focused
 current-source checks pass **59/59**, zero skips,
 `2a65b649fedb41b5ae698545808fc7f0`. This is fixture-only evidence; Business's
 nonpersisted reason contract and Scan producer integration are still pending.
+
+Business owner checkpoint `2c9067cac4f580d1affe43daaebbb666e4de2b41` is now
+integrated at `9814268d`. A fixed original-invocation synthesis failure reason is
+excluded unconditionally from canonical JSON on every new result property. It is
+captured locally, cleared from cached/store results, and only attached after exact
+coherent live authorization and a durable Failed/PublishedPartial outcome. Existing
+validation outcomes and retry limits remain unchanged. The synthesis prompt now
+clarifies already-enforced structural requirements; this omission is not yet proven
+to explain attempt 1. Owner source-free checks pass **380/380**,
+`aaf614b3e76943ad96986a11e8ed3b9e`, with serialization-invariance controls;
+independent owner and integration reviews accepted. Scan consumer verification is
+pending before attempt 2. No additional live budget has been consumed.
+
+Scan consumer `87df6258da8f96e050f1dea7c875ac0659196718` is integrated at
+`e0b99bbc`; original-finalizer-only reason capture and exact fixture field alignment
+passed independent integration review. Owner controlled checks passed 114/114
+(`f7dc768f1cff4a9b91c020c44a1f1a69`). Main current-source combined synthesis,
+finalizer, Scan finalization/entrypoint, fixture-input and registration-evidence
+checks passed **248/248**, zero skips, `cb5d7701a57640f59c98b69c0fc40154`.
+Attempt 2 will use these reviewed changes under the existing five-attempt grant.
