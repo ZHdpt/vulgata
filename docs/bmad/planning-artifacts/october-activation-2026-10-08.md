@@ -637,3 +637,20 @@ container and volume. A subsequent exact run-label lookup found zero remaining
 containers/volumes. Keys/source/tool/exchange state were disposable, not retained
 presentation data. The one-Generate grant is consumed; no automatic whole-run retry
 or additional provider request is authorized. Source-free diagnosis may continue.
+
+Diagnostic clarification: the child maps a cancelled operator wait to
+`run_interrupted` with disclosure disabled. Its zero metadata counts therefore do
+not prove that no CL/corpus existed. The failed assertion checked InteractionFailure
+before exit status; its code/request-presence were not then printed. Scan is
+reproducing a rejected/no-response operator interaction under controlled conditions;
+an operator-local 120-second expiry is a hypothesis, not the observed exact cause.
+The fixture's method-specific anchor selector may reject otherwise valid broader
+CL anchors. Safe stage/count diagnostics are being added without relaxing selection
+or granting another live run.
+
+The post-Chat-fix combined SelfContained run
+`19591731af10405197165d4a0e56e7ef` passed **4,188/4,189**, zero skips/build errors.
+All Chat cases passed. The remaining failure is Scan's
+`ForeignConcurrentExecution_CannotMutateActiveOriginalFileCoverageAsync` at its
+line-139 wait (13.9045-second test); Scan owns separate controlled diagnosis.
+No full-suite GREEN or timing waiver is claimed.

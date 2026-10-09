@@ -32,12 +32,16 @@ Sequential/operator Scan is now integrated at `b270bfba` (owner 103/103 affected
 tests). Main combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` is
 **4,185/4,186, not GREEN**: a Chat seed failed before provider dispatch with
 ExecutionFailure and zero requests. A deterministic registration-order race was
-subsequently reproduced and the reviewed fix integrated at `3feca6fb`; combined
-verification is pending. The reviewed BL fixture/scenario compiled at `cafedace`
+subsequently reproduced and the reviewed fix integrated at `3feca6fb`. The next
+combined run `19591731af10405197165d4a0e56e7ef` passed all Chat cases but remains
+**4,188/4,189**, with one Scan concurrent-execution test wait timeout under diagnosis.
+The reviewed BL fixture/scenario compiled at `cafedace`
 (83/83 affected checks). Its approved live run `3bde4a7267ca4d7d9ecb5c38d50f6a7b`
-failed Interrupted before operator selection/publication after one provider request
+failed Interrupted without successful operator selection/publication after one provider request
 (2,095 input/2,889 output tokens); all owned resources were removed. The one-run
-grant is consumed, with no automatic retry. Scan owns interruption diagnosis.
+grant is consumed, with no automatic retry. Scan owns interruption diagnosis;
+hidden zero report counts do not establish absence of accepted CL. Safe fixture
+stage diagnostics are pending before any separately approved repeat.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
