@@ -48,17 +48,21 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal(condition == "undefined" ? (OctoberWorkerFailureStage?)null : OctoberWorkerFailureStage.HostSealing, diagnostic.FailureStage);
     }
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task InvalidWorkerProposal_DiagnosticOnlyReplayReauthorizesWithoutDispatchAsync()
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task InvalidWorkerProposal_DiagnosticOnlyReplayReauthorizesWithoutDispatchAsync(bool terminal)
     {
         await using var harness = await Harness.CreateAsync();
-        harness.Client.TerminalTextOverride = "{PRIVATE_INVALID_OUTPUT";
+        if (terminal) harness.Client.OmitTerminalFinish = true;
+        else harness.Client.TerminalTextOverride = "{PRIVATE_INVALID_OUTPUT";
         var result = await harness.Runner.ExecuteAsync(harness.Execution);
         var report = Assert.IsType<OctoberScanReport>(result.Report);
         var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status);
         Assert.Equal(OctoberWorkerRetryDisposition.None, diagnostic.RetryDisposition);
-        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
+        Assert.Equal(terminal ? OctoberWorkerFailureStage.StreamTerminal : OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
+        Assert.Equal(terminal ? OctoberWorkerTerminalFailure.MissingFinish : (OctoberWorkerTerminalFailure?)null, diagnostic.TerminalFailure);
         Assert.NotEqual(0, report.ExitCode); Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication);
         Assert.Equal(0, harness.FreezeCalls); Assert.Equal(2, harness.Client.Calls);
         // Isolate the metadata predicate with the actual observed immutable snapshot.
@@ -504,6 +508,7 @@ public sealed class OctoberScanGenerateRunnerTests
             internal Task? ResponseGate;
             internal bool IncludeWitnessFreeUnknown;
             internal string? TerminalTextOverride;
+            internal bool OmitTerminalFinish;
             public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
             public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
             {
@@ -526,7 +531,7 @@ public sealed class OctoberScanGenerateRunnerTests
                 {
                     SawToolResult = history.SelectMany(message => message.Contents).OfType<FunctionResultContent>().Any();
                     const string json = """{"units":[{"semanticSelector":"file","parentSelector":null,"title":"Conditional execution","anchors":[{"startLine":1,"endLine":2}],"sections":[{"sectionId":"logic","ordinal":0,"title":"Behavior","claims":[{"claimGroupId":"rule","text":"Run executes when enabled.","qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}],"limitations":[]}]}]}],"observations":[],"uncertainties":[]}""";
-                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(TerminalTextOverride ?? (IncludeWitnessFreeUnknown ? json.Replace("\"uncertainties\":[]", "\"uncertainties\":[{\"key\":\"same-unknown\",\"explanation\":\"Runtime deployment is not established.\",\"evidence\":[],\"limitations\":[]}]") : json)), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = ChatFinishReason.Stop };
+                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(TerminalTextOverride ?? (IncludeWitnessFreeUnknown ? json.Replace("\"uncertainties\":[]", "\"uncertainties\":[{\"key\":\"same-unknown\",\"explanation\":\"Runtime deployment is not established.\",\"evidence\":[],\"limitations\":[]}]") : json)), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = OmitTerminalFinish ? null : ChatFinishReason.Stop };
                 }
             }
             public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;

@@ -407,7 +407,11 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         return new(Enum.IsDefined(result.Status) ? result.Status : null,
             Enum.IsDefined(result.RetryDisposition) ? result.RetryDisposition : null,
             result.Status == OctoberFileWorkerStatus.Completed ? OctoberWorkerFailureStage.HostSealing :
-                result.FailureStage is { } stage && Enum.IsDefined(stage) ? stage : null);
+                result.FailureStage is { } stage && Enum.IsDefined(stage) ? stage : null)
+        {
+            TerminalFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
+                result.TerminalFailure is { } terminal && Enum.IsDefined(terminal) ? terminal : null
+        };
     }
 
     private ImmutableArray<Contributor> IncludeObservedContributors(ImmutableArray<Contributor> contributors)

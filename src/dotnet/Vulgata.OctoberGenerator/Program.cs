@@ -480,7 +480,10 @@ public static class OctoberGeneratorEntryPoint
             {
                 Status = DefinedStatus(worker.Status),
                 RetryDisposition = DefinedStatus(worker.RetryDisposition),
-                FailureStage = DefinedStatus(worker.FailureStage)
+                FailureStage = DefinedStatus(worker.FailureStage),
+                TerminalFailure = worker.Status is { } workerStatus && Enum.IsDefined(workerStatus) &&
+                    workerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed
+                    ? DefinedStatus(worker.TerminalFailure) : null
             } : null,
             Publication = publication,
             report.Documents,
