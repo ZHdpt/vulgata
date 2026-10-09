@@ -38,9 +38,11 @@ public sealed class OctoberChatApplicationTests
         fixture.EnqueueComplete(Text("持久重新打开内容。") + Stop + Done);
         fixture.Application.Attach(callback => callback().AsTask());
         Assert.True(await fixture.Application.OpenAsync(fixture.Conversation));
+        int requestsBefore = fixture.RequestBodies.Count;
+        long started = Stopwatch.GetTimestamp();
         var original = Assert.IsType<OctoberChatCoordinationResult>(await fixture.Application.SubmitAsync("精确原问题")
             .WaitAsync(TimeSpan.FromSeconds(10)));
-        var receipt = Assert.IsType<DialogueTerminalReceipt>(original.Terminal!.Receipt);
+        var receipt = RequireSuccessfulSetup(fixture, original, "valid-locator", "持久重新打开内容。", requestsBefore, started);
         fixture.Application.Detach();
         int opensBefore = fixture.OpenRequests.Count;
         var reload = await fixture.CreateReattachmentAsync();
@@ -135,6 +137,7 @@ public sealed class OctoberChatApplicationTests
         fixture.Application.Attach(callback => callback().AsTask());
         Assert.True(await fixture.Application.OpenAsync(fixture.Conversation));
         int disposedBeforeSubmit = fixture.DisposedScopes;
+        int requestsBeforeSubmit = fixture.RequestBodies.Count;
         long submitStarted = Stopwatch.GetTimestamp();
         Task<OctoberChatCoordinationResult?> submit = fixture.Application.SubmitAsync("原会话问题");
         OctoberChatCoordinationResult? submitted;
@@ -153,7 +156,7 @@ public sealed class OctoberChatApplicationTests
             throw new TimeoutException("Initial valid-turn setup exceeded the unchanged 10-second wait. " + snapshot, error);
         }
         var saved = Assert.IsType<OctoberChatCoordinationResult>(submitted);
-        var receipt = saved.Terminal!.Receipt!;
+        var receipt = RequireSuccessfulSetup(fixture, saved, "unavailable-locator", "原会话受限内容。", requestsBeforeSubmit, submitStarted);
         fixture.Application.Detach();
         var selection = scenario switch
         {
@@ -275,7 +278,7 @@ public sealed class OctoberChatApplicationTests
         long startedA = Stopwatch.GetTimestamp();
         var first = Assert.IsType<OctoberChatCoordinationResult>(await fixture.Application.SubmitAsync("会话甲问题")
             .WaitAsync(TimeSpan.FromSeconds(10)));
-        var a = RequireSuccessfulSetup(first, "A", "会话甲回答。", requestsBeforeA, startedA);
+        var a = RequireSuccessfulSetup(fixture, first, "A", "会话甲回答。", requestsBeforeA, startedA);
         fixture.Application.Detach();
         var secondAttachment = await fixture.CreateReattachmentAsync();
         secondAttachment.Application.Attach(callback => callback().AsTask());
@@ -284,7 +287,7 @@ public sealed class OctoberChatApplicationTests
         long startedB = Stopwatch.GetTimestamp();
         var second = Assert.IsType<OctoberChatCoordinationResult>(await secondAttachment.Application.SubmitAsync("会话乙问题")
             .WaitAsync(TimeSpan.FromSeconds(10)));
-        var b = RequireSuccessfulSetup(second, "B", "会话乙回答。", requestsBeforeB, startedB);
+        var b = RequireSuccessfulSetup(fixture, second, "B", "会话乙回答。", requestsBeforeB, startedB);
         secondAttachment.Application.Detach();
 
         var reload = await fixture.CreateReattachmentAsync();
@@ -332,26 +335,27 @@ public sealed class OctoberChatApplicationTests
         Assert.Equal(2, fixture.RequestBodies.Count);
         Assert.Empty(page.FindAll("#chat-question"));
 
-        DialogueTerminalReceipt RequireSuccessfulSetup(OctoberChatCoordinationResult result, string label,
-            string expectedAnswer, int requestsBefore, long started)
+    }
+
+    private static DialogueTerminalReceipt RequireSuccessfulSetup(ApplicationFixture fixture, OctoberChatCoordinationResult result, string label,
+        string expectedAnswer, int requestsBefore, long started)
+    {
+        var terminal = result.Terminal;
+        var receipt = terminal?.Receipt;
+        var projection = terminal?.Projection;
+        bool succeeded = result.State == DialogueTurnState.Completed &&
+            terminal?.Status is DialogueStatus.Succeeded or DialogueStatus.Existing &&
+            receipt is { TerminalState: DialogueTerminalState.Completed, Reason: DialogueTerminalReason.None } &&
+            projection is { TerminalState: DialogueTerminalState.Completed, Reason: DialogueTerminalReason.None } &&
+            string.Equals(projection.AnswerText, expectedAnswer, StringComparison.Ordinal);
+        if (!succeeded)
         {
-            var terminal = result.Terminal;
-            var receipt = terminal?.Receipt;
-            var projection = terminal?.Projection;
-            bool succeeded = result.State == DialogueTurnState.Completed &&
-                terminal?.Status is DialogueStatus.Succeeded or DialogueStatus.Existing &&
-                receipt is { TerminalState: DialogueTerminalState.Completed, Reason: DialogueTerminalReason.None } &&
-                projection is { TerminalState: DialogueTerminalState.Completed, Reason: DialogueTerminalReason.None } &&
-                string.Equals(projection.AnswerText, expectedAnswer, StringComparison.Ordinal);
-            if (!succeeded)
-            {
-                // Fail at invalid setup, before navigation can disguise a failed turn as a render delay.
-                // Never include the actual or expected answer, request body, identifiers or capabilities.
-                string snapshot = FormattableString.Invariant($"turn={label}; submitMs={Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1}; beginStatus={result.Begin.Status}; mayDispatch={result.Begin.MayDispatch}; state={result.State}; terminalStatus={terminal?.Status}; receiptPresent={receipt is not null}; terminalState={receipt?.TerminalState}; terminalReason={receipt?.Reason}; projectionPresent={projection is not null}; projectionAnswerLength={projection?.AnswerText?.Length}; saveStatus={fixture.LastSaveResult?.Status}; saveState={fixture.LastSaveRequest?.TerminalState}; saveReason={fixture.LastSaveRequest?.Reason}; providerFinish={fixture.LastSaveRequest?.ProviderFinish}; saveAnswerLength={fixture.LastSaveRequest?.AnswerText?.Length}; requestsBefore={requestsBefore}; requestsAfter={fixture.RequestBodies.Count}; requestsForTurn={fixture.RequestBodies.Count - requestsBefore}; activeRegistrations={fixture.Registry.ActiveRegistrations}; activeRequests={fixture.Requests.ActiveRequests}; disposedScopes={fixture.DisposedScopes}");
-                Assert.True(succeeded, "Controlled navigation setup did not produce its required completed answer. " + snapshot);
-            }
-            return receipt!;
+            // Fail at invalid setup, before navigation can disguise a failed turn as a render delay.
+            // Never include the actual or expected answer, request body, identifiers or capabilities.
+            string snapshot = FormattableString.Invariant($"turn={label}; submitMs={Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1}; beginStatus={result.Begin.Status}; mayDispatch={result.Begin.MayDispatch}; state={result.State}; terminalStatus={terminal?.Status}; receiptPresent={receipt is not null}; terminalState={receipt?.TerminalState}; terminalReason={receipt?.Reason}; projectionPresent={projection is not null}; projectionAnswerLength={projection?.AnswerText?.Length}; saveStatus={fixture.LastSaveResult?.Status}; saveState={fixture.LastSaveRequest?.TerminalState}; saveReason={fixture.LastSaveRequest?.Reason}; providerFinish={fixture.LastSaveRequest?.ProviderFinish}; saveAnswerLength={fixture.LastSaveRequest?.AnswerText?.Length}; requestsBefore={requestsBefore}; requestsAfter={fixture.RequestBodies.Count}; requestsForTurn={fixture.RequestBodies.Count - requestsBefore}; activeRegistrations={fixture.Registry.ActiveRegistrations}; activeRequests={fixture.Requests.ActiveRequests}; disposedScopes={fixture.DisposedScopes}");
+            Assert.True(succeeded, "Controlled navigation setup did not produce its required completed answer. " + snapshot);
         }
+        return receipt!;
     }
 
     [Trait("Suite", "SelfContained")]
