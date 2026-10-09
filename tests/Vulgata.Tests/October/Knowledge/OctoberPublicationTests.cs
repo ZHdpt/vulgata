@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Tests.TestInfrastructure;
@@ -6,6 +7,94 @@ namespace Vulgata.Tests.October.Knowledge;
 
 public sealed class OctoberPublicationTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(2)]
+    [InlineData(1)]
+    [InlineData(3)]
+    public async Task PublishSelectionAsync_TwoManifestQualifiedIdenticalUnknowns_RequiresCompletePayloadMultisetAsync(int requestedCopies)
+    {
+        await using var acceptance = await OctoberKnowledgeAcceptanceFixture.CreateSqliteAsync();
+        var unknown = new Uncertainty("runtime-binding", "The runtime binding remains unknown.", [], ["No deployment evidence"]);
+        var firstProposal = acceptance.Proposal with { Uncertainties = [unknown] };
+        var firstResult = await acceptance.Writer().AcceptCompletedFileAsync(acceptance.Seal(firstProposal));
+        Assert.Equal(KnowledgeWriteStatus.Committed, firstResult.Status);
+        var first = Assert.IsType<AcceptedFile>(firstResult.AcceptedFile);
+
+        var secondOrigin = acceptance.Origin with { RelativePath = "src/Other.cs", SourceDigest = new string('c', 64) };
+        var evidence = new EvidenceReference(null, null, new(secondOrigin, 10, 15), null, secondOrigin.SourceDigest);
+        var unit = OctoberKnowledgeAcceptanceFixture.Unit("operation:other", null, "Other operation", [new(secondOrigin, 10, 20)],
+            [new("overview", 0, "Overview", [new("action", "Processes another request.", ClaimQualification.SourceSupported, [evidence], [])])]);
+        Guid secondAdmission = Guid.NewGuid();
+        var secondProposal = firstProposal with
+        {
+            AdmissionId = secondAdmission, AttemptId = Guid.NewGuid(), Origin = secondOrigin,
+            Units = [unit], Observations = [], Uncertainties = [unknown],
+            Contributors = [new(ContributorKind.Source, secondOrigin.RepositoryId, null, secondOrigin.RootBindingIdentity, null, secondOrigin.SourceDigest)],
+            Coverage = new(secondAdmission, secondOrigin, CoverageDisposition.Accepted, null)
+        };
+        acceptance.Source.Result = new(secondOrigin, 100);
+        var secondResult = await acceptance.Writer().AcceptCompletedFileAsync(acceptance.Seal(secondProposal, Guid.NewGuid()));
+        Assert.Equal(KnowledgeWriteStatus.Committed, secondResult.Status);
+        var second = Assert.IsType<AcceptedFile>(secondResult.AcceptedFile);
+        Assert.NotEqual(first.ManifestId, second.ManifestId);
+        await using (var before = acceptance.Factory.CreateDbContext())
+        {
+            var retained = await before.KnowledgeUncertainties.AsNoTracking().ToArrayAsync();
+            Assert.Equal(2, retained.Length);
+            Assert.Equal(new[] { first.ManifestId, second.ManifestId }.Order(), retained.Select(x => x.ManifestId).Order());
+            Assert.All(retained, row =>
+            {
+                Assert.Equal(unknown.Key, row.Key);
+                Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(unknown), OctoberKnowledgePolicy.CanonicalizeJson(row.ContentJson));
+            });
+        }
+
+        var freeze = new CorpusFreezeRequest(new(acceptance.Binding.BatchId, OperationKind.FreezeCorpus, Guid.NewGuid()),
+            acceptance.Binding, "", [first, second], [first.Coverage, second.Coverage]);
+        freeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
+        acceptance.FreezeAuthority.Approve(freeze);
+        var frozen = await acceptance.Writer().FreezeCorpusAsync(freeze);
+        Assert.Equal(KnowledgeWriteStatus.Committed, frozen.Status);
+        var corpus = Assert.IsType<CorpusHandle>(frozen.Corpus);
+        // Preserve the per-file payload multiset. Identical text is not a replacement for manifest identity.
+        var request = new PublicationRequest(new(acceptance.Binding.BatchId, OperationKind.PublishSelection, Guid.NewGuid()),
+            corpus, "", first.Documents.AddRange(second.Documents), [], Enumerable.Repeat(unknown, requestedCopies).ToImmutableArray(), [], freeze.TerminalCoverage);
+        request = request with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputePublicationDigest(request) };
+        var published = await acceptance.Writer().PublishSelectionAsync(request);
+        if (requestedCopies != 2)
+        {
+            Assert.Equal(KnowledgeWriteStatus.InvalidProposal, published.Status);
+            Assert.Null(published.Publication);
+            await using var rejected = acceptance.Factory.CreateDbContext();
+            Assert.Equal(0, await rejected.KnowledgePublications.CountAsync());
+            Assert.Equal(0, await rejected.PublicationUncertainties.CountAsync());
+            Assert.Equal(0, await rejected.PublicationMembers.CountAsync());
+            Assert.Equal(0, await rejected.KnowledgeOperations.CountAsync(operation => operation.Kind == OperationKind.PublishSelection));
+            Assert.Equal(2, await rejected.KnowledgeUncertainties.CountAsync());
+            return;
+        }
+        Assert.Equal(KnowledgeWriteStatus.Committed, published.Status);
+        Assert.NotNull(published.Publication);
+        await using var after = acceptance.Factory.CreateDbContext();
+        var selected = await after.PublicationUncertainties.AsNoTracking().ToArrayAsync();
+        Assert.Equal(2, selected.Length);
+        Assert.Equal(new[] { first.ManifestId, second.ManifestId }.Order(), selected.Select(x => x.ManifestId).Order());
+        Assert.All(selected, row =>
+        {
+            Assert.Equal(acceptance.Binding.BatchId, row.BatchId);
+            Assert.Equal(corpus.CorpusId, row.CorpusId);
+            Assert.Equal(published.Publication.PublicationId, row.PublicationId);
+            Assert.Equal(unknown.Key, row.Key);
+        });
+        Assert.Equal(2, await after.KnowledgeUncertainties.CountAsync());
+        Assert.Equal(3, await after.PublicationMembers.CountAsync());
+        var replay = await acceptance.Writer().PublishSelectionAsync(request);
+        Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, replay.Status);
+        Assert.Equal(published.Publication, replay.Publication);
+        Assert.Equal(2, await after.PublicationUncertainties.CountAsync());
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task PublishSelectionAsync_ExactClOnlyCorpus_PublishesAtomicMembershipUnknownAndHonestCoverageAsync()
