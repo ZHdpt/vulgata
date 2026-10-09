@@ -768,6 +768,83 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
         public void Dispose() { }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("explicit-null-empty", OctoberFileWorkerStatus.Completed)]
+    [InlineData("omit-nullable", OctoberFileWorkerStatus.InvalidOutput)]
+    [InlineData("duplicate-key", OctoberFileWorkerStatus.InvalidOutput)]
+    [InlineData("wrong-case-key", OctoberFileWorkerStatus.InvalidOutput)]
+    [InlineData("wrong-root", OctoberFileWorkerStatus.InvalidOutput)]
+    [InlineData("numeric-string", OctoberFileWorkerStatus.ProviderFailed)]
+    [InlineData("numeric-overflow", OctoberFileWorkerStatus.ProviderFailed)]
+    [InlineData("qualification-case", OctoberFileWorkerStatus.InvalidOutput)]
+    [InlineData("advisory-index", OctoberFileWorkerStatus.InvalidOutput)]
+    public async Task CurrentContract_ProposalShapeCharacterization_PreservesExactParserOutcomeAsync(string shape, OctoberFileWorkerStatus expected)
+    {
+        string json = shape switch
+        {
+            "explicit-null-empty" => UnitJson.Replace("\"observations\":[]", "\"observations\":[{\"observationKey\":\"call\",\"ownerSelector\":\"file\",\"role\":\"caller\",\"mechanism\":\"call\",\"operation\":\"Run\",\"logicalNamespace\":null,\"literalsOrExpressions\":[],\"qualification\":\"Hypothesis\",\"evidence\":[]}]"),
+            "omit-nullable" => UnitJson.Replace("\"parentSelector\":null,", ""),
+            "duplicate-key" => UnitJson[..^1] + ",\"units\":[]}",
+            "wrong-case-key" => UnitJson.Replace("\"units\":", "\"Units\":"),
+            "wrong-root" => "[" + UnitJson + "]",
+            "numeric-string" => UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"0\""),
+            "numeric-overflow" => UnitJson.Replace("\"ordinal\":0", "\"ordinal\":2147483648"),
+            "qualification-case" => UnitJson.Replace("SourceSupported", "sourcesupported"),
+            "advisory-index" => UnitJson.Replace("\"evidence\":[{\"startLine\":1,\"endLine\":2}]", "\"evidence\":[{\"advisoryIndex\":0}]"),
+            _ => throw new InvalidOperationException("Unknown characterization case"),
+        };
+        using var client = new ScriptedClient([new(json, ChatFinishReason.Stop)]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(expected, result.Status);
+        Assert.Equal(expected == OctoberFileWorkerStatus.Completed ? null : (OctoberWorkerFailureStage?)OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Single(client.Requests);
+        if (expected == OctoberFileWorkerStatus.Completed)
+        {
+            var proposal = Assert.IsType<CompletedFileProposal>(result.Proposal);
+            Assert.Null(Assert.Single(proposal.Units).ParentSelector);
+            var observation = Assert.Single(proposal.Observations);
+            Assert.Null(observation.LogicalNamespace); Assert.Empty(observation.LiteralsOrExpressions); Assert.Empty(observation.Evidence);
+        }
+        else Assert.Null(result.Proposal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(4, 5)]
+    [InlineData(11, 2)]
+    public async Task CurrentContract_WindowMetadata_ReconstructsUtf8AcrossSplitLinesAndCrLfAsync(int windowBytes, int windows)
+    {
+        const string source = "中😀abc\r\nreturn;";
+        var frame = new Frame(source);
+        string final = UnitJson.Replace("Conditional execution", "Unicode source").Replace("Run executes when enabled, then returns.", "The retained source spans two lines.");
+        using var client = new ScriptedClient(Enumerable.Range(0, windows).Select(index => new Round(index == windows - 1 ? final : "continue", ChatFinishReason.Stop)).ToArray());
+        var request = Request(frame) with { Limits = new(MaximumWindowUtf8Bytes: windowBytes, MaximumContinuationWindows: windows) };
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(windows, client.Requests.Count);
+        var reconstructed = new StringBuilder(); long offset = 0;
+        for (int index = 0; index < windows; index++)
+        {
+            using var payload = JsonDocument.Parse(client.Requests[index].Last(message => message.Role == ChatRole.User).Text);
+            var root = payload.RootElement;
+            Assert.Equal(index + 1, root.GetProperty("windowOrdinal").GetInt32()); Assert.Equal(windows, root.GetProperty("windowCount").GetInt32());
+            Assert.Equal(offset, root.GetProperty("byteStart").GetInt64()); Assert.Equal(index == windows - 1, root.GetProperty("finalWindow").GetBoolean());
+            Assert.Empty(root.GetProperty("advisory").EnumerateArray());
+            // Current delivered metadata has byte offset only. This is not a requirement to omit line metadata forever.
+            Assert.False(root.TryGetProperty("lineStart", out _)); Assert.False(root.TryGetProperty("lineCount", out _)); Assert.False(root.TryGetProperty("relativePath", out _));
+            string text = root.GetProperty("sourceText").GetString()!;
+            Assert.DoesNotContain("\uFFFD", text); Assert.InRange(Encoding.UTF8.GetByteCount(text), 1, windowBytes);
+            if (windowBytes == 11 && index == 0) Assert.EndsWith("\r", text);
+            if (windowBytes == 11 && index == 1) Assert.StartsWith("\n", text);
+            reconstructed.Append(text); offset += Encoding.UTF8.GetByteCount(text);
+        }
+        Assert.Equal(source, reconstructed.ToString()); Assert.Equal(Encoding.UTF8.GetBytes(source), Encoding.UTF8.GetBytes(reconstructed.ToString()));
+        Assert.Equal(frame.ByteLength, result.CoveredUtf8Bytes);
+        var unit = Assert.Single(result.Proposal!.Units); var anchor = Assert.Single(unit.Anchors);
+        Assert.Equal(1, anchor.StartLine); Assert.Equal(2, anchor.EndLine); Assert.Equal(frame.Origin, anchor.Origin);
+        // Scripted citations prove parser/host coordinate handling, not that a live model counted correctly.
+        Assert.Equal("The retained source spans two lines.", Assert.Single(Assert.Single(unit.Sections).Claims).Text);
+    }
     private sealed record Round(string? Text, ChatFinishReason? Finish, IReadOnlyList<AIContent>? Calls = null);
     private sealed class ScriptedClient(IReadOnlyList<Round> rounds, Action? afterRequest = null) : IChatClient
     {
@@ -1078,10 +1155,50 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     {
         public CyclicToolResult? Next { get; set; }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CurrentContract_ActualSdkFinalText_IsolatesFragmentedUnicodeFromReasoningAndPriorToolLeafAsync()
+    {
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        using (var transport = new FragmentedToolHttp { CharacterizeFinalText = true })
+        using (var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected()))
+        {
+            var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+            var leaves = new List<ChatResponseUpdate[]>();
+            for (int leaf = 0; leaf < 2; leaf++)
+            {
+                var updates = new List<ChatResponseUpdate>();
+                await foreach (var update in admitted.GetAttemptStreamingResponseAsync([new(ChatRole.User, "controlled characterization")], new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid()))) updates.Add(update);
+                Assert.InRange(updates.Count, 1, 16); leaves.Add([.. updates]);
+            }
+            string firstText = string.Concat(leaves[0].SelectMany(update => update.Contents).OfType<TextContent>().Select(content => content.Text));
+            string finalText = string.Concat(leaves[1].SelectMany(update => update.Contents).OfType<TextContent>().Select(content => content.Text));
+            Assert.Equal("PRIVATE_PRIOR_TOOL_LEAF", firstText);
+            Assert.Equal(FragmentedToolHttp.CharacterizationJson, finalText);
+            Assert.DoesNotContain("PRIVATE_REASONING", finalText); Assert.DoesNotContain("PRIVATE_PRIOR_TOOL_LEAF", finalText);
+            int reasoning = leaves[1].SelectMany(update => update.Contents).OfType<TextReasoningContent>().Count();
+            output.WriteLine("currentSdkFinalText: leaves=2; finalUpdates={0}; reasoningContentCount={1}; finalTextFragments={2}", leaves[1].Length, reasoning, leaves[1].SelectMany(update => update.Contents).OfType<TextContent>().Count());
+            // A zero count means this installed SDK ignored the synthetic wire extension; it is not proof of mapped reasoning isolation.
+        }
+        using var executionTransport = new FragmentedToolHttp { CharacterizeFinalText = true };
+        using var executionClient = await new OctoberWorkerClientFactory(new Secrets(), executionTransport).CreateAsync(Selected());
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var result = await new OctoberFileWorkerExecutor(executionClient, new Scope()).ExecuteAsync(Request(frame), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(2, executionTransport.Calls); Assert.Equal(1, result.SettledToolCalls);
+        var unit = Assert.Single(result.Proposal!.Units);
+        Assert.Equal("条件😀规则", unit.Title);
+        var claim = Assert.Single(Assert.Single(unit.Sections).Claims);
+        Assert.Equal("终结响应中的规则。", claim.Text);
+        var evidence = Assert.Single(claim.Evidence); var source = Assert.IsType<Vulgata.Core.DomainServices.OctoberKnowledge.SourceAnchor>(evidence.Source);
+        Assert.Equal(frame.Origin, source.Origin); Assert.Equal(1, source.StartLine); Assert.Equal(2, source.EndLine);
+        Assert.DoesNotContain("PRIVATE_", unit.ContentJson);
+    }
     private sealed class FragmentedToolHttp : HttpMessageHandler
     {
         internal bool MissingRequiredArgument;
         internal bool FailSecondRequest;
+        internal bool CharacterizeFinalText;
+        internal static string CharacterizationJson => UnitJson.Replace("Conditional execution", "条件😀规则").Replace("Run executes when enabled, then returns.", "终结响应中的规则。");
         internal int Calls;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -1104,6 +1221,27 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-terminal", @object = "chat.completion.chunk", created = 1, model = "selected-model",
                     choices = new[] { new { index = 0, delta = new { role = "assistant", content = UnitJson }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
+            }
+            if (CharacterizeFinalText)
+            {
+                if (call == 0)
+                {
+                    var first = System.Text.Json.Nodes.JsonNode.Parse(chunks[0])!;
+                    first["choices"]![0]!["delta"]!["content"] = "PRIVATE_PRIOR_TOOL_LEAF";
+                    chunks[0] = first.ToJsonString();
+                }
+                else
+                {
+                    string proposal = CharacterizationJson;
+                    int split = proposal.IndexOf("😀", StringComparison.Ordinal) + "😀".Length;
+                    string Chunk(object delta, string? finish) => JsonSerializer.Serialize(new { id = "controlled-unicode", @object = "chat.completion.chunk", created = 1, model = "selected-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } });
+                    chunks = [
+                        Chunk(new { role = "assistant", reasoning_content = "PRIVATE_REASONING_NOT_JSON" }, null),
+                        Chunk(new { content = proposal[..split] }, null),
+                        Chunk(new { content = proposal[split..] }, "stop"),
+                        """{"id":"controlled-unicode","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[],"usage":{"prompt_tokens":30,"completion_tokens":20,"total_tokens":50}}""",
+                    ];
+                }
             }
             if (call == 0 && MissingRequiredArgument)
             {
