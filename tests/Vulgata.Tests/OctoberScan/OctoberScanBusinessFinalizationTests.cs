@@ -20,12 +20,13 @@ public sealed class OctoberScanBusinessFinalizationTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task InternalNaturalCompletion_UsesActualOwnerRootSelectionAndSameRealProviderClientAsync(bool mismatchedConfiguration)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task InternalNaturalCompletion_UsesActualOwnerRootSelectionAndSameRealProviderClientAsync(bool mismatchedConfiguration, bool twoRepositories)
     {
-        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
-        using var transport = new NaturalTransport();
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync(twoRepositories: twoRepositories);
+        using var transport = new NaturalTransport { ExpectedWorkers = twoRepositories ? 2 : 1 };
         var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
         var selected = execution.Provider;
         var profile = selected.Profile;
@@ -40,7 +41,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             {
                 rootSelections++;
                 // Explicit trusted selector over the actual owner-loaded identities, never inferred roots.
-                var unit = Assert.Single(input.Units.Where(unit => unit.SemanticSelector == "file"));
+                var unit = Assert.Single(input.Units.Where(unit => unit.SemanticSelector == "file" && unit.PrimaryOrigin.RepositoryId == host.Database.Origin.RepositoryId));
                 transport.Root = unit.Document;
                 return [new FlowRootSelection(unit.UnitId, unit.Document, FlowRootKind.SelectedCodeUnit, unit.SemanticSelector)];
             }, projection, "Controlled resolution: use accepted evidence only.", "Controlled synthesis: preserve accepted evidence and qualifications.", new(), 32768);
@@ -70,19 +71,19 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Empty(transport.Requests);
             return;
         }
-        Assert.Equal(0, report.ExitCode);
+        Assert.True(report.ExitCode == 0, $"Expected complete natural route; exit={report.ExitCode}; gaps={string.Join(",", report.Gaps.Select(gap => gap.Code))}");
         Assert.Equal("cl-and-bl", report.CompletedStage);
         Assert.Equal(OctoberPhaseStatus.Completed, report.Matching);
         Assert.Equal(OctoberPhaseStatus.Completed, report.BusinessLogic);
         Assert.Equal(1, clientCreations);
         Assert.Equal(1, rootSelections);
-        Assert.Equal(1, transport.WorkerRequests);
+        Assert.Equal(twoRepositories ? 2 : 1, transport.WorkerRequests);
         Assert.Equal(1, transport.BusinessRequests);
-        Assert.Equal(2, report.Usage.Requests);
+        Assert.Equal(twoRepositories ? 3 : 2, report.Usage.Requests);
         Assert.False(report.Usage.HasUnknownUsage);
         Assert.Equal(1, host.BeginCalls);
         Assert.Equal(1, host.FreezeCalls);
-        Assert.Equal(2, report.Documents.Length);
+        Assert.Equal(twoRepositories ? 3 : 2, report.Documents.Length);
         Assert.All(transport.Requests, request =>
         {
             Assert.Equal("https://never-contacted.invalid/v1/chat/completions", request.Endpoint);
@@ -93,7 +94,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         Assert.Equal(1, await context.KnowledgePublications.CountAsync());
         var publication = Assert.IsType<PublicationBinding>(report.Publication);
         var reader = Reader(host, publication, "ordinary-reader");
-        var opened = await reader.OpenReadSelectionAsync(new(publication, new("ordinary-reader", "separate-authentication"), KnowledgeMode.IT, KnowledgePurpose.Reader, [host.Database.Origin.RepositoryId]));
+        var opened = await reader.OpenReadSelectionAsync(new(publication, new("ordinary-reader", "separate-authentication"), KnowledgeMode.IT, KnowledgePurpose.Reader, [.. execution.Authority.RepositoryIds]));
         Assert.Equal(KnowledgeReadStatus.Success, opened.Status);
         foreach (var handle in report.Documents)
         {
@@ -123,6 +124,17 @@ public sealed class OctoberScanBusinessFinalizationTests
     [InlineData("publication-held-scope-stop")]
     [InlineData("replay-authority-held")]
     [InlineData("binding-valid")]
+    [InlineData("operator-valid")]
+    [InlineData("operator-empty")]
+    [InlineData("operator-absent")]
+    [InlineData("operator-stale")]
+    [InlineData("operator-foreign")]
+    [InlineData("operator-duplicate")]
+    [InlineData("operator-revoked-after")]
+    [InlineData("operator-held-cancel")]
+    [InlineData("operator-cleanup-foreign")]
+    [InlineData("operator-scope-before")]
+    [InlineData("operator-scope-after")]
     [InlineData("cl-only-binding-unused")]
     [InlineData("binding-null")]
     [InlineData("binding-subject")]
@@ -152,10 +164,11 @@ public sealed class OctoberScanBusinessFinalizationTests
         int clients = 0;
         var composition = new OctoberBusinessRunComposition(
             (authority, guard) => new ResolutionBoundary(state, new OctoberResolutionStore(host.Database.Factory, authority, guard, host.Database.Log)),
-            authority => new OctoberFlowPlanningInputLoader(host.Database.Factory, authority),
+            authority => new ObservedPlanningLoader(state, new OctoberFlowPlanningInputLoader(host.Database.Factory, authority)),
             (authority, guard) => new PublicationBoundary(state, new OctoberFlowPublicationStore(host.Database.Factory, authority, guard, host.Database.Log)),
             input =>
             {
+                if (boundary.StartsWith("operator-", StringComparison.Ordinal)) throw new InvalidOperationException("Operator mode must not fall back to exact settings");
                 state.RootSelections++;
                 if (boundary == "empty-roots") return [];
                 if (boundary == "default-roots") return default;
@@ -182,19 +195,70 @@ public sealed class OctoberScanBusinessFinalizationTests
             }
             return binding;
         } };
+        if (boundary.StartsWith("operator-", StringComparison.Ordinal))
+        {
+            composition = composition with
+            {
+                OperatorSelection = new("operator", Path.Combine(Path.GetTempPath(), "unopened-operator-exchange-" + Guid.NewGuid().ToString("N")), 30),
+                InteractAsync = async (request, token) =>
+                {
+                    state.Interactions++;
+                    Assert.Equal(1, request.Version); Assert.NotEqual(Guid.Empty, request.RequestId); Assert.NotEqual(Guid.Empty, request.RunId);
+                    Assert.Equal(state.FrozenCorpus!.CorpusId, request.CorpusId);
+                    Assert.True(request.ExpiresAtUtc > DateTimeOffset.UtcNow);
+                    var candidate = Assert.Single(request.Candidates);
+                    Assert.Equal(host.Database.Origin.RepositoryId, candidate.RepositoryId);
+                    Assert.Equal("src/Order.cs", candidate.RelativePath); Assert.Equal("file", candidate.SemanticSelector);
+                    Assert.Equal(execution.Setup.BatchId, candidate.Document.BatchId);
+                    state.BeforeInteraction?.Invoke();
+                    if (boundary == "operator-cleanup-foreign") return await InteractWithForeignEntryAsync(state, request, token);
+                    if (boundary == "operator-held-cancel")
+                    {
+                        using var registration = token.Register(() => state.OperatorCancelled.TrySetResult());
+                        state.OperatorEntered.TrySetResult(); await state.ReleaseOperator.Task;
+                    }
+                    if (boundary == "operator-revoked-after") host.AuthorityAllowed = false;
+                    if (boundary == "operator-scope-after") state.StopScope!();
+                    if (boundary == "operator-absent") return null;
+                    transport.Root = candidate.Document;
+                    return new(1, boundary == "operator-stale" ? Guid.NewGuid() : request.RequestId, request.RunId,
+                        boundary == "operator-empty" ? [] : boundary == "operator-foreign" ? [Guid.NewGuid()] : boundary == "operator-duplicate" ? [candidate.UnitId, candidate.UnitId] : [candidate.UnitId]);
+                },
+            };
+        }
         var replayAuthority = new HeldReplayAuthority(host.Dependencies.Authority);
-        await using var runner = new OctoberGenerateRunner(host.Dependencies with
+        var runner = new OctoberGenerateRunner(host.Dependencies with
         {
             Authority = replayAuthority,
             Business = composition,
             CreateWorkerClient = async (provider, token) => { clients++; return await new OctoberWorkerClientFactory(new SyntheticSecret(), transport).CreateAsync(provider, token); },
             CreateKnowledgeWriter = ports => new FreezeBoundary(state, host.Dependencies.CreateKnowledgeWriter(ports)),
         }, clock);
+        await using var runnerLifetime = new RunnerTestLifetime(runner, state);
         if (boundary is "publication-log" or "publication-held-log") state.BeforePublication = () => host.Database.Log.Succeeds = false;
         if (boundary == "scope-stop-before-freeze") state.BeforeFreeze = () => ((OctoberExecutionScope)typeof(OctoberGenerateRunner).GetField("_scope", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(runner)!).HardStop();
         if (boundary == "scope-stop-before-commit") state.BeforePublication = () => ((OctoberExecutionScope)typeof(OctoberGenerateRunner).GetField("_scope", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(runner)!).HardStop();
+        state.StopScope = () => ((OctoberExecutionScope)typeof(OctoberGenerateRunner).GetField("_scope", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(runner)!).HardStop();
+        if (boundary == "operator-scope-before") state.AfterCatalog = state.StopScope;
+        state.BeforeInteraction = () =>
+        {
+            var activeScope = (OctoberExecutionScope)typeof(OctoberGenerateRunner).GetField("_scope", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(runner)!;
+            Assert.Equal(0, activeScope.GetSnapshot().OutstandingAttempts);
+            Assert.Equal(1, host.BeginCalls);
+        };
         using var callerCancellation = new CancellationTokenSource();
         var pending = runner.ExecuteAsync(execution, callerCancellation.Token);
+        if (boundary == "operator-held-cancel")
+        {
+            try
+            {
+                await state.OperatorEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                callerCancellation.Cancel();
+                await state.OperatorCancelled.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(1))); Assert.False(pending.IsCompleted);
+            }
+            finally { state.ReleaseOperator.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
+        }
         if (boundary is "binding-held-acquire" or "binding-held-read")
         {
             try
@@ -228,7 +292,28 @@ public sealed class OctoberScanBusinessFinalizationTests
         var report = Assert.IsType<OctoberScanReport>((await pending).Report);
         Assert.Equal(1, clients);
         Assert.Equal(1, transport.WorkerRequests);
-        if (boundary == "cl-only-binding-unused")
+        if (boundary.StartsWith("operator-", StringComparison.Ordinal))
+        {
+            Assert.Equal(boundary == "operator-scope-before" ? 0 : 1, state.Interactions); Assert.Equal(0, state.RootSelections);
+            if (boundary == "operator-valid") { Assert.Equal(0, report.ExitCode); Assert.NotNull(report.Publication); Assert.Equal(1, transport.BusinessRequests); }
+            else if (boundary == "operator-empty") { Assert.Equal(5, report.ExitCode); Assert.Equal(0, transport.BusinessRequests); }
+            else { Assert.NotEqual(0, report.ExitCode); Assert.NotEqual(5, report.ExitCode); Assert.Null(report.Publication); Assert.Equal(0, transport.BusinessRequests); }
+            var replay = await runner.ExecuteAsync(execution);
+            Assert.Equal(report.ExitCode, replay.Report!.ExitCode); Assert.Equal(boundary == "operator-scope-before" ? 0 : 1, state.Interactions);
+            if (boundary == "operator-revoked-after") { Assert.Empty(report.Documents); Assert.Empty(report.Inventory); Assert.Empty(report.AcceptedFiles); }
+            if (boundary == "operator-cleanup-foreign")
+            {
+                Assert.True(state.BrokerResponseWritten, "The real request and atomic response must complete before cleanup classification is tested.");
+                Assert.Equal("preserve caller-owned marker", await File.ReadAllTextAsync(Path.Combine(state.ExchangeDirectory!, "foreign.txt")));
+                Assert.False(File.Exists(Path.Combine(state.ExchangeDirectory!, "root-selection.request.json")));
+                Assert.False(File.Exists(Path.Combine(state.ExchangeDirectory!, "root-selection.response.json")));
+                Assert.Equal(4, report.ExitCode);
+                Assert.Contains(report.Gaps, gap => gap.Code == "owned_cleanup_unconfirmed");
+                await Assert.ThrowsAnyAsync<Exception>(() => runner.DisposeAsync().AsTask());
+                state.ExpectedCleanupRefusalObserved = true;
+            }
+        }
+        else        if (boundary == "cl-only-binding-unused")
         {
             Assert.Equal(0, report.ExitCode); Assert.Equal("cl-only", report.CompletedStage);
             Assert.Equal(0, state.ReaderBindings); Assert.Equal(0, state.RootSelections); Assert.Equal(0, transport.BusinessRequests);
@@ -394,7 +479,7 @@ public sealed class OctoberScanBusinessFinalizationTests
     private static OctoberVerifiedReaderBinding ControlledBinding(OctoberScanGenerateRunnerTests.Harness host, PublicationBinding publication, IOctoberOperatorSession session, BoundaryState? state)
     {
         var subject = new KnowledgeSubject(session.SubjectId, "controlled-verified-reader-stamp");
-        var selection = new ReadSelectionRequest(publication, subject, KnowledgeMode.IT, KnowledgePurpose.Reader, [host.Database.Origin.RepositoryId]);
+        var selection = new ReadSelectionRequest(publication, subject, KnowledgeMode.IT, KnowledgePurpose.Reader, [.. host.Execution.Authority.RepositoryIds]);
         selection = state?.Boundary switch
         {
             "binding-subject" => selection with { Subject = new("foreign-subject", subject.AuthenticationBinding) },
@@ -439,6 +524,47 @@ public sealed class OctoberScanBusinessFinalizationTests
         public Task<ContentPage> ReadExactAsync(ExactReadRequest request, CancellationToken token = default) => inner.ReadExactAsync(request, token);
         public Task<RelatedPage> GetRelatedAsync(RelatedReadRequest request, CancellationToken token = default) => inner.GetRelatedAsync(request, token);
     }
+    private static async Task<OctoberOperatorRootSelectionResponse?> InteractWithForeignEntryAsync(BoundaryState state, OctoberOperatorRootSelectionRequest request, CancellationToken token)
+    {
+        state.ExchangeDirectory = Path.Combine(Path.GetTempPath(), "october-host-operator-cleanup-" + Guid.NewGuid().ToString("N"));
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
+        var pending = new OctoberOperatorRootSelection(new("operator", state.ExchangeDirectory, 5)).InteractAsync(request, cancellation.Token);
+        try
+        {
+        string requestPath = Path.Combine(state.ExchangeDirectory, "root-selection.request.json");
+        var elapsed = System.Diagnostics.Stopwatch.StartNew();
+        while (!File.Exists(requestPath))
+        {
+            if (pending.IsCompleted) return await pending;
+            if (elapsed.Elapsed > TimeSpan.FromSeconds(3)) throw new TimeoutException("Owned broker request did not appear");
+            await Task.Delay(10, token);
+        }
+        await File.WriteAllTextAsync(Path.Combine(state.ExchangeDirectory, "foreign.txt"), "preserve caller-owned marker", token);
+        string temporary = Path.Combine(state.ExchangeDirectory, "response.tmp");
+        await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(new OctoberOperatorRootSelectionResponse(1, request.RequestId, request.RunId, [request.Candidates[0].UnitId]), new JsonSerializerOptions(JsonSerializerDefaults.Web)), token);
+        File.Move(temporary, Path.Combine(state.ExchangeDirectory, "root-selection.response.json"));
+        state.BrokerResponseWritten = true;
+        return await pending;
+        }
+        finally { cancellation.Cancel(); try { await pending.WaitAsync(TimeSpan.FromSeconds(6)); } catch (Exception) { } }
+    }
+    private sealed class RunnerTestLifetime(OctoberGenerateRunner runner, BoundaryState state) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            try { await runner.DisposeAsync(); }
+            catch (Exception) when (state.ExpectedCleanupRefusalObserved) { /* Explicitly asserted unconfirmed cleanup; never relabelled settled. */ }
+            finally
+            {
+                if (state.ExchangeDirectory is { } directory && Directory.Exists(directory))
+                {
+                    foreach (string name in new[] { "foreign.txt", "response.tmp", "root-selection.request.json", "root-selection.response.json" })
+                        File.Delete(Path.Combine(directory, name));
+                    Directory.Delete(directory, recursive: false);
+                }
+            }
+        }
+    }
     private sealed class HeldReplayAuthority(IOctoberLocalAuthority inner) : IOctoberLocalAuthority
     {
         internal bool Armed;
@@ -478,6 +604,15 @@ public sealed class OctoberScanBusinessFinalizationTests
     private sealed class BoundaryState
     {
         internal string Boundary = "";
+        internal CorpusHandle? FrozenCorpus;
+        internal int Interactions;
+        internal string? ExchangeDirectory;
+        internal bool ExpectedCleanupRefusalObserved;
+        internal bool BrokerResponseWritten;
+        internal Action? BeforeInteraction, StopScope, AfterCatalog;
+        internal TaskCompletionSource OperatorEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal TaskCompletionSource OperatorCancelled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal TaskCompletionSource ReleaseOperator { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource ReaderHeld { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource ReaderCancelled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource ReleaseReader { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -499,6 +634,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         {
             state.BeforeFreeze?.Invoke();
             var result = await inner.FreezeCorpusAsync(request, token);
+            state.FrozenCorpus = result.Corpus;
             return state.Boundary == "freeze-unknown" ? result with { Status = KnowledgeWriteStatus.CommitIndeterminate, Corpus = null } : result;
         }
         public Task<KnowledgeWriteResult> LookupOperationAsync(KnowledgeBinding binding, OperationKey operation, string digest, CancellationToken token = default)
@@ -528,6 +664,15 @@ public sealed class OctoberScanBusinessFinalizationTests
             _ => result,
         };
     }
+    private sealed class ObservedPlanningLoader(BoundaryState state, IOctoberFlowPlanningInputLoader inner) : IOctoberFlowPlanningInputLoader
+    {
+        public async Task<FlowPlanningInputResult> LoadAsync(CorpusHandle corpus, ImmutableArray<FlowRootSelection> roots, CancellationToken token = default)
+        {
+            var result = await inner.LoadAsync(corpus, roots, token);
+            state.AfterCatalog?.Invoke();
+            return result;
+        }
+    }
     private sealed class ResolutionBoundary(BoundaryState state, IOctoberResolutionStore inner) : IOctoberResolutionStore
     {
         public Task<ResolutionCorpusResult> LoadCorpusAsync(CorpusHandle corpus, CancellationToken token = default) => inner.LoadCorpusAsync(corpus, token);
@@ -556,6 +701,7 @@ public sealed class OctoberScanBusinessFinalizationTests
     {
         internal DocumentVersionReference? Root;
         internal int WorkerRequests, BusinessRequests, ResolutionRequests;
+        internal int ExpectedWorkers = 1;
         internal bool IncludeCallerObservation, ReturnUnresolved;
         internal List<(string Endpoint, string? Authorization, string Model)> Requests { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -567,7 +713,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             if (streaming)
             {
                 WorkerRequests++;
-                Assert.Equal(1, WorkerRequests);
+                Assert.InRange(WorkerRequests, 1, ExpectedWorkers);
                 const string worker = """{"units":[{"semanticSelector":"file","parentSelector":null,"title":"Conditional execution","anchors":[{"startLine":1,"endLine":2}],"sections":[{"sectionId":"logic","ordinal":0,"title":"Behavior","claims":[{"claimGroupId":"rule","text":"Run executes when enabled.","qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}],"limitations":[]}]}]}],"observations":[],"uncertainties":[]}""";
                 string payload = IncludeCallerObservation ? worker.Replace("\"observations\":[]", "\"observations\":[{\"observationKey\":\"local-call\",\"ownerSelector\":\"file\",\"role\":\"caller\",\"mechanism\":\"call\",\"operation\":\"Run\",\"logicalNamespace\":null,\"literalsOrExpressions\":[\"Run()\"],\"qualification\":\"SourceSupported\",\"evidence\":[{\"startLine\":1,\"endLine\":1}]}]") : worker;
                 string chunk = JsonSerializer.Serialize(new { id = "controlled-worker", @object = "chat.completion.chunk", created = 1, model,

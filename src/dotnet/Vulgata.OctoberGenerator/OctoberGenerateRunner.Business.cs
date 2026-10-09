@@ -20,6 +20,8 @@ internal sealed record OctoberBusinessRunComposition(
     long MaximumAttemptTokens)
 {
     internal Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? BindReader { get; init; }
+    internal OctoberOperatorRootSelectionOptions? OperatorSelection { get; init; }
+    internal Func<OctoberOperatorRootSelectionRequest, CancellationToken, Task<OctoberOperatorRootSelectionResponse?>>? InteractAsync { get; init; }
 }
 
 internal sealed partial class OctoberGenerateRunner
@@ -36,6 +38,77 @@ internal sealed partial class OctoberGenerateRunner
     private readonly HashSet<Task> _businessOwnerCalls = [];
     private readonly List<IAsyncDisposable> _businessReaderLifetimes = [];
     private Task? _businessReaderCleanup;
+    private OctoberOperatorCleanupUnconfirmedException? _operatorCleanupFailure;
+
+    private async Task<ImmutableArray<FlowRootSelection>> SelectBusinessRootsAsync(FlowPlanningInput input,
+        CancellationToken cancellationToken)
+    {
+        var business = _dependencies.Business!;
+        var options = business.OperatorSelection;
+        if (options is null || options.Mode == "exact-settings") return business.SelectRoots(input);
+        if (options.Mode != "operator" || options.TimeoutSeconds is not (>= 1 and <= 300) ||
+            business.InteractAsync is null || input.Units.IsDefault || input.Units.Length > 1024 ||
+            input.Units.Select(unit => unit.UnitId).Distinct().Count() != input.Units.Length)
+            return default;
+        var candidates = input.Units.Select(unit => new OctoberOperatorRootCandidate(unit.UnitId, unit.Document,
+            unit.PrimaryOrigin.RepositoryId, unit.PrimaryOrigin.RelativePath, unit.SemanticSelector)).ToImmutableArray();
+        if (candidates.Any(candidate => candidate.UnitId == Guid.Empty || candidate.Document is null ||
+            candidate.Document.BatchId != _binding!.BatchId || candidate.Document.LogicalDocumentId == Guid.Empty ||
+            candidate.Document.DocumentVersionId == Guid.Empty ||
+            !_execution!.Authority.RepositoryIds.Contains(candidate.RepositoryId) ||
+            !new OctoberBusinessSettings([new(candidate.RepositoryId, candidate.RelativePath, candidate.SemanticSelector,
+                FlowRootKind.SelectedCodeUnit)], business.Limits, business.MaximumAttemptTokens).IsValid()))
+            return default;
+        if (!OperatorSelectionEligible || await CheckPermissionsAsync(_observedContributors, cancellationToken) != DisclosureStatus.Allowed || !OperatorSelectionEligible)
+            return default;
+        TimeSpan remaining = Min(TimeSpan.FromSeconds(options.TimeoutSeconds.Value),
+            Min(RemainingRun, _execution!.Session.ExpiresAtUtc - _time.GetUtcNow()));
+        if (remaining <= TimeSpan.Zero) return default;
+        long started = _time.GetTimestamp();
+        var request = new OctoberOperatorRootSelectionRequest(1, Guid.NewGuid(), _beginRequest!.RunId,
+            input.Corpus.Handle.CorpusId, _time.GetUtcNow() + remaining, candidates);
+        if (System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(request,
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)).Length > 1024 * 1024)
+            return default;
+        using var deadline = new CancellationTokenSource(remaining, _time);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, deadline.Token);
+        OctoberOperatorRootSelectionResponse? response;
+        try
+        {
+            // A timed-out waiter does not release the actual interaction or its
+            // owned files. The original run retains and drains that call.
+            response = await BoundedAsync(RetainBusinessOwnerCall(async () =>
+            {
+                try { return await business.InteractAsync(request, linked.Token); }
+                catch (OctoberOperatorCleanupUnconfirmedException error)
+                {
+                    // Record actual cleanup failure even if the bounded waiter
+                    // already stopped. It remains owned by this original run.
+                    lock (_sync) _operatorCleanupFailure ??= error;
+                    throw;
+                }
+            }), linked.Token);
+        }
+        finally { await AwaitBusinessOwnerCallsAsync(); }
+        if (_time.GetElapsedTime(started) >= remaining || linked.IsCancellationRequested || !OperatorSelectionEligible ||
+            await CheckPermissionsAsync(_observedContributors, linked.Token) != DisclosureStatus.Allowed ||
+            _time.GetElapsedTime(started) >= remaining || !OperatorSelectionEligible || response is null ||
+            response.Version != 1 || response.RequestId != request.RequestId || response.RunId != request.RunId ||
+            response.SelectedUnitIds.IsDefault || response.SelectedUnitIds.Length > 256 ||
+            response.SelectedUnitIds.Distinct().Count() != response.SelectedUnitIds.Length)
+            return default;
+        var byId = candidates.ToDictionary(candidate => candidate.UnitId);
+        if (response.SelectedUnitIds.Any(id => !byId.ContainsKey(id))) return default;
+        return response.SelectedUnitIds.Select(id =>
+        {
+            var candidate = byId[id];
+            return new FlowRootSelection(candidate.UnitId, candidate.Document, FlowRootKind.SelectedCodeUnit, candidate.SemanticSelector);
+        }).ToImmutableArray();
+    }
+
+    private bool OperatorSelectionEligible => BusinessRunAvailable && _beginRequest is { } begin &&
+        _businessFinalizationOperation is { } operation && _scope?.CheckHandoffEligibility(begin.RunId,
+            operation, _execution!.Provider.Profile.Name) == ProviderAdmissionStatus.Granted;
 
     private bool BusinessRunAvailable => _execution is not null && RunAvailable &&
         _execution.Session.ExpiresAtUtc > _time.GetUtcNow() && _runToken is { IsCancellationRequested: false };
@@ -151,10 +224,10 @@ internal sealed partial class OctoberGenerateRunner
         if (planning.Status != KnowledgeReadStatus.Success || planning.Input is not { } input || input.Corpus.Handle != corpus || input.Contributors.IsDefault)
             return Failure("business_planning_inputs_unavailable", disclose: false);
         if (!_businessResolutionFailed && !_businessResolutionLimited) _matchingPhase = OctoberPhaseStatus.Completed;
-        _observedContributors = input.Contributors;
-        if (!BusinessRunAvailable || await CheckPermissionsAsync(input.Contributors, cancellationToken) != DisclosureStatus.Allowed)
+        var allObserved = IncludeObservedContributors(input.Contributors);
+        if (!BusinessRunAvailable || await CheckPermissionsAsync(allObserved, cancellationToken) != DisclosureStatus.Allowed)
             return Failure("business_authority_unavailable", interrupted: IsCancelled, disclose: false);
-        var roots = business.SelectRoots(input);
+        var roots = await SelectBusinessRootsAsync(input, cancellationToken);
         if (roots.IsDefault) return Failure("business_roots_unavailable");
         var selection = new BusinessFinalizationSelection(roots, business.Limits, _beginRequest!.RunId,
             execution.Provider.Profile.Name, OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(business.ProviderConfiguration),
