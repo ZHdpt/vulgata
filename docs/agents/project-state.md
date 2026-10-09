@@ -57,6 +57,13 @@ bootstrap/prepare passed. Generate stopped after 18.70 seconds at Worker
 Inventory77, accepted0/publications0; no runtime remains active. Scan owns bounded
 stream diagnosis; root retains resources/retry coordination. See the retained-pilot
 plan; useful real content and ordinary-user presentation reads remain unproven.
+Diagnostic delta integrated as `0bb15df6`; main affected controlled tests passed
+173/173 (isolation `d16a79f3687b4792a9a716d1b5d47d1c`), not full-suite GREEN.
+Fresh run `phone-43e354514b75` stopped after 21.02 seconds and proves terminal guard
+`ContentAfterFinish`: one request, 2,438 input / 1,613 output tokens, accepted0 and
+publications0. Source-free bootstrap/prepare passed; runtime stopped. Scan is now
+tracing the SDK event sequence; do not assume malformed model output or loosen
+validation without a controlled reproduction. Root owns any next paid retry.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

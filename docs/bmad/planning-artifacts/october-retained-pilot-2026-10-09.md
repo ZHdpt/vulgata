@@ -1,7 +1,8 @@
 # Retained phone-verification pilot
 
-Status: real pilot stopped at Worker stream-terminal validation after one provider
-request; Scan owner is diagnosing. No real-source content qualification is claimed.
+Status: diagnostic retry proves Worker `ContentAfterFinish`; Scan owner is tracing
+the SDK event sequence before any compatibility fix. No real-source content
+qualification is claimed.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -139,3 +140,29 @@ remains an indeterminate-settlement signal, never proof of database rollback.
   Raw provider content was not captured, so this broad failure stage does not prove
   which stream condition failed. Scan owns bounded diagnosis/safe diagnostics and
   controlled tests; root owns any later real retry. No unchanged retry is appropriate.
+
+## Diagnostic checkpoint and retry
+
+Integrated reviewed Scan delta `5aa759a9` as `0bb15df6`: one finite nullable
+`workerDiagnostics.terminalFailure`, no acceptance/retry/validation changes or raw
+payload logging. Main affected SelfContained verification passed **173/173**, no
+skips, isolation `d16a79f3687b4792a9a716d1b5d47d1c`. This is not full-suite GREEN.
+Initial restricted build had no compiler diagnostics; subsequent host build exposed
+`pwsh` resolution failure under the inherited over-8,200-character PATH. A short
+process-local PATH resolved it; no persistent configuration changed.
+
+Fresh diagnostic run `phone-43e354514b75`, batch
+`ea0798f0-1ad6-476e-8751-9a2e2c241e2c`, database
+`vulgata_oct_pilot_e57f71e490ef4c41bc577570dee86168` in the same existing container:
+
+- Wall **21.02 seconds**, pipeline 18.74 seconds; exit 1, no timeout or cleanup doubt.
+- Inventory **77**, accepted files **0**, Documents **0**, publications **0**.
+- **1 request**, 2,438 input / 1,613 output tokens; usage known.
+- `InvalidOutput / StreamTerminal / ContentAfterFinish`, retry disposition `None`.
+- Read-only settlement: one operation, zero accepted manifests/publications.
+- Previous attempt's owned indexes archived; all 77 source hashes matched before retry.
+
+This identifies the exact rejected branch, not the nature of the trailing content.
+An SDK-assembled tool-call event is a hypothesis to inspect, not an established
+cause. Scan owns SDK-sequence diagnosis/controlled correction; preserve rejection
+of genuinely invalid trailing content. No further unchanged paid retry.
