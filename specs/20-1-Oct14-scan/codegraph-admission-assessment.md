@@ -1,6 +1,6 @@
 # Complete CodeGraph result admission assessment
 
-2026-10-09. Source-free assessment authorized by OCT-Integrator
+2026-10-09. Original source-free assessment authorized by OCT-Integrator
 (`01a1109d-ec4c-7500-8b73-642a5e22f59b`). Production fixes and further paid/native
 runs are not authorized by this dispatch. The clean starting Scan checkpoint is
 `27df8f7f4f52e995a9efd40d3419908236cbb542`; the affected ledger, wrapper and native
@@ -128,3 +128,44 @@ findings. The only changed files are the two existing test files and this record
 No new suite entry or generation dataset was needed. PostgreSQL, real native tools,
 providers and source-root qualification were excluded. Production correction and
 any real observation remain pending Integrator's explicit decision.
+
+## Authorized comparison correction
+
+After test-only checkpoint `febbb239dda97bbec0927d21696b6ea4a3f9c314`,
+OCT-Integrator explicitly approved only the excerpt-comparison correction.
+Integration imported the assessment as `19ba0953`; its affected files match this
+lane's baseline. No reset or replacement of completed work was needed.
+
+The approved comparison applies one deterministic ordinal CRLF-to-LF replacement
+to both operands. It does not alter the retained frame, returned excerpt, digest,
+identity or contributors. Bare CR, whitespace, Unicode, case and paths receive no
+additional normalization. Every surrounding admission guard remains applicable.
+The separate test/production owners establish desired-behavior RED/GREEN and
+independent review. No new diagnostics, native probe or paid qualification is part
+of this dispatch; the live failure's cause remains unproven.
+
+Desired-behavior RED is `1a61256c5d994db89e77ef0a4f5c5587`: **202 selected,
+198 passed, four failed, zero skipped**. The actual-parser CRLF case, CRLF source
+with LF excerpt, reverse LF source with CRLF excerpt, and mixed-newline positive
+all failed against the unchanged raw comparison. Rejection controls passed.
+Historical characterization expectations were explicitly replaced by this approved
+behavior; raw-text/hash and snapshot-verification assertions remain.
+
+The production delta is only the existing `Contains` expression: each temporary
+comparison operand replaces `\r\n` with `\n` using ordinal semantics, followed by
+ordinal substring comparison. The original graph result and source frame are not
+rewritten. Verification and final review follow below.
+
+Final GREEN is `9698e2a3ea334bed9d9b677076eacebc`: **202/202 passed**, zero
+failures/skips and build zero errors, using the same four complete affected
+SelfContained classes. Both actual-parser source forms now admit while preserving
+their original hashes and verified snapshots. Reverse/mixed newline positives and
+whitespace, bare-CR, case, Unicode, no-trim and invalid-line-bound negatives pass.
+The test owner, production owner and independent reviewer accepted the unchanged
+reviewed code with no remaining blockers; `git diff --check` passed.
+
+Only this record, the two existing test files and the one ledger comparison changed.
+No new diagnostics, shared bindings/schema, provider/tool permissions, lifetime or
+other limits changed. This is controlled correctness of the approved comparison,
+not attribution of the last live rejection or real native/provider qualification.
+Integrator owns integration and the separate qualification decision.

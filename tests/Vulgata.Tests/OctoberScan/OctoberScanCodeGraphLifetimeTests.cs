@@ -274,7 +274,7 @@ public sealed class OctoberScanCodeGraphLifetimeTests
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task CurrentContract_ActualContainedAdapterCompleteLfExcerpt_MeetsLedgerOnlyForLfSourceAsync(bool crlf)
+    public async Task ActualContainedAdapterCompleteLfExcerpt_IsAdmittedForLfAndCrLfSourceAsync(bool crlf)
     {
         await using var native = await NativeHarness.CreateAsync();
         await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
@@ -315,25 +315,16 @@ public sealed class OctoberScanCodeGraphLifetimeTests
         var admission = await ledger.AdmitToolResultAsync(
             Vulgata.Core.DomainServices.OctoberKnowledge.SourceMetadataOperation.CodeGraphExplore,
             ".", "{\"query\":\"source\",\"maxFiles\":4}", actual);
-        Assert.Equal(crlf ? Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Denied
-            : Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Allowed, admission.Status);
+        Assert.Equal(Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Allowed, admission.Status);
         Assert.Equal(0, unexpectedAcquisitions);
         Assert.Equal(origin.SourceDigest, Vulgata.Core.DomainServices.OctoberKnowledge.OctoberKnowledgePolicy.Hash(frame.Text));
         Assert.Equal(native.Source.Content, frame.Text);
-        if (crlf)
-        {
-            Assert.Null(admission.Result);
-            Assert.Null(await ledger.FreezeForCompletionAsync());
-        }
-        else
-        {
-            Assert.Equal(excerpt, Assert.Single(Assert.IsType<CodeGraphToolInvocationResult>(admission.Result).Excerpts));
-            var snapshot = Assert.IsType<Vulgata.OctoberGenerator.OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
-            Assert.Equal(origin, Assert.Single(snapshot.VerifiedSources).Origin);
-            Assert.Contains(source, snapshot.Contributors);
-            Assert.Single(snapshot.Contributors.Where(item => item.Kind == Vulgata.Core.DomainServices.OctoberKnowledge.ContributorKind.SourceMetadata));
-            Assert.True(await ledger.VerifySnapshotAsync(snapshot));
-        }
+        Assert.Equal(excerpt, Assert.Single(Assert.IsType<CodeGraphToolInvocationResult>(admission.Result).Excerpts));
+        var snapshot = Assert.IsType<Vulgata.OctoberGenerator.OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Equal(origin, Assert.Single(snapshot.VerifiedSources).Origin);
+        Assert.Contains(source, snapshot.Contributors);
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == Vulgata.Core.DomainServices.OctoberKnowledge.ContributorKind.SourceMetadata));
+        Assert.True(await ledger.VerifySnapshotAsync(snapshot));
     }
 
     private sealed class ParserLedgerFrame(
