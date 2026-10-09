@@ -302,6 +302,66 @@ public sealed class OctoberScanToolRuntimeTests
         }
     }
 
+    // Characterization, not a desired fallback policy: the public October adapter
+    // collapses a settled JDT open failure and faults later source use even though
+    // the original source approval itself remains live.
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable)]
+    [InlineData(PreparedJavaNavigationOpenStatus.ReadinessFailed)]
+    public async Task CurrentBehavior_ConfirmedJavaOpenFailure_FaultsRuntimeWhileSourceApprovalRemainsCurrentAsync(PreparedJavaNavigationOpenStatus failure)
+    {
+        await using var fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var issuer = new PreparedSourceContextIssuer(fixture.Authority);
+        var binding = new PreparedSourceBinding(issuer, "owned-target",
+            [new("owned-target", fixture.Approval.BatchId, fixture.Approval.RepositoryId,
+                fixture.Approval.RootBindingIdentity, fixture.PreparedRootPath)]);
+        var workspace = new PreparedToolWorkspaceIssuer(fixture.Authority, new ControlledToolAuthorizer(fixture.Approval));
+        string stateRoot = Path.Combine(fixture.SiblingPath, "unused-confirmed-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(stateRoot, TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2), 1024);
+        var inert = new ConfirmedFailureJavaRuntime(failure);
+        var java = new PreparedJavaNavigationContextFactory(profile, inert);
+        var codeGraph = new PreparedCodeGraphConnectionFactory(Path.Combine(fixture.SandboxPath, "never-executed.ps1"));
+        await using var runtime = new OctoberToolRuntime(fixture.Approval, binding, workspace, java, codeGraph, TimeSpan.FromMinutes(1));
+
+        PreparedJavaNavigationResult navigation = await runtime.NavigateAsync(
+            PreparedJavaNavigationOperation.Definition, new("a.java", 1, 1, 10));
+        Assert.Equal(PreparedJavaNavigationOutcome.ReadinessFailed, navigation.Outcome);
+        Assert.Empty(navigation.Locations);
+        Assert.Equal(1, inert.OpenCalls);
+        var lease = Assert.Single(runtime.JdtLeases);
+        Assert.True(lease.OwnedResourcesSettled);
+        Assert.Equal(PreparedToolWorkspaceLifetime.Disposed, lease.Lifetime);
+
+        OctoberSourceFrameResult frame = await runtime.AcquireFileFrameAsync("a.java");
+        Assert.Equal(OctoberSourceFrameStatus.Unavailable, frame.Status);
+        Assert.Null(frame.Frame);
+        Assert.Null(runtime.PreparedConnection); // No native CodeGraph preparation on the faulted runtime.
+
+        PreparedSourceIssueResult independent = await issuer.IssueAsync(new(fixture.Approval,
+            fixture.PreparedRootPath, PreparedSourceGrantLimits.Default));
+        Assert.Equal(PreparedSourceIssueStatus.Issued, independent.Status);
+        await using IPreparedSourceReadContext context = Assert.IsAssignableFrom<IPreparedSourceReadContext>(independent.Context);
+        Assert.Equal(PreparedSourceContextLifetime.Open, context.Lifetime);
+        Assert.Equal(fixture.Approval.RepositoryId, context.RepositoryId);
+        await runtime.DisposeAsync();
+        Assert.Equal(1, inert.OpenCalls);
+    }
+
+    private sealed class ConfirmedFailureJavaRuntime(PreparedJavaNavigationOpenStatus status) : IPreparedJdtLsRuntime
+    {
+        internal int OpenCalls;
+        public Task<IPreparedJdtLsSession> OpenAsync(PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile, CancellationToken cancellationToken = default)
+        {
+            OpenCalls++;
+            return Task.FromException<IPreparedJdtLsSession>(new PreparedJdtLsOpenFailureException(status, cleanupConfirmed: true));
+        }
+    }
+
     private sealed class UnconfirmedJavaRuntime : IPreparedJdtLsRuntime
     {
         internal int OpenCalls { get; private set; }
