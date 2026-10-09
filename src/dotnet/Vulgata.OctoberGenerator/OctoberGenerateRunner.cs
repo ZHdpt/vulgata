@@ -325,7 +325,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                         if (retrySafe) continue;
                         _coverage = _coverage.Add(new(admissionId, frame.Origin, IsCancelled ? CoverageDisposition.Cancelled : CoverageDisposition.Failed, "worker_not_completed"));
                         _admissionClosed = true;
-                        return Failure("worker_not_completed", interrupted: IsCancelled);
+                        return Failure("worker_not_completed", interrupted: IsCancelled) with
+                        { WorkerDiagnostics = CreateWorkerDiagnostics(observed) };
                     }
                     IOctoberKnowledgeWriter writer = _dependencies.CreateKnowledgeWriter(new(attempt, attempt, this, ledger, this));
                     KnowledgeWriteResult accepted = await StoreAsync(() => attempt.AcceptAsync(writer, token), token);
@@ -398,6 +399,15 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 };
                 return new OctoberWorkerAdvisory(contributor, entry.Value);
             }).Distinct().ToImmutableArray();
+    }
+
+    private static OctoberWorkerDiagnosticSnapshot? CreateWorkerDiagnostics(OctoberFileWorkerResult? result)
+    {
+        if (result is null) return new(null, null, OctoberWorkerFailureStage.HostSealing);
+        return new(Enum.IsDefined(result.Status) ? result.Status : null,
+            Enum.IsDefined(result.RetryDisposition) ? result.RetryDisposition : null,
+            result.Status == OctoberFileWorkerStatus.Completed ? OctoberWorkerFailureStage.HostSealing :
+                result.FailureStage is { } stage && Enum.IsDefined(stage) ? stage : null);
     }
 
     private ImmutableArray<Contributor> IncludeObservedContributors(ImmutableArray<Contributor> contributors)
@@ -743,6 +753,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
         TerminalCoverage = [], Inventory = [], Gaps = [new(code)],
         BusinessDiagnostics = null,
+        WorkerDiagnostics = null,
         Matching = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested,
         BusinessLogic = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested
     };
@@ -756,7 +767,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 _toolWait, snapshot?.ModelWait ?? TimeSpan.Zero, _storeWait + report.Timings.StoreWait)
         };
     }
-    private static bool HasMetadata(OctoberScanReport report) => report.BusinessDiagnostics is not null || report.Publication is not null ||
+    private static bool HasMetadata(OctoberScanReport report) => report.WorkerDiagnostics is not null || report.BusinessDiagnostics is not null || report.Publication is not null ||
         !report.Documents.IsEmpty || !report.AcceptedFiles.IsEmpty || !report.TerminalCoverage.IsEmpty || !report.Inventory.IsEmpty;
     private static OctoberGeneratorExecutionResult Finished(OctoberScanReport report) => new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report);
     private static CommitGuardResult BeginDenied(CommitEligibilityStatus status) => new(status switch

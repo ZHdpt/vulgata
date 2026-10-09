@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 
 namespace Vulgata.OctoberGenerator;
@@ -27,6 +28,9 @@ public sealed record OctoberScanTimings(TimeSpan Elapsed, TimeSpan QueueWait,
 public sealed record OctoberScanUsage(int? Requests, long? InputTokens,
     long? OutputTokens, bool HasUnknownUsage);
 
+public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? Status,
+    OctoberWorkerRetryDisposition? RetryDisposition, OctoberWorkerFailureStage? FailureStage);
+
 public sealed record OctoberExecutionSnapshot(OctoberScanUsage Usage, TimeSpan QueueWait,
     TimeSpan ModelWait, int OutstandingAttempts, bool HasUnconfirmedSettlement);
 
@@ -51,6 +55,7 @@ public sealed record OctoberScanReport(
     public OctoberPhaseStatus Matching { get; init; } = RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.NotStarted : OctoberPhaseStatus.NotRequested;
     public OctoberPhaseStatus BusinessLogic { get; init; } = RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.NotStarted : OctoberPhaseStatus.NotRequested;
     public OctoberBusinessDiagnosticSnapshot? BusinessDiagnostics { get; init; }
+    public OctoberWorkerDiagnosticSnapshot? WorkerDiagnostics { get; init; }
 
     public int ExitCode => (Execution, PublicationStatus) switch
     {
