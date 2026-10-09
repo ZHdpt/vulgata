@@ -1,6 +1,8 @@
 # Retained phone-verification pilot
 
-Status: retained database and production bootstrap prepared. An initial Generate
+Status: real pilot stopped at Worker stream-terminal validation after one provider
+request; Scan owner is diagnosing. No real-source content qualification is claimed.
+An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
 confirmed relevant content from ALL 77 prepared files may be sent to the approved
@@ -48,8 +50,10 @@ offered channel/account entrypoint roots from accepted CL, not invented IDs.
 - Existing approved provider/model and protected credential reference. The user
   removed the proposed cumulative request/token budgets. The implementation still
   requires positive finite fields: use nonbinding configuration values (1,000,000
-  total/per-file requests and continuation windows; 1,000,000,000,000 tokens), not
-  a claim of literal infinite limits. With concurrency 1, a 30-minute deadline,
+  total requests; 1,000,000,000,000 tokens), not a claim of literal infinite limits.
+  Worker per-file rounds and continuation windows must remain at the supported
+  technical maximum of 100: setting them to 1,000,000 passes policy validation but
+  fails Worker admission. With concurrency 1, a 30-minute deadline,
   existing rate control and per-call context/output bounds, these must not be the
   practical stopping condition. No change to semantic validation or automatic
   transient retry policy. Business existing two-attempt policy remains unchanged.
@@ -106,3 +110,32 @@ The generic credential packager uses stdin-only secrets and production Data
 Protection purposes; its controlled synthetic roundtrip/overwrite refusal passed
 review. The watchdog's completion/output/environment/timeout controls passed; timeout
 remains an indeterminate-settlement signal, never proof of database rollback.
+
+## Runtime recovery observations
+
+- Missing owned Generator log directory originally caused exit 1 before admission;
+  create it explicitly during bootstrap.
+- Original batch admitted Generate but rejected invalid per-file limits before any
+  provider request. One operation, zero accepted files/publications were verified.
+- October setup has one selection slot per database. A different batch in an already
+  selected database conflicts and is surfaced as `Denied`; do not reset that record.
+- Replacement `phone-527d7e0ffe4f` prepared successfully, then ended in 56.26 seconds
+  with zero requests, empty inventory and `source-authority-or-identity-lost` gaps.
+  The earlier attempt's two `.codegraph` directories were still present. The adapter
+  rejects pre-existing state but disposal releases handles without deleting state.
+  Their creation times match the original run; all 77 source hashes still matched.
+  Archived only those generated directories under the failed run's protected local
+  directory, not in the source trees. This needs a repeat-run operational fix; no
+  source-access check was weakened.
+- Current fresh run `phone-9350f644c594`, batch
+  `94363a52-69d2-465f-be62-82a2a6a5b9bf`, uses database
+  `vulgata_oct_pilot_97cbb54eb7e34cf493f020c06b8dba95` in the same existing container.
+  Production bootstrap and prepare passed. Generate ended after 18.70 seconds
+  (reported pipeline 16.46 seconds), exit 1, no timeout or unconfirmed cleanup.
+  Inventory contained all 77 files; first Worker failed `InvalidOutput`,
+  `StreamTerminal`. One request used 2,438 input / 1,087 output tokens, usage known.
+  Read-only settlement: one operation, zero accepted-file manifests, zero publications.
+  No successful retained dataset exists; failed databases remain isolated for diagnosis.
+  Raw provider content was not captured, so this broad failure stage does not prove
+  which stream condition failed. Scan owns bounded diagnosis/safe diagnostics and
+  controlled tests; root owns any later real retry. No unchanged retry is appropriate.

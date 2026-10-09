@@ -42,11 +42,21 @@ Retained pilot bootstrap now exists in new database
 `vulgata_oct_pilot_mv0r9q4b_e19qg1` within the unchanged existing container.
 Production registration/setup and Generator prepare/select passed. The Generate
 launch was blocked by execution auto-review BEFORE dispatch because supporting
-rules could disclose the remaining 68 files beyond nine generated files. Seek
-explicit supporting-source confirmation was subsequently received: the user
+rules could disclose the remaining 68 files beyond nine generated files. Explicit
+supporting-source confirmation was subsequently received: the user
 confirmed relevant content from all 77 prepared files may be sent to DeepSeek,
 while only nine files generate Documents and evaluation answers stay excluded.
 Temporary Web stopped; protected local run `phone-mv0r8ity` and database/keys retained.
+Subsequent attempts exposed invalid per-file limit configuration, single-batch-per-DB
+selection, and leftover generated CodeGraph state. No provider requests or accepted
+Documents resulted from those attempts. Corrected limits and archived only the two
+owned indexes after rechecking all 77 hashes. Fresh run `phone-9350f644c594` now uses
+new database `vulgata_oct_pilot_97cbb54eb7e34cf493f020c06b8dba95` in the same container;
+bootstrap/prepare passed. Generate stopped after 18.70 seconds at Worker
+`InvalidOutput/StreamTerminal`, using one request (2,438 input / 1,087 output tokens).
+Inventory77, accepted0/publications0; no runtime remains active. Scan owns bounded
+stream diagnosis; root retains resources/retry coordination. See the retained-pilot
+plan; useful real content and ordinary-user presentation reads remain unproven.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
