@@ -171,6 +171,125 @@ public sealed class OctoberChatExecutionOwnershipTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GenerationStartup_PreSendCallbackCanWaitForExactTaskObservationBeforePhysicalDispatchAsync()
+    {
+        await using StoreFixture h = await StoreFixture.OpenAsync();
+        await h.RunningAsync();
+        var callbackEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var observationReady = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        OctoberChatTurnRunner? runner = null;
+        OctoberChatClientSession session = await h.F.Registry.CreateClientSessionAsync(h.Registration, h.Admitted,
+            async token =>
+            {
+                callbackEntered.TrySetResult();
+                await observationReady.Task.WaitAsync(token);
+                await runner!.ReauthorizeBeforeSendAsync(token);
+            }, h.Permits, h.Physical);
+        Task<ReadSelectionRequest?> Fresh(CancellationToken _) => Task.FromResult<ReadSelectionRequest?>(new(
+            h.Owner.Identity.Publication, h.Owner.Subject, h.Owner.Identity.Mode, KnowledgePurpose.Chat, h.Owner.Identity.RepositoryScope));
+        runner = Assert.IsType<OctoberChatTurnRunner>(await OctoberChatTurnRunner.CreateAsync(h.Admitted, session.Client,
+            h.F.Budget, new ReadSelection("controlled-owner-issued-selection"), h.History, h.Request.ProviderProfileId,
+            h.Request.ProviderProfileRevision, new NoToolReader(), h.Owner.Dependencies, h.F.Codec, h.F.Registry, Fresh, h.F.SaveId));
+        Task<OctoberChatGenerationResult> actualGeneration = runner.RunAsync((_, _) => ValueTask.CompletedTask);
+        bool observed = false;
+        try
+        {
+            // The actual task or callback decides ordering. The timeout is only a hung-test watchdog.
+            Task first = await Task.WhenAny(actualGeneration, callbackEntered.Task).WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(0, h.Physical.Sends);
+            Assert.Same(callbackEntered.Task, first);
+            Assert.False(actualGeneration.IsCompleted);
+
+            h.F.Registry.ObserveGeneration(h.Registration, actualGeneration);
+            observed = true;
+            observationReady.TrySetResult();
+            OctoberChatGenerationResult generated = await actualGeneration.WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.Equal(DialogueTerminalState.Completed, generated.TerminalState);
+            Assert.Equal("受控回答。", generated.AnswerText);
+            Assert.Equal(1, h.Physical.Sends);
+            await session.SealAndWaitForSettlementAsync();
+            Assert.Equal(0, h.Permits.ActiveRequests);
+            await h.SavingAsync();
+            Assert.Equal(DialogueStatus.Succeeded, (await h.Observed.SaveTerminalAsync(h.Terminal(generated), h.Owner.Subject)).Status);
+        }
+        finally
+        {
+            if (!observed) h.F.Registry.ObserveGeneration(h.Registration, actualGeneration);
+            observationReady.TrySetResult();
+            await actualGeneration.WaitAsync(TimeSpan.FromSeconds(10));
+            await session.SealAndWaitForSettlementAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GenerationStartup_CallbackReleaseWithoutObservationOrAfterSealCannotDispatchAsync(bool sealWhileCallbackPending)
+    {
+        await using StoreFixture h = await StoreFixture.OpenAsync();
+        await h.RunningAsync();
+        var callbackEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseCallback = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        OctoberChatTurnRunner? runner = null;
+        OctoberChatClientSession session = await h.F.Registry.CreateClientSessionAsync(h.Registration, h.Admitted,
+            async token =>
+            {
+                callbackEntered.TrySetResult();
+                // Controlled noncooperative callback: its actual lifetime must remain owned after cancellation.
+                await releaseCallback.Task;
+                await runner!.ReauthorizeBeforeSendAsync(token);
+            }, h.Permits, h.Physical);
+        Task<ReadSelectionRequest?> Fresh(CancellationToken _) => Task.FromResult<ReadSelectionRequest?>(new(
+            h.Owner.Identity.Publication, h.Owner.Subject, h.Owner.Identity.Mode, KnowledgePurpose.Chat, h.Owner.Identity.RepositoryScope));
+        runner = Assert.IsType<OctoberChatTurnRunner>(await OctoberChatTurnRunner.CreateAsync(h.Admitted, session.Client,
+            h.F.Budget, new ReadSelection("controlled-owner-issued-selection"), h.History, h.Request.ProviderProfileId,
+            h.Request.ProviderProfileRevision, new NoToolReader(), h.Owner.Dependencies, h.F.Codec, h.F.Registry, Fresh, h.F.SaveId));
+        Task<OctoberChatGenerationResult> actualGeneration = runner.RunAsync((_, _) => ValueTask.CompletedTask);
+        bool observed = false;
+        Task? drain = null;
+        try
+        {
+            Task first = await Task.WhenAny(actualGeneration, callbackEntered.Task).WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(0, h.Physical.Sends);
+            Assert.Same(callbackEntered.Task, first);
+            Assert.False(actualGeneration.IsCompleted);
+            if (sealWhileCallbackPending)
+            {
+                h.F.Registry.ObserveGeneration(h.Registration, actualGeneration);
+                observed = true;
+                _ = h.SealRegistration();
+                drain = session.SealAndWaitForSettlementAsync();
+                Assert.False(drain.IsCompleted);
+                Assert.Equal(0, h.Physical.Disposals);
+                Assert.False(h.Registration.Completion.IsCompleted);
+            }
+
+            releaseCallback.TrySetResult();
+            OctoberChatGenerationResult generated = await actualGeneration.WaitAsync(TimeSpan.FromSeconds(10));
+
+            Assert.NotEqual(DialogueTerminalState.Completed, generated.TerminalState);
+            Assert.Equal(0, h.Physical.Sends);
+            drain ??= session.SealAndWaitForSettlementAsync();
+            await drain.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(1, h.Physical.Disposals);
+            Assert.Equal(0, h.Permits.ActiveRequests);
+            Assert.False(h.Registration.Completion.IsCompletedSuccessfully);
+        }
+        finally
+        {
+            // Register only the exact real task, never a placeholder or a fabricated settled generation.
+            if (!observed) h.F.Registry.ObserveGeneration(h.Registration, actualGeneration);
+            releaseCallback.TrySetResult();
+            await actualGeneration.WaitAsync(TimeSpan.FromSeconds(10));
+            await session.SealAndWaitForSettlementAsync();
+            await h.Inner.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Terminal_ExactObservedGenerationRequiresActualPhysicalDrainAndRejectsRehashedForgedAnswerAsync()
     {
         await using StoreFixture h = await StoreFixture.OpenAsync();

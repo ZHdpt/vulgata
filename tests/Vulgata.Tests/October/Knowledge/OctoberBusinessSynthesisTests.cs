@@ -1,12 +1,16 @@
 using System.Collections.Immutable;
+using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.OctoberBusiness;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.DomainServices.OctoberScan;
 using Vulgata.Core.Entities.OctoberKnowledge;
+using ApiType = Vulgata.Core.Entities.ApiType;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.OctoberGenerator;
 using Vulgata.Tests.TestInfrastructure;
@@ -16,6 +20,150 @@ namespace Vulgata.Tests.October.Knowledge;
 
 public sealed class OctoberBusinessSynthesisTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteAsync_ActualSerializedInputLocators_AreIndependentOfNewOutputLabelsAsync(bool substituteOutputSection)
+    {
+        var f = new SynthesisCase();
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var transport = new SynthesisWireProposalHandler(substituteOutputSection);
+        using var client = await new OctoberWorkerClientFactory(new SynthesisSdkSecret(), transport).CreateAsync(
+            new("controlled-wire-locators", "only-source", new("selected-profile", ApiType.ChatCompletions,
+                "https://never-contacted.invalid/v1", "controlled-model", "credential://controlled-sdk"), "controlled-protected"));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
+        Assert.Equal(1, transport.Calls);
+        Assert.NotNull(transport.SelectedInput);
+        Assert.NotEqual(SynthesisWireProposalHandler.OutputSectionId, transport.SelectedInput.SectionId);
+        Assert.NotEqual(SynthesisWireProposalHandler.OutputClaimId, transport.SelectedInput.ClaimGroupId);
+        Assert.Null(result.AdmissionFailure);
+        if (substituteOutputSection)
+        {
+            Assert.Equal("SectionReference", SynthesisDiagnosticProbe.Read(result));
+            Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        }
+        else
+        {
+            Assert.NotNull(result.Content); Assert.NotNull(result.Proposal);
+            var section = Assert.Single(result.Proposal.Sections);
+            Assert.Equal(SynthesisWireProposalHandler.OutputSectionId, section.SectionId);
+            var claim = Assert.Single(section.Claims);
+            Assert.Equal(SynthesisWireProposalHandler.OutputClaimId, claim.ClaimGroupId);
+            Assert.Equal(transport.SelectedInput, Assert.Single(claim.Inputs));
+            Assert.Equal(transport.SelectedQualification, claim.Qualification);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void EmbeddedSynthesisPrompt_DistinguishesOutputLabelsFromExactSameChainInputLocators()
+    {
+        using var stream = typeof(OctoberBusinessSynthesisExecutor).Assembly.GetManifestResourceStream("Vulgata.Agents.Prompts.OctoberBusiness.Synthesis.md");
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream);
+        string prompt = reader.ReadToEnd();
+        foreach (string path in new[]
+        {
+            "input.Corpus.Documents[i].Version", "input.Corpus.Documents[i].Sections[j].SectionId",
+            "input.Corpus.Documents[i].Sections[j].Claims[k].ClaimGroupId",
+            "input.Corpus.Documents[i].Sections[j].Claims[k].Qualification", "group.Dependencies.Documents", "Inputs.Document"
+        }) Assert.Contains(path, prompt, StringComparison.Ordinal);
+        Assert.Matches(@"(?m)^.*输出.*SectionId.*ClaimGroupId.*$", prompt);
+        Assert.Contains("同一", prompt, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("plain")]
+    [InlineData("answer-and-reasoning")]
+    [InlineData("reasoning-only")]
+    [InlineData("invalid-answer")]
+    public async Task ExecuteAsync_ActualSelectedSdkMapping_KeepsReasoningSeparateFromValidatedAnswerAsync(string shape)
+    {
+        var f = new SynthesisCase();
+        string answer = JsonSerializer.Serialize(f.Proposal());
+        using var transport = new SynthesisSdkResponseHandler(answer, shape);
+        using var client = await new OctoberWorkerClientFactory(new SynthesisSdkSecret(), transport).CreateAsync(
+            new("controlled-sdk-response", "only-source", new("selected-profile", ApiType.ChatCompletions,
+                "https://never-contacted.invalid/v1", "controlled-model", "credential://controlled-sdk"), "controlled-protected"));
+        var attemptClient = Assert.IsAssignableFrom<IOctoberBusinessAttemptClient>(client);
+        var clock = new SynthesisClock();
+        await using (var mappingScope = f.Scope(clock))
+        {
+            var admission = await mappingScope.AcquireProviderAttemptAsync(new(f.Run, f.Operation, Guid.NewGuid(),
+                BusinessWorkKind.Synthesis, "selected-profile", TimeSpan.FromSeconds(30), 40));
+            Assert.Equal(ProviderAdmissionStatus.Granted, admission.Status);
+            var lease = Assert.IsAssignableFrom<IOctoberProviderAttemptLease>(admission.Lease);
+            int dispatches = 0;
+            try
+            {
+                var mapped = await attemptClient.GetAttemptResponseAsync([new(ChatRole.User, "Controlled mapping probe.")],
+                    new ChatOptions { ResponseFormat = ChatResponseFormat.Json, Tools = [] }, lease, _ => dispatches++);
+                // Assertion diagnostics contain only role/type categories, never answer or reasoning values.
+                Assert.All(mapped.Messages, message => Assert.Equal(ChatRole.Assistant, message.Role));
+                var categories = mapped.Messages.SelectMany(message => message.Contents).Select(content => content.GetType().Name)
+                    .Order(StringComparer.Ordinal).ToArray();
+                string[] expected = shape switch
+                {
+                    "plain" => [nameof(TextContent)],
+                    "reasoning-only" => [nameof(TextReasoningContent)],
+                    _ => [nameof(TextContent), nameof(TextReasoningContent)]
+                };
+                Assert.Equal(expected, categories);
+                Assert.True(shape == "reasoning-only" ? string.IsNullOrEmpty(mapped.Text) :
+                    string.Equals(shape == "invalid-answer" ? "{" : answer, mapped.Text, StringComparison.Ordinal));
+                Assert.Equal(1, dispatches);
+            }
+            finally
+            {
+                ((IOctoberWorkerDispatchObserver)lease).CompleteDispatchObservation();
+                await lease.SettleAsync(new(10, 5, null, TimeSpan.Zero, TimeSpan.Zero, ProviderAttemptOutcome.Completed));
+                await lease.DisposeAsync();
+            }
+        }
+        await using var scope = f.Scope(clock);
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
+        Assert.Equal(2, transport.Calls);
+        Assert.Equal(10, Assert.Single(result.Attempts).InputTokens);
+        Assert.Equal(5, result.Attempts[0].OutputTokens);
+        if (shape is "reasoning-only" or "invalid-answer")
+        {
+            Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        }
+        else
+        {
+            Assert.NotNull(result.Content); Assert.NotNull(result.Proposal); Assert.NotNull(result.Dependencies);
+            Assert.Null(result.AdmissionFailure);
+            Assert.True(string.Equals(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal()),
+                OctoberKnowledgePolicy.SerializeCanonical(result.Proposal), StringComparison.Ordinal));
+            Assert.False(result.Content.ContentJson.Contains(SynthesisSdkResponseHandler.ReasoningMarker, StringComparison.Ordinal));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("tool")]
+    [InlineData("unknown")]
+    [InlineData("non-assistant")]
+    public async Task ExecuteAsync_ReasoningCompatibility_DoesNotPermitToolsUnknownContentOrOtherRolesAsync(string shape)
+    {
+        var f = new SynthesisCase();
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        List<AIContent> contents = [new TextContent(JsonSerializer.Serialize(f.Proposal())), new TextReasoningContent("Controlled non-answer metadata.")];
+        if (shape == "tool") contents.Add(new FunctionCallContent("controlled-call", "unexpected-tool", new Dictionary<string, object?>()));
+        if (shape == "unknown") contents.Add(new SynthesisUnknownContent());
+        var response = new ChatResponse(new ChatMessage(shape == "non-assistant" ? ChatRole.User : ChatRole.Assistant, contents))
+        { FinishReason = ChatFinishReason.Stop, Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5 } };
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(response));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal("ResponseShape", SynthesisDiagnosticProbe.Read(result));
+        Assert.Equal(1, client.Calls);
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("ordinal", "SectionOrder")]
@@ -556,6 +704,78 @@ public sealed class OctoberBusinessSynthesisTests
         Assert.Equal(1, client.Calls); Assert.Equal(1, client.PeakActive);
     }
 }
+
+/// <summary>Builds a controlled provider proposal exclusively from the actual SDK request's accepted-input chain.</summary>
+internal sealed class SynthesisWireProposalHandler(bool substituteOutputSection) : HttpMessageHandler
+{
+    public const string OutputSectionId = "generated-business-section";
+    public const string OutputClaimId = "generated-business-claim";
+    public int Calls { get; private set; }
+    public SynthesisClaimInput? SelectedInput { get; private set; }
+    public ClaimQualification SelectedQualification { get; private set; }
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        Calls++;
+        using var wire = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+        var user = Assert.Single(wire.RootElement.GetProperty("messages").EnumerateArray().Where(message => message.GetProperty("role").GetString() == "user"));
+        var content = user.GetProperty("content");
+        string payload = content.ValueKind == JsonValueKind.String ? content.GetString()! :
+            Assert.Single(content.EnumerateArray().Where(part => part.GetProperty("type").GetString() == "text")).GetProperty("text").GetString()!;
+        using var accepted = JsonDocument.Parse(payload);
+        var dependencies = accepted.RootElement.GetProperty("group").GetProperty("Dependencies").GetProperty("Documents").EnumerateArray()
+            .Select(item => JsonSerializer.Deserialize<DocumentVersionReference>(item.GetRawText())!).ToHashSet();
+        var document = accepted.RootElement.GetProperty("input").GetProperty("Corpus").GetProperty("Documents").EnumerateArray()
+            .First(item => dependencies.Contains(JsonSerializer.Deserialize<DocumentVersionReference>(item.GetProperty("Version").GetRawText())!));
+        var version = JsonSerializer.Deserialize<DocumentVersionReference>(document.GetProperty("Version").GetRawText())!;
+        var section = document.GetProperty("Sections").EnumerateArray().First(item => item.GetProperty("Claims").GetArrayLength() > 0);
+        var claim = section.GetProperty("Claims").EnumerateArray().First(item => item.GetProperty("Qualification").GetInt32() == (int)ClaimQualification.SourceSupported);
+        SelectedInput = new(version, section.GetProperty("SectionId").GetString()!, claim.GetProperty("ClaimGroupId").GetString()!);
+        SelectedQualification = (ClaimQualification)claim.GetProperty("Qualification").GetInt32();
+        Assert.False(document.GetProperty("Sections").EnumerateArray().Any(item => item.GetProperty("SectionId").GetString() == OutputSectionId));
+        var reference = substituteOutputSection ? SelectedInput with { SectionId = OutputSectionId } : SelectedInput;
+        var proposal = new BusinessSynthesisProposal("业务处理说明", [new(OutputSectionId, 0, "处理结果",
+            [new(OutputClaimId, "根据已接受的操作说明处理业务请求。", SelectedQualification, [reference], [])])]);
+        string json = JsonSerializer.Serialize(new
+        {
+            id = "controlled-wire-locators", @object = "chat.completion", created = 1, model = "controlled-model",
+            choices = new[] { new { index = 0, message = new { role = "assistant", content = JsonSerializer.Serialize(proposal) }, finish_reason = "stop" } },
+            usage = new { prompt_tokens = 10, completion_tokens = 5, total_tokens = 15 }
+        });
+        return new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+    }
+}
+
+/// <summary>Installed SDK over controlled HTTP only; response values are never written to diagnostics.</summary>
+internal sealed class SynthesisSdkResponseHandler(string answer, string shape) : HttpMessageHandler
+{
+    public const string ReasoningMarker = "controlled-private-non-answer-metadata";
+    public int Calls { get; private set; }
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Calls++;
+        var message = new JsonObject { ["role"] = "assistant", ["content"] = shape == "reasoning-only" ? null : shape == "invalid-answer" ? "{" : answer };
+        if (shape != "plain") message["reasoning_content"] = shape is "reasoning-only" or "invalid-answer" ? answer : ReasoningMarker;
+        string json = JsonSerializer.Serialize(new
+        {
+            id = "controlled-sdk", @object = "chat.completion", created = 1, model = "controlled-model",
+            choices = new[] { new { index = 0, message, finish_reason = "stop" } },
+            usage = new { prompt_tokens = 10, completion_tokens = 5, total_tokens = 15 }
+        });
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+    }
+}
+internal sealed class SynthesisSdkSecret : ISecretEncryptionService
+{
+    public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public Task<string> DecryptAsync(string purpose, string cipher, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Assert.True(cipher == "controlled-protected");
+        return Task.FromResult("controlled-synthetic-token");
+    }
+}
+internal sealed class SynthesisUnknownContent : AIContent { }
 
 /// <summary>Controlled accepted-input fixture; real pure planner and real host scope, without source/provider runtime qualification.</summary>
 internal sealed class SynthesisCase

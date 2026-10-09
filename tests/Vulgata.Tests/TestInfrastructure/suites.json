@@ -8,6 +8,9 @@
   "October/Integration/OctoberGeneratedBlReaderE2ETests.cs": {
     "suite": "E2E"
   },
+  "October/OctoberHostSelectionTests.BlFixture.cs": {
+    "suite": "E2E"
+  },
   "October/Chat/OctoberChatInputDigestsTests.cs": {
     "suite": "SelfContained"
   },
@@ -1323,6 +1326,12 @@
   },
   "October/Chat/OctoberChatApplicationPostgreSqlTests.cs": {
     "suite": "PostgreSql"
+  },
+  "October/Integration/OctoberRegistrationRootEvidence.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Integration/OctoberRegistrationRootEvidenceTests.cs": {
+    "suite": "SelfContained"
   },
   "October/Integration/OctoberGeneratedClReport.cs": {
     "suite": "SelfContained"

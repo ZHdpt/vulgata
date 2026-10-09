@@ -8,7 +8,45 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-09 (first real synthetic Generate-to-ordinary-reader milestone passed; retained presentation operation remains separately pending).
+Updated: 2026-10-09 (real synthetic CL-and-BL Generate-to-ordinary-Business-reader passed; retained presentation operation remains separately pending).
+
+Newest qualification supersedes older BL-pending statements below for this exact
+synthetic scenario only: attempt 5 on `ea611586` passed **1/1**, run
+`11c3fce168954d7f8c0c8e62b29fef38`. One accepted AccountPolicy.java produced a
+confirmed CL-and-BL publication. Real ordinary User Identity login, canonical
+Business reader paging/dependencies/denials and same-session security-stamp
+revocation passed. This is not interactive BL UI, Chat, graph or two-repository
+qualification. All disposable resources were cleaned; no presentation DB retained.
+Five-attempt series complete: nine requests/121,726 tokens, all usage known, grant
+exhausted. Do not launch a sixth run. Production-source operation C needs separate
+authority. Full-suite GREEN is still unconfirmed; the prior 4,188/4,189 result is
+not replaced by focused or E2E passing checks.
+
+Newer user authority (October 9): selected real login/registration source may use
+the approved DeepSeek endpoint/model and protected credential; normal LLM use may
+consume the available balance, with finite execution limits and no blind retry.
+Preparation is delegated to the MBS sample chat. Keep actual prepared-root paths
+out of tracked code/config; use CLI or ignored local configuration. Successful
+presentation data is retained until explicit deletion; later runs use fresh owned
+databases. Failed incomplete owned runs may be cleaned after settlement/diagnostics.
+Exact sample scope and retained runtime bindings remain pending preparation; no
+real-source run is implied by the completed disposable synthetic qualification.
+Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
+volume, creating only a new isolated database; do not stop/delete shared resources.
+The user removed cumulative request/token caps for this run; current finite fields
+will use nonbinding values while deadlines and physical per-call limits remain.
+An elapsed/deadline console watchdog is implemented and controlled-tested; kill only
+the owned Generator tree at the 30-minute boundary, then assess settlement/remaining
+time. See the retained-pilot plan for exact bounds and source scope.
+Retained pilot bootstrap now exists in new database
+`vulgata_oct_pilot_mv0r9q4b_e19qg1` within the unchanged existing container.
+Production registration/setup and Generator prepare/select passed. The Generate
+launch was blocked by execution auto-review BEFORE dispatch because supporting
+rules could disclose the remaining 68 files beyond nine generated files. Seek
+explicit supporting-source confirmation was subsequently received: the user
+confirmed relevant content from all 77 prepared files may be sent to DeepSeek,
+while only nine files generate Documents and evaluation answers stay excluded.
+Temporary Web stopped; protected local run `phone-mv0r8ity` and database/keys retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
@@ -16,7 +54,8 @@ CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,
 Business-mode CL denial and revocation checks passed. Reported usage was
 2,095 input/1,888 output tokens, unknown=false. All fixture resources were cleaned.
 This supersedes earlier B-failure/pending statements below for this exact synthetic
-scenario only. Useful BL, two-Repository resolution, interactive streaming Chat,
+scenario only. Its older boundary did not qualify BL; the newer result above does
+for the synthetic scenario. Two-Repository resolution, interactive streaming Chat,
 graph and retained presentation operation C remain unqualified/unapproved as
 applicable; no production-source disclosure is implied.
 
@@ -27,6 +66,70 @@ owns CLI/runner, Business canonical contracts/schema, Explorer the new BL E2E,
 Integration the shared fixture/host/resources. No broad scheduler/recovery restart
 or automatic root discovery. See the activation record for the exact scope;
 implementation approval does not supply missing live-spend/retained-host limits.
+
+Sequential/operator Scan is now integrated at `b270bfba` (owner 103/103 affected
+tests). Main combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` is
+**4,185/4,186, not GREEN**: a Chat seed failed before provider dispatch with
+ExecutionFailure and zero requests. A deterministic registration-order race was
+subsequently reproduced and the reviewed fix integrated at `3feca6fb`. The next
+combined run `19591731af10405197165d4a0e56e7ef` passed all Chat cases but remains
+**4,188/4,189**, with one Scan concurrent-execution test wait timeout under diagnosis.
+The reviewed BL fixture/scenario compiled at `cafedace`
+(83/83 affected checks). Its approved live run `3bde4a7267ca4d7d9ecb5c38d50f6a7b`
+failed Interrupted without successful operator selection/publication after one provider request
+(2,095 input/2,889 output tokens); all owned resources were removed. The one-run
+grant is consumed, with no automatic retry. Scan owns interruption diagnosis;
+hidden zero report counts do not establish absence of accepted CL. Safe fixture
+stage diagnostics and a controlled no-response reproducer are now integrated and
+compiled (75/75 affected checks, `262bd0272fed4e79b66657488b2ab783`). Another live
+diagnostic attempt was explicitly approved on October 9 under the same bounded
+synthetic/provider/disposable-resource limits. That attempt is now complete:
+`38f6d3a06bcc4b40be260eeb932f5346` failed at the fixture's registration-root selector.
+The single offered candidate had the correct source origin and covered the
+registration declaration/return, but its anchors exceeded the method-only boundary.
+The fixture rejected it, published no operator response, and Generate subsequently
+reported Interrupted. One request used 2,095 input/2,064 output tokens; all owned
+resources were cleaned. This identifies the initiating rejection for this attempt,
+not a BL engine failure. The fixture-selection correction now accepts valid broader
+anchors covering the registration declaration and return while retaining exact
+source/corpus validation and requiring exactly one eligible offered candidate.
+Independent source review accepted this test-only correction; its focused source-free
+checks pass 11/11 (`06acf5e8b4aa45e893b1c8940e7cdde6`). A newly approved corrected
+run on `028534d2`, `ca1f324058864d41b9d8d6684b28b0ef`, confirmed successful unique
+root selection and operator-response publication, then failed later in Generate
+(exit 1, source-or-execution-gap). It used two requests, 14,393 input/6,274 output
+tokens; all owned resources were cleaned. Scan and Business own source-free
+diagnosis of the later failure. BL publication/reading remains unqualified;
+the latest one-run grant is consumed with no automatic retry.
+Reviewed command-local Business diagnostics are integrated at `ec7af241`; they
+retain fixed failure codes and exact-operation enum observations behind live
+disclosure/replay checks. Root fixture extraction is allowlisted and independently
+reviewed. This improves the next run's evidence, not the prior failure's diagnosis;
+The user subsequently authorized up to five further synthetic attempts with bounded
+diagnosis/correction, retaining all per-run limits and disposable boundaries.
+Attempt 1 (`bbc63f6cdeb149319856274b6af025fc`, source `45ed7f65`) failed after
+successful selection: finalizer and exact lookup both Failed / AlreadyCommitted,
+operation mismatch false, `business_publication_unavailable`. Detailed synthesis
+cause remains under Business-owned source-free diagnosis. Usage 2 requests/30,587
+tokens; all cleanup verified. Four attempts remain; no retained dataset authorized.
+Attempt 2 (`1d0fc8e1618a46d5b17f35656a9add1e`, source `eb907bd7`) failed earlier
+with `worker_not_completed` before accepted CL/operator selection/Business. It used
+one request/2,653 tokens and cleanup passed. Three attempts remain; series total
+three requests/33,240 tokens. Scan owns Worker-path diagnosis. The reviewed new
+Business reason and prompt clarification are integrated (`9814268d`, `e0b99bbc`),
+with main controlled verification 248/248; they were not exercised by attempt 2.
+Attempt 3 (`a77616cdda8844d3b1d684ff301330d5`, source `ce7340a8`) reached Business
+and reported ResponseShape: an envelope role/content-kind rejection before JSON
+parsing. The exact rejected type remains unknown. Worker diagnostic integration
+passed main 144/144 beforehand. Series totals are five requests/58,108 tokens;
+two attempts remain, cleanup verified. Business owns bounded envelope diagnosis.
+The installed-SDK ancillary reasoning compatibility defect was reproduced/fixed
+at `4b555cc7` (owner 403/403, main 80/80). Attempt 4
+(`d38660c31adc4a49b1dd7ea0b9000233`, source `1bb6b0ba`) passed the envelope guard
+but failed exact SectionReference validation. Business is diagnosing reference
+supply/prompt semantics, without weakening validation. Series totals seven
+requests/90,944 tokens; one live attempt remains. All disposable cleanup verified.
+Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;

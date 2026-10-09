@@ -530,3 +530,504 @@ but before using the invalid final locator; the UI had a Failed/empty saved answ
 Chat owns test-only assertions that validate both synthetic setup turns before
 navigation, with safe terminal/result counters on failure. No timer or product
 fix has been established, and the earlier initial-submit timeout remains distinct.
+
+Chat's reviewed setup assertions are imported at `bc8a4d8d`, preserving all waits
+and navigation expectations. The next full SelfContained run,
+`7ab2d78fd18e46b799d4179acce47c84`, passed **4,131/4,132**, zero skips/build errors,
+with the CodeGraph lookup directory restored. It remains **NOT GREEN**. CodeGraph
+and the earlier Chat cases passed; the sole failure moved to
+`ChatPage_ValidDurableLocatorReloadsExactOwnerTranscriptWithoutCreateOrGenerationAsync`:
+the expected saved answer was empty (3.8967-second case). Its setup did not capture
+terminal diagnostics. Chat now owns common controlled seed/lifecycle diagnosis
+across these navigation cases; another unchanged full rerun is not an explanation.
+No production fix, timing waiver, external execution or BL success is claimed.
+
+## Approved synthetic CL-and-BL operation — October 9
+
+The user explicitly answered **Approve this one BL run** to the consolidated
+resource request. This is one new operation, conditional on reviewed/compiled
+fixture support; it does not reuse completed B or authorize presentation operation C.
+
+- Source: only the test-owned existing `AccountPolicy.java` registration/login
+  rules, not either production Repository. One actual accepted registration-relevant
+  root is selected explicitly after inspecting offered candidates; ambiguity stops.
+- Provider: `https://api.deepseek.com`, model `deepseek-flash`; protected reference
+  is root `.env` key `VULGATA_TEST_LLM_KEY`. Never record the secret value. The
+  credential may be protected in fixture-owned temporary storage only.
+- One Generate, WorkerCap 1, cumulative maximum **8 Worker/B1/B2 requests and
+  48,000 combined tokens**. Worker maximum 3 requests/no transient retries;
+  existing Business maximum two attempts per work item counts against the same
+  totals. No automatic whole-run retry. Original run 900 seconds, file 480 seconds,
+  operator wait 120 seconds, cleanup drain 30 seconds.
+- Fresh run-labelled `postgres:17-alpine` container and volume, dynamic loopback
+  port, only its new `vulgata_story184_generator_<GUID>` database. Existing
+  migrations, synthetic operator and ordinary User accounts are allowed.
+- Fixture-owned temporary keys/logs/source/tool/exchange state, pinned CodeGraph
+  and JDT, one owned Generator and temporary Web host on an unused loopback port
+  for actual Identity login/read checks. No unrelated processes or shared DBs.
+- Delete owned database/container/volume and temporary files/keys afterward;
+  retain sanitized test evidence only. No persistent configuration changes,
+  retained dataset, production-source disclosure or permission expansion.
+
+Approval is recorded but the operation has **not started**. Root remains sole
+runtime/resource owner; lanes must not generate duplicate qualification data.
+
+### Scan integration and shared setup diagnostic result
+
+Reviewed Scan `ad322bb5` is integrated at `b270bfba`; its source, owner 103/103
+controlled evidence and protocol are retained. Independent integration review
+accepted the original Identity binding, same-run budgets, accumulated coverage and
+operator lifecycle. No native/provider/BL qualification is implied.
+
+Combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` on that source
+passed **4,185/4,186**, zero skips/build errors, 438 classified sources. The only
+failure is Chat's same-instance seed A: admitted successfully, then saved with
+ExecutionFailure/Unknown finish, zero provider requests, zero active registrations
+or requests and two disposed scopes. It took 540.4 ms for submission, 1.4408 seconds
+for the test. This localizes the fault before provider dispatch; it is not evidence
+of an invalid-locator/render delay or provider timeout. Chat owns further causal
+diagnosis; full-suite GREEN remains unachieved.
+
+Main source-write/build serialization is released for the additive BL fixture.
+Runtime authority remains the exact one-run approval above; no runtime dispatch
+has occurred. Independent fixture work does not waive the Chat regression.
+
+### Reviewed BL fixture and Chat causal correction
+
+Chat's deterministic pre-dispatch regression reproduced the registration-order
+race without using a timeout as proof. Reviewed correction `fa693815` is imported
+at `3feca6fb`: retain early closure refusal, await the existing coordinator
+registration/reauthorization callback, then require actual generation ownership
+and recheck closure before physical dispatch. Negative controls preserve refusal
+without observation and closure during a non-cooperative callback. Owner affected
+evidence is 597/597; this does not prove every historical failure had that cause.
+
+Explorer's single-run BL scenario is imported at `3dcbd975`. The additive fixture
+uses its own grant gate, preserves the original AccountPolicy source bytes, derives
+registration anchors from their verified digest, resolves one actual accepted root,
+and independently validates persisted finalization/publication. Temporary response
+cleanup now requires successful file creation ownership. It keeps the original
+ordinary-reader session across complete Business reads and actual stamp rotation.
+Independent final source review accepted the fixture and scenario.
+
+Current compilation and the affected reader/Chat ownership selection pass **83/83**,
+zero failures/skips, `8ec3561c312d41a7ab045ec1a03e9673`, 439 classified sources.
+The prior compile attempt `91fc5d7182a0407aa2c0aa6a6ef5f791` failed on an ambiguous
+SourceAnchor type; explicit October type qualification corrected it, with no runtime
+execution. This is not a full-suite or real BL result. The approved one-run operation
+was ready for root-controlled execution and remained unused at that checkpoint.
+
+### Approved BL attempt failed — no automatic retry
+
+The approved one-run grant was used on source checkpoint `cafedace`, E2E run
+`3bde4a7267ca4d7d9ecb5c38d50f6a7b` (**0/1**, zero skips). An earlier invocation
+stopped at Docker CLI lookup before provisioning or Generate; correcting only
+that invocation's PATH allowed the still-unused operation to start.
+
+The actual Generate exited 3 and reported Interrupted, `run_interrupted`,
+publication NotRequested, zero accepted files/Documents and no successful operator
+exchange. Reported provider use was **1 request, 2,095 input / 2,889 output tokens,
+unknown=false**. The E2E failed at the operator-exchange assertion before ordinary
+Business reading, BL content review or revocation checks. Its duration was 3m24.868s.
+The reason for interruption is under Scan-owned diagnosis; the report is not proof
+that any particular deadline fired. No BL or real Business-reader success is claimed.
+
+The fixture verified database and temporary-root cleanup; the runner removed its
+container and volume. A subsequent exact run-label lookup found zero remaining
+containers/volumes. Keys/source/tool/exchange state were disposable, not retained
+presentation data. The one-Generate grant is consumed; no automatic whole-run retry
+or additional provider request is authorized. Source-free diagnosis may continue.
+
+Diagnostic clarification: the child maps a cancelled operator wait to
+`run_interrupted` with disclosure disabled. Its zero metadata counts therefore do
+not prove that no CL/corpus existed. The failed assertion checked InteractionFailure
+before exit status; its code/request-presence were not then printed. Scan is
+reproducing a rejected/no-response operator interaction under controlled conditions;
+an operator-local 120-second expiry is a hypothesis, not the observed exact cause.
+The fixture's method-specific anchor selector may reject otherwise valid broader
+CL anchors. Safe stage/count diagnostics are being added without relaxing selection
+or granting another live run.
+
+The post-Chat-fix combined SelfContained run
+`19591731af10405197165d4a0e56e7ef` passed **4,188/4,189**, zero skips/build errors.
+All Chat cases passed. The remaining failure is Scan's
+`ForeignConcurrentExecution_CannotMutateActiveOriginalFileCoverageAsync` at its
+line-139 wait (13.9045-second test); Scan owns separate controlled diagnosis.
+No full-suite GREEN or timing waiver is claimed.
+
+Safe BL fixture diagnostics are now independently reviewed and compiled: fixed
+stage/reason codes, flags/counts and monotonic elapsed time are emitted before
+cleanup, with no raw model/source content, identifiers or secrets. The selector,
+limits and assertions are unchanged. Affected source-free verification passes
+26/26 in `f37822dfc1f8439c896f84b12dce8686`; it does not execute the live fixture.
+Explorer's matching assertion diagnostics were imported at `34940125`.
+
+Scan reports a reviewed controlled pair passing 2/2 in
+`8a9ce4e107784656bedc3b488934c663`: observed request plus rejected/no response
+reproduces the hidden-count Interrupted report, while owned SQLite retains one
+accepted file and one frozen corpus; valid response completes normally. This
+demonstrates the mechanism, not the original live rejection reason. Owner checkpoint
+`2265978d` is imported at `706c9284`. Another live diagnostic attempt requires new user
+approval; the earlier grant remains consumed.
+
+Main combined affected verification of the imported operator pair and reader/binding
+checks passes **75/75**, zero failures/skips, in
+`262bd0272fed4e79b66657488b2ab783`. Compilation passed with 439 classified sources.
+The diagnostic fixture itself has not been rerun live. A concrete request for one
+additional attempt under the same synthetic/provider/resource ceilings was presented
+to the user; approval is pending, not inferred from previous grants.
+
+Scan's separate timeout diagnostics `7deacd4d` are imported at `8ee550e2`.
+Owner verification passed 8/8 in `4ac957e68be141bdb45869da921effc8`; main suite
+policy/regressions pass (439 classified sources). The original entry/completion/
+drain waits and semantic assertions are unchanged. Failure-only counters record
+calls ending by return, throw or cancellation, not successful commits. No fresh
+main full-suite or live run was made; the prior full-suite failure remains open.
+
+## Additional diagnostic BL attempt approved — October 9
+
+The user explicitly said **Approve additional test**, accepting the pending
+one-attempt request. It authorizes ONE additional instrumented run of the original
+synthetic AccountPolicy.java with one unambiguous registration root, no fallback;
+the same `https://api.deepseek.com` / `deepseek-flash` and protected root `.env`
+credential reference; cumulative 8 requests/48,000 combined tokens, WorkerCap 1,
+Worker maximum 3/no transient retry, Business maximum two attempts per item within
+those totals; run/file/operator/drain limits 900/480/120/30 seconds. Fresh owned
+PG17 container/volume/database, synthetic identities, temporary keys/source/tools/
+logs/exchange state and loopback Generator/Web operation retain the prior approved
+cleanup boundary. No production Repository, shared database, retained presentation
+dataset, persistent configuration change or automatic further retry is authorized.
+Checkout was clean at `34a8d93a`; provider endpoint/model were reverified unchanged.
+This new grant is unused at this approval checkpoint; the first grant stays consumed.
+
+### Instrumented additional attempt completed — selector mismatch
+
+The additional grant was consumed on `d1088d46`, run
+`38f6d3a06bcc4b40be260eeb932f5346`: **0/1**, duration 3m16.880s.
+The exact initiating failure is now observed in fixture diagnostics:
+`registration-absent`, offered=1, inspected=1, invalid-origin=0,
+within-method=0, covers-declaration=1, covers-return=1, eligible=0.
+The actual candidate covers registration source but fails the fixture's stronger
+all-anchors-within-method requirement. These counts do not reveal the complete
+anchor shape or establish whether it is specifically a whole-class Document.
+
+The callback rejected at 68,678 ms; request present, response absent/unpublished.
+Generate subsequently exited 3, Interrupted / `run_interrupted`, with disclosure
+disabled and hidden zero metadata counts. This is not evidence of no accepted CL,
+nor a demonstrated failure of BL synthesis. No Business reader or BL semantic
+qualification was reached. Provider usage: **1 request, 2,095 input / 2,064 output
+tokens, unknown=false**. The earlier failed attempt's exact initiating rejection
+remains unknown; this observation must not be retroactively substituted for it.
+
+The fixture verified owned database and temporary-root cleanup. Independent exact
+run-label Docker queries found zero remaining containers and volumes. No dataset
+was retained. Root is assessing a source-grounded fixture-selector correction;
+production Scan selection and reader assertions are not waived. Scan and Explorer
+were notified. No automatic additional Generate/provider request is authorized.
+The previous combined SelfContained result remains 4,188/4,189, not GREEN.
+
+### Registration-coverage fixture correction
+
+The user authorized execution of the correction. The actual fixture now uses a
+small tested evidence predicate: all anchors must have the exact approved origin
+and valid in-file ranges, and their coverage must include the verified registration
+declaration and return. Anchors may extend beyond the method. Exactly one offered
+candidate must qualify; broad and method-specific candidates both qualifying remain
+ambiguous. No first-candidate fallback, guessed selector/title, source/corpus bypass
+or production change was introduced. Broader evidence proves registration coverage,
+not exclusive method identity; actual BL faithfulness still requires live review.
+
+Independent source review accepted the correction. Current-source compilation and
+focused SelfContained verification passed **11/11**, zero skips, run
+`06acf5e8b4aa45e893b1c8940e7cdde6`. Coverage includes method/broader anchors,
+partial/unrelated evidence, invalid ranges, each origin-field mismatch, missing
+anchors and ambiguous candidates. Suite policy now classifies 441 files.
+Earlier restricted build `d7736b5dcca340c7aa33d7574c556c49` and child PowerShell
+lookup failures `f792194df3a34415931a16af0f6fab6f` /
+`872c31650c3b4b68bc3b351af5a493af` did not reach tests and are not behavioral RED.
+Only the successful invocation's process-local PATH was adjusted and restored.
+No provider, PostgreSQL, native qualification or E2E was run for this correction.
+The full-suite failure remains open; the live BL grant remains consumed.
+
+### Corrected-selector live qualification authorized — October 9
+
+After the correction was committed at `abd371e1`, the user said **Proceed** in
+response to the proposed newly authorized live BL qualification. This authorizes
+one additional run under the previously stated unchanged synthetic AccountPolicy,
+DeepSeek endpoint/model, protected credential, 8-request/48,000-token ceilings,
+900/480/120/30-second limits and disposable PG17/Generator/Web/identity/tool/key
+cleanup boundaries. It does not authorize production sources, retained operation C
+or automatic retry. Prior grants remain consumed. The checkout was verified clean
+at `abd371e1`; the corrected source-coverage selector is the intended tested change.
+
+### Corrected selector succeeded; later Generate failure remains
+
+Run `ca1f324058864d41b9d8d6684b28b0ef` on `028534d2` completed **0/1**,
+duration 1m47.304s. Actual selector diagnostics: offered=1, inspected=1,
+invalid-origin=0, within-method=0, covers-declaration=1, covers-return=1,
+eligible=1, selected. The operator response was atomically published at 75,346 ms;
+InteractionFailure was null. This is real evidence the corrected selector handles
+the broader accepted anchor case; the former root-selection blocker is cleared.
+
+Generate subsequently exited 1 with execution Failed, publication NotRequested,
+matching/business unavailable, inventory=1 and generic `source-or-execution-gap`.
+The test failed the exit-zero assertion at line 80, before BL publication hydration,
+ordinary Business reading and semantic review. Sanitized metadata counts do not
+establish absence of accepted work. Reported use was **2 requests, 14,393 input /
+6,274 output tokens, unknown=false**. Exact later failure cause is not yet known;
+this does not prove provider outage, malformed BL, or a particular owner defect.
+
+Fixture database/temp cleanup passed. Independent exact run-label Docker checks
+found zero containers and volumes remaining. Scan and Business were asked for
+bounded source-free diagnosis, with no source edits or duplicate runtime requested.
+No BL content or reader success, retained presentation dataset, or full-suite GREEN
+is claimed. This latest approval is consumed; another live run requires approval.
+
+### Safe Business diagnostics integrated
+
+Reviewed Scan checkpoint `ebea00584e5d5706a4097ed4b048269c1b58c2ec` is integrated
+at `ec7af241`. It retains separate immediate-finalizer and exact-lookup status and
+persistence observations, last Business boundary and operation-mismatch flag.
+Only defined enums bound to the exact original operation are retained; null means
+unobserved, not success or absence. Exact lookup remains authoritative. Fixed
+Business gap codes survive console projection; unknown text remains redacted.
+Snapshots participate in metadata authorization, are removed by Hide/invalid
+binding, and are reauthorized on cached replay. No schema, acceptance, prompt,
+provider, budget or retry change is included.
+
+The root fixture extracts only those six scalar fields and the explicit fixed
+codes before cleanup, without privileged database/result parsing. Independent
+integration review accepted production and fixture changes. Owner controlled
+evidence: RED 46/59 with 13 expected missing-diagnostic failures
+(`89925b66d3d248b9b198b7d500216b9c`), GREEN 109/109
+(`a843cac61a5540c8b29290cfb38c0989`). These are source-free checks, not evidence of
+the cause of the prior live BL failure. No new runtime grant was consumed.
+
+Main current-source verification passed **155/155**, zero skips, in
+`163315b3930e4b3789d419256a856a02` (EntryPoint, BusinessFinalization, SequentialRun,
+fixture-input diagnostics and registration evidence). The initial filter misspelled
+the GenerateRunner class, so the actual `OctoberScanGenerateRunnerTests` was run
+separately: **14/14**, zero skips, `f0a4d87b3cd246b0b945588ac28940c3`.
+Both standard-launcher runs rebuilt current sources and exited zero; process-local
+PATH was restored. No external-resource qualification was performed. The earlier
+full-suite 4,188/4,189 remains unresolved, and live BL qualification still requires
+a new one-run approval.
+
+### Five-attempt diagnostic authorization — October 9
+
+The user explicitly approved automatic retry and diagnosis within five attempts
+from this point, then said Proceed. At most five additional live synthetic BL
+attempts are authorized, with source-free diagnosis and bounded corrections between
+them. Every attempt retains the original AccountPolicy-only source, approved
+DeepSeek endpoint/model and protected credential, 8-request/48,000-token per-run
+limits, original deadlines and disposable owned-resource cleanup. Aggregate ceiling
+is 40 requests/240,000 tokens. No unchanged blind retries, production source,
+retained dataset or expanded runtime authority. Stop on success, after five
+attempts, or on a blocker requiring broader authority. Earlier grants remain
+consumed. Attempt 1 will use the reviewed diagnostics at `dc993768`.
+
+#### Attempt 1 of 5 — persisted Failed finalization
+
+Run `bbc63f6cdeb149319856274b6af025fc` on `45ed7f65`: **0/1**, duration
+2m13.381s. Unique root selection and atomic response publication succeeded.
+Exact failure code is `business_publication_unavailable`; finalizer and exact
+lookup both report Failed / AlreadyCommitted, boundary ExactLookup, operation
+mismatch false. This establishes the observed persisted failed finalization,
+not the detailed synthesis rejection reason. No ordinary Business reader checks
+or BL semantic qualification were reached.
+
+Usage: 2 requests, 17,734 input / 12,853 output tokens, unknown=false. Attempt
+series totals: **1/5 attempts, 2 requests, 30,587 tokens**; four attempts remain.
+Database/temp cleanup passed; exact run-label queries confirmed zero containers
+and volumes. Business owns source-free synthesis diagnosis and bounded correction;
+Scan coordinates any safe fixed-code propagation. No unchanged retry is planned.
+
+Root fixture extraction for the agreed transient original-synthesis-failure field
+is prepared and independently reviewed: exactly 22 fixed non-None names, with
+missing/invalid/unknown values unavailable and no raw payload output. Focused
+current-source checks pass **59/59**, zero skips,
+`2a65b649fedb41b5ae698545808fc7f0`. This is fixture-only evidence; Business's
+nonpersisted reason contract and Scan producer integration are still pending.
+
+Business owner checkpoint `2c9067cac4f580d1affe43daaebbb666e4de2b41` is now
+integrated at `9814268d`. A fixed original-invocation synthesis failure reason is
+excluded unconditionally from canonical JSON on every new result property. It is
+captured locally, cleared from cached/store results, and only attached after exact
+coherent live authorization and a durable Failed/PublishedPartial outcome. Existing
+validation outcomes and retry limits remain unchanged. The synthesis prompt now
+clarifies already-enforced structural requirements; this omission is not yet proven
+to explain attempt 1. Owner source-free checks pass **380/380**,
+`aaf614b3e76943ad96986a11e8ed3b9e`, with serialization-invariance controls;
+independent owner and integration reviews accepted. Scan consumer verification is
+pending before attempt 2. No additional live budget has been consumed.
+
+Scan consumer `87df6258da8f96e050f1dea7c875ac0659196718` is integrated at
+`e0b99bbc`; original-finalizer-only reason capture and exact fixture field alignment
+passed independent integration review. Owner controlled checks passed 114/114
+(`f7dc768f1cff4a9b91c020c44a1f1a69`). Main current-source combined synthesis,
+finalizer, Scan finalization/entrypoint, fixture-input and registration-evidence
+checks passed **248/248**, zero skips, `cb5d7701a57640f59c98b69c0fc40154`.
+Attempt 2 will use these reviewed changes under the existing five-attempt grant.
+
+#### Attempt 2 of 5 — earlier Worker failure
+
+Run `1d0fc8e1618a46d5b17f35656a9add1e` on `eb907bd7`: **0/1**, duration
+40.123s. Generate exited 1 with `worker_not_completed`, Partial coverage, one
+inventory/terminal-coverage entry and no accepted file. Matching and Business
+remained not-started; no operator request appeared. The exchange cancellation
+followed child completion, not a demonstrated operator deadline. This did not
+exercise the new BL prompt/reason path. Exact Worker failure cause remains unknown.
+
+Usage: 1 request, 2,095 input / 558 output tokens, unknown=false. Series totals:
+**2/5 attempts, 3 requests, 33,240 tokens**; three attempts remain. Fixture DB/temp
+cleanup passed; exact run-label Docker queries confirmed zero containers/volumes.
+Scan owns bounded source-free Worker-path diagnosis before another attempt.
+
+Scan's source-free diagnosis found `worker_not_completed` collapses the existing
+Worker status and host sealing refusals. Even ProviderFailed can include local
+JSON type errors; token counts do not distinguish causes. A bounded observation
+change is authorized: existing status/retry disposition plus one fixed stage,
+under current disclosure/replay fences, with unchanged retries/status/acceptance.
+Worker prompt clarification is limited to already-enforced invariants.
+Root strict three-field fixture extraction passed independent review and **69/69**
+source-free tests (`60aac9264f3f420197c5d21c8d635b92`); producer integration remains
+pending. No additional runtime attempts were consumed.
+
+Worker producer checkpoint `9c0c9cc8b94b2ddfd4710f3a07ad9ff0b3bc2b0c` integrated
+at `16314779`, preserving existing statuses/retry/acceptance and live metadata
+fences. Owner controlled checks passed 157/157 (`8e042d55ff5745a486cdf003598c74d8`).
+Independent integration review accepted the producer/fixture field alignment.
+Main current-source Worker, entrypoint and fixture tests passed **144/144**, zero
+skips, `71f23857d5b5452aa95f3d104aa77fec`. Attempt 3 will exercise this diagnostic
+change and the Worker prompt's clarification of existing constraints. No causal
+claim about attempt 2 is made from controlled checks alone.
+
+#### Attempt 3 of 5 — Business response-envelope shape rejection
+
+Run `a77616cdda8844d3b1d684ff301330d5` on `ce7340a8`: **0/1**, duration
+2m2.417s. Worker acceptance, unique root selection and atomic response succeeded.
+Finalizer/lookup again returned Failed / AlreadyCommitted with exact operation;
+this time original reason is **ResponseShape**. The code emits that reason before
+JSON parsing when a response message is not Assistant or contains something other
+than TextContent/UsageContent. The exact rejected content type was not retained;
+reasoning-content incompatibility is a hypothesis, not observed runtime proof.
+
+Usage: 2 requests, 13,125 input / 11,743 output tokens, unknown=false. Series
+totals: **3/5 attempts, 5 requests, 58,108 tokens**; two attempts remain.
+Fixture DB/temp cleanup and exact run-label zero containers/volumes were verified.
+Business owns bounded source-free envelope compatibility diagnosis/correction;
+no JSON semantic validator relaxation or raw reasoning logging is authorized.
+
+The actual installed SDK over controlled HTTP reproduced an envelope compatibility
+defect: valid answer text plus TextReasoningContent was rejected by both synthesis
+and resolution. Controlled RED: 9/11 passed, two expected rejection failures,
+`c5411055a3cd48f1a787ed3b4d2f957b`; an earlier compile-only fixture import error is
+not RED. Business checkpoint `1e7dcf13819aacc5e59d5a5a581289b41891b59f` integrated
+at `4b555cc7`: exactly two production allowlist additions for recognized reasoning
+content. Only response.Text is parsed; all role/finish/size/JSON/semantic rules and
+accounting remain unchanged. No reasoning is logged, persisted or accepted as claims.
+Owner GREEN 403/403 (`e746098488be4bc3a28e21ad0b053d92`), independent integration
+review accepted. Main SDK/compatibility plus fixture checks passed **80/80**, zero
+skips, `a69283e0cdb8436f89336ba4d5a96c9f`. This proves the compatibility defect,
+not the unretained exact content shape of attempt 3. Attempt 4 uses the correction.
+
+#### Attempt 4 of 5 — semantic input-section reference rejection
+
+Run `d38660c31adc4a49b1dd7ea0b9000233` on `1bb6b0ba`: **0/1**, duration
+2m24.675s. Worker/selection succeeded and synthesis passed the prior envelope guard.
+Original failure reason is **SectionReference**, with finalizer/lookup both
+Failed / AlreadyCommitted and exact operation. The validator emits this when the
+input reference's exact Document has not exactly one section with the supplied
+SectionId. It is not evidence of missing database data or a specific mistaken ID;
+the generated payload was not retained. Exact validation remains mandatory.
+
+Usage: 2 requests, 17,422 input / 15,414 output tokens, unknown=false. Series
+totals: **4/5 attempts, 7 requests, 90,944 tokens**; one attempt remains.
+Owned database/temp and zero remaining run-labelled containers/volumes verified.
+Business is tracing serialized source-reference supply and prompt semantics before
+the final attempt. No permission to repair references by guessing or relax validation.
+
+Business traced a demonstrated prompt ambiguity between source-reference IDs and
+new output-local IDs. Prompt-only checkpoint `19a2e19c8151c08cf2d9ec593fdece45cbdfd95e`
+integrated at `7049a0db` explicitly maps the same nested input document Version,
+SectionId and ClaimGroupId into Inputs, distinguishing output IDs and permitting
+required copies of existing identities. No payload/catalog/parser/validator change.
+Actual serialized-wire tests accept exact copied references and reject output-ID
+substitution. Owner checks passed 342/342 (`14d9d6193398487da80fc0682910b437`);
+independent integration review accepted. Main rebuilt embedded prompt and passed
+**54/54** synthesis checks, zero skips, `80c4ba67a2504660802c60a80cab797f`.
+Attempt 5 is the final authorized live attempt, using this correction. This does
+not establish which wrong section ID the model supplied in attempt 4.
+
+#### Attempt 5 of 5 — real synthetic CL-and-BL qualification PASSED
+
+Run `11c3fce168954d7f8c0c8e62b29fef38` on `ea611586`: **1/1**, zero skips,
+duration 2m39.887s, launcher exit 0. One actual Worker accepted AccountPolicy.java;
+the one eligible root was selected and the operator response atomically published.
+Generate reported Completed cl-and-bl, Complete coverage, Confirmed publication,
+matching/business completed, two Documents, one accepted file, no gaps. Immediate
+finalizer and exact lookup both observed Published / AlreadyCommitted, boundary
+Completed, operation mismatch false.
+
+The test independently hydrated the exact generated publication, created an
+ordinary User-only Identity account, authenticated through the real loopback Web
+login, and read the complete Business projection through the canonical reader.
+Exact dependencies, Business CL denial/wrong-target denial, complete paging and
+same-session revocation after actual security-stamp rotation passed. This proves
+the scoped reader path, not an interactive BL page/browser, Chat, graph or cross-
+repository scenario. The temporary Web process exited before fixture disposal.
+
+Observed generated BL includes the correct registration rule (phone verified AND
+account not existing), login rejection for inactive account or failed attempts at
+least five, password matching otherwise, and no counter mutation. It explicitly
+limits coverage to the class's static decisions, not callers/deployment/order.
+The complete Business projection is in the TRX for separate semantic review;
+mechanical assertions alone do not constitute semantic approval. Class-level
+technical wording and repeated generic limitation labels remain presentation polish.
+
+Independent semantic review of the complete projection against the exact synthetic
+Java source accepted it with no material unsupported behavior. Suggested polish:
+say "达到或超过 5 次" explicitly, distinguish supplied verification/matching flags
+from performing verification inside these methods, and reduce technical wording.
+The surrounding less-than-five condition already makes the actual boundary clear.
+No generated content was edited to obtain acceptance. The broad root covers the
+class, including registration and login; it is not a method-exclusive or real
+enterprise-flow qualification.
+
+Usage: **2 requests, 16,523 input / 14,259 output tokens, unknown=false**. Final
+series totals: **5/5 attempts, 9 requests, 66,899 input / 54,827 output tokens
+(121,726 combined)**. The authorization is exhausted and execution stops on this
+success; no sixth attempt. All five runs stayed below their individual ceilings.
+Database/temp cleanup passed; exact final run-label queries confirmed zero
+containers and volumes. No retained presentation database or real repository source
+was used. Operation C remains separately pending. Earlier CL qualification remains
+valid; full SelfContained GREEN remains unconfirmed (prior 4,188/4,189 failure).
+
+## Real login/registration slice authorization — October 9
+
+The user delegated sample preparation to the existing MBS preparation chat and
+confirmed disclosure of the selected real source to `https://api.deepseek.com`,
+model `deepseek-flash`, through the existing protected credential reference.
+Available credential balance is the authorized spending ceiling for normal project
+LLM use; it is not a requirement to exhaust the balance or an instruction to retry
+unchanged failures. Use finite per-run limits and report measured/unknown usage;
+stop on insufficient credit rather than changing provider or purchasing funds.
+
+Machine-specific source paths must remain outside tracked code/configuration.
+Use command-line bindings or a verified Git-ignored local run configuration;
+tracked examples/evidence use logical repository names or placeholders, never the
+actual prepared-root paths. Sample preparation is not authority to hardcode paths.
+
+Successful presentation datasets are retained until the user explicitly requests
+deletion. Each later run uses a fresh owned database and never resets/overwrites a
+successful one. Failed incomplete owned run data may be deleted after settlement
+and sanitized diagnostics; ambiguous/possibly successful state must be preserved
+until classified. Required source/key artifacts for a retained success must not
+be removed by disposable-fixture cleanup. This remains a separate production-path
+operation, not reuse of a qualification fixture with cleanup disabled.
+
+The sample-preparation chat was dispatched with separate real repository roots,
+bounded source-grounded login/registration scope, provenance manifest and external
+gap reporting. It has no runtime/credential authority from this dispatch. Exact
+scope and local retained database/host bindings will be resolved after delivery;
+no real-source batch, shared-database mutation or retained host was started here.

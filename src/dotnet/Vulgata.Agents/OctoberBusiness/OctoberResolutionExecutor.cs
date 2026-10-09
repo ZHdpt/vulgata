@@ -142,7 +142,7 @@ public sealed class OctoberResolutionExecutor
                             failure = leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested
                                 ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
                         else if (response is not null && response.FinishReason == ChatFinishReason.Stop &&
-                            response.Messages.All(x => x.Role == ChatRole.Assistant && x.Contents.All(c => c is TextContent or UsageContent)) &&
+                            response.Messages.All(x => x.Role == ChatRole.Assistant && x.Contents.All(c => c is TextContent or UsageContent or TextReasoningContent)) &&
                             Encoding.UTF8.GetByteCount(response.Text) <= KnowledgeContract.MaximumContentBytes)
                         {
                             var finalAuthority = await CheckAuthorityAsync(disclosure, corpus.Handle, actual.Contributors, transportCancellation.Token);

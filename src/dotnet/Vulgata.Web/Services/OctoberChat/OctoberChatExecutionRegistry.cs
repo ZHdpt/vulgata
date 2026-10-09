@@ -272,8 +272,12 @@ public sealed class OctoberChatExecutionRegistry : IOctoberDialogueExecutionAuth
                     var session = await OctoberChatClientSession.CreateAsync(e.Binding!, e.Snapshot!, originalAdmission,
                         e.Budget!, this, async token =>
                         {
-                            lock (_gate) if (e.Closed || e.Generation is null) throw Refused();
+                            lock (_gate) if (e.Closed) throw Refused();
+                            // RunAsync may reach this callback before its actual task is
+                            // registered. Let the coordinator's observation barrier settle
+                            // before checking ownership, then recheck closure before send.
                             await reauthorizeBeforeSend(token);
+                            lock (_gate) if (e.Closed || e.Generation is null) throw Refused();
                         }, requests, physical, _clock, cancellationToken,
                         start => StartTrackedAsync(registration, start));
                     Task? closedDrain = null;
