@@ -108,6 +108,10 @@ public sealed class OctoberScanBusinessFinalizationTests
     [SuiteTheory("SelfContained")]
     [InlineData("freeze-unknown")]
     [InlineData("publication-ack")]
+    [InlineData("publication-first-lookup-unknown")]
+    [InlineData("publication-failed")]
+    [InlineData("publication-committed-failed")]
+    [InlineData("publication-undefined-status")]
     [InlineData("publication-foreign-operation")]
     [InlineData("publication-uncommitted")]
     [InlineData("empty-roots")]
@@ -150,6 +154,7 @@ public sealed class OctoberScanBusinessFinalizationTests
     [InlineData("freeze-log")]
     [InlineData("publication-log")]
     [InlineData("reader-nonprogress")]
+    [InlineData("reader-diagnostic-only-replay")]
     [InlineData("reader-empty-fresh-cursor")]
     [InlineData("scope-stop-before-freeze")]
     public async Task InternalNaturalCompletion_RespectsOwnedPhaseBoundariesAsync(string boundary)
@@ -299,6 +304,38 @@ public sealed class OctoberScanBusinessFinalizationTests
             finally { state.ReleasePublication.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
         }
         var report = Assert.IsType<OctoberScanReport>((await pending).Report);
+        if (boundary is "publication-ack" or "publication-first-lookup-unknown" or "publication-failed" or "publication-committed-failed" or "publication-foreign-operation" or "publication-uncommitted" or "publication-undefined-status" or "reader-nonprogress" or "reader-diagnostic-only-replay" or "reader-empty-fresh-cursor" or "binding-null")
+        {
+            var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+            Assert.Equal(boundary == "publication-foreign-operation", diagnostic.OperationMismatch);
+            if (boundary == "publication-first-lookup-unknown")
+            {
+                Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, diagnostic.FinalizerStatus); Assert.Null(diagnostic.FinalizerPersistenceStatus);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.LookupStatus); Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, diagnostic.LookupPersistenceStatus);
+            }
+            else if (boundary == "publication-foreign-operation") { Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, diagnostic.FinalizerStatus); Assert.Null(diagnostic.FinalizerPersistenceStatus); Assert.Null(diagnostic.LookupStatus); Assert.Null(diagnostic.LookupPersistenceStatus); }
+            else if (boundary == "publication-undefined-status") { Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, diagnostic.FinalizerStatus); Assert.Null(diagnostic.FinalizerPersistenceStatus); Assert.Null(diagnostic.LookupStatus); Assert.Null(diagnostic.LookupPersistenceStatus); }
+            else if (boundary == "publication-committed-failed")
+            {
+                // Transparent controlled status projection over the same real committed operation;
+                // this does not claim the owner naturally returned Failed for the exercised synthesis.
+                Assert.Equal(BusinessFinalizationStatus.Failed, diagnostic.FinalizerStatus); Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, diagnostic.FinalizerPersistenceStatus);
+                Assert.Equal(BusinessFinalizationStatus.Failed, diagnostic.LookupStatus); Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, diagnostic.LookupPersistenceStatus);
+            }
+            else if (boundary == "publication-failed")
+            {
+                Assert.Equal(BusinessFinalizationStatus.Failed, diagnostic.FinalizerStatus); Assert.Equal(KnowledgeWriteStatus.StorageUnavailable, diagnostic.FinalizerPersistenceStatus);
+                Assert.Equal(BusinessFinalizationStatus.Failed, diagnostic.LookupStatus); Assert.Equal(KnowledgeWriteStatus.StorageUnavailable, diagnostic.LookupPersistenceStatus);
+            }
+            else
+            {
+                Assert.Equal(boundary == "publication-uncommitted" ? BusinessFinalizationStatus.CommitIndeterminate : BusinessFinalizationStatus.Published, diagnostic.FinalizerStatus);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.LookupStatus);
+                Assert.Equal(boundary == "publication-uncommitted" ? KnowledgeWriteStatus.StorageUnavailable : KnowledgeWriteStatus.AlreadyCommitted, diagnostic.LookupPersistenceStatus);
+            }
+            Assert.Equal(boundary is "publication-ack" or "publication-first-lookup-unknown" ? OctoberBusinessDiagnosticBoundary.Completed : boundary == "binding-null" ? OctoberBusinessDiagnosticBoundary.ReaderBinding : boundary is "reader-nonprogress" or "reader-diagnostic-only-replay" or "reader-empty-fresh-cursor" ? OctoberBusinessDiagnosticBoundary.ExactReader : OctoberBusinessDiagnosticBoundary.ExactLookup, diagnostic.Boundary);
+        }
+        if (boundary is "revoked" or "publication-held-revoked" or "operator-revoked-after" or "cl-only-binding-unused") Assert.Null(report.BusinessDiagnostics);
         Assert.Equal(1, clients);
         Assert.Equal(1, transport.WorkerRequests);
         if (boundary.StartsWith("operator-", StringComparison.Ordinal))
@@ -364,7 +401,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             if (boundary == "binding-valid") { Assert.Equal(0, report.ExitCode); Assert.Equal(1, state.ReaderOpens); Assert.Equal(2, report.Documents.Length); }
             else { Assert.NotEqual(0, report.ExitCode); Assert.Null(report.Publication); Assert.Empty(report.Documents); Assert.Equal(boundary == "binding-held-read" ? 1 : 0, state.ReaderOpens); }
         }
-        else if (boundary is "publication-foreign-operation" or "publication-uncommitted")
+        else if (boundary is "publication-foreign-operation" or "publication-uncommitted" or "publication-failed" or "publication-committed-failed" or "publication-undefined-status")
         {
             Assert.NotEqual(0, report.ExitCode); Assert.Null(report.Publication); Assert.Empty(report.Documents);
             Assert.Equal(OctoberPhaseStatus.Unavailable, report.Matching);
@@ -388,6 +425,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             var hidden = Assert.IsType<OctoberScanReport>((await replay).Report);
             Assert.Null(hidden.Publication); Assert.Empty(hidden.Documents); Assert.Empty(hidden.Inventory);
             Assert.Empty(hidden.AcceptedFiles); Assert.Empty(hidden.TerminalCoverage);
+            Assert.Null(hidden.BusinessDiagnostics);
             Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.Matching); Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.BusinessLogic);
             Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
             await using var context = host.Database.Factory.CreateDbContext();
@@ -449,10 +487,24 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Equal(0, transport.BusinessRequests);
             await using var context = host.Database.Factory.CreateDbContext();
             Assert.Equal(0, await context.CorpusSelections.CountAsync());
-        }        else if (boundary == "reader-nonprogress")
+        }        else if (boundary is "reader-nonprogress" or "reader-diagnostic-only-replay")
         {
             Assert.NotEqual(0, report.ExitCode); Assert.NotEqual(5, report.ExitCode);
             Assert.InRange(state.ReaderCalls, 1, 3);
+            var originalDiagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+            if (boundary == "reader-diagnostic-only-replay")
+            {
+                // Isolate the cached metadata predicate using the actual observed snapshot. No new
+                // receipt or diagnostic is fabricated; every other metadata field is removed.
+                var onlyDiagnostic = report with { Publication = null, Documents = [], AcceptedFiles = [], TerminalCoverage = [], Inventory = [] };
+                typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .SetValue(runner, Task.FromResult(new OctoberGeneratorExecutionResult(OctoberGeneratorExecutionStatus.GenerateFinished, Report: onlyDiagnostic)));
+                Assert.Same(originalDiagnostic, onlyDiagnostic.BusinessDiagnostics);
+            }
+            host.AuthorityAllowed = false;
+            var hiddenReplay = await runner.ExecuteAsync(execution);
+            Assert.Null(hiddenReplay.Report!.BusinessDiagnostics); Assert.Null(hiddenReplay.Report.Publication); Assert.Empty(hiddenReplay.Report.Documents);
+            Assert.Same(originalDiagnostic, report.BusinessDiagnostics); // Previously observed immutable snapshot is not mutated or reattached.
             Assert.Equal(1, state.Publications);
         }        else if (boundary == "freeze-log")
         {
@@ -474,7 +526,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
             var repeated = await runner.ExecuteAsync(execution);
             Assert.Equal(report.Publication, repeated.Report!.Publication); Assert.Equal(1, state.Publications);
-        }        else if (boundary == "publication-ack")
+        }        else if (boundary is "publication-ack" or "publication-first-lookup-unknown")
         {
             Assert.Equal(0, report.ExitCode); Assert.Equal("cl-and-bl", report.CompletedStage);
             Assert.NotNull(report.Publication); Assert.Equal(1, state.Publications); Assert.True(state.PublicationLookups > 0);
@@ -528,7 +580,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         };
         var lifetime = new ReaderLifetime(state);
         IOctoberKnowledgeReader reader = Reader(host, publication, session.SubjectId);
-        if (state?.Boundary is "reader-nonprogress" or "reader-empty-fresh-cursor") reader = new NonprogressReader(state, reader);
+        if (state?.Boundary is "reader-nonprogress" or "reader-diagnostic-only-replay" or "reader-empty-fresh-cursor") reader = new NonprogressReader(state, reader);
         return new(subject, selection, new BoundReader(reader, selection, lifetime, state), lifetime);
     }
     private sealed class ReaderLifetime(BoundaryState? state) : IAsyncDisposable
@@ -704,11 +756,14 @@ public sealed class OctoberScanBusinessFinalizationTests
             }
             return state.Boundary == "publication-ack" ? result with { Status = BusinessFinalizationStatus.CommitIndeterminate, Publication = null } : Result(result);
         }
-        public async Task<BusinessFinalizationResult> LookupAsync(CorpusHandle corpus, OperationKey operation, string digest, CancellationToken token = default) { state.PublicationLookups++; var result = await inner.LookupAsync(corpus, operation, digest, token); state.PublicationLookupCompleted.TrySetResult(); return Result(result); }
+        public async Task<BusinessFinalizationResult> LookupAsync(CorpusHandle corpus, OperationKey operation, string digest, CancellationToken token = default) { state.PublicationLookups++; var result = await inner.LookupAsync(corpus, operation, digest, token); state.PublicationLookupCompleted.TrySetResult(); return state.Boundary == "publication-first-lookup-unknown" && state.PublicationLookups == 1 ? new(BusinessFinalizationStatus.CommitIndeterminate, operation, null, new(true, [])) : Result(result); }
         private BusinessFinalizationResult Result(BusinessFinalizationResult result) => state.Boundary switch
         {
             "publication-foreign-operation" => result with { Operation = result.Operation with { OperationId = Guid.NewGuid() } },
             "publication-uncommitted" => result with { PersistenceStatus = KnowledgeWriteStatus.StorageUnavailable },
+            "publication-committed-failed" => result with { Status = BusinessFinalizationStatus.Failed, Publication = null },
+            "publication-failed" => result with { Status = BusinessFinalizationStatus.Failed, PersistenceStatus = KnowledgeWriteStatus.StorageUnavailable, Publication = null },
+            "publication-undefined-status" => result with { Status = (BusinessFinalizationStatus)99999, PersistenceStatus = (KnowledgeWriteStatus)99999, Publication = null },
             _ => result,
         };
     }

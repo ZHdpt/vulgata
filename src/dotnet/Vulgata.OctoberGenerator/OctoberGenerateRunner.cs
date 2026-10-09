@@ -355,7 +355,12 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         if (execution.Policy.OutputStage == "cl-and-bl")
         {
             await CloseSourceResourcesAsync();
-            var business = await RunBusinessCompletionAsync(token);
+            OctoberScanReport business;
+            try { business = await RunBusinessCompletionAsync(token); }
+            catch (OperationCanceledException)
+            { return BusinessFailure("run_interrupted", interrupted: !Unresolved(), indeterminate: Unresolved(), disclose: false); }
+            catch (Exception)
+            { return BusinessFailure("run_unavailable", indeterminate: Unresolved(), disclose: false); }
             if (await DisclosureAsync(token) != DisclosureStatus.Allowed) return Hide(business, "authority_unavailable");
             return business with { Inventory = _inventory, Gaps = business.Gaps.AddRange(_gaps),
                 Coverage = !complete && business.Coverage == OctoberCoverageStatus.Complete ? OctoberCoverageStatus.Partial : business.Coverage };
@@ -737,6 +742,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
         PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
         TerminalCoverage = [], Inventory = [], Gaps = [new(code)],
+        BusinessDiagnostics = null,
         Matching = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested,
         BusinessLogic = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested
     };
@@ -750,7 +756,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 _toolWait, snapshot?.ModelWait ?? TimeSpan.Zero, _storeWait + report.Timings.StoreWait)
         };
     }
-    private static bool HasMetadata(OctoberScanReport report) => report.Publication is not null ||
+    private static bool HasMetadata(OctoberScanReport report) => report.BusinessDiagnostics is not null || report.Publication is not null ||
         !report.Documents.IsEmpty || !report.AcceptedFiles.IsEmpty || !report.TerminalCoverage.IsEmpty || !report.Inventory.IsEmpty;
     private static OctoberGeneratorExecutionResult Finished(OctoberScanReport report) => new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report);
     private static CommitGuardResult BeginDenied(CommitEligibilityStatus status) => new(status switch

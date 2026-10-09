@@ -305,6 +305,60 @@ public sealed class OctoberScanEntryPointTests
     {
         public ValueTask<OctoberOperatorCredentials?> ReadAsync(CancellationToken cancellationToken) => throw new InvalidOperationException("DI verification must not read credentials");
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("observed")]
+    [InlineData("unknown")]
+    [InlineData("undefined-status")]
+    [InlineData("undefined-boundary")]
+    [InlineData("cl-only")]
+    [InlineData("foreign-publication")]
+    [InlineData("cleanup-unconfirmed")]
+    public async Task BusinessDiagnostics_ProjectOnlySafeObservedScalarsAndRespectOutputFencesAsync(string condition)
+    {
+        var snapshot = new OctoberBusinessDiagnosticSnapshot(BusinessFinalizationStatus.CommitIndeterminate, null,
+            BusinessFinalizationStatus.Published, KnowledgeWriteStatus.AlreadyCommitted, OctoberBusinessDiagnosticBoundary.ExactLookup, false);
+        if (condition == "unknown") snapshot = snapshot with { FinalizerStatus = null, LookupStatus = null, LookupPersistenceStatus = null };
+        if (condition == "undefined-status") snapshot = snapshot with { FinalizerStatus = (BusinessFinalizationStatus)99999, FinalizerPersistenceStatus = (KnowledgeWriteStatus)99999, LookupStatus = (BusinessFinalizationStatus)99999, LookupPersistenceStatus = (KnowledgeWriteStatus)99999 };
+        if (condition == "undefined-boundary") snapshot = snapshot with { Boundary = (OctoberBusinessDiagnosticBoundary)99999 };
+        var batch = Guid.NewGuid();
+        string stage = condition == "cl-only" ? "cl-only" : "cl-and-bl";
+        var report = new OctoberScanReport(stage, null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(null, null, null, true), [new("business_publication_unavailable"), new("business_PRIVATE_SECRET_UNRECOGNIZED")]) { BusinessDiagnostics = snapshot };
+        if (condition == "foreign-publication")
+        {
+            var foreign = new PublicationBinding(new("PRIVATE-DATABASE", "foreign-target", batch, new string('a', 64)), Guid.NewGuid());
+            report = report with { CompletedStage = stage, Execution = OctoberExecutionStatus.Completed, PublicationStatus = OctoberPublicationStatus.Confirmed,
+                Publication = foreign, Documents = [new(batch, foreign.PublicationId, Guid.NewGuid(), Guid.NewGuid())] };
+        }
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "exact-target", batch, null, new() { OutputStage = stage }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error,
+            settle: condition == "cleanup-unconfirmed" ? () => ValueTask.FromException(new InvalidOperationException("PRIVATE cleanup detail")) : null);
+        using var json = JsonDocument.Parse(output.ToString());
+        Assert.DoesNotContain("PRIVATE", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("99999", output.ToString(), StringComparison.Ordinal);
+        bool present = json.RootElement.TryGetProperty("businessDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
+        if (condition is "cl-only" or "foreign-publication" or "undefined-boundary") { Assert.False(present); return; }
+        Assert.True(present);
+        Assert.Equal(new[] { "boundary", "finalizerPersistenceStatus", "finalizerStatus", "lookupPersistenceStatus", "lookupStatus", "operationMismatch" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal("ExactLookup", diagnostic.GetProperty("boundary").GetString());
+        Assert.False(diagnostic.GetProperty("operationMismatch").GetBoolean());
+        if (condition is "unknown" or "undefined-status")
+        {
+            foreach (string field in new[] { "finalizerStatus", "finalizerPersistenceStatus", "lookupStatus", "lookupPersistenceStatus" }) Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty(field).ValueKind);
+        }
+        else
+        {
+            Assert.Equal("CommitIndeterminate", diagnostic.GetProperty("finalizerStatus").GetString());
+            Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("finalizerPersistenceStatus").ValueKind);
+            Assert.Equal("Published", diagnostic.GetProperty("lookupStatus").GetString());
+            Assert.Equal("AlreadyCommitted", diagnostic.GetProperty("lookupPersistenceStatus").GetString());
+        }
+        Assert.Contains(json.RootElement.GetProperty("gaps").EnumerateArray(), gap => gap.GetProperty("code").GetString() == "business_publication_unavailable");
+        if (condition == "cleanup-unconfirmed") { Assert.Equal(4, exit); Assert.Contains(json.RootElement.GetProperty("gaps").EnumerateArray(), gap => gap.GetProperty("code").GetString() == "owned_cleanup_unconfirmed"); }
+    }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {
         internal int Calls;
