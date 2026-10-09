@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Globalization;
 using Microsoft.AspNetCore.DataProtection;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Configuration;
@@ -14,6 +15,77 @@ internal sealed record OctoberGenerateInputFiles(
 /// <summary>Explicit inputs for the owned qualification fixture, not a production authority port.</summary>
 internal static class OctoberGenerateFixtureInputs
 {
+    internal static IReadOnlyList<string> GenerateDiagnostics(int processExit, string stdout, string stderr)
+    {
+        var output = new List<string> { $"generate-process-exit={processExit.ToString(CultureInfo.InvariantCulture)}" };
+        string startup = stderr.Trim() switch
+        {
+            "October startup configuration failed: InvalidConfiguration." => "startup-invalid-configuration",
+            "October provider configuration failed: InvalidConfiguration." => "provider-invalid-configuration",
+            "October Worker provider binding failed: InvalidConfiguration." => "worker-invalid-configuration",
+            "October provider binding failed: CredentialUnavailable." => "provider-credential-unavailable",
+            "" => "none",
+            _ => "present-redacted"
+        };
+        output.Add($"generate-stderr-classification={startup}");
+        try
+        {
+            if (stdout.Length is 0 or > 1048576) throw new JsonException();
+            using var parsed = JsonDocument.Parse(stdout, new JsonDocumentOptions { MaxDepth = 32 });
+            var report = parsed.RootElement;
+            if (report.ValueKind != JsonValueKind.Object) throw new JsonException();
+            Unique(report);
+            string State(string name, params string[] allowed) => report.TryGetProperty(name, out var value)
+                && value.ValueKind == JsonValueKind.String && allowed.Contains(value.GetString(), StringComparer.Ordinal)
+                ? value.GetString()! : "unavailable";
+            string Count(string name) => report.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Array
+                ? value.GetArrayLength().ToString(CultureInfo.InvariantCulture) : "unavailable";
+            string Number(JsonElement owner, string name) => owner.ValueKind == JsonValueKind.Object
+                && owner.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out long number) && number >= 0
+                ? number.ToString(CultureInfo.InvariantCulture) : "unavailable";
+            string Phase(string name) => State(name, "not-requested", "not-started", "completed", "partial", "no-content", "failed", "interrupted", "indeterminate", "unavailable");
+            // This is a redacted report observation, never database-confirmed persistence or dispatch evidence.
+            output.Add($"generate-reported-status: requested={State("requestedStage", "cl-only", "cl-and-bl")}; completed={State("completedStage", "cl-only", "cl-and-bl")}; coverage={State("coverage", "Complete", "Partial", "None")}; execution={State("execution", "Completed", "Failed", "Interrupted", "Indeterminate")}; publication={State("publicationStatus", "NotRequested", "Confirmed", "NoContent", "Failed", "Indeterminate")}; matching={Phase("matching")}; business={Phase("businessLogic")}; exit={Number(report, "exitCode")}");
+            output.Add($"generate-reported-counts: documents={Count("documents")}; accepted-files={Count("acceptedFiles")}; terminal-coverage={Count("terminalCoverage")}; inventory={Count("inventory")}; gaps={Count("gaps")}");
+            if (report.TryGetProperty("gaps", out var gaps) && gaps.ValueKind == JsonValueKind.Array)
+                output.Add("generate-reported-gap-codes=" + string.Join(',', gaps.EnumerateArray().Take(16).Select(gap =>
+                    gap.ValueKind == JsonValueKind.Object && gap.TryGetProperty("code", out var code) && code.ValueKind == JsonValueKind.String
+                        ? SafeGap(code.GetString()) : "other")));
+            if (!report.TryGetProperty("usage", out var usage)) usage = default;
+            string unknown = usage.ValueKind == JsonValueKind.Object && usage.TryGetProperty("hasUnknownUsage", out var flag)
+                ? flag.ValueKind switch { JsonValueKind.True => "true", JsonValueKind.False => "false", _ => "unavailable" } : "unavailable";
+            output.Add($"generate-reported-usage: requests={Number(usage, "requests")}; input-tokens={Number(usage, "inputTokens")}; output-tokens={Number(usage, "outputTokens")}; unknown={unknown}");
+        }
+        catch (JsonException) { output.Add("generate-report=unavailable-or-malformed"); }
+        return output;
+
+        static string SafeGap(string? code) => code switch
+        {
+            "owned_cleanup_unconfirmed" or "coverage_incomplete" or "invalid_run_configuration" or "authority_unavailable" or
+            "begin_indeterminate" or "begin_settlement_pending" or "fresh_run_required" or "run_ineligible" or "run_interrupted" or
+            "run_unavailable" or "single_file_checkpoint_limit" or "source_frame_unavailable" or "source_frame_binding_changed" or
+            "file_deadline_exceeded" or "provider_settlement_unconfirmed" or "worker_not_completed" or "file_acceptance_unavailable" or
+            "generate_terminal_report_unavailable" or "output_binding_invalid" or "commit_indeterminate" or "operation_log_unavailable" or "phase_ineligible" or
+            "publication_failed" or "publication_interrupted" or "publication_unavailable" or "no_cl_content" or
+            "freeze_settlement_pending" or "publication_settlement_pending" or "phase_closed" or "unsupported_stage" or
+            "publication_not_started" or "source-authority-or-identity-lost" or "incomplete-directory" or "source-limitation" or
+            "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" or "source-or-execution-gap" => code,
+            _ => "other"
+        };
+
+        static void Unique(JsonElement value)
+        {
+            if (value.ValueKind == JsonValueKind.Object)
+            {
+                var names = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var property in value.EnumerateObject())
+                { if (!names.Add(property.Name)) throw new JsonException(); Unique(property.Value); }
+            }
+            else if (value.ValueKind == JsonValueKind.Array)
+                foreach (var item in value.EnumerateArray()) Unique(item);
+        }
+    }
+
     internal static TimeSpan GenerateWait(int runDeadlineSeconds)
     {
         if (runDeadlineSeconds is < 1 or > 1800)

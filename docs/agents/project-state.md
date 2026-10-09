@@ -8,7 +8,17 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-08 (source-free October PostgreSQL qualification integrated; real Generate paused by the user pending LLM configuration).
+Updated: 2026-10-09 (first real synthetic Generate-to-ordinary-reader milestone passed; retained presentation operation remains separately pending).
+
+Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
+`ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
+CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,
+Business-mode CL denial and revocation checks passed. Reported usage was
+2,095 input/1,888 output tokens, unknown=false. All fixture resources were cleaned.
+This supersedes earlier B-failure/pending statements below for this exact synthetic
+scenario only. Useful BL, two-Repository resolution, interactive streaming Chat,
+graph and retained presentation operation C remain unqualified/unapproved as
+applicable; no production-source disclosure is implied.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
@@ -25,8 +35,30 @@ Generate, live Chat, browser or retained presentation qualification. Narrow Scan
 command activation is subsequently integrated at `c00db2cd` from reviewed `28902685`:
 source/tests/build files match the owner's 2,170/2,170 affected controlled boundary,
 and root policy checks pass (431 files). The 3,991 full-suite result remains pinned
-before this Scan addition. Chat parent/application and root shared Web composition
-remain pending their reviewed lane checkpoint; real B/C holds are unchanged.
+before this Scan addition. Chat parent/application checkpoints are integrated at
+`71cdd7a0` and `589d78b4`. Reviewed root Web composition now passes the combined
+SelfContained suite **4,121/4,121**, zero failures/skips, run
+`488bd10080be4d9cba87308df3ccf8aa`; this includes the narrow Scan activation.
+The user subsequently approved A+ (seven source-free Chat/Explorer PostgreSQL
+cases) and resumed B (one synthetic CL-only Generate using the protected root
+`.env` provider binding, at most three requests/no retries and cumulative
+100,000 input/12,000 output tokens). A+ passed **7/7**, zero failures/skips, run
+`4afa67195cbc4ada8ecf1f84ef40bb9b`, with owned container/volume removal verified;
+its evidence is integrated at `3316505d`. B run
+`aed6ea62f99b48038de105aa787834d1` failed (0/1) at generated-source provenance
+resolution before ordinary-reader assertions; owned cleanup passed. Generate report
+and provider usage were not retained, so underlying cause/dispatch remain unknown.
+Root's reviewed qualification diagnostics now pass 53/53 affected source-free
+cases (`b35ffd84f2f74f42845d2263dc6b3605`); no automatic external retry is allowed.
+The user approved one additional B and subsequent diagnosis/fix. That attempt
+`ea77060cab984234a9a5de09ec6b2324` failed before inventory, reporting zero provider
+requests. Diagnosis reproduced native launch failure when the Generator fixture
+omitted Windows `PATHEXT`; restoring only that key passed the native probe.
+Root's fixture-only correction and exact real authority/contained-list regression
+pass 1/1 (`3ddd767908e04d738097eca9f131d8b5`), with owned cleanup. Production Scan
+and persistent machine configuration are unchanged. Corrected full B remains
+unverified; native and provider-free passes are not generated-content evidence.
+C remains separate and pending B; no production source disclosure is approved.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.

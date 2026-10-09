@@ -1,4 +1,7 @@
 {
+  "October/Integration/OctoberChatHostCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberGeneratedClReaderE2ETests.cs": {
     "suite": "E2E"
   },
@@ -1302,6 +1305,15 @@
   },
   "October/Integration/OctoberGeneratedClReportTests.cs": {
     "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatExecutionOwnershipTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatApplicationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Chat/OctoberChatApplicationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
   },
   "October/Integration/OctoberGeneratedClReport.cs": {
     "suite": "SelfContained"

@@ -149,7 +149,8 @@ internal sealed class OctoberChatAgent
                     adapter.LastFinishReason == ChatFinishReason.ContentFilter ? DialogueProviderFinish.ContentFilter : adapter.FailureFinish,
             };
         }
-        catch (OperationCanceledException) when (linked.IsCancellationRequested)
+        catch (OperationCanceledException) when (linked.IsCancellationRequested ||
+            cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested)
         {
             _budget.StopExecution();
             return new(cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested
@@ -167,11 +168,15 @@ internal sealed class OctoberChatAgent
                 Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeDependencyStatus.Cancelled => OctoberChatProviderStatus.Cancelled,
                 _ => null,
             };
-            OctoberChatProviderStatus status = linked.IsCancellationRequested
-                ? cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested
-                    ? OctoberChatProviderStatus.Cancelled : OctoberChatProviderStatus.BudgetExceeded
+            // CancelAsync marks the original source before its linked-token
+            // callbacks finish. Observe the original signals at this catch, before
+            // our own cleanup cancellation, rather than waiting for propagation.
+            bool callerCancelled = cancellationToken.IsCancellationRequested || _budget.OriginalCancellationToken.IsCancellationRequested;
+            bool cancelledAtFailure = callerCancelled || linked.IsCancellationRequested;
+            OctoberChatProviderStatus status = cancelledAtFailure
+                ? callerCancelled ? OctoberChatProviderStatus.Cancelled : OctoberChatProviderStatus.BudgetExceeded
                 : _budget.TransportFailureStatus ?? disclosureFailure ?? adapter.FailureStatus ?? OctoberChatProviderStatus.Failed;
-            DialogueProviderFinish finish = linked.IsCancellationRequested ? DialogueProviderFinish.Cancelled :
+            DialogueProviderFinish finish = cancelledAtFailure ? DialogueProviderFinish.Cancelled :
                 _budget.TransportFailureStatus == OctoberChatProviderStatus.Failed ? DialogueProviderFinish.Invalid : adapter.FailureFinish;
             _budget.StopExecution();
             linked.Cancel();

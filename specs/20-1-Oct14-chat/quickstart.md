@@ -470,3 +470,171 @@ Independent reviewer `wave_reviewer` accepted the frozen source and tests with n
 remaining actionable blocker and confirmed both GREEN runs satisfy review conditions.
 The current project-state pointers were rechecked: their open root-composition/runtime
 claims still apply; no shared project-state file or root instructions were changed.
+
+## Application activation — 2026-10-08, in progress
+
+The user delegated parent-page attachment and bounded feature-local execution/lifetime
+composition. Exact file ownership was agreed with Integrator before edits; shared DI,
+Program, provider/context configuration and Business persistence remain with their owners.
+The clean assigned branch fast-forwarded to approved
+`f6be1b410bd5de08394d70e5e83017c6512fec51`, preserving `f3db38db` and `fad7f11`.
+See contracts/web-provider-handoff.md for the agreed boundaries and owner prerequisites.
+
+Initial unavailable scaffolds compiled, then **0/7 passed, 7 failed, zero skipped**:
+`TestResults/isolation-bd39fe5ef681471395dfadc4eb05fea0/results.trx`.
+Six registry cases failed because reservation was unavailable; the parent regression
+exposed the legacy textarea when an October application was explicitly supplied without
+an entry. These are actual behavioral failures, not build failures. Discovery was 5,073,
+inventory 428, build zero errors / 14,410 warnings including AD0001; warning policy is
+unchanged. This first group exercises ownership mechanics and the unavailable parent,
+not canonical database cleanup or composed conversation qualification.
+
+Business's per-turn store disposal and Integrator's exact prompt-input digest helper
+are agreed dependencies pending import. PostgreSQL execution is currently assigned
+exclusively to Business; Chat has started no PostgreSQL/provider/browser/native/host
+resource. Actual Generate/provider configuration remains explicitly pending with the
+user. Controlled results do not authorize that execution or claim application activation.
+
+At a frozen source boundary, Chat safely fast-forwarded to Integrator-approved
+`7005f96bc425265feda0770049eaf2f06f5781ed`, importing the public exact prompt-input helper
+(`5d6c42a9`) and its owner's reviewed 16-case controlled evidence. All activation edits
+were preserved; only the overlapping two-entry local suite inventory delta was
+temporarily stashed, reapplied cleanly and its temporary stash removed. No reset,
+shared composition edit or duplicate qualification run occurred. The canonical
+store-disposal implementation remains pending its owner's accepted checkpoint.
+
+The accepted owner lifecycle was then imported through approved
+`260c57068757d0f39fe790c6794c3a738328675b` with the same safe inventory preservation.
+Integrator reports owner 500/500 controlled and the exclusively assigned 62/62
+PostgreSQL cases; these are owner evidence, not Chat application PostgreSQL qualification.
+The concrete owner now supplies observable idempotent cleanup without a schema/Core change.
+
+The first 25-case activation launcher crashed before build/test execution in the
+policy scanner with `System.ExecutionEngineException` (illegal instruction while
+traversing Roslyn syntax). An unchanged retry passed all policy gates and compiled:
+**19/25 passed, 6 failed, zero skipped**, discovery 5,128, inventory 432,
+`TestResults/isolation-e7f7be60c4d44750a5fcd5f02dc3f2a1/results.trx`.
+Build: zero errors / 14,616 warnings. No policy was bypassed.
+The missing-entry parent regression passed; five composed application cases failed
+on unavailable Open/IsReady scaffolds. Registry passed 18/19: the late credential
+case retained actual cleanup correctly but returned an already-sealed client instead
+of refusing the factory result. No unsafe send was observed. A separate reviewed
+NotStarted sanitized-closure gap requires an explicit fresh owner refusal test/fix.
+Application implementation is now authorized against these actual behavioral failures.
+
+The NotStarted closure regression selected three cases: **1 passed, 2 failed**, zero
+skipped, `TestResults/isolation-15abc485e4ac42e8b3298191ea14fd6a/results.trx`.
+The negative fabricated denial was refused correctly; genuine Denied and
+AuthorityUnavailable cases were incorrectly refused. The correction extends the
+fresh original-dependency probe to an otherwise verified empty NotStarted failure.
+Separate source review also required atomic readiness/client construction, registry
+ownership of actual session drain, and final service-scope disposal only after all
+registry/store work settles. These source findings are not mislabelled as observed RED.
+
+During that frozen boundary, Chat fast-forwarded without overlapping files to approved
+`c5e19241a5741aaa1524c1c5149a78168780007e`. Integrator reports full baseline
+SelfContained 3,991/3,991; this excludes the local uncommitted activation changes and
+is not their final verification. No external qualification follows from that baseline.
+
+The subsequent approved baseline is `c8d3ef0ebac924147392ec773b45249798832158`.
+A build stopped on corrupt Git metadata before executing tests; this was an
+infrastructure failure, not behavioral RED. After user repair, the single already
+started controlled run completed: **28/37 passed, 9 failed, zero skipped**,
+`TestResults/isolation-9c99c37fe2fe448a8f1d7a09ba36f157/results.trx`.
+All 24 execution-ownership cases passed. Application failures cover six invalid
+locator inputs, exact existing-conversation reload, uncertain-save reconciliation,
+and cancellation terminal classification. Application activation is not yet green.
+
+Following the user's second repair, `git fsck --full --no-dangling` passed with
+exit 0; Integrator independently confirmed the same and lifted the Git/build hold.
+The branch remains `oct14/chat` at the approved baseline, with `f3db38db` and
+`fad7f11` included. All 16 source/document backup hashes matched before resuming
+owned corrections. No lane metadata repair, reset, pruning or external backup copy
+was performed. Source backups remain retained. PostgreSQL and live-resource gates
+are unchanged by Git recovery.
+
+The first post-repair restricted launcher stopped during build with exit 1 and no
+compiler diagnostics (`isolation-82482581b416481da0fa43acda399b5a`); no tests ran.
+Git fsck remained clean. The same focused check with approved process permissions
+compiled and executed: **0/1 passed, 1 failed**, zero skipped, discovery 5,200,
+`TestResults/isolation-e0d3e4cf2169405cbd0f9d0c927c8ea3/results.trx`.
+The regression timed out waiting for final scope cleanup after actual canonical store
+disposal had settled and its observer reported a controlled disposal fault. This is
+observed RED for attempting remaining cleanup while retaining failed capacity; it
+is not a claim that the underlying SQLite store itself failed disposal.
+
+Expanded frozen application/registry qualification compiled and ran **47/51 passed,
+4 failed, zero skipped**, discovery 5,206,
+`TestResults/isolation-1990c598291947cf97c579c8246c06ed/results.trx`.
+All 25 registry cases passed, including the new cleanup regression. Previously
+failing locator and uncertain-save cases passed; cancellation also passed without
+an Agent classification change, so the earlier failure is not causally resolved.
+Two failures were bUnit stale event-handler dispatch during input (idle originating
+context and explicit new conversation). Unknown Begin did not expose reconciliation.
+The renderer authorization test observed old question text but has a known test
+synchronization gap to correct before attributing that observation solely to code.
+The full activation boundary remains non-green; source-free checks grant no runtime
+provider or PostgreSQL authorization.
+
+After correcting the renderer test's context-switch synchronization and strengthening
+actual-save assertions, the next run selected 53: **47 passed, 6 failed**, zero
+skipped (`TestResults/isolation-aa6ee77ea24242708b7a78dfb8f39334/results.trx`).
+Unknown-admission lookup/retention now passes. The strengthened Denied closure
+receives an actual Denied save instead of a canonical successful receipt; the
+originating-context test still exposes old question text; two same-page locator
+cases retain the prior conversation. These are observed behavioral failures.
+The AuthorityUnavailable closure case hit the same bUnit input-dispatch race and
+requires fixture synchronization. Cancellation reproduced with canonical
+Failed/ExecutionFailure, Unknown provider finish and six partial-answer characters;
+no save had begun before explicit cancellation. This remains under causal diagnosis,
+not a reason to rewrite every failure as cancellation.
+
+The next frozen run selected 55: **53 passed, 2 failed**, zero skipped
+(`TestResults/isolation-f735b61cd64f48c282204376ddc55276/results.trx`). Actual
+canonical empty saves, final identity rechecks and same-page locator changes now
+pass. The two failures are explicit full-stack cancellation and its new deterministic
+ordering regression: the original token is requested while linked propagation is
+held; a cancellation-associated exception carrying the original token is incorrectly
+classified Failed. The genuine-provider-failure-before-late-cancellation control
+passes. This supplies causal RED for a narrow Agent classification correction;
+no whole-answer buffering or general Failed-to-Cancelled rewriting is introduced.
+
+With the reviewed narrow Agent correction, **55/56 passed, 1 failed**, zero skipped
+(`TestResults/isolation-ec133480ca0348bbbb845688bbf1634e/results.trx`). Both the
+original-signal propagation regression and actual application cancellation pass;
+the pre-cancellation provider-failure control remains passing. The only failure is
+the new pending-locator test: after A's actual owner lookup/cleanup settles, B is
+not opened. Its correction must consume only the latest requested locator after
+actual settlement, with no persistence polling or generation replay.
+
+The first broader affected boundary (`OctoberChat|OctoberWiki|ChatPageTests`) passed
+**594/594**, zero failures/skips, discovery 5,211,
+`TestResults/isolation-e9858088aff34c32b8b58c481f928e9e/results.trx`.
+Final independent source review nevertheless identified an open-flag reentrancy
+window: a navigation handler that skipped a busy open could clear the actual open's
+flag and let pending navigation race its stale continuation. The narrow flag-ownership
+correction is review-driven (not fabricated RED) and requires a fresh affected run.
+
+Final independent review accepted the owned activation increment after that correction,
+with no remaining actionable source findings. The exact final affected rerun passed
+**594/594**, zero failures/skips, discovery 5,211,
+`TestResults/isolation-9e380300c462417c9d70df23f948d282/results.trx`.
+The filter was `FullyQualifiedName~OctoberChat|FullyQualifiedName~OctoberWiki|FullyQualifiedName~ChatPageTests`
+intersected with SelfContained through `eng/test.ps1`; policy/inventory/guard probes
+passed. No assertions were weakened and no external suite was selected.
+
+Implemented production code now attaches parent ChatPage to the application, finite
+execution registry, canonical per-turn preparation/store observation, existing genuine
+stream/tool presentation, canonical saved transcript and exact references. Controlled
+actual-SDK transport proves one conversation and a follow-up with exact owner history,
+immediate first text before provider completion, detach versus cancel, uncertain-save
+lookup without redispatch, and existing-locator reload/navigation. This is controlled
+consumer conformance, not a live provider/browser result or PostgreSQL application
+qualification. Shared Web DI/configuration and the three additional PostgreSQL cases
+remain Integrator dependencies; live provider/browser approval remains separate.
+
+An unresolved prior-host active turn remains unavailable without authoritative owner
+recovery. Empty sanitized closure without an authentic complete generated capsule is
+limited to freshly verified whole-selection refusal; document-specific uncertainty
+stays fail-closed. The host registration and exact proposed PostgreSQL resource scope
+are recorded in contracts/web-provider-handoff.md. Source backups remain retained.

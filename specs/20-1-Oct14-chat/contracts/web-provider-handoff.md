@@ -228,3 +228,173 @@ shapes: supported sanitized authorization failures, or Interrupted/OwnerLost, wi
 empty question, answer and references. The canonical orphan projection is display-only;
 accepting it neither proves owner death nor invokes cleanup, frees a slot or grants retry.
 Other missing-lineage content is refused. Root retains all execution and activation work.
+
+## Application activation ownership — 2026-10-08
+
+The user explicitly delegated parent attachment and bounded feature-local execution,
+lifetime, durable preparation and focused conformance to OCT-CHAT. Integrator agreed
+before edits; this supersedes earlier root-only feature-local composition holds, not
+shared registration or resource prerequisites. Clean approved baseline is
+`f6be1b410bd5de08394d70e5e83017c6512fec51`.
+
+Chat owns ChatPage.razor/codebehind/css and a new October partial; feature-local
+OctoberChatExecutionRegistry, OctoberChatObservedDialogueStore, OctoberChatApplication
+and OctoberChatTurnScope; narrowly necessary Coordinator/CommitGuard/ClientSession
+and Entry/Turn VM integration changes; named application/execution/PostgreSQL tests,
+their suite inventory entries and this feature's evidence. Existing rendering,
+history and reference leaves are consumed unchanged unless an evidenced defect needs
+correction. Integrator confirmed no competing registry/preparation implementation.
+Integrator retains Program.cs, OctoberChatModule, OctoberWikiRegistration, shared DI,
+provider configuration/authority and prompt-resource registration. Business retains
+all canonical dialogue/disclosure contracts, persistence semantics and schema.
+
+Application assembly must reserve finite host ownership before any durable mutation,
+register the exact frozen request, observe actual factory/generation/physical drain,
+store calls and submitted commits, and retain actual late leaf tasks before disposing
+owned services. Durable terminal state and process/resource settlement are separate.
+An absent row, cancelled wait or expired lease is never owner-death or release proof.
+Uncertainty consumes its bounded slot until proven resolved; no TTL eviction or
+generation replay. Browser detach removes presentation only; work remains host-owned
+within its original budget, with explicit user cancellation handled separately.
+
+Preparation consumes exact canonical history and owner-created initial question/history
+lineage, uses the actual embedded prompt digest and live server-authenticated Chat
+context, and submits the existing coordinator once. Parent UI consumes immediate text,
+tool activity, saved outcome, formatter and exact reference components; missing
+configuration/authority/settlement keeps generation unavailable.
+
+Independent design review identified a Business-owned prerequisite: private deferred
+transaction/context disposal in OctoberDialogueStore is not observed by the returned
+store task or commit guard settlement. Integrator has been asked for the owner's
+observable operation cleanup boundary. Chat must not reconstruct private cleanup or
+claim full settlement before it is supplied. The internal Agents prompt catalog also
+needs Integrator's exact resource/digest seam; no copied prompt is permitted. These
+dependencies do not stop independent controlled mechanics. Controlled and PostgreSQL
+prerequisites precede separately authorized live provider/browser qualification.
+
+Business proposed and Chat accepted a concrete owner-scoped `IAsyncDisposable`
+OctoberDialogueStore: the same retained disposal task closes new calls and joins
+active public calls, submitted commits, late factory/guard work and transaction/context
+cleanup, attempting all cleanup and reporting sanitized failure when unconfirmed.
+Integrator registers concrete and interface aliases to the same unique per-turn
+instance. This requires no new Core contract or schema. Protocol sequencing still
+observes individual calls/commit guards; final scope/process-slot release additionally
+awaits successful canonical owner disposal. An uncertain save retains its store for
+lookup and is not sealed merely because the bounded execution method returned.
+Implementation/import and qualification of that owner change remain prerequisites.
+
+The user's current resource decision assigns the 62 source-free owned PostgreSQL tests
+exclusively to Business. Chat performs no concurrent PostgreSQL launcher. Real Generate
+and provider work is explicitly pending the user's LLM configuration; retained
+presentation follows that milestone. No resource approval is inferred from this
+application implementation or from source-free controlled tests.
+
+Integrator agreed the exact prompt seam (pending import): public Agents
+`OctoberChatInputDigests.CreateAsync(mode, exactQuestion, token)` returns PromptDigest
+and InitialInputDigest. The former hashes the unchanged embedded catalog text exactly
+as the runner does; the latter hashes canonical JSON
+`["october-chat-initial-v1", numericMode, promptDigest, exactQuestion]`. No normalization,
+history or inferred catalog facts enter this root. Invalid input/resource returns null;
+caller cancellation throws. Shared registration adapts the returned hashes to the
+feature-local application delegate; Web never loads or duplicates prompt text.
+
+Activation locator agreement: the existing parent route may carry only the untrusted
+`conversationId` and `contextId` query pair. Both must be single nonempty GUIDs;
+partial, malformed, unknown, foreign or mismatched pairs fail closed before any
+CreateIfMissing. Fresh canonical subject/publication/mode/scope authorization remains
+mandatory. Publish the pair by history replacement only after positive durable open.
+Reload performs lookup only and never generates; explicit new conversation or an
+accepted context change clears the old locator. No shared navigation or browser
+storage contract is introduced.
+
+Integrator extended Chat's exclusive ownership narrowly for the observed cancellation
+classification defect to OctoberChatTurnRunner.cs, OctoberChatAgent.cs and
+OctoberChatProviderAdapter.cs plus focused tests. Diagnose the actual signal loss;
+existing Agent catch logic already distinguishes cancellation before cleanup. Preserve
+first observed failures, completion before late cancellation, and deadline/budget
+classification. Budget/SSE/Core/persistence changes require separate owner agreement.
+
+No owner-death issuer is supplied in this activation wave. Restart or an absent row
+cannot release an unresolved earlier host's active turn. Such conversations remain
+unavailable pending an authoritative owner recovery mechanism; no consumer proof is
+fabricated. Canonical store cleanup and embedded prompt digest dependencies are now
+imported at the approved c8d3ef0e baseline. Shared Web registration remains Integrator-owned.
+
+### Host registration required for this activation increment
+
+Integrator owns the shared registration. Supply a finite singleton
+`OctoberChatExecutionRegistry` with the canonical codec and a fail-closed default
+commit-authority callback. The application registers its exact fresh per-operation
+callback. Register a browser-scoped `OctoberChatApplication` with the trusted
+operation-scope factory, Agents input-digest adapter, configured limits and the live
+originating Chat attachment context. The page resolves that optional application and
+entry/context via DI; a supplied locator without composition remains unavailable.
+
+Each operation scope must contain a unique canonical `OctoberDialogueStore` with
+concrete/interface aliases pointing to the same instance, registry execution authority
+and CommitGuard, canonical reader/disclosed-reader/dependency/policy ports, exact
+selected provider binding and request admission. Its final disposal callback must
+await that same store's idempotent DisposeAsync, attempt remaining context/child-scope
+cleanup in finally, and retain any cleanup failure. Use the originating ordinary
+Chat user's live authenticated accessor and its authentication-bound security stamp
+for a fresh Chat-purpose context. Never substitute Scan's operator session or refresh
+a stale captured stamp to prolong authority. A child default circuit context or
+Reader-purpose context is not a substitute.
+
+Adapt Agents `OctoberChatInputDigests.CreateAsync` to the Web digest record without
+copying embedded prompts. Missing explicit configuration, selected provider/credential,
+canonical policy or execution authority must remain unavailable. Do not enable startup
+generation. Unresolved admission/save retains its execution slot; no timeout or absent
+row releases it. Already-sanitized generation with no complete capsule can close only
+under the narrowly verified fresh whole-selection refusal; document-specific uncertainty
+without authentic complete lineage stays blocked and is not reconstructed by Chat.
+
+### Additional PostgreSQL qualification remains unapproved
+
+The three `OctoberChatApplicationPostgreSqlTests` are authored, classified and guarded,
+but are outside Business's approved 62-case grant. Their proposed resource boundary is
+one eng/test.ps1-created PostgreSQL17 container/volume with verified run labels, fresh
+`vulgata_story121_<guid>` databases created by the existing disposable helper and only
+October migrations in those databases. Use controlled provider transport, no source,
+no seed dump, no real credentials/provider calls and no Web startup. Integrator must
+obtain the expanded resource grant before execution; cleanup must verify exact owned
+container/volume/database removal. Live Chat/provider/browser qualification remains a
+separate later authorization even after these controlled and PostgreSQL checks pass.
+
+### Shared host configuration and composition
+
+Root integrates the application through `OctoberWikiRegistration` and
+`OctoberChatHostRegistration`; no separate startup generation action is added.
+For an already configured exact `October:Wiki` publication, these host settings opt
+into executable Chat:
+
+| Setting | Meaning |
+| --- | --- |
+| `October:Chat:Enabled` | Explicit `true`; configuration alone is not runtime permission. |
+| `October:Chat:ProviderId` | Nonempty ID of the actual configured Web provider; no default provider fallback. |
+| `October:Chat:MaximumConcurrentRequests` | Optional Web Chat request limit, 1–4; default 4. Not a cross-process Scan quota. |
+| `October:Chat:MaximumConcurrentExecutions` | Optional retained host execution limit, 1–16; default 16. Unknown outcomes retain capacity. |
+
+Missing/invalid/disabled Chat configuration with a valid October Wiki registers an
+inert application, not the legacy composer. An explicit Chat configuration with an
+invalid/missing Wiki binding is also inert. When neither October binding nor Chat
+intent is configured, ordinary Web behavior is unchanged. No provider is contacted
+or credential decrypted by registration or scope construction.
+
+The scoped host factory captures the originating ordinary user's authentication
+accessor. A fresh operation uses the exact configured publication/repository scope,
+Chat purpose and its original subject/stamp, with actual Identity revalidation through
+fresh service scopes. It never resolves an unrelated child circuit authentication
+provider or substitutes the Scan operator. Reader, disclosed reader, dependencies,
+canonical store and scope share the same live policy. Each operation owns its unique
+canonical store and provider binding; codec, finite registry and request permits are
+shared by the host. The same store is explicitly disposed before all remaining owned
+context/service-scope cleanup attempts; cleanup failure remains observable.
+
+The circuit attachment follows an explicitly selected operation mode only after the
+host validates its binding. It rejects a late authorization result if its underlying
+context was replaced or disposed. Actual authentication changes still detach output.
+Operation contexts remain independently pinned and Explorer's Reader mode is not
+changed. No strict application mode/subject/scope comparison is weakened. Locator
+reload still requires a matching authorized server-selected context; it does not
+infer permission to switch modes from conversation IDs.

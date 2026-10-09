@@ -71,3 +71,19 @@ Optional Wiki/Scan/setup-host/Explorer PostgreSQL categories were not selected. 
 ### Requalification after owner-scoped dialogue disposal
 
 The subsequent concrete store IAsyncDisposable correction was independently reviewed and passed500 controlled dialogue/Chat/disclosure cases, including9 lifetime cases. The identical approved62-case PostgreSQL selection then passed62/62 with zero skips on the revised source in `isolation-204fd6b29988499699c3a4124e14f49c` (zero build errors/19 warnings). Fresh owned container and volume absence were verified. This additional run supersedes the earlier source boundary for current persistence qualification; earlier failures and successful runs remain retained above. No migrations or constructor/Core contracts changed. Actual Chat/Integrator same-instance AsyncServiceScope disposal is a consumer prerequisite; database success does not prove that composition. B/C and excluded categories remain unexecuted.
+
+### A+ Chat/Explorer qualification attempt
+
+Integrator relayed explicit user approval for exactly seven additional source-free PostgreSQL cases: `OctoberChatApplicationPostgreSqlTests` (3) and `ExplorePersistedReaderTests` (4). Approved main `075956e90279974e2d983deec6e5bd305befe5d2` was merged into the clean assigned worktree at `47ef42edc67134e44e2b49af3bedde4d3d3cca51`; the trees match exactly. No implementation change was made.
+
+Command: `pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~OctoberChatApplicationPostgreSqlTests|FullyQualifiedName~ExplorePersistedReaderTests'`.
+
+Attempt `0789d214b51542e08e93cc972f8983d8` passed source policy (435 classified files) and launcher regression probes, then exited1 at Docker readiness because the `dockerDesktopLinuxEngine` named pipe was unavailable. The run directory contains only `docker-readiness.log`; provisioning, build, discovery and execution were not reached. Selected/executed counts are therefore unavailable, not a seven-case failure or passing qualification. No owned container, volume or database was created, so no cleanup was necessary. Integrator received the precise prerequisite blocker; no Docker startup, settings change or process repair was attempted. Retry requires coordinated Docker readiness; the exact A+ scope remains unchanged.
+
+### A+ completed after Docker readiness was restored
+
+The first coordinated60-second readiness recheck still failed; no provisioning or test execution occurred. After the user confirmed Docker was running and explicitly requested retry, read-only readiness returned server29.8.2. The unchanged authorized command above then completed on the exact `075956e90279974e2d983deec6e5bd305befe5d2` source/test tree (only this evidence document differed).
+
+Run `4afa67195cbc4ada8ecf1f84ef40bb9b`: PostgreSql discovered5426, **selected7/passed7/failed0/skipped0**, launcher exit0. `OctoberChatApplicationPostgreSqlTests` passed3/3 and `ExplorePersistedReaderTests` passed4/4. Build completed with zero errors and14,892 warnings; no warning-free claim. Source policy covered435 classified files. The earlier readiness-only blocker remains historical evidence, not a failed test run.
+
+Fresh runner-owned PostgreSQL17 container/volume/database resources were used exclusively for A+. Checked container removal, explicit container absence and volume absence were verified after completion. No retained database/dataset, source/provider/seed/Web operation or category expansion occurred. No production/test/schema correction was needed. This qualifies the seven approved source-free consumer persistence cases only; it does not establish live generation, native/provider/E2E or retained presentation qualification. Integrator owns remaining activation and runtime decisions.

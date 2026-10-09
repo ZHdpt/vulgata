@@ -69,7 +69,7 @@ public sealed class OctoberChatClientSession : IAsyncDisposable
         OctoberChatProviderSnapshot snapshot, DialogueBeginResult admitted, OctoberChatBudget budget,
         IOctoberDialogueExecutionAuthority authority, Func<CancellationToken, Task> reauthorizeBeforeSend,
         OctoberChatRequestAdmission requests, HttpMessageHandler physicalTransport, TimeProvider clock,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, Func<Func<Task>, Task>? startReadiness = null)
     {
         ArgumentNullException.ThrowIfNull(physicalTransport);
         try
@@ -90,13 +90,14 @@ public sealed class OctoberChatClientSession : IAsyncDisposable
                 budget.OriginalCancellationToken, originalDeadline.Token, durableDeadline.Token);
             var token = readiness.Token;
             token.ThrowIfCancellationRequested();
-            if (await AwaitReadinessAsync(authority.VerifyAdmissionAsync(admission.Request, token), token) != DialogueExecutionStatus.Verified) throw Refused();
+            if (await AwaitReadinessAsync(() => authority.VerifyAdmissionAsync(admission.Request, token), token, startReadiness) != DialogueExecutionStatus.Verified) throw Refused();
             token.ThrowIfCancellationRequested();
-            string? secret = await AwaitReadinessAsync(binding.DecryptCurrentKeyAsync(snapshot, token), token);
+            string? secret = await AwaitReadinessAsync(() => binding.DecryptCurrentKeyAsync(snapshot, token), token, startReadiness);
             token.ThrowIfCancellationRequested();
             if (secret is null || budget.IsStopped || admission.DeadlineUtc <= clock.GetUtcNow()) throw Refused();
-            return new(binding, snapshot, admission, budget, authority, reauthorizeBeforeSend,
-                requests, physicalTransport, clock, secret, cancellationToken);
+            return await AwaitReadinessAsync(() => Task.FromResult(new OctoberChatClientSession(binding, snapshot,
+                admission, budget, authority, reauthorizeBeforeSend, requests, physicalTransport, clock, secret,
+                cancellationToken)), token, startReadiness);
         }
         catch (OperationCanceledException)
         {
@@ -150,8 +151,12 @@ public sealed class OctoberChatClientSession : IAsyncDisposable
 
     private static InvalidOperationException Refused() => new("The selected Chat execution is unavailable.");
 
-    private static async Task<T> AwaitReadinessAsync<T>(Task<T> operation, CancellationToken token)
+    private static async Task<T> AwaitReadinessAsync<T>(Func<Task<T>> start, CancellationToken token,
+        Func<Func<Task>, Task>? startOwned = null)
     {
+        token.ThrowIfCancellationRequested();
+        // Invoke and retain under the host's same start/seal gate, before the bounded wait.
+        Task<T> operation = startOwned is null ? start() : (Task<T>)startOwned(() => start());
         try { return await operation.WaitAsync(token); }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {

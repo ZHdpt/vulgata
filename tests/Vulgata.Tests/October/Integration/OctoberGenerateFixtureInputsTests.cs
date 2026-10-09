@@ -10,6 +10,63 @@ namespace Vulgata.Tests.October.Integration;
 public sealed class OctoberGenerateFixtureInputsTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_ReportedFieldsAreRedactedAndUnknownUsageIsNotZero()
+    {
+        const string secret = "PRIVATE-source-key-endpoint";
+        string json = JsonSerializer.Serialize(new
+        {
+            requestedStage = "cl-only", completedStage = (string?)null, coverage = "None", execution = "Failed",
+            publicationStatus = "NotRequested", matching = "not-requested", businessLogic = "not-requested", exitCode = 1,
+            documents = new[] { secret }, acceptedFiles = Array.Empty<string>(), terminalCoverage = Array.Empty<string>(),
+            inventory = new[] { secret, secret }, gaps = Enumerable.Range(0, 20).Select(i => new { code = i == 0 ? "worker_not_completed" : secret, relativePath = secret }),
+            usage = new { requests = (int?)null, inputTokens = (long?)null, outputTokens = 7, hasUnknownUsage = true }, arbitrary = secret
+        });
+        var lines = OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, secret);
+        string output = string.Join('\n', lines);
+        Assert.DoesNotContain(secret, output);
+        Assert.Contains("generate-process-exit=1", lines);
+        Assert.Contains("generate-stderr-classification=present-redacted", lines);
+        Assert.Contains("execution=Failed", output);
+        Assert.Contains("documents=1; accepted-files=0; terminal-coverage=0; inventory=2; gaps=20", output);
+        Assert.Contains("requests=unavailable; input-tokens=unavailable; output-tokens=7; unknown=true", output);
+        string gaps = Assert.Single(lines.Where(x => x.StartsWith("generate-reported-gap-codes=", StringComparison.Ordinal)));
+        Assert.Equal(16, gaps.Split('=')[1].Split(',').Length);
+        Assert.StartsWith("generate-reported-gap-codes=worker_not_completed,other", gaps);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("{")]
+    [InlineData("{}{}")]
+    [InlineData("[]")]
+    [InlineData("{\"exitCode\":0,\"exitCode\":1}")]
+    [InlineData("{\"usage\":{\"requests\":0,\"requests\":1}}")]
+    [InlineData("oversized")]
+    public void GenerateDiagnostics_InvalidOrAmbiguousJson_ProducesOnlySafeClassification(string input)
+    {
+        if (input == "oversized") input = new string('x', 1048577);
+        var lines = OctoberGenerateFixtureInputs.GenerateDiagnostics(1, input, "October startup configuration failed: InvalidConfiguration.");
+        Assert.Equal(new[] { "generate-process-exit=1", "generate-stderr-classification=startup-invalid-configuration", "generate-report=unavailable-or-malformed" }, lines);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_UnknownStatusesAndAppendedStartupText_AreNotEchoed()
+    {
+        const string marker = "PRIVATE-diagnostic";
+        var lines = OctoberGenerateFixtureInputs.GenerateDiagnostics(2,
+            JsonSerializer.Serialize(new { execution = marker, usage = new { requests = -1, hasUnknownUsage = marker } }),
+            "October startup configuration failed: InvalidConfiguration." + marker);
+        string output = string.Join('\n', lines);
+        Assert.DoesNotContain(marker, output);
+        Assert.Contains("execution=unavailable", output);
+        Assert.Contains("unknown=unavailable", output);
+        Assert.Contains("requests=unavailable", output);
+        Assert.Contains("generate-stderr-classification=present-redacted", lines);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(1)]
     [InlineData(900)]
