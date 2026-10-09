@@ -541,3 +541,33 @@ the expected saved answer was empty (3.8967-second case). Its setup did not capt
 terminal diagnostics. Chat now owns common controlled seed/lifecycle diagnosis
 across these navigation cases; another unchanged full rerun is not an explanation.
 No production fix, timing waiver, external execution or BL success is claimed.
+
+## Approved synthetic CL-and-BL operation — October 9
+
+The user explicitly answered **Approve this one BL run** to the consolidated
+resource request. This is one new operation, conditional on reviewed/compiled
+fixture support; it does not reuse completed B or authorize presentation operation C.
+
+- Source: only the test-owned existing `AccountPolicy.java` registration/login
+  rules, not either production Repository. One actual accepted registration-relevant
+  root is selected explicitly after inspecting offered candidates; ambiguity stops.
+- Provider: `https://api.deepseek.com`, model `deepseek-flash`; protected reference
+  is root `.env` key `VULGATA_TEST_LLM_KEY`. Never record the secret value. The
+  credential may be protected in fixture-owned temporary storage only.
+- One Generate, WorkerCap 1, cumulative maximum **8 Worker/B1/B2 requests and
+  48,000 combined tokens**. Worker maximum 3 requests/no transient retries;
+  existing Business maximum two attempts per work item counts against the same
+  totals. No automatic whole-run retry. Original run 900 seconds, file 480 seconds,
+  operator wait 120 seconds, cleanup drain 30 seconds.
+- Fresh run-labelled `postgres:17-alpine` container and volume, dynamic loopback
+  port, only its new `vulgata_story184_generator_<GUID>` database. Existing
+  migrations, synthetic operator and ordinary User accounts are allowed.
+- Fixture-owned temporary keys/logs/source/tool/exchange state, pinned CodeGraph
+  and JDT, one owned Generator and temporary Web host on an unused loopback port
+  for actual Identity login/read checks. No unrelated processes or shared DBs.
+- Delete owned database/container/volume and temporary files/keys afterward;
+  retain sanitized test evidence only. No persistent configuration changes,
+  retained dataset, production-source disclosure or permission expansion.
+
+Approval is recorded but the operation has **not started**. Root remains sole
+runtime/resource owner; lanes must not generate duplicate qualification data.
