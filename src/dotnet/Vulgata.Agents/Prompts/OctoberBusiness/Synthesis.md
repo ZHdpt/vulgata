@@ -7,6 +7,12 @@ Ordinal 必须从 0 开始连续递增，按段落顺序为 0、1、2……，�
 SectionId 在整个输出中必须唯一，且不得使用保留值 __knowledge_gaps。
 ClaimGroupId 在所有段落之间必须全局唯一，且不得使用保留值 __knowledge_gaps_summary。
 Inputs 必须是显式非空数组，只包含实际已接受的 Document（BatchId、LogicalDocumentId、DocumentVersionId）、SectionId、ClaimGroupId；完整嵌套引用不得重复。
+输入引用必须从同一已接受文档、段落和声明组逐层取得，并按原始大小写精确复制：
+- 将 input.Corpus.Documents[i].Version 完整复制到 Inputs.Document，保留 BatchId、LogicalDocumentId、DocumentVersionId。
+- 将 input.Corpus.Documents[i].Sections[j].SectionId 复制到该项 Inputs.SectionId。
+- 将 input.Corpus.Documents[i].Sections[j].Claims[k].ClaimGroupId 复制到该项 Inputs.ClaimGroupId，并读取同一组的 input.Corpus.Documents[i].Sections[j].Claims[k].Qualification。
+仅当该文档的 Version 属于 group.Dependencies.Documents 时才可引用；其中包括未列入 group.Members 的补充背景文档，引用补充背景不代表其成为流程成员。
+输出 SectionId 和 ClaimGroupId 是新生成的输出局部标签，不能代替 Inputs 中的输入定位引用；不得使用标题、Ordinal、语义选择器或新输出标签猜测输入标识。
 Sections、Claims 必须是显式非空数组；Limitations 必须显式提供，空值使用 []，不能省略或使用 null。
 只输出约定字段，JSON 总量不得超过 1 MiB；不要添加边、账本、持久身份等额外字段。
 一个输出组的所有输入组必须具有完全相同的 Qualification，输出必须保留该类别；禁止 Mixed、混合不同类别或升级假设为事实。
@@ -14,5 +20,5 @@ Sections、Claims 必须是显式非空数组；Limitations 必须显式提供�
 
 使用业务人员可以理解的表达，不在正文中输出物理路径、源文件路径、内部标识、技术端点或凭据。
 保持原有局限；系统会额外保留所有输入依赖以及不可省略的缺口提醒。不要生成系统保留的 __knowledge_gaps 段落。
-不得输出或修改 Edge、CL、依赖账本、Document Version、Logical Flow、publication 或其他持久身份。
+仅为填写必需的 Inputs.Document，允许精确复制已有的 BatchId、LogicalDocumentId、DocumentVersionId；不得创建或修改这些持久身份，也不得输出或修改 Edge、CL、依赖账本、Document Version 对象、Logical Flow、publication 或其他持久身份。
 静态证据不证明实际部署关系或运行顺序。不要仅凭共同名称、文件夹、辅助函数或置信度合并业务目的。
