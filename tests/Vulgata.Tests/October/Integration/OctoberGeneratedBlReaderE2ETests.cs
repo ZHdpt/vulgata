@@ -17,6 +17,10 @@ public sealed class OctoberGeneratedBlReaderE2ETests
     // Exact publication snapshots use the owner's separate stored-read bounds, not the public page cap.
     private const int MaximumPages = 128;
     private const long MaximumAggregateBytes = 8 * 1024 * 1024;
+    // Test-fixture safeguards separate from graph/page limits and production policy. Reference observations
+    // are charged across BOTH dependency snapshots for the entire positive assertion helper.
+    private const int MaximumBusinessDocuments = 128;
+    private const int MaximumDependencyReferences = 4096;
 
     internal sealed record ReconstructedBusinessStream(DocumentHandle Document, string Content,
         ImmutableArray<string> OrderedClaimTexts, int Pages, ContinuationToken? FirstContinuation);
@@ -35,7 +39,10 @@ public sealed class OctoberGeneratedBlReaderE2ETests
         var expected = original.Documents.Where(document => document.Kind == DocumentKind.BusinessLogic)
             .ToDictionary(document => Handle(publication, document.Reference));
         Assert.NotEmpty(expected);
+        Assert.InRange(expected.Count, 1, MaximumBusinessDocuments);
         Assert.Equal(original.Documents.Length, original.Documents.Select(document => document.Reference).Distinct().Count());
+        var dependencyBudget = new DependencyObservationBudget();
+        var originalDependencies = await CaptureDependenciesAsync(fixture, publication, expected.Keys, dependencyBudget, cancellationToken);
         var budget = new VerificationBudget();
         Assert.NotNull(session);
         Assert.NotNull(session.Selection);
@@ -103,7 +110,50 @@ public sealed class OctoberGeneratedBlReaderE2ETests
         var retained = await fixture.LoadExactPublicationAsync(publication, cancellationToken);
         Assert.Equal(publication, retained.Publication);
         AssertUnchangedDocuments(original.Documents, retained.Documents);
+        var retainedDependencies = await CaptureDependenciesAsync(fixture, publication, expected.Keys, dependencyBudget, cancellationToken);
+        foreach (var pair in originalDependencies)
+        {
+            Assert.True(pair.Value.SetEquals(retainedDependencies[pair.Key]),
+                "Exact Business Document dependencies changed during reads.");
+        }
         return reconstructed.ToImmutable();
+    }
+
+    private static async Task<Dictionary<DocumentHandle, HashSet<DocumentVersionReference>>> CaptureDependenciesAsync(
+        OctoberHostSelectionTests.GeneratorPrepareFixture fixture, PublicationBinding publication,
+        IEnumerable<DocumentHandle> businessDocuments, DependencyObservationBudget budget, CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<DocumentHandle, HashSet<DocumentVersionReference>>();
+        foreach (var document in businessDocuments)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Assert.Null(document.SectionId);
+            var dependencies = await fixture.LoadExactBusinessDependenciesAsync(publication, document, cancellationToken);
+            Assert.False(dependencies.IsDefaultOrEmpty, "A published Business Document must retain its exact dependencies.");
+            budget.Admit(dependencies.Length);
+            var references = dependencies.ToHashSet();
+            Assert.Equal(dependencies.Length, references.Count);
+            Assert.All(dependencies, dependency =>
+            {
+                Assert.Equal(publication.Knowledge.BatchId, dependency.BatchId);
+                Assert.NotEqual(Guid.Empty, dependency.LogicalDocumentId);
+                Assert.NotEqual(Guid.Empty, dependency.DocumentVersionId);
+            });
+            // Keep every owner-returned reference, including supplemental nonmembers. Neither Business
+            // visibility nor final-publication membership is a requirement, and no graph Edge is inferred.
+            result.Add(document, references);
+        }
+        return result;
+    }
+
+    private sealed class DependencyObservationBudget
+    {
+        private int _observations;
+        internal void Admit(int count)
+        {
+            Assert.InRange(count, 1, MaximumDependencyReferences - _observations);
+            _observations += count;
+        }
     }
 
     /// <summary>
