@@ -51,10 +51,17 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
         { return Empty(request, BusinessFinalizationStatus.Denied); }
         if (Eligibility(request, lifetime) is { } ineligible) return Empty(request, ineligible);
+        BusinessSynthesisFailureReason? originalFailureReason = null;
         try
         {
             // No caller token reaches the original callback; the privately issued slot supplies the host token.
-            await _slot.RunOnceAsync(request, hostToken => RunOriginalAsync(request, lifetime, hostToken), cancellationToken)
+            await _slot.RunOnceAsync(request, async hostToken =>
+                {
+                    var originalResult = await RunOriginalAsync(request, lifetime, hostToken);
+                    originalFailureReason = originalResult.OriginalSynthesisFailureReason;
+                    // The slot retains only canonical outcome metadata; another waiter cannot inherit this invocation's diagnostic.
+                    return originalResult with { OriginalSynthesisFailureReason = null };
+                }, cancellationToken)
                 .WaitAsync(cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -72,7 +79,12 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
                 request.CanonicalPayloadDigest, bounded.Token), bounded.Token);
             if (Eligibility(request, lifetime) is { } stopped) return Empty(request, stopped);
             bounded.Token.ThrowIfCancellationRequested();
-            return Coherent(request, result) ? Sanitize(request, result) : Empty(request, BusinessFinalizationStatus.CommitIndeterminate);
+            if (!Coherent(request, result)) return Empty(request, BusinessFinalizationStatus.CommitIndeterminate);
+            var disclosed = Sanitize(request, result);
+            return originalFailureReason is { } reason && reason != BusinessSynthesisFailureReason.None && Enum.IsDefined(reason) &&
+                disclosed.Status is (BusinessFinalizationStatus.Failed or BusinessFinalizationStatus.PublishedPartial) &&
+                disclosed.PersistenceStatus is (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted or KnowledgeWriteStatus.LogUnavailable)
+                ? disclosed with { OriginalSynthesisFailureReason = reason } : disclosed;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception)
@@ -110,6 +122,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             var completed = ImmutableArray.CreateBuilder<FlowSynthesisSubmission>();
             var dispositions = ImmutableArray.CreateBuilder<FlowFinalizationDisposition>();
             bool stopFurtherAttempts = false;
+            BusinessSynthesisFailureReason? firstFailureReason = null;
             foreach (var root in selection.Roots)
             {
                 token.ThrowIfCancellationRequested();
@@ -118,6 +131,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
                     x.Flow.RootKind == root.Kind && x.Flow.RootSelector == root.Selector);
                 if (group is null || stopFurtherAttempts)
                 {
+                    firstFailureReason ??= group is null ? BusinessSynthesisFailureReason.UnsupportedRoot : BusinessSynthesisFailureReason.NotEvaluated;
                     dispositions.Add(new(root, group?.GroupVersionId, FlowFinalizationDispositionKind.NotEvaluated,
                         group is null ? "Selected root was not supported by the bounded planner." : "Original synthesis allowance did not permit further work."));
                     continue;
@@ -130,6 +144,8 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
                     completed.Add(new(root, group.GroupVersionId, synthesized.Proposal));
                 else
                 {
+                    firstFailureReason ??= synthesized.FailureReason != BusinessSynthesisFailureReason.None
+                        ? synthesized.FailureReason : BusinessSynthesisFailureReason.ExecutionUnavailable;
                     dispositions.Add(new(root, group.GroupVersionId, FlowFinalizationDispositionKind.Failed, "Synthesis did not produce a validated completed proposal."));
                     stopFurtherAttempts = synthesized.AdmissionFailure is ProviderAdmissionStatus.BudgetExhausted or ProviderAdmissionStatus.DeadlineExceeded;
                 }
@@ -148,7 +164,9 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             publication = publication with { CanonicalOutcomeDigest = OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(publication) };
             using var publishBound = Bound(token);
             var saved = await AwaitAsync(_store.PublishAsync(publication, publishBound.Token), publishBound.Token);
-            return Coherent(request, saved) ? Sanitize(request, saved) : Empty(request, BusinessFinalizationStatus.CommitIndeterminate);
+            return Coherent(request, saved)
+                ? Sanitize(request, saved) with { OriginalSynthesisFailureReason = firstFailureReason }
+                : Empty(request, BusinessFinalizationStatus.CommitIndeterminate);
         }
         catch (OperationCanceledException)
         { return Empty(request, Eligibility(request, lifetime) ?? (hostToken.IsCancellationRequested ? BusinessFinalizationStatus.HardStopped : BusinessFinalizationStatus.CommitIndeterminate)); }
@@ -179,7 +197,8 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
 
     private static BusinessFinalizationResult Sanitize(FinalizationRequest request, BusinessFinalizationResult result) =>
         result.Status is BusinessFinalizationStatus.Published or BusinessFinalizationStatus.PublishedPartial or BusinessFinalizationStatus.NoContent
-            ? result : Empty(request, result.Status) with { PersistenceStatus = result.PersistenceStatus, IsReplay = result.IsReplay };
+            ? result with { OriginalSynthesisFailureReason = null }
+            : Empty(request, result.Status) with { PersistenceStatus = result.PersistenceStatus, IsReplay = result.IsReplay };
 
     private static BusinessFinalizationResult Empty(FinalizationRequest request, BusinessFinalizationStatus status) =>
         new(status, request.Operation, null, new(true, []));

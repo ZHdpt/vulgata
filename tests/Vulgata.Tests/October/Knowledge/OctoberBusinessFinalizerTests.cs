@@ -12,6 +12,98 @@ public sealed class OctoberBusinessFinalizerTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FinalizeAsync_OriginalFailureDiagnostic_SurvivesAuthorizedLookupOnlyForOriginalInvocationAsync(bool bothRootsFail)
+    {
+        using var f = new FinalizerCase();
+        var expectedStatus = bothRootsFail ? BusinessFinalizationStatus.Failed : BusinessFinalizationStatus.PublishedPartial;
+        f.Store.PublishStatus = expectedStatus;
+        f.Store.PublishCoverage = new(!bothRootsFail, []);
+        f.Store.PublishPersistenceStatus = KnowledgeWriteStatus.Committed;
+        f.Provider = (call, _) => Task.FromResult(call == 1
+            ? SynthesisCase.JsonResponse(JsonSerializer.Serialize(f.Proposal(0) with { Sections = [f.Proposal(0).Sections[0] with { Ordinal = 1 }] }))
+            : bothRootsFail ? SynthesisCase.JsonResponse("null") : f.Response(call - 1));
+        var finalizer = f.Finalizer();
+        var original = await finalizer.FinalizeAsync(f.Request);
+        Assert.Equal(expectedStatus, original.Status);
+        Assert.Equal(bothRootsFail ? null : f.Publication, original.Publication);
+        Assert.Equal("SectionOrder", SynthesisDiagnosticProbe.Read(original, "OriginalSynthesisFailureReason"));
+        Assert.True(f.Store.Lookups >= 1);
+        Assert.Null(SynthesisDiagnosticProbe.Read(f.Store.Durable!, "OriginalSynthesisFailureReason"));
+        Assert.Equal(bothRootsFail ? 0 : 1, f.Store.Submitted!.Completed.Length);
+        Assert.Equal(bothRootsFail ? 2 : 1, f.Store.Submitted.Dispositions.Length);
+        var cached = await finalizer.FinalizeAsync(f.Request);
+        var importedSlot = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Equal(original.Publication, cached.Publication);
+        Assert.Equal(original.Publication, importedSlot.Publication);
+        Assert.Null(SynthesisDiagnosticProbe.Read(cached, "OriginalSynthesisFailureReason"));
+        Assert.Null(SynthesisDiagnosticProbe.Read(importedSlot, "OriginalSynthesisFailureReason"));
+        Assert.Equal(2, f.Client.Calls); Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("injected")]
+    [InlineData("revoked")]
+    [InlineData("foreign")]
+    [InlineData("legacy-null")]
+    [InlineData("durable-replay")]
+    [InlineData("indeterminate")]
+    public async Task FinalizeAsync_LookupDiagnostic_IsNeverAcceptedAsOriginalAttemptAuthorityAsync(string boundary)
+    {
+        using var f = new FinalizerCase();
+        f.Store.PublishStatus = BusinessFinalizationStatus.PublishedPartial;
+        f.Store.PublishCoverage = new(true, []);
+        f.Store.PublishPersistenceStatus = KnowledgeWriteStatus.Committed;
+        f.Provider = (call, _) =>
+        {
+            var response = f.Response(call - 1);
+            if (call == 1 && boundary != "injected") response.FinishReason = ChatFinishReason.Length;
+            return Task.FromResult(response);
+        };
+        var lookup = f.Result(BusinessFinalizationStatus.PublishedPartial) with { Coverage = new(true, []), PersistenceStatus = KnowledgeWriteStatus.Committed };
+        lookup = boundary switch
+        {
+            "revoked" => f.Result(BusinessFinalizationStatus.Denied),
+            "indeterminate" => f.Result(BusinessFinalizationStatus.CommitIndeterminate),
+            "foreign" => lookup with { Operation = lookup.Operation with { OperationId = Guid.NewGuid() } },
+            "legacy-null" => lookup with { PersistenceStatus = null },
+            "durable-replay" => lookup with { PersistenceStatus = KnowledgeWriteStatus.AlreadyCommitted, IsReplay = true },
+            _ => lookup
+        };
+        SynthesisDiagnosticProbe.Set(lookup, "ResponseShape", "OriginalSynthesisFailureReason");
+        f.Store.LookupOverride = lookup;
+        if (boundary == "durable-replay") f.Store.Initial = new(BusinessFinalizationInitialReadKind.NoDispatchResult, lookup);
+        var result = await f.Finalizer().FinalizeAsync(f.Request);
+        Assert.Null(SynthesisDiagnosticProbe.Read(result, "OriginalSynthesisFailureReason"));
+        Assert.Equal(boundary switch
+        {
+            "revoked" => BusinessFinalizationStatus.Denied,
+            "foreign" or "indeterminate" => BusinessFinalizationStatus.CommitIndeterminate,
+            _ => BusinessFinalizationStatus.PublishedPartial
+        }, result.Status);
+        if (boundary is "revoked" or "foreign" or "indeterminate") { Assert.Null(result.Publication); Assert.Empty(result.Coverage.PermittedGaps); }
+        if (boundary == "durable-replay") { Assert.Equal(0, f.Client.Calls); Assert.Equal(0, f.Store.Publishes); }
+        else Assert.Equal(2, f.Client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void FinalizationDiagnostic_NonnullReason_DoesNotChangeOrdinaryOrCanonicalSerialization()
+    {
+        using var f = new FinalizerCase();
+        var result = f.Result(BusinessFinalizationStatus.Failed);
+        string ordinary = JsonSerializer.Serialize(result);
+        string canonical = OctoberKnowledgePolicy.SerializeCanonical(result);
+        SynthesisDiagnosticProbe.Set(result, "SectionOrder", "OriginalSynthesisFailureReason");
+        Assert.Equal("SectionOrder", SynthesisDiagnosticProbe.Read(result, "OriginalSynthesisFailureReason"));
+        Assert.Equal(ordinary, JsonSerializer.Serialize(result));
+        Assert.Equal(canonical, OctoberKnowledgePolicy.SerializeCanonical(result));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("conflict")]
     [InlineData("invalid-proposal")]
     [InlineData("indeterminate")]
@@ -433,6 +525,7 @@ internal sealed class FinalizerOwnerStore(FinalizerCase fixture) : IOctoberFlowP
     public Exception? LookupFailure { get; set; }
     public CoverageProjection? PublishCoverage { get; set; }
     public BusinessFinalizationStatus PublishStatus { get; set; } = BusinessFinalizationStatus.Published;
+    public KnowledgeWriteStatus? PublishPersistenceStatus { get; set; }
     public int InitialReads { get; private set; }
     public int Publishes { get; private set; }
     public int Lookups { get; private set; }
@@ -449,7 +542,7 @@ internal sealed class FinalizerOwnerStore(FinalizerCase fixture) : IOctoberFlowP
     public Task<BusinessFinalizationResult> PublishAsync(FlowFinalizationPublicationRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested(); Publishes++; Submitted = request;
-        var result = fixture.Result(PublishStatus);
+        var result = fixture.Result(PublishStatus) with { PersistenceStatus = PublishPersistenceStatus };
         if (PublishCoverage is not null) result = result with { Coverage = PublishCoverage };
         if (PublishStatus != BusinessFinalizationStatus.CommitIndeterminate) Durable = result;
         return Task.FromResult(result);
