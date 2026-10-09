@@ -812,3 +812,16 @@ Both standard-launcher runs rebuilt current sources and exited zero; process-loc
 PATH was restored. No external-resource qualification was performed. The earlier
 full-suite 4,188/4,189 remains unresolved, and live BL qualification still requires
 a new one-run approval.
+
+### Five-attempt diagnostic authorization — October 9
+
+The user explicitly approved automatic retry and diagnosis within five attempts
+from this point, then said Proceed. At most five additional live synthetic BL
+attempts are authorized, with source-free diagnosis and bounded corrections between
+them. Every attempt retains the original AccountPolicy-only source, approved
+DeepSeek endpoint/model and protected credential, 8-request/48,000-token per-run
+limits, original deadlines and disposable owned-resource cleanup. Aggregate ceiling
+is 40 requests/240,000 tokens. No unchanged blind retries, production source,
+retained dataset or expanded runtime authority. Stop on success, after five
+attempts, or on a blocker requiring broader authority. Earlier grants remain
+consumed. Attempt 1 will use the reviewed diagnostics at `dc993768`.
