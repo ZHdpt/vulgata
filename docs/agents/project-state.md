@@ -32,7 +32,8 @@ Current activation authority and ownership are in the [October 8 activation reco
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
 its reviewed tests/evidence are integrated at `9271f8f0`. This supersedes older
 "unrun PostgreSQL" statements for exactly those cases, not real generated content.
-Operation B is explicitly paused; retained operation C waits for B. Reviewed Business
+Operation B is now complete for the exact synthetic CL scenario above; retained
+operation C still requires its separate concrete authorization. Reviewed Business
 per-turn cleanup is integrated at `260c5706`, with its own 62/62 PostgreSQL rerun and
 verified cleanup. Final combined SelfContained `9e0129e1d5d54b94bc5df77ed6e57ffb`
 passes **3,991/3,991**, zero failures/skips, including Identity reader binding, prompt
@@ -64,9 +65,10 @@ requests. Diagnosis reproduced native launch failure when the Generator fixture
 omitted Windows `PATHEXT`; restoring only that key passed the native probe.
 Root's fixture-only correction and exact real authority/contained-list regression
 pass 1/1 (`3ddd767908e04d738097eca9f131d8b5`), with owned cleanup. Production Scan
-and persistent machine configuration are unchanged. Corrected full B remains
-unverified; native and provider-free passes are not generated-content evidence.
-C remains separate and pending B; no production source disclosure is approved.
+and persistent machine configuration are unchanged. The subsequent corrected full B
+passed as recorded above; native and provider-free passes alone were not
+generated-content evidence. C remains separately pending authorization; no production
+source disclosure is approved.
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.

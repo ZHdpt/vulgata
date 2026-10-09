@@ -426,3 +426,29 @@ input/verification path and shares one coordinated data run. Implementation and
 SelfContained verification proceed under this approval. New live BL spend limits
 and retained presentation source/host/retention details still need one concrete
 resource authorization; the synthetic B's finished one-run grant is not reused.
+
+### Additive ordinary-reader fixture checkpoint
+
+Integration added a fixture-owned reader session retaining the genuine authenticated
+principal, captured stamp and one canonical ReadSelection across Search, ReadExact
+and GetRelated continuations. Disposal closes admission and drains returned API
+tasks; it does not claim settlement of physical work escaped by an owner timeout.
+A separate internal test oracle loads only the exact owned publication through the
+existing published source; it is not ordinary-user authorization. Existing CL
+qualification APIs and assertions remain unchanged. Independent review accepted
+this bounded addition with no must-fix findings.
+
+Current sources compile and the affected SelfContained selection passes **26/26**,
+zero failures/skips, run `bed774db8bef46328bc6793c06e6f006`. This validates compilation
+and surrounding controlled reader/binding behavior, not execution of the new
+PostgreSQL-backed session or real BL content. Full-suite and external qualification
+are not claimed. Earlier build attempts stopped before tests: one restricted build
+had no compiler diagnostic, and two subsequent attempts reported policy-hook
+`pwsh` lookup failure (MSB3073/9009). A short process-only PATH containing the
+installed PowerShell/.NET and Windows directories passed command lookup and the
+standard launcher; no machine/user configuration or build policy was changed.
+
+Scan's bounded file-exchange operator protocol is agreed with Business; implementation
+is still underway. Explorer owns additive BL reader assertions. Business is checking
+duplicate uncertainty payloads across accepted manifests; mandatory occurrences must
+not be dropped or renamed by Scan. These are not yet integrated runtime capabilities.

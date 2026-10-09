@@ -1777,6 +1777,100 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 : await reader.ReadExactAsync(new(opened.Selection, handle), cancellationToken);
         }
 
+        internal async Task<OctoberPublishedKnowledge> LoadExactPublicationAsync(PublicationBinding publication,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ValidateReaderPublication(publication, KnowledgeMode.IT);
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            IOctoberPublishedKnowledgeSource source = new OctoberKnowledgePublishedSource(CreateReaderContextFactory());
+            var result = await source.LoadAsync(publication, cancellationToken)
+                ?? throw new InvalidOperationException("The exact owned publication is unavailable.");
+            if (result.Publication != publication)
+                throw new InvalidOperationException("The loaded publication differs from the requested binding.");
+            return result;
+        }
+
+        internal async Task<OrdinaryReaderSession?> OpenReaderSessionAsync(PublicationBinding publication,
+            string subjectId, string capturedStamp, KnowledgeMode mode, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ValidateReaderPublication(publication, mode);
+            ClaimsPrincipal principal;
+            lock (_readerLock)
+            {
+                if (!_authenticatedReaders.TryGetValue(subjectId, out var authenticated) || authenticated.Stamp != capturedStamp)
+                    return null;
+                principal = authenticated.Principal.Clone();
+            }
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            var factory = CreateReaderContextFactory();
+            var live = new OctoberKnowledgeIdentityAdapter(Services.GetRequiredService<IServiceScopeFactory>(),
+                token => { token.ThrowIfCancellationRequested(); return Task.FromResult<ClaimsPrincipal?>(principal); });
+            var policy = new OctoberKnowledgeDisclosurePolicy(live, new OctoberKnowledgeSelectionAuthority(factory));
+            string log = Path.Combine(OwnedRoot, "reader-logs"); Directory.CreateDirectory(log);
+            IOctoberKnowledgeReader reader = new OctoberKnowledgeReader(new OctoberKnowledgePublishedSource(factory), publication, policy,
+                new OctoberKnowledgeCursorProtector(new OctoberKnowledgeDataProtectionTokenProtector(_protection.Provider)),
+                new OctoberKnowledgeOperationLog(log));
+            var opened = await reader.OpenReadSelectionAsync(new(publication, new(subjectId, capturedStamp), mode,
+                KnowledgePurpose.Reader, [RepositoryId]), cancellationToken);
+            return opened.Selection is null ? null : new OrdinaryReaderSession(reader, opened.Selection);
+        }
+
+        private ReaderContextFactory CreateReaderContextFactory() => new(new DbContextOptionsBuilder<OctoberDbContext>()
+            .UseNpgsql(ConnectionString, options => options.MigrationsHistoryTable("__OctoberMigrationsHistory", "october")).Options);
+
+        /// <summary>One original authenticated selection; disposal drains returned reader API tasks, not escaped physical I/O.</summary>
+        internal sealed class OrdinaryReaderSession(IOctoberKnowledgeReader reader, ReadSelection selection) : IAsyncDisposable
+        {
+            private readonly SemaphoreSlim _gate = new(1, 1);
+            private readonly object _lifetime = new();
+            private Task? _disposal;
+            private bool _closed;
+            internal ReadSelection Selection { get; } = selection;
+
+            internal Task<ContentPage> ReadExactAsync(DocumentHandle document, ContinuationToken? continuation = null,
+                CancellationToken cancellationToken = default) => InvokeAsync(
+                    token => reader.ReadExactAsync(new(Selection, document, continuation), token), cancellationToken);
+
+            internal Task<SearchPage> SearchAsync(string query, int pageSize = KnowledgeContract.DefaultPageSize,
+                ContinuationToken? continuation = null, CancellationToken cancellationToken = default) => InvokeAsync(
+                    token => reader.SearchAsync(new(Selection, query, pageSize, continuation), token), cancellationToken);
+
+            internal Task<RelatedPage> GetRelatedAsync(DocumentHandle document, int pageSize = KnowledgeContract.DefaultPageSize,
+                ContinuationToken? continuation = null, CancellationToken cancellationToken = default) => InvokeAsync(
+                    token => reader.GetRelatedAsync(new(Selection, document, pageSize, continuation), token), cancellationToken);
+
+            private async Task<T> InvokeAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken token)
+            {
+                token.ThrowIfCancellationRequested();
+                await _gate.WaitAsync(token);
+                try
+                {
+                    lock (_lifetime) ObjectDisposedException.ThrowIf(_closed, this);
+                    return await operation(token);
+                }
+                finally { _gate.Release(); }
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                lock (_lifetime)
+                {
+                    _closed = true;
+                    return new(_disposal ??= DrainAsync());
+                }
+            }
+
+            private async Task DrainAsync()
+            {
+                await _gate.WaitAsync();
+                _gate.Release();
+            }
+        }
+
         private void ValidateReaderPublication(PublicationBinding publication, KnowledgeMode mode)
         {
             if (publication?.Knowledge is not { } binding || binding.CanonicalDatabaseIdentity != CanonicalDatabaseIdentity
