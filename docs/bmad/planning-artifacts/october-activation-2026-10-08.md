@@ -462,3 +462,14 @@ confirmed the mapping; independent source review accepted the implementation.
 Current compilation and 26/26 affected SelfContained tests pass in
 `7ca0e24daad649ce84791f7b406a121c`. The new storage oracle itself remains unexecuted
 against real BL until the separately authorized shared qualification run.
+
+Explorer's reviewed assertion helpers (`0315b087`, correction `78deae7b`) are
+imported at `a83daa2a`/`9424130a` and classified E2E. They reconstruct complete
+canonical Business reading with bounded pagination, check BL-only disclosure and
+use the same previously successful session/actual cursors across stamp revocation.
+The rejected draft's nullable reopen shortcut was removed: service failure cannot
+count as successful revocation. These helpers have no discoverable test or fake
+Generate stub; orchestration and dependency assertions remain owner work.
+Current compilation and the existing affected SelfContained selection pass
+**26/26**, run `ef63d2749a5f4049a79d290152de5cc6`, with 436 classified files.
+This is compilation/controlled evidence only, not executed BL E2E qualification.
