@@ -118,7 +118,12 @@ SelfContained **727/727** passed, zero skips (isolation
 `7d0758fe750f4e9e960b83375141758a`); not whole-project full-suite GREEN. Lane broader
 run was726/727 with BusinessTransport old-rate-reservation failure; isolatedpass
 and mainpass do not erase it. Scan is doing bounded pre-change baseline assessment;
-paid repeats remain held pending disposition. Prior partialCL retained.
+Baseline assessment ended with two parent704/704passes, unchangedfailurepath and
+inconclusiveattribution; keep intermittent concern. Rootallowed onequalification,
+nowsettled: `phone-c0c810df49ae`49.12s,2requests7,556input/1,528output,accepted0.
+Exactfailure **CodeGraphExplore/ResultAdmission**, returned **Complete**, outer
+ProviderFailed/ToolInvocation. Paid runsheld; Scan source-free ledger/native-envelope
+contract assessment authorized, no admission bypass. Prior partialCL retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

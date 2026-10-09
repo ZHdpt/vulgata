@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: one prior real CL remains accepted but unpublished. Reviewed JDT/tool-path
-correction is integrated. Latest real retry identifies `OutputBytes` as the Worker
-budget bound; paid retries paused for source-free accounting assessment.
+Status: one prior real CL remains accepted but unpublished. Accounting correction
+is integrated. Latest retry identifies `CodeGraphExplore / ResultAdmission` with
+returned status `Complete`; paid runs held for bounded admission-path diagnosis.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -370,3 +370,27 @@ main727/727 do not erase/explain it. Scan is assigned bounded pre-change baselin
 assessment; source shows virtual60s steps with10ms scheduling windows around a120s
 deadline, a hypothesis not yet proved for the recordedfailure. No test weakening,
 Businessfix or paidretry while that disposition is pending. PartialCL remains intact.
+
+## Baseline disposition and CodeGraph result-admission failure
+
+Two unchanged parent fullOctoberScan runs passed704/704 (f73f76a139a046cdb0721acf7466f960,
+c5782778eda94776b1f0522eb152d555). Current727 includes23added accountingcases. Failed
+Business test, ResolutionExecutor, scope and clock helpers are unchanged. Attribution
+of lane726/727 remains inconclusive; preserve that intermittent concern. Root allowed
+one qualification based on reviewed correction/main727/727, not a regression waiver.
+
+Fresh `phone-c0c810df49ae`, batch `cdca79a6-12a7-4c52-978f-174e4e126e99`, database
+`vulgata_oct_pilot_8217b6076edc401083bcd59d4209160b`:
+
+- **49.12s wall /46.90s pipeline**, exit1, no timeout/cleanup doubt; inventory77,
+  accepted0; **2requests,7,556input/1,528output tokens**, usageknown.
+- `ProviderFailed / ToolInvocation / None`; observed tool `CodeGraphExplore`,
+  boundary `ResultAdmission`, actual returned `codeGraphStatus: Complete`. Other
+  typed statuses/settlement unknown(null). This does not prove payload validity,
+  but distinguishes this failure from JDT startup/provider transport/tool readiness.
+- Paid runs held. Scan owns source-free controlled Complete-result-to-ledger
+  assessment, preserving authority/currentness/provenance. If real native envelope
+  observation is necessary, propose a bounded source-local no-LLM probe for root
+  before any resource action; do not perform another paid diagnostic loop.
+- Prior partialCL database/keys remain preserved and unpublished. All77 hashes
+  matched before this run; no sharedcontainer/database mutation or newcontainer.
