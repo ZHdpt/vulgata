@@ -20,6 +20,14 @@ scenario only. Useful BL, two-Repository resolution, interactive streaming Chat,
 graph and retained presentation operation C remain unqualified/unapproved as
 applicable; no production-source disclosure is implied.
 
+Active next increment (October 9, explicitly approved): sequential multi-file
+processing (WorkerCap 1), bounded same-original-run operator selection of actual
+accepted BL roots, and an additive BL ordinary-reader qualification path. Scan
+owns CLI/runner, Business canonical contracts/schema, Explorer the new BL E2E,
+Integration the shared fixture/host/resources. No broad scheduler/recovery restart
+or automatic root discovery. See the activation record for the exact scope;
+implementation approval does not supply missing live-spend/retained-host limits.
+
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
 The approved 62-case source-free PostgreSQL selection passed with owned cleanup;
 its reviewed tests/evidence are integrated at `9271f8f0`. This supersedes older

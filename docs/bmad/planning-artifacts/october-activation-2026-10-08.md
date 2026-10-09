@@ -396,3 +396,33 @@ Fixture database/temp cleanup was recorded; runner container removal and named
 volume absence were verified. No presentation dataset was retained, no production
 repository was accessed, and no credential values were recorded. Operation C is
 now eligible for a concrete separate approval request, not automatically approved.
+
+## Approved limited extension after B — October 9
+
+After read-only Scan/Business readiness assessment, the user explicitly approved:
+
+- sequential multi-file processing across explicitly selected Repositories;
+- bounded operator selection of actual accepted Code Units within the same
+  original run, preserving identity, deadline and remaining budget;
+- extending qualification to real BL content and ordinary-user Business reading.
+
+This releases that limited multi-file prerequisite beyond the earlier single-file
+hold; it does not activate cap-2 concurrency, a generic fairness scheduler, durable
+resume, broader recovery or automatic root discovery. WorkerCap remains 1. Preserve
+per-file ownership/ledgers, accumulated contributors, exact terminal coverage and
+one original shared request/token/time allowance. No acceptance/persistence bypass.
+
+Scan owns Generator/CLI/command-local operator interaction and its tests. Existing
+exact root settings remain supported. The new bounded async selection occurs at
+the existing hook after freeze/B1, over authorized owner-projected units, before
+the final request digest/original slot. No guessed/all/first-unit default, foreign
+or stale selection, renewed deadline/budget, held provider permit/DB transaction,
+or abandoned interaction. Business owns contract compatibility and all schema;
+no schema/Core contract redesign is approved. Explorer owns the new BL reader E2E
+assertions; Integration owns shared fixture/host/resource wiring and merges.
+
+Current CL-only qualification guards remain intact; BL gets an explicit additive
+input/verification path and shares one coordinated data run. Implementation and
+SelfContained verification proceed under this approval. New live BL spend limits
+and retained presentation source/host/retention details still need one concrete
+resource authorization; the synthetic B's finished one-run grant is not reused.
