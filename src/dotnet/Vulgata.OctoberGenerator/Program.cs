@@ -485,7 +485,8 @@ public static class OctoberGeneratorEntryPoint
                     workerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed
                     ? DefinedStatus(worker.TerminalFailure) : null,
                 BudgetFailure = worker.Status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.BudgetExceeded
-                    ? DefinedStatus(worker.BudgetFailure) : null
+                    ? DefinedStatus(worker.BudgetFailure) : null,
+                ToolFailure = ProjectToolFailure(worker)
             } : null,
             Publication = publication,
             report.Documents,
@@ -524,6 +525,27 @@ public static class OctoberGeneratorEntryPoint
         {
             Converters = { new JsonStringEnumConverter() }
         });
+    }
+
+    private static object? ProjectToolFailure(OctoberWorkerDiagnosticSnapshot worker)
+    {
+        if (worker.Status is not { } status || !Enum.IsDefined(status) ||
+            status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed ||
+            worker.ToolFailure is not { } observed || !Enum.IsDefined(observed.Operation) ||
+            !Enum.IsDefined(observed.Boundary)) return null;
+        bool java = observed.Operation is SourceMetadataOperation.JavaDefinition or SourceMetadataOperation.JavaReferences;
+        bool source = observed.Operation is SourceMetadataOperation.List or SourceMetadataOperation.ReadTextRange or SourceMetadataOperation.SearchText;
+        return new
+        {
+            observed.Operation,
+            observed.Boundary,
+            JavaOpenStatus = java ? DefinedStatus(observed.JavaOpenStatus) : null,
+            JavaOutcome = java ? DefinedStatus(observed.JavaOutcome) : null,
+            SourceOutcome = source || (java && observed.Boundary == OctoberToolFailureBoundary.SourceCurrentness)
+                ? DefinedStatus(observed.SourceOutcome) : null,
+            CodeGraphStatus = observed.Operation == SourceMetadataOperation.CodeGraphExplore ? DefinedStatus(observed.CodeGraphStatus) : null,
+            observed.CleanupConfirmed
+        };
     }
 
     private static string? SafeRelativePath(string? path) => path is not null && path.Length <= 2048 &&

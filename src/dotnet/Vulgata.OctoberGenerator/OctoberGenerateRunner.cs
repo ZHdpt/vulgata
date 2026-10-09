@@ -277,7 +277,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                         });
                     _activeLedger = ledger;
                     request = request with { Source = ledger };
-                    IReadOnlyList<AIFunction> tools = await ToolAsync(() => new OctoberWorkerTools(_source.GetRuntime(repository.RepositoryId), ledger).CreateAsync(token), token);
+                    var workerTools = new OctoberWorkerTools(_source.GetRuntime(repository.RepositoryId), ledger);
+                    IReadOnlyList<AIFunction> tools = await ToolAsync(() => workerTools.CreateAsync(token), token);
                     tools = tools.Select(tool => (AIFunction)new MeasuredTool(this, tool)).ToArray();
                     IChatClient client = execution.Policy.OutputStage == "cl-and-bl" && _businessClient is not null
                         ? _businessClient : await AcquireClientAsync(execution.Provider, token);
@@ -326,7 +327,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                         _coverage = _coverage.Add(new(admissionId, frame.Origin, IsCancelled ? CoverageDisposition.Cancelled : CoverageDisposition.Failed, "worker_not_completed"));
                         _admissionClosed = true;
                         return Failure("worker_not_completed", interrupted: IsCancelled) with
-                        { WorkerDiagnostics = CreateWorkerDiagnostics(observed) };
+                        { WorkerDiagnostics = CreateWorkerDiagnostics(observed)! with { ToolFailure = workerTools.FirstFailure } };
                     }
                     IOctoberKnowledgeWriter writer = _dependencies.CreateKnowledgeWriter(new(attempt, attempt, this, ledger, this));
                     KnowledgeWriteResult accepted = await StoreAsync(() => attempt.AcceptAsync(writer, token), token);

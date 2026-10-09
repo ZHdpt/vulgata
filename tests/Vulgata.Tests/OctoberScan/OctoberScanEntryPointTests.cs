@@ -1,3 +1,4 @@
+using System.Text;
 using System.Collections.Immutable;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Configuration;
+using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.OctoberGenerator;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Tests.TestInfrastructure;
@@ -402,7 +404,7 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "absent" or "foreign-binding") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "budgetFailure", "failureStage", "retryDisposition", "status", "terminalFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "budgetFailure", "failureStage", "retryDisposition", "status", "terminalFailure", "toolFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined") { Assert.All(diagnostic.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
         Assert.Equal(condition is "budget" or "undefined-budget" ? "BudgetExceeded" : condition == "completed-terminal" ? "Completed" : "InvalidOutput", diagnostic.GetProperty("status").GetString());
         Assert.Equal("None", diagnostic.GetProperty("retryDisposition").GetString());
@@ -411,6 +413,55 @@ public sealed class OctoberScanEntryPointTests
         else Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("terminalFailure").ValueKind);
         if (condition == "budget") Assert.Equal("OutputBytes", diagnostic.GetProperty("budgetFailure").GetString());
         else Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("budgetFailure").ValueKind);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("java")]
+    [InlineData("java-source-currentness")]
+    [InlineData("source")]
+    [InlineData("graph")]
+    [InlineData("unknown-status")]
+    [InlineData("unknown-operation")]
+    [InlineData("unknown-boundary")]
+    [InlineData("completed-worker")]
+    [InlineData("foreign-binding")]
+    public async Task ToolFirstCauseProjection_IsBoundedOperationSpecificAndContainsNoPayloadAsync(string condition)
+    {
+        var operation = condition == "source" ? SourceMetadataOperation.ReadTextRange : condition == "graph" ? SourceMetadataOperation.CodeGraphExplore : SourceMetadataOperation.JavaDefinition;
+        var cause = new OctoberToolDiagnosticSnapshot(operation, OctoberToolFailureBoundary.RuntimeOpen,
+            PreparedJavaNavigationOpenStatus.ReadinessFailed, PreparedJavaNavigationOutcome.ReadinessFailed,
+            PreparedSourceOutcome.Incomplete, CodeGraphToolInvocationStatus.Unavailable, true);
+        if (condition == "java-source-currentness") cause = cause with { Boundary = OctoberToolFailureBoundary.SourceCurrentness };
+        if (condition == "unknown-status") cause = cause with { JavaOpenStatus = (PreparedJavaNavigationOpenStatus)99999, JavaOutcome = (PreparedJavaNavigationOutcome)99999, SourceOutcome = (PreparedSourceOutcome)99999, CodeGraphStatus = (CodeGraphToolInvocationStatus)99999, CleanupConfirmed = null };
+        if (condition == "unknown-operation") cause = cause with { Operation = (SourceMetadataOperation)99999 };
+        if (condition == "unknown-boundary") cause = cause with { Boundary = (OctoberToolFailureBoundary)99999 };
+        var snapshot = new OctoberWorkerDiagnosticSnapshot(condition == "completed-worker" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerRetryDisposition.None, OctoberWorkerFailureStage.ToolInvocation) { ToolFailure = cause };
+        var batch = Guid.NewGuid();
+        var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed, OctoberPublicationStatus.Failed,
+            null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(null, null, null, true), []) { WorkerDiagnostics = snapshot };
+        if (condition == "foreign-binding") report = report with { Publication = new(new("PRIVATE_DB", "foreign-target", batch, new string('a', 64)), Guid.NewGuid()) };
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "exact-target", batch, null, new() { OutputStage = "cl-only" }), new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        Assert.NotEqual(0, exit); Assert.DoesNotContain("PRIVATE", output.ToString()); Assert.DoesNotContain("99999", output.ToString());
+        using var document = JsonDocument.Parse(output.ToString());
+        bool hasWorker = document.RootElement.TryGetProperty("workerDiagnostics", out var worker) && worker.ValueKind != JsonValueKind.Null;
+        if (condition == "foreign-binding") { Assert.False(hasWorker); return; }
+        Assert.True(hasWorker);
+        bool present = worker.TryGetProperty("toolFailure", out var projected) && projected.ValueKind != JsonValueKind.Null;
+        if (condition is "unknown-operation" or "unknown-boundary" or "completed-worker") { Assert.False(present); return; }
+        Assert.True(present); Assert.InRange(Encoding.UTF8.GetByteCount(projected.GetRawText()), 1, 512);
+        Assert.Equal(new[] { "boundary", "cleanupConfirmed", "codeGraphStatus", "javaOpenStatus", "javaOutcome", "operation", "sourceOutcome" }, projected.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(operation.ToString(), projected.GetProperty("operation").GetString()); Assert.Equal(condition == "java-source-currentness" ? "SourceCurrentness" : "RuntimeOpen", projected.GetProperty("boundary").GetString());
+        foreach (string field in new[] { "javaOpenStatus", "javaOutcome", "sourceOutcome", "codeGraphStatus" })
+        {
+            bool retained = (condition is "java" or "java-source-currentness") && (field is "javaOpenStatus" or "javaOutcome") || (condition is "source" or "java-source-currentness") && field == "sourceOutcome" || condition == "graph" && field == "codeGraphStatus";
+            if (!retained) Assert.Equal(JsonValueKind.Null, projected.GetProperty(field).ValueKind);
+        }
+        if (condition is "java" or "java-source-currentness") { Assert.Equal("ReadinessFailed", projected.GetProperty("javaOpenStatus").GetString()); Assert.Equal("ReadinessFailed", projected.GetProperty("javaOutcome").GetString()); }
+        if (condition is "source" or "java-source-currentness") Assert.Equal("Incomplete", projected.GetProperty("sourceOutcome").GetString());
+        if (condition == "graph") Assert.Equal("Unavailable", projected.GetProperty("codeGraphStatus").GetString());
+        if (condition == "unknown-status") Assert.Equal(JsonValueKind.Null, projected.GetProperty("cleanupConfirmed").ValueKind);
+        else Assert.True(projected.GetProperty("cleanupConfirmed").GetBoolean());
     }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {

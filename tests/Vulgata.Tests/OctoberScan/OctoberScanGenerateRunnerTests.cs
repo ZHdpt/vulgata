@@ -7,6 +7,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
+using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Infrastructure.Source;
 using Vulgata.OctoberGenerator;
@@ -21,6 +22,55 @@ namespace Vulgata.Tests.OctoberScan;
 /// <summary>Actual Begin/Worker/tools/F1/B0/reader on owned SQLite and contained temporary source; controlled model and authority only.</summary>
 public sealed class OctoberScanGenerateRunnerTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FailedJavaOpen_FirstCauseSurvivesSecondaryFaultThenRevocationClearsReplayAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        host.Client.FirstCallJava = true;
+        // Controlled runtime open failure; no native Java process is started.
+        host.JavaOpenFailure = new InvalidOperationException("PRIVATE_CONTROLLED_OPEN_FAILURE");
+        var result = await host.Runner.ExecuteAsync(host.Execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        var worker = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
+        var cause = Assert.IsType<OctoberToolDiagnosticSnapshot>(worker.ToolFailure);
+        Assert.Equal(SourceMetadataOperation.JavaDefinition, cause.Operation); Assert.Equal(OctoberToolFailureBoundary.RuntimeOpen, cause.Boundary);
+        Assert.Null(cause.JavaOpenStatus); Assert.Null(cause.CleanupConfirmed); // Unknown is not confirmed cleanup.
+        Assert.NotEqual(0, report.ExitCode); Assert.Null(report.Publication); Assert.Empty(report.AcceptedFiles);
+        Assert.Equal(1, host.Client.Calls); Assert.Equal(0, host.FreezeCalls);
+        var onlyDiagnostic = report with { Publication = null, Documents = [], AcceptedFiles = [], TerminalCoverage = [], Inventory = [] };
+        typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .SetValue(host.Runner, Task.FromResult(result with { Report = onlyDiagnostic }));
+        host.AuthorityAllowed = false;
+        var replay = await host.Runner.ExecuteAsync(host.Execution);
+        Assert.Null(replay.Report!.WorkerDiagnostics); Assert.Null(replay.Report.Publication); Assert.Empty(replay.Report.Documents);
+        Assert.Same(cause, report.WorkerDiagnostics!.ToolFailure); Assert.Equal(1, host.Client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CleanJavaLimitation_CannotBecomeStaleFirstCauseForLaterFailureAsync(bool nextFile)
+    {
+        await using var host = await Harness.CreateAsync();
+        host.JavaOpenFailure = new PreparedJdtLsOpenFailureException(PreparedJavaNavigationOpenStatus.ReadinessFailed, cleanupConfirmed: true);
+        if (nextFile) await host.AddSelectedFileAsync();
+        var first = new Harness.Model { FirstCallJava = true, TerminalTextOverride = nextFile ? null : "{PRIVATE_PARSE_FAILURE" };
+        var second = new Harness.Model { TerminalTextOverride = "{PRIVATE_PARSE_FAILURE" };
+        int creations = 0;
+        await using var runner = new OctoberGenerateRunner(host.Dependencies with
+        {
+            CreateWorkerClient = (_, _) => Task.FromResult<IChatClient>(++creations == 1 ? first : second),
+        });
+        var result = await runner.ExecuteAsync(host.Execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(2, first.Calls); Assert.Equal(nextFile ? 2 : 1, creations);
+        Assert.Equal(nextFile ? 1 : 0, report.AcceptedFiles.Length);
+        var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status); Assert.Equal(OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
+        Assert.Null(diagnostic.ToolFailure); Assert.Null(report.Publication); Assert.Equal(0, host.FreezeCalls);
+    }
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("missing")]
@@ -332,6 +382,7 @@ public sealed class OctoberScanGenerateRunnerTests
         internal TaskCompletionSource SourceDisposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal Action? AfterPublish;
         internal Action<Guid>? BeforeFrame;
+        internal Exception? JavaOpenFailure;
         internal IOctoberLocalAuthority Authority => _authority;
         internal bool AuthorityAllowed { get => _authority.Allowed; set => _authority.Allowed = value; }
         internal Task AddSelectedFileAsync() => File.WriteAllTextAsync(Path.Combine(_files.PreparedRootPath, "src", "Second.cs"), Text);
@@ -352,10 +403,10 @@ public sealed class OctoberScanGenerateRunnerTests
                 {
                     SourceOpens++;
                     Assert.True(BeginCommitted.Task.IsCompletedSuccessfully);
-                    IOctoberScanRunSource source = secondFiles is null ? new Source(_files, _authority.Approval, remaining)
+                    IOctoberScanRunSource source = secondFiles is null ? new Source(_files, _authority.Approval, remaining, JavaOpenFailure)
                         : new MultipleSources(new Dictionary<Guid, Source>
                         {
-                            [_authority.Approval.RepositoryId] = new Source(_files, _authority.Approval, remaining),
+                            [_authority.Approval.RepositoryId] = new Source(_files, _authority.Approval, remaining, JavaOpenFailure),
                             [setup.Repositories[1].RepositoryId] = new Source(secondFiles, _authority.Approval with { RepositoryId = setup.Repositories[1].RepositoryId, RootBindingIdentity = setup.Repositories[1].RootBindingIdentity, ApprovalIdentity = "controlled-second-approval" }, remaining),
                         });
                     _ownedSources.Add(source);
@@ -484,7 +535,7 @@ public sealed class OctoberScanGenerateRunnerTests
         {
             private readonly OctoberToolRuntime _runtime;
             private readonly PreparedCodeGraphConnection _descriptor;
-            internal Source(PreparedSourceFixture files, PreparedSourceApproval approval, TimeSpan remaining)
+            internal Source(PreparedSourceFixture files, PreparedSourceApproval approval, TimeSpan remaining, Exception? javaOpenFailure = null)
             {
                 files.Authority.Approve(approval);
                 var issuer = new PreparedSourceContextIssuer(files.Authority);
@@ -492,7 +543,7 @@ public sealed class OctoberScanGenerateRunnerTests
                 _descriptor = descriptor;
                 _runtime = new(approval, remaining, new OctoberToolRuntimeDependencies((_, _) => Task.FromResult(descriptor),
                     (_, _, token) => issuer.IssueAsync(new(approval, files.PreparedRootPath, PreparedSourceGrantLimits.Default), descriptor, token),
-                    issuer.ObserveFileIdentityAsync, (_, _) => throw new InvalidOperationException("Unexpected native Java"), (owner, _) => owner.OpenSession()));
+                    issuer.ObserveFileIdentityAsync, (_, _) => throw javaOpenFailure ?? new InvalidOperationException("Unexpected native Java"), (owner, _) => owner.OpenSession()));
             }
             public Task<PreparedSourceResult> ListSourceAsync(Guid repository, PreparedSourceListRequest request, CancellationToken token = default) => _runtime.ListAsync(request, token);
             public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) => _runtime.AcquireFileFrameAsync(path, cancellationToken: token);
@@ -511,6 +562,7 @@ public sealed class OctoberScanGenerateRunnerTests
             internal bool IncludeWitnessFreeUnknown;
             internal string? TerminalTextOverride;
             internal bool OmitTerminalFinish;
+            internal bool FirstCallJava;
             public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
             public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
             {
@@ -528,7 +580,7 @@ public sealed class OctoberScanGenerateRunnerTests
                 if (ResponseGate is not null) await ResponseGate;
                 cancellationToken.ThrowIfCancellationRequested();
                 if (call == 0)
-                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new FunctionCallContent("read-primary", "read_prepared_source", new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs", ["byteOffset"] = 0L, ["byteCount"] = Encoding.UTF8.GetByteCount(Text) }), new UsageContent(new UsageDetails { InputTokenCount = 100, OutputTokenCount = 10 })], FinishReason = ChatFinishReason.ToolCalls };
+                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new FunctionCallContent("read-primary", FirstCallJava ? "navigate_java_definition" : "read_prepared_source", FirstCallJava ? new Dictionary<string, object?> { ["relativePath"] = "src/Probe.java", ["line"] = 1, ["character"] = 1, ["maximumLocations"] = 5 } : new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs", ["byteOffset"] = 0L, ["byteCount"] = Encoding.UTF8.GetByteCount(Text) }), new UsageContent(new UsageDetails { InputTokenCount = 100, OutputTokenCount = 10 })], FinishReason = ChatFinishReason.ToolCalls };
                 else
                 {
                     SawToolResult = history.SelectMany(message => message.Contents).OfType<FunctionResultContent>().Any();

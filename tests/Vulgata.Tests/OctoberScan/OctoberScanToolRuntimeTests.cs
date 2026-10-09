@@ -302,14 +302,13 @@ public sealed class OctoberScanToolRuntimeTests
         }
     }
 
-    // Characterization, not a desired fallback policy: the public October adapter
-    // collapses a settled JDT open failure and faults later source use even though
-    // the original source approval itself remains live.
+    // The public adapter must preserve positively settled ordinary JDT limitations.
+    // A second explicit caller invocation proves usability, not an automatic retry.
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable)]
     [InlineData(PreparedJavaNavigationOpenStatus.ReadinessFailed)]
-    public async Task CurrentBehavior_ConfirmedJavaOpenFailure_FaultsRuntimeWhileSourceApprovalRemainsCurrentAsync(PreparedJavaNavigationOpenStatus failure)
+    public async Task ConfirmedOrdinaryJavaOpenFailure_PreservesLimitationAndRuntimeUsabilityAsync(PreparedJavaNavigationOpenStatus failure)
     {
         await using var fixture = await PreparedSourceFixture.CreateAsync();
         fixture.Authority.Approve(fixture.Approval);
@@ -329,17 +328,30 @@ public sealed class OctoberScanToolRuntimeTests
 
         PreparedJavaNavigationResult navigation = await runtime.NavigateAsync(
             PreparedJavaNavigationOperation.Definition, new("a.java", 1, 1, 10));
-        Assert.Equal(PreparedJavaNavigationOutcome.ReadinessFailed, navigation.Outcome);
+        var expected = failure == PreparedJavaNavigationOpenStatus.ConfigurationUnavailable
+            ? PreparedJavaNavigationOutcome.ConfigurationUnavailable : PreparedJavaNavigationOutcome.ReadinessFailed;
+        Assert.Equal(expected, navigation.Outcome);
         Assert.Empty(navigation.Locations);
+        PreparedJavaLimitation limitation = Assert.Single(navigation.Limitations);
+        Assert.Equal(failure == PreparedJavaNavigationOpenStatus.ConfigurationUnavailable
+            ? "jdt_configuration_unavailable" : "jdt_readiness_failed", limitation.Code);
+        Assert.Null(limitation.Source);
         Assert.Equal(1, inert.OpenCalls);
         var lease = Assert.Single(runtime.JdtLeases);
         Assert.True(lease.OwnedResourcesSettled);
         Assert.Equal(PreparedToolWorkspaceLifetime.Disposed, lease.Lifetime);
 
-        OctoberSourceFrameResult frame = await runtime.AcquireFileFrameAsync("a.java");
-        Assert.Equal(OctoberSourceFrameStatus.Unavailable, frame.Status);
-        Assert.Null(frame.Frame);
-        Assert.Null(runtime.PreparedConnection); // No native CodeGraph preparation on the faulted runtime.
+        var second = await runtime.NavigateAsync(PreparedJavaNavigationOperation.Definition, new("a.java", 1, 1, 10));
+        Assert.Equal(expected, second.Outcome);
+        Assert.Empty(second.Locations);
+        Assert.Equal(2, inert.OpenCalls);
+        Assert.Equal(2, runtime.JdtLeases.Count);
+        Assert.All(runtime.JdtLeases, owned =>
+        {
+            Assert.True(owned.OwnedResourcesSettled);
+            Assert.Equal(PreparedToolWorkspaceLifetime.Disposed, owned.Lifetime);
+        });
+        Assert.Null(runtime.PreparedConnection); // Neither explicit navigation attempt launches CodeGraph.
 
         PreparedSourceIssueResult independent = await issuer.IssueAsync(new(fixture.Approval,
             fixture.PreparedRootPath, PreparedSourceGrantLimits.Default));
@@ -348,7 +360,7 @@ public sealed class OctoberScanToolRuntimeTests
         Assert.Equal(PreparedSourceContextLifetime.Open, context.Lifetime);
         Assert.Equal(fixture.Approval.RepositoryId, context.RepositoryId);
         await runtime.DisposeAsync();
-        Assert.Equal(1, inert.OpenCalls);
+        Assert.Equal(2, inert.OpenCalls);
     }
 
     private sealed class ConfirmedFailureJavaRuntime(PreparedJavaNavigationOpenStatus status) : IPreparedJdtLsRuntime

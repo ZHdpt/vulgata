@@ -1,7 +1,12 @@
 # Tool outcome diagnosis
 
-2026-10-09. Source-free diagnosis only; no production correction or new diagnostic
-is authorized by this record. Base Scan `ab0de7fde5ec1078bbae31bb29ab9f4b1285dd4c`
+Current status: bounded correction implemented and independently accepted;
+**466/466 affected controlled tests passed**. Native/provider qualification remains
+separate, and the latest real `ToolInvocation` failure is not attributed to JDT.
+
+2026-10-09. The initial sections record source-free diagnosis; a subsequent explicit
+Integrator decision authorizes the bounded correction recorded at the end. Base
+Scan `ab0de7fde5ec1078bbae31bb29ab9f4b1285dd4c`
 matches affected production in integration `500e2f07a0b85e1fce83c2a4cb211e2c9c1d610a`.
 
 ## Real observation and limits
@@ -105,3 +110,119 @@ queries, result bodies, source or hidden reasoning. Do not infer them from elaps
 time or classify every `ReadinessFailed`/`Unavailable` as recoverable. No such
 diagnostic has been implemented, and no paid rerun is proposed before the root
 decides the consolidated boundary.
+
+## Subsequent approved correction
+
+OCT-Integrator (`01a1109d-ec4c-7500-8b73-642a5e22f59b`) explicitly approved one
+bounded JDT correction plus the minimal content-free discriminator after the
+diagnosis checkpoint `dc77ddec0824d9b13b69044f82ac7c7738ac53bb`. Production ownership
+is Scan-local runtime, tool wrapper, report, runner and CLI projection; shared
+facade/API/Knowledge/Business schemas remain unchanged. Separate test and production
+owners and independent review remain required; native/provider/PostgreSQL work is
+not authorized in this lane.
+
+Only positively settled `ConfigurationUnavailable` or `ReadinessFailed` may become
+honest navigation limitations after fresh same-approval/root/source authority
+verification under the original lifetime. Unknown exceptions, invalid results,
+disposal failure, unavailable authority, changed identities, cancellation/deadline
+and required CodeGraph failure remain fatal. No extra retries or lifetime changes.
+
+The additive JSON shape is `workerDiagnostics.toolFailure`, nullable, containing
+exactly `operation`, `boundary`, `javaOpenStatus`, `javaOutcome`, `sourceOutcome`,
+`codeGraphStatus`, and `cleanupConfirmed`. Operations use the existing fixed
+six-operation enum; boundaries are `ArgumentBinding`, `RuntimeOpen`, `RuntimeInvoke`,
+`RuntimeSettlement`, `SourceCurrentness`, `ResultAdmission`. Status fields use only
+defined existing typed values actually observed; unavailable evidence is null.
+For example, a source-grant issue status is not invented as a source-result outcome.
+No IDs, names, paths, arguments, source, result bodies or exception text are fields.
+
+Observation is local to one invocation, closed on settlement, and copied to the
+current Worker attempt only when that invocation fails. Successful recoverable
+limitations do not leave a failure record. Existing report revocation/disclosure
+fences cover this nested field. The original concrete cause must survive later
+generic runtime/source/ledger failures without crossing calls or files.
+
+Before RED only the diagnostic record/enum/property declarations and a null
+observation stub were added to permit test compilation; production behavior was
+unchanged. Tests cover the public JDT factory's settlement evidence separately
+from the composed runtime-backed primary frame, limitation admission and subsequent
+file-tool read. They use existing controlled fixtures and inert dependencies, not
+native JDT or CodeGraph execution.
+
+RED `181cd77c430b49ffa604d15e12ba60a8` built successfully and ran the full affected
+runtime, wrapper, input-ledger, runner and entry-point classes: **198 selected,
+169 passed, 29 failed, zero skipped**. Missing fallback, diagnostic capture and
+projection accounted for the failures. The cleanup-unconfirmed row's expected
+teardown failure can mask its earlier missing-diagnostic assertion in RED; other
+rows independently establish missing capture, and GREEN must satisfy both body
+and teardown. Both test owners assessed RED before production behavior edits.
+
+Review also found that typed CodeGraph `Failed`, `Unavailable` and `TimedOut`
+could leave the runtime usable after wrapper refusal. The approved no-source-only
+CodeGraph stop condition requires closing that path. Focused RED
+`316a65913375416d8d0b3b69f7c508b2` ran 14 fatal-control cases: 11 passed and exactly
+those three failed because their runtime-backed primary frame remained current.
+The correction faults the runtime on a returned required-tool failure while
+preserving the actual typed status. `Complete`, `NoMatch` and `Limited` remain
+distinct, and the existing bounded `Expired` renewal is unchanged. No retry or
+lifetime expansion accompanies this guard.
+
+An initial expanded run `17fb2d8efc21483c958dc39c751a9d53` passed 462/462 controlled
+tests. Independent review still found an uncovered binding edge: foreign/null
+CodeGraph result identities and a foreign Java result from a correctly bound
+context were converted to sanitized failure/limitation results before the runtime
+was faulted. The Java limitation could be ledger-permitted. These are binding gaps,
+not evidence of the live failure, and are not assumed to be newly introduced by
+this correction. Three additional controlled counterparts require permanent
+runtime fencing and a content-free `SourceCurrentness` observation retaining only
+the actually returned typed status. Java cleanup is reported true only after its
+existing successful context disposal.
+
+Binding RED `13c42bb6e8524a91b022f40d98bbae43` ran 17 fatal-control cases:
+14 passed and those three failed. The Java foreign-result case did not throw;
+Graph foreign/null cases reported the downstream synthesized failure rather than
+the actual returned status. Production then added the narrow binding fence before
+sanitizing either result. No foreign identity or returned payload is retained in
+the diagnostic. These additional guards preserve the approved provenance boundary;
+they do not qualify native tools or identify the latest live failing tool.
+
+The binding correction passed 465/465 in
+`40ffbe88c33a42128d1c70517b7b8569`. A final observation-only check then reproduced
+the generic-catch gap: `6ef13d928d8848b7b95acf58f103fc7f` failed its single controlled
+source-exception case because the report showed downstream `ResultAdmission` /
+`AuthorityUnavailable`, rather than the observed runtime exception with unknown
+typed status. The runtime generic catch now observes `RuntimeInvoke` before its
+existing fault-and-sanitized-return behavior. First-wins capture preserves any
+earlier more precise cause; cancellation and failure policy are unchanged.
+
+## Accepted implementation evidence and handoff
+
+Final run `ff0c0234e2354177b7c4749ab4749013` passed **466/466**, zero failures or
+skips, through `eng/test.ps1 -Suite SelfContained`. The full selected classes were
+Worker, WorkerTools, InputLedger, ToolRuntime, ExecutionScope, Acceptance,
+GenerateRunner, ClPublication, EntryPoint, CodeGraphLifetime and PreparedSourceFrame
+under OctoberScan, plus PreparedSourceToolFunction, PreparedJavaNavigationFunctions,
+PreparedJavaNavigationComposition and CodeGraphFunctions. Policy/guard probes and
+`git diff --check` passed. This is an affected regression selection, not a new
+full-suite qualification or waiver of the previously recorded sequential timeout.
+
+Both test owners assessed the final shape. Independent review accepted the final
+production/test checkpoint with no remaining blockers after the returned-binding
+and generic-observation corrections. Production changes are confined to five files
+in `Vulgata.OctoberGenerator`: `OctoberToolRuntime.cs`, `OctoberWorkerTools.cs`,
+`OctoberScanReport.cs`, `OctoberGenerateRunner.cs` and `Program.cs`. Four existing
+test files and this record carry the controlled evidence. No shared API, facade,
+Business/Knowledge schema, migration, provider configuration or runtime profile changed.
+
+There is no new invocation/configuration requirement. Integrator retains the
+original run/session/provider/budget, exact source bindings and verified Identity
+reader requirements. The additive nested report field described above is the only
+report-shape change. A reported status describes the observed typed boundary; it
+does not convert a failed call into successful navigation or prove native tool
+identity from elapsed time. Unknown values remain null.
+
+Integrator owns merging and deciding one subsequent real qualification with its
+approved resources. This lane performed no paid/provider/native/PostgreSQL or
+real-source-root operation and preserved earlier accepted CL. Controlled public
+factory settlement and composed runtime/frame/ledger fallback are separate tested
+seams; no native JDT fallback or latest-pilot-cause claim is made.

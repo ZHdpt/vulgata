@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
 using Vulgata.Agents.WorkerExecution;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.Infrastructure.Analysis.Java;
 
 namespace Vulgata.OctoberGenerator;
 
@@ -9,6 +11,12 @@ public enum OctoberExecutionStatus { Completed, Failed, Interrupted, Indetermina
 public enum OctoberPublicationStatus { NotRequested, Confirmed, NoContent, Failed, Indeterminate }
 public enum OctoberPhaseStatus { NotRequested, NotStarted, Completed, Partial, NoContent, Failed, Interrupted, Indeterminate, Unavailable }
 public enum OctoberBusinessDiagnosticBoundary { OriginalSlot, Finalizer, ExactLookup, ReaderBinding, ExactReader, Completed }
+public enum OctoberToolFailureBoundary { ArgumentBinding, RuntimeOpen, RuntimeInvoke, RuntimeSettlement, SourceCurrentness, ResultAdmission }
+
+public sealed record OctoberToolDiagnosticSnapshot(SourceMetadataOperation Operation, OctoberToolFailureBoundary Boundary,
+    PreparedJavaNavigationOpenStatus? JavaOpenStatus = null, PreparedJavaNavigationOutcome? JavaOutcome = null,
+    PreparedSourceOutcome? SourceOutcome = null, CodeGraphToolInvocationStatus? CodeGraphStatus = null,
+    bool? CleanupConfirmed = null);
 
 /// <summary>Bounded host observations; no identifiers, source text or provider payloads.</summary>
 public sealed record OctoberBusinessDiagnosticSnapshot(
@@ -33,6 +41,7 @@ public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? St
 {
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
+    public OctoberToolDiagnosticSnapshot? ToolFailure { get; init; }
 }
 
 public sealed record OctoberExecutionSnapshot(OctoberScanUsage Usage, TimeSpan QueueWait,
