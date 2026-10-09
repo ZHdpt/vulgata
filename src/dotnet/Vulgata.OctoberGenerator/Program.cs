@@ -224,6 +224,7 @@ public static class OctoberGeneratorEntryPoint
                     CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
                     PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
                     TerminalCoverage = [], Inventory = [], Gaps = [new("output_binding_invalid")],
+                    BusinessDiagnostics = null,
                     Matching = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable,
                     BusinessLogic = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable
                 };
@@ -473,6 +474,7 @@ public static class OctoberGeneratorEntryPoint
             report.PublicationStatus,
             Matching = PhaseStatus(report.Matching),
             BusinessLogic = PhaseStatus(report.BusinessLogic),
+            BusinessDiagnostics = ProjectBusinessDiagnostics(report),
             Publication = publication,
             report.Documents,
             AcceptedFiles = report.AcceptedFiles.Select(file => new
@@ -516,6 +518,24 @@ public static class OctoberGeneratorEntryPoint
         !path.StartsWith('/') && !path.Contains('\\') && !path.Contains(':') && !path.Any(char.IsControl) &&
         (path.Length == 0 || path.Split('/').All(part => part is not ("" or "." or ".."))) ? path : null;
 
+    private static object? ProjectBusinessDiagnostics(OctoberScanReport report)
+    {
+        if (report.RequestedStage != "cl-and-bl" || report.BusinessDiagnostics is not { } observed ||
+            !Enum.IsDefined(observed.Boundary)) return null;
+        return new
+        {
+            FinalizerStatus = DefinedStatus(observed.FinalizerStatus),
+            FinalizerPersistenceStatus = DefinedStatus(observed.FinalizerPersistenceStatus),
+            LookupStatus = DefinedStatus(observed.LookupStatus),
+            LookupPersistenceStatus = DefinedStatus(observed.LookupPersistenceStatus),
+            observed.Boundary,
+            observed.OperationMismatch
+        };
+    }
+
+    private static T? DefinedStatus<T>(T? value) where T : struct, Enum =>
+        value is { } defined && Enum.IsDefined(defined) ? defined : null;
+
     private static string PhaseStatus(OctoberPhaseStatus status) => status switch
     {
         OctoberPhaseStatus.NotRequested => "not-requested", OctoberPhaseStatus.NotStarted => "not-started",
@@ -535,7 +555,13 @@ public static class OctoberGeneratorEntryPoint
         "publication_failed" or "publication_interrupted" or "publication_unavailable" or "no_cl_content" or
         "freeze_settlement_pending" or "publication_settlement_pending" or "phase_closed" or "unsupported_stage" or
         "publication_not_started" or "source-authority-or-identity-lost" or "incomplete-directory" or "source-limitation" or
-        "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" => code,
+        "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" or
+        "business_authority_unavailable" or "business_client_unavailable" or "business_corpus_unavailable" or
+        "business_freeze_unavailable" or "business_initial_read_unavailable" or "business_original_slot_unavailable" or
+        "business_planning_inputs_unavailable" or "business_publication_binding_unavailable" or
+        "business_publication_read_unavailable" or "business_publication_unavailable" or
+        "business_resolution_failed" or "business_resolution_ineligible" or "business_resolution_limit" or
+        "business_resolution_unavailable" or "business_roots_unavailable" or "business_run_ineligible" => code,
         _ => "source-or-execution-gap"
     };
 

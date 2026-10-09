@@ -7,6 +7,16 @@ public enum OctoberCoverageStatus { Complete, Partial, None }
 public enum OctoberExecutionStatus { Completed, Failed, Interrupted, Indeterminate }
 public enum OctoberPublicationStatus { NotRequested, Confirmed, NoContent, Failed, Indeterminate }
 public enum OctoberPhaseStatus { NotRequested, NotStarted, Completed, Partial, NoContent, Failed, Interrupted, Indeterminate, Unavailable }
+public enum OctoberBusinessDiagnosticBoundary { OriginalSlot, Finalizer, ExactLookup, ReaderBinding, ExactReader, Completed }
+
+/// <summary>Bounded host observations; no identifiers, source text or provider payloads.</summary>
+public sealed record OctoberBusinessDiagnosticSnapshot(
+    BusinessFinalizationStatus? FinalizerStatus,
+    KnowledgeWriteStatus? FinalizerPersistenceStatus,
+    BusinessFinalizationStatus? LookupStatus,
+    KnowledgeWriteStatus? LookupPersistenceStatus,
+    OctoberBusinessDiagnosticBoundary Boundary,
+    bool OperationMismatch);
 
 public sealed record OctoberScanTimings(TimeSpan Elapsed, TimeSpan QueueWait,
     TimeSpan ToolWait, TimeSpan ModelWait, TimeSpan StoreWait);
@@ -37,6 +47,7 @@ public sealed record OctoberScanReport(
     public ImmutableArray<OctoberScanInventoryEntry> Inventory { get; init; } = [];
     public OctoberPhaseStatus Matching { get; init; } = RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.NotStarted : OctoberPhaseStatus.NotRequested;
     public OctoberPhaseStatus BusinessLogic { get; init; } = RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.NotStarted : OctoberPhaseStatus.NotRequested;
+    public OctoberBusinessDiagnosticSnapshot? BusinessDiagnostics { get; init; }
 
     public int ExitCode => (Execution, PublicationStatus) switch
     {

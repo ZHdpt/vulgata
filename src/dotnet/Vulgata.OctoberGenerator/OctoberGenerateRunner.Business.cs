@@ -39,6 +39,7 @@ internal sealed partial class OctoberGenerateRunner
     private readonly List<IAsyncDisposable> _businessReaderLifetimes = [];
     private Task? _businessReaderCleanup;
     private OctoberOperatorCleanupUnconfirmedException? _operatorCleanupFailure;
+    private OctoberBusinessDiagnosticSnapshot? _businessDiagnostics;
 
     private async Task<ImmutableArray<FlowRootSelection>> SelectBusinessRootsAsync(FlowPlanningInput input,
         CancellationToken cancellationToken)
@@ -140,13 +141,16 @@ internal sealed partial class OctoberGenerateRunner
     private Task CloseSourceResourcesAsync() => _sourceCleanup ??= _source is null
         ? Task.CompletedTask : _source.DisposeAsync().AsTask();
 
+    private OctoberScanReport BusinessFailure(string code, bool interrupted = false, bool indeterminate = false, bool disclose = true) =>
+        Failure(code, interrupted, indeterminate, disclose) with { BusinessDiagnostics = _fenced ? null : _businessDiagnostics };
+
     private async Task<OctoberScanReport> RunBusinessCompletionAsync(CancellationToken cancellationToken)
     {
         var business = _dependencies.Business!;
         var execution = _execution!;
         var binding = _binding!;
         if (!BusinessRunAvailable || await CheckPermissionsAsync(_observedContributors, cancellationToken) != DisclosureStatus.Allowed)
-            return Failure("business_authority_unavailable", interrupted: IsCancelled, disclose: false);
+            return BusinessFailure("business_authority_unavailable", interrupted: IsCancelled, disclose: false);
         _businessGuard = new(this);
         var freeze = new CorpusFreezeRequest(new(binding.BatchId, OperationKind.FreezeCorpus, Guid.NewGuid()), binding, "", _accepted, _coverage);
         _expectedFreeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
@@ -161,32 +165,32 @@ internal sealed partial class OctoberGenerateRunner
         if (frozen.Operation != _expectedFreeze.Operation || !KnownCommitted(frozen.Status) ||
             frozen.Corpus is not { } corpus || corpus.Binding != binding || corpus.CorpusId == Guid.Empty ||
             corpus.CorpusDigest != _expectedFreeze.CanonicalPayloadDigest)
-            return Failure("business_freeze_unavailable", indeterminate: frozen.Status == KnowledgeWriteStatus.CommitIndeterminate,
+            return BusinessFailure("business_freeze_unavailable", indeterminate: frozen.Status == KnowledgeWriteStatus.CommitIndeterminate,
                 interrupted: IsCancelled, disclose: false);
         _businessGuard.ConfirmCommitted(_expectedFreeze.Operation);
         _confirmedBusinessCorpus = corpus;
         if (frozen.Status == KnowledgeWriteStatus.LogUnavailable)
-            return Failure("operation_log_unavailable");
-        if (!BusinessRunAvailable) return Failure("business_run_ineligible", interrupted: true);
+            return BusinessFailure("operation_log_unavailable");
+        if (!BusinessRunAvailable) return BusinessFailure("business_run_ineligible", interrupted: true);
 
         _businessClient ??= await AcquireClientAsync(execution.Provider, cancellationToken);
         if (_businessClient is not IOctoberBusinessAttemptClient bound || bound.ProviderProfileId != execution.Provider.Profile.Name)
-            return Failure("business_client_unavailable");
+            return BusinessFailure("business_client_unavailable");
         var resolutionStore = new ObservedBusinessResolutionStore(this, business.CreateResolutionStore(this, _businessGuard));
         var disclosure = new BusinessDisclosure(this);
         _matchingPhase = OctoberPhaseStatus.Indeterminate;
         var loaded = await StoreAsync(() => resolutionStore.LoadCorpusAsync(corpus, cancellationToken), cancellationToken);
         if (loaded.Status != KnowledgeReadStatus.Success || loaded.Corpus is not { } acceptedCorpus || acceptedCorpus.Handle != corpus)
-            return Failure("business_corpus_unavailable", disclose: false);
+            return BusinessFailure("business_corpus_unavailable", disclose: false);
         var resolutionPlan = OctoberResolutionPolicy.Plan(acceptedCorpus);
         var resolver = new OctoberResolutionExecutor(_businessClient, business.ResolutionInstructions, _time);
         foreach (var inquiry in resolutionPlan.Inquiries)
         {
-            if (!BusinessRunAvailable) return Failure("business_run_ineligible", interrupted: true);
+            if (!BusinessRunAvailable) return BusinessFailure("business_run_ineligible", interrupted: true);
             var resolved = await resolver.ExecuteAsync(acceptedCorpus, inquiry, _businessFinalizationOperation!,
                 _beginRequest!.RunId, execution.Provider.Profile.Name, business.MaximumAttemptTokens, _scope!, disclosure, cancellationToken);
             if (resolved.AdmissionFailure is ProviderAdmissionStatus.Denied or ProviderAdmissionStatus.AuthorityUnavailable or ProviderAdmissionStatus.HardStopped)
-                return Failure("business_resolution_ineligible", interrupted: IsCancelled, disclose: false);
+                return BusinessFailure("business_resolution_ineligible", interrupted: IsCancelled, disclose: false);
             bool notEvaluatedForLimit = resolved.Witness is null &&
                 resolved.AdmissionFailure == ProviderAdmissionStatus.BudgetExhausted && resolved.Attempts.Length == 0;
             var acceptance = new ResolutionAcceptanceRequest(new(binding.BatchId, OperationKind.AcceptResolution, Guid.NewGuid()),
@@ -201,7 +205,7 @@ internal sealed partial class OctoberGenerateRunner
                 saved = await StoreAsync(() => resolutionStore.LookupOutcomeAsync(corpus, acceptance.Operation,
                     acceptance.CanonicalPayloadDigest, cancellationToken), cancellationToken);
             if (!KnownCommitted(saved.Status) || saved.Operation != acceptance.Operation || saved.Outcome?.Fingerprint != inquiry.Fingerprint)
-                return Failure("business_resolution_unavailable", indeterminate: saved.Status == KnowledgeWriteStatus.CommitIndeterminate, disclose: false);
+                return BusinessFailure("business_resolution_unavailable", indeterminate: saved.Status == KnowledgeWriteStatus.CommitIndeterminate, disclose: false);
             _businessGuard.ConfirmCommitted(acceptance.Operation);
             if (saved.Outcome.Kind == ResolutionOutcomeKind.Failed)
             {
@@ -217,18 +221,18 @@ internal sealed partial class OctoberGenerateRunner
                 if (!_gaps.Any(gap => gap.Code == "business_resolution_limit"))
                     _gaps = _gaps.Add(new("business_resolution_limit"));
             }
-            if (saved.Status == KnowledgeWriteStatus.LogUnavailable) return Failure("operation_log_unavailable");
+            if (saved.Status == KnowledgeWriteStatus.LogUnavailable) return BusinessFailure("operation_log_unavailable");
         }
         var loader = new ObservedBusinessPlanningLoader(this, business.CreatePlanningInputLoader(this));
         var planning = await StoreAsync(() => loader.LoadAsync(corpus, [], cancellationToken), cancellationToken);
         if (planning.Status != KnowledgeReadStatus.Success || planning.Input is not { } input || input.Corpus.Handle != corpus || input.Contributors.IsDefault)
-            return Failure("business_planning_inputs_unavailable", disclose: false);
+            return BusinessFailure("business_planning_inputs_unavailable", disclose: false);
         if (!_businessResolutionFailed && !_businessResolutionLimited) _matchingPhase = OctoberPhaseStatus.Completed;
         var allObserved = IncludeObservedContributors(input.Contributors);
         if (!BusinessRunAvailable || await CheckPermissionsAsync(allObserved, cancellationToken) != DisclosureStatus.Allowed)
-            return Failure("business_authority_unavailable", interrupted: IsCancelled, disclose: false);
+            return BusinessFailure("business_authority_unavailable", interrupted: IsCancelled, disclose: false);
         var roots = await SelectBusinessRootsAsync(input, cancellationToken);
-        if (roots.IsDefault) return Failure("business_roots_unavailable");
+        if (roots.IsDefault) return BusinessFailure("business_roots_unavailable");
         var selection = new BusinessFinalizationSelection(roots, business.Limits, _beginRequest!.RunId,
             execution.Provider.Profile.Name, OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(business.ProviderConfiguration),
             OctoberKnowledgePolicy.Hash(business.SynthesisInstructions), business.MaximumAttemptTokens);
@@ -236,31 +240,39 @@ internal sealed partial class OctoberGenerateRunner
         request = request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
         _originalBusinessRequest = request;
         _businessProviderConfiguration = business.ProviderConfiguration;
+        _businessDiagnostics = new(null, null, null, null, OctoberBusinessDiagnosticBoundary.OriginalSlot, false);
         var slot = TryIssueOriginalBusinessFinalizationSlot();
-        if (slot is null) return Failure("business_original_slot_unavailable", interrupted: IsCancelled, disclose: false);
+        if (slot is null) return BusinessFailure("business_original_slot_unavailable", interrupted: IsCancelled, disclose: false);
         var ownerPublications = business.CreatePublicationStore(this, _businessGuard);
-        if (ownerPublications is not IOctoberFlowPublicationInitialRead initialRead) return Failure("business_initial_read_unavailable");
+        if (ownerPublications is not IOctoberFlowPublicationInitialRead initialRead) return BusinessFailure("business_initial_read_unavailable");
         var publications = new ObservedBusinessPublicationStore(this, ownerPublications, initialRead);
         _businessGuard.Register(new(request.Operation, request.Operation.OperationId, request.CanonicalPayloadDigest));
         var finalizer = new OctoberBusinessFinalizer(slot, publications, loader, _businessClient,
             execution.Provider.Profile.Name, business.ProviderConfiguration, business.SynthesisInstructions, disclosure, _time);
         _businessLogicPhase = OctoberPhaseStatus.Indeterminate;
-        try { await finalizer.FinalizeAsync(request, cancellationToken); }
+        _businessDiagnostics = _businessDiagnostics with { Boundary = OctoberBusinessDiagnosticBoundary.Finalizer };
+        try
+        {
+            var immediate = await finalizer.FinalizeAsync(request, cancellationToken);
+            ObserveBusinessOutcome(request, immediate, finalizer: true);
+        }
         finally { await AwaitBusinessOwnerCallsAsync(); }
         // Bounded orchestration may finish before an actual owner call returns.
         // Its late result is settlement evidence, never fresh disclosure authority.
         if (BusinessHandoffFailure(request) is { } beforeLookup) return beforeLookup;
         BusinessFinalizationResult outcome;
+        _businessDiagnostics = _businessDiagnostics with { Boundary = OctoberBusinessDiagnosticBoundary.ExactLookup };
         try
         {
             outcome = await StoreAsync(() => publications.LookupAsync(corpus, request.Operation,
                 request.CanonicalPayloadDigest, cancellationToken), cancellationToken);
+            ObserveBusinessOutcome(request, outcome, finalizer: false);
         }
         finally { await AwaitBusinessOwnerCallsAsync(); }
         if (BusinessHandoffFailure(request) is { } afterLookup) return afterLookup;
         bool completed = outcome.Status is BusinessFinalizationStatus.Published or BusinessFinalizationStatus.PublishedPartial or BusinessFinalizationStatus.NoContent;
         if (outcome.Operation != request.Operation || !completed || outcome.PersistenceStatus is not (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted or KnowledgeWriteStatus.LogUnavailable))
-            return Failure("business_publication_unavailable", indeterminate: outcome.Status == BusinessFinalizationStatus.CommitIndeterminate,
+            return BusinessFailure("business_publication_unavailable", indeterminate: outcome.Status == BusinessFinalizationStatus.CommitIndeterminate,
                 interrupted: outcome.Status == BusinessFinalizationStatus.HardStopped || IsCancelled, disclose: false);
         _businessLogicPhase = outcome.Status switch
         {
@@ -272,22 +284,35 @@ internal sealed partial class OctoberGenerateRunner
         if (outcome.PersistenceStatus == KnowledgeWriteStatus.LogUnavailable) _businessPublicationLogUnavailable = true;
         if (_businessPublicationLogUnavailable) _gaps = _gaps.Add(new("operation_log_unavailable"));
         if (await DisclosureAsync(cancellationToken) != DisclosureStatus.Allowed)
-            return Failure("business_authority_unavailable", disclose: false);
+            return BusinessFailure("business_authority_unavailable", disclose: false);
         ImmutableArray<DocumentHandle> documents = [];
         if (outcome.Status != BusinessFinalizationStatus.NoContent)
         {
             if (outcome.Publication is not { } publication || publication.Knowledge != binding || publication.PublicationId == Guid.Empty)
-                return Failure("business_publication_binding_unavailable", disclose: false);
+                return BusinessFailure("business_publication_binding_unavailable", disclose: false);
             documents = await ReadBusinessPublicationAsync(business, publication, cancellationToken);
-            if (documents.IsDefaultOrEmpty) return Failure("business_publication_read_unavailable", disclose: false);
+            if (documents.IsDefaultOrEmpty) return BusinessFailure("business_publication_read_unavailable", disclose: false);
         }
         if (BusinessHandoffFailure(request) is { } beforeReturn) return beforeReturn;
+        _businessDiagnostics = _businessDiagnostics with { Boundary = OctoberBusinessDiagnosticBoundary.Completed };
         return new("cl-and-bl", "cl-and-bl", outcome.Coverage.IsPartial ? OctoberCoverageStatus.Partial : OctoberCoverageStatus.Complete,
             _businessPublicationLogUnavailable || _businessResolutionFailed || _businessResolutionLimited ? OctoberExecutionStatus.Failed : OctoberExecutionStatus.Completed,
             outcome.Status == BusinessFinalizationStatus.NoContent ? OctoberPublicationStatus.NoContent : OctoberPublicationStatus.Confirmed,
             outcome.Publication, documents, _accepted, _coverage,
             new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(0, 0, 0, false), [])
-        { Matching = _matchingPhase, BusinessLogic = _businessLogicPhase };
+        { Matching = _matchingPhase, BusinessLogic = _businessLogicPhase, BusinessDiagnostics = _businessDiagnostics };
+    }
+
+    private void ObserveBusinessOutcome(FinalizationRequest request, BusinessFinalizationResult result, bool finalizer)
+    {
+        bool exact = result.Operation == request.Operation;
+        BusinessFinalizationStatus? status = exact && Enum.IsDefined(result.Status) ? result.Status : null;
+        KnowledgeWriteStatus? persistence = exact && result.PersistenceStatus is { } observed && Enum.IsDefined(observed) ? observed : null;
+        _businessDiagnostics = finalizer
+            ? _businessDiagnostics! with { FinalizerStatus = status, FinalizerPersistenceStatus = persistence,
+                OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact }
+            : _businessDiagnostics! with { LookupStatus = status, LookupPersistenceStatus = persistence,
+                OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact };
     }
 
     private OctoberScanReport? BusinessHandoffFailure(FinalizationRequest request)
@@ -295,7 +320,7 @@ internal sealed partial class OctoberGenerateRunner
         var selection = request.Selection!;
         var handoff = _scope!.CheckHandoffEligibility(selection.RunId, request.Operation, selection.ProviderProfileId);
         return BusinessRunAvailable && handoff == ProviderAdmissionStatus.Granted ? null :
-            Failure("business_run_ineligible", interrupted: IsCancelled || RemainingRun <= TimeSpan.Zero ||
+            BusinessFailure("business_run_ineligible", interrupted: IsCancelled || RemainingRun <= TimeSpan.Zero ||
                 _execution!.Session.ExpiresAtUtc <= _time.GetUtcNow() ||
                 handoff is ProviderAdmissionStatus.HardStopped or ProviderAdmissionStatus.DeadlineExceeded, disclose: false);
     }
@@ -304,6 +329,7 @@ internal sealed partial class OctoberGenerateRunner
         PublicationBinding publication, CancellationToken token)
     {
         var execution = _execution!;
+        _businessDiagnostics = _businessDiagnostics! with { Boundary = OctoberBusinessDiagnosticBoundary.ReaderBinding };
         var binding = await StoreAsync(() => RetainBusinessOwnerCall(async () =>
         {
             var acquired = await business.BindReader!(execution.Session, publication, token);
@@ -322,6 +348,7 @@ internal sealed partial class OctoberGenerateRunner
             !binding.Selection.RepositoryScope.Order().SequenceEqual(execution.Authority.RepositoryIds.Order()))
             return [];
         var reader = binding.Reader;
+        _businessDiagnostics = _businessDiagnostics with { Boundary = OctoberBusinessDiagnosticBoundary.ExactReader };
         var opened = await StoreAsync(() => RetainBusinessOwnerCall(() => reader.OpenReadSelectionAsync(binding.Selection, token)), token);
         if (opened.Status != KnowledgeReadStatus.Success || opened.Selection is null) return [];
         var handles = ImmutableArray.CreateBuilder<DocumentHandle>();
