@@ -3,7 +3,12 @@
 
 只返回 BusinessSynthesisProposal JSON：Title 和 Sections。每个 Section 包含 SectionId、Ordinal、Title、Claims。
 每个 Claim 包含 ClaimGroupId、Text、Qualification、Inputs、Limitations。
-Inputs 只包含实际已接受的 Document（BatchId、LogicalDocumentId、DocumentVersionId）、SectionId、ClaimGroupId。
+Ordinal 必须从 0 开始连续递增，按段落顺序为 0、1、2……，不得缺号或重复。
+SectionId 在整个输出中必须唯一，且不得使用保留值 __knowledge_gaps。
+ClaimGroupId 在所有段落之间必须全局唯一，且不得使用保留值 __knowledge_gaps_summary。
+Inputs 必须是显式非空数组，只包含实际已接受的 Document（BatchId、LogicalDocumentId、DocumentVersionId）、SectionId、ClaimGroupId；完整嵌套引用不得重复。
+Sections、Claims 必须是显式非空数组；Limitations 必须显式提供，空值使用 []，不能省略或使用 null。
+只输出约定字段，JSON 总量不得超过 1 MiB；不要添加边、账本、持久身份等额外字段。
 一个输出组的所有输入组必须具有完全相同的 Qualification，输出必须保留该类别；禁止 Mixed、混合不同类别或升级假设为事实。
 资格枚举为 SourceSupported=0、Advisory=1、Hypothesis=2、Uncertain=3。每项说明必须关联真实输入组。
 
