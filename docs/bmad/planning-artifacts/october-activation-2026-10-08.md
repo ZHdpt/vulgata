@@ -958,3 +958,47 @@ independent integration review accepted. Main rebuilt embedded prompt and passed
 **54/54** synthesis checks, zero skips, `80c4ba67a2504660802c60a80cab797f`.
 Attempt 5 is the final authorized live attempt, using this correction. This does
 not establish which wrong section ID the model supplied in attempt 4.
+
+#### Attempt 5 of 5 — real synthetic CL-and-BL qualification PASSED
+
+Run `11c3fce168954d7f8c0c8e62b29fef38` on `ea611586`: **1/1**, zero skips,
+duration 2m39.887s, launcher exit 0. One actual Worker accepted AccountPolicy.java;
+the one eligible root was selected and the operator response atomically published.
+Generate reported Completed cl-and-bl, Complete coverage, Confirmed publication,
+matching/business completed, two Documents, one accepted file, no gaps. Immediate
+finalizer and exact lookup both observed Published / AlreadyCommitted, boundary
+Completed, operation mismatch false.
+
+The test independently hydrated the exact generated publication, created an
+ordinary User-only Identity account, authenticated through the real loopback Web
+login, and read the complete Business projection through the canonical reader.
+Exact dependencies, Business CL denial/wrong-target denial, complete paging and
+same-session revocation after actual security-stamp rotation passed. This proves
+the scoped reader path, not an interactive BL page/browser, Chat, graph or cross-
+repository scenario. The temporary Web process exited before fixture disposal.
+
+Observed generated BL includes the correct registration rule (phone verified AND
+account not existing), login rejection for inactive account or failed attempts at
+least five, password matching otherwise, and no counter mutation. It explicitly
+limits coverage to the class's static decisions, not callers/deployment/order.
+The complete Business projection is in the TRX for separate semantic review;
+mechanical assertions alone do not constitute semantic approval. Class-level
+technical wording and repeated generic limitation labels remain presentation polish.
+
+Independent semantic review of the complete projection against the exact synthetic
+Java source accepted it with no material unsupported behavior. Suggested polish:
+say "达到或超过 5 次" explicitly, distinguish supplied verification/matching flags
+from performing verification inside these methods, and reduce technical wording.
+The surrounding less-than-five condition already makes the actual boundary clear.
+No generated content was edited to obtain acceptance. The broad root covers the
+class, including registration and login; it is not a method-exclusive or real
+enterprise-flow qualification.
+
+Usage: **2 requests, 16,523 input / 14,259 output tokens, unknown=false**. Final
+series totals: **5/5 attempts, 9 requests, 66,899 input / 54,827 output tokens
+(121,726 combined)**. The authorization is exhausted and execution stops on this
+success; no sixth attempt. All five runs stayed below their individual ceilings.
+Database/temp cleanup passed; exact final run-label queries confirmed zero
+containers and volumes. No retained presentation database or real repository source
+was used. Operation C remains separately pending. Earlier CL qualification remains
+valid; full SelfContained GREEN remains unconfirmed (prior 4,188/4,189 failure).

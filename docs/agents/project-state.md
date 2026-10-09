@@ -8,7 +8,19 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-09 (first real synthetic Generate-to-ordinary-reader milestone passed; retained presentation operation remains separately pending).
+Updated: 2026-10-09 (real synthetic CL-and-BL Generate-to-ordinary-Business-reader passed; retained presentation operation remains separately pending).
+
+Newest qualification supersedes older BL-pending statements below for this exact
+synthetic scenario only: attempt 5 on `ea611586` passed **1/1**, run
+`11c3fce168954d7f8c0c8e62b29fef38`. One accepted AccountPolicy.java produced a
+confirmed CL-and-BL publication. Real ordinary User Identity login, canonical
+Business reader paging/dependencies/denials and same-session security-stamp
+revocation passed. This is not interactive BL UI, Chat, graph or two-repository
+qualification. All disposable resources were cleaned; no presentation DB retained.
+Five-attempt series complete: nine requests/121,726 tokens, all usage known, grant
+exhausted. Do not launch a sixth run. Production-source operation C needs separate
+authority. Full-suite GREEN is still unconfirmed; the prior 4,188/4,189 result is
+not replaced by focused or E2E passing checks.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
@@ -16,7 +28,8 @@ CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,
 Business-mode CL denial and revocation checks passed. Reported usage was
 2,095 input/1,888 output tokens, unknown=false. All fixture resources were cleaned.
 This supersedes earlier B-failure/pending statements below for this exact synthetic
-scenario only. Useful BL, two-Repository resolution, interactive streaming Chat,
+scenario only. Its older boundary did not qualify BL; the newer result above does
+for the synthetic scenario. Two-Repository resolution, interactive streaming Chat,
 graph and retained presentation operation C remain unqualified/unapproved as
 applicable; no production-source disclosure is implied.
 
