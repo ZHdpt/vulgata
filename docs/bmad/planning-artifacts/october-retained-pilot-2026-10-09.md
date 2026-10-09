@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: one prior real CL remains accepted but unpublished. Budget diagnostics are
-integrated; the latest fresh retry instead hit an unclassified `ProviderFailed`
-path. Paid retries are paused for bounded diagnosis. Preserve the partial dataset.
+Status: one prior real CL remains accepted but unpublished. The latest phase-
+diagnostic retry instead reached `ProposalParse` failure. Paid retries are paused
+for a consolidated, source-free Worker contract assessment; preserve partial data.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -219,3 +219,26 @@ database `vulgata_oct_pilot_fe1981e86bc8427689f6e70c77c31265`:
   paid retry. No arbitrary trailing output, safety-limit or accounting bypass.
 - Earlier accepted CL database/keys remain untouched. All77 source hashes matched
   before this run; generated indexes were archived outside the source roots.
+
+## Phase diagnostics and proposal parsing failure
+
+Reviewed two-file checkpoint `36299848` integrated as `a1afb9e3`; finite phase
+observations preserve status/retries/guards and identify exact escaping exceptions
+without logging them. Main affected SelfContained **205/205**, no skips, isolation
+`2bc0e6efb6b14f25be9eca71bc9a410d`; no full-suite claim.
+
+Fresh run `phone-6216c2bfaa55`, batch `0bdd7c09-863e-48ed-9706-298dd88424f4`,
+database `vulgata_oct_pilot_6873d244d5b84c30bb7c513f20383a2d`:
+
+- **72.11 seconds** wall /69.84 seconds pipeline, exit1, no timeout/cleanup doubt.
+- **4 requests**, 15,437 input /4,845 output tokens, usage known.
+- Inventory77, accepted0; `InvalidOutput / ProposalParse / None`; terminal and
+  budget reasons null. This does not resolve or reproduce earlier budget/provider
+  failure branches. No publication or useful BL/Chat/graph qualification.
+- Root has held further paid runs. Scan is assigned a bounded **assessment only**
+  of current prompt/schema/parser, actual SDK/MAF final-text handling and tool/ledger
+  contracts together. Return concrete inconsistencies, controlled evidence and the
+  smallest missing observation before more implementation or live spend. Do not
+  repeat another isolated diagnostic-field/paid-run cycle without that decision.
+- Previous partial accepted CL and its database/keys remain retained. Only generated
+  tool state from the settled prior run was archived; all77 source hashes matched.

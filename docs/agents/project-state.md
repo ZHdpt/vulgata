@@ -78,6 +78,13 @@ Budget diagnostics integrated as `31b00465`, main affected **192/192** passed
 proof of a remote outage and did not identify the earlier budget bound. Root has
 paused paid retries for Scan's bounded SDK/MAF/tool-path diagnosis; prior partial
 CL data remains retained. Runtime stopped; no new permission decision required yet.
+Latest phase diagnostics `a1afb9e3` passed main affected **205/205**
+(isolation `2bc0e6efb6b14f25be9eca71bc9a410d`). Run `phone-6216c2bfaa55`
+ended72.11s at `InvalidOutput/ProposalParse`:4requests15,437input/4,845output,
+accepted0. Earlier budget/provider failure causes remain unresolved. Paid runs
+are held; Scan now has **assessment-only** scope across Worker prompt/parser/tool
+contracts and actual SDK output handling, returning a consolidated proposal before
+more edits/spend. Prior acceptedCL remains preserved and unpublished.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
