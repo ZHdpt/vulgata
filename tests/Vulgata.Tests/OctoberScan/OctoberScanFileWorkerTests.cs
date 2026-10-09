@@ -66,6 +66,7 @@ public sealed class OctoberScanFileWorkerTests
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
+        Assert.Null(result.TerminalFailure);
         var proposal = Assert.IsType<CompletedFileProposal>(result.Proposal);
         Assert.Equal(request.Binding, proposal.Binding);
         Assert.Equal(request.AdmissionId, proposal.AdmissionId);
@@ -95,6 +96,7 @@ public sealed class OctoberScanFileWorkerTests
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(frame), []);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
+        Assert.Null(result.TerminalFailure);
         Assert.Empty(result.Proposal!.Units);
         Assert.Equal(CoverageDisposition.CompletedZeroUnit, result.Proposal.Coverage.Disposition);
         Assert.NotEmpty(result.Proposal.Uncertainties);
@@ -140,6 +142,7 @@ public sealed class OctoberScanFileWorkerTests
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [first, second]);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
+        Assert.Null(result.TerminalFailure);
         Assert.Equal(2, calls);
         Assert.Equal(1, maximum);
         Assert.Equal(0, active);
@@ -286,6 +289,7 @@ public sealed class OctoberScanFileWorkerTests
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
+        Assert.Null(result.TerminalFailure);
         Assert.Equal(frame.Origin, result.Proposal!.Origin);
         Assert.Contains(advisory, result.Proposal.Contributors);
         Assert.Equal(advisory.ContentDigest, Assert.Single(Assert.Single(Assert.Single(Assert.Single(result.Proposal.Units).Sections).Claims).Evidence).ContentDigest);
@@ -667,6 +671,63 @@ public sealed class OctoberScanFileWorkerTests
         Assert.Equal(status, result.Status); Assert.Equal(stage, result.FailureStage);
         Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         if (defect == "admission") Assert.Empty(client.Requests);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(OctoberWorkerTerminalFailure.ContentAfterFinish, false)]
+    [InlineData(OctoberWorkerTerminalFailure.ContentAfterFinish, true)]
+    [InlineData(OctoberWorkerTerminalFailure.ConflictingFinish, false)]
+    [InlineData(OctoberWorkerTerminalFailure.NonAssistantRole, false)]
+    [InlineData(OctoberWorkerTerminalFailure.ToolCallError, false)]
+    [InlineData(OctoberWorkerTerminalFailure.MissingToolCallId, false)]
+    [InlineData(OctoberWorkerTerminalFailure.UnknownTool, false)]
+    [InlineData(OctoberWorkerTerminalFailure.RepeatedToolCallId, false)]
+    [InlineData(OctoberWorkerTerminalFailure.MissingFinish, false)]
+    [InlineData(OctoberWorkerTerminalFailure.UnsupportedFinish, false)]
+    [InlineData(OctoberWorkerTerminalFailure.ToolFinishWithoutCalls, false)]
+    [InlineData(OctoberWorkerTerminalFailure.StopWithCalls, false)]
+    public async Task TerminalGuard_ReportsOnlyExactFixedReasonAndPreservesOutcomeAsync(OctoberWorkerTerminalFailure defect, bool conflictingWithContent = false)
+    {
+        int toolCalls = 0;
+        var tool = AIFunctionFactory.Create(() => { toolCalls++; return "PRIVATE_TOOL_RESULT"; }, "read_prepared_source");
+        FunctionCallContent Call(string id = "PRIVATE_CALL_ID", string name = "read_prepared_source") => new(id, name, new Dictionary<string, object?>());
+        ChatResponseUpdate Finish(ChatFinishReason? reason) => new() { Role = ChatRole.Assistant, FinishReason = reason };
+        ChatResponseUpdate Content(AIContent content, ChatFinishReason? finish = null) => new() { Role = ChatRole.Assistant, Contents = [content], FinishReason = finish };
+        ChatResponseUpdate[] updates = defect switch
+        {
+            OctoberWorkerTerminalFailure.ContentAfterFinish => [Finish(ChatFinishReason.Stop), Content(new TextContent("PRIVATE_AFTER_FINISH"), conflictingWithContent ? ChatFinishReason.Length : null)],
+            OctoberWorkerTerminalFailure.ConflictingFinish => [Finish(ChatFinishReason.Stop), Finish(ChatFinishReason.Length)],
+            OctoberWorkerTerminalFailure.NonAssistantRole => [new() { Role = ChatRole.User, Contents = [new TextContent("PRIVATE_ROLE_CONTENT")], FinishReason = ChatFinishReason.Stop }],
+            OctoberWorkerTerminalFailure.ToolCallError => [Content(new FunctionCallContent("PRIVATE_CALL_ID", tool.Name, new Dictionary<string, object?>()) { Exception = new JsonException("PRIVATE_ARGUMENT_ERROR") }, ChatFinishReason.ToolCalls)],
+            OctoberWorkerTerminalFailure.MissingToolCallId => [Content(Call(" "), ChatFinishReason.ToolCalls)],
+            OctoberWorkerTerminalFailure.UnknownTool => [Content(Call(name: "PRIVATE_UNKNOWN_TOOL"), ChatFinishReason.ToolCalls)],
+            OctoberWorkerTerminalFailure.RepeatedToolCallId => [Content(Call()), Content(Call(), ChatFinishReason.ToolCalls)],
+            OctoberWorkerTerminalFailure.MissingFinish => [Content(new TextContent(UnitJson))],
+            OctoberWorkerTerminalFailure.UnsupportedFinish => [Finish(ChatFinishReason.Length)],
+            OctoberWorkerTerminalFailure.ToolFinishWithoutCalls => [Finish(ChatFinishReason.ToolCalls)],
+            OctoberWorkerTerminalFailure.StopWithCalls => [Content(Call(), ChatFinishReason.Stop)],
+            _ => throw new InvalidOperationException("Unimplemented controlled guard"),
+        };
+        using var client = new UpdateClient(updates);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(defect, result.TerminalFailure); Assert.Null(result.Proposal);
+        Assert.Equal(0, toolCalls); Assert.Equal(1, client.Calls);
+    }
+
+    private sealed class UpdateClient(ChatResponseUpdate[] updates) : IChatClient
+    {
+        internal int Calls;
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            foreach (var update in updates) { await Task.Yield(); cancellationToken.ThrowIfCancellationRequested(); yield return update; }
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
     }
     private sealed record Round(string? Text, ChatFinishReason? Finish, IReadOnlyList<AIContent>? Calls = null);
     private sealed class ScriptedClient(IReadOnlyList<Round> rounds, Action? afterRequest = null) : IChatClient

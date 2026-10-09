@@ -371,6 +371,9 @@ public sealed class OctoberScanEntryPointTests
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("defined")]
+    [InlineData("terminal")]
+    [InlineData("completed-terminal")]
+    [InlineData("undefined-terminal")]
     [InlineData("undefined")]
     [InlineData("absent")]
     [InlineData("foreign-binding")]
@@ -378,7 +381,10 @@ public sealed class OctoberScanEntryPointTests
     {
         var snapshot = condition == "absent" ? null : new OctoberWorkerDiagnosticSnapshot(
             OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerRetryDisposition.None, OctoberWorkerFailureStage.ProposalParse);
-        if (condition == "undefined") snapshot = new((OctoberFileWorkerStatus)99999, (OctoberWorkerRetryDisposition)99999, (OctoberWorkerFailureStage)99999);
+        if (condition == "terminal") snapshot = snapshot! with { FailureStage = OctoberWorkerFailureStage.StreamTerminal, TerminalFailure = OctoberWorkerTerminalFailure.MissingFinish };
+        if (condition == "completed-terminal") snapshot = snapshot! with { Status = OctoberFileWorkerStatus.Completed, TerminalFailure = OctoberWorkerTerminalFailure.MissingFinish };
+        if (condition == "undefined-terminal") snapshot = snapshot! with { TerminalFailure = (OctoberWorkerTerminalFailure)99999 };
+        if (condition == "undefined") snapshot = new((OctoberFileWorkerStatus)99999, (OctoberWorkerRetryDisposition)99999, (OctoberWorkerFailureStage)99999) { TerminalFailure = (OctoberWorkerTerminalFailure)99999 };
         var batch = Guid.NewGuid();
         var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
             OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
@@ -392,11 +398,13 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "absent" or "foreign-binding") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "failureStage", "retryDisposition", "status" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "failureStage", "retryDisposition", "status", "terminalFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined") { Assert.All(diagnostic.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
-        Assert.Equal("InvalidOutput", diagnostic.GetProperty("status").GetString());
+        Assert.Equal(condition == "completed-terminal" ? "Completed" : "InvalidOutput", diagnostic.GetProperty("status").GetString());
         Assert.Equal("None", diagnostic.GetProperty("retryDisposition").GetString());
-        Assert.Equal("ProposalParse", diagnostic.GetProperty("failureStage").GetString());
+        Assert.Equal(condition == "terminal" ? "StreamTerminal" : "ProposalParse", diagnostic.GetProperty("failureStage").GetString());
+        if (condition == "terminal") Assert.Equal("MissingFinish", diagnostic.GetProperty("terminalFailure").GetString());
+        else Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("terminalFailure").ValueKind);
     }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {

@@ -65,6 +65,12 @@ public enum OctoberFileWorkerStatus
 
 public enum OctoberWorkerRetryDisposition { None, KnownSafeTransient }
 public enum OctoberWorkerFailureStage { Admission, StreamTerminal, ProposalParse, ProposalValidation, Transport, HostSealing }
+public enum OctoberWorkerTerminalFailure
+{
+    ContentAfterFinish, ConflictingFinish, NonAssistantRole, ToolCallError, MissingToolCallId,
+    UnknownTool, RepeatedToolCallId, MissingFinish, UnsupportedFinish, ToolFinishWithoutCalls,
+    StopWithCalls, IncompleteTerminal, IncompleteCoverage
+}
 
 /// <summary>Worker observation only; this is not a Knowledge completion capability.</summary>
 public sealed record OctoberFileWorkerResult(
@@ -77,6 +83,7 @@ public sealed record OctoberFileWorkerResult(
     public OctoberWorkerRetryDisposition RetryDisposition { get; init; }
     public TimeSpan? RetryAfter { get; init; }
     public OctoberWorkerFailureStage? FailureStage { get; init; }
+    public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
 }
 
 public sealed class OctoberFileWorkerExecutor
@@ -105,6 +112,7 @@ public sealed class OctoberFileWorkerExecutor
         WorkerClient? adapter = null;
         int covered = 0;
         OctoberWorkerFailureStage? stage = null;
+        OctoberWorkerTerminalFailure? terminalFailure = null;
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -168,7 +176,7 @@ public sealed class OctoberFileWorkerExecutor
                 if (adapter.Failure is { } failure) throw new WorkerFailure(failure);
                 stage = OctoberWorkerFailureStage.StreamTerminal;
                 if (adapter.Finish != ChatFinishReason.Stop || adapter.PendingCalls != 0)
-                    throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput);
+                    throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
                 stage = null;
                 if (!await request.Source.VerifyCurrentAsync(cancellationToken))
                     throw new WorkerFailure(OctoberFileWorkerStatus.SourceChanged);
@@ -176,7 +184,7 @@ public sealed class OctoberFileWorkerExecutor
                 history.AddRange(response.Messages);
             }
             stage = OctoberWorkerFailureStage.StreamTerminal;
-            if (covered != source.Length) throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput);
+            if (covered != source.Length) throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteCoverage);
             stage = OctoberWorkerFailureStage.ProposalParse;
             CompletedFileProposal proposal = ParseProposal(adapter.LastText, request, ref stage);
             return new(OctoberFileWorkerStatus.Completed, proposal, covered, adapter.Rounds, adapter.SettledTools);
@@ -185,7 +193,7 @@ public sealed class OctoberFileWorkerExecutor
         {
             return Failed(OctoberFileWorkerStatus.Cancelled);
         }
-        catch (WorkerFailure failure) { return Failed(failure.Status); }
+        catch (WorkerFailure failure) { terminalFailure = failure.TerminalFailure; return Failed(failure.Status); }
         catch (Exception exception) when (exception is JsonException or ArgumentException or InvalidDataException or OverflowException)
         {
             return Failed(adapter?.Failure ?? OctoberFileWorkerStatus.InvalidOutput);
@@ -197,7 +205,8 @@ public sealed class OctoberFileWorkerExecutor
             {
                 RetryDisposition = status == OctoberFileWorkerStatus.ProviderFailed
                     ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None,
-                FailureStage = stage ?? adapter?.FailureStage
+                FailureStage = stage ?? adapter?.FailureStage,
+                TerminalFailure = terminalFailure ?? adapter?.TerminalFailure
             };
     }
 
@@ -276,9 +285,10 @@ public sealed class OctoberFileWorkerExecutor
         return lines;
     }
 
-    private sealed class WorkerFailure(OctoberFileWorkerStatus status) : Exception("Worker execution stopped.")
+    private sealed class WorkerFailure(OctoberFileWorkerStatus status, OctoberWorkerTerminalFailure? terminalFailure = null) : Exception("Worker execution stopped.")
     {
         internal OctoberFileWorkerStatus Status { get; } = status;
+        internal OctoberWorkerTerminalFailure? TerminalFailure { get; } = terminalFailure;
     }
 
     private sealed class WorkerClient(IChatClient client, IOctoberWorkerExecutionScope scope,
@@ -298,6 +308,7 @@ public sealed class OctoberFileWorkerExecutor
         internal string LastText { get; private set; } = string.Empty;
         internal OctoberFileWorkerStatus? Failure { get; private set; }
         internal OctoberWorkerFailureStage? FailureStage { get; private set; }
+        internal OctoberWorkerTerminalFailure? TerminalFailure { get; private set; }
         private OctoberWorkerFailureStage? _observedStage;
 
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
@@ -310,7 +321,8 @@ public sealed class OctoberFileWorkerExecutor
         {
             _observedStage = OctoberWorkerFailureStage.StreamTerminal;
             cancellationToken.ThrowIfCancellationRequested();
-            if (Failure is not null || _pending.Count != 0) throw Fail(OctoberFileWorkerStatus.InvalidOutput);
+            if (Failure is not null || _pending.Count != 0)
+                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
             _observedStage = OctoberWorkerFailureStage.Admission;
             if (Rounds >= request.Limits.MaximumProviderRounds) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
             _observedStage = null;
@@ -383,9 +395,12 @@ public sealed class OctoberFileWorkerExecutor
                     if (!next) break;
                     _observedStage = OctoberWorkerFailureStage.StreamTerminal;
                     ChatResponseUpdate update = iterator.Current;
-                    if (finish is not null && (update.Contents.Any(content => content is not UsageContent) ||
-                        update.FinishReason is { } repeated && repeated != finish)) throw Fail(OctoberFileWorkerStatus.InvalidOutput);
-                    if (update.Role is { } role && role != ChatRole.Assistant) throw Fail(OctoberFileWorkerStatus.InvalidOutput);
+                    if (finish is not null && update.Contents.Any(content => content is not UsageContent))
+                        throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ContentAfterFinish);
+                    if (finish is not null && update.FinishReason is { } repeated && repeated != finish)
+                        throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ConflictingFinish);
+                    if (update.Role is { } role && role != ChatRole.Assistant)
+                        throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.NonAssistantRole);
                     foreach (AIContent content in update.Contents)
                     {
                         if (content is TextContent value)
@@ -396,9 +411,14 @@ public sealed class OctoberFileWorkerExecutor
                         else if (content is FunctionCallContent call && !call.InformationalOnly)
                         {
                             ChargeOutput(JsonSerializer.Serialize(call.Arguments));
-                            if (call.Exception is not null || string.IsNullOrWhiteSpace(call.CallId) ||
-                                !tools.Any(tool => tool.Name == call.Name) || !_seen.Add(call.CallId))
-                                throw Fail(OctoberFileWorkerStatus.InvalidOutput);
+                            if (call.Exception is not null)
+                                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolCallError);
+                            if (string.IsNullOrWhiteSpace(call.CallId))
+                                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.MissingToolCallId);
+                            if (!tools.Any(tool => tool.Name == call.Name))
+                                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.UnknownTool);
+                            if (!_seen.Add(call.CallId))
+                                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.RepeatedToolCallId);
                             if (++_toolCount > request.Limits.MaximumToolCalls) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
                             var arguments = JsonSerializer.Deserialize<Dictionary<string, object?>>(
                                 JsonSerializer.Serialize(call.Arguments ?? new Dictionary<string, object?>()))!;
@@ -418,9 +438,14 @@ public sealed class OctoberFileWorkerExecutor
                     buffered.Add(update);
                 }
                 _observedStage = OctoberWorkerFailureStage.StreamTerminal;
-                if (finish != ChatFinishReason.Stop && finish != ChatFinishReason.ToolCalls ||
-                    finish == ChatFinishReason.ToolCalls && calls.Count == 0 || finish == ChatFinishReason.Stop && calls.Count != 0)
-                    throw Fail(OctoberFileWorkerStatus.InvalidOutput);
+                if (finish is null)
+                    throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.MissingFinish);
+                if (finish != ChatFinishReason.Stop && finish != ChatFinishReason.ToolCalls)
+                    throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.UnsupportedFinish);
+                if (finish == ChatFinishReason.ToolCalls && calls.Count == 0)
+                    throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolFinishWithoutCalls);
+                if (finish == ChatFinishReason.Stop && calls.Count != 0)
+                    throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.StopWithCalls);
                 _observedStage = null;
                 if (!await request.Source.VerifyCurrentAsync(linked.Token)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
                 success = true;
@@ -561,11 +586,12 @@ public sealed class OctoberFileWorkerExecutor
             return bytes;
         }
 
-        private WorkerFailure Fail(OctoberFileWorkerStatus status)
+        private WorkerFailure Fail(OctoberFileWorkerStatus status, OctoberWorkerTerminalFailure? terminalFailure = null)
         {
             Failure = status;
             FailureStage ??= _observedStage;
-            return new(status);
+            TerminalFailure ??= terminalFailure;
+            return new(status, TerminalFailure);
         }
 
         private static bool IsTransient(Exception exception)

@@ -29,7 +29,10 @@ public sealed record OctoberScanUsage(int? Requests, long? InputTokens,
     long? OutputTokens, bool HasUnknownUsage);
 
 public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? Status,
-    OctoberWorkerRetryDisposition? RetryDisposition, OctoberWorkerFailureStage? FailureStage);
+    OctoberWorkerRetryDisposition? RetryDisposition, OctoberWorkerFailureStage? FailureStage)
+{
+    public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
+}
 
 public sealed record OctoberExecutionSnapshot(OctoberScanUsage Usage, TimeSpan QueueWait,
     TimeSpan ModelWait, int OutstandingAttempts, bool HasUnconfirmedSettlement);
