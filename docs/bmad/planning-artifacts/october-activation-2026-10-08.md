@@ -676,3 +676,10 @@ checks passes **75/75**, zero failures/skips, in
 The diagnostic fixture itself has not been rerun live. A concrete request for one
 additional attempt under the same synthetic/provider/resource ceilings was presented
 to the user; approval is pending, not inferred from previous grants.
+
+Scan's separate timeout diagnostics `7deacd4d` are imported at `8ee550e2`.
+Owner verification passed 8/8 in `4ac957e68be141bdb45869da921effc8`; main suite
+policy/regressions pass (439 classified sources). The original entry/completion/
+drain waits and semantic assertions are unchanged. Failure-only counters record
+calls ending by return, throw or cancellation, not successful commits. No fresh
+main full-suite or live run was made; the prior full-suite failure remains open.
