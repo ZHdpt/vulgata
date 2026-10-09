@@ -287,3 +287,28 @@ database `vulgata_oct_pilot_3098051296684929a4800ec6bed276b8`:
   authority/provenance refusal from ordinary unavailable-tool fallback. No new
   diagnostic/behavior change or live resource use before a reviewed proposal.
 - Prior accepted partial CL/database/keys remain intact; no publication yet.
+
+## Settled JDT limitation correction decision
+
+Reviewed characterization `dc77ddec` integrated as `cbcfd139`; lane controlled
+109/109 passed. Inert public-factory tests prove confirmed-cleanup JDT configuration
+and readiness failures permanently fault the October runtime even though an
+independent same-approval source grant remains valid. This violates the permitted
+file-tool fallback in accepted FR-006; it does not prove the latest live failed tool.
+
+Integrator approved one narrow correction and one bounded diagnostic together:
+
+- Preserve typed JDT open outcome and positively confirmed settlement. Permit only
+  explicit ConfigurationUnavailable/ReadinessFailed after fresh exact source/root/
+  authority checks to retain file-tool fallback with honest limitation metadata.
+- Keep unknown/cancelled/expired/authority/provenance/identity/unconfirmed cleanup
+  failures fatal; required CodeGraph policy unchanged. No retries, lifetime/budget
+  extension, profile, shared-facade API or Knowledge schema changes.
+- Fixed observed operation/boundary, existing typed outcome where observed, nullable
+  confirmed-settlement flag only; no raw payload/paths/exception text. Preserve first
+  actual cause and all output/revocation fences. No broad logging framework.
+- Scan owns scoped runtime/wrapper/projection/tests, separate test and production
+  owners and independent review. Composed real-frame/ledger fallback and fatal
+  counterparts must pass controlled tests before root considers live qualification.
+
+Paid/native/PostgreSQL/source-root operations remain outside the lane dispatch.

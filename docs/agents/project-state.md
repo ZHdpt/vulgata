@@ -94,9 +94,16 @@ Consolidated correction now integrated as `500e2f07`; main affected328/328 passe
 (isolation `ac98f025e95d44ea8a683ae81dc8a4ed`). Real `phone-1f2243ae6f6e` failed
 after37.17s at **ProviderFailed/ToolInvocation**:2requests6,727input/676output,
 inventory77accepted0. This identifies local tool execution, not exact tool or cause.
-Paid runs held; Scan has source-free diagnosis-only scope on tool/runtime/ledger
-non-success handling. Preserve genuine authority/provenance failures and prior
-partial CL; no ordinary-user publication or presentation-ready dataset yet.
+Paid runs held. Tool-outcome characterization integrated as `cbcfd139` (lane
+109/109 controlled GREEN) proves that positively settled JDT startup limitations
+currently fault otherwise-authorized file access. Integrator approved one bounded
+FR-006 correction plus a fixed content-free tool-boundary discriminator. Only
+confirmed-cleanup configuration/readiness limitations with fresh exact source and
+authority checks may fall back to existing file tools. CodeGraph remains required;
+authority/provenance/identity/expiry/unknown/cleanup failures remain fatal. No extra
+retries, lifetime, budget or shared contracts. Scan owns reviewed controlled
+implementation; root owns any live qualification. The latest real failure is NOT
+proven JDT. Preserve prior partial CL; no presentation-ready publication yet.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
