@@ -490,3 +490,27 @@ Business's full run `b82cd8568e5e49f5832593ce15a1db13` remains **4,123/4,124**, 
 an initial Chat SubmitAsync ten-second timeout before unknown-locator assertions.
 Focused nonreproduction does not explain it. Chat owns bounded failure diagnostics
 preserving that assertion and timeout; no production correction or waiver is claimed.
+
+### Combined integration regression — October 9
+
+Explorer's exact dependency assertions are imported at `42703cff`; current main
+compilation and 26 affected SelfContained cases passed in
+`48279b982426496493397a887cdc93ee`. These partial helpers still have no live BL test.
+Reviewed Chat failure-only diagnostics are imported at `0e78cbd9`: the original
+ten-second wait/assertions remain, with safe counters/state sampled before teardown.
+
+The full SelfContained run on `0e78cbd9`,
+`8c2117b463a54d0785e50dec48cbaf82`, passed **4,130/4,132**, zero skips, build zero
+errors. It is **NOT GREEN**. The earlier initial-submit timeout did not recur,
+which does not establish its cause. Two current failures remain:
+
+- `CodeGraphAdapter_UsesApprovedIdentity_AndClosedPublicSeamWithoutStartupIndexing`:
+  expected Ready, observed NotReady at line 149; Integration owns diagnosis.
+- `ChatPage_SameInstanceLocatorNavigationReopensExactContextAndCannotSilentlyCreateOnRemovalAsync`
+  (`?conversationId=invalid`): expected the second answer but rendered a failed-answer
+  state; Chat owns diagnosis. A longer render wait is not an established fix.
+
+No assertion/timeout waiver, production remedy or new provider/database operation
+is authorized by this regression result. The process-only short PATH used for
+build lookup is part of the recorded test environment and must be considered
+when diagnosing environment-sensitive failures.
