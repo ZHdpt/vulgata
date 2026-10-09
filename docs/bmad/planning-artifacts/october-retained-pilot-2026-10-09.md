@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: one prior real CL remains accepted but unpublished. Consolidated Worker
-correction is integrated and controlled-tested, but real retry failed in local
-`ToolInvocation`. Paid retries are paused for bounded tool-path diagnosis.
+Status: one prior real CL remains accepted but unpublished. Reviewed JDT/tool-path
+correction is integrated. Latest real retry identifies `OutputBytes` as the Worker
+budget bound; paid retries paused for source-free accounting assessment.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -312,3 +312,23 @@ Integrator approved one narrow correction and one bounded diagnostic together:
   counterparts must pass controlled tests before root considers live qualification.
 
 Paid/native/PostgreSQL/source-root operations remain outside the lane dispatch.
+
+## JDT/tool checkpoint and exact byte-bound observation
+
+Reviewed `b5aff0ef` integrated as `449e00bf`; main15 affected controlled classes
+passed **466/466**, no skips (isolation `7899441b665e4e06b3543e8b8485160f`). Native
+JDT recovery is not qualified by these controlled seams or the next partial run.
+
+Fresh `phone-5dabccf9027c`, batch `021f168d-97e4-4cbf-9f3e-201da9c862d6`, database
+`vulgata_oct_pilot_df18c46b20c84f16a0d62d4f9655f102`:
+
+- **51.13s wall /48.87s pipeline**, exit1, no timeout/cleanup doubt; inventory77,
+  accepted0; **3 requests, token totals unknown**.
+- `BudgetExceeded / StreamTerminal / OutputBytes`, retryNone, toolFailure null.
+  This identifies the262,144-byte cumulative Worker output bound, not a cumulative
+  run token/request cap and not which content categories consumed it.
+- Root assigned source-free accounting assessment: quantify real-SDK reasoning
+  fragment serialization versus semantic UTF8, chunking/Unicode invariance, final
+  text/call arguments/tool-result contributions. No limit increase, reasoning
+  exclusion, production edit or paid retry before an evidence-backed decision.
+- Earlier partial acceptedCL database/keys remain retained; no successful publication.

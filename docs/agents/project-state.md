@@ -104,6 +104,12 @@ authority/provenance/identity/expiry/unknown/cleanup failures remain fatal. No e
 retries, lifetime, budget or shared contracts. Scan owns reviewed controlled
 implementation; root owns any live qualification. The latest real failure is NOT
 proven JDT. Preserve prior partial CL; no presentation-ready publication yet.
+That correction is now integrated as `449e00bf`; main affected466/466GREEN
+(isolation `7899441b665e4e06b3543e8b8485160f`). Fresh real run `phone-5dabccf9027c`
+stopped51.13s with **BudgetExceeded/StreamTerminal/OutputBytes**,3requests,
+token totals unknown,accepted0. Scan now has source-free accounting-assessment
+scope only (reasoning fragment overhead/chunk invariance/tool-result contributions).
+No limit increase or paid retry pending rootdecision; prior partialCL retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
