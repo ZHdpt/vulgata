@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: reviewed SDK compatibility fix is integrated. Latest real pilot accepted
-one CL Document, then failed a Worker internal budget on the second file. No
-publication or ordinary-user read qualification yet; preserve this partial dataset.
+Status: one prior real CL remains accepted but unpublished. Budget diagnostics are
+integrated; the latest fresh retry instead hit an unclassified `ProviderFailed`
+path. Paid retries are paused for bounded diagnosis. Preserve the partial dataset.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -199,3 +199,23 @@ lookup based on the class name. However, some cited line ranges are misaligned:
 the execute claim cites 17–21, while the actual method declaration/body runs 20–23
 (return on22). Structural acceptance is not complete citation-accuracy qualification.
 Record this quality gap; do not present this partial dataset as presentation-ready.
+
+## Budget diagnostic integration and divergent retry
+
+Integrated reviewed `b72aae4a` as `31b00465`; labels only existing output-byte,
+tool-call and stream-update guards. Main affected SelfContained **192/192**, no
+skips, isolation `da32e16289cd4c8dbe1b33a0ac00a7a2`; no limit/charge/acceptance changes.
+
+Fresh run `phone-38a2b10a166c`, batch `56dcd8b2-0ef2-4100-8044-9628b527019f`,
+database `vulgata_oct_pilot_fe1981e86bc8427689f6e70c77c31265`:
+
+- **19.83 seconds** wall; exit1, no timeout or unconfirmed cleanup.
+- **1 request**, 2,438 input / 648 output tokens, usage known.
+- `ProviderFailed / None`, failureStage/terminalFailure/budgetFailure all null.
+- Inventory77; one admitted operation; accepted0/publications0.
+- This did **not** reproduce or identify the prior budget bound. The broad status
+  does not establish a remote provider outage; local SDK/MAF/tool exceptions remain
+  possible. Scan owns controlled diagnosis of the unlabelled path before any next
+  paid retry. No arbitrary trailing output, safety-limit or accounting bypass.
+- Earlier accepted CL database/keys remain untouched. All77 source hashes matched
+  before this run; generated indexes were archived outside the source roots.

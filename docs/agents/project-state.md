@@ -71,6 +71,13 @@ accepted **one CL Document**, then stopped after31.49s on second-file
 publications**, so ordinary-user read/BL/Chat/graph are not yet qualified. Retain
 partial database `vulgata_oct_pilot_beca4c15e7414fc7b4732d527f480f18` and keys.
 Scan owns bounded budget diagnosis; no unchanged retry or limit bypass.
+Budget diagnostics integrated as `31b00465`, main affected **192/192** passed
+(isolation `da32e16289cd4c8dbe1b33a0ac00a7a2`). New diagnostic run
+`phone-38a2b10a166c` diverged: `ProviderFailed` with all stage/reason fields null,
+19.83s, one request (2,438 input/648 output), accepted0/publications0. This is not
+proof of a remote outage and did not identify the earlier budget bound. Root has
+paused paid retries for Scan's bounded SDK/MAF/tool-path diagnosis; prior partial
+CL data remains retained. Runtime stopped; no new permission decision required yet.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
