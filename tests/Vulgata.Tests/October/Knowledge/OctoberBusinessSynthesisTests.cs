@@ -22,6 +22,60 @@ public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteAsync_ActualSerializedInputLocators_AreIndependentOfNewOutputLabelsAsync(bool substituteOutputSection)
+    {
+        var f = new SynthesisCase();
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var transport = new SynthesisWireProposalHandler(substituteOutputSection);
+        using var client = await new OctoberWorkerClientFactory(new SynthesisSdkSecret(), transport).CreateAsync(
+            new("controlled-wire-locators", "only-source", new("selected-profile", ApiType.ChatCompletions,
+                "https://never-contacted.invalid/v1", "controlled-model", "credential://controlled-sdk"), "controlled-protected"));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
+        Assert.Equal(1, transport.Calls);
+        Assert.NotNull(transport.SelectedInput);
+        Assert.NotEqual(SynthesisWireProposalHandler.OutputSectionId, transport.SelectedInput.SectionId);
+        Assert.NotEqual(SynthesisWireProposalHandler.OutputClaimId, transport.SelectedInput.ClaimGroupId);
+        Assert.Null(result.AdmissionFailure);
+        if (substituteOutputSection)
+        {
+            Assert.Equal("SectionReference", SynthesisDiagnosticProbe.Read(result));
+            Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        }
+        else
+        {
+            Assert.NotNull(result.Content); Assert.NotNull(result.Proposal);
+            var section = Assert.Single(result.Proposal.Sections);
+            Assert.Equal(SynthesisWireProposalHandler.OutputSectionId, section.SectionId);
+            var claim = Assert.Single(section.Claims);
+            Assert.Equal(SynthesisWireProposalHandler.OutputClaimId, claim.ClaimGroupId);
+            Assert.Equal(transport.SelectedInput, Assert.Single(claim.Inputs));
+            Assert.Equal(transport.SelectedQualification, claim.Qualification);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void EmbeddedSynthesisPrompt_DistinguishesOutputLabelsFromExactSameChainInputLocators()
+    {
+        using var stream = typeof(OctoberBusinessSynthesisExecutor).Assembly.GetManifestResourceStream("Vulgata.Agents.Prompts.OctoberBusiness.Synthesis.md");
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream);
+        string prompt = reader.ReadToEnd();
+        foreach (string path in new[]
+        {
+            "input.Corpus.Documents[i].Version", "input.Corpus.Documents[i].Sections[j].SectionId",
+            "input.Corpus.Documents[i].Sections[j].Claims[k].ClaimGroupId",
+            "input.Corpus.Documents[i].Sections[j].Claims[k].Qualification", "group.Dependencies.Documents", "Inputs.Document"
+        }) Assert.Contains(path, prompt, StringComparison.Ordinal);
+        Assert.Matches(@"(?m)^.*输出.*SectionId.*ClaimGroupId.*$", prompt);
+        Assert.Contains("同一", prompt, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("plain")]
     [InlineData("answer-and-reasoning")]
     [InlineData("reasoning-only")]
@@ -648,6 +702,46 @@ public sealed class OctoberBusinessSynthesisTests
         Assert.Null((await active).Content);
         Assert.Equal(ProviderAdmissionStatus.HardStopped, (await active).AdmissionFailure);
         Assert.Equal(1, client.Calls); Assert.Equal(1, client.PeakActive);
+    }
+}
+
+/// <summary>Builds a controlled provider proposal exclusively from the actual SDK request's accepted-input chain.</summary>
+internal sealed class SynthesisWireProposalHandler(bool substituteOutputSection) : HttpMessageHandler
+{
+    public const string OutputSectionId = "generated-business-section";
+    public const string OutputClaimId = "generated-business-claim";
+    public int Calls { get; private set; }
+    public SynthesisClaimInput? SelectedInput { get; private set; }
+    public ClaimQualification SelectedQualification { get; private set; }
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        Calls++;
+        using var wire = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+        var user = Assert.Single(wire.RootElement.GetProperty("messages").EnumerateArray().Where(message => message.GetProperty("role").GetString() == "user"));
+        var content = user.GetProperty("content");
+        string payload = content.ValueKind == JsonValueKind.String ? content.GetString()! :
+            Assert.Single(content.EnumerateArray().Where(part => part.GetProperty("type").GetString() == "text")).GetProperty("text").GetString()!;
+        using var accepted = JsonDocument.Parse(payload);
+        var dependencies = accepted.RootElement.GetProperty("group").GetProperty("Dependencies").GetProperty("Documents").EnumerateArray()
+            .Select(item => JsonSerializer.Deserialize<DocumentVersionReference>(item.GetRawText())!).ToHashSet();
+        var document = accepted.RootElement.GetProperty("input").GetProperty("Corpus").GetProperty("Documents").EnumerateArray()
+            .First(item => dependencies.Contains(JsonSerializer.Deserialize<DocumentVersionReference>(item.GetProperty("Version").GetRawText())!));
+        var version = JsonSerializer.Deserialize<DocumentVersionReference>(document.GetProperty("Version").GetRawText())!;
+        var section = document.GetProperty("Sections").EnumerateArray().First(item => item.GetProperty("Claims").GetArrayLength() > 0);
+        var claim = section.GetProperty("Claims").EnumerateArray().First(item => item.GetProperty("Qualification").GetInt32() == (int)ClaimQualification.SourceSupported);
+        SelectedInput = new(version, section.GetProperty("SectionId").GetString()!, claim.GetProperty("ClaimGroupId").GetString()!);
+        SelectedQualification = (ClaimQualification)claim.GetProperty("Qualification").GetInt32();
+        Assert.False(document.GetProperty("Sections").EnumerateArray().Any(item => item.GetProperty("SectionId").GetString() == OutputSectionId));
+        var reference = substituteOutputSection ? SelectedInput with { SectionId = OutputSectionId } : SelectedInput;
+        var proposal = new BusinessSynthesisProposal("业务处理说明", [new(OutputSectionId, 0, "处理结果",
+            [new(OutputClaimId, "根据已接受的操作说明处理业务请求。", SelectedQualification, [reference], [])])]);
+        string json = JsonSerializer.Serialize(new
+        {
+            id = "controlled-wire-locators", @object = "chat.completion", created = 1, model = "controlled-model",
+            choices = new[] { new { index = 0, message = new { role = "assistant", content = JsonSerializer.Serialize(proposal) }, finish_reason = "stop" } },
+            usage = new { prompt_tokens = 10, completion_tokens = 5, total_tokens = 15 }
+        });
+        return new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
     }
 }
 
