@@ -123,7 +123,14 @@ inconclusiveattribution; keep intermittent concern. Rootallowed onequalification
 nowsettled: `phone-c0c810df49ae`49.12s,2requests7,556input/1,528output,accepted0.
 Exactfailure **CodeGraphExplore/ResultAdmission**, returned **Complete**, outer
 ProviderFailed/ToolInvocation. Paid runsheld; Scan source-free ledger/native-envelope
-contract assessment authorized, no admission bypass. Prior partialCL retained.
+contract assessment completed: actual contained parser produces LF excerpts from
+CRLF source, but ledger rawContains rejects them. Test-only characterization
+`febbb239` accepted (lane193/193). Integrator authorized minimal ordinal CRLF→LF
+excerpt comparison alignment only, preserving rawsource/hash/identity and all
+nonempty/path/range/size/distinctfile/currentness/authorization guards. No broader
+whitespace normalization, blanketComplete acceptance, newdiagnostics or nativeprobe.
+Scan owns separateRED/GREEN/review; paidrunsheld. Lastlivecause notprovenattributed.
+Prior partialCL retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

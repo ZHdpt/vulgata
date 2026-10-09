@@ -394,3 +394,19 @@ Fresh `phone-c0c810df49ae`, batch `cdca79a6-12a7-4c52-978f-174e4e126e99`, databa
   before any resource action; do not perform another paid diagnostic loop.
 - Prior partialCL database/keys remain preserved and unpublished. All77 hashes
   matched before this run; no sharedcontainer/database mutation or newcontainer.
+
+## CodeGraph excerpt representation correction decision
+
+Reviewed test-only `febbb239` accepted, lane193/193 controlled GREEN. The actual
+contained adapter parser verifies/returns LF excerpts against normalized source;
+ledger rawContains rejects the same excerpt on unchangedCRLF source. LF control
+is allowed. This is a concrete producer/consumer mismatch, not proven attribution
+of the latest live payload. Other legitimate consumer denials remain necessary.
+
+Integrator approved only ordinal CRLF→LF comparison alignment on both values in
+the Scan ledger. Raw retainedsource/hash/identity stay unchanged; all nonempty,
+path/range/size/distinctfile/currentness/provenance/authorization checks remain.
+No arbitrary whitespace trimming, bareCR/Unicode/case normalization or blanket
+Complete admission. Existing tests/assessment plus ledger comparison only, separate
+RED/GREEN and independent review. No new diagnostic/native probe or paid run in
+this dispatch; root owns later qualification. PriorpartialCL remains retained.
