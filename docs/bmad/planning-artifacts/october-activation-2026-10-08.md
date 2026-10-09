@@ -683,3 +683,19 @@ policy/regressions pass (439 classified sources). The original entry/completion/
 drain waits and semantic assertions are unchanged. Failure-only counters record
 calls ending by return, throw or cancellation, not successful commits. No fresh
 main full-suite or live run was made; the prior full-suite failure remains open.
+
+## Additional diagnostic BL attempt approved — October 9
+
+The user explicitly said **Approve additional test**, accepting the pending
+one-attempt request. It authorizes ONE additional instrumented run of the original
+synthetic AccountPolicy.java with one unambiguous registration root, no fallback;
+the same `https://api.deepseek.com` / `deepseek-flash` and protected root `.env`
+credential reference; cumulative 8 requests/48,000 combined tokens, WorkerCap 1,
+Worker maximum 3/no transient retry, Business maximum two attempts per item within
+those totals; run/file/operator/drain limits 900/480/120/30 seconds. Fresh owned
+PG17 container/volume/database, synthetic identities, temporary keys/source/tools/
+logs/exchange state and loopback Generator/Web operation retain the prior approved
+cleanup boundary. No production Repository, shared database, retained presentation
+dataset, persistent configuration change or automatic further retry is authorized.
+Checkout was clean at `34a8d93a`; provider endpoint/model were reverified unchanged.
+This new grant is unused at this approval checkpoint; the first grant stays consumed.

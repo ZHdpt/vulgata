@@ -43,7 +43,8 @@ grant is consumed, with no automatic retry. Scan owns interruption diagnosis;
 hidden zero report counts do not establish absence of accepted CL. Safe fixture
 stage diagnostics and a controlled no-response reproducer are now integrated and
 compiled (75/75 affected checks, `262bd0272fed4e79b66657488b2ab783`). Another live
-diagnostic attempt is awaiting separate user approval; no repeat has started.
+diagnostic attempt was explicitly approved on October 9 under the same bounded
+synthetic/provider/disposable-resource limits; it has not started at this checkpoint.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).
