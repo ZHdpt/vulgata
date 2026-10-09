@@ -32,6 +32,7 @@ public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? St
     OctoberWorkerRetryDisposition? RetryDisposition, OctoberWorkerFailureStage? FailureStage)
 {
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
+    public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
 }
 
 public sealed record OctoberExecutionSnapshot(OctoberScanUsage Usage, TimeSpan QueueWait,

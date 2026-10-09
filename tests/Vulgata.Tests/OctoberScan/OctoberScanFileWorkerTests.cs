@@ -68,6 +68,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
         Assert.Null(result.TerminalFailure);
+        Assert.Null(result.BudgetFailure);
         var proposal = Assert.IsType<CompletedFileProposal>(result.Proposal);
         Assert.Equal(request.Binding, proposal.Binding);
         Assert.Equal(request.AdmissionId, proposal.AdmissionId);
@@ -98,6 +99,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
         Assert.Null(result.TerminalFailure);
+        Assert.Null(result.BudgetFailure);
         Assert.Empty(result.Proposal!.Units);
         Assert.Equal(CoverageDisposition.CompletedZeroUnit, result.Proposal.Coverage.Disposition);
         Assert.NotEmpty(result.Proposal.Uncertainties);
@@ -144,6 +146,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
         Assert.Null(result.TerminalFailure);
+        Assert.Null(result.BudgetFailure);
         Assert.Equal(2, calls);
         Assert.Equal(1, maximum);
         Assert.Equal(0, active);
@@ -189,6 +192,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var scope = new Scope();
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
         Assert.Equal(exhaust ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.BudgetFailure);
         if (exhaust) Assert.Null(result.Proposal);
         else
         {
@@ -291,6 +295,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Null(result.FailureStage);
         Assert.Null(result.TerminalFailure);
+        Assert.Null(result.BudgetFailure);
         Assert.Equal(frame.Origin, result.Proposal!.Origin);
         Assert.Contains(advisory, result.Proposal.Contributors);
         Assert.Equal(advisory.ContentDigest, Assert.Single(Assert.Single(Assert.Single(Assert.Single(result.Proposal.Units).Sections).Claims).Evidence).ContentDigest);
@@ -306,6 +311,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var scope = new Scope();
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
         Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Null(result.BudgetFailure);
         Assert.Null(result.Proposal);
         Assert.Empty(client.Requests);
         Assert.Empty(scope.Requests);
@@ -718,14 +724,46 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(0, toolCalls); Assert.Equal(1, client.Calls);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(OctoberWorkerBudgetFailure.OutputBytes)]
+    [InlineData(OctoberWorkerBudgetFailure.ToolCalls)]
+    [InlineData(OctoberWorkerBudgetFailure.StreamUpdates)]
+    public async Task StreamDefaultBudget_IdentifiesExactLimitWithoutInventingUsageAsync(OctoberWorkerBudgetFailure limit)
+    {
+        int toolsInvoked = 0;
+        var tool = AIFunctionFactory.Create(() => { toolsInvoked++; return "controlled result"; }, "read_prepared_source");
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        Assert.Equal(262144, request.Limits.MaximumOutputUtf8Bytes); Assert.Equal(16, request.Limits.MaximumToolCalls);
+        ChatResponseUpdate[] updates = limit switch
+        {
+            OctoberWorkerBudgetFailure.OutputBytes => [new() { Role = ChatRole.Assistant, Contents = [new TextContent(new string('x', 262145))], FinishReason = ChatFinishReason.Stop }],
+            OctoberWorkerBudgetFailure.ToolCalls => [new() { Role = ChatRole.Assistant, Contents = Enumerable.Range(0, 17).Select(index => (AIContent)new FunctionCallContent("controlled-" + index, tool.Name, new Dictionary<string, object?>())).ToList(), FinishReason = ChatFinishReason.ToolCalls }],
+            _ => Enumerable.Range(0, 8193).Select(_ => new ChatResponseUpdate { Role = ChatRole.Assistant }).ToArray(),
+        };
+        var scope = new Scope(); using var client = new UpdateClient(updates);
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(limit, result.BudgetFailure); Assert.Null(result.TerminalFailure);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Null(result.Proposal);
+        Assert.Equal(0, toolsInvoked); Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
+        Assert.Single(scope.Requests);
+        var lease = Assert.Single(scope.Leases);
+        Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        var usage = Assert.IsType<ProviderAttemptUsage>(lease.Usage);
+        Assert.Null(usage.InputTokens); Assert.Null(usage.OutputTokens); Assert.Null(usage.Cost);
+    }
     private sealed class UpdateClient(ChatResponseUpdate[] updates) : IChatClient
     {
+        internal bool StreamDisposed;
         internal int Calls;
         public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             Calls++;
-            foreach (var update in updates) { await Task.Yield(); cancellationToken.ThrowIfCancellationRequested(); yield return update; }
+            try { foreach (var update in updates) { await Task.Yield(); cancellationToken.ThrowIfCancellationRequested(); yield return update; } }
+            finally { StreamDisposed = true; }
         }
         public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
         public void Dispose() { }
@@ -772,6 +810,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         public Guid AttemptId => attemptId;
         public CancellationToken CancellationToken => CancellationToken.None;
         internal int Settlements { get; private set; }
+        internal int Disposals { get; private set; }
+        internal ProviderAttemptUsage? Usage { get; private set; }
         internal int Checks { get; private set; }
         internal int DenyAfterChecks { get; init; } = int.MaxValue;
         public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default)
@@ -779,8 +819,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             Checks++;
             return Task.FromResult(Checks <= DenyAfterChecks ? ProviderAdmissionStatus.Granted : ProviderAdmissionStatus.Denied);
         }
-        public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default) { Settlements++; return Task.CompletedTask; }
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default) { Settlements++; Usage = usage; return Task.CompletedTask; }
+        public ValueTask DisposeAsync() { Disposals++; return ValueTask.CompletedTask; }
     }
     private sealed class Secrets : ISecretEncryptionService
     {
