@@ -73,6 +73,12 @@ successful selection: finalizer and exact lookup both Failed / AlreadyCommitted,
 operation mismatch false, `business_publication_unavailable`. Detailed synthesis
 cause remains under Business-owned source-free diagnosis. Usage 2 requests/30,587
 tokens; all cleanup verified. Four attempts remain; no retained dataset authorized.
+Attempt 2 (`1d0fc8e1618a46d5b17f35656a9add1e`, source `eb907bd7`) failed earlier
+with `worker_not_completed` before accepted CL/operator selection/Business. It used
+one request/2,653 tokens and cleanup passed. Three attempts remain; series total
+three requests/33,240 tokens. Scan owns Worker-path diagnosis. The reviewed new
+Business reason and prompt clarification are integrated (`9814268d`, `e0b99bbc`),
+with main controlled verification 248/248; they were not exercised by attempt 2.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).

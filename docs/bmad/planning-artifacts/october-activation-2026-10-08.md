@@ -868,3 +868,17 @@ passed independent integration review. Owner controlled checks passed 114/114
 finalizer, Scan finalization/entrypoint, fixture-input and registration-evidence
 checks passed **248/248**, zero skips, `cb5d7701a57640f59c98b69c0fc40154`.
 Attempt 2 will use these reviewed changes under the existing five-attempt grant.
+
+#### Attempt 2 of 5 — earlier Worker failure
+
+Run `1d0fc8e1618a46d5b17f35656a9add1e` on `eb907bd7`: **0/1**, duration
+40.123s. Generate exited 1 with `worker_not_completed`, Partial coverage, one
+inventory/terminal-coverage entry and no accepted file. Matching and Business
+remained not-started; no operator request appeared. The exchange cancellation
+followed child completion, not a demonstrated operator deadline. This did not
+exercise the new BL prompt/reason path. Exact Worker failure cause remains unknown.
+
+Usage: 1 request, 2,095 input / 558 output tokens, unknown=false. Series totals:
+**2/5 attempts, 3 requests, 33,240 tokens**; three attempts remain. Fixture DB/temp
+cleanup passed; exact run-label Docker queries confirmed zero containers/volumes.
+Scan owns bounded source-free Worker-path diagnosis before another attempt.
