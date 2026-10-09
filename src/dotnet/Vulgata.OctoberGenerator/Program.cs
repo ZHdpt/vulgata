@@ -486,6 +486,14 @@ public static class OctoberGeneratorEntryPoint
                     ? DefinedStatus(worker.TerminalFailure) : null,
                 BudgetFailure = worker.Status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.BudgetExceeded
                     ? DefinedStatus(worker.BudgetFailure) : null,
+                ParseFailure = worker.Status is { } parseStatus && Enum.IsDefined(parseStatus) &&
+                    parseStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed &&
+                    worker.FailureStage == Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.ProposalParse &&
+                    worker.ParseFailure is { } parse ? new
+                    {
+                        Category = DefinedStatus(parse.Category),
+                        Slot = DefinedStatus(parse.Slot)
+                    } : null,
                 ToolFailure = ProjectToolFailure(worker)
             } : null,
             Publication = publication,

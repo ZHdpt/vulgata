@@ -41,6 +41,7 @@ public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? St
 {
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
+    public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
     public OctoberToolDiagnosticSnapshot? ToolFailure { get; init; }
 }
 
