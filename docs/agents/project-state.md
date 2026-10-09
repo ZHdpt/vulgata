@@ -142,10 +142,12 @@ Real `phone-64d5fbe0a2b9`54.94s,3requests15,195input/3,696output,accepted0 nowpr
 **parseFailure Syntax/Root**. Exact content/depth/empty/fence cause stillunknown.
 Wire assessment `3a17cd1a` accepted: lane199/199 controls prove JSONmode remains
 initial/posttool and only finalleaf is parsed; no wire/assembly defect reproduced.
-Root is requesting explicit user approval for ONE bounded protected local inspection
-of failing finalproposal; no capture implementation or furtherpaidrun authorized yet.
-Do not add another counts-only layer, repair/normalize output or raise parserdepth.
-Scan idle pending that decision; priorpartialCL retained.
+User explicitly approved ONE diagnosticrun and protected local capture of only the
+failed finalproposal, at most256KiB, outsideGit. No reasoning/request/credentials;
+rootinspects, keeps sanitizeddiagnosis and deletes rawcapture afterward. Scan now
+owns default-off run-bound injected capture seam with syntheticchecks/review;
+no realruntime/capture in lane. Root's single live run stays blocked until reviewed
+integration. No outputrepair/normalization/depthraise. PriorpartialCL retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

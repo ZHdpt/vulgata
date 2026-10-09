@@ -461,3 +461,24 @@ failed finalproposal, outsideGit; no reasoning/request/credential capture, sanit
 diagnosis only retained, rawcapture deleted after diagnosis. This is a proposal,
 not runtime/capture authority. No instrumentation, paid/native/PG operation, output
 repair/normalization or depth increase before scoped decision. Scan remains idle.
+
+## User approval: one privileged final-proposal observation
+
+The user subsequently explicitly replied **approve** to one diagnostic run capturing
+only the failing finalproposal up to256KiB in protectedlocal storage outsideGit.
+Exclude reasoning, requests and credentials. Root inspects privately, retains only
+a sanitizeddiagnosis and deletes the rawcapture afterward. No retryseries or raw
+output publication is authorized by this grant.
+
+Scan is dispatched to implement a minimal default-off, explicitly run-bound injected
+capture seam; trusted Generator composition owns the local sink, not arbitrary
+filesystem access in AgentExecution. At mostone capture, strictUTF8 bound, no
+misleading truncation, CreateNew/nooverwrite and protected/non-reparse destination.
+Fresh source/authority checks gate capture; revocation/cancellation/changedsource
+cannot disclose. Original parser/status/acceptance/limits unchanged; failures must
+not mask Workerfailure or claim successfulcapture. No rawcontent in standardreports.
+
+Syntheticcontrols, separateowners and independentreview precede rootintegration and
+the one paidrun. The lane has no realprovider/native/PG/source-root/capture authority.
+Existing retained partialCL and sharedcontainer remain untouched. Root config/paths
+stay outsideGit; no outputrepair or modelresponse normalization is approved.
