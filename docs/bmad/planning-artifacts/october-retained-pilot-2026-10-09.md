@@ -1,10 +1,13 @@
 # Retained phone-verification pilot
 
-Status: retained database and production bootstrap prepared. The Generate launch
-was rejected by execution auto-review before starting: nine selected files plus
-empty-prefix supporting rules could disclose content from the other 68 slice files.
-Explicit confirmation of that supporting-source egress boundary is pending. No
-real-source provider request or Generate was executed; do not bypass the rejection.
+Status: retained database and production bootstrap prepared. An initial Generate
+launch was rejected by execution auto-review before starting because supporting
+reads could disclose additional slice files. The user subsequently explicitly
+confirmed relevant content from ALL 77 prepared files may be sent to the approved
+DeepSeek provider, while only nine selected files generate Documents. Evaluation
+answers remain excluded. This resolves that specific scope hold; reverify source
+and runtime bindings before launching. No provider request occurred in the rejected
+invocation.
 
 ## Scope
 

@@ -43,8 +43,10 @@ Retained pilot bootstrap now exists in new database
 Production registration/setup and Generator prepare/select passed. The Generate
 launch was blocked by execution auto-review BEFORE dispatch because supporting
 rules could disclose the remaining 68 files beyond nine generated files. Seek
-explicit supporting-source confirmation; do not bypass the rejection. Temporary
-Web stopped; protected local run `phone-mv0r8ity` and database/keys retained.
+explicit supporting-source confirmation was subsequently received: the user
+confirmed relevant content from all 77 prepared files may be sent to DeepSeek,
+while only nine files generate Documents and evaluation answers stay excluded.
+Temporary Web stopped; protected local run `phone-mv0r8ity` and database/keys retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
