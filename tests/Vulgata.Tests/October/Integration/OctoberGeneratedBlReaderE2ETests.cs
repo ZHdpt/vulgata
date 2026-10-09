@@ -60,6 +60,21 @@ public sealed class OctoberGeneratedBlReaderE2ETests(ITestOutputHelper output)
             observedRequest = request;
             return ImmutableArray.Create(selectedUnit);
         }, CancellationToken.None);
+        // Emit only known owner codes and bounded structural facts, never raw reports or candidate content.
+        var interactionCode = result.InteractionFailure switch
+        {
+            null => "none",
+            "operator-cancelled-or-expired" => "operator-cancelled-or-expired",
+            "operator-exchange-rejected" => "operator-exchange-rejected",
+            _ => "unrecognized-owner-code",
+        };
+        int? candidateCount = result.Request is { Candidates.IsDefault: false } requestReceipt
+            ? requestReceipt.Candidates.Length : null;
+        int? selectionCount = result.Response is { SelectedUnitIds.IsDefault: false } responseReceipt
+            ? responseReceipt.SelectedUnitIds.Length : null;
+        output.WriteLine($"BL interaction: failure={interactionCode}; requestPresent={result.Request is not null}; " +
+            $"responsePresent={result.Response is not null}; candidateCount={candidateCount?.ToString() ?? "unavailable"}; " +
+            $"selectionCount={selectionCount?.ToString() ?? "unavailable"}.");
         // No retry: a failed terminal result can follow committed work.
         Assert.True(result.InteractionFailure is null, "The original-run operator exchange must complete successfully.");
         Assert.Equal(0, result.ExitCode);
