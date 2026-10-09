@@ -133,6 +133,8 @@ public sealed class OctoberScanBusinessFinalizationTests
     [InlineData("operator-revoked-after")]
     [InlineData("operator-held-cancel")]
     [InlineData("operator-cleanup-foreign")]
+    [InlineData("operator-broker-no-response")]
+    [InlineData("operator-broker-valid")]
     [InlineData("operator-scope-before")]
     [InlineData("operator-scope-after")]
     [InlineData("cl-only-binding-unused")]
@@ -158,6 +160,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         if (boundary == "freeze-log") state.BeforeFreeze = () => host.Database.Log.Succeeds = false;
         var clock = boundary is "session-expired" or "replay-authority-held" ? new OctoberScanAcceptanceHarness.ManualClock() : null;
         var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
+        if (boundary is "operator-broker-no-response" or "operator-broker-valid") execution = execution with { Policy = execution.Policy with { RunDeadlineSeconds = 900, FileDeadlineSeconds = 480 } };
         if (boundary == "session-expired") execution = execution with { Session = new FixedSession(execution.Session.SubjectId, execution.Session.ManagementAuthorityId, clock!.GetUtcNow().AddSeconds(5)) };
         if (boundary == "cl-only-binding-unused") execution = execution with { Policy = execution.Policy with { OutputStage = "cl-only" } };
         var profile = execution.Provider.Profile;
@@ -199,7 +202,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         {
             composition = composition with
             {
-                OperatorSelection = new("operator", Path.Combine(Path.GetTempPath(), "unopened-operator-exchange-" + Guid.NewGuid().ToString("N")), 30),
+                OperatorSelection = new("operator", Path.Combine(Path.GetTempPath(), "unopened-operator-exchange-" + Guid.NewGuid().ToString("N")), boundary is "operator-broker-no-response" or "operator-broker-valid" ? 1 : 30),
                 InteractAsync = async (request, token) =>
                 {
                     state.Interactions++;
@@ -212,6 +215,11 @@ public sealed class OctoberScanBusinessFinalizationTests
                     Assert.Equal(execution.Setup.BatchId, candidate.Document.BatchId);
                     state.BeforeInteraction?.Invoke();
                     if (boundary == "operator-cleanup-foreign") return await InteractWithForeignEntryAsync(state, request, token);
+                    if (boundary is "operator-broker-no-response" or "operator-broker-valid")
+                    {
+                        transport.Root = candidate.Document;
+                        return await InteractWithForeignEntryAsync(state, request, token);
+                    }
                     if (boundary == "operator-held-cancel")
                     {
                         using var registration = token.Register(() => state.OperatorCancelled.TrySetResult());
@@ -246,6 +254,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Equal(0, activeScope.GetSnapshot().OutstandingAttempts);
             Assert.Equal(1, host.BeginCalls);
         };
+        var runElapsed = System.Diagnostics.Stopwatch.StartNew();
         using var callerCancellation = new CancellationTokenSource();
         var pending = runner.ExecuteAsync(execution, callerCancellation.Token);
         if (boundary == "operator-held-cancel")
@@ -295,12 +304,40 @@ public sealed class OctoberScanBusinessFinalizationTests
         if (boundary.StartsWith("operator-", StringComparison.Ordinal))
         {
             Assert.Equal(boundary == "operator-scope-before" ? 0 : 1, state.Interactions); Assert.Equal(0, state.RootSelections);
-            if (boundary == "operator-valid") { Assert.Equal(0, report.ExitCode); Assert.NotNull(report.Publication); Assert.Equal(1, transport.BusinessRequests); }
+            if (boundary is "operator-valid" or "operator-broker-valid") { Assert.Equal(0, report.ExitCode); Assert.NotNull(report.Publication); Assert.Equal(1, transport.BusinessRequests); }
             else if (boundary == "operator-empty") { Assert.Equal(5, report.ExitCode); Assert.Equal(0, transport.BusinessRequests); }
             else { Assert.NotEqual(0, report.ExitCode); Assert.NotEqual(5, report.ExitCode); Assert.Null(report.Publication); Assert.Equal(0, transport.BusinessRequests); }
             var replay = await runner.ExecuteAsync(execution);
             Assert.Equal(report.ExitCode, replay.Report!.ExitCode); Assert.Equal(boundary == "operator-scope-before" ? 0 : 1, state.Interactions);
             if (boundary == "operator-revoked-after") { Assert.Empty(report.Documents); Assert.Empty(report.Inventory); Assert.Empty(report.AcceptedFiles); }
+            if (boundary is "operator-broker-no-response" or "operator-broker-valid")
+            {
+                Assert.True(state.BrokerRequestObserved);
+                Assert.False(callerCancellation.IsCancellationRequested);
+                Assert.True(execution.Session.ExpiresAtUtc > DateTimeOffset.UtcNow);
+                Assert.Equal(900, execution.Policy.RunDeadlineSeconds); Assert.Equal(480, execution.Policy.FileDeadlineSeconds);
+                Assert.InRange(execution.Session.ExpiresAtUtc - DateTimeOffset.UtcNow, TimeSpan.FromMinutes(59), TimeSpan.FromMinutes(61));
+                Assert.True(runElapsed.Elapsed < TimeSpan.FromSeconds(480));
+                Assert.False(Directory.Exists(state.ExchangeDirectory));
+                if (boundary == "operator-broker-no-response")
+                {
+                    Assert.Equal("controlled-selector-rejected", state.SelectorRejection);
+                    Assert.False(state.BrokerResponseWritten);
+                    // Diagnostic current behavior: operator timeout is reported as run_interrupted and hides
+                    // durable progress. This is an observed misclassification, not the desired future contract.
+                    Assert.Equal(3, report.ExitCode); Assert.Equal(OctoberExecutionStatus.Interrupted, report.Execution);
+                    Assert.Contains(report.Gaps, gap => gap.Code == "run_interrupted");
+                    Assert.Null(report.Publication); Assert.Empty(report.Documents); Assert.Empty(report.AcceptedFiles);
+                    Assert.Empty(report.Inventory); Assert.Empty(report.TerminalCoverage);
+                    Assert.Equal(1, report.Usage.Requests); Assert.Equal(100, report.Usage.InputTokens); Assert.Equal(40, report.Usage.OutputTokens);
+                    Assert.False(report.Usage.HasUnknownUsage); Assert.Equal(0, transport.BusinessRequests);
+                    await using var context = host.Database.Factory.CreateDbContext();
+                    Assert.Equal(1, await context.AcceptedFileManifests.CountAsync());
+                    Assert.Equal(1, await context.CorpusSelections.CountAsync());
+                    Assert.Equal(0, await context.KnowledgePublications.CountAsync());
+                }
+                else { Assert.True(state.BrokerResponseWritten); Assert.Null(state.SelectorRejection); }
+            }
             if (boundary == "operator-cleanup-foreign")
             {
                 Assert.True(state.BrokerResponseWritten, "The real request and atomic response must complete before cleanup classification is tested.");
@@ -528,7 +565,7 @@ public sealed class OctoberScanBusinessFinalizationTests
     {
         state.ExchangeDirectory = Path.Combine(Path.GetTempPath(), "october-host-operator-cleanup-" + Guid.NewGuid().ToString("N"));
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
-        var pending = new OctoberOperatorRootSelection(new("operator", state.ExchangeDirectory, 5)).InteractAsync(request, cancellation.Token);
+        var pending = new OctoberOperatorRootSelection(new("operator", state.ExchangeDirectory, state.Boundary is "operator-broker-no-response" or "operator-broker-valid" ? 1 : 5)).InteractAsync(request, cancellation.Token);
         try
         {
         string requestPath = Path.Combine(state.ExchangeDirectory, "root-selection.request.json");
@@ -539,7 +576,17 @@ public sealed class OctoberScanBusinessFinalizationTests
             if (elapsed.Elapsed > TimeSpan.FromSeconds(3)) throw new TimeoutException("Owned broker request did not appear");
             await Task.Delay(10, token);
         }
-        await File.WriteAllTextAsync(Path.Combine(state.ExchangeDirectory, "foreign.txt"), "preserve caller-owned marker", token);
+        var observed = JsonSerializer.Deserialize<OctoberOperatorRootSelectionRequest>(await File.ReadAllTextAsync(requestPath, token), new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+        Assert.Equal(request.RequestId, observed.RequestId); Assert.Equal(request.RunId, observed.RunId);
+        Assert.Equal(request.Candidates.ToArray(), observed.Candidates.ToArray());
+        state.BrokerRequestObserved = true;
+        if (state.Boundary == "operator-broker-no-response")
+        {
+            state.SelectorRejection = "controlled-selector-rejected"; // Deliberate rejection: no response file is written.
+            return await pending;
+        }
+        if (state.Boundary == "operator-cleanup-foreign")
+            await File.WriteAllTextAsync(Path.Combine(state.ExchangeDirectory, "foreign.txt"), "preserve caller-owned marker", token);
         string temporary = Path.Combine(state.ExchangeDirectory, "response.tmp");
         await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(new OctoberOperatorRootSelectionResponse(1, request.RequestId, request.RunId, [request.Candidates[0].UnitId]), new JsonSerializerOptions(JsonSerializerDefaults.Web)), token);
         File.Move(temporary, Path.Combine(state.ExchangeDirectory, "root-selection.response.json"));
@@ -608,7 +655,8 @@ public sealed class OctoberScanBusinessFinalizationTests
         internal int Interactions;
         internal string? ExchangeDirectory;
         internal bool ExpectedCleanupRefusalObserved;
-        internal bool BrokerResponseWritten;
+        internal bool BrokerResponseWritten, BrokerRequestObserved;
+        internal string? SelectorRejection;
         internal Action? BeforeInteraction, StopScope, AfterCatalog;
         internal TaskCompletionSource OperatorEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource OperatorCancelled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
