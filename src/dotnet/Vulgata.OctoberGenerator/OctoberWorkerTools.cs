@@ -13,6 +13,8 @@ public sealed class OctoberWorkerTools
 {
     private readonly OctoberToolRuntime _runtime;
     private readonly OctoberWorkerInputLedger _ledger;
+    private OctoberToolDiagnosticSnapshot? _firstFailure;
+    internal OctoberToolDiagnosticSnapshot? FirstFailure => Volatile.Read(ref _firstFailure);
 
     public OctoberWorkerTools(OctoberToolRuntime runtime, OctoberWorkerInputLedger ledger)
     {
@@ -33,11 +35,12 @@ public sealed class OctoberWorkerTools
         IReadOnlyList<AIFunction> source = new PreparedSourceFunctions(new BorrowedSource(_runtime)).Create();
         IReadOnlyList<AIFunction> java = new PreparedJavaNavigationFunctions(new BorrowedJava(_runtime)).Create();
         return source.Concat(java).Concat(graph.Functions).Select(function =>
-            (AIFunction)new LedgerFunction(function, _ledger)).ToArray();
+            (AIFunction)new LedgerFunction(function, this)).ToArray();
     }
 
-    private sealed class LedgerFunction(AIFunction function, OctoberWorkerInputLedger ledger) : AIFunction
+    private sealed class LedgerFunction(AIFunction function, OctoberWorkerTools owner) : AIFunction
     {
+        private readonly OctoberWorkerInputLedger ledger = owner._ledger;
         private static readonly UTF8Encoding Utf8 = new(false, true);
         private readonly JsonElement _schema = WorkerSchema(function);
         public override string Name => function.Name;
@@ -47,23 +50,6 @@ public sealed class OctoberWorkerTools
 
         protected override async ValueTask<object?> InvokeCoreAsync(AIFunctionArguments arguments, CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!await ledger.VerifyCurrentAsync(cancellationToken))
-                throw new InvalidOperationException("Worker input authority is unavailable.");
-            // Freeze exactly the closed invocation seen by the facade; a mutable caller
-            // dictionary must not change between native use and provenance recording.
-            string safeRequest;
-            try
-            {
-                safeRequest = JsonSerializer.Serialize(arguments);
-                if (Utf8.GetByteCount(safeRequest) > OctoberKnowledgeInputLimits.MaximumSafeRequestUtf8Bytes)
-                    return new { status = "InvalidArguments" };
-            }
-            catch (Exception error) when (error is JsonException or NotSupportedException or EncoderFallbackException)
-            { return new { status = "InvalidArguments" }; }
-            using JsonDocument request = JsonDocument.Parse(safeRequest);
-            if (!ValidArguments(Name, request.RootElement)) return new { status = "InvalidArguments" };
-            Dictionary<string, object?> snapshot = JsonSerializer.Deserialize<Dictionary<string, object?>>(safeRequest)!;
             SourceMetadataOperation operation = Name switch
             {
                 "list_prepared_source" => SourceMetadataOperation.List,
@@ -74,21 +60,68 @@ public sealed class OctoberWorkerTools
                 "codegraph_explore" => SourceMetadataOperation.CodeGraphExplore,
                 _ => throw new InvalidOperationException("The Worker tool is not declared.")
             };
-            string scope = operation switch
+            OctoberToolDiagnosticSnapshot? first = null;
+            OctoberToolFailureBoundary boundary = OctoberToolFailureBoundary.SourceCurrentness;
+            object? result = null;
+            using var observation = owner._runtime.ObserveInvocation(operation, diagnostic =>
             {
-                SourceMetadataOperation.CodeGraphExplore => ".",
-                SourceMetadataOperation.List or SourceMetadataOperation.SearchText =>
-                    request.RootElement.GetProperty("relativeDirectory").GetString()!,
-                _ => request.RootElement.GetProperty("relativePath").GetString()!
-            };
-            if (scope.Length == 0) scope = ".";
-            object result = await function.InvokeAsync(new AIFunctionArguments(snapshot), cancellationToken)
-                ?? throw new InvalidOperationException("The Worker tool returned no typed result.");
-            OctoberWorkerInputAdmission admitted = await ledger.AdmitToolResultAsync(operation, scope,
-                safeRequest, result, cancellationToken);
-            if (admitted.Status != DisclosureStatus.Allowed || admitted.Result is null)
-                throw new InvalidOperationException("The Worker tool input was withheld.");
-            return admitted.Result;
+                if (diagnostic.Operation == operation && Enum.IsDefined(diagnostic.Boundary))
+                    Interlocked.CompareExchange(ref first, diagnostic, null);
+            });
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!await ledger.VerifyCurrentAsync(cancellationToken))
+                    throw new InvalidOperationException("Worker input authority is unavailable.");
+                boundary = OctoberToolFailureBoundary.ArgumentBinding;
+                // Freeze exactly the closed invocation seen by the facade; a mutable caller
+                // dictionary must not change between native use and provenance recording.
+                string safeRequest;
+                try
+                {
+                    safeRequest = JsonSerializer.Serialize(arguments);
+                    if (Utf8.GetByteCount(safeRequest) > OctoberKnowledgeInputLimits.MaximumSafeRequestUtf8Bytes)
+                        return new { status = "InvalidArguments" };
+                }
+                catch (Exception error) when (error is JsonException or NotSupportedException or EncoderFallbackException)
+                { return new { status = "InvalidArguments" }; }
+                using JsonDocument request = JsonDocument.Parse(safeRequest);
+                if (!ValidArguments(Name, request.RootElement)) return new { status = "InvalidArguments" };
+                Dictionary<string, object?> snapshot = JsonSerializer.Deserialize<Dictionary<string, object?>>(safeRequest)!;
+                string scope = operation switch
+                {
+                    SourceMetadataOperation.CodeGraphExplore => ".",
+                    SourceMetadataOperation.List or SourceMetadataOperation.SearchText =>
+                        request.RootElement.GetProperty("relativeDirectory").GetString()!,
+                    _ => request.RootElement.GetProperty("relativePath").GetString()!
+                };
+                if (scope.Length == 0) scope = ".";
+                boundary = OctoberToolFailureBoundary.RuntimeInvoke;
+                result = await function.InvokeAsync(new AIFunctionArguments(snapshot), cancellationToken)
+                    ?? throw new InvalidOperationException("The Worker tool returned no typed result.");
+                if (result is CodeGraphToolInvocationResult graph && graph.Status is not
+                    (CodeGraphToolInvocationStatus.Complete or CodeGraphToolInvocationStatus.NoMatch or CodeGraphToolInvocationStatus.Limited))
+                    throw new InvalidOperationException("Required CodeGraph invocation is unavailable.");
+                boundary = OctoberToolFailureBoundary.ResultAdmission;
+                OctoberWorkerInputAdmission admitted = await ledger.AdmitToolResultAsync(operation, scope,
+                    safeRequest, result, cancellationToken);
+                if (admitted.Status != DisclosureStatus.Allowed || admitted.Result is null)
+                    throw new InvalidOperationException("The Worker tool input was withheld.");
+                return admitted.Result;
+            }
+            catch
+            {
+                // Close the invocation before publishing its first failure. Late work
+                // cannot replace this cause or populate another attempt's collector.
+                observation.Dispose();
+                var fallback = new OctoberToolDiagnosticSnapshot(operation, boundary,
+                    JavaOutcome: result is PreparedJavaNavigationResult java && Enum.IsDefined(java.Outcome) ? java.Outcome : null,
+                    SourceOutcome: result is PreparedSourceResult source && Enum.IsDefined(source.Outcome) ? source.Outcome : null,
+                    CodeGraphStatus: result is CodeGraphToolInvocationResult graph && Enum.IsDefined(graph.Status) ? graph.Status : null);
+                Interlocked.CompareExchange(ref first, fallback, null);
+                Interlocked.CompareExchange(ref owner._firstFailure, first, null);
+                throw;
+            }
         }
 
         private static JsonElement WorkerSchema(AIFunction tool)

@@ -1,10 +1,15 @@
 using Microsoft.Extensions.AI;
 using System.Text.Json;
+using System.Text;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.OctoberGenerator;
 using Vulgata.Tests.TestInfrastructure;
+using Vulgata.Tests.PreparedSource;
+using Vulgata.Infrastructure.Source;
+using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Infrastructure.Analysis.CodeGraph;
 
 namespace Vulgata.Tests.OctoberScan;
 
@@ -305,6 +310,277 @@ public sealed class OctoberScanWorkerToolsTests
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await function.InvokeAsync(SourceArguments(function.Name)));
         Assert.Equal(failure == "authority" ? 0 : 1, sourceCalls);
         Assert.Null(await ledger.FreezeForCompletionAsync());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("configuration", PreparedJavaNavigationOutcome.ConfigurationUnavailable)]
+    [InlineData("readiness", PreparedJavaNavigationOutcome.ReadinessFailed)]
+    public async Task SettledJavaLimitation_RealRuntimeFrameAndLedgerPermitOrdinaryFileFallbackAsync(string failure, PreparedJavaNavigationOutcome expected)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await ContainedToolRuntime.CreateAsync(failure);
+        var acquired = await controlled.Runtime.AcquireFileFrameAsync("a.java");
+        var frame = Assert.IsType<OctoberPreparedSourceFrame>(acquired.Frame);
+        var ledger = RuntimeLedger(host, controlled, frame);
+        var owner = new OctoberWorkerTools(controlled.Runtime, ledger);
+        var tools = await owner.CreateAsync();
+        var result = Assert.IsType<PreparedJavaNavigationResult>(await tools.Single(tool => tool.Name == "navigate_java_definition")
+            .InvokeAsync(ToolArguments("navigate_java_definition")));
+        Assert.Equal(expected, result.Outcome);
+        Assert.Empty(result.Locations);
+        PreparedJavaLimitation limitation = Assert.Single(result.Limitations);
+        Assert.Equal(failure == "configuration" ? "jdt_configuration_unavailable" : "jdt_readiness_failed", limitation.Code);
+        Assert.Null(limitation.Source);
+        Assert.Equal(1, controlled.JavaOpens); // No automatic retry.
+        Assert.True(await frame.VerifyCurrentAsync());
+        var read = Assert.IsType<PreparedSourceResult>(await tools.Single(tool => tool.Name == "read_prepared_source")
+            .InvokeAsync(SourceArguments("read_prepared_source")));
+        Assert.Equal(PreparedSourceOutcome.Complete, read.Outcome);
+        Assert.Equal("source", read.Text);
+        Assert.Equal(frame.Origin.RepositoryId, read.RepositoryId);
+        Assert.Equal("a.java", read.ReadLocation!.RelativePath);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.VerifiedSources);
+        Assert.Equal(frame.Origin, snapshot.VerifiedSources[0].Origin);
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == ContributorKind.Source));
+        Assert.Equal(new[] { SourceMetadataOperation.ReadTextRange, SourceMetadataOperation.JavaDefinition }.Order(),
+            snapshot.Contributors.Where(item => item.Kind == ContributorKind.SourceMetadata)
+                .Select(item => item.MetadataOrigin!.Operation).Order());
+        Assert.Equal(0, controlled.GraphCalls);
+        Assert.Null(owner.FirstFailure);
+        Assert.Null(new OctoberWorkerTools(controlled.Runtime, ledger).FirstFailure);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("denied")]
+    [InlineData("authority-unavailable")]
+    [InlineData("root-unavailable")]
+    [InlineData("revoked")]
+    [InlineData("root-binding")]
+    [InlineData("source-content-change")]
+    [InlineData("unknown")]
+    [InlineData("cleanup-unconfirmed")]
+    [InlineData("cancelled")]
+    [InlineData("deadline")]
+    [InlineData("required-graph")]
+    [InlineData("graph-unavailable")]
+    [InlineData("graph-failed")]
+    [InlineData("graph-timedout")]
+    [InlineData("graph-foreign")]
+    [InlineData("graph-missing")]
+    [InlineData("java-foreign")]
+    public async Task FatalToolFailure_RealRuntimeFrameCannotAuthorizeFileFallbackAsync(string failure)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await ContainedToolRuntime.CreateAsync(failure);
+        var frame = Assert.IsType<OctoberPreparedSourceFrame>((await controlled.Runtime.AcquireFileFrameAsync("a.java")).Frame);
+        var ledger = RuntimeLedger(host, controlled, frame);
+        var owner = new OctoberWorkerTools(controlled.Runtime, ledger);
+        var tools = await owner.CreateAsync();
+        bool graphFailure = failure == "required-graph" || failure.StartsWith("graph-", StringComparison.Ordinal);
+        string name = graphFailure ? "codegraph_explore" : "navigate_java_definition";
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await tools.Single(tool => tool.Name == name).InvokeAsync(ToolArguments(name)));
+        var diagnostic = Assert.IsType<OctoberToolDiagnosticSnapshot>(owner.FirstFailure);
+        Assert.Equal(graphFailure ? SourceMetadataOperation.CodeGraphExplore : SourceMetadataOperation.JavaDefinition,
+            diagnostic.Operation);
+        OctoberToolDiagnosticSnapshot expectedDiagnostic = failure switch
+        {
+            "required-graph" => new(SourceMetadataOperation.CodeGraphExplore, OctoberToolFailureBoundary.RuntimeInvoke),
+            "graph-unavailable" => new(SourceMetadataOperation.CodeGraphExplore, OctoberToolFailureBoundary.RuntimeInvoke,
+                CodeGraphStatus: CodeGraphToolInvocationStatus.Unavailable),
+            "graph-failed" => new(SourceMetadataOperation.CodeGraphExplore, OctoberToolFailureBoundary.RuntimeInvoke,
+                CodeGraphStatus: CodeGraphToolInvocationStatus.Failed),
+            "graph-timedout" => new(SourceMetadataOperation.CodeGraphExplore, OctoberToolFailureBoundary.RuntimeInvoke,
+                CodeGraphStatus: CodeGraphToolInvocationStatus.TimedOut),
+            "graph-foreign" or "graph-missing" => new(SourceMetadataOperation.CodeGraphExplore, OctoberToolFailureBoundary.SourceCurrentness,
+                CodeGraphStatus: CodeGraphToolInvocationStatus.Complete),
+            "java-foreign" => new(SourceMetadataOperation.JavaDefinition, OctoberToolFailureBoundary.SourceCurrentness,
+                JavaOutcome: PreparedJavaNavigationOutcome.Observed, CleanupConfirmed: true),
+            "unknown" => new(SourceMetadataOperation.JavaDefinition, OctoberToolFailureBoundary.RuntimeOpen),
+            "source-content-change" => new(SourceMetadataOperation.JavaDefinition, OctoberToolFailureBoundary.ResultAdmission,
+                JavaOutcome: PreparedJavaNavigationOutcome.ConfigurationUnavailable),
+            "revoked" or "root-binding" => new(SourceMetadataOperation.JavaDefinition,
+                OctoberToolFailureBoundary.SourceCurrentness, CleanupConfirmed: true),
+            _ => new(SourceMetadataOperation.JavaDefinition, OctoberToolFailureBoundary.RuntimeOpen,
+                JavaOpenStatus: failure switch
+                {
+                    "denied" => PreparedJavaNavigationOpenStatus.Denied,
+                    "authority-unavailable" => PreparedJavaNavigationOpenStatus.AuthorityUnavailable,
+                    "root-unavailable" => PreparedJavaNavigationOpenStatus.RootUnavailable,
+                    "cancelled" => PreparedJavaNavigationOpenStatus.Cancelled,
+                    "deadline" => PreparedJavaNavigationOpenStatus.DeadlineExceeded,
+                    _ => PreparedJavaNavigationOpenStatus.ConfigurationUnavailable
+                }, CleanupConfirmed: failure != "cleanup-unconfirmed")
+        };
+        Assert.Equal(expectedDiagnostic, diagnostic);
+        Assert.Equal(graphFailure ? 0 : 1, controlled.JavaOpens);
+        Assert.Equal(graphFailure ? 1 : 0, controlled.GraphCalls);
+        Assert.Equal(failure == "java-foreign" ? 1 : 0, controlled.JavaCloses);
+        Assert.False(await frame.VerifyCurrentAsync());
+        int issuesAfterFailure = controlled.SourceIssues;
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await tools.Single(tool => tool.Name == "read_prepared_source")
+            .InvokeAsync(SourceArguments("read_prepared_source")));
+        Assert.Equal(issuesAfterFailure, controlled.SourceIssues);
+        Assert.Null(await ledger.FreezeForCompletionAsync());
+        Assert.Same(diagnostic, owner.FirstFailure);
+        Assert.Null(new OctoberWorkerTools(controlled.Runtime, ledger).FirstFailure);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SourceRuntimeException_RecordsUnknownFirstCauseWithoutSynthesizedAuthorityStatusAsync()
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
+        int sourceCalls = 0;
+        controlled.Sources.Enqueue(controlled.Context(_ =>
+        {
+            sourceCalls++;
+            throw new IOException("PRIVATE_CONTROLLED_SOURCE_EXCEPTION");
+        }));
+        var ledger = Ledger(host, controlled);
+        await using var runtime = controlled.CreateRuntime();
+        var owner = new OctoberWorkerTools(runtime, ledger);
+        var tools = await owner.CreateAsync();
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await tools.Single(tool => tool.Name == "list_prepared_source")
+            .InvokeAsync(SourceArguments("list_prepared_source")));
+        var diagnostic = Assert.IsType<OctoberToolDiagnosticSnapshot>(owner.FirstFailure);
+        Assert.Equal(new OctoberToolDiagnosticSnapshot(SourceMetadataOperation.List, OctoberToolFailureBoundary.RuntimeInvoke), diagnostic);
+        Assert.DoesNotContain("PRIVATE", JsonSerializer.Serialize(diagnostic), StringComparison.Ordinal);
+        Assert.Equal(1, sourceCalls);
+        Assert.Equal(1, controlled.SourceIssues);
+        var frame = await runtime.AcquireFileFrameAsync("a.java");
+        Assert.Equal(OctoberSourceFrameStatus.Unavailable, frame.Status);
+        Assert.Null(frame.Frame);
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await tools.Single(tool => tool.Name == "read_prepared_source")
+            .InvokeAsync(SourceArguments("read_prepared_source")));
+        Assert.Equal(1, controlled.SourceIssues);
+        Assert.Equal(1, sourceCalls);
+        Assert.Null(await ledger.FreezeForCompletionAsync());
+        Assert.Same(diagnostic, owner.FirstFailure);
+    }
+
+    private static OctoberWorkerInputLedger RuntimeLedger(OctoberScanAcceptanceHarness host, ContainedToolRuntime controlled,
+        OctoberPreparedSourceFrame frame)
+    {
+        var request = host.Request with { Source = frame, Contributors = [new(ContributorKind.Source, frame.Origin.RepositoryId,
+            null, frame.Origin.RootBindingIdentity, null, frame.Origin.SourceDigest)], Advisory = [] };
+        return new(request, async (path, token) => (await controlled.Runtime.AcquireFileFrameAsync(path, cancellationToken: token)).Frame,
+            (_, _) => Task.FromResult(DisclosureStatus.Allowed));
+    }
+
+    // Existing inert runtime dependency seam, but real contained source grants and
+    // a runtime-acquired primary frame. Public factory lease proof is tested separately.
+    private sealed class ContainedToolRuntime : IAsyncDisposable
+    {
+        private readonly PreparedSourceFixture _fixture;
+        private readonly PreparedCodeGraphConnection _descriptor;
+        private readonly bool _expectCleanupFailure;
+        internal OctoberToolRuntime Runtime { get; }
+        internal int SourceIssues;
+        internal int JavaOpens;
+        internal int JavaCloses;
+        internal int GraphCalls;
+        private ContainedToolRuntime(PreparedSourceFixture fixture, string failure)
+        {
+            _fixture = fixture;
+            _expectCleanupFailure = failure == "cleanup-unconfirmed";
+            fixture.Authority.Approve(fixture.Approval);
+            var issuer = new PreparedSourceContextIssuer(fixture.Authority);
+            _descriptor = new(fixture.Approval.RepositoryId, Path.Combine(fixture.SandboxPath, "never-executed.ps1"),
+                "never-executed", [], fixture.PreparedRootPath, new Dictionary<string, string>(), static () => { },
+                _ => new InertGraph(this, failure));
+            Runtime = new(fixture.Approval, TimeSpan.FromMinutes(5), new OctoberToolRuntimeDependencies(
+                (_, _) => Task.FromResult(_descriptor),
+                (_, remaining, token) =>
+                {
+                    SourceIssues++;
+                    return issuer.IssueAsync(new(fixture.Approval, fixture.PreparedRootPath,
+                        PreparedSourceGrantLimits.Default with { Deadline = remaining }), _descriptor, token);
+                },
+                issuer.ObserveFileIdentityAsync,
+                (_, _) =>
+                {
+                    JavaOpens++;
+                    if (failure == "java-foreign")
+                        return Task.FromResult<IPreparedJavaNavigationContext>(new ForeignResultJava(this));
+                    if (failure == "revoked") fixture.Authority.Revoke();
+                    if (failure == "root-binding") fixture.Authority.Approve(fixture.Approval with { RootBindingIdentity = "changed-controlled-binding" });
+                    if (failure == "source-content-change")
+                        File.WriteAllText(Path.Combine(fixture.PreparedRootPath, "a.java"), "mutate", new UTF8Encoding(false));
+                    Exception error = failure == "unknown" ? new IOException("Controlled unknown open failure") :
+                        new PreparedJdtLsOpenFailureException(failure switch
+                        {
+                            "readiness" => PreparedJavaNavigationOpenStatus.ReadinessFailed,
+                            "denied" => PreparedJavaNavigationOpenStatus.Denied,
+                            "authority-unavailable" => PreparedJavaNavigationOpenStatus.AuthorityUnavailable,
+                            "root-unavailable" => PreparedJavaNavigationOpenStatus.RootUnavailable,
+                            "cancelled" => PreparedJavaNavigationOpenStatus.Cancelled,
+                            "deadline" => PreparedJavaNavigationOpenStatus.DeadlineExceeded,
+                            _ => PreparedJavaNavigationOpenStatus.ConfigurationUnavailable
+                        }, cleanupConfirmed: failure != "cleanup-unconfirmed");
+                    return Task.FromException<IPreparedJavaNavigationContext>(error);
+                },
+                (descriptor, _) => descriptor.OpenSession()));
+        }
+        internal static async Task<ContainedToolRuntime> CreateAsync(string failure)
+        {
+            var fixture = await PreparedSourceFixture.CreateAsync();
+            Directory.CreateDirectory(Path.Combine(fixture.PreparedRootPath, ".codegraph"));
+            await File.WriteAllTextAsync(Path.Combine(fixture.PreparedRootPath, "a.java"), "source", new UTF8Encoding(false));
+            return new(fixture, failure);
+        }
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                if (_expectCleanupFailure)
+                {
+                    var error = await Assert.ThrowsAsync<InvalidOperationException>(() => Runtime.DisposeAsync().AsTask());
+                    Assert.Equal("Tool cleanup remains unconfirmed.", error.Message);
+                }
+                else await Runtime.DisposeAsync();
+            }
+            // This test adapter started no native resource. Release its explicitly owned
+            // descriptor after asserting quarantine; this is not production settlement.
+            finally { await _descriptor.DisposeAsync(); await _fixture.DisposeAsync(); }
+        }
+        private sealed class InertGraph(ContainedToolRuntime owner, string failure) : ICodeGraphWorkerToolSession
+        {
+            public Task<CodeGraphToolReadiness> DiscoverAsync(CancellationToken cancellationToken)
+                => Task.FromResult(new CodeGraphToolReadiness(CodeGraphToolReadinessStatus.Ready, owner._fixture.Approval.RepositoryId));
+            public Task<CodeGraphToolInvocationResult> ExploreAsync(string query, int maxFiles, CancellationToken cancellationToken)
+            {
+                owner.GraphCalls++;
+                return failure == "required-graph" ? Task.FromException<CodeGraphToolInvocationResult>(new IOException("Controlled required graph failure")) :
+                    Task.FromResult(new CodeGraphToolInvocationResult
+                    {
+                        RepositoryId = failure == "graph-missing" ? null :
+                            failure == "graph-foreign" ? Guid.NewGuid() : owner._fixture.Approval.RepositoryId,
+                        Status = failure switch
+                        {
+                            "graph-unavailable" => CodeGraphToolInvocationStatus.Unavailable,
+                            "graph-failed" => CodeGraphToolInvocationStatus.Failed,
+                            "graph-timedout" => CodeGraphToolInvocationStatus.TimedOut,
+                            _ => CodeGraphToolInvocationStatus.Complete
+                        }
+                    });
+            }
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
+        private sealed class ForeignResultJava(ContainedToolRuntime owner) : IPreparedJavaNavigationContext
+        {
+            public Guid RepositoryId => owner._fixture.Approval.RepositoryId;
+            public Task<PreparedJavaNavigationResult> GetDefinitionAsync(PreparedJavaNavigationRequest request, CancellationToken cancellationToken = default)
+                => Task.FromResult(new PreparedJavaNavigationResult(Guid.NewGuid(), PreparedJavaNavigationOperation.Definition,
+                    PreparedJavaNavigationOutcome.Observed, [], [], null));
+            public Task<PreparedJavaNavigationResult> GetReferencesAsync(PreparedJavaNavigationRequest request, CancellationToken cancellationToken = default)
+                => Task.FromResult(new PreparedJavaNavigationResult(Guid.NewGuid(), PreparedJavaNavigationOperation.References,
+                    PreparedJavaNavigationOutcome.Observed, [], [], null));
+            public ValueTask DisposeAsync() { owner.JavaCloses++; return ValueTask.CompletedTask; }
+        }
     }
 
     private static void AssertRefusal(object? result)
