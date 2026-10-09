@@ -1,18 +1,148 @@
 using System.Collections.Immutable;
+using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Data.October.Knowledge;
+using Vulgata.OctoberGenerator;
+using Vulgata.Shared;
+using Vulgata.Tests.TestInfrastructure;
+using Vulgata.Web.Data;
+using Xunit.Abstractions;
 
 namespace Vulgata.Tests.October.Integration;
 
 /// <summary>
-/// Partial assertion authoring only: no discoverable test, Generate orchestration, resource acquisition or approval bootstrap.
-/// An authorized caller must provide the actual final publication and already authenticated ordinary reader capture.
-/// These checks establish exact Business reading, not source-semantic correctness or browser/circuit qualification.
+/// One explicitly approved synthetic registration Generate, actual operator selection and ordinary Business reading.
+/// Approval/input installation remains root-owned. Mechanical reading checks are not source-semantic correctness
+/// or interactive browser/circuit qualification; reconstructed Business prose is returned for separate review.
 /// </summary>
-public sealed class OctoberGeneratedBlReaderE2ETests
+public sealed class OctoberGeneratedBlReaderE2ETests(ITestOutputHelper output)
 {
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GenerateOnce_SelectedRegistrationRoot_OrdinaryBusinessReaderPreservesExactBlAndRevocationAsync()
+    {
+        Assert.True(SuiteAuthorization.IsEnabled("E2E"), "The E2E suite must be explicitly enabled.");
+        _ = TestResourceScope.RequireAdministrator();
+        await using var fixture = await OctoberHostSelectionTests.GeneratorPrepareFixture.CreateAsync(output);
+        TestResourceScope.ValidateOwnedTarget(fixture.ConnectionString);
+        var inputs = await fixture.PrepareApprovedBlInputsAsync(CancellationToken.None);
+        await fixture.AssertOctoberSchemaPresentAsync();
+        Assert.Equal(fixture.CanonicalDatabaseIdentity, inputs.Binding.CanonicalDatabaseIdentity);
+        Assert.Equal(fixture.TargetId, inputs.Binding.TargetId);
+        Assert.Equal(fixture.BatchId, inputs.Binding.BatchId);
+        Assert.Equal(fixture.RepositoryId, inputs.Source.RepositoryId);
+        Guid selectedUnit = Guid.Empty;
+        OctoberOperatorRootSelectionRequest? observedRequest = null;
+        var result = await fixture.RunApprovedBlGenerateAsync(inputs, async (request, token) =>
+        {
+            token.ThrowIfCancellationRequested();
+            Assert.Null(observedRequest);
+            Assert.Equal(1, request.Version);
+            Assert.NotEqual(Guid.Empty, request.RequestId);
+            Assert.NotEqual(Guid.Empty, request.RunId);
+            Assert.NotEqual(Guid.Empty, request.CorpusId);
+            Assert.False(request.Candidates.IsDefault);
+            // The owner resolves the approved method from exact held corpus/source evidence. The test does
+            // not infer method identity from opaque selectors, guessed line numbers or model prose.
+            selectedUnit = await fixture.ResolveApprovedRegistrationRootAsync(request, token);
+            var root = Assert.Single(request.Candidates.Where(candidate => candidate.UnitId == selectedUnit));
+            Assert.Equal(inputs.Source.RepositoryId, root.RepositoryId);
+            Assert.Equal(inputs.Source.RelativePath, root.RelativePath);
+            Assert.NotEqual(Guid.Empty, root.UnitId);
+            Assert.Equal(inputs.Binding.BatchId, root.Document.BatchId);
+            Assert.NotEqual(Guid.Empty, root.Document.LogicalDocumentId);
+            Assert.NotEqual(Guid.Empty, root.Document.DocumentVersionId);
+            selectedUnit = root.UnitId;
+            observedRequest = request;
+            return ImmutableArray.Create(selectedUnit);
+        }, CancellationToken.None);
+        // No retry: a failed terminal result can follow committed work.
+        Assert.True(result.InteractionFailure is null, "The original-run operator exchange must complete successfully.");
+        Assert.Equal(0, result.ExitCode);
+        Assert.NotNull(observedRequest);
+        Assert.NotNull(result.Request);
+        Assert.NotNull(result.Response);
+        Assert.Equal(1, result.Response.Version);
+        Assert.Equal(observedRequest.RequestId, result.Request.RequestId);
+        Assert.Equal(observedRequest.RunId, result.Request.RunId);
+        Assert.Equal(observedRequest.CorpusId, result.Request.CorpusId);
+        Assert.Equal(result.Request.RequestId, result.Response.RequestId);
+        Assert.Equal(result.Request.RunId, result.Response.RunId);
+        Assert.Equal(selectedUnit, Assert.Single(result.Response.SelectedUnitIds));
+
+        var origin = await fixture.ResolveGeneratedOriginAsync(CancellationToken.None);
+        Assert.Equal(inputs.Source.RepositoryId, origin.RepositoryId);
+        Assert.Equal(inputs.Source.RootBindingIdentity, origin.RootBindingIdentity);
+        Assert.Equal(inputs.Source.RelativePath, origin.RelativePath);
+        Assert.Equal(inputs.Source.SourceDigest, origin.SourceDigest);
+        var publication = await fixture.ResolveGeneratedBlPublicationAsync(result, CancellationToken.None);
+        Assert.Equal(inputs.Binding, publication.Knowledge);
+        Assert.NotEqual(Guid.Empty, publication.PublicationId);
+        var ordinary = await fixture.CreateOrdinaryReaderAsync(CancellationToken.None);
+        await using (var scope = fixture.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = Assert.IsType<ApplicationUser>(await users.FindByIdAsync(ordinary.SubjectId));
+            var roles = await users.GetRolesAsync(user);
+            Assert.True(roles.Count == 1 && roles[0] == RoleNames.User, "The ordinary reader must have exactly the live User role.");
+        }
+
+        int port = OctoberHostSelectionTests.ReserveOwnedLoopbackPort();
+        using var process = fixture.StartWeb(port, publication, KnowledgeMode.Business);
+        var stdout = process.StandardOutput.ReadToEndAsync();
+        var stderr = process.StandardError.ReadToEndAsync();
+        try
+        {
+            await OctoberHostSelectionTests.WaitForWebStartupAsync(process, port, fixture, stdout, stderr);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+            using var handler = new HttpClientHandler { AllowAutoRedirect = false, UseProxy = false, CookieContainer = new() };
+            using var client = new HttpClient(handler) { BaseAddress = new Uri($"http://127.0.0.1:{port}"), Timeout = TimeSpan.FromSeconds(30) };
+            using var login = await fixture.LoginReaderAsync(client, ordinary.UserName, ordinary.Password, timeout.Token);
+            Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+            var location = Assert.IsType<Uri>(login.Headers.Location);
+            var destination = location.IsAbsoluteUri ? location : new Uri(client.BaseAddress, location);
+            Assert.Equal(client.BaseAddress.GetLeftPart(UriPartial.Authority), destination.GetLeftPart(UriPartial.Authority));
+            Assert.Equal("/", destination.AbsolutePath);
+            await using var session = await fixture.OpenReaderSessionAsync(publication, ordinary.SubjectId,
+                ordinary.SecurityStamp, KnowledgeMode.Business, timeout.Token);
+            Assert.NotNull(session);
+            var streams = await AssertBusinessPublicationAsync(fixture, publication, session, timeout.Token);
+            var review = new StringBuilder();
+            review.AppendLine($"Publication: batch={publication.Knowledge.BatchId:D}; publication={publication.PublicationId:D}");
+            foreach (var stream in streams.Where(stream => stream.Document.SectionId is null))
+            {
+                review.AppendLine($"Document: batch={stream.Document.BatchId:D}; publication={stream.Document.PublicationId:D}; logical={stream.Document.LogicalDocumentId:D}; version={stream.Document.DocumentVersionId:D}");
+                review.AppendLine(stream.Content);
+            }
+            var reviewText = review.ToString();
+            Assert.True(new UTF8Encoding(false, true).GetByteCount(reviewText) <= 128 * 1024,
+                "Complete Business semantic-review output exceeds the explicit 128-KiB cap; do not truncate or claim complete review.");
+            output.WriteLine("Complete whole-Document Business projections for semantic review; mechanical assertions are not semantic approval:");
+            output.WriteLine(reviewText);
+            await fixture.RotateReaderSecurityStampAsync(ordinary.SubjectId, timeout.Token);
+            await using (var scope = fixture.Services.CreateAsyncScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var user = Assert.IsType<ApplicationUser>(await users.FindByIdAsync(ordinary.SubjectId));
+                var stamp = await users.GetSecurityStampAsync(user);
+                Assert.True(!string.IsNullOrWhiteSpace(stamp) && !string.Equals(stamp, ordinary.SecurityStamp, StringComparison.Ordinal),
+                    "Actual Identity stamp rotation must invalidate the original capture.");
+            }
+            await AssertRevokedBusinessReaderAsync(session, publication, streams, timeout.Token);
+        }
+        finally
+        {
+            await OctoberHostSelectionTests.StopOwnedWebProcessAsync(process);
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            await Task.WhenAll(stdout, stderr).WaitAsync(cleanup.Token);
+            Assert.True(process.HasExited, "The owned Web process must terminate before fixture disposal.");
+        }
+    }
+
     // Total canonical page traffic per assertion helper, including denial pages; not production read policy.
     // Exact publication snapshots use the owner's separate stored-read bounds, not the public page cap.
     private const int MaximumPages = 128;
