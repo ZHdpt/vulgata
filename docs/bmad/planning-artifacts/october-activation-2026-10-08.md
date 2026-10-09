@@ -946,3 +946,15 @@ totals: **4/5 attempts, 7 requests, 90,944 tokens**; one attempt remains.
 Owned database/temp and zero remaining run-labelled containers/volumes verified.
 Business is tracing serialized source-reference supply and prompt semantics before
 the final attempt. No permission to repair references by guessing or relax validation.
+
+Business traced a demonstrated prompt ambiguity between source-reference IDs and
+new output-local IDs. Prompt-only checkpoint `19a2e19c8151c08cf2d9ec593fdece45cbdfd95e`
+integrated at `7049a0db` explicitly maps the same nested input document Version,
+SectionId and ClaimGroupId into Inputs, distinguishing output IDs and permitting
+required copies of existing identities. No payload/catalog/parser/validator change.
+Actual serialized-wire tests accept exact copied references and reject output-ID
+substitution. Owner checks passed 342/342 (`14d9d6193398487da80fc0682910b437`);
+independent integration review accepted. Main rebuilt embedded prompt and passed
+**54/54** synthesis checks, zero skips, `80c4ba67a2504660802c60a80cab797f`.
+Attempt 5 is the final authorized live attempt, using this correction. This does
+not establish which wrong section ID the model supplied in attempt 4.
