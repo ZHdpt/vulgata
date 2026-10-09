@@ -115,6 +115,13 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal((terminal || budget) ? OctoberWorkerFailureStage.StreamTerminal : OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
         Assert.Equal(terminal ? OctoberWorkerTerminalFailure.MissingFinish : (OctoberWorkerTerminalFailure?)null, diagnostic.TerminalFailure);
         Assert.Equal(budget ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, diagnostic.BudgetFailure);
+        if (terminal || budget) Assert.Null(diagnostic.ParseFailure);
+        else
+        {
+            var parse = Assert.IsType<OctoberWorkerParseDiagnosticSnapshot>(diagnostic.ParseFailure);
+            Assert.Equal(OctoberWorkerParseFailure.Syntax, parse.Category);
+            Assert.Equal(OctoberWorkerParseSlot.Root, parse.Slot);
+        }
         Assert.NotEqual(0, report.ExitCode); Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication);
         Assert.Equal(0, harness.FreezeCalls); Assert.Equal(2, harness.Client.Calls);
         // Isolate the metadata predicate with the actual observed immutable snapshot.

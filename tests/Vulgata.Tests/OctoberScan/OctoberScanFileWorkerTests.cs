@@ -648,6 +648,37 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Null(snapshot.Usage.OutputTokens);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("syntax", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root)]
+    [InlineData("units-value", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Units)]
+    [InlineData("claim-extra", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ClosedFields, OctoberWorkerParseSlot.Claims)]
+    [InlineData("first-cause", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ClosedFields, OctoberWorkerParseSlot.Claims)]
+    [InlineData("parent-value", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.ParentSelector)]
+    public async Task ParseFailure_ReportsFirstActualGuardWithoutInputEchoOrStatusRepairAsync(string scenario,
+        OctoberFileWorkerStatus status, OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot)
+    {
+        string json = scenario switch
+        {
+            "syntax" => "{PRIVATE_PARSE_PAYLOAD",
+            "units-value" => "{\"units\":\"PRIVATE_PARSE_PAYLOAD\",\"observations\":[],\"uncertainties\":[]}",
+            "parent-value" => UnitJson.Replace("\"parentSelector\":null", "\"parentSelector\":123"),
+            _ => UnitJson.Replace("\"claimGroupId\":", "\"PRIVATE_UNKNOWN_FIELD\":\"PRIVATE_PARSE_PAYLOAD\",\"claimGroupId\":")
+        };
+        if (scenario == "first-cause") json = json.Replace("\"ordinal\":0", "\"ordinal\":\"PRIVATE_LATER_ERROR\"");
+        var scope = new Scope();
+        using var client = new ScriptedClient([new(json, ChatFinishReason.Stop)]);
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(status, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Null(result.Proposal); Assert.Single(client.Requests);
+        var parse = Assert.IsType<OctoberWorkerParseDiagnosticSnapshot>(result.ParseFailure);
+        Assert.Equal(category, parse.Category); Assert.Equal(slot, parse.Slot);
+        Assert.DoesNotContain("PRIVATE", JsonSerializer.Serialize(parse));
+        var lease = Assert.Single(scope.Leases);
+        Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
     private sealed class SynchronousFailureTransport : HttpMessageHandler
     {
         internal int Calls;
@@ -679,6 +710,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(status, result.Status); Assert.Equal(stage, result.FailureStage);
         Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         if (defect == "admission") Assert.Empty(client.Requests);
+        if (defect is "cycle" or "admission" or "terminal") Assert.Null(result.ParseFailure);
     }
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
@@ -800,6 +832,27 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(expected, result.Status);
         Assert.Equal(expected == OctoberFileWorkerStatus.Completed ? null : (OctoberWorkerFailureStage?)OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
         Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Single(client.Requests);
+        if (expected == OctoberFileWorkerStatus.Completed) Assert.Null(result.ParseFailure);
+        else
+        {
+            var parse = Assert.IsType<OctoberWorkerParseDiagnosticSnapshot>(result.ParseFailure);
+            Assert.Equal(shape switch
+            {
+                "wrong-root" => OctoberWorkerParseFailure.RootShape,
+                "numeric-string" or "numeric-overflow" => OctoberWorkerParseFailure.ValueShape,
+                "qualification-case" => OctoberWorkerParseFailure.Qualification,
+                "advisory-index" => OctoberWorkerParseFailure.EvidenceIndex,
+                _ => OctoberWorkerParseFailure.ClosedFields
+            }, parse.Category);
+            Assert.Equal(shape switch
+            {
+                "omit-nullable" => OctoberWorkerParseSlot.Units,
+                "numeric-string" or "numeric-overflow" => OctoberWorkerParseSlot.Ordinal,
+                "qualification-case" => OctoberWorkerParseSlot.Qualification,
+                "advisory-index" => OctoberWorkerParseSlot.AdvisoryIndex,
+                _ => OctoberWorkerParseSlot.Root
+            }, parse.Slot);
+        }
         if (expected == OctoberFileWorkerStatus.Completed)
         {
             var proposal = Assert.IsType<CompletedFileProposal>(result.Proposal);
@@ -1174,6 +1227,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(frame), [tool]);
         Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.SourceVerification, result.FailureStage);
+        Assert.Null(result.ParseFailure);
         Assert.Equal(afterTool, toolReturned); Assert.Equal(afterTool ? 1 : 0, client.Requests.Count);
         Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
     }

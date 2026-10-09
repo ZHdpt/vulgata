@@ -413,7 +413,11 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             TerminalFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.TerminalFailure is { } terminal && Enum.IsDefined(terminal) ? terminal : null,
             BudgetFailure = result.Status == OctoberFileWorkerStatus.BudgetExceeded &&
-                result.BudgetFailure is { } budget && Enum.IsDefined(budget) ? budget : null
+                result.BudgetFailure is { } budget && Enum.IsDefined(budget) ? budget : null,
+            ParseFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
+                result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.ParseFailure is { } parse
+                ? new(parse.Category is { } category && Enum.IsDefined(category) ? category : null,
+                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null) : null
         };
     }
 

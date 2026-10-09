@@ -73,6 +73,16 @@ public enum OctoberWorkerFailureStage
     SourceVerification, ToolInvocation, ToolResultSerialization, AttemptSettlement, AgentOrchestration
 }
 public enum OctoberWorkerBudgetFailure { OutputBytes, ToolCalls, StreamUpdates }
+public enum OctoberWorkerParseFailure { Syntax, RootShape, ClosedFields, ValueShape, Qualification, EvidenceIndex }
+public enum OctoberWorkerParseSlot
+{
+    Root, Units, Sections, Claims, Anchors, Observations, Uncertainties, Evidence,
+    SemanticSelector, ParentSelector, Title, SectionId, Ordinal, ClaimGroupId, Text,
+    Qualification, Limitations, ObservationKey, OwnerSelector, Role, Mechanism,
+    Operation, LogicalNamespace, LiteralsOrExpressions, Key, Explanation,
+    AdvisoryIndex, StartLine, EndLine
+}
+public sealed record OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure? Category, OctoberWorkerParseSlot? Slot);
 public enum OctoberWorkerTerminalFailure
 {
     ContentAfterFinish, ConflictingFinish, NonAssistantRole, ToolCallError, MissingToolCallId,
@@ -93,6 +103,7 @@ public sealed record OctoberFileWorkerResult(
     public OctoberWorkerFailureStage? FailureStage { get; init; }
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
+    public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
 }
 
 public sealed class OctoberFileWorkerExecutor
@@ -123,6 +134,7 @@ public sealed class OctoberFileWorkerExecutor
         OctoberWorkerFailureStage? stage = null;
         OctoberWorkerTerminalFailure? terminalFailure = null;
         var observations = new ExceptionObservation();
+        var parseObservation = new ParseObservation();
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -216,7 +228,7 @@ public sealed class OctoberFileWorkerExecutor
             stage = OctoberWorkerFailureStage.StreamTerminal;
             if (covered != source.Length) throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteCoverage);
             stage = OctoberWorkerFailureStage.ProposalParse;
-            CompletedFileProposal proposal = ParseProposal(adapter.LastText, request, ref stage);
+            CompletedFileProposal proposal = ParseProposal(adapter.LastText, request, ref stage, parseObservation);
             return new(OctoberFileWorkerStatus.Completed, proposal, covered, adapter.Rounds, adapter.SettledTools);
         }
         catch (OperationCanceledException exception)
@@ -237,7 +249,10 @@ public sealed class OctoberFileWorkerExecutor
                     ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None,
                 FailureStage = observations.For(exception) ?? stage ?? adapter?.FailureStage,
                 TerminalFailure = terminalFailure ?? adapter?.TerminalFailure,
-                BudgetFailure = status == OctoberFileWorkerStatus.BudgetExceeded ? adapter?.BudgetFailure : null
+                BudgetFailure = status == OctoberFileWorkerStatus.BudgetExceeded ? adapter?.BudgetFailure : null,
+                ParseFailure = Enum.IsDefined(status) && status != OctoberFileWorkerStatus.Completed &&
+                    (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.ProposalParse
+                    ? parseObservation.First : null
             };
     }
 
@@ -895,41 +910,56 @@ public sealed class OctoberFileWorkerExecutor
         }
     }
 
-    private static CompletedFileProposal ParseProposal(string json, OctoberFileWorkerRequest request, ref OctoberWorkerFailureStage? stage)
+    private static CompletedFileProposal ParseProposal(string json, OctoberFileWorkerRequest request,
+        ref OctoberWorkerFailureStage? stage, ParseObservation parse)
     {
-        using JsonDocument document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 32 });
+        using JsonDocument document = parse.Read(() => JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 32 }),
+            OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root);
         JsonElement root = document.RootElement;
-        Fields(root, "units", "observations", "uncertainties");
-        ImmutableArray<SemanticUnitProposal> units = Array(root, "units").Select(unit =>
+        Fields(root, parse, OctoberWorkerParseSlot.Root, "units", "observations", "uncertainties");
+        ImmutableArray<SemanticUnitProposal> units = Array(root, "units", parse, OctoberWorkerParseSlot.Units).Select(unit =>
         {
-            Fields(unit, "semanticSelector", "parentSelector", "title", "anchors", "sections");
-            ImmutableArray<DocumentSection> sections = Array(unit, "sections").Select(section =>
+            Fields(unit, parse, OctoberWorkerParseSlot.Units, "semanticSelector", "parentSelector", "title", "anchors", "sections");
+            ImmutableArray<DocumentSection> sections = Array(unit, "sections", parse, OctoberWorkerParseSlot.Sections).Select(section =>
             {
-                Fields(section, "sectionId", "ordinal", "title", "claims");
-                ImmutableArray<QualifiedClaimGroup> claims = Array(section, "claims").Select(claim =>
+                Fields(section, parse, OctoberWorkerParseSlot.Sections, "sectionId", "ordinal", "title", "claims");
+                ImmutableArray<QualifiedClaimGroup> claims = Array(section, "claims", parse, OctoberWorkerParseSlot.Claims).Select(claim =>
                 {
-                    Fields(claim, "claimGroupId", "text", "qualification", "evidence", "limitations");
-                    return new QualifiedClaimGroup(Text(claim, "claimGroupId"), Text(claim, "text"),
-                        Qualification(claim), Evidence(claim, request), Strings(claim, "limitations"));
+                    Fields(claim, parse, OctoberWorkerParseSlot.Claims, "claimGroupId", "text", "qualification", "evidence", "limitations");
+                    return new QualifiedClaimGroup(Text(claim, "claimGroupId", parse, OctoberWorkerParseSlot.ClaimGroupId),
+                        Text(claim, "text", parse, OctoberWorkerParseSlot.Text),
+                        Qualification(claim, parse), Evidence(claim, request, parse),
+                        Strings(claim, "limitations", parse, OctoberWorkerParseSlot.Limitations));
                 }).ToImmutableArray();
-                return new DocumentSection(Text(section, "sectionId"), section.GetProperty("ordinal").GetInt32(), Text(section, "title"), claims);
+                return new DocumentSection(Text(section, "sectionId", parse, OctoberWorkerParseSlot.SectionId),
+                    parse.Read(() => section.GetProperty("ordinal").GetInt32(), OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Ordinal),
+                    Text(section, "title", parse, OctoberWorkerParseSlot.Title), claims);
             }).ToImmutableArray();
-            string title = Text(unit, "title");
-            return new SemanticUnitProposal(Text(unit, "semanticSelector"), NullableText(unit, "parentSelector"), title,
+            string title = Text(unit, "title", parse, OctoberWorkerParseSlot.Title);
+            return new SemanticUnitProposal(Text(unit, "semanticSelector", parse, OctoberWorkerParseSlot.SemanticSelector),
+                NullableText(unit, "parentSelector", parse, OctoberWorkerParseSlot.ParentSelector), title,
                 OctoberKnowledgePolicy.CreateContentJson(title, sections),
-                Array(unit, "anchors").Select(anchor => Anchor(anchor, request)).ToImmutableArray(), sections);
+                Array(unit, "anchors", parse, OctoberWorkerParseSlot.Anchors)
+                    .Select(anchor => Anchor(anchor, request, parse, OctoberWorkerParseSlot.Anchors)).ToImmutableArray(), sections);
         }).ToImmutableArray();
-        ImmutableArray<CommunicationObservation> observations = Array(root, "observations").Select(observation =>
+        ImmutableArray<CommunicationObservation> observations = Array(root, "observations", parse, OctoberWorkerParseSlot.Observations).Select(observation =>
         {
-            Fields(observation, "observationKey", "ownerSelector", "role", "mechanism", "operation", "logicalNamespace", "literalsOrExpressions", "qualification", "evidence");
-            return new CommunicationObservation(Text(observation, "observationKey"), Text(observation, "ownerSelector"),
-                Text(observation, "role"), Text(observation, "mechanism"), Text(observation, "operation"), NullableText(observation, "logicalNamespace"),
-                Strings(observation, "literalsOrExpressions"), Qualification(observation), Evidence(observation, request));
+            Fields(observation, parse, OctoberWorkerParseSlot.Observations, "observationKey", "ownerSelector", "role", "mechanism", "operation", "logicalNamespace", "literalsOrExpressions", "qualification", "evidence");
+            return new CommunicationObservation(Text(observation, "observationKey", parse, OctoberWorkerParseSlot.ObservationKey),
+                Text(observation, "ownerSelector", parse, OctoberWorkerParseSlot.OwnerSelector),
+                Text(observation, "role", parse, OctoberWorkerParseSlot.Role),
+                Text(observation, "mechanism", parse, OctoberWorkerParseSlot.Mechanism),
+                Text(observation, "operation", parse, OctoberWorkerParseSlot.Operation),
+                NullableText(observation, "logicalNamespace", parse, OctoberWorkerParseSlot.LogicalNamespace),
+                Strings(observation, "literalsOrExpressions", parse, OctoberWorkerParseSlot.LiteralsOrExpressions),
+                Qualification(observation, parse), Evidence(observation, request, parse));
         }).ToImmutableArray();
-        ImmutableArray<Uncertainty> uncertainties = Array(root, "uncertainties").Select(uncertainty =>
+        ImmutableArray<Uncertainty> uncertainties = Array(root, "uncertainties", parse, OctoberWorkerParseSlot.Uncertainties).Select(uncertainty =>
         {
-            Fields(uncertainty, "key", "explanation", "evidence", "limitations");
-            return new Uncertainty(Text(uncertainty, "key"), Text(uncertainty, "explanation"), Evidence(uncertainty, request), Strings(uncertainty, "limitations"));
+            Fields(uncertainty, parse, OctoberWorkerParseSlot.Uncertainties, "key", "explanation", "evidence", "limitations");
+            return new Uncertainty(Text(uncertainty, "key", parse, OctoberWorkerParseSlot.Key),
+                Text(uncertainty, "explanation", parse, OctoberWorkerParseSlot.Explanation),
+                Evidence(uncertainty, request, parse), Strings(uncertainty, "limitations", parse, OctoberWorkerParseSlot.Limitations));
         }).ToImmutableArray();
         stage = OctoberWorkerFailureStage.ProposalValidation;
         if (units.IsEmpty && uncertainties.IsEmpty) throw new InvalidDataException("Zero-unit analysis requires a reason.");
@@ -943,47 +973,90 @@ public sealed class OctoberFileWorkerExecutor
         return proposal;
     }
 
-    private static ImmutableArray<EvidenceReference> Evidence(JsonElement parent, OctoberFileWorkerRequest request)
-        => Array(parent, "evidence").Select(value =>
+    private static ImmutableArray<EvidenceReference> Evidence(JsonElement parent, OctoberFileWorkerRequest request, ParseObservation parse)
+        => Array(parent, "evidence", parse, OctoberWorkerParseSlot.Evidence).Select(value =>
         {
-            if (value.TryGetProperty("advisoryIndex", out JsonElement index))
+            JsonElement index = default;
+            if (parse.Read(() => value.TryGetProperty("advisoryIndex", out index), OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Evidence))
             {
-                Fields(value, "advisoryIndex");
-                int ordinal = index.GetInt32();
-                if (ordinal < 0 || ordinal >= request.Advisory.Length) throw new InvalidDataException("Invalid advisory reference.");
+                Fields(value, parse, OctoberWorkerParseSlot.Evidence, "advisoryIndex");
+                int ordinal = parse.Read(() => index.GetInt32(), OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.AdvisoryIndex);
+                if (ordinal < 0 || ordinal >= request.Advisory.Length)
+                {
+                    parse.Record(OctoberWorkerParseFailure.EvidenceIndex, OctoberWorkerParseSlot.AdvisoryIndex);
+                    throw new InvalidDataException("Invalid advisory reference.");
+                }
                 Contributor contributor = request.Advisory[ordinal].Contributor;
                 return new EvidenceReference(null, null, null, contributor.AdvisoryRecordId, contributor.ContentDigest);
             }
-            SourceAnchor anchor = Anchor(value, request);
+            SourceAnchor anchor = Anchor(value, request, parse, OctoberWorkerParseSlot.Evidence);
             return new EvidenceReference(null, null, anchor, null, request.Source.Origin.SourceDigest);
         }).ToImmutableArray();
 
-    private static SourceAnchor Anchor(JsonElement value, OctoberFileWorkerRequest request)
+    private static SourceAnchor Anchor(JsonElement value, OctoberFileWorkerRequest request, ParseObservation parse, OctoberWorkerParseSlot container)
     {
-        Fields(value, "startLine", "endLine");
-        return new(request.Source.Origin, value.GetProperty("startLine").GetInt32(), value.GetProperty("endLine").GetInt32());
+        Fields(value, parse, container, "startLine", "endLine");
+        return new(request.Source.Origin,
+            parse.Read(() => value.GetProperty("startLine").GetInt32(), OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.StartLine),
+            parse.Read(() => value.GetProperty("endLine").GetInt32(), OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.EndLine));
     }
 
-    private static ClaimQualification Qualification(JsonElement value)
+    private static ClaimQualification Qualification(JsonElement value, ParseObservation parse)
     {
-        string text = Text(value, "qualification");
+        string text = Text(value, "qualification", parse, OctoberWorkerParseSlot.Qualification);
         if (!Enum.TryParse(text, ignoreCase: false, out ClaimQualification result) || result == ClaimQualification.Mixed ||
-            result.ToString() != text) throw new InvalidDataException("Invalid claim qualification.");
+            result.ToString() != text)
+        {
+            parse.Record(OctoberWorkerParseFailure.Qualification, OctoberWorkerParseSlot.Qualification);
+            throw new InvalidDataException("Invalid claim qualification.");
+        }
         return result;
     }
 
-    private static IEnumerable<JsonElement> Array(JsonElement value, string name) => value.GetProperty(name).EnumerateArray();
-    private static ImmutableArray<string> Strings(JsonElement value, string name) => Array(value, name).Select(item => item.GetString() ?? throw new InvalidDataException("Missing text.")).ToImmutableArray();
-    private static string Text(JsonElement value, string name) => value.GetProperty(name).GetString() ?? throw new InvalidDataException("Missing text.");
-    private static string? NullableText(JsonElement value, string name) => value.GetProperty(name).ValueKind == JsonValueKind.Null ? null : Text(value, name);
+    private static IEnumerable<JsonElement> Array(JsonElement value, string name, ParseObservation parse, OctoberWorkerParseSlot slot)
+        => parse.Read(() => value.GetProperty(name).EnumerateArray(), OctoberWorkerParseFailure.ValueShape, slot);
+    private static ImmutableArray<string> Strings(JsonElement value, string name, ParseObservation parse, OctoberWorkerParseSlot slot)
+        => Array(value, name, parse, slot).Select(item => parse.Read(() => item.GetString() ?? throw new InvalidDataException("Missing text."),
+            OctoberWorkerParseFailure.ValueShape, slot)).ToImmutableArray();
+    private static string Text(JsonElement value, string name, ParseObservation parse, OctoberWorkerParseSlot slot)
+        => parse.Read(() => value.GetProperty(name).GetString() ?? throw new InvalidDataException("Missing text."), OctoberWorkerParseFailure.ValueShape, slot);
+    private static string? NullableText(JsonElement value, string name, ParseObservation parse, OctoberWorkerParseSlot slot)
+        => parse.Read(() => value.GetProperty(name).ValueKind == JsonValueKind.Null ? null : Text(value, name, parse, slot), OctoberWorkerParseFailure.ValueShape, slot);
 
-    private static void Fields(JsonElement value, params string[] names)
+    private static void Fields(JsonElement value, ParseObservation parse, OctoberWorkerParseSlot slot, params string[] names)
     {
-        if (value.ValueKind != JsonValueKind.Object) throw new InvalidDataException("Expected an object.");
+        if (value.ValueKind != JsonValueKind.Object)
+        {
+            parse.Record(slot == OctoberWorkerParseSlot.Root ? OctoberWorkerParseFailure.RootShape : OctoberWorkerParseFailure.ValueShape, slot);
+            throw new InvalidDataException("Expected an object.");
+        }
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (JsonProperty property in value.EnumerateObject())
             if (!names.Contains(property.Name, StringComparer.Ordinal) || !seen.Add(property.Name))
+            {
+                parse.Record(OctoberWorkerParseFailure.ClosedFields, slot);
                 throw new InvalidDataException("Unknown or repeated proposal field.");
-        if (seen.Count != names.Length) throw new InvalidDataException("Missing proposal field.");
+            }
+        if (seen.Count != names.Length)
+        {
+            parse.Record(OctoberWorkerParseFailure.ClosedFields, slot);
+            throw new InvalidDataException("Missing proposal field.");
+        }
+    }
+
+    private sealed class ParseObservation
+    {
+        internal OctoberWorkerParseDiagnosticSnapshot? First { get; private set; }
+        internal void Record(OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot) => First ??= new(category, slot);
+        internal T Read<T>(Func<T> operation, OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot)
+        {
+            try { return operation(); }
+            catch (Exception error) when (error is JsonException or InvalidOperationException or FormatException or
+                ArgumentException or InvalidDataException or OverflowException or KeyNotFoundException)
+            {
+                Record(category, slot);
+                throw;
+            }
+        }
     }
 }
