@@ -1,5 +1,6 @@
 using Bunit;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -128,12 +129,30 @@ public sealed class OctoberChatApplicationTests
     [InlineData("mode")]
     public async Task ChatPage_UnavailableDurableLocatorNeverCreatesReplacementOrDisclosesAnotherContextAsync(string scenario)
     {
+        long setupStarted = Stopwatch.GetTimestamp();
         await using var fixture = await ApplicationFixture.CreateAsync();
         fixture.EnqueueComplete(Text("原会话受限内容。") + Stop + Done);
         fixture.Application.Attach(callback => callback().AsTask());
         Assert.True(await fixture.Application.OpenAsync(fixture.Conversation));
-        var saved = Assert.IsType<OctoberChatCoordinationResult>(await fixture.Application.SubmitAsync("原会话问题")
-            .WaitAsync(TimeSpan.FromSeconds(10)));
+        int disposedBeforeSubmit = fixture.DisposedScopes;
+        long submitStarted = Stopwatch.GetTimestamp();
+        Task<OctoberChatCoordinationResult?> submit = fixture.Application.SubmitAsync("原会话问题");
+        OctoberChatCoordinationResult? submitted;
+        try
+        {
+            submitted = await submit.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        catch (TimeoutException error)
+        {
+            // Capture before await-using teardown cancels/detaches the application.
+            // These independently sampled values are diagnostic, not an atomic state or release proof.
+            string snapshot = FormattableString.Invariant($"phase=initial-valid-turn; setupMs={Stopwatch.GetElapsedTime(setupStarted).TotalMilliseconds:F1}; submitMs={Stopwatch.GetElapsedTime(submitStarted).TotalMilliseconds:F1}; task={submit.Status}; busy={fixture.Application.IsBusy}; ready={fixture.Application.IsReady}; uncertain={fixture.Application.IsSaveUncertain}; opens={fixture.OpenRequests.Count}; begins={fixture.BeginCalls}; providerRequests={fixture.RequestBodies.Count}; saves={fixture.SaveCalls}; saveStatus={fixture.LastSaveResult?.Status}; receiptPresent={fixture.LastSaveResult?.Receipt is not null}; terminalState={fixture.LastSaveResult?.Receipt?.TerminalState}; terminalReason={fixture.LastSaveResult?.Receipt?.Reason}; lookups={fixture.LookupCalls}; admissionLookups={fixture.AdmissionLookups.Count}; activeRegistrations={fixture.Registry.ActiveRegistrations}; activeRequests={fixture.Requests.ActiveRequests}; disposedBefore={disposedBeforeSubmit}; disposedNow={fixture.DisposedScopes}; visibleTurns={fixture.Application.Turns.Count}; transcriptTurns={fixture.Application.Transcript.Length}");
+            // Observe an eventual fault without waiting longer or changing the timeout assertion.
+            _ = submit.ContinueWith(completed => { _ = completed.Exception; }, CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            throw new TimeoutException("Initial valid-turn setup exceeded the unchanged 10-second wait. " + snapshot, error);
+        }
+        var saved = Assert.IsType<OctoberChatCoordinationResult>(submitted);
         var receipt = saved.Terminal!.Receipt!;
         fixture.Application.Detach();
         var selection = scenario switch
