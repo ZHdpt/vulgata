@@ -62,6 +62,11 @@ root selection and operator-response publication, then failed later in Generate
 tokens; all owned resources were cleaned. Scan and Business own source-free
 diagnosis of the later failure. BL publication/reading remains unqualified;
 the latest one-run grant is consumed with no automatic retry.
+Reviewed command-local Business diagnostics are integrated at `ec7af241`; they
+retain fixed failure codes and exact-operation enum observations behind live
+disclosure/replay checks. Root fixture extraction is allowlisted and independently
+reviewed. This improves the next run's evidence, not the prior failure's diagnosis;
+no new provider run or retained dataset has been authorized.
 Presentation operation C remains unapproved.
 
 Current activation authority and ownership are in the [October 8 activation record](../bmad/planning-artifacts/october-activation-2026-10-08.md).

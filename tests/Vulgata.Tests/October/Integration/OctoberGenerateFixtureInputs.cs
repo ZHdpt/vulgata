@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Configuration;
 using Vulgata.Shared;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
+using Vulgata.OctoberGenerator;
 
 namespace Vulgata.Tests.October.Integration;
 
@@ -55,6 +57,13 @@ internal static class OctoberGenerateFixtureInputs
             string unknown = usage.ValueKind == JsonValueKind.Object && usage.TryGetProperty("hasUnknownUsage", out var flag)
                 ? flag.ValueKind switch { JsonValueKind.True => "true", JsonValueKind.False => "false", _ => "unavailable" } : "unavailable";
             output.Add($"generate-reported-usage: requests={Number(usage, "requests")}; input-tokens={Number(usage, "inputTokens")}; output-tokens={Number(usage, "outputTokens")}; unknown={unknown}");
+            if (!report.TryGetProperty("businessDiagnostics", out var business)) business = default;
+            string Defined<T>(string name) where T : struct, Enum => business.ValueKind == JsonValueKind.Object
+                && business.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+                && Enum.GetNames<T>().Contains(value.GetString(), StringComparer.Ordinal) ? value.GetString()! : "unavailable";
+            string mismatch = business.ValueKind == JsonValueKind.Object && business.TryGetProperty("operationMismatch", out var mismatchValue)
+                ? mismatchValue.ValueKind switch { JsonValueKind.True => "true", JsonValueKind.False => "false", _ => "unavailable" } : "unavailable";
+            output.Add($"generate-reported-business-diagnostics: finalizer-status={Defined<BusinessFinalizationStatus>("finalizerStatus")}; finalizer-persistence={Defined<KnowledgeWriteStatus>("finalizerPersistenceStatus")}; lookup-status={Defined<BusinessFinalizationStatus>("lookupStatus")}; lookup-persistence={Defined<KnowledgeWriteStatus>("lookupPersistenceStatus")}; boundary={Defined<OctoberBusinessDiagnosticBoundary>("boundary")}; operation-mismatch={mismatch}");
         }
         catch (JsonException) { output.Add("generate-report=unavailable-or-malformed"); }
         return output;
@@ -69,7 +78,13 @@ internal static class OctoberGenerateFixtureInputs
             "publication_failed" or "publication_interrupted" or "publication_unavailable" or "no_cl_content" or
             "freeze_settlement_pending" or "publication_settlement_pending" or "phase_closed" or "unsupported_stage" or
             "publication_not_started" or "source-authority-or-identity-lost" or "incomplete-directory" or "source-limitation" or
-            "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" or "source-or-execution-gap" => code,
+            "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" or "source-or-execution-gap" or
+            "business_authority_unavailable" or "business_client_unavailable" or "business_corpus_unavailable" or
+            "business_freeze_unavailable" or "business_initial_read_unavailable" or "business_original_slot_unavailable" or
+            "business_planning_inputs_unavailable" or "business_publication_binding_unavailable" or
+            "business_publication_read_unavailable" or "business_publication_unavailable" or
+            "business_resolution_failed" or "business_resolution_ineligible" or "business_resolution_limit" or
+            "business_resolution_unavailable" or "business_roots_unavailable" or "business_run_ineligible" => code,
             _ => "other"
         };
 

@@ -782,3 +782,33 @@ found zero containers and volumes remaining. Scan and Business were asked for
 bounded source-free diagnosis, with no source edits or duplicate runtime requested.
 No BL content or reader success, retained presentation dataset, or full-suite GREEN
 is claimed. This latest approval is consumed; another live run requires approval.
+
+### Safe Business diagnostics integrated
+
+Reviewed Scan checkpoint `ebea00584e5d5706a4097ed4b048269c1b58c2ec` is integrated
+at `ec7af241`. It retains separate immediate-finalizer and exact-lookup status and
+persistence observations, last Business boundary and operation-mismatch flag.
+Only defined enums bound to the exact original operation are retained; null means
+unobserved, not success or absence. Exact lookup remains authoritative. Fixed
+Business gap codes survive console projection; unknown text remains redacted.
+Snapshots participate in metadata authorization, are removed by Hide/invalid
+binding, and are reauthorized on cached replay. No schema, acceptance, prompt,
+provider, budget or retry change is included.
+
+The root fixture extracts only those six scalar fields and the explicit fixed
+codes before cleanup, without privileged database/result parsing. Independent
+integration review accepted production and fixture changes. Owner controlled
+evidence: RED 46/59 with 13 expected missing-diagnostic failures
+(`89925b66d3d248b9b198b7d500216b9c`), GREEN 109/109
+(`a843cac61a5540c8b29290cfb38c0989`). These are source-free checks, not evidence of
+the cause of the prior live BL failure. No new runtime grant was consumed.
+
+Main current-source verification passed **155/155**, zero skips, in
+`163315b3930e4b3789d419256a856a02` (EntryPoint, BusinessFinalization, SequentialRun,
+fixture-input diagnostics and registration evidence). The initial filter misspelled
+the GenerateRunner class, so the actual `OctoberScanGenerateRunnerTests` was run
+separately: **14/14**, zero skips, `f0a4d87b3cd246b0b945588ac28940c3`.
+Both standard-launcher runs rebuilt current sources and exited zero; process-local
+PATH was restored. No external-resource qualification was performed. The earlier
+full-suite 4,188/4,189 remains unresolved, and live BL qualification still requires
+a new one-run approval.

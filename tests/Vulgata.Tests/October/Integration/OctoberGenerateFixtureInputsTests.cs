@@ -11,6 +11,76 @@ public sealed class OctoberGenerateFixtureInputsTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_AllSixteenDefinedBusinessGapCodesRemainVisibleWithoutWildcard()
+    {
+        string[] codes = ["business_authority_unavailable", "business_client_unavailable", "business_corpus_unavailable",
+            "business_freeze_unavailable", "business_initial_read_unavailable", "business_original_slot_unavailable",
+            "business_planning_inputs_unavailable", "business_publication_binding_unavailable", "business_publication_read_unavailable",
+            "business_publication_unavailable", "business_resolution_failed", "business_resolution_ineligible",
+            "business_resolution_limit", "business_resolution_unavailable", "business_roots_unavailable", "business_run_ineligible"];
+        string json = JsonSerializer.Serialize(new { gaps = codes.Select(code => new { code }) });
+        Assert.Contains("generate-reported-gap-codes=" + string.Join(',', codes),
+            OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, ""));
+        Assert.Contains("generate-reported-gap-codes=other", OctoberGenerateFixtureInputs.GenerateDiagnostics(1,
+            "{\"gaps\":[{\"code\":\"business_PRIVATE-secret\"}]}", ""));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void GenerateDiagnostics_BusinessScalarsUseExactDefinedStatusesAndBoolean(bool mismatch)
+    {
+        string json = JsonSerializer.Serialize(new { businessDiagnostics = new {
+            finalizerStatus = "Published", finalizerPersistenceStatus = "Committed", lookupStatus = "CommitIndeterminate",
+            lookupPersistenceStatus = "StorageUnavailable", boundary = "ExactLookup", operationMismatch = mismatch } });
+        string line = Assert.Single(OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, "")
+            .Where(x => x.StartsWith("generate-reported-business-diagnostics:", StringComparison.Ordinal)));
+        Assert.Equal("generate-reported-business-diagnostics: finalizer-status=Published; finalizer-persistence=Committed; lookup-status=CommitIndeterminate; lookup-persistence=StorageUnavailable; boundary=ExactLookup; operation-mismatch="
+            + (mismatch ? "true" : "false"), line);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("{}")]
+    [InlineData("{\"businessDiagnostics\":null}")]
+    [InlineData("{\"businessDiagnostics\":[]}")]
+    [InlineData("{\"businessDiagnostics\":{\"finalizerStatus\":null,\"finalizerPersistenceStatus\":999,\"lookupStatus\":\"published\",\"lookupPersistenceStatus\":\"0\",\"boundary\":\"Finalizer, Completed\",\"operationMismatch\":\"true\"}}")]
+    public void GenerateDiagnostics_MissingNullOrInvalidBusinessValuesRemainUnavailable(string json)
+    {
+        string line = Assert.Single(OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, "")
+            .Where(x => x.StartsWith("generate-reported-business-diagnostics:", StringComparison.Ordinal)));
+        Assert.Equal("generate-reported-business-diagnostics: finalizer-status=unavailable; finalizer-persistence=unavailable; lookup-status=unavailable; lookup-persistence=unavailable; boundary=unavailable; operation-mismatch=unavailable", line);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_BusinessFieldsNeverEchoUnknownStringsOrNestedPayloads()
+    {
+        const string secret = "PRIVATE-source-credential-database";
+        string json = JsonSerializer.Serialize(new { businessDiagnostics = new {
+            finalizerStatus = secret, finalizerPersistenceStatus = new { secret }, lookupStatus = secret,
+            lookupPersistenceStatus = secret, boundary = secret, operationMismatch = new[] { secret }, extra = secret },
+            gaps = new[] { new { code = "run_interrupted" } } });
+        string output = string.Join('\n', OctoberGenerateFixtureInputs.GenerateDiagnostics(3, json, ""));
+        Assert.DoesNotContain(secret, output);
+        Assert.Contains("generate-reported-gap-codes=run_interrupted", output);
+        Assert.Contains("boundary=unavailable; operation-mismatch=unavailable", output);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_DuplicateBusinessFieldsRejectReportRatherThanSelectValue()
+    {
+        var output = OctoberGenerateFixtureInputs.GenerateDiagnostics(1,
+            "{\"businessDiagnostics\":{\"boundary\":\"Completed\",\"boundary\":\"PRIVATE-secret\"}}", "");
+        Assert.Contains("generate-report=unavailable-or-malformed", output);
+        Assert.DoesNotContain(output, x => x.StartsWith("generate-reported-business-diagnostics:", StringComparison.Ordinal));
+        Assert.DoesNotContain("PRIVATE-secret", string.Join('\n', output));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GenerateDiagnostics_ReportedFieldsAreRedactedAndUnknownUsageIsNotZero()
     {
         const string secret = "PRIVATE-source-key-endpoint";
