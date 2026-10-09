@@ -64,6 +64,13 @@ Fresh run `phone-43e354514b75` stopped after 21.02 seconds and proves terminal g
 publications0. Source-free bootstrap/prepare passed; runtime stopped. Scan is now
 tracing the SDK event sequence; do not assume malformed model output or loosen
 validation without a controlled reproduction. Root owns any next paid retry.
+Newer SDK correction `88790331` passed main affected **186/186** controlled tests
+(isolation `98bc7f4a235445d88bb9bde9be257fba`). Real pilot `phone-56378a6c60d7`
+accepted **one CL Document**, then stopped after31.49s on second-file
+`BudgetExceeded/StreamTerminal`. Two requests, token totals unknown; **zero
+publications**, so ordinary-user read/BL/Chat/graph are not yet qualified. Retain
+partial database `vulgata_oct_pilot_beca4c15e7414fc7b4732d527f480f18` and keys.
+Scan owns bounded budget diagnosis; no unchanged retry or limit bypass.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

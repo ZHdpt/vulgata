@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: diagnostic retry proves Worker `ContentAfterFinish`; Scan owner is tracing
-the SDK event sequence before any compatibility fix. No real-source content
-qualification is claimed.
+Status: reviewed SDK compatibility fix is integrated. Latest real pilot accepted
+one CL Document, then failed a Worker internal budget on the second file. No
+publication or ordinary-user read qualification yet; preserve this partial dataset.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -166,3 +166,36 @@ This identifies the exact rejected branch, not the nature of the trailing conten
 An SDK-assembled tool-call event is a hypothesis to inspect, not an established
 cause. Scan owns SDK-sequence diagnosis/controlled correction; preserve rejection
 of genuinely invalid trailing content. No further unchanged paid retry.
+
+## SDK correction and first accepted real CL
+
+Reviewed lane fix `12f1873f` integrated as `88790331`. Controlled actual-SDK SSE
+reproduction proved that the installed adapter emits an assembled executable
+tool-call update after the `ToolCalls` finish marker. The narrow exception permits
+one matching aggregate only, retaining all call validation and rejecting trailing
+text. Main affected tests **186/186**, no skips, isolation
+`98bc7f4a235445d88bb9bde9be257fba`; not full regression/runtime qualification.
+
+Corrected real run `phone-56378a6c60d7`, batch
+`75e30e39-7ec3-48e3-8b55-d9c547bf5731`, database
+`vulgata_oct_pilot_beca4c15e7414fc7b4732d527f480f18`:
+
+- **31.49 seconds** wall / 29.24 seconds reported pipeline, exit 1, no timeout or
+  unconfirmed cleanup.
+- First selected `GetMobileByAccessCodeOp.java` produced one accepted CL Document:
+  logical ID `68569a16-c897-5890-72ca-0a3fd53bb347`, exact version
+  `770b1751-02ea-4721-8958-a421bf1f9521`.
+- Second file stopped at `BudgetExceeded / StreamTerminal`, terminal code null.
+  **2 requests**, input/output token totals unknown. Do not invent totals or treat
+  removed cumulative caps as removal of all internal per-file safety limits.
+- Database counts: **1 accepted manifest / 1 Document Version / 0 publications**.
+  Accepted content is not yet an ordinarily readable retained publication.
+- Scan owns precise internal-budget diagnosis before any further retry. Root
+  preserves the partial database and keys; later runs must use fresh databases.
+
+Read-only semantic spot-check of the first accepted CL: it correctly describes the
+method writing `timeStamp` and returning `NEXT`, and does not invent a mobile-number
+lookup based on the class name. However, some cited line ranges are misaligned:
+the execute claim cites 17–21, while the actual method declaration/body runs 20–23
+(return on22). Structural acceptance is not complete citation-accuracy qualification.
+Record this quality gap; do not present this partial dataset as presentation-ready.
