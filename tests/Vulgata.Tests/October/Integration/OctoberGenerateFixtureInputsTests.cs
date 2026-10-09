@@ -11,6 +11,43 @@ public sealed class OctoberGenerateFixtureInputsTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void GenerateDiagnostics_OriginalSynthesisReasonAcceptsOnlyExplicitNonNoneNames()
+    {
+        string[] reasons = ["InvalidInput", "ProposalShape", "SectionOrder", "ClaimShape", "DocumentReference",
+            "SectionReference", "ClaimReference", "QualificationMismatch", "InputClaimShape", "OutputLimit", "InvalidStructure",
+            "ResponseMissing", "FinishReasonNotStop", "ResponseLengthLimit", "ResponseShape", "ResponsePayloadLimit",
+            "ProposalMissing", "JsonInvalid", "TransportFailure", "ExecutionUnavailable", "UnsupportedRoot", "NotEvaluated"];
+        foreach (string reason in reasons)
+        {
+            string json = JsonSerializer.Serialize(new { businessDiagnostics = new { originalSynthesisFailureReason = reason } });
+            Assert.Contains("generate-reported-original-synthesis-failure=" + reason,
+                OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, ""));
+        }
+        Assert.Contains("generate-reported-original-synthesis-failure=unavailable",
+            OctoberGenerateFixtureInputs.GenerateDiagnostics(1, "{}", ""));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("null")]
+    [InlineData("\"None\"")]
+    [InlineData("0")]
+    [InlineData("999")]
+    [InlineData("\"1\"")]
+    [InlineData("\"sectionOrder\"")]
+    [InlineData("\"SectionOrder, ClaimShape\"")]
+    [InlineData("\"PRIVATE-secret-source\"")]
+    [InlineData("{\"payload\":\"PRIVATE-secret-source\"}")]
+    public void GenerateDiagnostics_InvalidOriginalSynthesisReasonRemainsUnavailableAndRedacted(string value)
+    {
+        string json = "{\"businessDiagnostics\":{\"originalSynthesisFailureReason\":" + value + "}}";
+        var output = OctoberGenerateFixtureInputs.GenerateDiagnostics(1, json, "");
+        Assert.Contains("generate-reported-original-synthesis-failure=unavailable", output);
+        Assert.DoesNotContain("PRIVATE-secret-source", string.Join('\n', output));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GenerateDiagnostics_AllSixteenDefinedBusinessGapCodesRemainVisibleWithoutWildcard()
     {
         string[] codes = ["business_authority_unavailable", "business_client_unavailable", "business_corpus_unavailable",

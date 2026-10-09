@@ -64,6 +64,18 @@ internal static class OctoberGenerateFixtureInputs
             string mismatch = business.ValueKind == JsonValueKind.Object && business.TryGetProperty("operationMismatch", out var mismatchValue)
                 ? mismatchValue.ValueKind switch { JsonValueKind.True => "true", JsonValueKind.False => "false", _ => "unavailable" } : "unavailable";
             output.Add($"generate-reported-business-diagnostics: finalizer-status={Defined<BusinessFinalizationStatus>("finalizerStatus")}; finalizer-persistence={Defined<KnowledgeWriteStatus>("finalizerPersistenceStatus")}; lookup-status={Defined<BusinessFinalizationStatus>("lookupStatus")}; lookup-persistence={Defined<KnowledgeWriteStatus>("lookupPersistenceStatus")}; boundary={Defined<OctoberBusinessDiagnosticBoundary>("boundary")}; operation-mismatch={mismatch}");
+            string synthesis = business.ValueKind == JsonValueKind.Object
+                && business.TryGetProperty("originalSynthesisFailureReason", out var failure) && failure.ValueKind == JsonValueKind.String
+                ? failure.GetString() switch
+                {
+                    "InvalidInput" or "ProposalShape" or "SectionOrder" or "ClaimShape" or "DocumentReference" or
+                    "SectionReference" or "ClaimReference" or "QualificationMismatch" or "InputClaimShape" or "OutputLimit" or
+                    "InvalidStructure" or "ResponseMissing" or "FinishReasonNotStop" or "ResponseLengthLimit" or "ResponseShape" or
+                    "ResponsePayloadLimit" or "ProposalMissing" or "JsonInvalid" or "TransportFailure" or "ExecutionUnavailable" or
+                    "UnsupportedRoot" or "NotEvaluated" => failure.GetString()!,
+                    _ => "unavailable"
+                } : "unavailable";
+            output.Add($"generate-reported-original-synthesis-failure={synthesis}");
         }
         catch (JsonException) { output.Add("generate-report=unavailable-or-malformed"); }
         return output;

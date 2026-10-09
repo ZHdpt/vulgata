@@ -841,3 +841,10 @@ series totals: **1/5 attempts, 2 requests, 30,587 tokens**; four attempts remain
 Database/temp cleanup passed; exact run-label queries confirmed zero containers
 and volumes. Business owns source-free synthesis diagnosis and bounded correction;
 Scan coordinates any safe fixed-code propagation. No unchanged retry is planned.
+
+Root fixture extraction for the agreed transient original-synthesis-failure field
+is prepared and independently reviewed: exactly 22 fixed non-None names, with
+missing/invalid/unknown values unavailable and no raw payload output. Focused
+current-source checks pass **59/59**, zero skips,
+`2a65b649fedb41b5ae698545808fc7f0`. This is fixture-only evidence; Business's
+nonpersisted reason contract and Scan producer integration are still pending.
