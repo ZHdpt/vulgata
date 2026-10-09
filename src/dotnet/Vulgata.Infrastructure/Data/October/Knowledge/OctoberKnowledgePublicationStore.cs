@@ -73,22 +73,27 @@ public sealed class OctoberKnowledgePublicationStore
                 !request.Documents.Contains(relationship.From) || !request.Documents.Contains(relationship.To)) return Failure(operation);
             selectedRelationships.Add(exact);
         }
-        foreach (var unknown in request.Uncertainties)
+        foreach (var requested in request.Uncertainties.GroupBy(OctoberKnowledgePolicy.SerializeCanonical, StringComparer.Ordinal))
         {
-            string canonical = OctoberKnowledgePolicy.SerializeCanonical(unknown);
+            string canonical = requested.Key;
             var exact = acceptedUnknowns.Where(x => OctoberKnowledgePolicy.CanonicalizeJson(x.ContentJson) == canonical).ToArray();
             var resolution = resolutionUnknowns.Where(x => OctoberKnowledgePolicy.CanonicalizeJson(x.ContentJson) == canonical).ToArray();
-            // Shared uncertainty requests contain no manifest ID. Ambiguous identical payloads cannot choose an owner.
-            if (exact.Length + resolution.Length != 1) return Failure(operation);
-            if (resolution.Length == 1)
+            // Without manifest IDs, identical file payloads can only select the full matching
+            // multiset. A partial count cannot identify which immutable file owner was intended.
+            if (exact.Length != 0)
             {
-                if (selectedResolutionUnknowns.Any(x => x.UncertaintyId == resolution[0].UncertaintyId)) return Failure(operation);
-                selectedResolutionUnknowns.Add(resolution[0]);
+                if (resolution.Length != 0 || requested.Count() != exact.Length ||
+                    exact.Any(match => selectedUnknowns.Any(x => x.ManifestId == match.ManifestId && x.Key == match.Key)))
+                    return Failure(operation);
+                selectedUnknowns.AddRange(exact);
             }
             else
             {
-                if (selectedUnknowns.Any(x => x.ManifestId == exact[0].ManifestId && x.Key == exact[0].Key)) return Failure(operation);
-                selectedUnknowns.Add(exact[0]);
+                // Resolution selection remains singular; no cross-origin or duplicate aliasing.
+                if (resolution.Length != 1 || requested.Count() != 1 ||
+                    selectedResolutionUnknowns.Any(x => x.UncertaintyId == resolution[0].UncertaintyId))
+                    return Failure(operation);
+                selectedResolutionUnknowns.Add(resolution[0]);
             }
         }
         if (selectedRelationships.Count != 0 || selectedResolutionUnknowns.Count != 0)
