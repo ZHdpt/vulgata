@@ -241,6 +241,10 @@ public sealed record BusinessFinalizationResult(BusinessFinalizationStatus Statu
     /// <summary>Persistence diagnostics do not change the immutable logical result or grant dispatch authority.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public KnowledgeWriteStatus? PersistenceStatus { get; init; }
+
+    /// <summary>Original process-local synthesis diagnostic; never serialized or reconstructed from persistence.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public BusinessSynthesisFailureReason? OriginalSynthesisFailureReason { get; init; }
 }
 
 public sealed record FinalizationRequest(OperationKey Operation, CorpusHandle Corpus, string CanonicalPayloadDigest,

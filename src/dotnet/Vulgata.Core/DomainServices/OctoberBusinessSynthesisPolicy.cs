@@ -17,11 +17,40 @@ public sealed record SynthesisGapLocator(SynthesisGapKind Kind, string Key);
 public sealed record SynthesisGap(SynthesisGapLocator Locator, string Explanation,
     ImmutableArray<EvidenceReference> Evidence, ImmutableArray<string> Limitations);
 public enum BusinessSynthesisValidationStatus { Succeeded, InvalidInput, InvalidProposal }
+public enum BusinessSynthesisFailureReason
+{
+    None = 0,
+    InvalidInput = 1,
+    ProposalShape = 2,
+    SectionOrder = 3,
+    ClaimShape = 4,
+    DocumentReference = 5,
+    SectionReference = 6,
+    ClaimReference = 7,
+    QualificationMismatch = 8,
+    InputClaimShape = 9,
+    OutputLimit = 10,
+    InvalidStructure = 11,
+    ResponseMissing = 12,
+    FinishReasonNotStop = 13,
+    ResponseLengthLimit = 14,
+    ResponseShape = 15,
+    ResponsePayloadLimit = 16,
+    ProposalMissing = 17,
+    JsonInvalid = 18,
+    TransportFailure = 19,
+    ExecutionUnavailable = 20,
+    UnsupportedRoot = 21,
+    NotEvaluated = 22
+}
 public sealed record BusinessSynthesisValidationResult(BusinessSynthesisValidationStatus Status,
     BusinessLogicContent? Content, BLDependency? Dependencies, ImmutableArray<SynthesisGap> Gaps)
 {
     public ImmutableArray<FileCoverage> Coverage { get; init; } = [];
     public ImmutableArray<ResolutionItemDisposition> PlanDispositions { get; init; } = [];
+    /// <summary>Process-local classification only; never part of canonical content, payload limits or persistence.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public BusinessSynthesisFailureReason FailureReason { get; init; }
 }
 
 /// <summary>Derives qualified BL from exact accepted inputs; model output never owns identities or lineage.</summary>
@@ -42,31 +71,35 @@ public static class OctoberBusinessSynthesisPolicy
     public static BusinessSynthesisValidationResult Validate(FlowPlanningInput input, Guid groupVersionId,
         BusinessSynthesisProposal proposal, FlowPlanningLimits? limits = null)
     {
-        BusinessSynthesisValidationResult Invalid(BusinessSynthesisValidationStatus status = BusinessSynthesisValidationStatus.InvalidProposal) =>
-            new(status, null, null, []);
+        BusinessSynthesisValidationResult Invalid(BusinessSynthesisFailureReason reason,
+            BusinessSynthesisValidationStatus status = BusinessSynthesisValidationStatus.InvalidProposal) =>
+            new(status, null, null, []) { FailureReason = reason };
         FlowGroupVersion? group;
         ImmutableArray<SynthesisGap> gaps;
         try
         {
             group = SelectGroup(input, groupVersionId, limits);
-            if (group is null) return Invalid(BusinessSynthesisValidationStatus.InvalidInput);
+            if (group is null) return Invalid(BusinessSynthesisFailureReason.InvalidInput, BusinessSynthesisValidationStatus.InvalidInput);
             gaps = Gaps(input, group);
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
-        { return Invalid(BusinessSynthesisValidationStatus.InvalidInput); }
+        { return Invalid(BusinessSynthesisFailureReason.InvalidStructure, BusinessSynthesisValidationStatus.InvalidInput); }
         try
         {
-            if (proposal is null || !Bounded(proposal) || string.IsNullOrWhiteSpace(proposal.Title) || proposal.Sections.IsDefaultOrEmpty ||
+            if (proposal is null) return Invalid(BusinessSynthesisFailureReason.ProposalShape);
+            if (!Bounded(proposal)) return Invalid(BusinessSynthesisFailureReason.OutputLimit);
+            if (string.IsNullOrWhiteSpace(proposal.Title) || proposal.Sections.IsDefaultOrEmpty ||
                 proposal.Sections.Any(x => x is null || string.IsNullOrWhiteSpace(x.SectionId) || x.SectionId == GapSectionId ||
                     string.IsNullOrWhiteSpace(x.Title) || x.Claims.IsDefaultOrEmpty) ||
-                proposal.Sections.Select(x => x.SectionId).Distinct(StringComparer.Ordinal).Count() != proposal.Sections.Length ||
-                proposal.Sections.SelectMany(x => x.Claims).Any(x => x is null) ||
+                proposal.Sections.Select(x => x.SectionId).Distinct(StringComparer.Ordinal).Count() != proposal.Sections.Length)
+                return Invalid(BusinessSynthesisFailureReason.ProposalShape);
+            if (proposal.Sections.SelectMany(x => x.Claims).Any(x => x is null) ||
                 proposal.Sections.SelectMany(x => x.Claims).Select(x => x.ClaimGroupId).Distinct(StringComparer.Ordinal).Count() != proposal.Sections.Sum(x => x.Claims.Length))
-                return Invalid();
+                return Invalid(BusinessSynthesisFailureReason.ClaimShape);
             var sections = ImmutableArray.CreateBuilder<DocumentSection>();
             foreach (var section in proposal.Sections.OrderBy(x => x.Ordinal))
             {
-                if (section.Ordinal != sections.Count) return Invalid();
+                if (section.Ordinal != sections.Count) return Invalid(BusinessSynthesisFailureReason.SectionOrder);
                 var claims = ImmutableArray.CreateBuilder<QualifiedClaimGroup>();
                 foreach (var proposed in section.Claims)
                 {
@@ -75,20 +108,21 @@ public static class OctoberBusinessSynthesisPolicy
                         proposed.Qualification == ClaimQualification.Mixed || proposed.Inputs.IsDefaultOrEmpty ||
                         proposed.Limitations.IsDefault || proposed.Limitations.Any(string.IsNullOrWhiteSpace) ||
                         proposed.Inputs.Any(x => x is null) || proposed.Inputs.Distinct().Count() != proposed.Inputs.Length)
-                        return Invalid();
+                        return Invalid(BusinessSynthesisFailureReason.ClaimShape);
                     var evidence = ImmutableArray.CreateBuilder<EvidenceReference>();
                     var limitations = ImmutableArray.CreateBuilder<string>();
                     limitations.AddRange(proposed.Limitations);
                     bool supplemental = false;
                     foreach (var reference in proposed.Inputs)
                     {
-                        if (!group.Dependencies.Documents.Contains(reference.Document)) return Invalid();
+                        if (!group.Dependencies.Documents.Contains(reference.Document)) return Invalid(BusinessSynthesisFailureReason.DocumentReference);
                         var document = input.Corpus.Documents.SingleOrDefault(x => x.Version == reference.Document);
                         var inputSections = document?.Sections.Where(x => x.SectionId == reference.SectionId).ToArray();
-                        if (inputSections is not { Length: 1 }) return Invalid();
+                        if (inputSections is not { Length: 1 }) return Invalid(BusinessSynthesisFailureReason.SectionReference);
                         var matches = inputSections[0].Claims.Where(x => x.ClaimGroupId == reference.ClaimGroupId).ToArray();
-                        if (matches.Length != 1 || matches[0].Qualification != proposed.Qualification ||
-                            matches[0].Evidence.IsDefault || matches[0].Limitations.IsDefault) return Invalid();
+                        if (matches.Length != 1) return Invalid(BusinessSynthesisFailureReason.ClaimReference);
+                        if (matches[0].Qualification != proposed.Qualification) return Invalid(BusinessSynthesisFailureReason.QualificationMismatch);
+                        if (matches[0].Evidence.IsDefault || matches[0].Limitations.IsDefault) return Invalid(BusinessSynthesisFailureReason.InputClaimShape);
                         var accepted = matches[0];
                         evidence.AddRange(accepted.Evidence.Select(x => x with { Document = reference.Document, ClaimGroupId = reference.ClaimGroupId }));
                         limitations.AddRange(accepted.Limitations);
@@ -114,10 +148,10 @@ public static class OctoberBusinessSynthesisPolicy
                 Coverage = input.Coverage,
                 PlanDispositions = input.PlanDispositions
             };
-            return Bounded(result) ? result : Invalid();
+            return Bounded(result) ? result : Invalid(BusinessSynthesisFailureReason.OutputLimit);
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
-        { return Invalid(); }
+        { return Invalid(BusinessSynthesisFailureReason.InvalidStructure); }
     }
 
     private static FlowGroupVersion? SelectGroup(FlowPlanningInput input, Guid groupVersionId, FlowPlanningLimits? limits)

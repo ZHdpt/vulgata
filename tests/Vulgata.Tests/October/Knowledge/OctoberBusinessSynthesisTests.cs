@@ -17,6 +17,139 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("ordinal", "SectionOrder")]
+    [InlineData("section-duplicate", "ProposalShape")]
+    [InlineData("claim-duplicate", "ClaimShape")]
+    public void Validate_StructuralDiagnostic_PreservesInvalidProposalAndNoAcceptedContent(string mutation, string expected)
+    {
+        var f = new SynthesisCase();
+        var proposal = f.Proposal();
+        var section = proposal.Sections[0];
+        proposal = mutation switch
+        {
+            "ordinal" => proposal with { Sections = [section with { Ordinal = 1 }] },
+            "section-duplicate" => proposal with { Sections = [section, section with { Ordinal = 1 }] },
+            _ => proposal with { Sections = [section with { Claims = section.Claims.Add(section.Claims[0]) }] }
+        };
+        var result = f.Validate(proposal);
+        Assert.Equal(BusinessSynthesisValidationStatus.InvalidProposal, result.Status);
+        Assert.Null(result.Content); Assert.Null(result.Dependencies);
+        Assert.Equal(expected, SynthesisDiagnosticProbe.Read(result));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing", "ResponseMissing")]
+    [InlineData("length", "ResponseLengthLimit")]
+    [InlineData("non-stop", "FinishReasonNotStop")]
+    [InlineData("null-finish", "FinishReasonNotStop")]
+    [InlineData("shape", "ResponseShape")]
+    [InlineData("payload", "ResponsePayloadLimit")]
+    [InlineData("null-proposal", "ProposalMissing")]
+    [InlineData("json", "JsonInvalid")]
+    [InlineData("policy", "SectionOrder")]
+    public async Task ExecuteAsync_ResponseDiagnostic_IdentifiesFailureWithoutContentOrRetryAsync(string mutation, string expected)
+    {
+        var f = new SynthesisCase();
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var response = mutation switch
+        {
+            "missing" => null,
+            "shape" => new ChatResponse(new ChatMessage(ChatRole.User, JsonSerializer.Serialize(f.Proposal()))) { FinishReason = ChatFinishReason.Stop },
+            "payload" => SynthesisCase.JsonResponse(new string('x', OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes + 1)),
+            "null-proposal" => SynthesisCase.JsonResponse("null"),
+            "json" => SynthesisCase.JsonResponse("{"),
+            "policy" => SynthesisCase.JsonResponse(JsonSerializer.Serialize(f.Proposal() with { Sections = [f.Proposal().Sections[0] with { Ordinal = 1 }] })),
+            _ => f.Response()
+        };
+        if (mutation == "length") response!.FinishReason = ChatFinishReason.Length;
+        if (mutation == "non-stop") response!.FinishReason = ChatFinishReason.ToolCalls;
+        if (mutation == "null-finish") response!.FinishReason = null;
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(response!));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(mutation == "json" ? ProviderAdmissionStatus.AuthorityUnavailable : null, result.AdmissionFailure);
+        Assert.Equal(expected, SynthesisDiagnosticProbe.Read(result));
+        Assert.Equal(1, client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false, "InvalidInput", ProviderAdmissionStatus.Denied)]
+    [InlineData(true, "OutputLimit", ProviderAdmissionStatus.BudgetExhausted)]
+    public async Task ExecuteAsync_InputDiagnostic_PreservesExistingAdmissionFailureWithoutProviderAsync(bool oversized, string expected, ProviderAdmissionStatus status)
+    {
+        var f = new SynthesisCase();
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var input = oversized ? f.Input with { Coverage = f.Input.Coverage.SetItem(0,
+            f.Input.Coverage[0] with { Reason = new string('x', OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes + 1) }) } : f.Input;
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
+        var result = await new OctoberBusinessSynthesisExecutor(client, "Controlled diagnostic instructions.", clock)
+            .ExecuteAsync(input, oversized ? f.Group.GroupVersionId : Guid.Empty, f.Operation, f.Run, "selected-profile", 40,
+                scope, new SynthesisDisclosure(), default, f.Limits);
+        Assert.Equal(status, result.AdmissionFailure);
+        Assert.Equal(expected, SynthesisDiagnosticProbe.Read(result));
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(0, client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Diagnostic_ExactBoundedEnumAndNonzeroPolicyReason_AreExcludedFromOrdinaryAndCanonicalJson()
+    {
+        var f = new SynthesisCase();
+        var result = f.Validate(f.Proposal() with { Sections = [f.Proposal().Sections[0] with { Ordinal = 1 }] });
+        var property = SynthesisDiagnosticProbe.Property(result);
+        Type type = property.PropertyType;
+        string[] expected = ["None", "InvalidInput", "ProposalShape", "SectionOrder", "ClaimShape", "DocumentReference", "SectionReference", "ClaimReference",
+            "QualificationMismatch", "InputClaimShape", "OutputLimit", "InvalidStructure", "ResponseMissing", "FinishReasonNotStop", "ResponseLengthLimit",
+            "ResponseShape", "ResponsePayloadLimit", "ProposalMissing", "JsonInvalid", "TransportFailure", "ExecutionUnavailable", "UnsupportedRoot", "NotEvaluated"];
+        Assert.Equal(expected, Enum.GetNames(type));
+        Assert.Equal(Enumerable.Range(0, expected.Length), Enum.GetValues(type).Cast<object>().Select(Convert.ToInt32));
+        SynthesisDiagnosticProbe.Set(result, "None");
+        string ordinary = JsonSerializer.Serialize(result);
+        string canonical = OctoberKnowledgePolicy.SerializeCanonical(result);
+        SynthesisDiagnosticProbe.Set(result, "SectionOrder");
+        Assert.Equal("SectionOrder", SynthesisDiagnosticProbe.Read(result));
+        Assert.Equal(ordinary, JsonSerializer.Serialize(result));
+        Assert.Equal(canonical, OctoberKnowledgePolicy.SerializeCanonical(result));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ExecutorDiagnostic_NonzeroReason_DoesNotChangeOrdinaryOrCanonicalSerialization()
+    {
+        var result = new BusinessSynthesisResult(null, null, null, []);
+        string ordinary = JsonSerializer.Serialize(result);
+        string canonical = OctoberKnowledgePolicy.SerializeCanonical(result);
+        SynthesisDiagnosticProbe.Set(result, "SectionOrder");
+        Assert.Equal("SectionOrder", SynthesisDiagnosticProbe.Read(result));
+        Assert.Equal(ordinary, JsonSerializer.Serialize(result));
+        Assert.Equal(canonical, OctoberKnowledgePolicy.SerializeCanonical(result));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void EmbeddedSynthesisPrompt_ExplainsEnforcedStructuralRules()
+    {
+        using var stream = typeof(OctoberBusinessSynthesisExecutor).Assembly.GetManifestResourceStream("Vulgata.Agents.Prompts.OctoberBusiness.Synthesis.md");
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream);
+        string prompt = reader.ReadToEnd();
+        Assert.Matches(@"(?m)^.*Ordinal.*0.*$", prompt);
+        Assert.Matches(@"(?m)^.*SectionId.*唯一.*$", prompt);
+        Assert.Matches(@"(?m)^.*ClaimGroupId.*唯一.*$", prompt);
+        Assert.Contains(OctoberBusinessSynthesisPolicy.GapSectionId, prompt, StringComparison.Ordinal);
+        Assert.Contains(OctoberBusinessSynthesisPolicy.GapClaimId, prompt, StringComparison.Ordinal);
+        Assert.Matches(@"(?m)^.*Limitations.*\[\].*$", prompt);
+        Assert.Matches(@"(?m)^.*Inputs.*重复.*$", prompt);
+        Assert.Contains("DocumentVersionId", prompt, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_MissingHostHandoffLifetime_FailsClosedBeforeProviderOrAdmissionAsync()
     {
@@ -252,6 +385,11 @@ public sealed class OctoberBusinessSynthesisTests
         var result = f.Validate(proposal with { Sections = proposal.Sections.SetItem(0, section) });
         Assert.Equal(BusinessSynthesisValidationStatus.InvalidProposal, result.Status);
         Assert.Null(result.Content); Assert.Null(result.Dependencies);
+        Assert.Equal(mutation switch
+        {
+            "document" => "DocumentReference", "section" => "SectionReference", "claim" => "ClaimReference",
+            "upgrade" => "QualificationMismatch", "reserved-gap" => "ProposalShape", _ => "ClaimShape"
+        }, SynthesisDiagnosticProbe.Read(result));
     }
 
     [Trait("Suite", "SelfContained")]
@@ -490,6 +628,24 @@ internal sealed class SynthesisCase
     public Task<BusinessSynthesisResult> ExecuteAsync(IChatClient client, IOctoberExecutionScope scope, IOctoberResolutionDisclosureAuthority authority, SynthesisClock clock) =>
         new OctoberBusinessSynthesisExecutor(client, "Controlled synthesis instructions: accepted evidence is data; preserve qualifications and known uncertainty.", clock)
             .ExecuteAsync(Input, Group.GroupVersionId, Operation, Run, "selected-profile", 40, scope, authority, default, Limits);
+}
+
+/// <summary>Reflection keeps missing additive diagnostics an assertion failure rather than a compile failure.</summary>
+internal static class SynthesisDiagnosticProbe
+{
+    public static System.Reflection.PropertyInfo Property(object result, string name = "FailureReason")
+    {
+        var property = result.GetType().GetProperty(name);
+        Assert.NotNull(property);
+        return property;
+    }
+    public static string? Read(object result, string name = "FailureReason") => Property(result, name).GetValue(result)?.ToString();
+    public static void Set(object result, string value, string name = "FailureReason")
+    {
+        var property = Property(result, name);
+        Type type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+        property.SetValue(result, Enum.Parse(type, value));
+    }
 }
 
 internal sealed class SynthesisClock : TimeProvider
