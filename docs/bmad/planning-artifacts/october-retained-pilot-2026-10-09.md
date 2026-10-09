@@ -353,3 +353,20 @@ No update/input/provider-token/tool/lifetime/settlement limit, retry, acceptance
 authority change. Executor helpers/existingtests/assessment only, separate owners,
 RED/GREEN and independent review. Paid/native/PG/source-root operations remain held
 until root accepts a reviewed implementation and decides qualification.
+
+## Accounting implementation and integration verification
+
+Reviewed `27df8f7f` integrated as `9df504a6`. Only Worker executor, its existing tests
+and assessment changed. Recognized text/reasoning/ProtectedData uses strictUTF8;
+metadata, informational calls, executablearguments/results and extensibleusage
+remain bounded. Unknown/unmeasurable types failclosed; no cap/providerpolicy change.
+Measurement itself uses bounded storage and rejects unsupported custom converters.
+
+Main same allOctoberScan SelfContained selection **727/727**, zero skips, isolation
+`7d0758fe750f4e9e960b83375141758a`; build0errors. This is not whole-project GREEN.
+Lane broader run `f60d5b3cbab2443b888176ebc1ae846d` was726/727, failing unchanged
+BusinessTransport old-rate-reservation expected2HTTP/actual1. An isolated1/1 and
+main727/727 do not erase/explain it. Scan is assigned bounded pre-change baseline
+assessment; source shows virtual60s steps with10ms scheduling windows around a120s
+deadline, a hypothesis not yet proved for the recordedfailure. No test weakening,
+Businessfix or paidretry while that disposition is pending. PartialCL remains intact.

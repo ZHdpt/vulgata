@@ -113,7 +113,12 @@ solely from99-byte per-delta JSON envelopes. Integrator approved a bounded execu
 correction: strictUTF8 recognized text/reasoning, continued opaque/metadata/tool
 payload charging, bounded informational-call and extensible usage-metadata charging.
 Keep262144 cap and all otherlimits, no new executable authority or rawpayload logs.
-Separate RED/GREEN/review required; paid repeats held and prior partialCL retained.
+Reviewed accounting correction now integrated as `9df504a6`. Main allOctoberScan
+SelfContained **727/727** passed, zero skips (isolation
+`7d0758fe750f4e9e960b83375141758a`); not whole-project full-suite GREEN. Lane broader
+run was726/727 with BusinessTransport old-rate-reservation failure; isolatedpass
+and mainpass do not erase it. Scan is doing bounded pre-change baseline assessment;
+paid repeats remain held pending disposition. Prior partialCL retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
