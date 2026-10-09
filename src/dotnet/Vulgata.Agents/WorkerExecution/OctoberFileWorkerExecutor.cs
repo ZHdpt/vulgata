@@ -1,9 +1,12 @@
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.ClientModel;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
@@ -477,11 +480,18 @@ public sealed class OctoberFileWorkerExecutor
                         if (content is TextContent value)
                         {
                             ChargeOutput(value.Text);
+                            ChargeMetadata(value);
                             text.Append(value.Text);
+                        }
+                        else if (content is TextReasoningContent reasoning && content.GetType() == typeof(TextReasoningContent))
+                        {
+                            ChargeOutput(reasoning.Text);
+                            if (reasoning.ProtectedData is not null) ChargeOutput(reasoning.ProtectedData);
+                            ChargeMetadata(reasoning);
                         }
                         else if (content is FunctionCallContent call && !call.InformationalOnly)
                         {
-                            ChargeOutput(JsonSerializer.Serialize(call.Arguments));
+                            ChargeOutput(MeasureOutput(call.Arguments));
                             if (call.Exception is not null)
                                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolCallError);
                             if (string.IsNullOrWhiteSpace(call.CallId))
@@ -501,9 +511,15 @@ public sealed class OctoberFileWorkerExecutor
                         {
                             inputTokens = usage.Details.InputTokenCount;
                             actualOutputTokens = usage.Details.OutputTokenCount;
+                            if (content.GetType() != typeof(UsageContent) || usage.Details.GetType() != typeof(UsageDetails))
+                                throw new NotSupportedException("Extended usage payload cannot be measured.");
+                            ChargeMetadata(usage);
+                            if (usage.Details.AdditionalCounts is { Count: > 0 } counts) ChargeOutput(MeasureOutput(counts));
                         }
-                        else if (content is not FunctionCallContent)
-                            ChargeOutput(JsonSerializer.Serialize(content));
+                        else if (content is FunctionCallContent)
+                            ChargeOutput(MeasureOutput(content));
+                        else
+                            throw new NotSupportedException("Unknown output payload cannot be measured.");
                     }
                     if (update.FinishReason is { } currentFinish) finish = currentFinish;
                     if (buffered.Count >= 8192)
@@ -637,18 +653,162 @@ public sealed class OctoberFileWorkerExecutor
                 call.Arguments?.Keys.Any(key => !properties.TryGetProperty(key, out _)) == true;
             object? result = unsupported ? new { status = "InvalidArguments" } :
                 await observations.RunAsync(() => function.InvokeAsync(new AIFunctionArguments(call.Arguments ?? new Dictionary<string, object?>()), token).AsTask(), OctoberWorkerFailureStage.ToolInvocation);
-            ChargeOutput(observations.Run(() => JsonSerializer.Serialize(result), OctoberWorkerFailureStage.ToolResultSerialization));
+            ChargeOutput(observations.Run(() => MeasureOutput(result), OctoberWorkerFailureStage.ToolResultSerialization));
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(token), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
             _pending.Remove(call.CallId);
             SettledTools++;
             return result;
         }
 
-        private void ChargeOutput(string value)
+        private void ChargeMetadata(AIContent content)
         {
-            _outputBytes = checked(_outputBytes + Utf8.GetByteCount(value));
-            if (_outputBytes > request.Limits.MaximumOutputUtf8Bytes)
+            if (content.Annotations is { Count: > 0 } annotations) ChargeOutput(MeasureOutput(annotations));
+            if (content.AdditionalProperties is { Count: > 0 } properties) ChargeOutput(MeasureOutput(properties));
+        }
+
+        private void ChargeOutput(string value) => ChargeOutput(Utf8.GetByteCount(value));
+
+        private void ChargeOutput(int bytes)
+        {
+            if (bytes > request.Limits.MaximumOutputUtf8Bytes - _outputBytes)
                 throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.OutputBytes);
+            _outputBytes += bytes;
+        }
+
+        private int MeasureOutput<T>(T value)
+        {
+            int remaining = request.Limits.MaximumOutputUtf8Bytes - _outputBytes;
+            try
+            {
+                var destination = new OutputMeasurementBuffer(remaining);
+                var resolver = new DefaultJsonTypeInfoResolver();
+                resolver.Modifiers.Add(typeInfo =>
+                {
+                    // Measurement does not invoke host-defined converter Write
+                    // methods. Metadata resolution itself remains trusted host code.
+                    if (!SupportedOutputConverter(typeInfo.Converter) ||
+                        typeInfo.Properties.Any(property => property.CustomConverter is { } converter && !SupportedOutputConverter(converter)))
+                        throw new NotSupportedException("Custom output converters cannot be measured.");
+                });
+                var options = new JsonSerializerOptions { TypeInfoResolver = resolver };
+                options.Converters.Add(new OutputStringConverter(remaining));
+                options.Converters.Add(new OutputElementConverter(remaining));
+                using var writer = new Utf8JsonWriter(destination);
+                JsonSerializer.Serialize(writer, value, options);
+                writer.Flush();
+                return destination.Written;
+            }
+            catch (OutputMeasurementLimit)
+            {
+                // Keep the existing output-budget failure outside the serializer
+                // observation; malformed JSON retains its serialization attribution.
+                return remaining + 1;
+            }
+        }
+
+        private static bool SupportedOutputConverter(JsonConverter converter) =>
+            converter is OutputStringConverter or OutputElementConverter ||
+            converter.GetType().Assembly == typeof(JsonSerializer).Assembly;
+
+        private sealed class OutputMeasurementLimit : Exception;
+
+        private sealed class OutputMeasurementBuffer(int allowance) : IBufferWriter<byte>
+        {
+            // Reservations can exceed actual JSON bytes (escaping/transcoding).
+            // They are bounded scratch, never charged as payload.
+            private readonly int _maximumReservation = checked(18 * allowance + 4096);
+            private byte[] _buffer = [];
+            internal int Written { get; private set; }
+
+            public void Advance(int count)
+            {
+                if (count < 0 || count > _buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+                if (count > allowance - Written) throw new OutputMeasurementLimit();
+                Written += count;
+            }
+
+            public Memory<byte> GetMemory(int sizeHint = 0)
+            {
+                int size = Math.Max(sizeHint, 256);
+                if (size > _maximumReservation) throw new OutputMeasurementLimit();
+                if (_buffer.Length < size) _buffer = new byte[size];
+                return _buffer;
+            }
+
+            public Span<byte> GetSpan(int sizeHint = 0) => GetMemory(sizeHint).Span;
+        }
+
+        private sealed class OutputStringConverter(int allowance) : JsonConverter<string>
+        {
+            public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+                => throw new NotSupportedException();
+
+            public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+            {
+                Check(value);
+                writer.WriteStringValue(value);
+            }
+
+            public override void WriteAsPropertyName(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+            {
+                Check(value);
+                writer.WritePropertyName(value);
+            }
+
+            private void Check(string value)
+            {
+                // Reject before Utf8JsonWriter rents an escaping buffer for a token.
+                if (Utf8.GetByteCount(value) > allowance) throw new OutputMeasurementLimit();
+            }
+        }
+
+        private sealed class OutputElementConverter : JsonConverter<JsonElement>
+        {
+            private readonly JsonSerializerOptions _validation;
+            internal OutputElementConverter(int allowance)
+            {
+                _validation = new();
+                _validation.Converters.Add(new OutputElementValidation(checked(6 * allowance + 4096)));
+            }
+
+            public override JsonElement Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+                => throw new NotSupportedException();
+
+            public override void Write(Utf8JsonWriter writer, JsonElement value, JsonSerializerOptions options)
+            {
+                // Deserialize reads the element's retained UTF-8 span. This probe
+                // creates no DOM/string copy before bounding token scratch and work.
+                _ = value.Deserialize<bool>(_validation);
+                value.WriteTo(writer);
+            }
+        }
+
+        private sealed class OutputElementValidation(int maximumRawBytes) : JsonConverter<bool>
+        {
+            public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                long start = reader.TokenStartIndex;
+                int depth = reader.CurrentDepth;
+                Check(ref reader, start);
+                if (reader.TokenType is not (JsonTokenType.StartObject or JsonTokenType.StartArray)) return true;
+                while (reader.Read())
+                {
+                    Check(ref reader, start);
+                    if (reader.CurrentDepth == depth && reader.TokenType is JsonTokenType.EndObject or JsonTokenType.EndArray)
+                        return true;
+                }
+                throw new JsonException("Incomplete output metadata.");
+            }
+
+            private void Check(ref Utf8JsonReader reader, long start)
+            {
+                long tokenBytes = reader.HasValueSequence ? reader.ValueSequence.Length : reader.ValueSpan.Length;
+                if (reader.BytesConsumed - start > maximumRawBytes || tokenBytes > maximumRawBytes)
+                    throw new OutputMeasurementLimit();
+            }
+
+            public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
+                => throw new NotSupportedException();
         }
 
         private static int MeasureInput(IEnumerable<ChatMessage> messages, ChatOptions? options)

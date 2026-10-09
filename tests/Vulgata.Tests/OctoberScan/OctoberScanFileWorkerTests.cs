@@ -1313,12 +1313,12 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [InlineData("ascii", "A")]
     [InlineData("chinese", "中")]
     [InlineData("emoji", "😀")]
-    public async Task CurrentAccounting_IdenticalReasoningChunkingCanCrossUnchangedDefaultOutputCapAsync(string label, string scalar)
+    public async Task OutputAccounting_ReasoningFragmentsUseIdenticalStrictUtf8AtUnchangedDefaultCapAsync(string label, string scalar)
     {
         const int pieces = 7500;
         string reasoning = string.Concat(Enumerable.Repeat(scalar, pieces));
-        var one = await ObserveAccountingSdkAsync([reasoning], [UnitJson]);
-        var many = await ObserveAccountingSdkAsync(Enumerable.Repeat(scalar, pieces).ToArray(), [UnitJson]);
+        var one = await ObserveHistoricalJsonAccountingSdkAsync([reasoning], [UnitJson]);
+        var many = await ObserveHistoricalJsonAccountingSdkAsync(Enumerable.Repeat(scalar, pieces).ToArray(), [UnitJson]);
         Assert.Equal(reasoning, one.Reasoning); Assert.Equal(reasoning, many.Reasoning);
         Assert.Equal(UnitJson, one.Text); Assert.Equal(UnitJson, many.Text);
         Assert.Equal(1, one.ReasoningPieces); Assert.Equal(pieces, many.ReasoningPieces);
@@ -1334,7 +1334,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         output.WriteLine("reasoningBreakdown case={0}; rawReasonBytes={1}; escapedReasonBytes={2}; oneEnvelopeBytes={3}; manyEnvelopeBytes={4}; finalTextBytes={5}", label, reasonSemantic, escapedPayload, oneEnvelope, manyEnvelopes, finalSemantic);
         int cap = new OctoberFileWorkerLimits().MaximumOutputUtf8Bytes;
         output.WriteLine("reasoningChunking case={0}; semanticBytes={1}; oneCharge={2}; manyCharge={3}; oneUpdates={4}; manyUpdates={5}; defaultCap={6}", label, semantic, one.ChargedBytes, many.ChargedBytes, one.Updates, many.Updates, cap);
-        // This is a measured current-behavior default-cap claim, never a reason to raise or silently replace the cap.
+        // Historical default-JSON measurements remain evidence of the old defect; executor expectations below are the authorized semantic-byte correction.
         Assert.True(one.ChargedBytes <= cap && many.ChargedBytes > cap, $"Measured default crossing absent: one={one.ChargedBytes}; many={many.ChargedBytes}; cap={cap}");
         foreach (bool fragmented in new[] { false, true })
         {
@@ -1342,13 +1342,13 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
             var scope = new Scope();
             var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
-            Assert.Equal(fragmented ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
-            Assert.Equal(fragmented ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
-            Assert.Equal(fragmented ? OctoberWorkerFailureStage.StreamTerminal : (OctoberWorkerFailureStage?)null, result.FailureStage);
+            Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+            Assert.Null(result.BudgetFailure);
+            Assert.Null(result.FailureStage);
             Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Equal(1, transport.Calls);
             var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
-            if (fragmented) { Assert.Null(result.Proposal); Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens); }
-            else { Assert.NotNull(result.Proposal); Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens); }
+            Assert.NotNull(result.Proposal); Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens);
+
         }
     }
 
@@ -1361,8 +1361,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     {
         string final = UnitJson.Replace("Conditional execution", string.Concat(Enumerable.Repeat(scalar, 12)));
         string[] fragments = final.EnumerateRunes().Select(rune => rune.ToString()).ToArray();
-        var one = await ObserveAccountingSdkAsync([], [final]);
-        var many = await ObserveAccountingSdkAsync([], fragments);
+        var one = await ObserveHistoricalJsonAccountingSdkAsync([], [final]);
+        var many = await ObserveHistoricalJsonAccountingSdkAsync([], fragments);
         Assert.Equal(final, one.Text); Assert.Equal(final, many.Text); Assert.Empty(one.Reasoning); Assert.Empty(many.Reasoning);
         Assert.Equal(Encoding.UTF8.GetByteCount(final), one.ChargedBytes); Assert.Equal(one.ChargedBytes, many.ChargedBytes);
         Assert.True(many.Updates < 8192);
@@ -1413,15 +1413,15 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task CurrentAccounting_InformationalCallPayloadIsUncharged_RecordsExistingGapAsync()
+    public async Task OutputAccounting_InformationalCallPayloadIsBoundedAndNeverExecutableAsync()
     {
-        // Characterizes the current gap; this is not an endorsement that arbitrary informational data should be unbounded.
+        // Authorized correction closes the previously characterized informational-payload omission.
         int cap = new OctoberFileWorkerLimits().MaximumOutputUtf8Bytes;
         var informational = new FunctionCallContent("controlled", "not-executable", new Dictionary<string, object?> { ["opaque"] = new string('x', cap + 1) }) { InformationalOnly = true };
         using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [informational, new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
-        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(0, result.SettledToolCalls); Assert.Null(result.BudgetFailure); Assert.NotNull(result.Proposal);
-        output.WriteLine("informationalCurrentGap: suppliedArgumentChars={0}; outputCap={1}; settledTools=0", cap + 1, cap);
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status); Assert.Equal(0, result.SettledToolCalls); Assert.Equal(OctoberWorkerBudgetFailure.OutputBytes, result.BudgetFailure); Assert.Null(result.Proposal);
+        output.WriteLine("informationalBound: suppliedArgumentChars={0}; outputCap={1}; settledTools=0", cap + 1, cap);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1445,7 +1445,223 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(1, scope.Leases[0].Settlements); Assert.Equal(1, scope.Leases[0].Disposals); Assert.True(client.StreamDisposed);
         Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
     }
-    private async Task<(string Text, string Reasoning, int ChargedBytes, int Updates, int ReasoningPieces)> ObserveAccountingSdkAsync(string[] reasoning, string[] text)
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task OutputAccounting_ActualSdkStrictUtf8HonorsExactDefaultCapAndOneExtraByteAsync(bool extra)
+    {
+        int cap = new OctoberFileWorkerLimits().MaximumOutputUtf8Bytes;
+        int remaining = cap - Encoding.UTF8.GetByteCount(UnitJson);
+        string reasoning = string.Concat(Enumerable.Repeat("中", remaining / 3)) + new string('x', remaining % 3 + (extra ? 1 : 0));
+        Assert.Equal(cap + (extra ? 1 : 0), new UTF8Encoding(false, true).GetByteCount(reasoning) + Encoding.UTF8.GetByteCount(UnitJson));
+        using var wire = new AccountingSseHttp([reasoning], [UnitJson]);
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), wire).CreateAsync(Selected());
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(extra ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(extra ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        if (extra) { Assert.Null(result.Proposal); Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens); }
+        else { Assert.NotNull(result.Proposal); Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("text-annotations")]
+    [InlineData("text-properties")]
+    [InlineData("reason-annotations")]
+    [InlineData("reason-properties")]
+    [InlineData("reason-protected")]
+    [InlineData("usage-properties")]
+    [InlineData("usage-annotations")]
+    [InlineData("usage-count-keys")]
+    [InlineData("text-json-element")]
+    public async Task OutputAccounting_NonTextPayloadsRemainBoundedOnEveryTextOrUsageEnvelopeAsync(string kind)
+    {
+        int cap = new OctoberFileWorkerLimits().MaximumOutputUtf8Bytes;
+        string payload = new('p', cap + 1);
+        AIContent content = kind.StartsWith("text-", StringComparison.Ordinal) ? new TextContent("") :
+            kind.StartsWith("usage-", StringComparison.Ordinal) ? new UsageContent(new UsageDetails { InputTokenCount = 20, OutputTokenCount = 10 }) : new TextReasoningContent("");
+        if (kind.EndsWith("annotations", StringComparison.Ordinal)) content.Annotations = [new CitationAnnotation { Title = payload }];
+        else if (kind.EndsWith("properties", StringComparison.Ordinal)) content.AdditionalProperties = new() { ["controlled"] = payload };
+        else if (kind == "usage-count-keys") ((UsageContent)content).Details.AdditionalCounts = new() { [payload] = 1 };
+        else if (kind == "text-json-element") content.AdditionalProperties = new() { ["controlled"] = JsonSerializer.SerializeToElement(payload) };
+        else ((TextReasoningContent)content).ProtectedData = payload;
+        // Earlier observed numeric usage must survive a later payload-bound failure, without fabricated zero usage.
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [new UsageContent(new UsageDetails { InputTokenCount = 20, OutputTokenCount = 10 })] }, new() { Role = ChatRole.Assistant, Contents = [content] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+        var scope = new Scope(); var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status); Assert.Equal(OctoberWorkerBudgetFailure.OutputBytes, result.BudgetFailure);
+        Assert.Null(result.Proposal); Assert.Equal(0, result.SettledToolCalls); Assert.True(client.StreamDisposed);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(20, lease.Usage!.InputTokens); Assert.Equal(10, lease.Usage.OutputTokens);
+        Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OutputAccounting_MetadataMeasurementStopsBeforeTraversingFullFinitePayloadAsync()
+    {
+        var values = new CountedPayload();
+        AIContent content = new TextContent("") { AdditionalProperties = new() { ["controlled"] = values } };
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [content] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputUtf8Bytes: 1024) }, []);
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status); Assert.Equal(OctoberWorkerBudgetFailure.OutputBytes, result.BudgetFailure);
+        Assert.InRange(values.Visited, 1, 256); Assert.Null(result.Proposal); Assert.True(client.StreamDisposed);
+        Assert.Null(Assert.Single(scope.Leases).Usage!.InputTokens); Assert.Null(scope.Leases[0].Usage!.OutputTokens);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("cycle")]
+    [InlineData("nested")]
+    [InlineData("unknown")]
+    [InlineData("invalid-scalar")]
+    public async Task OutputAccounting_UnmeasurableOrUnknownPayloadsFailClosedAndSettleAsync(string kind)
+    {
+        AIContent content;
+        if (kind == "unknown") content = new UnknownPayloadContent { Payload = new string('x', 262145) };
+        else if (kind == "invalid-scalar") content = new TextReasoningContent("\uD800");
+        else
+        {
+            object value;
+            if (kind == "cycle") { var cycle = new CyclicToolResult(); cycle.Next = cycle; value = cycle; }
+            else { value = "end"; for (int index = 0; index < 80; index++) value = new Dictionary<string, object?> { ["next"] = value }; }
+            content = new TextContent("") { AdditionalProperties = new() { ["controlled"] = value } };
+        }
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [content] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+        var scope = new Scope(); var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status); Assert.Null(result.Proposal); Assert.Equal(0, result.SettledToolCalls);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.True(client.StreamDisposed);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("text")]
+    [InlineData("reasoning")]
+    [InlineData("usage")]
+    public async Task OutputAccounting_MetadataCollectionsAreChargedExactlyWithoutTextEnvelopeAsync(string kind)
+    {
+        AIContent content = kind == "text" ? new TextContent("") : kind == "reasoning" ? new TextReasoningContent("中😀") { ProtectedData = "签😀" } : new UsageContent(new UsageDetails { InputTokenCount = 20, OutputTokenCount = 10, AdditionalCounts = new() { ["reasoning_测试"] = 7 } });
+        content.Annotations = [new CitationAnnotation { Title = "注释😀" }];
+        content.AdditionalProperties = new() { ["controlled"] = "值😀" };
+        int bytes = Encoding.UTF8.GetByteCount(UnitJson) + Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(content.Annotations)) + Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(content.AdditionalProperties));
+        if (content is TextReasoningContent reasoning) bytes += new UTF8Encoding(false, true).GetByteCount(reasoning.Text) + new UTF8Encoding(false, true).GetByteCount(reasoning.ProtectedData!);
+        if (content is UsageContent usage) bytes += Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(usage.Details.AdditionalCounts));
+        foreach (bool under in new[] { false, true })
+        {
+            using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [content] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+            var scope = new Scope();
+            var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputUtf8Bytes: bytes - (under ? 1 : 0)) }, []);
+            Assert.Equal(under ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+            Assert.Equal(under ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+            var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+            if (kind == "usage") { Assert.Equal(20, lease.Usage!.InputTokens); Assert.Equal(10, lease.Usage.OutputTokens); }
+            else { Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens); }
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OutputAccounting_SmallInformationalCallChargesFullObjectAndNeverExecutesAsync()
+    {
+        AIContent informational = new FunctionCallContent("controlled", "read_prepared_source", new Dictionary<string, object?> { ["hint"] = "中😀" }) { InformationalOnly = true, AdditionalProperties = new() { ["controlled"] = "meta" } };
+        int cap = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(informational)) + Encoding.UTF8.GetByteCount(UnitJson);
+        int invocations = 0;
+        var tool = AIFunctionFactory.Create(() => { invocations++; return "never called"; }, "read_prepared_source");
+        foreach (bool under in new[] { false, true })
+        {
+            using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [informational] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+            var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputUtf8Bytes: cap - (under ? 1 : 0)) }, [tool]);
+            Assert.Equal(under ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+            Assert.Equal(under ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+            Assert.Equal(0, invocations); Assert.Equal(0, result.SettledToolCalls); Assert.Equal(1, client.Calls);
+        }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task OutputAccounting_CustomMetadataConverterIsRejectedBeforeExecutionAsync(bool propertyLevel)
+    {
+        // Host extensibility boundary, not a wire-provider shape. The converter is deliberately
+        // finite even if the old serializer executes it; rejection must precede that execution.
+        var value = new ConverterMetadata();
+        var property = new PropertyConverterMetadata();
+        AIContent content = new TextContent("") { AdditionalProperties = new() { ["controlled"] = propertyLevel ? property : value } };
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [content] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(0, propertyLevel ? property.Value.Writes : value.Writes);
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status); Assert.Null(result.Proposal);
+        Assert.Equal(0, result.SettledToolCalls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.True(client.StreamDisposed);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens);
+    }
+
+    [System.Text.Json.Serialization.JsonConverter(typeof(CountedMetadataConverter))]
+    private sealed class ConverterMetadata { internal int Writes; }
+    private sealed class CountedMetadataConverter : System.Text.Json.Serialization.JsonConverter<ConverterMetadata>
+    {
+        public CountedMetadataConverter() { }
+        public override ConverterMetadata? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotSupportedException();
+        public override void Write(Utf8JsonWriter writer, ConverterMetadata value, JsonSerializerOptions options)
+        {
+            value.Writes++;
+            writer.WriteStringValue("finite controlled value");
+        }
+    }
+    private sealed class PropertyConverterMetadata
+    {
+        [System.Text.Json.Serialization.JsonConverter(typeof(CountedPropertyConverter))]
+        public PropertyConverterValue Value { get; } = new();
+    }
+    private sealed class PropertyConverterValue { internal int Writes; }
+    private sealed class CountedPropertyConverter : System.Text.Json.Serialization.JsonConverter<PropertyConverterValue>
+    {
+        public CountedPropertyConverter() { }
+        public override PropertyConverterValue? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => throw new NotSupportedException();
+        public override void Write(Utf8JsonWriter writer, PropertyConverterValue value, JsonSerializerOptions options)
+        {
+            value.Writes++;
+            writer.WriteStringValue("finite controlled property");
+        }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OutputAccounting_BuiltInPropertyConverterRemainsCompatibleAtExactMetadataCapAsync()
+    {
+        AIContent content = new TextContent("") { AdditionalProperties = new() { ["controlled"] = new BuiltInConverterMetadata() } };
+        int cap = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(content.AdditionalProperties)) + Encoding.UTF8.GetByteCount(UnitJson);
+        foreach (bool under in new[] { false, true })
+        {
+            using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = [content] }, new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]);
+            var scope = new Scope();
+            var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputUtf8Bytes: cap - (under ? 1 : 0)) }, []);
+            Assert.Equal(under ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+            Assert.Equal(under ? OctoberWorkerBudgetFailure.OutputBytes : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+            Assert.Equal(0, result.SettledToolCalls); Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
+            var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+            Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens);
+        }
+    }
+    private enum BuiltInMetadataMode { Controlled }
+    private sealed class BuiltInConverterMetadata
+    {
+        [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+        public BuiltInMetadataMode Mode { get; } = BuiltInMetadataMode.Controlled;
+    }
+    private sealed class CountedPayload : IEnumerable<string>
+    {
+        internal int Visited;
+        public IEnumerator<string> GetEnumerator() { for (int index = 0; index < 4096; index++) { Visited++; yield return new string('x', 128); } }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+    private sealed class UnknownPayloadContent : AIContent { public string? Payload { get; init; } }
+    private async Task<(string Text, string Reasoning, int ChargedBytes, int Updates, int ReasoningPieces)> ObserveHistoricalJsonAccountingSdkAsync(string[] reasoning, string[] text)
     {
         using var transport = new AccountingSseHttp(reasoning, text);
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
@@ -1457,8 +1673,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             foreach (AIContent content in update.Contents)
             {
                 if (content is TextReasoningContent thought) { observedReasoning.Append(thought.Text); reasoningPieces++; }
-                // Measure the current public SDK content representation using the executor's existing charge categories.
-                // These are characterization counts, not a proposed accounting algorithm.
+                // Preserve the historical JSON-envelope measurement over actual SDK content for comparison with corrected charging.
+                // These historical counts are not the corrected production accounting algorithm.
                 if (content is TextContent value) { observedText.Append(value.Text); charged += Encoding.UTF8.GetByteCount(value.Text); }
                 else if (content is FunctionCallContent call && !call.InformationalOnly) charged += Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(call.Arguments));
                 else if (content is not UsageContent && content is not FunctionCallContent) charged += Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(content));
