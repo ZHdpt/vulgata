@@ -528,6 +528,8 @@ public static class OctoberGeneratorEntryPoint
             FinalizerPersistenceStatus = DefinedStatus(observed.FinalizerPersistenceStatus),
             LookupStatus = DefinedStatus(observed.LookupStatus),
             LookupPersistenceStatus = DefinedStatus(observed.LookupPersistenceStatus),
+            OriginalSynthesisFailureReason = observed.OriginalSynthesisFailureReason == BusinessSynthesisFailureReason.None
+                ? null : DefinedStatus(observed.OriginalSynthesisFailureReason),
             observed.Boundary,
             observed.OperationMismatch
         };

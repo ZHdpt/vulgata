@@ -16,7 +16,10 @@ public sealed record OctoberBusinessDiagnosticSnapshot(
     BusinessFinalizationStatus? LookupStatus,
     KnowledgeWriteStatus? LookupPersistenceStatus,
     OctoberBusinessDiagnosticBoundary Boundary,
-    bool OperationMismatch);
+    bool OperationMismatch)
+{
+    public BusinessSynthesisFailureReason? OriginalSynthesisFailureReason { get; init; }
+}
 
 public sealed record OctoberScanTimings(TimeSpan Elapsed, TimeSpan QueueWait,
     TimeSpan ToolWait, TimeSpan ModelWait, TimeSpan StoreWait);

@@ -108,6 +108,8 @@ public sealed class OctoberScanBusinessFinalizationTests
     [SuiteTheory("SelfContained")]
     [InlineData("freeze-unknown")]
     [InlineData("publication-ack")]
+    [InlineData("reason-observer")]
+    [InlineData("reason-invalid-proposal")]
     [InlineData("publication-first-lookup-unknown")]
     [InlineData("publication-failed")]
     [InlineData("publication-committed-failed")]
@@ -160,7 +162,7 @@ public sealed class OctoberScanBusinessFinalizationTests
     public async Task InternalNaturalCompletion_RespectsOwnedPhaseBoundariesAsync(string boundary)
     {
         await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
-        using var transport = new NaturalTransport { IncludeCallerObservation = boundary is "nonempty-b1" or "nonempty-b1-direct" or "unresolved-b1" or "budget-b1-direct" or "budget-b1-ack", ReturnUnresolved = boundary == "unresolved-b1" };
+        using var transport = new NaturalTransport { IncludeCallerObservation = boundary is "nonempty-b1" or "nonempty-b1-direct" or "unresolved-b1" or "budget-b1-direct" or "budget-b1-ack", ReturnUnresolved = boundary == "unresolved-b1", InvalidSynthesisProposal = boundary == "reason-invalid-proposal" };
         var state = new BoundaryState { Boundary = boundary };
         if (boundary == "freeze-log") state.BeforeFreeze = () => host.Database.Log.Succeeds = false;
         var clock = boundary is "session-expired" or "replay-authority-held" ? new OctoberScanAcceptanceHarness.ManualClock() : null;
@@ -304,6 +306,37 @@ public sealed class OctoberScanBusinessFinalizationTests
             finally { state.ReleasePublication.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
         }
         var report = Assert.IsType<OctoberScanReport>((await pending).Report);
+        if (boundary == "reason-observer")
+        {
+            // Controlled consumer conformance through the existing private observer; this does not
+            // claim the owner produced any synthetic result below. The request is from this real run.
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var request = Assert.IsType<FinalizationRequest>(typeof(OctoberGenerateRunner).GetField("_originalBusinessRequest", flags)!.GetValue(runner));
+            var field = typeof(OctoberGenerateRunner).GetField("_businessDiagnostics", flags)!;
+            var observe = typeof(OctoberGenerateRunner).GetMethod("ObserveBusinessOutcome", flags)!;
+            var original = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(field.GetValue(runner));
+            foreach (var reason in new BusinessSynthesisFailureReason?[] { BusinessSynthesisFailureReason.ProposalShape, BusinessSynthesisFailureReason.None, null, (BusinessSynthesisFailureReason)99999 })
+            {
+                field.SetValue(runner, original with { OriginalSynthesisFailureReason = null });
+                var immediate = new BusinessFinalizationResult(BusinessFinalizationStatus.Failed, request.Operation, null, new(true, []))
+                    { OriginalSynthesisFailureReason = reason };
+                observe.Invoke(runner, [request, immediate, true]);
+                var expected = reason == BusinessSynthesisFailureReason.ProposalShape ? reason : null;
+                Assert.Equal(expected, Assert.IsType<OctoberBusinessDiagnosticSnapshot>(field.GetValue(runner)).OriginalSynthesisFailureReason);
+                observe.Invoke(runner, [request, immediate with { OriginalSynthesisFailureReason = BusinessSynthesisFailureReason.DocumentReference }, false]);
+                var afterLookup = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(field.GetValue(runner));
+                Assert.Equal(expected, afterLookup.OriginalSynthesisFailureReason);
+                Assert.Equal(BusinessFinalizationStatus.Failed, afterLookup.FinalizerStatus);
+                Assert.Equal(BusinessFinalizationStatus.Failed, afterLookup.LookupStatus);
+            }
+            field.SetValue(runner, original with { OriginalSynthesisFailureReason = null });
+            var foreign = new BusinessFinalizationResult(BusinessFinalizationStatus.Failed, request.Operation with { OperationId = Guid.NewGuid() }, null, new(true, []))
+                { OriginalSynthesisFailureReason = BusinessSynthesisFailureReason.ProposalShape };
+            observe.Invoke(runner, [request, foreign, true]);
+            var rejected = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(field.GetValue(runner));
+            Assert.Null(rejected.OriginalSynthesisFailureReason); Assert.True(rejected.OperationMismatch); Assert.Null(rejected.FinalizerStatus);
+            field.SetValue(runner, original);
+        }
         if (boundary is "publication-ack" or "publication-first-lookup-unknown" or "publication-failed" or "publication-committed-failed" or "publication-foreign-operation" or "publication-uncommitted" or "publication-undefined-status" or "reader-nonprogress" or "reader-diagnostic-only-replay" or "reader-empty-fresh-cursor" or "binding-null")
         {
             var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
@@ -526,13 +559,31 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
             var repeated = await runner.ExecuteAsync(execution);
             Assert.Equal(report.Publication, repeated.Report!.Publication); Assert.Equal(1, state.Publications);
-        }        else if (boundary is "publication-ack" or "publication-first-lookup-unknown")
+        }        else if (boundary is "publication-ack" or "publication-first-lookup-unknown" or "reason-observer")
         {
             Assert.Equal(0, report.ExitCode); Assert.Equal("cl-and-bl", report.CompletedStage);
             Assert.NotNull(report.Publication); Assert.Equal(1, state.Publications); Assert.True(state.PublicationLookups > 0);
             Assert.Equal(1, transport.BusinessRequests);
             var replay = await runner.ExecuteAsync(execution);
             Assert.Equal(report.Publication, replay.Report!.Publication); Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+        }
+        else if (boundary == "reason-invalid-proposal")
+        {
+            // Real owner validation and finalization, using a parsed but structurally invalid proposal.
+            var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+            Assert.Equal(BusinessSynthesisFailureReason.ProposalShape, diagnostic.OriginalSynthesisFailureReason);
+            Assert.Equal(BusinessFinalizationStatus.Failed, diagnostic.FinalizerStatus);
+            Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, diagnostic.FinalizerPersistenceStatus);
+            Assert.Equal(BusinessFinalizationStatus.Failed, diagnostic.LookupStatus);
+            Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, diagnostic.LookupPersistenceStatus);
+            Assert.NotEqual(0, report.ExitCode); Assert.Null(report.Publication); Assert.Empty(report.Documents);
+            Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+            var replay = await runner.ExecuteAsync(execution);
+            Assert.Equal(BusinessSynthesisFailureReason.ProposalShape, replay.Report!.BusinessDiagnostics!.OriginalSynthesisFailureReason);
+            host.AuthorityAllowed = false;
+            var hidden = await runner.ExecuteAsync(execution);
+            Assert.Null(hidden.Report!.BusinessDiagnostics); Assert.Null(hidden.Report.Publication); Assert.Empty(hidden.Report.Documents);
+            Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
         }
         else if (boundary == "empty-roots")
         {
@@ -805,7 +856,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         internal DocumentVersionReference? Root;
         internal int WorkerRequests, BusinessRequests, ResolutionRequests;
         internal int ExpectedWorkers = 1;
-        internal bool IncludeCallerObservation, ReturnUnresolved;
+        internal bool IncludeCallerObservation, ReturnUnresolved, InvalidSynthesisProposal;
         internal List<(string Endpoint, string? Authorization, string Model)> Requests { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -842,7 +893,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             var root = Assert.IsType<DocumentVersionReference>(Root);
             var proposal = new BusinessSynthesisProposal("条件处理", [new("business", 0, "处理规则", [new("rule", "满足条件时执行处理。", ClaimQualification.SourceSupported, [new(root, "logic", "rule")], [])])]);
             string json = JsonSerializer.Serialize(new { id = "controlled-business", @object = "chat.completion", created = 1, model,
-                choices = new[] { new { index = 0, message = new { role = "assistant", content = JsonSerializer.Serialize(proposal) }, finish_reason = "stop" } }, usage = new { prompt_tokens = 80, completion_tokens = 25, total_tokens = 105 } });
+                choices = new[] { new { index = 0, message = new { role = "assistant", content = JsonSerializer.Serialize(InvalidSynthesisProposal ? new BusinessSynthesisProposal("", []) : proposal) }, finish_reason = "stop" } }, usage = new { prompt_tokens = 80, completion_tokens = 25, total_tokens = 105 } });
             return new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
         }
     }
