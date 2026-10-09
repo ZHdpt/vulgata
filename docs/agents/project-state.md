@@ -131,6 +131,12 @@ nonempty/path/range/size/distinctfile/currentness/authorization guards. No broad
 whitespace normalization, blanketComplete acceptance, newdiagnostics or nativeprobe.
 Scan owns separateRED/GREEN/review; paidrunsheld. Lastlivecause notprovenattributed.
 Prior partialCL retained.
+CRLFfix nowintegrated `cb5008c3`; mainaffected202/202GREEN
+(isolation `82e6065d6b2540bd8650f71dac5d0ef0`). Fresh `phone-7743a9fb013b`
+ended56.30s at InvalidOutput/ProposalParse,2requests7,883input/4,037output,accepted0;
+no tool/terminal/budgetfailure. Paidrunsheld. Integrator nowauthorized the previously
+proposed minimal fixed parser-category/schema-slot observation, original acceptance
+and status unchanged, no rawresponse/dynamicfieldnames. Separatetests/review required.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

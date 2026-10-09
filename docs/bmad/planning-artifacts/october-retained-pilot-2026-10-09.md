@@ -1,8 +1,8 @@
 # Retained phone-verification pilot
 
-Status: one prior real CL remains accepted but unpublished. Accounting correction
-is integrated. Latest retry identifies `CodeGraphExplore / ResultAdmission` with
-returned status `Complete`; paid runs held for bounded admission-path diagnosis.
+Status: one prior real CL remains accepted but unpublished. CRLF comparison fix is
+integrated; latest retry passed tool execution but failed `ProposalParse`. Paid
+runs held pending bounded parser-category/schema-slot diagnostics, without raw output.
 An initial Generate
 launch was rejected by execution auto-review before starting because supporting
 reads could disclose additional slice files. The user subsequently explicitly
@@ -410,3 +410,22 @@ No arbitrary whitespace trimming, bareCR/Unicode/case normalization or blanket
 Complete admission. Existing tests/assessment plus ledger comparison only, separate
 RED/GREEN and independent review. No new diagnostic/native probe or paid run in
 this dispatch; root owns later qualification. PriorpartialCL remains retained.
+
+## CRLF qualification and remaining parser observation
+
+Reviewed `877fb8a4` integrated as `cb5008c3`; mainaffected202/202, no skips, isolation
+`82e6065d6b2540bd8650f71dac5d0ef0`. Fresh `phone-7743a9fb013b`, batch
+`9f9e4027-daca-49df-86b3-21874dfb1a38`, database
+`vulgata_oct_pilot_cfcad84511c04afc8c1952daedef8c47`:
+
+- **56.30s wall /54.13s pipeline**, exit1, no timeout/cleanup doubt.
+- Inventory77,accepted0; **2requests,7,883input/4,037output tokens**, usageknown.
+- `InvalidOutput / ProposalParse / None`, no terminal/budget/tool failure.
+  Exact rejected shape remains unknown; this does not prove prior rejection'scause.
+
+After the completed parser/SDK/tool matrix and contract correction, Integrator
+approved the previously proposed minimal fixed parser rejectioncategory/schema-slot
+observation. No dynamic keys/values/indices/paths/exceptiontext/responsebody. Preserve
+parser acceptance/status, distinguish later validation and existing disclosurefences.
+Existingtests, separateowners and independentreview; no repair/retry/schema change.
+Paid/native/PG/source-root operations held pending root integration decision.
