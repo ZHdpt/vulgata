@@ -452,3 +452,13 @@ Scan's bounded file-exchange operator protocol is agreed with Business; implemen
 is still underway. Explorer owns additive BL reader assertions. Business is checking
 duplicate uncertainty payloads across accepted manifests; mandatory occurrences must
 not be dropped or renamed by Scan. These are not yet integrated runtime capabilities.
+
+The subsequent fixture oracle validates each actual BL Document's exact
+publication/member/group/corpus/finalization binding and returns all persisted
+CL Document Version dependencies, including supplemental non-member dependencies.
+It fails on missing or inconsistent rows, never infers directed graph edges and
+does not require supplemental CL evidence to be publicly selected. Business
+confirmed the mapping; independent source review accepted the implementation.
+Current compilation and 26/26 affected SelfContained tests pass in
+`7ca0e24daad649ce84791f7b406a121c`. The new storage oracle itself remains unexecuted
+against real BL until the separately authorized shared qualification run.

@@ -1792,6 +1792,63 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             return result;
         }
 
+        /// <summary>Owned read-only storage oracle, not a disclosure or authorization API.</summary>
+        internal async Task<ImmutableArray<DocumentVersionReference>> LoadExactBusinessDependenciesAsync(
+            PublicationBinding publication, DocumentHandle document, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ValidateReaderPublication(publication, KnowledgeMode.IT);
+            if (document is null || document.BatchId != BatchId || document.PublicationId != publication.PublicationId
+                || document.LogicalDocumentId == Guid.Empty || document.DocumentVersionId == Guid.Empty || document.SectionId is not null)
+                throw new ArgumentException("An exact owned whole Document handle is required.");
+            // Establish the complete exact publication binding through the owner before examining its dependencies.
+            var published = await LoadExactPublicationAsync(publication, cancellationToken);
+            if (!published.Documents.Any(x => x.Reference == new DocumentVersionReference(BatchId,
+                    document.LogicalDocumentId, document.DocumentVersionId) && x.Kind == DocumentKind.BusinessLogic))
+                throw new InvalidOperationException("The exact Business Document is not published.");
+            await using var context = CreateOctoberContext();
+            var selected = await context.KnowledgePublications.AsNoTracking().SingleAsync(x =>
+                x.BatchId == BatchId && x.PublicationId == publication.PublicationId, cancellationToken);
+            var member = await context.PublicationMembers.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                && x.PublicationId == publication.PublicationId && x.LogicalDocumentId == document.LogicalDocumentId
+                && x.VersionId == document.DocumentVersionId, cancellationToken);
+            var version = await context.DocumentVersions.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                && x.LogicalDocumentId == document.LogicalDocumentId && x.VersionId == document.DocumentVersionId, cancellationToken);
+            if (member.CorpusId != selected.CorpusId || version.Kind != DocumentKind.BusinessLogic
+                || version.ManifestId is not null || version.FlowGroupVersionId is null
+                || selected.OperationKind != OperationKind.FinalizeCorpus
+                || version.FinalizationOperationKind != selected.OperationKind || version.FinalizationOperationId != selected.OperationId)
+                throw new InvalidOperationException("Business publication ownership is inconsistent.");
+            var group = await context.FlowGroupVersions.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                && x.CorpusId == selected.CorpusId && x.GroupVersionId == version.FlowGroupVersionId, cancellationToken);
+            if (group.OperationKind != selected.OperationKind || group.OperationId != selected.OperationId)
+                throw new InvalidOperationException("Business group finalization is inconsistent.");
+            // IsMember=false dependencies are supplemental model-visible evidence and must remain included.
+            var dependencies = await context.FlowDocumentDependencies.AsNoTracking().Where(x => x.BatchId == BatchId
+                && x.CorpusId == selected.CorpusId && x.GroupVersionId == group.GroupVersionId)
+                .OrderBy(x => x.LogicalDocumentId).ThenBy(x => x.VersionId).ToArrayAsync(cancellationToken);
+            if (dependencies.Length == 0)
+                throw new InvalidOperationException("Business source dependencies are missing.");
+            var result = ImmutableArray.CreateBuilder<DocumentVersionReference>(dependencies.Length);
+            foreach (var dependency in dependencies)
+            {
+                var corpusDocument = await context.CorpusDocuments.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                    && x.CorpusId == selected.CorpusId && x.LogicalDocumentId == dependency.LogicalDocumentId
+                    && x.VersionId == dependency.VersionId, cancellationToken);
+                var code = await context.DocumentVersions.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                    && x.LogicalDocumentId == dependency.LogicalDocumentId && x.VersionId == dependency.VersionId, cancellationToken);
+                if (code.Kind != DocumentKind.CodeLogic || code.ManifestId is null || code.ManifestId != corpusDocument.ManifestId
+                    || code.FlowGroupVersionId is not null || code.FinalizationOperationKind is not null
+                    || code.FinalizationOperationId is not null)
+                    throw new InvalidOperationException("An exact Business source dependency is inconsistent.");
+                result.Add(new(BatchId, dependency.LogicalDocumentId, dependency.VersionId));
+            }
+            if (result.Distinct().Count() != result.Count)
+                throw new InvalidOperationException("Business source dependencies are ambiguous.");
+            return result.ToImmutable();
+        }
+
         internal async Task<OrdinaryReaderSession?> OpenReaderSessionAsync(PublicationBinding publication,
             string subjectId, string capturedStamp, KnowledgeMode mode, CancellationToken cancellationToken = default)
         {
