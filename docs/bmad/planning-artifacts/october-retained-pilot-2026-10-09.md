@@ -446,3 +446,18 @@ passed, no skips (isolation `4a2bb3b23dec470a9a58a810180290fb`). Fresh
   post-tool finalcall and final-text/depth assessment. Return one evidence-backed
   proposal/minimalmissingobservation; no repair/stripfences/schema/status change or
   raw response capture in current scope. Existing partialCL remains preserved.
+
+## Wire assessment and privileged observation decision pending
+
+Reviewed test-only `3a17cd1a` accepted, lane199/199 controlled GREEN. Actual factory/
+MAF/SDK controls keep exact JSONmode on initial/posttool requests and parse only
+the finalleaf. Empty/fenced/prose anddepth33 inputs all explain the broadSyntax/Root
+classification in controls; none is established as the real rejected response.
+No wire/assembly productionfix is justified by current evidence.
+
+Root declined another counts-only diagnostic layer and is asking the user for
+explicit approval of ONE bounded protected local capture/inspection of the exact
+failed finalproposal, outsideGit; no reasoning/request/credential capture, sanitized
+diagnosis only retained, rawcapture deleted after diagnosis. This is a proposal,
+not runtime/capture authority. No instrumentation, paid/native/PG operation, output
+repair/normalization or depth increase before scoped decision. Scan remains idle.

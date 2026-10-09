@@ -140,8 +140,12 @@ and status unchanged, no rawresponse/dynamicfieldnames. Diagnostics nowintegrate
 as `52fa489b`, main221/221GREEN (isolation `4a2bb3b23dec470a9a58a810180290fb`).
 Real `phone-64d5fbe0a2b9`54.94s,3requests15,195input/3,696output,accepted0 nowproves
 **parseFailure Syntax/Root**. Exact content/depth/empty/fence cause stillunknown.
-Paidheld; Scan source-free actualSDK/MAF outboundJSON-mode and final-text assessment
-only, no automatic repair/normalization/acceptance change. PriorpartialCL retained.
+Wire assessment `3a17cd1a` accepted: lane199/199 controls prove JSONmode remains
+initial/posttool and only finalleaf is parsed; no wire/assembly defect reproduced.
+Root is requesting explicit user approval for ONE bounded protected local inspection
+of failing finalproposal; no capture implementation or furtherpaidrun authorized yet.
+Do not add another counts-only layer, repair/normalize output or raise parserdepth.
+Scan idle pending that decision; priorpartialCL retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
