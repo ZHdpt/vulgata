@@ -32,6 +32,14 @@ Every object rejects unknown fields. Arrays are required, including empty arrays
 Names such as semanticSelector, sectionId, claimGroupId and observationKey are
 local semantic keys, not application or Document identifiers.
 
+Keep each `semanticSelector` unique within this file. A non-null `parentSelector` must name
+another emitted unit; parent links must be acyclic. Within each emitted unit,
+`sectionId` and section `ordinal` must each be unique; within each section,
+`claimGroupId` must be unique. Keep `observationKey` values unique among observations
+and uncertainty `key` values unique among uncertainties. Each emitted unit needs
+nonempty anchors and sections, and each section needs nonempty claims. These
+requirements do not forbid `units: []` with an explicit zero-unit uncertainty.
+
 - Root: `units`, `observations`, `uncertainties`.
 - Unit: `semanticSelector` (string), `parentSelector` (string or null), `title`
   (string), `anchors` (array of source anchors), `sections` (array of sections).

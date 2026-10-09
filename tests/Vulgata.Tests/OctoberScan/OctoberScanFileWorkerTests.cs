@@ -65,6 +65,7 @@ public sealed class OctoberScanFileWorkerTests
         using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.FailureStage);
         var proposal = Assert.IsType<CompletedFileProposal>(result.Proposal);
         Assert.Equal(request.Binding, proposal.Binding);
         Assert.Equal(request.AdmissionId, proposal.AdmissionId);
@@ -76,6 +77,12 @@ public sealed class OctoberScanFileWorkerTests
         Assert.Equal(frame.ByteLength, result.CoveredUtf8Bytes);
         Assert.True(frame.Verifications >= 2);
         Assert.Single(client.Requests);
+        string deliveredPrompt = string.Join("\n", client.Requests[0].Where(message => message.Role == ChatRole.System).Select(message => message.Text));
+        Assert.Contains("semanticSelector", deliveredPrompt, StringComparison.Ordinal);
+        Assert.Contains("claimGroupId", deliveredPrompt, StringComparison.Ordinal);
+        Assert.Contains("unique", deliveredPrompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("acyclic", deliveredPrompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("nonempty", deliveredPrompt, StringComparison.OrdinalIgnoreCase);
         Assert.All(scope.Leases, lease => Assert.Equal(1, lease.Settlements));
     }
 
@@ -87,6 +94,7 @@ public sealed class OctoberScanFileWorkerTests
         using var client = new ScriptedClient([new(ZeroJson, ChatFinishReason.Stop)]);
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(frame), []);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.FailureStage);
         Assert.Empty(result.Proposal!.Units);
         Assert.Equal(CoverageDisposition.CompletedZeroUnit, result.Proposal.Coverage.Disposition);
         Assert.NotEmpty(result.Proposal.Uncertainties);
@@ -131,6 +139,7 @@ public sealed class OctoberScanFileWorkerTests
             new(UnitJson, ChatFinishReason.Stop)]);
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [first, second]);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.FailureStage);
         Assert.Equal(2, calls);
         Assert.Equal(1, maximum);
         Assert.Equal(0, active);
@@ -276,6 +285,7 @@ public sealed class OctoberScanFileWorkerTests
         using var client = new ScriptedClient([new(json, ChatFinishReason.Stop)]);
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.FailureStage);
         Assert.Equal(frame.Origin, result.Proposal!.Origin);
         Assert.Contains(advisory, result.Proposal.Contributors);
         Assert.Equal(advisory.ContentDigest, Assert.Single(Assert.Single(Assert.Single(Assert.Single(result.Proposal.Units).Sections).Claims).Evidence).ContentDigest);
@@ -431,6 +441,7 @@ public sealed class OctoberScanFileWorkerTests
         using var client = new TransientClient(knownUsage);
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(frame), []);
         Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.Transport, result.FailureStage);
         Assert.Equal(knownUsage ? OctoberWorkerRetryDisposition.KnownSafeTransient : OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         Assert.Null(result.Proposal);
         Assert.True(client.DisposedStream);
@@ -634,6 +645,29 @@ public sealed class OctoberScanFileWorkerTests
             throw new HttpRequestException("Controlled synchronous transport invocation failure");
         }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("invalid-json", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse)]
+    [InlineData("typed-json", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerFailureStage.ProposalParse)]
+    [InlineData("terminal", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.StreamTerminal)]
+    [InlineData("cycle", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalValidation)]
+    [InlineData("admission", OctoberFileWorkerStatus.Denied, OctoberWorkerFailureStage.Admission)]
+    public async Task Execute_DiagnosticsIdentifyBoundaryWithoutChangingLegacyStatusAsync(string defect, OctoberFileWorkerStatus status, OctoberWorkerFailureStage stage)
+    {
+        string text = defect switch
+        {
+            "invalid-json" => "{PRIVATE_INVALID_JSON",
+            "typed-json" => UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"PRIVATE_WRONG_TYPE\""),
+            "cycle" => UnitJson.Replace("\"parentSelector\":null", "\"parentSelector\":\"file\""),
+            _ => UnitJson,
+        };
+        using var client = new ScriptedClient([new(text, defect == "terminal" ? ChatFinishReason.Length : ChatFinishReason.Stop)]);
+        var scope = new Scope { Denied = defect == "admission" };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(status, result.Status); Assert.Equal(stage, result.FailureStage);
+        Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        if (defect == "admission") Assert.Empty(client.Requests);
+    }
     private sealed record Round(string? Text, ChatFinishReason? Finish, IReadOnlyList<AIContent>? Calls = null);
     private sealed class ScriptedClient(IReadOnlyList<Round> rounds, Action? afterRequest = null) : IChatClient
     {
@@ -660,11 +694,13 @@ public sealed class OctoberScanFileWorkerTests
     }
     private sealed class Scope : IOctoberWorkerExecutionScope
     {
+        internal bool Denied;
         internal List<OctoberWorkerProviderAttemptRequest> Requests { get; } = [];
         internal List<Lease> Leases { get; } = [];
         public Task<ProviderAdmission> AcquireWorkerAttemptAsync(OctoberWorkerProviderAttemptRequest request, CancellationToken cancellationToken = default)
         {
             Requests.Add(request);
+            if (Denied) return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.Denied, null));
             var lease = new Lease(request.AttemptId); Leases.Add(lease);
             return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.Granted, lease));
         }

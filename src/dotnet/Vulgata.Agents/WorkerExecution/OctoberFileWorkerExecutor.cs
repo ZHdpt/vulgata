@@ -64,6 +64,7 @@ public enum OctoberFileWorkerStatus
 }
 
 public enum OctoberWorkerRetryDisposition { None, KnownSafeTransient }
+public enum OctoberWorkerFailureStage { Admission, StreamTerminal, ProposalParse, ProposalValidation, Transport, HostSealing }
 
 /// <summary>Worker observation only; this is not a Knowledge completion capability.</summary>
 public sealed record OctoberFileWorkerResult(
@@ -75,6 +76,7 @@ public sealed record OctoberFileWorkerResult(
 {
     public OctoberWorkerRetryDisposition RetryDisposition { get; init; }
     public TimeSpan? RetryAfter { get; init; }
+    public OctoberWorkerFailureStage? FailureStage { get; init; }
 }
 
 public sealed class OctoberFileWorkerExecutor
@@ -99,28 +101,31 @@ public sealed class OctoberFileWorkerExecutor
         IReadOnlyList<AIFunction> tools, CancellationToken cancellationToken = default)
     {
         if (Interlocked.Exchange(ref _used, 1) != 0)
-            return new(OctoberFileWorkerStatus.InvalidInput);
+            return new(OctoberFileWorkerStatus.InvalidInput) { FailureStage = OctoberWorkerFailureStage.Admission };
         WorkerClient? adapter = null;
         int covered = 0;
+        OctoberWorkerFailureStage? stage = null;
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (!ValidRequest(request, tools) || _client.GetService(typeof(FunctionInvokingChatClient)) is not null)
-                return new(OctoberFileWorkerStatus.InvalidInput);
+                return Failed(OctoberFileWorkerStatus.InvalidInput) with { FailureStage = OctoberWorkerFailureStage.Admission };
             if (_client is IOctoberWorkerAttemptClient selectedClient &&
                 !string.Equals(selectedClient.ProviderProfileId, request.ProviderProfileId, StringComparison.Ordinal))
-                return new(OctoberFileWorkerStatus.InvalidInput);
+                return Failed(OctoberFileWorkerStatus.InvalidInput) with { FailureStage = OctoberWorkerFailureStage.Admission };
             string prompt = LoadPrompt();
             byte[] source = Utf8.GetBytes(request.Source.Text);
             if (source.LongLength != request.Source.ByteLength ||
                 !string.Equals(Convert.ToHexStringLower(SHA256.HashData(source)), request.Source.Origin.SourceDigest, StringComparison.OrdinalIgnoreCase) ||
                 CountLines(request.Source.Text) != request.Source.LineCount)
-                return new(OctoberFileWorkerStatus.InvalidInput);
+                return Failed(OctoberFileWorkerStatus.InvalidInput) with { FailureStage = OctoberWorkerFailureStage.Admission };
+            stage = null;
             if (!await request.Source.VerifyCurrentAsync(cancellationToken))
-                return new(OctoberFileWorkerStatus.SourceChanged);
+                return Failed(OctoberFileWorkerStatus.SourceChanged);
+            stage = OctoberWorkerFailureStage.Admission;
             List<string> windows = SplitWindows(source, request.Limits.MaximumWindowUtf8Bytes);
             if (windows.Count > request.Limits.MaximumContinuationWindows)
-                return new(OctoberFileWorkerStatus.BudgetExceeded);
+                return Failed(OctoberFileWorkerStatus.BudgetExceeded);
 
             adapter = new WorkerClient(_client, _scope, request, tools);
             using var invoking = new FunctionInvokingChatClient(adapter)
@@ -157,18 +162,23 @@ public sealed class OctoberFileWorkerExecutor
                     advisory = request.Advisory.Select((item, ordinal) => new { advisoryIndex = ordinal, text = item.Text })
                 });
                 history.Add(new ChatMessage(ChatRole.User, input));
+                stage = null;
                 AgentResponse response = await agent.RunStreamingAsync(history, cancellationToken: cancellationToken)
                     .ToAgentResponseAsync(cancellationToken);
                 if (adapter.Failure is { } failure) throw new WorkerFailure(failure);
+                stage = OctoberWorkerFailureStage.StreamTerminal;
                 if (adapter.Finish != ChatFinishReason.Stop || adapter.PendingCalls != 0)
                     throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput);
+                stage = null;
                 if (!await request.Source.VerifyCurrentAsync(cancellationToken))
                     throw new WorkerFailure(OctoberFileWorkerStatus.SourceChanged);
                 covered = checked(covered + Utf8.GetByteCount(windows[index]));
                 history.AddRange(response.Messages);
             }
+            stage = OctoberWorkerFailureStage.StreamTerminal;
             if (covered != source.Length) throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput);
-            CompletedFileProposal proposal = ParseProposal(adapter.LastText, request);
+            stage = OctoberWorkerFailureStage.ProposalParse;
+            CompletedFileProposal proposal = ParseProposal(adapter.LastText, request, ref stage);
             return new(OctoberFileWorkerStatus.Completed, proposal, covered, adapter.Rounds, adapter.SettledTools);
         }
         catch (OperationCanceledException)
@@ -186,7 +196,8 @@ public sealed class OctoberFileWorkerExecutor
             => new(status, null, covered, adapter?.Rounds ?? 0, adapter?.SettledTools ?? 0)
             {
                 RetryDisposition = status == OctoberFileWorkerStatus.ProviderFailed
-                    ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None
+                    ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None,
+                FailureStage = stage ?? adapter?.FailureStage
             };
     }
 
@@ -286,6 +297,8 @@ public sealed class OctoberFileWorkerExecutor
         internal ChatFinishReason? Finish { get; private set; }
         internal string LastText { get; private set; } = string.Empty;
         internal OctoberFileWorkerStatus? Failure { get; private set; }
+        internal OctoberWorkerFailureStage? FailureStage { get; private set; }
+        private OctoberWorkerFailureStage? _observedStage;
 
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
             ChatOptions? options = null, CancellationToken cancellationToken = default)
@@ -295,10 +308,14 @@ public sealed class OctoberFileWorkerExecutor
             IEnumerable<ChatMessage> messages, ChatOptions? options = null,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            _observedStage = OctoberWorkerFailureStage.StreamTerminal;
             cancellationToken.ThrowIfCancellationRequested();
             if (Failure is not null || _pending.Count != 0) throw Fail(OctoberFileWorkerStatus.InvalidOutput);
+            _observedStage = OctoberWorkerFailureStage.Admission;
             if (Rounds >= request.Limits.MaximumProviderRounds) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+            _observedStage = null;
             if (!await request.Source.VerifyCurrentAsync(cancellationToken)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
+            _observedStage = OctoberWorkerFailureStage.Admission;
             ChatMessage[] snapshot = messages.ToArray();
             int input = MeasureInput(snapshot, options);
             _inputBytes = checked(_inputBytes + input);
@@ -336,6 +353,7 @@ public sealed class OctoberFileWorkerExecutor
                 if (client is not IOctoberWorkerAttemptClient &&
                     await lease.CheckBeforeSendAsync(linked.Token) != ProviderAdmissionStatus.Granted)
                     throw Fail(OctoberFileWorkerStatus.Denied);
+                _observedStage = null;
                 if (!await request.Source.VerifyCurrentAsync(linked.Token)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
                 linked.Token.ThrowIfCancellationRequested();
                 Rounds++;
@@ -344,12 +362,14 @@ public sealed class OctoberFileWorkerExecutor
                     (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
                     timing.MarkDispatched(Stopwatch.GetTimestamp());
                 }
+                _observedStage = OctoberWorkerFailureStage.Transport;
                 IAsyncEnumerable<ChatResponseUpdate> updates = client is IOctoberWorkerAttemptClient admittedClient
                     ? admittedClient.GetAttemptStreamingResponseAsync(snapshot, bounded, lease, linked.Token, timing.MarkDispatched)
                     : client.GetStreamingResponseAsync(snapshot, bounded, linked.Token);
                 iterator = updates.GetAsyncEnumerator(linked.Token);
                 while (true)
                 {
+                    _observedStage = OctoberWorkerFailureStage.Transport;
                     pendingMove = iterator.MoveNextAsync().AsTask();
                     bool next;
                     try { next = await pendingMove.WaitAsync(linked.Token); }
@@ -361,6 +381,7 @@ public sealed class OctoberFileWorkerExecutor
                         throw;
                     }
                     if (!next) break;
+                    _observedStage = OctoberWorkerFailureStage.StreamTerminal;
                     ChatResponseUpdate update = iterator.Current;
                     if (finish is not null && (update.Contents.Any(content => content is not UsageContent) ||
                         update.FinishReason is { } repeated && repeated != finish)) throw Fail(OctoberFileWorkerStatus.InvalidOutput);
@@ -396,15 +417,23 @@ public sealed class OctoberFileWorkerExecutor
                     if (buffered.Count >= 8192) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
                     buffered.Add(update);
                 }
+                _observedStage = OctoberWorkerFailureStage.StreamTerminal;
                 if (finish != ChatFinishReason.Stop && finish != ChatFinishReason.ToolCalls ||
                     finish == ChatFinishReason.ToolCalls && calls.Count == 0 || finish == ChatFinishReason.Stop && calls.Count != 0)
                     throw Fail(OctoberFileWorkerStatus.InvalidOutput);
+                _observedStage = null;
                 if (!await request.Source.VerifyCurrentAsync(linked.Token)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
                 success = true;
             }
             catch (Exception exception) when (IsTransient(exception))
             {
+                FailureStage ??= _observedStage;
                 transient = true;
+                throw;
+            }
+            catch (Exception)
+            {
+                FailureStage ??= _observedStage;
                 throw;
             }
             finally
@@ -425,12 +454,14 @@ public sealed class OctoberFileWorkerExecutor
                             await QuarantineAsync(lease);
                             if (cleanup is not null) _ = SettleAfterCleanupAsync(cleanup, lease, wait, timing);
                             Failure = OctoberFileWorkerStatus.ProviderFailed;
+                            FailureStage = OctoberWorkerFailureStage.Transport;
                         }
                         catch (Exception)
                         {
                             deferred = true;
                             await QuarantineAsync(lease);
                             Failure = OctoberFileWorkerStatus.ProviderFailed;
+                            FailureStage = OctoberWorkerFailureStage.Transport;
                         }
                     }
                     if (!deferred)
@@ -493,6 +524,7 @@ public sealed class OctoberFileWorkerExecutor
 
         internal async ValueTask<object?> InvokeAsync(FunctionInvocationContext context, CancellationToken token)
         {
+            _observedStage = null;
             if (!_pending.TryGetValue(context.CallContent.CallId, out FunctionCallContent? call) || call.Name != context.Function.Name)
                 throw Fail(OctoberFileWorkerStatus.InvalidOutput);
             if (!await request.Source.VerifyCurrentAsync(token)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
@@ -532,6 +564,7 @@ public sealed class OctoberFileWorkerExecutor
         private WorkerFailure Fail(OctoberFileWorkerStatus status)
         {
             Failure = status;
+            FailureStage ??= _observedStage;
             return new(status);
         }
 
@@ -592,7 +625,7 @@ public sealed class OctoberFileWorkerExecutor
         }
     }
 
-    private static CompletedFileProposal ParseProposal(string json, OctoberFileWorkerRequest request)
+    private static CompletedFileProposal ParseProposal(string json, OctoberFileWorkerRequest request, ref OctoberWorkerFailureStage? stage)
     {
         using JsonDocument document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 32 });
         JsonElement root = document.RootElement;
@@ -628,6 +661,7 @@ public sealed class OctoberFileWorkerExecutor
             Fields(uncertainty, "key", "explanation", "evidence", "limitations");
             return new Uncertainty(Text(uncertainty, "key"), Text(uncertainty, "explanation"), Evidence(uncertainty, request), Strings(uncertainty, "limitations"));
         }).ToImmutableArray();
+        stage = OctoberWorkerFailureStage.ProposalValidation;
         if (units.IsEmpty && uncertainties.IsEmpty) throw new InvalidDataException("Zero-unit analysis requires a reason.");
         var proposal = new CompletedFileProposal(request.Binding, request.AdmissionId, request.AttemptId, request.Source.Origin,
             string.Empty, units, observations, uncertainties, request.Contributors,

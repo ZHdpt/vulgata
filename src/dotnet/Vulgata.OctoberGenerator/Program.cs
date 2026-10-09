@@ -225,6 +225,7 @@ public static class OctoberGeneratorEntryPoint
                     PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
                     TerminalCoverage = [], Inventory = [], Gaps = [new("output_binding_invalid")],
                     BusinessDiagnostics = null,
+                    WorkerDiagnostics = null,
                     Matching = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable,
                     BusinessLogic = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable
                 };
@@ -475,6 +476,12 @@ public static class OctoberGeneratorEntryPoint
             Matching = PhaseStatus(report.Matching),
             BusinessLogic = PhaseStatus(report.BusinessLogic),
             BusinessDiagnostics = ProjectBusinessDiagnostics(report),
+            WorkerDiagnostics = report.WorkerDiagnostics is { } worker ? new
+            {
+                Status = DefinedStatus(worker.Status),
+                RetryDisposition = DefinedStatus(worker.RetryDisposition),
+                FailureStage = DefinedStatus(worker.FailureStage)
+            } : null,
             Publication = publication,
             report.Documents,
             AcceptedFiles = report.AcceptedFiles.Select(file => new

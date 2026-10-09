@@ -10,6 +10,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Configuration;
 using Vulgata.OctoberGenerator;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.OctoberScan;
@@ -366,6 +367,36 @@ public sealed class OctoberScanEntryPointTests
         }
         Assert.Contains(json.RootElement.GetProperty("gaps").EnumerateArray(), gap => gap.GetProperty("code").GetString() == "business_publication_unavailable");
         if (condition == "cleanup-unconfirmed") { Assert.Equal(4, exit); Assert.Contains(json.RootElement.GetProperty("gaps").EnumerateArray(), gap => gap.GetProperty("code").GetString() == "owned_cleanup_unconfirmed"); }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("defined")]
+    [InlineData("undefined")]
+    [InlineData("absent")]
+    [InlineData("foreign-binding")]
+    public async Task WorkerDiagnostics_ProjectOnlyDefinedScalarsWithoutPayloadAsync(string condition)
+    {
+        var snapshot = condition == "absent" ? null : new OctoberWorkerDiagnosticSnapshot(
+            OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerRetryDisposition.None, OctoberWorkerFailureStage.ProposalParse);
+        if (condition == "undefined") snapshot = new((OctoberFileWorkerStatus)99999, (OctoberWorkerRetryDisposition)99999, (OctoberWorkerFailureStage)99999);
+        var batch = Guid.NewGuid();
+        var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(null, null, null, true), []) { WorkerDiagnostics = snapshot };
+        if (condition == "foreign-binding") report = report with { Publication = new(new("PRIVATE_DB", "foreign-target", batch, new string('a', 64)), Guid.NewGuid()) };
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "exact-target", batch, null, new() { OutputStage = "cl-only" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        using var json = JsonDocument.Parse(output.ToString());
+        Assert.NotEqual(0, exit); Assert.DoesNotContain("PRIVATE", output.ToString()); Assert.DoesNotContain("99999", output.ToString());
+        bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
+        if (condition is "absent" or "foreign-binding") { Assert.False(present); return; }
+        Assert.True(present);
+        Assert.Equal(new[] { "failureStage", "retryDisposition", "status" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        if (condition == "undefined") { Assert.All(diagnostic.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
+        Assert.Equal("InvalidOutput", diagnostic.GetProperty("status").GetString());
+        Assert.Equal("None", diagnostic.GetProperty("retryDisposition").GetString());
+        Assert.Equal("ProposalParse", diagnostic.GetProperty("failureStage").GetString());
     }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {

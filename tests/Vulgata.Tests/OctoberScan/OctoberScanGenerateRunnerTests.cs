@@ -10,6 +10,7 @@ using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Infrastructure.Source;
 using Vulgata.OctoberGenerator;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Tests.October.Knowledge;
 using Vulgata.Tests.PreparedSource;
 using Vulgata.Tests.TestInfrastructure;
@@ -21,6 +22,55 @@ namespace Vulgata.Tests.OctoberScan;
 public sealed class OctoberScanGenerateRunnerTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing")]
+    [InlineData("completed")]
+    [InlineData("undefined")]
+    public void TerminalSealRefusal_DiagnosticMappingPreservesUnknownAndCompletedDistinction(string condition)
+    {
+        // Pure host mapping conformance at the terminal no-submission branch; this does not
+        // fabricate an actual accepted Worker proposal or claim a real sealing failure occurred.
+        OctoberFileWorkerResult? result = condition switch
+        {
+            "missing" => null,
+            "completed" => new(OctoberFileWorkerStatus.Completed),
+            _ => new((OctoberFileWorkerStatus)99999) { RetryDisposition = (OctoberWorkerRetryDisposition)99999, FailureStage = (OctoberWorkerFailureStage)99999 },
+        };
+        var method = typeof(OctoberGenerateRunner).GetMethod("CreateWorkerDiagnostics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(method.Invoke(null, [result]));
+        if (condition == "completed")
+        {
+            Assert.Equal(OctoberFileWorkerStatus.Completed, diagnostic.Status);
+            Assert.Equal(OctoberWorkerRetryDisposition.None, diagnostic.RetryDisposition);
+        }
+        else { Assert.Null(diagnostic.Status); Assert.Null(diagnostic.RetryDisposition); }
+        Assert.Equal(condition == "undefined" ? (OctoberWorkerFailureStage?)null : OctoberWorkerFailureStage.HostSealing, diagnostic.FailureStage);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task InvalidWorkerProposal_DiagnosticOnlyReplayReauthorizesWithoutDispatchAsync()
+    {
+        await using var harness = await Harness.CreateAsync();
+        harness.Client.TerminalTextOverride = "{PRIVATE_INVALID_OUTPUT";
+        var result = await harness.Runner.ExecuteAsync(harness.Execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, diagnostic.RetryDisposition);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
+        Assert.NotEqual(0, report.ExitCode); Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication);
+        Assert.Equal(0, harness.FreezeCalls); Assert.Equal(2, harness.Client.Calls);
+        // Isolate the metadata predicate with the actual observed immutable snapshot.
+        var onlyDiagnostic = report with { Publication = null, Documents = [], AcceptedFiles = [], TerminalCoverage = [], Inventory = [] };
+        typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .SetValue(harness.Runner, Task.FromResult(result with { Report = onlyDiagnostic }));
+        harness.AuthorityAllowed = false;
+        var hidden = await harness.Runner.ExecuteAsync(harness.Execution);
+        Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Null(hidden.Report.Publication); Assert.Empty(hidden.Report.Documents);
+        Assert.Same(diagnostic, report.WorkerDiagnostics); Assert.Equal(2, harness.Client.Calls); Assert.Equal(1, harness.BeginCalls);
+    }
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task OneFile_ActualPipelinePublishesReadableCl_AndSameRunDoesNotDispatchTwiceAsync()
     {
@@ -29,6 +79,7 @@ public sealed class OctoberScanGenerateRunnerTests
         var report = Assert.IsType<OctoberScanReport>(first.Report);
         Assert.Equal(0, report.ExitCode);
         Assert.Equal("cl-only", report.CompletedStage);
+        Assert.Null(report.WorkerDiagnostics);
         Assert.Single(report.AcceptedFiles);
         Assert.Single(report.Documents);
         Assert.Equal(2, harness.Client.Calls);
@@ -452,6 +503,7 @@ public sealed class OctoberScanGenerateRunnerTests
             internal bool SynchronousBeforeResponse;
             internal Task? ResponseGate;
             internal bool IncludeWitnessFreeUnknown;
+            internal string? TerminalTextOverride;
             public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
             public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
             {
@@ -474,7 +526,7 @@ public sealed class OctoberScanGenerateRunnerTests
                 {
                     SawToolResult = history.SelectMany(message => message.Contents).OfType<FunctionResultContent>().Any();
                     const string json = """{"units":[{"semanticSelector":"file","parentSelector":null,"title":"Conditional execution","anchors":[{"startLine":1,"endLine":2}],"sections":[{"sectionId":"logic","ordinal":0,"title":"Behavior","claims":[{"claimGroupId":"rule","text":"Run executes when enabled.","qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}],"limitations":[]}]}]}],"observations":[],"uncertainties":[]}""";
-                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(IncludeWitnessFreeUnknown ? json.Replace("\"uncertainties\":[]", "\"uncertainties\":[{\"key\":\"same-unknown\",\"explanation\":\"Runtime deployment is not established.\",\"evidence\":[],\"limitations\":[]}]") : json), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = ChatFinishReason.Stop };
+                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(TerminalTextOverride ?? (IncludeWitnessFreeUnknown ? json.Replace("\"uncertainties\":[]", "\"uncertainties\":[{\"key\":\"same-unknown\",\"explanation\":\"Runtime deployment is not established.\",\"evidence\":[],\"limitations\":[]}]") : json)), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = ChatFinishReason.Stop };
                 }
             }
             public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
