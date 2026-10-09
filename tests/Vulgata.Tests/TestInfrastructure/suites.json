@@ -269,6 +269,12 @@
   "OctoberScan/OctoberScanRunSourceFactoryTests.cs": {
     "suite": "SelfContained"
   },
+  "OctoberScan/OctoberScanOperatorExchangeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberScanSequentialRunTests.cs": {
+    "suite": "SelfContained"
+  },
   "OctoberScan/OctoberScanGenerateRunnerTests.cs": {
     "suite": "SelfContained"
   },

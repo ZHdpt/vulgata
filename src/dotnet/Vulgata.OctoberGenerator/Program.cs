@@ -19,6 +19,38 @@ namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static OctoberOperatorRootSelectionOptions? ReadOperatorRootSelectionOptions(IConfiguration configuration,
+        OctoberScanPolicy policy, OctoberBusinessSettings? settings, OctoberRuntimeConfiguration runtime)
+    {
+        if (policy.OutputStage == "cl-only") return null;
+        string mode = configuration["October:BusinessRootSelectionMode"] ?? "exact-settings";
+        if (policy.OutputStage != "cl-and-bl" || settings is null || !settings.IsValid())
+            throw new InvalidOperationException("October operator root configuration is invalid.");
+        if (mode == "exact-settings") return new();
+        string? directory = configuration["October:BusinessRootSelectionDirectory"];
+        if (mode != "operator" || !settings.Roots.IsEmpty || string.IsNullOrWhiteSpace(directory) ||
+            directory.Trim() != directory || !Path.IsPathFullyQualified(directory) || directory.Any(char.IsControl) ||
+            !int.TryParse(configuration["October:BusinessRootSelectionTimeoutSeconds"],
+                System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int timeout) || timeout is < 1 or > 300)
+            throw new InvalidOperationException("October operator root configuration is invalid.");
+        directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+        string? parent = Path.GetDirectoryName(directory);
+        if (parent is null || !Directory.Exists(parent) || Path.Exists(directory) ||
+            runtime.PreparedRoots.Any(root => OperatorPathsOverlap(root.PhysicalRootPath, directory)) ||
+            OperatorPathsOverlap(runtime.LogDirectory, directory) || OperatorPathsOverlap(runtime.JavaNavigation.DisposableStateRoot, directory))
+            throw new InvalidOperationException("October operator directory is unavailable.");
+        return new(mode, directory, timeout);
+    }
+
+    private static bool OperatorPathsOverlap(string left, string right)
+    {
+        left = Path.TrimEndingDirectorySeparator(Path.GetFullPath(left));
+        right = Path.TrimEndingDirectorySeparator(Path.GetFullPath(right));
+        return string.Equals(left, right, StringComparison.OrdinalIgnoreCase) ||
+            left.StartsWith(Path.EndsInDirectorySeparator(right) ? right : right + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+            right.StartsWith(Path.EndsInDirectorySeparator(left) ? left : left + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    }
+
     internal static void AddBusinessReaderDependencies(IServiceCollection services, string ownedLogDirectory,
         TimeProvider? timeProvider = null)
     {
@@ -32,7 +64,8 @@ public static class OctoberGeneratorEntryPoint
     internal static OctoberBusinessRunComposition? ComposeBusiness(OctoberScanPolicy policy,
         OctoberSelectedWorkerProvider provider, OctoberBusinessSettings? settings,
         IDbContextFactory<OctoberDbContext> contexts, IOctoberKnowledgeOperationLog log,
-        Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader)
+        Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
+        OctoberOperatorRootSelectionOptions? operatorSelection = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(policy);
         if (policy.OutputStage == "cl-only") return null;
@@ -41,6 +74,9 @@ public static class OctoberGeneratorEntryPoint
             provider is null || provider.Precedence != "only-source" || provider.Profile.ApiType != ApiType.ChatCompletions ||
             contexts is null || log is null || bindReader is null)
             throw new InvalidOperationException("October Business composition is invalid.");
+        if (operatorSelection is not null && operatorSelection.Mode != "exact-settings" &&
+            (operatorSelection.Mode != "operator" || !settings.Roots.IsEmpty || operatorSelection.TimeoutSeconds is not (>= 1 and <= 300)))
+            throw new InvalidOperationException("October Business operator selection is invalid.");
         var profile = provider.Profile;
         var projection = new BusinessProviderConfigurationProjection(provider.SourceIdentity, 0, profile.Name,
             "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference);
@@ -50,7 +86,12 @@ public static class OctoberGeneratorEntryPoint
             authorization => new OctoberFlowPlanningInputLoader(contexts, authorization),
             (authorization, guard) => new OctoberFlowPublicationStore(contexts, authorization, guard, log),
             settings.SelectRoots, projection, LoadBusinessInstructions("Resolution"), LoadBusinessInstructions("Synthesis"),
-            settings.Limits, settings.MaximumAttemptTokens) { BindReader = bindReader };
+            settings.Limits, settings.MaximumAttemptTokens)
+        {
+            BindReader = bindReader, OperatorSelection = operatorSelection,
+            InteractAsync = operatorSelection?.Mode == "operator"
+                ? new OctoberOperatorRootSelection(operatorSelection, timeProvider).InteractAsync : null
+        };
     }
 
     private static string LoadBusinessInstructions(string name)
@@ -68,13 +109,13 @@ public static class OctoberGeneratorEntryPoint
         ISecretEncryptionService encryption, OctoberScanPolicy policy, OctoberSelectedWorkerProvider provider,
         OctoberBusinessSettings? settings,
         Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null, OctoberOperatorRootSelectionOptions? operatorSelection = null)
     {
         TimeProvider clock = timeProvider ?? TimeProvider.System;
         var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock);
         return new OctoberGenerateRunner(dependencies with
         {
-            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader)
+            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock)
         }, clock);
     }
 
@@ -218,6 +259,7 @@ public static class OctoberGeneratorEntryPoint
             OctoberAuthorityConfiguration authorityConfiguration;
             OctoberRuntimeConfiguration? runtime = null;
             OctoberBusinessSettings? businessSettings = null;
+            OctoberOperatorRootSelectionOptions? operatorSelection = null;
             string keyRingPath;
             string applicationName;
             try
@@ -227,6 +269,7 @@ public static class OctoberGeneratorEntryPoint
                 {
                     runtime = await ReadRuntimeConfigurationAsync(configuration);
                     businessSettings = await ReadBusinessSettingsForPolicyAsync(configuration, command.ScanPolicy!);
+                    operatorSelection = ReadOperatorRootSelectionOptions(configuration, command.ScanPolicy!, businessSettings, runtime);
                 }
                 authorityConfiguration = ReadAuthorityConfiguration(configuration, command);
                 keyRingPath = Required(configuration, "DataProtection:KeyRingPath");
@@ -342,7 +385,7 @@ public static class OctoberGeneratorEntryPoint
                 ? ComposeGenerate(runtime!, localAuthority,
                     new ConfiguredContextFactory(scope.ServiceProvider.GetRequiredService<DbContextOptions<OctoberDbContext>>()),
                     protection.GetRequiredService<ISecretEncryptionService>(), command.ScanPolicy!, workerProvider!,
-                    businessSettings, bindReader) : null;
+                    businessSettings, bindReader, operatorSelection: operatorSelection) : null;
             OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
             return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
                 settle: generate is null ? null : () => generate.DisposeAsync());

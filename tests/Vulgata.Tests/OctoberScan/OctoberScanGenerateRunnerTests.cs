@@ -104,15 +104,21 @@ public sealed class OctoberScanGenerateRunnerTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task MultipleSelectedFiles_DoNotSilentlyPickOneOrClaimCompletionAsync()
+    public async Task MultipleSelectedFiles_AcceptEveryFileWithDistinctOwnershipAsync()
     {
         await using var harness = await Harness.CreateAsync();
         await harness.AddSelectedFileAsync();
         var result = await harness.Runner.ExecuteAsync(harness.Execution);
-        Assert.NotEqual(0, result.Report!.ExitCode);
-        Assert.Equal(0, harness.Client.Calls);
-        Assert.Empty(result.Report.AcceptedFiles);
-        Assert.Null(result.Report.Publication);
+        Assert.Equal(0, result.Report!.ExitCode);
+        Assert.Equal(2, result.Report.AcceptedFiles.Length);
+        Assert.Equal(2, result.Report.TerminalCoverage.Length);
+        Assert.Equal(2, result.Report.AcceptedFiles.Select(file => file.AdmissionId).Distinct().Count());
+        Assert.Equal(new[] { "src/Order.cs", "src/Second.cs" }, result.Report.TerminalCoverage.Select(file => file.Origin.RelativePath).Order(StringComparer.Ordinal).ToArray());
+        Assert.All(result.Report.TerminalCoverage, file => Assert.Equal(CoverageDisposition.Accepted, file.Disposition));
+        Assert.Equal(2, result.Report.Documents.Length);
+        Assert.NotNull(result.Report.Publication);
+        await using var context = harness.Database.Factory.CreateDbContext();
+        Assert.Equal(2, await context.AcceptedFileManifests.CountAsync());
     }
 
     [Trait("Suite", "SelfContained")]
@@ -247,6 +253,7 @@ public sealed class OctoberScanGenerateRunnerTests
     {
         internal const string Text = "if (enabled) Run();\nreturn;";
         private readonly PreparedSourceFixture _files;
+        private readonly PreparedSourceFixture? _secondFiles;
         private readonly LocalAuthority _authority;
         internal readonly OperatorSession Session = new();
         internal OctoberKnowledgeAcceptanceFixture Database { get; }
@@ -260,25 +267,26 @@ public sealed class OctoberScanGenerateRunnerTests
         internal int FreezeCalls;
         internal bool HoldCleanup, FailCleanup, HoldSourceOpen, HoldClientCreation;
         internal int SourceDisposals;
-        private readonly List<Source> _ownedSources = [];
+        private readonly List<IOctoberScanRunSource> _ownedSources = [];
         internal TaskCompletionSource CleanupEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource ReleaseCleanup { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource FactoryEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource ReleaseFactory { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource SourceDisposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal Action? AfterPublish;
+        internal Action<Guid>? BeforeFrame;
         internal IOctoberLocalAuthority Authority => _authority;
         internal bool AuthorityAllowed { get => _authority.Allowed; set => _authority.Allowed = value; }
         internal Task AddSelectedFileAsync() => File.WriteAllTextAsync(Path.Combine(_files.PreparedRootPath, "src", "Second.cs"), Text);
         internal int BeginCalls, SourceOpens, ClientCreations;
         internal TaskCompletionSource BeginCommitted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal TaskCompletionSource ReleaseBegin { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private Harness(OctoberKnowledgeAcceptanceFixture database, PreparedSourceFixture files, OctoberSetupRequest setup, OctoberAuthorizedSelection selection)
+        private Harness(OctoberKnowledgeAcceptanceFixture database, PreparedSourceFixture files, OctoberSetupRequest setup, OctoberAuthorizedSelection selection, PreparedSourceFixture? secondFiles = null)
         {
-            Database = database; _files = files;
+            Database = database; _files = files; _secondFiles = secondFiles;
             _authority = new(setup, selection, new(database.Binding.BatchId, database.Origin.RepositoryId, Session.SubjectId, PreparedSourcePurpose.WorkerSourceRead, "controlled-original-approval", database.Origin.RootBindingIdentity, "owned source"), Session);
             var policy = new OctoberScanPolicy { OutputStage = "cl-only", WorkerCap = 1, MaximumTotalTokens = 1000000, MaximumRequestsPerMinute = 1000000,
-                SourceRules = [new(database.Origin.RepositoryId, "src", "selected", "Explicit owned one-file scope")] };
+                SourceRules = [.. setup.Repositories.Select(repository => new OctoberScanSourceRule(repository.RepositoryId, "src", "selected", "Explicit owned source scope"))] };
             Execution = new(Session, new Bound(setup.TargetId, setup.BatchId, new(setup, selection, DateTimeOffset.UtcNow)), selection, policy,
                 new("controlled-explicit-provider", "only-source", new("selected", ApiType.ChatCompletions, "https://never-contacted.invalid/v1", "controlled-model", "credential://controlled"), "unused-protected-test-secret"));
             Dependencies = new(_authority, _ => ConfigurationValid,
@@ -287,16 +295,21 @@ public sealed class OctoberScanGenerateRunnerTests
                 {
                     SourceOpens++;
                     Assert.True(BeginCommitted.Task.IsCompletedSuccessfully);
-                    var source = new Source(_files, _authority.Approval, remaining);
+                    IOctoberScanRunSource source = secondFiles is null ? new Source(_files, _authority.Approval, remaining)
+                        : new MultipleSources(new Dictionary<Guid, Source>
+                        {
+                            [_authority.Approval.RepositoryId] = new Source(_files, _authority.Approval, remaining),
+                            [setup.Repositories[1].RepositoryId] = new Source(secondFiles, _authority.Approval with { RepositoryId = setup.Repositories[1].RepositoryId, RootBindingIdentity = setup.Repositories[1].RootBindingIdentity, ApprovalIdentity = "controlled-second-approval" }, remaining),
+                        });
                     _ownedSources.Add(source);
                     if (HoldSourceOpen) { FactoryEntered.TrySetResult(); await ReleaseFactory.Task; }
                     return new ObservedSource(this, source);
                 },
-                async (_, _) => { ClientCreations++; if (HoldClientCreation) { FactoryEntered.TrySetResult(); await ReleaseFactory.Task; } return (IChatClient)Client; },
+                async (_, _) => { ClientCreations++; if (HoldClientCreation) { FactoryEntered.TrySetResult(); await ReleaseFactory.Task; } return (IChatClient)(secondFiles is null ? Client : new Model()); },
                 ports => new ObservedWriter(this, new OctoberKnowledgeWriter(database.Factory, ports.CompletionAuthority, ports.SourceVerifier, ports.ProducerAuthorization, ports.CommitGuard, database.Log, ports.FreezeAuthority)), database.Log);
             Runner = new(Dependencies);
         }
-        internal static async Task<Harness> CreateAsync(OctoberKnowledgeAcceptanceFixture? suppliedDatabase = null)
+        internal static async Task<Harness> CreateAsync(OctoberKnowledgeAcceptanceFixture? suppliedDatabase = null, bool twoRepositories = false)
         {
             var database = suppliedDatabase ?? await OctoberKnowledgeAcceptanceFixture.CreateSqliteAsync();
             var files = await PreparedSourceFixture.CreateAsync();
@@ -304,26 +317,37 @@ public sealed class OctoberScanGenerateRunnerTests
             Directory.CreateDirectory(Path.Combine(files.PreparedRootPath, ".codegraph"));
             await File.WriteAllTextAsync(Path.Combine(files.PreparedRootPath, "src", "Order.cs"), Text, new UTF8Encoding(false));
             var repository = new OctoberRepositorySelection(database.Origin.RepositoryId, null, database.Origin.RootBindingIdentity, "owned source");
-            var selectedContext = new OctoberSelectedAdvisoryContext("controlled-authority", [repository],
+            PreparedSourceFixture? secondFiles = null;
+            var repositories = new List<OctoberRepositorySelection> { repository };
+            if (twoRepositories)
+            {
+                secondFiles = await PreparedSourceFixture.CreateAsync();
+                Directory.CreateDirectory(Path.Combine(secondFiles.PreparedRootPath, "src"));
+                Directory.CreateDirectory(Path.Combine(secondFiles.PreparedRootPath, ".codegraph"));
+                await File.WriteAllTextAsync(Path.Combine(secondFiles.PreparedRootPath, "src", "Order.cs"), Text, new UTF8Encoding(false));
+                repositories.Add(new(Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff1"), null, "controlled-second-root", "second owned source"));
+            }
+            var selectedContext = new OctoberSelectedAdvisoryContext("controlled-authority", [.. repositories],
                 [new(repository.RepositoryId, OctoberContextScope.Repository, OctoberContextApplicability.Selected, database.AdvisoryContributor.AdvisoryRecordId, OctoberKnowledgeAcceptanceFixture.AdvisorySnapshot, OctoberContextEvidenceKind.AdvisoryNotSourceProof),
                  new(repository.RepositoryId, OctoberContextScope.Global, OctoberContextApplicability.Selected, database.UncitedContributor.AdvisoryRecordId, OctoberKnowledgeAcceptanceFixture.UncitedSnapshot, OctoberContextEvidenceKind.AdvisoryNotSourceProof)], []);
-            var setup = new OctoberSetupRequest(database.Binding.TargetId, database.Binding.BatchId, [repository],
+            var setup = new OctoberSetupRequest(database.Binding.TargetId, database.Binding.BatchId, [.. repositories],
                 [new(OctoberContextScope.Repository, database.AdvisoryContributor.AdvisoryRecordId!.Value), new(OctoberContextScope.Global, database.UncitedContributor.AdvisoryRecordId!.Value)], "");
             setup = setup with { SelectionDigest = OctoberSelectionDigest.Compute(setup, selectedContext) };
-            var selection = new OctoberAuthorizedSelection(setup.TargetId, setup.BatchId, "owned-operator", database.Binding.CanonicalDatabaseIdentity, [repository.RepositoryId], setup.SelectionDigest, selectedContext);
+            var selection = new OctoberAuthorizedSelection(setup.TargetId, setup.BatchId, "owned-operator", database.Binding.CanonicalDatabaseIdentity, [.. repositories.Select(item => item.RepositoryId)], setup.SelectionDigest, selectedContext);
             await using (var context = database.Factory.CreateDbContext())
             {
                 var batch = await context.Batches.SingleAsync(); batch.SelectionDigest = setup.SelectionDigest;
+                if (twoRepositories) context.RepositorySelections.Add(new() { BatchId = setup.BatchId, RepositoryId = repositories[1].RepositoryId, RootBindingIdentity = repositories[1].RootBindingIdentity, OperatorLabel = repositories[1].OperatorLabel });
                 await context.SaveChangesAsync();
             }
-            return new(database, files, setup, selection);
+            return new(database, files, setup, selection, secondFiles);
         }
         public async ValueTask DisposeAsync()
         {
             ReleaseBegin.TrySetResult(); ReleaseFactory.TrySetResult(); ReleaseCleanup.TrySetResult();
             try { await Runner.DisposeAsync(); }
             catch (InvalidOperationException) when (FailCleanup) { /* Expected unconfirmed cleanup; test owns actual inert resources below. */ }
-            finally { foreach (var source in _ownedSources) await source.DisposeAsync(); await _files.DisposeAsync(); await Database.DisposeAsync(); }
+            finally { foreach (var source in _ownedSources) await source.DisposeAsync(); await _files.DisposeAsync(); if (_secondFiles is not null) await _secondFiles.DisposeAsync(); await Database.DisposeAsync(); }
         }
         private sealed class Admission(Harness owner, IOctoberGenerateAdmissionStore inner) : IOctoberGenerateAdmissionStore
         {
@@ -377,10 +401,10 @@ public sealed class OctoberScanGenerateRunnerTests
             public Task<PreparedSourceAuthorityResult> VerifySourceApprovalAsync(IOctoberOperatorSession session, string target, PreparedSourceApproval requested, CancellationToken token) => Task.FromResult(new PreparedSourceAuthorityResult(Allowed ? PreparedSourceAuthorityStatus.Current : PreparedSourceAuthorityStatus.Revoked, Allowed ? approval : null));
             public Task<OctoberRevocationStatus> RevokeSourceApprovalAsync(IOctoberOperatorSession session, string target, string identity, CancellationToken token) => Task.FromResult(OctoberRevocationStatus.Revoked);
         }
-        private sealed class ObservedSource(Harness owner, Source inner) : IOctoberScanRunSource
+        private sealed class ObservedSource(Harness owner, IOctoberScanRunSource inner) : IOctoberScanRunSource
         {
             public Task<PreparedSourceResult> ListSourceAsync(Guid repository, PreparedSourceListRequest request, CancellationToken token = default) => inner.ListSourceAsync(repository, request, token);
-            public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) => inner.AcquireFrameAsync(repository, path, token);
+            public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) { owner.BeforeFrame?.Invoke(repository); return inner.AcquireFrameAsync(repository, path, token); }
             public OctoberToolRuntime GetRuntime(Guid repository) => inner.GetRuntime(repository);
             public async ValueTask DisposeAsync()
             {
@@ -391,6 +415,13 @@ public sealed class OctoberScanGenerateRunnerTests
                 await inner.DisposeAsync();
                 owner.SourceDisposed.TrySetResult();
             }
+        }
+        private sealed class MultipleSources(Dictionary<Guid, Source> sources) : IOctoberScanRunSource
+        {
+            public Task<PreparedSourceResult> ListSourceAsync(Guid repository, PreparedSourceListRequest request, CancellationToken token = default) => sources[repository].ListSourceAsync(repository, request, token);
+            public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) => sources[repository].AcquireFrameAsync(repository, path, token);
+            public OctoberToolRuntime GetRuntime(Guid repository) => sources[repository].GetRuntime(repository);
+            public async ValueTask DisposeAsync() { foreach (var source in sources.Values) await source.DisposeAsync(); }
         }
         private sealed class Source : IOctoberScanRunSource
         {
@@ -417,12 +448,25 @@ public sealed class OctoberScanGenerateRunnerTests
             internal int DisposeCalls;
             internal TaskCompletionSource DisposedTask { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
             internal bool SawToolResult;
+            internal Action? BeforeResponse;
+            internal bool SynchronousBeforeResponse;
+            internal Task? ResponseGate;
+            internal bool IncludeWitnessFreeUnknown;
             public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
             public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
             {
                 int call = Calls++;
                 var history = messages.ToArray();
+                if (SynchronousBeforeResponse)
+                {
+                    // The executor has already recorded dispatch before MoveNext. Complete this
+                    // controlled cancellation synchronously so no unfinished iterator is implied.
+                    BeforeResponse?.Invoke();
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
                 await Task.Yield();
+                if (!SynchronousBeforeResponse) BeforeResponse?.Invoke();
+                if (ResponseGate is not null) await ResponseGate;
                 cancellationToken.ThrowIfCancellationRequested();
                 if (call == 0)
                     yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new FunctionCallContent("read-primary", "read_prepared_source", new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs", ["byteOffset"] = 0L, ["byteCount"] = Encoding.UTF8.GetByteCount(Text) }), new UsageContent(new UsageDetails { InputTokenCount = 100, OutputTokenCount = 10 })], FinishReason = ChatFinishReason.ToolCalls };
@@ -430,7 +474,7 @@ public sealed class OctoberScanGenerateRunnerTests
                 {
                     SawToolResult = history.SelectMany(message => message.Contents).OfType<FunctionResultContent>().Any();
                     const string json = """{"units":[{"semanticSelector":"file","parentSelector":null,"title":"Conditional execution","anchors":[{"startLine":1,"endLine":2}],"sections":[{"sectionId":"logic","ordinal":0,"title":"Behavior","claims":[{"claimGroupId":"rule","text":"Run executes when enabled.","qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}],"limitations":[]}]}]}],"observations":[],"uncertainties":[]}""";
-                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(json), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = ChatFinishReason.Stop };
+                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(IncludeWitnessFreeUnknown ? json.Replace("\"uncertainties\":[]", "\"uncertainties\":[{\"key\":\"same-unknown\",\"explanation\":\"Runtime deployment is not established.\",\"evidence\":[],\"limitations\":[]}]") : json), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = ChatFinishReason.Stop };
                 }
             }
             public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
