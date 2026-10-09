@@ -1,4 +1,7 @@
 using System.Collections.Immutable;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using Xunit.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
@@ -9,7 +12,7 @@ using Vulgata.Tests.TestInfrastructure;
 namespace Vulgata.Tests.OctoberScan;
 
 /// <summary>Actual owner Begin/accept/freeze/publication on owned SQLite, two contained roots and controlled Worker/native adapters.</summary>
-public sealed class OctoberScanSequentialRunTests
+public sealed class OctoberScanSequentialRunTests(ITestOutputHelper output)
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
@@ -119,30 +122,83 @@ public sealed class OctoberScanSequentialRunTests
         await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync(twoRepositories: true);
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        int clients = 0;
+        int clients = 0, frames = 0;
+        var models = new ConcurrentQueue<OctoberScanGenerateRunnerTests.Harness.Model>();
+        var writes = new WriterProgress();
+        var elapsed = Stopwatch.StartNew();
+        string phase = "entry";
+        host.BeforeFrame = _ => Interlocked.Increment(ref frames);
         await using var runner = new OctoberGenerateRunner(host.Dependencies with
         {
-            CreateWorkerClient = (_, _) => Task.FromResult<IChatClient>(++clients == 1
-                ? new OctoberScanGenerateRunnerTests.Harness.Model { BeforeResponse = () => entered.TrySetResult(), ResponseGate = release.Task }
-                : new OctoberScanGenerateRunnerTests.Harness.Model()),
+            CreateWorkerClient = (_, _) =>
+            {
+                var model = ++clients == 1
+                    ? new OctoberScanGenerateRunnerTests.Harness.Model { BeforeResponse = () => entered.TrySetResult(), ResponseGate = release.Task }
+                    : new OctoberScanGenerateRunnerTests.Harness.Model();
+                models.Enqueue(model);
+                return Task.FromResult<IChatClient>(model);
+            },
+            CreateKnowledgeWriter = ports => new ProgressWriter(writes, host.Dependencies.CreateKnowledgeWriter(ports)),
         });
         var execution = host.Execution;
         var original = runner.ExecuteAsync(execution);
+        void Snapshot()
+        {
+            try
+            {
+                var observed = models.ToArray();
+                output.WriteLine("foreign-execution-progress phase={0}; elapsedMs={1}; entered={2}; released={3}; taskStatus={4}; begin={5}; clients={6}; modelCalls={7}; modelDisposals={8}; frames={9}; sourceOpens={10}; sourceDisposals={11}; acceptEntered={12}; acceptCompleted={13}; freezeEntered={14}; freezeCompleted={15}; publishEntered={16}; publishCompleted={17}; lookupEntered={18}; lookupCompleted={19}",
+                    phase, elapsed.ElapsedMilliseconds, entered.Task.IsCompleted, release.Task.IsCompleted, (int)original.Status,
+                    host.BeginCalls, clients, observed.Sum(model => Volatile.Read(ref model.Calls)), observed.Sum(model => Volatile.Read(ref model.DisposeCalls)),
+                    Volatile.Read(ref frames), host.SourceOpens, host.SourceDisposals,
+                    writes.Read(0), writes.Read(1), writes.Read(2), writes.Read(3), writes.Read(4), writes.Read(5), writes.Read(6), writes.Read(7));
+            }
+            catch (Exception) { /* Diagnostics must not replace the original test failure. */ }
+        }
         try
         {
             Assert.Same(entered.Task, await Task.WhenAny(entered.Task, original).WaitAsync(TimeSpan.FromSeconds(5)));
+            phase = "foreign-rejection";
             var foreign = await runner.ExecuteAsync(execution with { });
             Assert.NotEqual(0, foreign.Report!.ExitCode);
             Assert.Contains(foreign.Report.Gaps, gap => gap.Code == "run_binding_unavailable");
             Assert.False(original.IsCompleted);
             release.TrySetResult();
+            phase = "released";
             var report = Assert.IsType<OctoberScanReport>((await original.WaitAsync(TimeSpan.FromSeconds(10))).Report);
+            phase = "completion";
             Assert.Equal(0, report.ExitCode); Assert.Equal(2, report.AcceptedFiles.Length); Assert.Equal(2, report.TerminalCoverage.Length);
             Assert.All(report.TerminalCoverage, coverage => Assert.Equal(CoverageDisposition.Accepted, coverage.Disposition));
             Assert.Equal(2, report.TerminalCoverage.Select(coverage => coverage.AdmissionId).Distinct().Count());
             Assert.Equal(1, host.BeginCalls);
         }
-        finally { release.TrySetResult(); await original.WaitAsync(TimeSpan.FromSeconds(10)); }
+        catch { Snapshot(); throw; }
+        finally
+        {
+            phase = "finally";
+            release.TrySetResult();
+            try { await original.WaitAsync(TimeSpan.FromSeconds(10)); }
+            catch { Snapshot(); throw; }
+        }
+    }
+    private sealed class WriterProgress
+    {
+        private readonly int[] _counts = new int[8];
+        internal void Increment(int index) => Interlocked.Increment(ref _counts[index]);
+        internal int Read(int index) => Volatile.Read(ref _counts[index]);
+    }
+    private sealed class ProgressWriter(WriterProgress progress, IOctoberKnowledgeWriter inner) : IOctoberKnowledgeWriter
+    {
+        private async Task<KnowledgeWriteResult> TrackAsync(int index, Func<Task<KnowledgeWriteResult>> operation)
+        {
+            progress.Increment(index);
+            try { return await operation(); }
+            finally { progress.Increment(index + 1); }
+        }
+        public Task<KnowledgeWriteResult> AcceptCompletedFileAsync(CompletedFileSubmission submission, CancellationToken token = default) => TrackAsync(0, () => inner.AcceptCompletedFileAsync(submission, token));
+        public Task<KnowledgeWriteResult> FreezeCorpusAsync(CorpusFreezeRequest request, CancellationToken token = default) => TrackAsync(2, () => inner.FreezeCorpusAsync(request, token));
+        public Task<KnowledgeWriteResult> PublishSelectionAsync(PublicationRequest request, CancellationToken token = default) => TrackAsync(4, () => inner.PublishSelectionAsync(request, token));
+        public Task<KnowledgeWriteResult> LookupOperationAsync(KnowledgeBinding binding, OperationKey operation, string digest, CancellationToken token = default) => TrackAsync(6, () => inner.LookupOperationAsync(binding, operation, digest, token));
     }
     private sealed class Observation(string boundary)
     {
