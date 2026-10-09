@@ -310,6 +310,8 @@ internal sealed partial class OctoberGenerateRunner
         KnowledgeWriteStatus? persistence = exact && result.PersistenceStatus is { } observed && Enum.IsDefined(observed) ? observed : null;
         _businessDiagnostics = finalizer
             ? _businessDiagnostics! with { FinalizerStatus = status, FinalizerPersistenceStatus = persistence,
+                OriginalSynthesisFailureReason = exact && result.OriginalSynthesisFailureReason is { } reason &&
+                    reason != BusinessSynthesisFailureReason.None && Enum.IsDefined(reason) ? reason : null,
                 OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact }
             : _businessDiagnostics! with { LookupStatus = status, LookupPersistenceStatus = persistence,
                 OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact };

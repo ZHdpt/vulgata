@@ -308,6 +308,9 @@ public sealed class OctoberScanEntryPointTests
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("observed")]
+    [InlineData("reason-none")]
+    [InlineData("reason-null")]
+    [InlineData("reason-undefined")]
     [InlineData("unknown")]
     [InlineData("undefined-status")]
     [InlineData("undefined-boundary")]
@@ -317,7 +320,10 @@ public sealed class OctoberScanEntryPointTests
     public async Task BusinessDiagnostics_ProjectOnlySafeObservedScalarsAndRespectOutputFencesAsync(string condition)
     {
         var snapshot = new OctoberBusinessDiagnosticSnapshot(BusinessFinalizationStatus.CommitIndeterminate, null,
-            BusinessFinalizationStatus.Published, KnowledgeWriteStatus.AlreadyCommitted, OctoberBusinessDiagnosticBoundary.ExactLookup, false);
+            BusinessFinalizationStatus.Published, KnowledgeWriteStatus.AlreadyCommitted, OctoberBusinessDiagnosticBoundary.ExactLookup, false) { OriginalSynthesisFailureReason = BusinessSynthesisFailureReason.ProposalShape };
+        if (condition == "reason-none") snapshot = snapshot with { OriginalSynthesisFailureReason = BusinessSynthesisFailureReason.None };
+        if (condition == "reason-null") snapshot = snapshot with { OriginalSynthesisFailureReason = null };
+        if (condition == "reason-undefined") snapshot = snapshot with { OriginalSynthesisFailureReason = (BusinessSynthesisFailureReason)99999 };
         if (condition == "unknown") snapshot = snapshot with { FinalizerStatus = null, LookupStatus = null, LookupPersistenceStatus = null };
         if (condition == "undefined-status") snapshot = snapshot with { FinalizerStatus = (BusinessFinalizationStatus)99999, FinalizerPersistenceStatus = (KnowledgeWriteStatus)99999, LookupStatus = (BusinessFinalizationStatus)99999, LookupPersistenceStatus = (KnowledgeWriteStatus)99999 };
         if (condition == "undefined-boundary") snapshot = snapshot with { Boundary = (OctoberBusinessDiagnosticBoundary)99999 };
@@ -342,9 +348,11 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("businessDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "cl-only" or "foreign-publication" or "undefined-boundary") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "boundary", "finalizerPersistenceStatus", "finalizerStatus", "lookupPersistenceStatus", "lookupStatus", "operationMismatch" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "boundary", "finalizerPersistenceStatus", "finalizerStatus", "lookupPersistenceStatus", "lookupStatus", "operationMismatch", "originalSynthesisFailureReason" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
         Assert.Equal("ExactLookup", diagnostic.GetProperty("boundary").GetString());
         Assert.False(diagnostic.GetProperty("operationMismatch").GetBoolean());
+        if (condition is "reason-none" or "reason-null" or "reason-undefined") Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("originalSynthesisFailureReason").ValueKind);
+        else Assert.Equal("ProposalShape", diagnostic.GetProperty("originalSynthesisFailureReason").GetString());
         if (condition is "unknown" or "undefined-status")
         {
             foreach (string field in new[] { "finalizerStatus", "finalizerPersistenceStatus", "lookupStatus", "lookupPersistenceStatus" }) Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty(field).ValueKind);
