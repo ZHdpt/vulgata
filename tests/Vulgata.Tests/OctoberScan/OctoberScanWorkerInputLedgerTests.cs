@@ -387,6 +387,117 @@ public sealed class OctoberScanWorkerInputLedgerTests
         }
         Assert.True(finalVerification);
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("java-empty", true)]
+    [InlineData("java-limited", true)]
+    [InlineData("java-readiness", true)]
+    [InlineData("java-configuration", true)]
+    [InlineData("java-protocol", true)]
+    [InlineData("java-authority", false)]
+    [InlineData("java-missing-repository", false)]
+    [InlineData("java-foreign-repository", false)]
+    [InlineData("graph-no-match", true)]
+    [InlineData("graph-unavailable", true)]
+    [InlineData("graph-failed", true)]
+    [InlineData("graph-timeout", true)]
+    [InlineData("graph-limited", true)]
+    [InlineData("graph-undefined", false)]
+    [InlineData("graph-authority", false)]
+    [InlineData("graph-missing-repository", false)]
+    [InlineData("graph-foreign-repository", false)]
+    public async Task CurrentContract_NonSuccessNavigationEnvelope_RequiresExactRepositoryAsync(string scenario, bool allowed)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        int acquisitions = 0;
+        var ledger = new OctoberWorkerInputLedger(host.Request, (_, _) => { acquisitions++; return Task.FromResult<IOctoberVerifiedFileFrame?>(null); }, (_, _) => Task.FromResult(DisclosureStatus.Allowed));
+        bool graph = scenario.StartsWith("graph-", StringComparison.Ordinal);
+        Guid repository = scenario.EndsWith("missing-repository", StringComparison.Ordinal) ? Guid.Empty : scenario.EndsWith("foreign-repository", StringComparison.Ordinal) ? Guid.NewGuid() : host.Source.Origin.RepositoryId;
+        SourceMetadataOperation operation = graph ? SourceMetadataOperation.CodeGraphExplore : SourceMetadataOperation.JavaDefinition;
+        string path = graph ? "." : host.Source.Origin.RelativePath;
+        string request = graph ? "{\"query\":\"controlled\",\"maxFiles\":4}" : JsonSerializer.Serialize(new { relativePath = path, line = 1, character = 1, maximumLocations = 10 });
+        object result;
+        if (graph)
+        {
+            var status = scenario switch
+            {
+                "graph-no-match" => CodeGraphToolInvocationStatus.NoMatch,
+                "graph-failed" => CodeGraphToolInvocationStatus.Failed,
+                "graph-timeout" => CodeGraphToolInvocationStatus.TimedOut,
+                "graph-limited" => CodeGraphToolInvocationStatus.Limited,
+                "graph-undefined" => (CodeGraphToolInvocationStatus)99999,
+                "graph-authority" => CodeGraphToolInvocationStatus.AuthorityUnavailable,
+                _ => CodeGraphToolInvocationStatus.Unavailable,
+            };
+            result = new CodeGraphToolInvocationResult { RepositoryId = scenario == "graph-missing-repository" ? null : repository, Status = status,
+                IssueCode = status == CodeGraphToolInvocationStatus.NoMatch ? CodeGraphToolIssueCode.None : CodeGraphToolIssueCode.InvocationFailed };
+        }
+        else
+        {
+            var outcome = scenario switch
+            {
+                "java-empty" => PreparedJavaNavigationOutcome.NoResultObserved,
+                "java-limited" => PreparedJavaNavigationOutcome.Limited,
+                "java-configuration" => PreparedJavaNavigationOutcome.ConfigurationUnavailable,
+                "java-protocol" => PreparedJavaNavigationOutcome.ProtocolFailed,
+                "java-authority" => PreparedJavaNavigationOutcome.AuthorityUnavailable,
+                _ => PreparedJavaNavigationOutcome.ReadinessFailed,
+            };
+            result = new PreparedJavaNavigationResult(repository, PreparedJavaNavigationOperation.Definition, outcome, [], [], null);
+        }
+        // Envelope-only characterization: a real runtime may separately invalidate primary currentness.
+        var admitted = await ledger.AdmitToolResultAsync(operation, path, request, result);
+        Assert.Equal(allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied, admitted.Status); Assert.Equal(0, acquisitions);
+        if (!allowed) { Assert.Null(admitted.Result); Assert.Null(await ledger.FreezeForCompletionAsync()); return; }
+        if (graph) Assert.Equal(((CodeGraphToolInvocationResult)result).Status, Assert.IsType<CodeGraphToolInvocationResult>(admitted.Result).Status);
+        else Assert.Equal(((PreparedJavaNavigationResult)result).Outcome, Assert.IsType<PreparedJavaNavigationResult>(admitted.Result).Outcome);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.VerifiedSources);
+        var metadata = Assert.Single(snapshot.Contributors.Where(contributor => contributor.Kind == ContributorKind.SourceMetadata));
+        Assert.Equal(operation, metadata.MetadataOrigin!.Operation); Assert.Equal(host.Source.Origin.RepositoryId, metadata.MetadataOrigin.RepositoryId);
+        Assert.Equal(path, metadata.MetadataOrigin.NormalizedScopePath);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("incomplete", true)]
+    [InlineData("missing", true)]
+    [InlineData("invalid-range", true)]
+    [InlineData("unsupported-text", true)]
+    [InlineData("empty-without-envelope", false)]
+    [InlineData("empty-at-eof", true)]
+    [InlineData("missing-repository", false)]
+    [InlineData("foreign-repository", false)]
+    public async Task CurrentContract_NonSuccessReadEnvelope_DistinguishesAbsentPayloadFromVerifiedEofAsync(string scenario, bool allowed)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        int acquisitions = 0;
+        var ledger = new OctoberWorkerInputLedger(host.Request, (_, _) => { acquisitions++; return Task.FromResult<IOctoberVerifiedFileFrame?>(null); }, (_, _) => Task.FromResult(DisclosureStatus.Allowed));
+        var primary = host.Source;
+        bool eof = scenario == "empty-at-eof";
+        long offset = eof ? primary.ByteLength : 0;
+        Guid repository = scenario == "missing-repository" ? Guid.Empty : scenario == "foreign-repository" ? Guid.NewGuid() : primary.Origin.RepositoryId;
+        var outcome = scenario switch
+        {
+            "missing" => PreparedSourceOutcome.Missing,
+            "invalid-range" => PreparedSourceOutcome.InvalidRange,
+            "unsupported-text" => PreparedSourceOutcome.UnsupportedText,
+            "empty-without-envelope" or "empty-at-eof" => PreparedSourceOutcome.CompleteEmpty,
+            _ => PreparedSourceOutcome.Incomplete,
+        };
+        var result = new PreparedSourceResult { RepositoryId = repository, Operation = PreparedSourceOperation.ReadTextRange, Outcome = outcome,
+            Text = eof ? string.Empty : null, ReadLocation = eof ? new(repository, primary.Origin.RelativePath, offset, offset) : null,
+            ObservedFileByteLength = eof ? primary.ByteLength : null };
+        var admitted = await ledger.AdmitToolResultAsync(SourceMetadataOperation.ReadTextRange, primary.Origin.RelativePath,
+            JsonSerializer.Serialize(new { relativePath = primary.Origin.RelativePath, byteOffset = offset, byteCount = 1 }), result);
+        Assert.Equal(allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied, admitted.Status); Assert.Equal(0, acquisitions);
+        if (!allowed) { Assert.Null(admitted.Result); Assert.Null(await ledger.FreezeForCompletionAsync()); return; }
+        var disclosed = Assert.IsType<PreparedSourceResult>(admitted.Result); Assert.Equal(outcome, disclosed.Outcome);
+        Assert.Equal(result.Text, disclosed.Text); Assert.Equal(result.ReadLocation, disclosed.ReadLocation);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.VerifiedSources); Assert.Equal(primary.Origin, snapshot.VerifiedSources[0].Origin);
+        Assert.Single(snapshot.Contributors.Where(contributor => contributor.Kind == ContributorKind.SourceMetadata));
+    }
     private static OctoberWorkerInputLedger Ledger(OctoberScanAcceptanceHarness host, params Frame[] frames) => new(host.Request,
         (path, _) => Task.FromResult<IOctoberVerifiedFileFrame?>(frames.SingleOrDefault(frame => frame.Origin.RelativePath == path)),
         (_, _) => Task.FromResult(DisclosureStatus.Allowed));
