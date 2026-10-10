@@ -981,14 +981,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     public async Task UnsupportedFinishObservation_ReportsOnlyCurrentLeafScalarsWithoutChangingOutcomeAsync(string finishKind, string usageKind, bool lowCap)
     {
         var request = Request(new Frame("if (enabled) Run();\nreturn;"));
-        if (lowCap)
-        {
-            using var measure = new TerminalObservationClient([[new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.Length }]]);
-            var measuredScope = new Scope();
-            await new OctoberFileWorkerExecutor(measure, measuredScope).ExecuteAsync(request, []);
-            long measuredInput = Assert.Single(measuredScope.Requests).MaximumTokens - 8192;
-            request = request with { Limits = request.Limits with { MaximumTokensPerRequest = measuredInput + 137 } };
-        }
+        if (lowCap) request = request with { Limits = request.Limits with { MaximumOutputTokensPerRequest = 137 } };
         ChatFinishReason finish = finishKind == "length" ? ChatFinishReason.Length : finishKind == "filter" ? ChatFinishReason.ContentFilter : new(finishKind);
         var updates = new List<ChatResponseUpdate> { new() { Role = ChatRole.Assistant, Contents = [new TextContent("PRIVATE_UNACCEPTED_FRAGMENT")], FinishReason = finish } };
         if (usageKind != "missing") updates.Insert(0, new() { Contents = [new UsageContent(new UsageDetails
@@ -1073,6 +1066,99 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(1, transport.Calls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
         Assert.DoesNotContain("PRIVATE", JsonSerializer.Serialize(result));
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(8192, false)]
+    [InlineData(8192, true)]
+    [InlineData(137, false)]
+    [InlineData(137, true)]
+    public async Task FixedOutputReservation_ExactFitDispatchesFullCapAndOneLessRejectsWithoutShrinkingAsync(int outputCap, bool under)
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;")) with
+        { Limits = new(MaximumOutputTokensPerRequest: outputCap) };
+        ChatResponseUpdate[][] leaves = [[new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]];
+        using var measure = new TerminalObservationClient(leaves);
+        var measuredScope = new Scope();
+        Assert.Equal(OctoberFileWorkerStatus.Completed, (await new OctoberFileWorkerExecutor(measure, measuredScope).ExecuteAsync(request, [])).Status);
+        // The measured reservation includes the actual input proxy plus the requested output cap.
+        long required = Assert.Single(measuredScope.Requests).MaximumTokens;
+        Assert.Equal(outputCap, Assert.Single(measure.Caps));
+        using var client = new TerminalObservationClient(leaves);
+        var scope = new Scope();
+        var bounded = request with { Limits = request.Limits with { MaximumTokensPerRequest = required - (under ? 1 : 0) } };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(bounded, []);
+        Assert.Equal(under ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        if (under)
+        {
+            Assert.Empty(client.Caps); Assert.Empty(scope.Requests); Assert.Empty(scope.Leases);
+            Assert.Null(result.Proposal); Assert.Null(result.TerminalObservation);
+        }
+        else
+        {
+            Assert.Equal(outputCap, Assert.Single(client.Caps));
+            Assert.Equal(required, Assert.Single(scope.Requests).MaximumTokens);
+            var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FixedOutputReservation_GrowingReasoningAndToolHistoryRejectsNextLeafBeforeAdmissionAsync()
+    {
+        const string reasoning = "CONTROLLED_REPLAY_中文😀";
+        var tool = AIFunctionFactory.Create(() => "controlled tool result enlarges history", "read_prepared_source");
+        ChatResponseUpdate[][] leaves =
+        [
+            [new() { Role = ChatRole.Assistant, Contents = [new TextReasoningContent(reasoning), new FunctionCallContent("controlled", tool.Name, new Dictionary<string, object?>())], FinishReason = ChatFinishReason.ToolCalls }],
+            [new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]
+        ];
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        using var measure = new TerminalObservationClient(leaves);
+        var measuredScope = new Scope();
+        Assert.Equal(OctoberFileWorkerStatus.Completed, (await new OctoberFileWorkerExecutor(measure, measuredScope).ExecuteAsync(request, [tool])).Status);
+        Assert.Equal(2, measuredScope.Requests.Count);
+        Assert.True(measuredScope.Requests[1].MaximumTokens > measuredScope.Requests[0].MaximumTokens);
+        Assert.All(measure.Caps, cap => Assert.Equal(8192, cap));
+        using var client = new TerminalObservationClient(leaves);
+        var scope = new Scope();
+        var bounded = request with { Limits = request.Limits with { MaximumTokensPerRequest = measuredScope.Requests[1].MaximumTokens - 1 } };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(bounded, [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(8192, Assert.Single(client.Caps)); Assert.Single(scope.Requests);
+        Assert.Equal(1, result.SettledToolCalls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Null(result.Proposal); Assert.Null(result.TerminalObservation);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(0)]
+    [InlineData(8193)]
+    public async Task FixedOutputReservation_InvalidConfiguredOutputRefusesBeforeAdmissionAsync(int outputCap)
+    {
+        using var client = new TerminalObservationClient([]);
+        var scope = new Scope();
+        var request = Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputTokensPerRequest: outputCap) };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(scope.Requests); Assert.Empty(client.Caps); Assert.Null(result.Proposal);
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FixedOutputReservation_InvalidOverflowSizedTotalRefusesBeforeAdmissionAsync()
+    {
+        using var client = new TerminalObservationClient([]);
+        var scope = new Scope();
+        var request = Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumTokensPerRequest: long.MaxValue) };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(scope.Requests); Assert.Empty(client.Caps); Assert.Null(result.Proposal);
     }
 
     private sealed class TerminalObservationClient(ChatResponseUpdate[][] leaves) : IChatClient
@@ -2269,7 +2355,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             Assert.Equal("json_object", format.GetProperty("type").GetString());
             Assert.True(body.TryGetProperty("max_completion_tokens", out var capValue));
             int cap = capValue.GetInt32();
-            Assert.InRange(cap, 1, (int)Math.Min(8192, request.Limits.MaximumTokensPerRequest));
+            Assert.Equal(request.Limits.MaximumOutputTokensPerRequest, cap);
             Assert.False(body.TryGetProperty("max_tokens", out _));
             bool thinking = body.TryGetProperty("thinking", out _);
             bool reasoningEffort = body.TryGetProperty("reasoning_effort", out _);

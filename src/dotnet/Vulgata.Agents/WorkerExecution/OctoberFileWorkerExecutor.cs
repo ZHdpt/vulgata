@@ -73,7 +73,8 @@ public sealed record OctoberFileWorkerLimits(
     int MaximumOutputUtf8Bytes = 262144,
     TimeSpan? RequestTimeout = null,
     long MaximumTokensPerRequest = 32768,
-    int MaximumContinuationWindows = 4);
+    int MaximumContinuationWindows = 4,
+    int MaximumOutputTokensPerRequest = 8192);
 
 public sealed record OctoberFileWorkerRequest(
     KnowledgeBinding Binding,
@@ -219,7 +220,7 @@ public sealed class OctoberFileWorkerExecutor
                     ResponseFormat = ChatResponseFormat.Json,
                     Tools = tools.Cast<AITool>().ToList(),
                     AllowMultipleToolCalls = false,
-                    MaxOutputTokens = 8192
+                    MaxOutputTokens = request.Limits.MaximumOutputTokensPerRequest
                 }
             });
             var history = new List<ChatMessage> { new(ChatRole.System, prompt) };
@@ -374,6 +375,7 @@ public sealed class OctoberFileWorkerExecutor
         if (limits.MaximumProviderRounds is < 1 or > 100 || limits.MaximumToolCalls is < 0 or > 1000 ||
             limits.MaximumWindowUtf8Bytes is < 4 or > 1048576 || limits.MaximumInputUtf8Bytes is < 1 or > 16777216 ||
             limits.MaximumOutputUtf8Bytes is < 1 or > 1048576 || limits.MaximumTokensPerRequest is < 1 or > 1048576 ||
+            limits.MaximumOutputTokensPerRequest is < 1 or > 8192 ||
             limits.MaximumContinuationWindows is < 1 or > 100 ||
             limits.RequestTimeout is { } duration && (duration <= TimeSpan.Zero || duration > TimeSpan.FromMinutes(10)))
             return false;
@@ -517,16 +519,23 @@ public sealed class OctoberFileWorkerExecutor
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(cancellationToken), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
             _observedStage = OctoberWorkerFailureStage.Admission;
             ChatMessage[] snapshot = messages.ToArray();
-            int input = MeasureInput(snapshot, options);
-            _inputBytes = checked(_inputBytes + input);
-            if (_inputBytes > request.Limits.MaximumInputUtf8Bytes || input >= request.Limits.MaximumTokensPerRequest)
+            int inputBytes = MeasureInputBytes(snapshot, options);
+            _inputBytes = checked(_inputBytes + inputBytes);
+            if (_inputBytes > request.Limits.MaximumInputUtf8Bytes)
+                throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+
+            // Retain the existing byte-based input reservation policy. This is a
+            // proxy, not a provider tokenizer or a proven context upper bound.
+            long inputTokenReservation = inputBytes;
+            int outputTokens = request.Limits.MaximumOutputTokensPerRequest;
+            long requiredTokens = checked(inputTokenReservation + outputTokens);
+            if (requiredTokens > request.Limits.MaximumTokensPerRequest)
                 throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
             ChatOptions bounded = options?.Clone() ?? new();
-            int outputTokens = (int)Math.Min(8192, request.Limits.MaximumTokensPerRequest - input);
             bounded.MaxOutputTokens = outputTokens;
             var admissionRequest = new OctoberWorkerProviderAttemptRequest(request.RunId, request.FileWorkstreamId,
                 Guid.NewGuid(), request.ProviderProfileId, request.Limits.RequestTimeout ?? TimeSpan.FromMinutes(2),
-                checked(input + outputTokens));
+                requiredTokens);
             long waitStarted = Stopwatch.GetTimestamp();
             ProviderAdmission admission = await scope.AcquireWorkerAttemptAsync(admissionRequest, cancellationToken);
             if (admission.Status != ProviderAdmissionStatus.Granted || admission.Lease is null)
@@ -956,7 +965,7 @@ public sealed class OctoberFileWorkerExecutor
                 => throw new NotSupportedException();
         }
 
-        private static int MeasureInput(IEnumerable<ChatMessage> messages, ChatOptions? options)
+        private static int MeasureInputBytes(IEnumerable<ChatMessage> messages, ChatOptions? options)
         {
             int bytes = 256;
             foreach (ChatMessage message in messages)

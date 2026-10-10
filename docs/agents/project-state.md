@@ -29,8 +29,15 @@ Preparation is delegated to the MBS sample chat. Keep actual prepared-root paths
 out of tracked code/config; use CLI or ignored local configuration. Successful
 presentation data is retained until explicit deletion; later runs use fresh owned
 databases. Failed incomplete owned runs may be cleaned after settlement/diagnostics.
-Exact sample scope and retained runtime bindings remain pending preparation; no
-real-source run is implied by the completed disposable synthetic qualification.
+The assigned Scan lane now has 77 manifest-verified prepared files and retained
+runtime bindings. Its real single-Java-file CL generation/publication passed after
+the reasoning replay correction; ordinary-reader access was not requalified in
+that run. The full slice then stopped at the channel POM, whose isolated trial
+confirmed Length at a reduced 4,011-token output cap. The user approved fixed-output
+admission and a new bounded POM trial. Current Scan-owned implementation and
+verification are in [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation-verification.md);
+earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
+retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
 volume, creating only a new isolated database; do not stop/delete shared resources.
 The user removed cumulative request/token caps for this run; current finite fields

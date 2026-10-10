@@ -269,8 +269,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
                         execution.Provider.Profile.Name, frame, baseline, advisory,
                         new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
-                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(32768, execution.Policy.MaximumTotalTokens!.Value),
-                            MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows));
+                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(40960, execution.Policy.MaximumTotalTokens!.Value),
+                            MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
+                            MaximumOutputTokensPerRequest: 8192));
                     var ledger = new OctoberWorkerInputLedger(request,
                         async (path, callToken) =>
                         {

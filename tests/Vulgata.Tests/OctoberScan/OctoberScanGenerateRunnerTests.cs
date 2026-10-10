@@ -25,6 +25,32 @@ namespace Vulgata.Tests.OctoberScan;
 public sealed class OctoberScanGenerateRunnerTests
 {
 
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(1000000, true)]
+    [InlineData(32768, false)]
+    public async Task FixedOutputReservation_GeneratorAllows40960EnvelopeWithoutOverridingSmallerCumulativeBoundAsync(long totalTokens, bool fits)
+    {
+        await using var host = await Harness.CreateAsync();
+        host.Client.FirstReasoning = new string('r', 20000);
+        host.Client.TerminalFinishOverride = ChatFinishReason.Length;
+        var execution = host.Execution with { Policy = host.Execution.Policy with { MaximumTotalTokens = totalTokens } };
+        var result = await host.Runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
+        Assert.Equal(fits ? OctoberFileWorkerStatus.InvalidOutput : OctoberFileWorkerStatus.BudgetExceeded, diagnostic.Status);
+        Assert.Equal(fits ? 2 : 1, host.Client.Calls);
+        Assert.All(host.Client.OutputCaps, cap => Assert.Equal(8192, cap));
+        if (fits)
+        {
+            Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, diagnostic.TerminalFailure);
+            Assert.Equal(8192, Assert.IsType<OctoberWorkerTerminalObservation>(diagnostic.TerminalObservation).MaximumOutputTokens);
+        }
+        else Assert.Null(diagnostic.TerminalObservation);
+        Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication); Assert.Equal(0, host.FreezeCalls);
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task UnsupportedFinishObservation_ActualRunnerMapsFinalLeafAndReauthorizesDiagnosticReplayAsync()
@@ -890,6 +916,8 @@ public sealed class OctoberScanGenerateRunnerTests
         internal sealed class Model : IChatClient
         {
             internal int Calls;
+            internal string? FirstReasoning;
+            internal List<int?> OutputCaps { get; } = [];
             internal int DisposeCalls;
             internal TaskCompletionSource DisposedTask { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
             internal bool SawToolResult;
@@ -905,6 +933,7 @@ public sealed class OctoberScanGenerateRunnerTests
             public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
             {
                 int call = Calls++;
+                OutputCaps.Add(options?.MaxOutputTokens);
                 var history = messages.ToArray();
                 if (SynchronousBeforeResponse)
                 {
@@ -917,6 +946,7 @@ public sealed class OctoberScanGenerateRunnerTests
                 if (!SynchronousBeforeResponse) BeforeResponse?.Invoke();
                 if (ResponseGate is not null) await ResponseGate;
                 cancellationToken.ThrowIfCancellationRequested();
+                if (call == 0 && FirstReasoning is not null) yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextReasoningContent(FirstReasoning)] };
                 if (call == 0)
                     yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new FunctionCallContent("read-primary", FirstCallJava ? "navigate_java_definition" : "read_prepared_source", FirstCallJava ? new Dictionary<string, object?> { ["relativePath"] = "src/Probe.java", ["line"] = 1, ["character"] = 1, ["maximumLocations"] = 5 } : new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs", ["byteOffset"] = 0L, ["byteCount"] = Encoding.UTF8.GetByteCount(Text) }), new UsageContent(new UsageDetails { InputTokenCount = 100, OutputTokenCount = 10 })], FinishReason = ChatFinishReason.ToolCalls };
                 else
