@@ -133,9 +133,14 @@ The user subsequently approved two-level per-primary-file tool budgets: advisory
 and hard48, explicit Scan policy settings and fresh model-visible counters before
 each request. Same-file attempts/corrections retain the counter; only a new primary
 file resets it. Other guards remain unchanged. Independent review accepted the
-implementation. Full SelfContained remains non-green; affected requalification and
-the authorized isolated account POM, then conditional whole-slice retry are recorded
-in [file tool budget evidence](../../specs/20-1-Oct14-scan/file-tool-budget-verification.md).
+implementation, committed at `c82adf22`. All1052 affected SelfContained checks pass;
+full-suite GREEN remains unconfirmed. The isolated account POM completed in74.82
+seconds with five CL Documents and confirmed publication. The conditional whole
+scan accepted seven files, then stopped on GuestSyncOp.java after431.11 seconds:
+Syntax/Root JSON error, MismatchedDelimiter before EOF, identical HTTP/SDK/parser
+text despite Stop. No tool-budget or deadline failure;17 requests, usage known,
+no whole-run publication. Data retained, no further paid retry. See
+[file tool budget evidence](../../specs/20-1-Oct14-scan/file-tool-budget-verification.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.

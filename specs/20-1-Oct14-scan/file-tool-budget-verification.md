@@ -67,3 +67,55 @@ Generator and test output copies match: Vulgata.Agents.dll SHA256
 `C4A70BFC545F02C33C3FD7A3804463651290AF897C93E000E6A4564AC5E6469C`;
 Vulgata.OctoberGenerator.dll SHA256
 `69225D5EDBB775DF8143AB7A856BDA824BF77E2B92018F47845B08AA97155684`.
+
+## Real isolated POM and conditional whole scan
+
+Reviewed implementation commit `c82adf22` ran account pom.xml alone. Report
+`generate-4d0dd47f81fd4f848d0399e14561782a.stdout`: exit0 in74.82 seconds,
+no timeout or settlement check, Completed/Complete/Confirmed. Two provider
+requests,42824 input/17826 output tokens, all usage known. One accepted primary
+file produced five CL Documents in publication
+`35353a66-f512-4eb2-b22a-8994bca4aaa4`:
+
+| Logical Document | Exact version |
+| --- | --- |
+| a84a1156-e63c-c9e9-114a-4fa1af29b430 | 90145d74-b58c-43e7-a264-e3e1030ba029 |
+| de83017f-c7e6-13be-6cfa-63148ec62e43 | ecd860c5-82ce-4bb7-a64f-413864e5873a |
+| 23dd5d69-9e86-32de-9b7e-49a55765d8ce | 68cad5a4-20c4-4108-9407-837feac8af95 |
+| 099af32a-6d66-53be-c74d-8a38de4a44be | c901e9db-6f33-4330-83cf-2411bc20752e |
+| e53adfe0-2934-4a82-9f45-998fce71c379 | 7409f682-ef18-4078-8b6d-62ce258559ed |
+
+All77 prepared-source hashes still match. This proves real accepted CL publication
+for this POM, not ordinary-reader qualification or that the advisory was crossed;
+the terminal report does not expose executed tool counts.
+
+The user's success condition was met. Fresh whole target `phone-ddbd64a3c12d`,
+batch `44146569-84be-41a3-a72f-0e8d57b96955`, database
+`vulgata_oct_pilot_92076fb8a4d742e9b6fd190f54f1718b` selects all77 approved files.
+Bootstrap, source-copy verification, prepare and select passed. Same reviewed
+executable and explicit32/48/low/393216 settings; isolated and historical data
+remain retained. Whole-run outcome follows separately.
+
+Whole report `generate-e0e7c71189a644a7ad7007b24258e8e1.stdout`: exit1 in431.11
+seconds, no timeout, NeedsSettlementCheck=false, empty stderr. Failed/Partial;
+seven accepted files, zero returned Documents, publication NotRequested.17
+provider requests,316839 input/85308 output tokens, all usage known. Account POM,
+EleAcctCustInfoCacheOp.java, GetMobileByAccessCodeOp.java,
+GetMobileToReplaceResOp.java, QueryAllCreditCardOp.java, BaseAntiRequestOp.java
+and LoginAntiRequestOp.java were accepted. Account
+`src/main/java/cn/com/yitong/actions/cust/custcenter/GuestSyncOp.java` failed
+InvalidOutput/ProposalParse, Syntax/Root. No tool or budget failure is reported.
+
+Final bounded HTTP observation: MaxTokens393216, HTTP/SDK Stop, DONE seen;
+HTTP/SDK/parser each2640 UTF-8 bytes and equal. Each reports MismatchedDelimiter,
+two open objects/two open arrays, atEof=false.343 reasoning tokens reported by
+both HTTP and SDK. This is malformed provider JSON reaching the parser unchanged,
+not a local tool limit or evidence of output-cap truncation. The existing shared
+single corrective-turn allowance remains unchanged; no local JSON repair,
+validation waiver, further budget widening or additional paid retry was applied.
+
+All77 prepared-source hashes still match after the whole run. All successful
+isolated and partial historical/whole-run data remain retained. Controlled budget
+behavior and isolated POM real publication pass; whole-slice publication and
+ordinary-reader qualification remain incomplete. PostgreSQL suite was not rerun;
+these real operations used only the separately approved owned databases.
