@@ -56,3 +56,31 @@ Final affected SelfContained run `isolation-c19fd58f062547c6b558e3206bda9cc1`
 passed **436/436**, zero skips. Independent final-shape review accepted the exact
 diagnostic assertion updates. No production change followed the full suite;
 focused GREEN does not erase its recorded failures or qualify external resources.
+
+## Real whole-slice outcome
+
+Reviewed production commit `d0f3b691dd22e2df97cb835a31c220b9c3dc0f05` ran one
+whole-slice Generate on the fresh target above. Report
+`generate-33cf4565e5204d9bb855cf95157e573e.stdout` records exit 1 after **109.05
+seconds**, no timeout, `NeedsSettlementCheck=false`, empty stderr. All 77 files
+were inventoried/selected. Three provider requests used 21276 input and 26340
+output tokens, all usage known. No budget failure occurred.
+
+Two files were accepted: `mbs_account/pom.xml` and
+`mbs_account/src/main/java/cn/com/yitong/actions/acct/EleAcctCustInfoCacheOp.java`.
+The third, `mbs_account/src/main/java/cn/com/yitong/actions/acct/GetMobileByAccessCodeOp.java`,
+failed `InvalidOutput / ProposalParse / Syntax / Root`. Execution Failed,
+coverage Partial, publication NotRequested, zero returned Documents. This is
+accepted-file progress, not published Knowledge or ordinary-reader qualification.
+
+The bounded observer reports MaxTokens=393216, HTTP and SDK finish Stop, DONE
+seen, 3519 UTF-8 text bytes identical at HTTP, SDK and parser boundaries. Each
+JSON summary reports MissingClosingDelimiters at EOF with one object and one
+array still open. HTTP/SDK reasoning usage agrees at 991 for this failing leaf.
+Thus this attempt did not reproduce admission rejection or Length exhaustion;
+the observed response content itself was incomplete JSON despite Stop. No raw
+source/response/reasoning is recorded here and no blind JSON repair was applied.
+
+All 77 prepared-source hashes remain unchanged. The owned run database and
+diagnostics, including the two accepted files, are retained; previous data and
+shared container/volume are preserved. No automatic retry or further paid call.

@@ -75,6 +75,13 @@ other finite guards remain; specific budget categories distinguish local failure
 All 436 affected tests pass; full-suite GREEN remains unconfirmed. See
 [input admission evidence](../../specs/20-1-Oct14-scan/input-admission-verification.md)
 for diagnosis, review, test failures and the separately recorded live attempt.
+On `d0f3b691`, the post-fix whole scan passed admission and accepted the account
+POM plus EleAcctCustInfoCacheOp.java. It stopped on GetMobileByAccessCodeOp.java
+after 109.05 seconds: InvalidOutput/ProposalParse, incomplete JSON despite HTTP
+and SDK Stop; bounded observation confirms identical HTTP/SDK/parser text.
+Three requests, 21276 input/26340 output tokens, all usage known. Two accepted
+files, zero returned Documents, publication not requested. No retry; owned data
+retained. This does not qualify complete generation/publication or reader access.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
