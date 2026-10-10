@@ -516,3 +516,21 @@ synthetic/SDK assembly diagnosis and a bounded remediation proposal, not product
 repair or further paid/capture/native/database runs. The earlier accepted partial
 CL/database and shared container/volume remain untouched. No presentation-ready
 dataset, ordinary-user read, BL, Chat or graph success is claimed for this run.
+
+## Approved complete-proposal prompt trial
+
+The user explicitly approved the narrow final-window prompt clarification and
+one fresh-database trial, without raw capture. Reviewed source-free suffix tests
+`0f3cedd8` integrated as `8af27960`: validly ordered closing deltas survive the
+actual SDK/Worker path; no application suffix-loss defect was reproduced. Scan
+owns only the prompt clarification and controlled verification/review. Root owns
+integration and the one live trial. Strict acceptance, full-file coverage, evidence,
+budgets and retry behavior remain unchanged; no bracket repair or automatic series.
+
+All77 source hashes still match. Prior diagnostic-owned CodeGraph state was moved
+outside the prepared roots into its owned run archive after boundary/reparse checks.
+Fresh production-API bootstrap created run `phone-ea740448c019`, batch
+`dcf7f41e-be52-4439-9490-99ab7d58de38`, database
+`vulgata_oct_pilot_9d483f1b39ad41b0b0f2ad40abbcfd61` in the existing PG17 container.
+The temporary bootstrap Web stopped. No Generate/provider request has occurred
+at this checkpoint; it awaits the reviewed prompt and current-source verification.
