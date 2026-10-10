@@ -104,6 +104,13 @@ files, then stopped on LoginAntiSendOp.java with host run_unavailable after153.4
 seconds; no Worker diagnostic identifies the exception. Four requests, all usage
 known, no whole-run publication. Both fresh databases and isolated publication
 are retained. See [stop/JSON evidence](../../specs/20-1-Oct14-scan/stop-json-wire-verification.md).
+The user authorized fixing this host failure and isolated-first qualification.
+A matching CodeGraph lifecycle defect is corrected: next-file preparation now
+renews an expired native session once, only after confirmed old-session cleanup
+and within the existing runtime lifetime/replacement cap. Original exception was
+not captured; historical causality is inferred from the deterministic path/timing.
+All100 affected tests pass; SelfContained4791/4792 retains the report-parser failure.
+See [session renewal evidence](../../specs/20-1-Oct14-scan/session-renewal-verification.md).
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

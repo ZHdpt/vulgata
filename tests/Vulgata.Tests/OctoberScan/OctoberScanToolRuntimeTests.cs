@@ -143,6 +143,86 @@ public sealed class OctoberScanToolRuntimeTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_ExpiredSessionReplacesOnceAndReusesReadyReplacementAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        var first = Assert.Single(harness.CodeGraphSessions);
+        first.Expired = true;
+
+        var replacementReadiness = await runtime.PrepareAsync();
+
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, replacementReadiness.Status);
+        Assert.True(first.Disposed);
+        var replacement = Assert.Single(harness.CodeGraphSessions.Skip(1));
+        Assert.False(replacement.Disposed);
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        Assert.Equal(2, harness.CodeGraphSessions.Count);
+        Assert.Equal(1, harness.Preparations);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_ExpiredReplacementIsReturnedWithoutOpeningThirdSessionAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        var first = Assert.Single(harness.CodeGraphSessions);
+        first.Expired = true;
+        harness.NewCodeGraphExpired = true;
+
+        var result = await runtime.PrepareAsync();
+
+        Assert.Equal(CodeGraphToolReadinessStatus.Expired, result.Status);
+        Assert.True(first.Disposed);
+        Assert.Equal(2, harness.CodeGraphSessions.Count);
+        Assert.False(harness.CodeGraphSessions[1].Disposed);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_UnconfirmedExpiredSessionCleanupDoesNotOpenReplacementAsync()
+    {
+        var harness = await RuntimeHarness.CreateAsync();
+        var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        var first = Assert.Single(harness.CodeGraphSessions);
+        first.Expired = true;
+        first.FailCleanup = true;
+
+        var result = await runtime.PrepareAsync();
+
+        Assert.Equal(CodeGraphToolReadinessStatus.Unavailable, result.Status);
+        Assert.False(first.Disposed);
+        Assert.Single(harness.CodeGraphSessions);
+        Assert.Equal(CodeGraphToolReadinessStatus.Unavailable, (await runtime.PrepareAsync()).Status);
+        Assert.Single(harness.CodeGraphSessions);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => runtime.DisposeAsync().AsTask());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => harness.DisposeAsync().AsTask());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_RepeatedExpiredReplacementsRetainTwentyOneSessionCapAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        harness.CodeGraphSessions[0].Expired = true;
+        harness.NewCodeGraphExpired = true;
+
+        for (int replacement = 0; replacement < 20; replacement++)
+            Assert.Equal(CodeGraphToolReadinessStatus.Expired, (await runtime.PrepareAsync()).Status);
+
+        Assert.Equal(21, harness.CodeGraphSessions.Count);
+        Assert.Equal(CodeGraphToolReadinessStatus.Unavailable, (await runtime.PrepareAsync()).Status);
+        Assert.Equal(21, harness.CodeGraphSessions.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExploreAsync_JavaPhaseInFlight_WaitsForVerifiedJavaDisposalAsync()
     {
         await using var harness = await RuntimeHarness.CreateAsync();
@@ -415,6 +495,7 @@ public sealed class OctoberScanToolRuntimeTests
         internal int Preparations { get; private set; }
         internal int IdentityObservations { get; private set; }
         internal List<ControlledCodeGraph> CodeGraphSessions { get; } = [];
+        internal bool NewCodeGraphExpired { get; set; }
         internal ControlledJava Java { get; }
         internal bool JavaWasDisposedBeforeCodeGraph { get; private set; }
         internal static async Task<RuntimeHarness> CreateAsync()
@@ -439,14 +520,14 @@ public sealed class OctoberScanToolRuntimeTests
         private ControlledCodeGraph NewCodeGraph()
         {
             JavaWasDisposedBeforeCodeGraph = Java.Disposed;
-            var session = new ControlledCodeGraph(RepositoryId);
+            var session = new ControlledCodeGraph(RepositoryId) { Expired = NewCodeGraphExpired };
             CodeGraphSessions.Add(session);
             return session;
         }
         public async ValueTask DisposeAsync()
         {
-            await _descriptor.DisposeAsync();
-            await _fixture.DisposeAsync();
+            try { await _descriptor.DisposeAsync(); }
+            finally { await _fixture.DisposeAsync(); }
         }
     }
 
@@ -472,9 +553,15 @@ public sealed class OctoberScanToolRuntimeTests
     {
         internal bool Disposed { get; private set; }
         internal bool Expired { get; set; }
+        internal bool FailCleanup { get; set; }
         public Task<CodeGraphToolReadiness> DiscoverAsync(CancellationToken cancellationToken) => Task.FromResult(new CodeGraphToolReadiness(Expired ? CodeGraphToolReadinessStatus.Expired : CodeGraphToolReadinessStatus.Ready, repository, IssueCode: Expired ? CodeGraphToolIssueCode.SessionExpired : CodeGraphToolIssueCode.None));
         public Task<CodeGraphToolInvocationResult> ExploreAsync(string query, int maxFiles, CancellationToken cancellationToken) => Task.FromResult(new CodeGraphToolInvocationResult { RepositoryId = repository, Status = CodeGraphToolInvocationStatus.Complete });
-        public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
+        public ValueTask DisposeAsync()
+        {
+            if (FailCleanup) return ValueTask.FromException(new InvalidOperationException("Controlled unconfirmed CodeGraph disposal"));
+            Disposed = true;
+            return ValueTask.CompletedTask;
+        }
     }
 
     internal sealed class ControlledJava(Guid repository) : IPreparedJavaNavigationContext

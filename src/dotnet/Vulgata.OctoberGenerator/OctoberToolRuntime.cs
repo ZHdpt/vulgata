@@ -229,7 +229,17 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
         => RunAsync(async token =>
         {
             await EnsurePreparedAsync(token);
-            return await EnsureSessionAsync(token);
+            CodeGraphToolReadiness readiness = await EnsureSessionAsync(token);
+            // New-file tool registration also discovers the cached native session.
+            // Renew its bounded lifetime just as ExploreAsync does, never before
+            // old-session settlement or outside the original runtime lifetime.
+            if (readiness.Status == CodeGraphToolReadinessStatus.Expired && Available)
+            {
+                await CloseSessionAsync();
+                token.ThrowIfCancellationRequested();
+                if (Available) readiness = await EnsureSessionAsync(token);
+            }
+            return readiness;
         }, cancelled => new CodeGraphToolReadiness(cancelled ? CodeGraphToolReadinessStatus.Cancelled : CodeGraphToolReadinessStatus.Unavailable,
             RepositoryId, CodeGraphToolStage.Preparation, cancelled ? CodeGraphToolIssueCode.Cancelled : CodeGraphToolIssueCode.SourceUnprepared), cancellationToken);
 
