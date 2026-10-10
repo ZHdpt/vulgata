@@ -54,6 +54,12 @@ report-parser failure. Committed at `b3192899`, the real low-effort trial also e
 with Length: one request, 9748 input/8192 output tokens, all output reported as
 reasoning; no accepted CL/publication and no whole-slice retry. See
 [low reasoning evidence](../../specs/20-1-Oct14-scan/low-reasoning-verification.md).
+The subsequent user-requested 393216 output-cap experiment is opt-in through
+`October:WorkerMaxOutputTokens`, retaining the 8192 default and other guards.
+All 20 cap/replay and 434 affected-class checks pass; full SelfContained is
+4773/4775 (report parser and CodeGraph cancellation failures). See
+[maximum-cap evidence](../../specs/20-1-Oct14-scan/max-output-cap-verification.md)
+for the separately recorded real POM retry.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

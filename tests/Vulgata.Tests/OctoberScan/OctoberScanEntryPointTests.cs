@@ -23,6 +23,30 @@ public sealed class OctoberScanEntryPointTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData("absent", 8192)]
+    [InlineData("minimum", 1)]
+    [InlineData("default", 8192)]
+    [InlineData("maximum", 393216)]
+    [InlineData("zero", 0)]
+    [InlineData("above-maximum", 393217)]
+    [InlineData("malformed", -1)]
+    public void MaxOutputCap_WorkerConfigurationDefaultsAndEnforcesInclusiveBounds(string condition, int expected)
+    {
+        var values = new Dictionary<string, string?>();
+        if (condition != "absent")
+            values["October:WorkerMaxOutputTokens"] = condition == "malformed" ? "not-an-integer" : expected.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+
+        if (condition is "zero" or "above-maximum" or "malformed")
+        {
+            var error = Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadWorkerMaxOutputTokens(configuration));
+            Assert.DoesNotContain("not-an-integer", error.Message, StringComparison.Ordinal);
+        }
+        else Assert.Equal(expected, OctoberGeneratorEntryPoint.ReadWorkerMaxOutputTokens(configuration));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(null, true)]
     [InlineData("low", true)]
     [InlineData("", false)]
@@ -454,11 +478,12 @@ public sealed class OctoberScanEntryPointTests
     [InlineData("undefined-enum")]
     [InlineData("negative-counts")]
     [InlineData("excess-cap")]
+    [InlineData("max-cap")]
     public async Task UnsupportedFinishObservation_ConsoleProjectsOnlyWhitelistedScalarsAtExactFailureBoundaryAsync(string condition)
     {
         var observation = condition == "missing" ? new OctoberWorkerTerminalObservation() : new OctoberWorkerTerminalObservation(
             condition == "undefined-enum" ? (OctoberWorkerUnsupportedFinish)99999 : OctoberWorkerUnsupportedFinish.Length,
-            condition == "negative-counts" ? -1 : condition == "excess-cap" ? 8193 : 137,
+            condition == "negative-counts" ? -1 : condition == "excess-cap" ? 393217 : condition == "max-cap" ? 393216 : 137,
             condition == "negative-counts" ? -1 : condition == "zero" ? 0 : 101,
             condition == "negative-counts" ? -2 : condition == "zero" ? 0 : 37,
             condition == "negative-counts" ? -3 : condition == "zero" ? 0 : 29);
@@ -486,6 +511,7 @@ public sealed class OctoberScanEntryPointTests
         if (condition == "undefined-enum") Assert.Equal(JsonValueKind.Null, projected.GetProperty("finishReason").ValueKind);
         else Assert.Equal("Length", projected.GetProperty("finishReason").GetString());
         if (condition is "negative-counts" or "excess-cap") Assert.Equal(JsonValueKind.Null, projected.GetProperty("maximumOutputTokens").ValueKind);
+        else if (condition == "max-cap") Assert.Equal(393216, projected.GetProperty("maximumOutputTokens").GetInt32());
         else Assert.Equal(137, projected.GetProperty("maximumOutputTokens").GetInt32());
         foreach (var name in new[] { "inputTokens", "outputTokens", "reasoningTokens" })
             if (condition == "negative-counts") Assert.Equal(JsonValueKind.Null, projected.GetProperty(name).ValueKind);

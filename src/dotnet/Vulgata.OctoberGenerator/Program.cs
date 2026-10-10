@@ -19,6 +19,19 @@ namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static int ReadWorkerMaxOutputTokens(IConfiguration configuration)
+    {
+        const string key = "October:WorkerMaxOutputTokens";
+        string? value = configuration[key];
+        if (configuration.GetSection(key).GetChildren().Any())
+            throw new InvalidOperationException("October Worker token configuration is invalid.");
+        if (value is null) return 8192;
+        if (!int.TryParse(value, System.Globalization.NumberStyles.None,
+            System.Globalization.CultureInfo.InvariantCulture, out int maximum) || maximum is < 1 or > 393216)
+            throw new InvalidOperationException("October Worker token configuration is invalid.");
+        return maximum;
+    }
+
     internal static string? ReadDeepSeekWorkerReasoningEffort(IConfiguration configuration)
     {
         const string key = "October:DeepSeekWorkerReasoningEffort";
@@ -213,13 +226,14 @@ public static class OctoberGeneratorEntryPoint
         Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
         TimeProvider? timeProvider = null, OctoberOperatorRootSelectionOptions? operatorSelection = null,
         OctoberParseFailureCapture? parseFailureCapture = null, OctoberWorkerHttpObservation? httpObservation = null,
-        string? deepSeekWorkerReasoningEffort = null)
+        string? deepSeekWorkerReasoningEffort = null, int workerMaxOutputTokens = 8192)
     {
         TimeProvider clock = timeProvider ?? TimeProvider.System;
         if (parseFailureCapture is not null && httpObservation is not null) throw new InvalidOperationException("October diagnostic configuration is invalid.");
         var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock, httpObservation, deepSeekWorkerReasoningEffort);
         return new OctoberGenerateRunner(dependencies with
         {
+            MaximumWorkerOutputTokens = workerMaxOutputTokens,
             Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock),
             ParseFailureCapture = parseFailureCapture,
             HttpObservation = httpObservation
@@ -375,6 +389,7 @@ public static class OctoberGeneratorEntryPoint
             OctoberParseFailureCaptureOptions? captureOptions = null;
             OctoberWorkerHttpObservationOptions? observationOptions = null;
             string? deepSeekWorkerReasoningEffort = null;
+            int workerMaxOutputTokens = 8192;
             string keyRingPath;
             string applicationName;
             try
@@ -383,6 +398,7 @@ public static class OctoberGeneratorEntryPoint
                 if (command.Mode == OctoberGeneratorMode.Generate)
                 {
                     deepSeekWorkerReasoningEffort = ReadDeepSeekWorkerReasoningEffort(configuration);
+                    workerMaxOutputTokens = ReadWorkerMaxOutputTokens(configuration);
                     runtime = await ReadRuntimeConfigurationAsync(configuration);
                     businessSettings = await ReadBusinessSettingsForPolicyAsync(configuration, command.ScanPolicy!);
                     operatorSelection = ReadOperatorRootSelectionOptions(configuration, command.ScanPolicy!, businessSettings, runtime);
@@ -507,7 +523,8 @@ public static class OctoberGeneratorEntryPoint
                     parseFailureCapture: captureOptions is null ? null : new OctoberParseFailureCapture(captureOptions,
                         CaptureExcludedPaths(configuration, runtime!, keyRingPath)),
                     httpObservation: observationOptions is null ? null : new OctoberWorkerHttpObservation(observationOptions),
-                    deepSeekWorkerReasoningEffort: deepSeekWorkerReasoningEffort) : null;
+                    deepSeekWorkerReasoningEffort: deepSeekWorkerReasoningEffort,
+                    workerMaxOutputTokens: workerMaxOutputTokens) : null;
             OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
             return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
                 settle: generate is null ? null : () => generate.DisposeAsync());
@@ -670,7 +687,7 @@ public static class OctoberGeneratorEntryPoint
         return new
         {
             FinishReason = DefinedStatus(observed.FinishReason),
-            MaximumOutputTokens = observed.MaximumOutputTokens is > 0 and <= 8192 ? observed.MaximumOutputTokens : null,
+            MaximumOutputTokens = observed.MaximumOutputTokens is > 0 and <= 393216 ? observed.MaximumOutputTokens : null,
             InputTokens = observed.InputTokens is >= 0 ? observed.InputTokens : null,
             OutputTokens = observed.OutputTokens is >= 0 ? observed.OutputTokens : null,
             ReasoningTokens = observed.ReasoningTokens is >= 0 ? observed.ReasoningTokens : null

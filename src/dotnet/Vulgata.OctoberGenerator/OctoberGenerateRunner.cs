@@ -38,6 +38,7 @@ internal sealed record OctoberGenerateRunnerDependencies(
     internal OctoberBusinessRunComposition? Business { get; init; }
     internal OctoberParseFailureCapture? ParseFailureCapture { get; init; }
     internal OctoberWorkerHttpObservation? HttpObservation { get; init; }
+    internal int MaximumWorkerOutputTokens { get; init; } = 8192;
 }
 
 /// <summary>Owns the original sequential Generate run; a stored receipt is never a restart grant.</summary>
@@ -94,6 +95,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         TimeProvider? timeProvider = null)
     {
         _dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
+        if (dependencies.MaximumWorkerOutputTokens is < 1 or > 393216)
+            throw new ArgumentOutOfRangeException(nameof(dependencies.MaximumWorkerOutputTokens));
         ArgumentNullException.ThrowIfNull(dependencies.Authority);
         ArgumentNullException.ThrowIfNull(dependencies.ValidateSourceConfiguration);
         ArgumentNullException.ThrowIfNull(dependencies.CreateAdmissionStore);
@@ -269,9 +272,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
                         execution.Provider.Profile.Name, frame, baseline, advisory,
                         new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
-                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(40960, execution.Policy.MaximumTotalTokens!.Value),
+                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(32768L + _dependencies.MaximumWorkerOutputTokens, execution.Policy.MaximumTotalTokens!.Value),
                             MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
-                            MaximumOutputTokensPerRequest: 8192));
+                            MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens));
                     var ledger = new OctoberWorkerInputLedger(request,
                         async (path, callToken) =>
                         {
@@ -448,7 +451,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 result.FailureStage == OctoberWorkerFailureStage.StreamTerminal &&
                 result.TerminalFailure == OctoberWorkerTerminalFailure.UnsupportedFinish && result.TerminalObservation is { } observed
                 ? new(observed.FinishReason is { } finish && Enum.IsDefined(finish) ? finish : null,
-                    observed.MaximumOutputTokens is > 0 and <= 8192 ? observed.MaximumOutputTokens : null,
+                    observed.MaximumOutputTokens is > 0 and <= 393216 ? observed.MaximumOutputTokens : null,
                     observed.InputTokens is >= 0 ? observed.InputTokens : null,
                     observed.OutputTokens is >= 0 ? observed.OutputTokens : null,
                     observed.ReasoningTokens is >= 0 ? observed.ReasoningTokens : null) : null,

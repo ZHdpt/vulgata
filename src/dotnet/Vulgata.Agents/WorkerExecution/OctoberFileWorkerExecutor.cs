@@ -375,7 +375,7 @@ public sealed class OctoberFileWorkerExecutor
         if (limits.MaximumProviderRounds is < 1 or > 100 || limits.MaximumToolCalls is < 0 or > 1000 ||
             limits.MaximumWindowUtf8Bytes is < 4 or > 1048576 || limits.MaximumInputUtf8Bytes is < 1 or > 16777216 ||
             limits.MaximumOutputUtf8Bytes is < 1 or > 1048576 || limits.MaximumTokensPerRequest is < 1 or > 1048576 ||
-            limits.MaximumOutputTokensPerRequest is < 1 or > 8192 ||
+            limits.MaximumOutputTokensPerRequest is < 1 or > 393216 ||
             limits.MaximumContinuationWindows is < 1 or > 100 ||
             limits.RequestTimeout is { } duration && (duration <= TimeSpan.Zero || duration > TimeSpan.FromMinutes(10)))
             return false;

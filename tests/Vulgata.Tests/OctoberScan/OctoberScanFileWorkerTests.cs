@@ -1075,10 +1075,12 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [InlineData(8192, true)]
     [InlineData(137, false)]
     [InlineData(137, true)]
-    public async Task FixedOutputReservation_ExactFitDispatchesFullCapAndOneLessRejectsWithoutShrinkingAsync(int outputCap, bool under)
+    [InlineData(393216, false)]
+    [InlineData(393216, true)]
+    public async Task MaxOutputCap_FixedOutputReservationExactFitAndOneLessBoundaryAsync(int outputCap, bool under)
     {
         var request = Request(new Frame("if (enabled) Run();\nreturn;")) with
-        { Limits = new(MaximumOutputTokensPerRequest: outputCap) };
+        { Limits = new(MaximumTokensPerRequest: 32768L + outputCap, MaximumOutputTokensPerRequest: outputCap) };
         ChatResponseUpdate[][] leaves = [[new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]];
         using var measure = new TerminalObservationClient(leaves);
         var measuredScope = new Scope();
@@ -1137,8 +1139,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(0)]
-    [InlineData(8193)]
-    public async Task FixedOutputReservation_InvalidConfiguredOutputRefusesBeforeAdmissionAsync(int outputCap)
+    [InlineData(393217)]
+    public async Task MaxOutputCap_InvalidConfiguredOutputRefusesBeforeAdmissionAsync(int outputCap)
     {
         using var client = new TerminalObservationClient([]);
         var scope = new Scope();
@@ -2860,9 +2862,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task DeepSeekLowReasoning_ActualWorkerWireKeeps8192AndReplayAcrossToolRoundsAsync(bool enabled)
+    [InlineData(false, 8192)]
+    [InlineData(true, 8192)]
+    [InlineData(true, 393216)]
+    public async Task MaxOutputCap_DeepSeekLowReasoningActualWorkerWirePreservesCapAndReplayAcrossToolRoundsAsync(bool enabled, int outputCap)
     {
         var bodies = new List<JsonElement>();
         using var transport = new FragmentedToolHttp
@@ -2875,11 +2878,13 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport, deepSeekWorkerReasoningEffort: enabled ? "low" : null).CreateAsync(selected);
         var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
         var scope = new Scope();
-        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        request = request with { Limits = request.Limits with { MaximumTokensPerRequest = 32768L + outputCap, MaximumOutputTokensPerRequest = outputCap } };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(2, bodies.Count); Assert.Equal(1, result.SettledToolCalls);
         foreach (var body in bodies)
         {
-            Assert.Equal(8192, body.GetProperty("max_tokens").GetInt32());
+            Assert.Equal(outputCap, body.GetProperty("max_tokens").GetInt32());
             Assert.False(body.TryGetProperty("max_completion_tokens", out _)); Assert.False(body.TryGetProperty("thinking", out _));
             Assert.Equal(enabled, body.TryGetProperty("reasoning_effort", out var effort));
             if (enabled) Assert.Equal("low", effort.GetString());

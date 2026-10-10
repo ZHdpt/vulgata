@@ -52,6 +52,36 @@ public sealed class OctoberScanGenerateRunnerTests
     }
 
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(1000000, true)]
+    [InlineData(32768, false)]
+    public async Task MaxOutputCap_GeneratorEmitsConfiguredCapAndRejectsInsufficientCumulativeBoundAsync(long totalTokens, bool fits)
+    {
+        await using var host = await Harness.CreateAsync();
+        host.Client.TerminalFinishOverride = ChatFinishReason.Length;
+        var execution = host.Execution with { Policy = host.Execution.Policy with { MaximumTotalTokens = totalTokens } };
+        await using var runner = new OctoberGenerateRunner(host.Dependencies with { MaximumWorkerOutputTokens = 393216 });
+
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(fits ? OctoberFileWorkerStatus.InvalidOutput : OctoberFileWorkerStatus.BudgetExceeded,
+            Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics).Status);
+        Assert.Equal(fits ? 2 : 0, host.Client.Calls);
+        if (fits)
+        {
+            Assert.All(host.Client.OutputCaps, cap => Assert.Equal(393216, cap));
+            var observation = Assert.IsType<OctoberWorkerTerminalObservation>(report.WorkerDiagnostics!.TerminalObservation);
+            Assert.Equal(393216, observation.MaximumOutputTokens);
+        }
+        else
+        {
+            Assert.Empty(host.Client.OutputCaps);
+            Assert.Null(report.WorkerDiagnostics!.TerminalObservation);
+        }
+        Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication); Assert.Equal(0, host.FreezeCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task UnsupportedFinishObservation_ActualRunnerMapsFinalLeafAndReauthorizesDiagnosticReplayAsync()
     {
