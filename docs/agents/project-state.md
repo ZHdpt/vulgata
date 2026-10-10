@@ -123,6 +123,11 @@ and semantic failures remain non-correctable; all acceptance guards stay strict.
 All463 affected cases pass; prior full-suite failure remains visible. See
 [structural correction evidence](../../specs/20-1-Oct14-scan/structural-correction-verification.md)
 for review, limits, diagnostics and separate runtime outcomes.
+Committed at5bcdc246. Isolated GuestSyncOp.java succeeded/published in52.23 seconds.
+The conditional whole run then stopped on account pom.xml at98.88 seconds with
+the unchanged16-tool-call limit (BudgetFailure=ToolCalls), not a parse/schema
+failure. Three requests,83947 input/20898 output tokens, all known; no whole-run
+acceptance/publication. All data retained, no extra attempt or budget widening.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
