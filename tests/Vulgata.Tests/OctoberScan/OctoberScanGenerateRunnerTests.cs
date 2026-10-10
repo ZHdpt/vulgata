@@ -755,6 +755,11 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal(Encoding.UTF8.GetByteCount(CorrectionObservationHttp.FinalMalformedText), facts.HttpTextUtf8Bytes);
         Assert.Equal(facts.HttpTextUtf8Bytes, facts.ParseInputUtf8Bytes);
         Assert.Equal(2, wire.Requests.Count); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
+        Assert.All(wire.Requests, body =>
+        {
+            Assert.False(body.TryGetProperty("stop", out _));
+            Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
+        });
         var correctionRequest = wire.Requests[1];
         Assert.Equal(8192, correctionRequest.GetProperty("max_tokens").GetInt32());
         Assert.Equal("json_object", correctionRequest.GetProperty("response_format").GetProperty("type").GetString());

@@ -3051,6 +3051,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(outputCap, body.GetProperty("max_tokens").GetInt32());
             Assert.False(body.TryGetProperty("max_completion_tokens", out _)); Assert.False(body.TryGetProperty("thinking", out _));
+            Assert.False(body.TryGetProperty("stop", out _));
+            Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
             Assert.Equal(enabled, body.TryGetProperty("reasoning_effort", out var effort));
             if (enabled) Assert.Equal("low", effort.GetString());
         }
