@@ -122,3 +122,29 @@ generation, provider or reader qualification.
 
 No production edit, paid/native/PostgreSQL operation, new capture or real source
 inspection is authorized in this assessment.
+
+## Subsequently approved prompt clarification
+
+Later on 2026-10-10, OCT-Integrator relayed explicit human approval of the narrow
+final-complete-JSON prompt clarification and one fresh-database live trial without
+raw capture. Scan owns only the prompt edit and focused controlled verification;
+Integrator owns integration and that trial. The clean starting Scan checkpoint is
+`0f3cedd8cdbeed54cd732339261aa3a9badff975`; its prompt matches observed main
+`8276461e`. The earlier suffix assessment remains available unchanged in history.
+
+The existing final-proposal paragraph now explicitly maps `finalWindow=true` to
+one complete exact-format JSON object after necessary allowed tool calls, with
+all closing delimiters and no partial object or continuation fragment. All remaining
+prompt instructions and application behavior stay unchanged. This is the approved
+mitigation, not a claim that the prior live failure's cause is proven or resolved.
+
+The existing SDK wire test checks delivery on initial and post-tool requests.
+Focused RED `a3f06daf9c21426191a20bfdf1db4479` selected four cases: all four failed
+on the missing instruction, with zero skips and build zero errors. After the
+prompt-only edit, GREEN `b808dfc40fe645e3a45824160f4f264a` passed **330/330**, zero
+failures/skips, build zero errors, through the standard SelfContained launcher
+and the complete Worker, GenerateRunner, EntryPoint and ExecutionScope classes.
+Existing analyzer warnings remain. Separate test/prompt owners and independent
+review accepted the boundary; `git diff --check` passed. This proves controlled
+instruction delivery and regression behavior, not live model compliance. No real
+provider/native/PostgreSQL/capture operation was performed in this lane.

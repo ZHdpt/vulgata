@@ -1955,6 +1955,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             Assert.True(prompt.Contains("case-sensitive", StringComparison.OrdinalIgnoreCase));
             Assert.True(prompt.Contains("explicit null", StringComparison.OrdinalIgnoreCase));
             Assert.True(prompt.Contains("primary file", StringComparison.OrdinalIgnoreCase));
+            string normalizedPrompt = System.Text.RegularExpressions.Regex.Replace(prompt, @"\s+", " ");
+            Assert.True(normalizedPrompt.Contains("When `finalWindow` is true, after any necessary allowed tool calls, return one complete JSON object containing only units, observations and uncertainties.", StringComparison.Ordinal));
+            Assert.True(normalizedPrompt.Contains("include all closing array and object delimiters.", StringComparison.Ordinal));
+            Assert.True(normalizedPrompt.Contains("Do not return a partial object or continuation fragment.", StringComparison.Ordinal));
             using var window = JsonDocument.Parse(MessageText(messages.Last(message => message.GetProperty("role").GetString() == "user")));
             Assert.True(window.RootElement.GetProperty("finalWindow").GetBoolean());
             Assert.Equal(1, window.RootElement.GetProperty("windowOrdinal").GetInt32());
