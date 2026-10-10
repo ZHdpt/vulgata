@@ -558,3 +558,48 @@ production edits, further capture and native/provider/PG activity remain held.
 Earlier retained partial CL and shared resources are preserved. No retained
 presentation publication, ordinary-user read, useful BL, Chat or graph qualification
 is claimed for this attempt.
+
+## Two approved synthetic provider probes (October 10)
+
+User explicitly approved two diagnostic requests to check thinking/output limits
+and premature termination. Root ran exactly one streaming and one non-streaming
+request against the existing approved DeepSeek endpoint/model/credential. Public
+synthetic request only: a two-field JSON object; no source, tools, Worker, database,
+native tools or generation dataset. Common requested output cap8192, timeout120s,
+SDK retries0, no application retry. Local one-use invocation guard consumed.
+
+The external temporary probe referenced the installed SDK assemblies; no product
+code changed. HTTP response bodies were bounded to1MiB, buffered only in memory,
+then parsed by the SDK. Only fixed sanitized outcomes were printed. This tests
+HTTP framing/text mapping, not live streaming latency or the full Worker/MAF path.
+No raw body, reasoning text, headers or credentials were persisted. Both processes'
+response memory ended with the probe process. No provider failure or timeout.
+
+| Observation | Streaming | Non-streaming |
+| --- | --- | --- |
+| Elapsed seconds |0.795|0.761|
+| HTTP / reported finish |200 / stop|200 / stop|
+| Input / completion tokens |73 /41|73 /57|
+| Reasoning tokens within completion |31|47|
+| Valid expected JSON at HTTP and SDK |yes|yes|
+| HTTP text equals SDK text |yes|yes|
+| DONE marker |present|not applicable|
+| Content events after finish / DONE |0 /0|not applicable|
+
+Both requests omitted explicit thinking/effort and stop parameters; reasoning was
+present. The observed reasoning token accounting is consistent with thinking
+consuming the output budget. Neither response approached the requested cap or
+showed premature termination. These two small successful samples do not explain
+the previous complex Worker failures or establish general provider reliability.
+
+Important unresolved compatibility detail: the installed SDK serialized the cap
+as `max_completion_tokens:8192`, whereas current official DeepSeek Chat Completions
+documentation describes `max_tokens`. The provider accepted the request, but these
+small outputs cannot prove the alias is enforced. Root asked Scan for source-free
+verification of the actual Worker adapter's serialized field; no cap/transport
+change or additional live probe is authorized by this completed two-call grant.
+
+References: https://api-docs.deepseek.com/api/create-chat-completion/ (completion
+usage breakdown, max_tokens and finish semantics),
+https://api-docs.deepseek.com/guides/thinking_mode/ (thinking enabled by default).
+No retained Knowledge qualification or repair of the earlier failure is claimed.

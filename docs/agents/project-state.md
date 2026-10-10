@@ -167,6 +167,15 @@ shape and cause remain unknown for this trial. No further paid retry under this
 grant. Scan is preparing only a recommendation for a discriminating experiment;
 strict acceptance and prior partial CL remain unchanged.
 
+The subsequently approved TWO synthetic provider probes both succeeded: streaming
+0.795s,41 completion tokens including31 reasoning; non-streaming0.761s,57 including47.
+Both returned expected valid JSON, HTTP200/Stop and HTTP-to-installed-SDK text
+equality; streaming DONE present, no trailing content or timeout. No raw persistence,
+source, tools or DB involved. This establishes minimal provider behavior, not a
+Worker fix. SDK emitted `max_completion_tokens:8192`; DeepSeek documents `max_tokens`.
+Alias enforcement remains unproven; Scan is checking the real Worker serialization
+source-free. No further live request authorized by the completed two-probe grant.
+
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
 CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,
