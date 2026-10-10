@@ -93,3 +93,41 @@ Prepared database/keys/configuration remain retained for the user's decision;
 the bootstrap host is stopped. Exact source-scope/destination confirmation in
 this chat is the remaining launch requirement. Real replay behavior and JSON
 truncation remain unqualified despite passing controlled replay tests.
+
+## Confirmed one-run authorization and real result
+
+The user subsequently answered **"Confirm"** in this chat to the explicit request
+to send relevant content from all 77 manifest-verified prepared files to
+`https://api.deepseek.com`, model `deepseek-flash`, using the existing protected
+credential, with only `GetMobileByAccessCodeOp.java` selected for CL generation and
+evaluation answers excluded. This resolved the launch approval block above. One
+Generate invocation ran; the create-new invocation marker is consumed and no retry
+was performed.
+
+Real run target `phone-75362f1af6b5`, batch
+`82e9b113-e9ec-4f87-8b28-6cbae66a06f8`, completed in **88.11 seconds** with
+exit 0, no timeout, and `NeedsSettlementCheck=false`. The retained report
+`generate-04efc49e588b4a2db1ceff2e33e68a43.stdout` records:
+
+- Requested/completed stage: `cl-only`.
+- Execution: `Completed`; selected-file coverage: `Complete`.
+- One accepted file, one returned CL Document, zero gaps; inventory: 77 files.
+- Publication: `Confirmed`, ID `d464ab3c-43a7-4308-9caa-86d0c1361806`.
+- Logical Document `3f36e9a6-fc74-aff3-e4c5-7eb74fd6eb55`, exact version
+  `8823c2b5-b12e-4870-bdfe-fbc629ef4a96`.
+- Matching and Business Logic: `not-requested`; Worker diagnostics: null.
+- Three provider requests, 12,439 input tokens, 3,700 output tokens, unknown
+  usage false. Standard error is empty.
+
+All 77 prepared source files still match their approved hashes after execution.
+The owned database, source binding and required keys are retained. There is no
+running Web presentation host. No raw provider response/reasoning was retained.
+The in-memory observer reports parse failures only, so a successful run has no
+HTTP/SDK/Worker comparison snapshot; its absence is not comparison evidence.
+
+This establishes real source-to-accepted-CL-to-confirmed-publication success for
+the single selected file with the replay fix. It does not establish ordinary IT
+reader/UI qualification, full-slice completion, BL, Chat or graph behavior, nor
+prove the cause of the earlier single-request JSON truncation. The unchanged
+full-suite report-parser failure remains outstanding. This one-run paid grant is
+consumed; further provider execution requires another user instruction.
