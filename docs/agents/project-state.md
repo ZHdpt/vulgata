@@ -37,8 +37,13 @@ confirmed Length at a reduced 4,011-token output cap. The user-approved fixed-ou
 admission is reviewed/committed at `e5c53e00`; 423 affected checks passed. Its real
 POM trial hit the unchanged 8192 streamed-update guard before terminal usage, with
 one request, unknown token usage and no accepted/published CL; no full-slice retry
-ran. Full SelfContained remains non-green (4730/4732). Current implementation and
-verification are in [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation-verification.md);
+ran. The subsequent bounded stream-aggregation correction removes the unnecessary
+update list, coalesces plain reasoning and retains finite non-progress/segment
+bounds plus explicit synchronous cancellation checks. Its affected checks pass
+434/434; full SelfContained remains non-green (4741/4743). A fresh POM trial is
+prepared, with no result yet. Current implementation and verification are in
+[stream aggregation evidence](../../specs/20-1-Oct14-scan/stream-aggregation-verification.md)
+and [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation-verification.md);
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

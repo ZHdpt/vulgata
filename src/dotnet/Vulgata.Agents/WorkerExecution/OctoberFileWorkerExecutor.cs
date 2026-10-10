@@ -556,11 +556,32 @@ public sealed class OctoberFileWorkerExecutor
             long? inputTokens = null;
             long? actualOutputTokens = null;
             long? reasoningTokens = null;
-            var buffered = new List<ChatResponseUpdate>();
+            string? lastResponseId = null;
+            int nonProgressUpdates = 0;
             var calls = new List<FunctionCallContent>();
             var reasoningHistory = new List<TextReasoningContent>();
+            var plainReasoning = new StringBuilder();
+            bool hasPlainReasoning = false;
             var text = new StringBuilder();
             ChatFinishReason? finish = null;
+
+            void RetainReasoning(TextReasoningContent reasoning)
+            {
+                // Protected segments (even empty ones) can carry wire semantics.
+                // Bound retained objects independently of transport fragmentation.
+                if (reasoningHistory.Count >= 8192)
+                    throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.StreamUpdates);
+                reasoningHistory.Add(reasoning);
+            }
+
+            void FlushPlainReasoning()
+            {
+                if (!hasPlainReasoning) return;
+                RetainReasoning(new TextReasoningContent(plainReasoning.ToString()));
+                plainReasoning.Clear();
+                hasPlainReasoning = false;
+            }
+
             try
             {
                 if (client is not IOctoberWorkerAttemptClient &&
@@ -583,6 +604,7 @@ public sealed class OctoberFileWorkerExecutor
                 while (true)
                 {
                     _observedStage = OctoberWorkerFailureStage.Transport;
+                    linked.Token.ThrowIfCancellationRequested();
                     pendingMove = iterator.MoveNextAsync().AsTask();
                     bool next;
                     try { next = await pendingMove.WaitAsync(linked.Token); }
@@ -593,9 +615,11 @@ public sealed class OctoberFileWorkerExecutor
                         _ = SettleLateAsync(pendingMove, iterator, lease, wait, timing);
                         throw;
                     }
+                    linked.Token.ThrowIfCancellationRequested();
                     if (!next) break;
                     _observedStage = OctoberWorkerFailureStage.StreamTerminal;
                     ChatResponseUpdate update = iterator.Current;
+                    int outputBytesBefore = _outputBytes;
                     // The qualified OpenAI adapter emits complete calls in one
                     // aggregate after its empty ToolCalls finish and usage updates.
                     // Validate that narrow envelope, then apply every call guard.
@@ -611,6 +635,7 @@ public sealed class OctoberFileWorkerExecutor
                         throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.NonAssistantRole);
                     foreach (AIContent content in update.Contents)
                     {
+                        linked.Token.ThrowIfCancellationRequested();
                         if (content is TextContent value)
                         {
                             ChargeOutput(value.Text);
@@ -625,10 +650,19 @@ public sealed class OctoberFileWorkerExecutor
                             // Keep provider reasoning in conversation history, never in
                             // LastText (the proposal/capture input). Do not carry opaque
                             // raw SDK objects into the next request.
-                            reasoningHistory.Add(new TextReasoningContent(reasoning.Text)
+                            if (reasoning.ProtectedData is null)
                             {
-                                ProtectedData = reasoning.ProtectedData
-                            });
+                                plainReasoning.Append(reasoning.Text);
+                                hasPlainReasoning = true;
+                            }
+                            else
+                            {
+                                FlushPlainReasoning();
+                                RetainReasoning(new TextReasoningContent(reasoning.Text)
+                                {
+                                    ProtectedData = reasoning.ProtectedData
+                                });
+                            }
                         }
                         else if (content is FunctionCallContent call && !call.InformationalOnly)
                         {
@@ -664,9 +698,12 @@ public sealed class OctoberFileWorkerExecutor
                             throw new NotSupportedException("Unknown output payload cannot be measured.");
                     }
                     if (update.FinishReason is { } currentFinish) finish = currentFinish;
-                    if (buffered.Count >= 8192)
+                    // Positive-byte updates are bounded by the existing byte cap.
+                    // Empty/usage-only updates share one cumulative allowance; a
+                    // tiny payload never renews an empty-stream flood budget.
+                    if (_outputBytes == outputBytesBefore && ++nonProgressUpdates > 8192)
                         throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.StreamUpdates);
-                    buffered.Add(update);
+                    lastResponseId = update.ResponseId;
                 }
                 _observedStage = OctoberWorkerFailureStage.StreamTerminal;
                 if (finish is null)
@@ -688,6 +725,7 @@ public sealed class OctoberFileWorkerExecutor
                     throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolFinishWithoutCalls);
                 if (finish == ChatFinishReason.Stop && calls.Count != 0)
                     throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.StopWithCalls);
+                FlushPlainReasoning();
                 _observedStage = null;
                 if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(linked.Token), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
                 success = true;
@@ -784,7 +822,7 @@ public sealed class OctoberFileWorkerExecutor
             yield return new ChatResponseUpdate
             {
                 Role = ChatRole.Assistant,
-                ResponseId = buffered.LastOrDefault()?.ResponseId,
+                ResponseId = lastResponseId,
                 Contents = [.. reasoningHistory, new TextContent(LastText), .. calls],
                 FinishReason = finish
             };

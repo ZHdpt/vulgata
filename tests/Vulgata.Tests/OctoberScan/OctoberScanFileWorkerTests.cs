@@ -1161,13 +1161,189 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Empty(scope.Requests); Assert.Empty(client.Caps); Assert.Null(result.Proposal);
     }
 
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("text", "stop")]
+    [InlineData("text", "length")]
+    [InlineData("reasoning", "stop")]
+    [InlineData("reasoning", "length")]
+    public async Task BoundedStream_ActualSdkOver8192ProgressFragmentsEquivalentToSinglePayloadAsync(string kind, string finish)
+    {
+        const int fragments = 8300;
+        string padding = new(' ', fragments);
+        string reason = new('r', fragments);
+        foreach (bool fragmented in new[] { false, true })
+        {
+            string[] text = kind == "text" ? fragmented ? [.. Enumerable.Repeat(" ", fragments), UnitJson] : [padding + UnitJson] : [UnitJson];
+            string[] reasoning = kind == "reasoning" ? fragmented ? Enumerable.Repeat("r", fragments).ToArray() : [reason] : [];
+            using var transport = new AccountingSseHttp(reasoning, text)
+            {
+                FinishOverrides = [.. Enumerable.Repeat<string?>(null, text.Length - 1), finish], ReasoningTokens = 17
+            };
+            using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+            var scope = new Scope();
+            var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+            Assert.Equal(finish == "stop" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput, result.Status);
+            Assert.Null(result.BudgetFailure); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+            if (finish == "stop") Assert.Equal("Conditional execution", Assert.Single(result.Proposal!.Units).Title);
+            else
+            {
+                Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+                var observed = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+                Assert.Equal(OctoberWorkerUnsupportedFinish.Length, observed.FinishReason);
+                Assert.Equal(100L, observed.InputTokens); Assert.Equal(50L, observed.OutputTokens); Assert.Equal(17L, observed.ReasoningTokens);
+            }
+            Assert.Equal(1, transport.Calls);
+            var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+            Assert.Equal(100L, lease.Usage!.InputTokens); Assert.Equal(50L, lease.Usage.OutputTokens);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BoundedStream_NonProgressAllowanceIsCumulativeAcrossPayloadAndUsageUpdatesAsync(bool over)
+    {
+        var updates = Enumerable.Range(0, 4096).Select(_ => new ChatResponseUpdate { Role = ChatRole.Assistant }).ToList();
+        updates.Add(new() { Role = ChatRole.Assistant, Contents = [new TextContent(" ")] });
+        updates.AddRange(Enumerable.Range(0, 4096 + (over ? 1 : 0)).Select(_ => new ChatResponseUpdate
+        { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 100, OutputTokenCount = 50 })] }));
+        updates.Add(new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop });
+        using var client = new UpdateClient([.. updates]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(over ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(over ? OctoberWorkerBudgetFailure.StreamUpdates : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+        Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
+        if (over) Assert.Null(result.Proposal); else Assert.NotNull(result.Proposal);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(null)]
+    [InlineData("controlled-last-response")]
+    public async Task BoundedStream_ToolReplayCoalescesPlainReasoningButRetainsProtectedSegmentsInOrderAsync(string? lastResponseId)
+    {
+        var tool = AIFunctionFactory.Create(() => "contained result", "read_prepared_source");
+        ChatResponseUpdate[] first =
+        [
+            new() { Role = ChatRole.Assistant, Contents = [new TextReasoningContent("a")] },
+            new() { Contents = [new TextReasoningContent("") { ProtectedData = "" }] },
+            new() { Contents = [new TextReasoningContent("b")] },
+            new() { Contents = [new TextReasoningContent("c") { ProtectedData = "opaque-one" }] },
+            new() { Contents = [new TextReasoningContent("d")] },
+            new() { Contents = [new TextReasoningContent("e")] },
+            new() { Contents = [new TextReasoningContent("f") { ProtectedData = "" }] },
+            new() { Contents = [new TextReasoningContent("g")] },
+            new() { Contents = [new TextReasoningContent("") { ProtectedData = "opaque-two" }] },
+            new() { Contents = [new TextReasoningContent("")] },
+            new() { Contents = [new FunctionCallContent("bounded-call", tool.Name, new Dictionary<string, object?>())], FinishReason = ChatFinishReason.ToolCalls }
+        ];
+        first[0].ResponseId = "controlled-earlier-response";
+        first[^1].ResponseId = lastResponseId;
+        using (var directClient = new TerminalObservationClient([first]))
+        {
+            var directScope = new Scope();
+            var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+            // Inspect the owned aggregate before MAF's documented content coalescing.
+            var workerType = typeof(OctoberFileWorkerExecutor).GetNestedType("WorkerClient", System.Reflection.BindingFlags.NonPublic)!;
+            var observationsType = typeof(OctoberFileWorkerExecutor).GetNestedType("ExceptionObservation", System.Reflection.BindingFlags.NonPublic)!;
+            object observations = Activator.CreateInstance(observationsType, nonPublic: true)!;
+            using var worker = Assert.IsAssignableFrom<IChatClient>(Activator.CreateInstance(workerType,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                binder: null, args: [directClient, directScope, request, new AIFunction[] { tool }, observations], culture: null));
+            var aggregates = new List<ChatResponseUpdate>();
+            await foreach (var update in worker.GetStreamingResponseAsync([new(ChatRole.User, "controlled owned aggregation")], new ChatOptions { Tools = [tool] })) aggregates.Add(update);
+            var aggregate = Assert.Single(aggregates);
+            Assert.Equal(lastResponseId, aggregate.ResponseId);
+            Assert.Equal(ChatFinishReason.ToolCalls, aggregate.FinishReason);
+            var ownedReasoning = aggregate.Contents.OfType<TextReasoningContent>().ToArray();
+            Assert.Equal(new[] { "a", "", "b", "c", "de", "f", "g", "", "" }, ownedReasoning.Select(content => content.Text));
+            Assert.Equal(new string?[] { null, "", null, "opaque-one", null, "", null, "opaque-two", null }, ownedReasoning.Select(content => content.ProtectedData));
+            Assert.Equal("bounded-call", Assert.Single(aggregate.Contents.OfType<FunctionCallContent>()).CallId);
+            var lease = Assert.Single(directScope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        }
+        using var client = new TerminalObservationClient([first, [new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(1, result.SettledToolCalls);
+        var assistant = Assert.Single(client.Histories[1].Where(message => message.Role == ChatRole.Assistant));
+        var reasoning = assistant.Contents.OfType<TextReasoningContent>().ToArray();
+        // The installed MAF adapter also coalesces reasoning. Compare its final
+        // replay to the legacy aggregate shape, including protected data pairs.
+        var legacyAggregate = new ChatResponseUpdate
+        {
+            Role = ChatRole.Assistant, FinishReason = ChatFinishReason.ToolCalls,
+            Contents = [.. first.SelectMany(update => update.Contents).OfType<TextReasoningContent>()
+                .Select(content => new TextReasoningContent(content.Text) { ProtectedData = content.ProtectedData }),
+                new TextContent(""), .. first.SelectMany(update => update.Contents).OfType<FunctionCallContent>()]
+        };
+        var expectedReplay = new[] { legacyAggregate }.ToChatResponse().Messages.SelectMany(message => message.Contents)
+            .OfType<TextReasoningContent>().Select(content => (content.Text, content.ProtectedData)).ToArray();
+        Assert.Equal(expectedReplay, reasoning.Select(content => (content.Text, content.ProtectedData)).ToArray());
+        Assert.Equal("bounded-call", Assert.Single(assistant.Contents.OfType<FunctionCallContent>()).CallId);
+        Assert.DoesNotContain("opaque-", JsonSerializer.Serialize(result));
+        Assert.Equal(2, scope.Leases.Count); Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BoundedStream_SynchronouslyCompletedMoveChecksCancellationBeforeAnotherMoveAsync()
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var client = new SynchronousCancellingClient(cancellation);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [], cancellation.Token);
+        Assert.Equal(OctoberFileWorkerStatus.Cancelled, result.Status);
+        Assert.Equal(1, client.Moves); Assert.True(client.Disposed); Assert.Null(result.Proposal);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BoundedStream_RetainedReasoningSegmentBoundAlsoAppliesInsideSingleUpdateAsync(bool over)
+    {
+        var contents = Enumerable.Range(0, 8192 + (over ? 1 : 0))
+            .Select(_ => (AIContent)new TextReasoningContent("") { ProtectedData = "" }).ToList();
+        contents.Add(new TextContent(UnitJson));
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = contents, FinishReason = ChatFinishReason.Stop }]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(over ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(over ? OctoberWorkerBudgetFailure.StreamUpdates : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+        Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
+        if (over) Assert.Null(result.Proposal); else Assert.NotNull(result.Proposal);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+    private sealed class SynchronousCancellingClient(CancellationTokenSource cancellation) : IChatClient, IAsyncEnumerable<ChatResponseUpdate>, IAsyncEnumerator<ChatResponseUpdate>
+    {
+        internal int Moves;
+        internal bool Disposed;
+        public ChatResponseUpdate Current => new() { Role = ChatRole.Assistant };
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => this;
+        public IAsyncEnumerator<ChatResponseUpdate> GetAsyncEnumerator(CancellationToken cancellationToken = default) => this;
+        public ValueTask<bool> MoveNextAsync() { Moves++; if (Moves == 1) cancellation.Cancel(); return ValueTask.FromResult(Moves <= 9000); }
+        public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+
     private sealed class TerminalObservationClient(ChatResponseUpdate[][] leaves) : IChatClient
     {
         internal List<int?> Caps { get; } = [];
+        internal List<ChatMessage[]> Histories { get; } = [];
         public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            int index = Caps.Count; Caps.Add(options?.MaxOutputTokens);
+            int index = Caps.Count; Caps.Add(options?.MaxOutputTokens); Histories.Add(messages.ToArray());
             Assert.InRange(index, 0, leaves.Length - 1);
             foreach (var update in leaves[index]) { await Task.Yield(); cancellationToken.ThrowIfCancellationRequested(); yield return update; }
         }
