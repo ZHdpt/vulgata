@@ -534,3 +534,27 @@ Fresh production-API bootstrap created run `phone-ea740448c019`, batch
 `vulgata_oct_pilot_9d483f1b39ad41b0b0f2ad40abbcfd61` in the existing PG17 container.
 The temporary bootstrap Web stopped. No Generate/provider request has occurred
 at this checkpoint; it awaits the reviewed prompt and current-source verification.
+
+### Complete-proposal trial outcome
+
+Reviewed prompt checkpoint `3fc0951b` integrated as `9213d69a`. Main rebuilt current
+sources and passed **330/330**, no failures/skips, build zero errors, isolation
+`c61af7651d1d4769b29998eefc914d99`. The prompt change remains a mitigation attempt,
+not a demonstrated fix. No parser, transport, schema, retry or limit changed.
+
+The approved single trial in `phone-ea740448c019` exited1 after **27.35s wall /
+24.61s pipeline**, no timeout or cleanup doubt. Inventory77, accepted0, Documents0,
+publication not requested; matching and BL did not start. Known usage:
+**1 request,3,021 input/3,002 output tokens**. Safe Worker diagnosis remained
+`InvalidOutput / ProposalParse / Syntax / Root`, retry `None`; terminal, budget
+and tool failures were null. Capture status was null and no capture directory
+existed. Local report: `generate-30ac88fa6a2446f08c1028c7a54a170c`.
+
+The clarification did not produce accepted output in this trial. Without raw
+capture, this does not prove the same missing-delimiter shape or its cause.
+No further paid run is launched under the one-trial grant. Scan received sanitized
+results and is asked only for the next discriminating experiment recommendation;
+production edits, further capture and native/provider/PG activity remain held.
+Earlier retained partial CL and shared resources are preserved. No retained
+presentation publication, ordinary-user read, useful BL, Chat or graph qualification
+is claimed for this attempt.

@@ -157,6 +157,16 @@ possible final-chunk assembly versus incomplete model output; causal attribution
 is not yet established. No further paid run, output repair or parser weakening
 is authorized by the one-capture grant. Prior partial CL remains retained.
 
+Subsequent user-approved prompt clarification integrated as `9213d69a`; main
+affected controlled tests330/330 passed (isolation `c61af7651d1d4769b29998eefc914d99`).
+Its ONE fresh-database trial `phone-ea740448c019` failed after27.35s at
+`InvalidOutput/ProposalParse/Syntax/Root`, accepted0, one request with3,021 input/
+3,002 output tokens. Raw capture was disabled and absent; no timeout or cleanup
+doubt. The prompt mitigation did not resolve this observed blocker. Exact output
+shape and cause remain unknown for this trial. No further paid retry under this
+grant. Scan is preparing only a recommendation for a discriminating experiment;
+strict acceptance and prior partial CL remain unchanged.
+
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
 CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,
