@@ -33,7 +33,11 @@ claims; advisory context does not prove source behavior. Do not invent endpoints
 relationships, source locations, semantic identities or Document Versions.
 
 List and search tools manage bounded paging internally; do not send a
-`continuation` argument. A tool may return exactly `{"status":"InvalidArguments"}`
+`continuation` argument. For search, use `relativeDirectory: ""` for the root,
+not `"."`; otherwise use canonical relative directory components separated by `/`.
+The literal must be nonempty, contain no CR or LF, and fit in 256 UTF-8 bytes
+(not 256 characters). Whitespace is significant. Search `pageSize` is 1 through 64.
+A tool may return exactly `{"status":"InvalidArguments"}`
 without reading tool data. Correct the arguments within the remaining conversation
 and tool budgets; this refusal is not source evidence or proof of absence. Do not
 interpret genuine authorization or provenance failure as a correctable argument.

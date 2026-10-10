@@ -583,6 +583,158 @@ public sealed class OctoberScanWorkerToolsTests
         }
     }
 
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("device-digit")]
+    [InlineData("device-superscript")]
+    [InlineData("component-over")]
+    [InlineData("colon")]
+    [InlineData("trailing-slash")]
+    [InlineData("control")]
+    [InlineData("dot")]
+    [InlineData("parent")]
+    [InlineData("absolute")]
+    [InlineData("backslash")]
+    [InlineData("empty-component")]
+    [InlineData("reserved")]
+    [InlineData("trailing-dot")]
+    [InlineData("trailing-space")]
+    [InlineData("empty-literal")]
+    [InlineData("cr")]
+    [InlineData("lf")]
+    [InlineData("ascii-over")]
+    [InlineData("utf8-over")]
+    [InlineData("surrogate")]
+    [InlineData("page-zero")]
+    [InlineData("page-over")]
+    public async Task SearchText_InvalidSemanticsRefuseBeforeRuntime_ThenCorrectionSucceedsAsync(string defect)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
+        var ledger = Ledger(host, controlled);
+        await using var runtime = controlled.CreateRuntime();
+        var owner = new OctoberWorkerTools(runtime, ledger);
+        var function = (await owner.CreateAsync()).Single(tool => tool.Name == "search_prepared_source");
+        var arguments = SourceArguments(function.Name);
+        switch (defect)
+        {
+            case "device-digit": arguments["relativeDirectory"] = "src/LPT9.log"; break;
+            case "device-superscript": arguments["relativeDirectory"] = "COM¹"; break;
+            case "component-over": arguments["relativeDirectory"] = new string('x', 256); break;
+            case "colon": arguments["relativeDirectory"] = "src:other"; break;
+            case "trailing-slash": arguments["relativeDirectory"] = "src/"; break;
+            case "control": arguments["relativeDirectory"] = "src\t"; break;
+            case "dot": arguments["relativeDirectory"] = "."; break;
+            case "parent": arguments["relativeDirectory"] = "src/../other"; break;
+            case "absolute": arguments["relativeDirectory"] = "/src"; break;
+            case "backslash": arguments["relativeDirectory"] = @"src\nested"; break;
+            case "empty-component": arguments["relativeDirectory"] = "src//nested"; break;
+            case "reserved": arguments["relativeDirectory"] = "src/CON.txt"; break;
+            case "trailing-dot": arguments["relativeDirectory"] = "src."; break;
+            case "trailing-space": arguments["relativeDirectory"] = "src "; break;
+            case "empty-literal": arguments["literal"] = ""; break;
+            case "cr": arguments["literal"] = "a\rb"; break;
+            case "lf": arguments["literal"] = "a\nb"; break;
+            case "ascii-over": arguments["literal"] = new string('a', 257); break;
+            case "utf8-over": arguments["literal"] = new string('中', 86); break;
+            case "surrogate": arguments["literal"] = "\uD800"; break;
+            case "page-zero": arguments["pageSize"] = 0; break;
+            case "page-over": arguments["pageSize"] = 65; break;
+        }
+        Assert.False(PreparedSourceTraversal.IsCanonicalRelativePath((string)arguments["relativeDirectory"]!, allowEmpty: true) &&
+            PreparedSourceText.EncodeLiteral((string)arguments["literal"]!) is not null &&
+            (int)arguments["pageSize"]! is >= 1 and <= 64);
+        AssertRefusal(await function.InvokeAsync(arguments));
+        Assert.Equal(0, controlled.SourceIssues);
+        Assert.Null(owner.FirstFailure);
+        Assert.True(await ledger.VerifyCurrentAsync());
+        QueueEmptySearch(controlled, function.Name);
+        Assert.Equal(PreparedSourceOutcome.CompleteEmpty,
+            Assert.IsType<PreparedSourceResult>(await function.InvokeAsync(SourceArguments(function.Name))).Outcome);
+        Assert.Equal(1, controlled.SourceIssues);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == ContributorKind.SourceMetadata));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("", "one", 1)]
+    [InlineData("src/nested", "ascii-boundary", 64)]
+    [InlineData("源码", "utf8-boundary", 64)]
+    public async Task SearchText_ValidBoundaryArgumentsReachRuntimeUnchangedAsync(string directory, string kind, int pageSize)
+    {
+        string literal = kind == "one" ? " " : kind == "ascii-boundary" ? new string('a', 256) : new string('中', 85) + "a";
+        Assert.True(PreparedSourceTraversal.IsCanonicalRelativePath(directory, allowEmpty: true));
+        Assert.NotNull(PreparedSourceText.EncodeLiteral(literal));
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
+        var context = controlled.Context(_ => throw new InvalidOperationException("Unexpected listing"));
+        int calls = 0;
+        context.Search = request =>
+        {
+            calls++;
+            Assert.Equal(directory, request.RelativeDirectory);
+            Assert.Equal(literal, request.Literal);
+            Assert.Equal(pageSize, request.PageSize);
+            return new() { RepositoryId = controlled.RepositoryId, Operation = PreparedSourceOperation.SearchText, Outcome = PreparedSourceOutcome.CompleteEmpty };
+        };
+        controlled.Sources.Enqueue(context);
+        var ledger = Ledger(host, controlled);
+        await using var runtime = controlled.CreateRuntime();
+        var function = (await new OctoberWorkerTools(runtime, ledger).CreateAsync()).Single(tool => tool.Name == "search_prepared_source");
+        Assert.IsType<PreparedSourceResult>(await function.InvokeAsync(new() { ["relativeDirectory"] = directory, ["literal"] = literal, ["pageSize"] = pageSize }));
+        Assert.Equal(1, calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SearchText_AuthorityAndTypedDenialRemainFatalAsync(bool staleAuthority)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
+        bool allowed = true;
+        var ledger = Ledger(host, controlled, () => allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied);
+        var context = controlled.Context(_ => throw new InvalidOperationException("Unexpected listing"));
+        context.Search = _ => new() { RepositoryId = controlled.RepositoryId, Operation = PreparedSourceOperation.SearchText, Outcome = PreparedSourceOutcome.Denied };
+        controlled.Sources.Enqueue(context);
+        await using var runtime = controlled.CreateRuntime();
+        var function = (await new OctoberWorkerTools(runtime, ledger).CreateAsync()).Single(tool => tool.Name == "search_prepared_source");
+        var arguments = SourceArguments(function.Name);
+        if (staleAuthority) { allowed = false; arguments["relativeDirectory"] = "."; }
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await function.InvokeAsync(arguments));
+        Assert.Equal(staleAuthority ? 0 : 1, controlled.SourceIssues);
+        allowed = true;
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await function.InvokeAsync(SourceArguments(function.Name)));
+        Assert.Null(await ledger.FreezeForCompletionAsync());
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SearchText_EscapedLoneSurrogateRefusesBeforeRuntimeWithoutPoisoningLedgerAsync()
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        await using var controlled = await OctoberScanToolRuntimeTests.RuntimeHarness.CreateAsync();
+        var ledger = Ledger(host, controlled);
+        await using var runtime = controlled.CreateRuntime();
+        var owner = new OctoberWorkerTools(runtime, ledger);
+        var function = (await owner.CreateAsync()).Single(tool => tool.Name == "search_prepared_source");
+        using var decodedArguments = JsonDocument.Parse("""{"relativeDirectory":"","literal":"\uD800","pageSize":1}""");
+        var arguments = new AIFunctionArguments(decodedArguments.RootElement.EnumerateObject()
+            .ToDictionary(property => property.Name, property => (object?)property.Value.Clone()));
+        Assert.Null(PreparedSourceText.EncodeLiteral("\uD800"));
+        AssertRefusal(await function.InvokeAsync(arguments));
+        Assert.Equal(0, controlled.SourceIssues);
+        Assert.Null(owner.FirstFailure);
+        Assert.True(await ledger.VerifyCurrentAsync());
+        QueueEmptySearch(controlled, function.Name);
+        Assert.IsType<PreparedSourceResult>(await function.InvokeAsync(SourceArguments(function.Name)));
+        Assert.Equal(1, controlled.SourceIssues);
+    }
+
     private static void AssertRefusal(object? result)
     {
         Assert.NotNull(result);

@@ -1521,6 +1521,57 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         if (transport.Calls > 1) Assert.True(transport.SawExactRefusal);
     }
 
+
+    // Characterization of the current compatibility gap, not an assertion of DeepSeek conformance.
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CurrentContract_ActualSdkWorkerSecondRequestOmitsToolLeafReasoningReplayAsync()
+    {
+        const string reasoning = "SYNTHETIC_TOOL_REASONING_中文";
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        using (var transport = new FragmentedToolHttp { ExpectedHost = "api.deepseek.com", InitialReasoning = reasoning })
+        using (var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected))
+        {
+            int mapped = 0;
+            var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+            await foreach (var update in admitted.GetAttemptStreamingResponseAsync([new(ChatRole.User, "controlled replay observation")],
+                new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid())))
+                mapped += update.Contents.OfType<TextReasoningContent>().Count();
+            output.WriteLine("reasoningReplay: synthetic wire reasoning present; actual SDK mapped reasoning fragments={0}", mapped);
+        }
+        bool inspectedSecond = false;
+        using var executionTransport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com", InitialReasoning = reasoning,
+            ObserveRequest = (body, call) =>
+            {
+                if (call != 1) return;
+                var messages = body.GetProperty("messages").EnumerateArray().ToArray();
+                var assistant = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "assistant" && message.TryGetProperty("tool_calls", out _)));
+                Assert.Equal("controlled-call", Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+                var result = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "tool"));
+                Assert.Equal("controlled-call", result.GetProperty("tool_call_id").GetString());
+                Assert.False(assistant.TryGetProperty("reasoning_content", out _));
+                Assert.DoesNotContain(reasoning, body.GetRawText());
+                inspectedSecond = true;
+            }
+        };
+        using var executionClient = await new OctoberWorkerClientFactory(new Secrets(), executionTransport).CreateAsync(selected);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(executionClient, scope)
+            .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.True(inspectedSecond);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, executionTransport.Calls);
+        Assert.Equal(1, result.SettledToolCalls);
+        Assert.Equal(2, scope.Leases.Count);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        output.WriteLine("reasoningReplay: second request retains correlated assistant tool call and tool result, but omits reasoning_content; controlled responder permits completion, no live provider conformance claimed");
+    }
+
     private sealed class ArgumentCorrectionHttp : HttpMessageHandler
     {
         internal int Calls;
@@ -2510,6 +2561,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         internal string ExpectedHost = "selected.example.test";
         internal bool ContentOnly;
         internal string? InitialTextOverride;
+        internal string? InitialReasoning;
         internal string? FinalTextOverride;
         internal Action<JsonElement, int>? ObserveRequest;
         internal bool MissingRequiredArgument;
@@ -2549,6 +2601,12 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-window", @object = "chat.completion.chunk", created = 1, model = "selected-model",
                     choices = new[] { new { index = 0, delta = new { role = "assistant", content = "continue" }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } })];
+            }
+            if (call == 0 && InitialReasoning is not null)
+            {
+                var first = System.Text.Json.Nodes.JsonNode.Parse(chunks[0])!;
+                first["choices"]![0]!["delta"]!["reasoning_content"] = InitialReasoning;
+                chunks[0] = first.ToJsonString();
             }
             if (call == 0 && InitialTextOverride is not null)
             {
