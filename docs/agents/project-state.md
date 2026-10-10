@@ -59,7 +59,10 @@ The subsequent user-requested 393216 output-cap experiment is opt-in through
 All 20 cap/replay and 434 affected-class checks pass; full SelfContained is
 4773/4775 (report parser and CodeGraph cancellation failures). See
 [maximum-cap evidence](../../specs/20-1-Oct14-scan/max-output-cap-verification.md)
-for the separately recorded real POM retry.
+for the separately recorded real POM retry on `7c5e82fc`: one provider request,
+9748 input/1816 output tokens, followed by local BudgetExceeded/Admission. No
+Length diagnostic this time, but no accepted CL/publication or whole-slice retry.
+The report does not identify the exact admission limit; existing guards remain.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

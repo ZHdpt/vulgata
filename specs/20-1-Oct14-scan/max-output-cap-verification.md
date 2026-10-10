@@ -38,3 +38,23 @@ affected classes passed. Full-suite GREEN is not claimed: failures were
 successful native CodeGraph qualification. No additional suites are qualified.
 The executable Generator and tested copy have identical SHA-256
 `F67B8654B09B25A6E08DEB028BD3F1AF6E8021920E20AB3A87EBB1A8302A0E2E`.
+
+## Real POM retry
+
+Executed reviewed commit `7c5e82fc41eebd9db51630120b50730522f2e460`, with low
+reasoning and 393216 output cap in the owned child configuration. Report
+`generate-40f41f0428e74d748645e1b9da9a2aae.stdout`: exit 1 after 29.8 seconds,
+no timeout, `NeedsSettlementCheck=false`, empty stderr. One provider request used
+9748 input and 1816 output tokens, all usage known. The Worker subsequently failed
+`BudgetExceeded / Admission`, with no terminal/parse/tool failure diagnostics.
+Execution Failed, coverage Partial, publication NotRequested, zero accepted files
+and zero Documents. All 77 prepared-source hashes still match the approved manifest.
+
+The earlier Length failure did not recur in this attempt. The remaining failure
+is local admission after the first provider request; the current diagnostic does
+not distinguish the exact admission refusal. The retained 32768-byte input proxy
+headroom is a candidate when conversation/tool history grows, not a confirmed
+measurement of this failed request. No input/byte/deadline guard was widened, no
+raw provider reasoning was retained, and no extra paid attempt or whole-slice
+retry ran. Resources and previous successful data remain retained. This is failed
+real generation evidence, not reader qualification or completion of the slice.
