@@ -161,3 +161,54 @@ the standard SelfContained launcher. Every initial and post-tool request carried
 restricted attempt `ecee15f68ac34c8ab8733c0b3963e7a6` stopped at build exit 1 with
 no compiler diagnostics and no tests; the single approved escalated retry supplied
 the passing evidence above. Existing assertions remain intact.
+
+## Authorized compatibility adapter (2026-10-10)
+
+The user subsequently requested a simple compatibility adapter and a test of
+whether `max_tokens` improves the outcome. Integrator verified that direct
+instruction and confirmed the selected endpoint as `https://api.deepseek.com`
+(default HTTPS port, root base path), model `deepseek-flash`. Its approved main
+checkpoint `3ddde7b3` matches this lane's affected factory/executor production
+files. No reset, replacement implementation or unrelated synchronization is needed.
+
+The bounded design changes only the outgoing cap property for that exact parsed
+endpoint. The existing admitted numeric limit is preserved; no cap is invented or
+increased. Other providers and endpoint variants retain their existing behavior.
+Ambiguous duplicate/conflicting cap properties fail before dispatch. The body
+transformation precedes the final lease/cancellation check, preserves other request
+semantics and applies to both existing Worker streaming and shared Business
+nonstreaming requests. It changes neither thinking mode nor response format,
+tools, retries, output parsing, publication or source/reader authority.
+
+Independent design review accepted this boundary, with final implementation review
+and controlled RED/GREEN required. Integrator owns a separately recorded fresh
+live experiment; earlier two-probe and Generate grants were exhausted. The lane
+does not acquire secrets or perform provider/native/PostgreSQL operations. A
+successful synthetic cap comparison would establish only its tested provider
+behavior, not real-source generation, accepted Knowledge or ordinary-reader success.
+
+Initial controlled RED `9f3a217ca81a4813ad98450fa2ff3046` selected 12 cases:
+7 passed, 5 failed, zero skipped, build zero errors. All five failures were the
+missing `max_tokens` assertion for the exact endpoint (Worker initial/tool
+continuation, nondefault cap and Business nonstreaming); negative endpoint and
+final lease-denial controls passed. Earlier `94000630f0b2461988a1bb16b012ef00`
+stopped at the restricted build without tests. `5651aadcfb884dcc99714ea542307f8d`
+then exposed a test-construction compile error (record syntax on an immutable
+class), corrected through its existing constructor before the genuine RED run.
+Neither earlier attempt is behavioral RED evidence.
+
+Final GREEN `578da4dac41f409d817cfb0921322c05`: **342/342 passed**, zero failures
+or skips, current build zero errors, through the standard SelfContained launcher
+for the complete Worker, GenerateRunner, EntryPoint and ExecutionScope classes.
+All 12 new cases passed. Actual SDK/MAF initial/post-tool bodies differ from the
+generic endpoint controls only in the cap key; the direct and Business cases
+preserve the nondefault value 137. Six negative endpoint cases retain generic
+behavior, and final Business lease denial produces zero dispatch. Independent
+implementation review accepted the boundary pending this now-passing GREEN.
+Duplicate/conflicting cap rejection and nonmatching body nonaccess were reviewed
+statically; no public-SDK malformed-key test is claimed. Existing generic wire
+characterization remains valid and unchanged. `git diff --check` passed.
+
+This checkpoint establishes the controlled compatibility behavior. Whether the
+deployed provider enforces the key, or real generation improves, remains pending
+Integrator's fresh runtime experiment. No live result is inferred from this GREEN.
