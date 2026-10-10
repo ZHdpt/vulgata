@@ -131,3 +131,39 @@ reader/UI qualification, full-slice completion, BL, Chat or graph behavior, nor
 prove the cause of the earlier single-request JSON truncation. The unchanged
 full-suite report-parser failure remains outstanding. This one-run paid grant is
 consumed; further provider execution requires another user instruction.
+
+## User-authorized full CL attempt
+
+The user next requested **"Try a full CL scan."** One fresh batch selected all
+77 exact manifest files, with `cl-only`, the same provider/model, existing finite
+limits and zero automatic retries. All 77 hashes matched before and after the
+run. The successful one-file publication above was preserved in its original
+database. A fresh owned database and fresh prepared tool workspace were used;
+the existing PostgreSQL container/volume were reused without alteration.
+
+Target `phone-096e63253cff`, batch `9247a399-fccf-4051-aef3-6d382c1b9635`:
+prepare/select both exited 0. Generate report
+`generate-bbd2fde7788c44118635ce1e8e632120.stdout` records exit 1 after
+**26.47 seconds**, no timeout and `NeedsSettlementCheck=false`:
+
+- Inventory/selected: 77/77; accepted files: 0; Documents: 0.
+- Execution `Failed`, coverage `Partial`, publication `NotRequested`.
+- First failed file: `mbs_channel/pom.xml`; no later file was attempted.
+- Worker `InvalidOutput`, stage `StreamTerminal`, terminal failure
+  `UnsupportedFinish`; retry disposition `None`.
+- One provider request, 9,748 input tokens, 4,011 output tokens, unknown usage
+  false. Standard error is empty.
+- No parse failure, tool failure, raw capture or HTTP comparison snapshot.
+
+The current guard classifies every observed finish other than Stop/ToolCalls as
+UnsupportedFinish; the report does not preserve its actual value. Therefore this
+does not establish Length, ContentFilter or another terminal cause. The observer
+emits only at proposal parse failure and supplies no additional evidence here.
+This is a new terminal rejection, not proof of a recurrence of malformed JSON or
+reasoning replay failure. No assertions or runtime policy were weakened, and no
+further provider request was made. The fresh resources are retained for diagnosis.
+
+Next diagnostic requirement: retain the sanitized exact finish reason and admitted
+output cap/usage at this failure boundary before attributing the cause or changing
+limits. Full CL completion and ordinary-reader qualification remain unachieved;
+the prior single-file accepted/publication result remains valid for its own scope.
