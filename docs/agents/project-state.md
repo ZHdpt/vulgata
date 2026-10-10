@@ -68,6 +68,13 @@ stopped on `mbs_account/pom.xml` before any provider call with the same
 BudgetExceeded/Admission classification. Zero accepted files/Documents; no
 publication. The maximum-cap evidence above retains this distinct run and its
 fresh owned resources. No additional retry ran.
+The user subsequently authorized correcting admission and another whole scan.
+Generate now uses the existing 1048576 per-request Worker ceiling, capped by run
+policy, instead of 32768 input bytes plus output. Actual leaf reservations and
+other finite guards remain; specific budget categories distinguish local failures.
+All 436 affected tests pass; full-suite GREEN remains unconfirmed. See
+[input admission evidence](../../specs/20-1-Oct14-scan/input-admission-verification.md)
+for diagnosis, review, test failures and the separately recorded live attempt.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

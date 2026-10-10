@@ -193,7 +193,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var scope = new Scope();
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
         Assert.Equal(exhaust ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
-        Assert.Null(result.BudgetFailure);
+        Assert.Equal(exhaust ? OctoberWorkerBudgetFailure.ProviderRounds : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
         if (exhaust) Assert.Null(result.Proposal);
         else
         {
@@ -312,10 +312,32 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var scope = new Scope();
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
         Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
-        Assert.Null(result.BudgetFailure);
+        Assert.Equal(OctoberWorkerBudgetFailure.InputBytes, result.BudgetFailure);
         Assert.Null(result.Proposal);
         Assert.Empty(client.Requests);
         Assert.Empty(scope.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Execute_InitialSerializedInputAbove32768Bytes_IsAdmittedWithinLargerRequestBudgetAsync()
+    {
+        var frame = new Frame("//" + new string('x', 48000) + "\nreturn;");
+        var request = Request(frame) with
+        {
+            Limits = new(MaximumWindowUtf8Bytes: 60000, MaximumInputUtf8Bytes: 1048576,
+                MaximumTokensPerRequest: 1048576, MaximumOutputTokensPerRequest: 8192)
+        };
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+        var scope = new Scope();
+
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.BudgetFailure);
+        Assert.True(frame.ByteLength > 32768);
+        Assert.True(Assert.Single(scope.Requests).MaximumTokens > 32768);
+        Assert.Single(client.Requests);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1098,11 +1120,13 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Empty(client.Caps); Assert.Empty(scope.Requests); Assert.Empty(scope.Leases);
             Assert.Null(result.Proposal); Assert.Null(result.TerminalObservation);
+            Assert.Equal(OctoberWorkerBudgetFailure.RequestTokens, result.BudgetFailure);
         }
         else
         {
             Assert.Equal(outputCap, Assert.Single(client.Caps));
             Assert.Equal(required, Assert.Single(scope.Requests).MaximumTokens);
+            Assert.Null(result.BudgetFailure);
             var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
         }
     }
@@ -1132,6 +1156,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
         Assert.Equal(8192, Assert.Single(client.Caps)); Assert.Single(scope.Requests);
         Assert.Equal(1, result.SettledToolCalls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(OctoberWorkerBudgetFailure.RequestTokens, result.BudgetFailure);
         Assert.Null(result.Proposal); Assert.Null(result.TerminalObservation);
         var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
     }
@@ -1902,7 +1927,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         else
         {
             Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status); Assert.Null(result.Proposal);
-            Assert.Equal(scenario == "tool-limit" ? OctoberWorkerBudgetFailure.ToolCalls : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+            Assert.Equal(scenario == "tool-limit" ? OctoberWorkerBudgetFailure.ToolCalls :
+                scenario == "provider-limit" ? OctoberWorkerBudgetFailure.ProviderRounds : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
         }
         if (transport.Calls > 1) Assert.True(transport.SawExactRefusal);
     }

@@ -100,7 +100,7 @@ public enum OctoberWorkerFailureStage
     Admission, StreamTerminal, ProposalParse, ProposalValidation, Transport, HostSealing,
     SourceVerification, ToolInvocation, ToolResultSerialization, AttemptSettlement, AgentOrchestration
 }
-public enum OctoberWorkerBudgetFailure { OutputBytes, ToolCalls, StreamUpdates }
+public enum OctoberWorkerBudgetFailure { OutputBytes, ToolCalls, StreamUpdates, InputBytes, RequestTokens, ProviderRounds, ProviderAdmission }
 public enum OctoberWorkerParseFailure { Syntax, RootShape, ClosedFields, ValueShape, Qualification, EvidenceIndex }
 public enum OctoberWorkerCaptureStatus { Captured, TooLarge, Unencodable, Suppressed, Failed, AlreadyAttempted, CleanupUnconfirmed }
 public enum OctoberWorkerParseSlot
@@ -514,7 +514,7 @@ public sealed class OctoberFileWorkerExecutor
             if (Failure is not null || _pending.Count != 0)
                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
             _observedStage = OctoberWorkerFailureStage.Admission;
-            if (Rounds >= request.Limits.MaximumProviderRounds) throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+            if (Rounds >= request.Limits.MaximumProviderRounds) throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.ProviderRounds);
             _observedStage = null;
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(cancellationToken), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
             _observedStage = OctoberWorkerFailureStage.Admission;
@@ -522,7 +522,7 @@ public sealed class OctoberFileWorkerExecutor
             int inputBytes = MeasureInputBytes(snapshot, options);
             _inputBytes = checked(_inputBytes + inputBytes);
             if (_inputBytes > request.Limits.MaximumInputUtf8Bytes)
-                throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+                throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.InputBytes);
 
             // Retain the existing byte-based input reservation policy. This is a
             // proxy, not a provider tokenizer or a proven context upper bound.
@@ -530,7 +530,7 @@ public sealed class OctoberFileWorkerExecutor
             int outputTokens = request.Limits.MaximumOutputTokensPerRequest;
             long requiredTokens = checked(inputTokenReservation + outputTokens);
             if (requiredTokens > request.Limits.MaximumTokensPerRequest)
-                throw Fail(OctoberFileWorkerStatus.BudgetExceeded);
+                throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.RequestTokens);
             ChatOptions bounded = options?.Clone() ?? new();
             bounded.MaxOutputTokens = outputTokens;
             var admissionRequest = new OctoberWorkerProviderAttemptRequest(request.RunId, request.FileWorkstreamId,
@@ -540,7 +540,9 @@ public sealed class OctoberFileWorkerExecutor
             ProviderAdmission admission = await scope.AcquireWorkerAttemptAsync(admissionRequest, cancellationToken);
             if (admission.Status != ProviderAdmissionStatus.Granted || admission.Lease is null)
                 throw Fail(admission.Status is ProviderAdmissionStatus.BudgetExhausted or ProviderAdmissionStatus.DeadlineExceeded
-                    ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Denied);
+                    ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Denied,
+                    budgetFailure: admission.Status is ProviderAdmissionStatus.BudgetExhausted or ProviderAdmissionStatus.DeadlineExceeded
+                        ? OctoberWorkerBudgetFailure.ProviderAdmission : null);
             IOctoberProviderAttemptLease lease = admission.Lease;
             try { (client.GetService(typeof(IOctoberWorkerHttpObservationClient)) as IOctoberWorkerHttpObservationClient)?.BeginLeaf(request.RunId, lease); }
             catch (Exception) { }

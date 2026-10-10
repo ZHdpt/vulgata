@@ -272,7 +272,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
                         execution.Provider.Profile.Name, frame, baseline, advisory,
                         new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
-                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(32768L + _dependencies.MaximumWorkerOutputTokens, execution.Policy.MaximumTotalTokens!.Value),
+                            // Input includes JSON escaping, prompt, tool schemas and replayed history,
+                            // not just the source window. Reserve measured input at each leaf under
+                            // the existing Worker ceiling and the run's cumulative policy.
+                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(1048576L, execution.Policy.MaximumTotalTokens!.Value),
                             MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
                             MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens));
                     var ledger = new OctoberWorkerInputLedger(request,
