@@ -196,3 +196,22 @@ PrepareAsync against retained .codegraph, correctly rejected as preexisting stat
 This is a Scan-owned lifecycle defect in b4a8e5fe, not JSON or source-byte change.
 Restart10 is held for correction to retain one original run-bound descriptor,
 as already required by plan.md109-114. No deletion/adoption bypass is authorized.
+
+Owner correction reviewed/tested/committed at2cb6dc27; isolated userAuth.xml passed.
+Restart10: phone-46a590bd74bd, database vulgata_oct_pilot_e9f4059db88246b8a3375d7221fbdff6,
+batch524073bc-04a3-4212-b8d7-8790b5130d2c,
+report generate-970aa0edfa2848b798169e72df2c8294.stdout.
+Exit1 in184.64s, settled/no timeout,0accepted/0Documents/NotRequested.
+Account pom.xml stopped BudgetExceeded/Admission/InputBytes:7requests,
+253740input/27514output, known usage;77source hashes match. The finite cumulative
+input-byte guard is retained; this is not classified as a JSON/provider defect.
+No whole publication succeeded in the initial attempt plus10restarts.
+
+The consulter's final updated evaluation keeps correction-only text mode as a
+controlled hypothesis, not a proven provider cause. The one-object/one-array EOF
+signature does not justify delimiter repair. Independent code plan assessment
+accepts default-false UseTextForJsonCorrection, propagated to Worker limits, changing
+only cloned eligible-correction ResponseFormat. Initial/tool/next-file calls remain
+JSON, declarations/tool-choice-none/history/caps/prompt unchanged, one correction.
+Actual-wire and strict rejection tests are required. User's conditional second
+series is now applicable; hardmode remains off and unimplemented.

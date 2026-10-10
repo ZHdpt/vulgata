@@ -147,3 +147,17 @@ Independent implementation review accepted the owner correction. Full SelfContai
 frames with different genuine test approval identities. The sole failure is the
 existing generated-report parser case. No assertion changes or full-suite GREEN
 claim. No native/provider qualification is inferred from these controlled tests.
+
+Committed owner correction `2cb6dc2740f380eda2ea56d22cad4801652cdd94`.
+Generator/test-copy SHA256 both
+`A0E5D6F4C8682E192312872A4C7154B5D768773E97ACA86F7F1E2D96E1E83048`.
+Real isolated channel userAuth.xml trial `owner-isolated-01` passed30.85s:
+Completed/Complete/Confirmed,1accepted/1Document, settled/no timeout, all77hashes
+match.2requests,9364input/3082output, known usage. Root phone-6c6b62ac2b31,
+database vulgata_oct_pilot_adc4c107155e48deb0545a6b9b35804d,
+batch540cfa67-a418-463b-a66d-93b520ebadbc,
+report generate-0ace3fed8a6a462aa280b5fde377d692.stdout. Retained publication
+9c0cc388-ed2a-46a0-aac2-09bdad7e3fb3, logical Document b74e86ef-9d03-59e4-5eee-bb7487bd6962,
+exact version fed63014-2b91-49a8-9aa0-b1abfcc831cd.
+The short trial does not qualify renewal, JSON correction usage or reader access.
+Whole restart10 follows; no text-mode or hardmode change yet.
