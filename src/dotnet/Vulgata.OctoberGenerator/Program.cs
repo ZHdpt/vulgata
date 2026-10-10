@@ -588,6 +588,7 @@ public static class OctoberGeneratorEntryPoint
                 TerminalFailure = worker.Status is { } workerStatus && Enum.IsDefined(workerStatus) &&
                     workerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed
                     ? DefinedStatus(worker.TerminalFailure) : null,
+                TerminalObservation = ProjectTerminalObservation(worker),
                 BudgetFailure = worker.Status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.BudgetExceeded
                     ? DefinedStatus(worker.BudgetFailure) : null,
                 ParseFailure = worker.Status is { } parseStatus && Enum.IsDefined(parseStatus) &&
@@ -642,6 +643,22 @@ public static class OctoberGeneratorEntryPoint
         {
             Converters = { new JsonStringEnumConverter() }
         });
+    }
+
+    private static object? ProjectTerminalObservation(OctoberWorkerDiagnosticSnapshot worker)
+    {
+        if (worker.Status != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.InvalidOutput ||
+            worker.FailureStage != Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.StreamTerminal ||
+            worker.TerminalFailure != Vulgata.Agents.WorkerExecution.OctoberWorkerTerminalFailure.UnsupportedFinish ||
+            worker.TerminalObservation is not { } observed) return null;
+        return new
+        {
+            FinishReason = DefinedStatus(observed.FinishReason),
+            MaximumOutputTokens = observed.MaximumOutputTokens is > 0 and <= 8192 ? observed.MaximumOutputTokens : null,
+            InputTokens = observed.InputTokens is >= 0 ? observed.InputTokens : null,
+            OutputTokens = observed.OutputTokens is >= 0 ? observed.OutputTokens : null,
+            ReasoningTokens = observed.ReasoningTokens is >= 0 ? observed.ReasoningTokens : null
+        };
     }
 
     private static object? ProjectHttpObservation(OctoberWorkerDiagnosticSnapshot worker)

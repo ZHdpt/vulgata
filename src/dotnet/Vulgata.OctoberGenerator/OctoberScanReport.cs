@@ -40,6 +40,7 @@ public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? St
     OctoberWorkerRetryDisposition? RetryDisposition, OctoberWorkerFailureStage? FailureStage)
 {
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
+    public OctoberWorkerTerminalObservation? TerminalObservation { get; init; }
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
     public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
     public OctoberWorkerCaptureStatus? CaptureStatus { get; init; }

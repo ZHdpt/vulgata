@@ -934,6 +934,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
         Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         Assert.Equal(defect, result.TerminalFailure); Assert.Null(result.Proposal);
+        if (defect != OctoberWorkerTerminalFailure.UnsupportedFinish) Assert.Null(result.TerminalObservation);
         Assert.Equal(0, toolCalls); Assert.Equal(1, client.Calls);
     }
 
@@ -958,7 +959,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
         Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
-        Assert.Equal(limit, result.BudgetFailure); Assert.Null(result.TerminalFailure);
+        Assert.Equal(limit, result.BudgetFailure); Assert.Null(result.TerminalFailure); Assert.Null(result.TerminalObservation);
         Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Null(result.Proposal);
         Assert.Equal(0, toolsInvoked); Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
         Assert.Single(scope.Requests);
@@ -967,6 +968,127 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var usage = Assert.IsType<ProviderAttemptUsage>(lease.Usage);
         Assert.Null(usage.InputTokens); Assert.Null(usage.OutputTokens); Assert.Null(usage.Cost);
     }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("length", "known", false)]
+    [InlineData("filter", "known", false)]
+    [InlineData("PRIVATE_UNKNOWN_FINISH", "known", false)]
+    [InlineData("length", "missing", false)]
+    [InlineData("length", "zero", false)]
+    [InlineData("length", "negative", false)]
+    [InlineData("length", "known", true)]
+    public async Task UnsupportedFinishObservation_ReportsOnlyCurrentLeafScalarsWithoutChangingOutcomeAsync(string finishKind, string usageKind, bool lowCap)
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        if (lowCap)
+        {
+            using var measure = new TerminalObservationClient([[new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.Length }]]);
+            var measuredScope = new Scope();
+            await new OctoberFileWorkerExecutor(measure, measuredScope).ExecuteAsync(request, []);
+            long measuredInput = Assert.Single(measuredScope.Requests).MaximumTokens - 8192;
+            request = request with { Limits = request.Limits with { MaximumTokensPerRequest = measuredInput + 137 } };
+        }
+        ChatFinishReason finish = finishKind == "length" ? ChatFinishReason.Length : finishKind == "filter" ? ChatFinishReason.ContentFilter : new(finishKind);
+        var updates = new List<ChatResponseUpdate> { new() { Role = ChatRole.Assistant, Contents = [new TextContent("PRIVATE_UNACCEPTED_FRAGMENT")], FinishReason = finish } };
+        if (usageKind != "missing") updates.Insert(0, new() { Contents = [new UsageContent(new UsageDetails
+        { InputTokenCount = 123, OutputTokenCount = 456, ReasoningTokenCount = 789 })] });
+        if (usageKind != "missing") updates.Add(new() { Contents = [new UsageContent(new UsageDetails
+        {
+            InputTokenCount = usageKind == "zero" ? 0 : usageKind == "negative" ? -1 : 101,
+            OutputTokenCount = usageKind == "zero" ? 0 : usageKind == "negative" ? -2 : 37,
+            ReasoningTokenCount = usageKind == "zero" ? 0 : usageKind == "negative" ? -3 : 29
+        })] });
+        using var client = new TerminalObservationClient([[.. updates]]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Null(result.Proposal); Assert.Null(result.ParseFailure); Assert.Null(result.CaptureStatus);
+        var observation = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+        Assert.Equal(finishKind == "length" ? OctoberWorkerUnsupportedFinish.Length : finishKind == "filter" ? OctoberWorkerUnsupportedFinish.ContentFilter : OctoberWorkerUnsupportedFinish.Other, observation.FinishReason);
+        Assert.Equal(lowCap ? 137 : 8192, observation.MaximumOutputTokens);
+        Assert.Equal(Assert.Single(client.Caps), observation.MaximumOutputTokens);
+        Assert.Equal(usageKind == "known" ? 101L : usageKind == "zero" ? 0L : (long?)null, observation.InputTokens);
+        Assert.Equal(usageKind == "known" ? 37L : usageKind == "zero" ? 0L : (long?)null, observation.OutputTokens);
+        Assert.Equal(usageKind == "known" ? 29L : usageKind == "zero" ? 0L : (long?)null, observation.ReasoningTokens);
+        var lease = Assert.Single(scope.Leases);
+        Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.DoesNotContain("PRIVATE", JsonSerializer.Serialize(result));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UnsupportedFinishObservation_NeverReusesPriorToolLeafUsageAsync(bool finalUsage)
+    {
+        var tool = AIFunctionFactory.Create(() => "controlled result", "read_prepared_source");
+        ChatResponseUpdate[] first =
+        [
+            new() { Role = ChatRole.Assistant, Contents = [new FunctionCallContent("controlled-prior", tool.Name, new Dictionary<string, object?>())], FinishReason = ChatFinishReason.ToolCalls },
+            new() { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 900, OutputTokenCount = 800, ReasoningTokenCount = 700 })] }
+        ];
+        var second = new List<ChatResponseUpdate> { new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.Length } };
+        if (finalUsage) second.Add(new() { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 9, OutputTokenCount = 8, ReasoningTokenCount = 7 })] });
+        using var client = new TerminalObservationClient([first, [.. second]]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        var observation = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+        Assert.Equal(finalUsage ? 9L : (long?)null, observation.InputTokens);
+        Assert.Equal(finalUsage ? 8L : (long?)null, observation.OutputTokens);
+        Assert.Equal(finalUsage ? 7L : (long?)null, observation.ReasoningTokens);
+        Assert.Equal(2, client.Caps.Count); Assert.Equal(client.Caps[1], observation.MaximumOutputTokens);
+        Assert.Equal(1, result.SettledToolCalls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task UnsupportedFinishObservation_ActualSdkMapsLengthAndUsageTrailerAsync()
+    {
+        int? wireCap = null;
+        using var transport = new AccountingSseHttp(["PRIVATE_REASONING"], ["{PRIVATE_INCOMPLETE"])
+        {
+            ExpectedHost = "api.deepseek.com", FinishOverrides = ["length"], ReasoningTokens = 17,
+            ObserveRequest = body => wireCap = body.GetProperty("max_tokens").GetInt32()
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        var observation = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+        Assert.Equal(OctoberWorkerUnsupportedFinish.Length, observation.FinishReason);
+        Assert.Equal(8192, wireCap); Assert.Equal(wireCap, observation.MaximumOutputTokens);
+        Assert.Equal(100L, observation.InputTokens); Assert.Equal(50L, observation.OutputTokens); Assert.Equal(17L, observation.ReasoningTokens);
+        Assert.Equal(1, transport.Calls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.DoesNotContain("PRIVATE", JsonSerializer.Serialize(result));
+    }
+
+    private sealed class TerminalObservationClient(ChatResponseUpdate[][] leaves) : IChatClient
+    {
+        internal List<int?> Caps { get; } = [];
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            int index = Caps.Count; Caps.Add(options?.MaxOutputTokens);
+            Assert.InRange(index, 0, leaves.Length - 1);
+            foreach (var update in leaves[index]) { await Task.Yield(); cancellationToken.ThrowIfCancellationRequested(); yield return update; }
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+
     private sealed class UpdateClient(ChatResponseUpdate[] updates) : IChatClient
     {
         internal bool StreamDisposed;

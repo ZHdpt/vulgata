@@ -443,6 +443,14 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         {
             TerminalFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.TerminalFailure is { } terminal && Enum.IsDefined(terminal) ? terminal : null,
+            TerminalObservation = result.Status == OctoberFileWorkerStatus.InvalidOutput &&
+                result.FailureStage == OctoberWorkerFailureStage.StreamTerminal &&
+                result.TerminalFailure == OctoberWorkerTerminalFailure.UnsupportedFinish && result.TerminalObservation is { } observed
+                ? new(observed.FinishReason is { } finish && Enum.IsDefined(finish) ? finish : null,
+                    observed.MaximumOutputTokens is > 0 and <= 8192 ? observed.MaximumOutputTokens : null,
+                    observed.InputTokens is >= 0 ? observed.InputTokens : null,
+                    observed.OutputTokens is >= 0 ? observed.OutputTokens : null,
+                    observed.ReasoningTokens is >= 0 ? observed.ReasoningTokens : null) : null,
             BudgetFailure = result.Status == OctoberFileWorkerStatus.BudgetExceeded &&
                 result.BudgetFailure is { } budget && Enum.IsDefined(budget) ? budget : null,
             ParseFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&

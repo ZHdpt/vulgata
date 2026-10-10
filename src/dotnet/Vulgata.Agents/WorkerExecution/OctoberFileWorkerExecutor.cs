@@ -118,6 +118,11 @@ public enum OctoberWorkerTerminalFailure
     StopWithCalls, IncompleteTerminal, IncompleteCoverage
 }
 
+public enum OctoberWorkerUnsupportedFinish { Length, ContentFilter, Other }
+public sealed record OctoberWorkerTerminalObservation(
+    OctoberWorkerUnsupportedFinish? FinishReason = null, int? MaximumOutputTokens = null,
+    long? InputTokens = null, long? OutputTokens = null, long? ReasoningTokens = null);
+
 /// <summary>Worker observation only; this is not a Knowledge completion capability.</summary>
 public sealed record OctoberFileWorkerResult(
     OctoberFileWorkerStatus Status,
@@ -130,6 +135,7 @@ public sealed record OctoberFileWorkerResult(
     public TimeSpan? RetryAfter { get; init; }
     public OctoberWorkerFailureStage? FailureStage { get; init; }
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
+    public OctoberWorkerTerminalObservation? TerminalObservation { get; init; }
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
     public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
     public OctoberWorkerCaptureStatus? CaptureStatus { get; init; }
@@ -309,6 +315,10 @@ public sealed class OctoberFileWorkerExecutor
                     ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None,
                 FailureStage = observations.For(exception) ?? stage ?? adapter?.FailureStage,
                 TerminalFailure = terminalFailure ?? adapter?.TerminalFailure,
+                TerminalObservation = status == OctoberFileWorkerStatus.InvalidOutput &&
+                    (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.StreamTerminal &&
+                    adapter?.TerminalFailure == OctoberWorkerTerminalFailure.UnsupportedFinish
+                    ? adapter.TerminalObservation : null,
                 BudgetFailure = status == OctoberFileWorkerStatus.BudgetExceeded ? adapter?.BudgetFailure : null,
                 ParseFailure = Enum.IsDefined(status) && status != OctoberFileWorkerStatus.Completed &&
                     (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.ProposalParse
@@ -485,6 +495,7 @@ public sealed class OctoberFileWorkerExecutor
         internal OctoberFileWorkerStatus? Failure { get; private set; }
         internal OctoberWorkerFailureStage? FailureStage { get; private set; }
         internal OctoberWorkerTerminalFailure? TerminalFailure { get; private set; }
+        internal OctoberWorkerTerminalObservation? TerminalObservation { get; private set; }
         internal OctoberWorkerBudgetFailure? BudgetFailure { get; private set; }
         private OctoberWorkerFailureStage? _observedStage;
 
@@ -535,6 +546,7 @@ public sealed class OctoberFileWorkerExecutor
             Task<bool>? pendingMove = null;
             long? inputTokens = null;
             long? actualOutputTokens = null;
+            long? reasoningTokens = null;
             var buffered = new List<ChatResponseUpdate>();
             var calls = new List<FunctionCallContent>();
             var reasoningHistory = new List<TextReasoningContent>();
@@ -631,6 +643,7 @@ public sealed class OctoberFileWorkerExecutor
                         {
                             inputTokens = usage.Details.InputTokenCount;
                             actualOutputTokens = usage.Details.OutputTokenCount;
+                            reasoningTokens = usage.Details.ReasoningTokenCount;
                             if (content.GetType() != typeof(UsageContent) || usage.Details.GetType() != typeof(UsageDetails))
                                 throw new NotSupportedException("Extended usage payload cannot be measured.");
                             ChargeMetadata(usage);
@@ -650,7 +663,18 @@ public sealed class OctoberFileWorkerExecutor
                 if (finish is null)
                     throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.MissingFinish);
                 if (finish != ChatFinishReason.Stop && finish != ChatFinishReason.ToolCalls)
+                {
+                    // Only scalar observations from this rejected leaf. Unknown usage
+                    // stays unknown; the requested cap is not proof of enforcement.
+                    TerminalObservation = new(
+                        finish == ChatFinishReason.Length ? OctoberWorkerUnsupportedFinish.Length :
+                        finish == ChatFinishReason.ContentFilter ? OctoberWorkerUnsupportedFinish.ContentFilter :
+                        OctoberWorkerUnsupportedFinish.Other,
+                        outputTokens, inputTokens is >= 0 ? inputTokens : null,
+                        actualOutputTokens is >= 0 ? actualOutputTokens : null,
+                        reasoningTokens is >= 0 ? reasoningTokens : null);
                     throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.UnsupportedFinish);
+                }
                 if (finish == ChatFinishReason.ToolCalls && calls.Count == 0)
                     throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolFinishWithoutCalls);
                 if (finish == ChatFinishReason.Stop && calls.Count != 0)

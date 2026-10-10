@@ -167,3 +167,65 @@ Next diagnostic requirement: retain the sanitized exact finish reason and admitt
 output cap/usage at this failure boundary before attributing the cause or changing
 limits. Full CL completion and ordinary-reader qualification remain unachieved;
 the prior single-file accepted/publication result remains valid for its own scope.
+
+## Approved unsupported-finish scalar diagnostic
+
+The user approved exposing the sanitized finish reason and effective requested
+output cap before changing limits. This correction adds `terminalObservation`
+only for `InvalidOutput / StreamTerminal / UnsupportedFinish`, with:
+
+- `finishReason`: Length, ContentFilter or Other. Unknown provider strings never
+  enter the report. The known labels preserve the SDK's observed finish reason.
+- `maximumOutputTokens`: this rejected leaf's actual requested cap, 1..8192.
+  This is the client option, not proof of provider enforcement.
+- `inputTokens`, `outputTokens`, `reasoningTokens`: the latest observed usage
+  snapshot from that same leaf. Missing or negative values remain null; zero
+  remains zero. Earlier leaf usage is never borrowed and reasoning is not added
+  again to total output tokens.
+
+Collection occurs after stream enumeration and includes a late usage trailer.
+Both Generate mapping and console projection guard the exact failure boundary and
+sanitize values. Metadata is not a cleanup certificate or an accounting waiver.
+Source authorization, cached-report authorization, status, retry, settlement,
+acceptance, cap computation and all runtime limits remain unchanged. No provider
+payload text, source content or reasoning text is logged by this correction.
+
+Separate test ownership retained. Initial RED
+`isolation-d610945d55f343339418158fcfed738c`: 18/18 failed with the observation
+absent. Focused GREEN `isolation-f18359bde0aa4cbe90af21c53287643e`: **501/501
+passed**, zero skips. Twenty diagnostic cases include actual SDK length/usage
+mapping, reduced cap 137, absent/zero/negative usage, latest snapshot replacement,
+prior-leaf isolation, actual runner mapping/revocation and console sanitization.
+Existing failure, budget and settlement assertions remain intact. Independent
+review found no blocking finding, conditional on required final verification.
+
+No paid provider, native-tool or PostgreSQL qualification was performed for this
+diagnostic change. It cannot recover the actual finish reason of the previous
+full-CL run.
+
+Full SelfContained `isolation-d242b3168ab744a6a854c27ab97236fe` completed with
+**4,718/4,722 passed**, four failures, zero skips; build zero errors. All twenty
+new diagnostic cases passed. The full suite is not GREEN. Failures were:
+
+- The previously recorded exact report-shape mismatch in
+  `OctoberGeneratedClReportTests.Parse_ActualEntryPointProjection_RoundTripsControlledReportWithoutStorageClaimAsync`.
+- `OctoberScanSequentialRunTests.ForeignConcurrentExecution_CannotMutateActiveOriginalFileCoverageAsync`:
+  timed out waiting for original execution after releasing its gate.
+- `Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_StreamingUpdatesResetInactivityDeadlineAsync`:
+  controlled timed transport returned ProviderUnavailable under the test's 40 ms
+  inactivity deadline. This test uses synthetic in-memory SSE, not a real provider.
+- `OctoberScanCodeGraphLifetimeTests.ExploreAsync_ContainedVerificationWaits_UsesSameBoundedOperationCancellationAsync`:
+  readiness assertion failed under the controlled 100 ms operation limit.
+
+No assertion or timeout was changed. The focused unchanged rerun of the three
+timing cases was initially blocked by automatic review based on the DeepSeek test
+class name. Read-only inspection verified its SelfContained classification,
+synthetic endpoint/credential and injected `TimedUpdateHandler` returning in-memory
+SSE. The identical command was subsequently permitted; no external provider request
+was part of either the full suite or the focused timing checks.
+
+Unchanged timing rerun `isolation-b6e0c07131d4493199c6eee97245fc7b`: **3/3
+passed**, zero skips. Those failures did not reproduce in the focused selection;
+this does not erase the failed full-suite result or establish their root causes.
+Independent final review accepted the scoped diagnostic with no outstanding code
+findings and explicitly retained the full-suite limitation. No paid run followed.
