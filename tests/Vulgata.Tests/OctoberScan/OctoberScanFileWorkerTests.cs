@@ -687,7 +687,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     {
         const string finalText = "{SYNTHETIC_CAPTURE_FINAL";
         string? captured = null; int captures = 0;
-        using var transport = new FragmentedToolHttp { InitialTextOverride = "SYNTHETIC_PRIOR_NOT_CAPTURED", FinalTextOverride = finalText };
+        using var transport = new FragmentedToolHttp { InitialTextOverride = "SYNTHETIC_PRIOR_NOT_CAPTURED", InitialReasoningFragments = ["SYNTHETIC_REASONING_", "NOT_CAPTURED"], FinalTextOverride = finalText };
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
         var tool = AIFunctionFactory.Create((string relativePath) => "SYNTHETIC_TOOL_NOT_CAPTURED", "read_prepared_source");
         var scope = new Scope();
@@ -1522,54 +1522,203 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     }
 
 
-    // Characterization of the current compatibility gap, not an assertion of DeepSeek conformance.
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task CurrentContract_ActualSdkWorkerSecondRequestOmitsToolLeafReasoningReplayAsync()
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActualSdkWorker_SecondRequestPreservesExactToolLeafReasoningReplayAsync(bool fragmented)
     {
-        const string reasoning = "SYNTHETIC_TOOL_REASONING_中文";
+        const string reasoning = "SYNTHETIC_TOOL_REASONING_中文😀";
+        string[] fragments = fragmented ? reasoning.EnumerateRunes().Select(rune => rune.ToString()).ToArray() : [reasoning];
         var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
             new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
         var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
-        using (var transport = new FragmentedToolHttp { ExpectedHost = "api.deepseek.com", InitialReasoning = reasoning })
+        using (var transport = new FragmentedToolHttp { ExpectedHost = "api.deepseek.com", InitialReasoningFragments = fragments })
         using (var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected))
         {
-            int mapped = 0;
+            var mapped = new StringBuilder();
             var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
             await foreach (var update in admitted.GetAttemptStreamingResponseAsync([new(ChatRole.User, "controlled replay observation")],
                 new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid())))
-                mapped += update.Contents.OfType<TextReasoningContent>().Count();
-            output.WriteLine("reasoningReplay: synthetic wire reasoning present; actual SDK mapped reasoning fragments={0}", mapped);
+                foreach (var content in update.Contents.OfType<TextReasoningContent>()) mapped.Append(content.Text);
+            Assert.Equal(reasoning, mapped.ToString());
         }
-        bool inspectedSecond = false;
+        JsonElement? secondRequest = null;
         using var executionTransport = new FragmentedToolHttp
         {
-            ExpectedHost = "api.deepseek.com", InitialReasoning = reasoning,
-            ObserveRequest = (body, call) =>
-            {
-                if (call != 1) return;
-                var messages = body.GetProperty("messages").EnumerateArray().ToArray();
-                var assistant = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "assistant" && message.TryGetProperty("tool_calls", out _)));
-                Assert.Equal("controlled-call", Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
-                var result = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "tool"));
-                Assert.Equal("controlled-call", result.GetProperty("tool_call_id").GetString());
-                Assert.False(assistant.TryGetProperty("reasoning_content", out _));
-                Assert.DoesNotContain(reasoning, body.GetRawText());
-                inspectedSecond = true;
-            }
+            ExpectedHost = "api.deepseek.com", InitialReasoningFragments = fragments,
+            ObserveRequest = (body, call) => { if (call == 1) secondRequest = body.Clone(); }
         };
         using var executionClient = await new OctoberWorkerClientFactory(new Secrets(), executionTransport).CreateAsync(selected);
         var scope = new Scope();
         var result = await new OctoberFileWorkerExecutor(executionClient, scope)
             .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
-        Assert.True(inspectedSecond);
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Equal(2, executionTransport.Calls);
         Assert.Equal(1, result.SettledToolCalls);
         Assert.Equal(2, scope.Leases.Count);
         Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
         Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
-        output.WriteLine("reasoningReplay: second request retains correlated assistant tool call and tool result, but omits reasoning_content; controlled responder permits completion, no live provider conformance claimed");
+        Assert.DoesNotContain("SYNTHETIC_TOOL_REASONING_", JsonSerializer.Serialize(result.Proposal));
+        Assert.DoesNotContain("SYNTHETIC_TOOL_REASONING_", JsonSerializer.Serialize(result));
+        Assert.NotNull(secondRequest);
+        var messages = secondRequest.Value.GetProperty("messages").EnumerateArray().ToArray();
+        var assistant = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "assistant" && message.TryGetProperty("tool_calls", out _)));
+        Assert.Equal("controlled-call", Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+        var toolResult = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "tool"));
+        Assert.Equal("controlled-call", toolResult.GetProperty("tool_call_id").GetString());
+        Assert.True(assistant.TryGetProperty("reasoning_content", out var replay), "Tool-bearing assistant history must replay reasoning_content.");
+        Assert.Equal(reasoning, replay.GetString());
+        Assert.All(messages.Where(message => message.GetProperty("role").GetString() != "assistant"),
+            message => Assert.False(message.TryGetProperty("reasoning_content", out _)));
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualSdkWorker_ReasoningReplayRetainsPlainAssistantAcrossSourceWindowsAsync()
+    {
+        const string reasoning = "SYNTHETIC_WINDOW_REASONING_中文😀";
+        var requests = new List<JsonElement>();
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com", ContentOnly = true,
+            InitialReasoningFragments = ["SYNTHETIC_WINDOW_", "REASONING_中文😀"],
+            ObserveRequest = (body, _) => requests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var request = Request(frame) with { Limits = new(MaximumWindowUtf8Bytes: 20, MaximumContinuationWindows: 2) };
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, requests.Count);
+        var assistant = Assert.Single(requests[1].GetProperty("messages").EnumerateArray()
+            .Where(message => message.GetProperty("role").GetString() == "assistant"));
+        Assert.True(assistant.TryGetProperty("reasoning_content", out var replay));
+        Assert.Equal(reasoning, replay.GetString());
+        Assert.False(assistant.TryGetProperty("tool_calls", out _));
+        Assert.Equal(0, result.SettledToolCalls);
+        Assert.Equal(frame.ByteLength, result.CoveredUtf8Bytes);
+        Assert.DoesNotContain("SYNTHETIC_WINDOW_REASONING_", JsonSerializer.Serialize(result));
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualSdkWorker_ReasoningReplayKeepsEveryToolRoundAssociatedWithoutDuplicationAsync()
+    {
+        using var transport = new ReasoningRoundsHttp();
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope)
+            .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(3, transport.Requests.Count);
+        Assert.Equal(2, result.SettledToolCalls);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+        for (int requestIndex = 1; requestIndex <= 2; requestIndex++)
+        {
+            var messages = transport.Requests[requestIndex].GetProperty("messages").EnumerateArray().ToArray();
+            var assistants = messages.Where(message => message.GetProperty("role").GetString() == "assistant").ToArray();
+            var results = messages.Where(message => message.GetProperty("role").GetString() == "tool").ToArray();
+            Assert.Equal(requestIndex, assistants.Length);
+            Assert.Equal(requestIndex, results.Length);
+            for (int prior = 0; prior < requestIndex; prior++)
+            {
+                Assert.True(assistants[prior].TryGetProperty("reasoning_content", out var replay));
+                Assert.Equal(ReasoningRoundsHttp.Reasoning(prior), replay.GetString());
+                string callId = "round-call-" + prior;
+                Assert.Equal(callId, Assert.Single(assistants[prior].GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+                Assert.Equal(callId, results[prior].GetProperty("tool_call_id").GetString());
+            }
+        }
+        Assert.DoesNotContain("SYNTHETIC_ROUND_REASONING", JsonSerializer.Serialize(result));
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("https://api.deepseek.com", true)]
+    [InlineData("https://api.deepseek.com:443/", true)]
+    [InlineData("https://selected.example.test", false)]
+    [InlineData("https://api.deepseek.com/v1", false)]
+    [InlineData("http://api.deepseek.com/", false)]
+    [InlineData("https://api.deepseek.com:444/", false)]
+    [InlineData("https://api.deepseek.com.foreign.invalid/", false)]
+    public async Task ActualSdkFactory_ReasoningHistorySerializesOnlyForExactEndpointWithoutMutatingHistoryAsync(string endpoint, bool replayExpected)
+    {
+        const string reasoning = "SYNTHETIC_DIRECT_HISTORY_中文😀";
+        JsonElement? observed = null;
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = new Uri(endpoint).Host, Calls = 1,
+            ObserveRequest = (body, _) => observed = body.Clone()
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, endpoint, "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var reasoningContent = new TextReasoningContent(reasoning);
+        object originalRaw = new();
+        ChatMessage[] history =
+        [
+            new(ChatRole.User, "controlled direct history serialization"),
+            new(ChatRole.Assistant, [reasoningContent, new FunctionCallContent("controlled-call", tool.Name,
+                new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs" })]),
+            new(ChatRole.Tool, [new FunctionResultContent("controlled-call", "contained result")])
+        ];
+        history[1].RawRepresentation = originalRaw;
+        var originalContents = history[1].Contents;
+        var originalCall = history[1].Contents.OfType<FunctionCallContent>().Single();
+        await foreach (var update in admitted.GetAttemptStreamingResponseAsync(history, new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid()))) { }
+        Assert.Same(originalRaw, history[1].RawRepresentation);
+        Assert.Same(originalContents, history[1].Contents);
+        Assert.Same(reasoningContent, history[1].Contents.OfType<TextReasoningContent>().Single());
+        Assert.Same(originalCall, history[1].Contents.OfType<FunctionCallContent>().Single());
+        Assert.Equal(reasoning, reasoningContent.Text);
+        Assert.Equal("controlled-call", originalCall.CallId);
+        Assert.NotNull(observed);
+        var assistant = Assert.Single(observed.Value.GetProperty("messages").EnumerateArray()
+            .Where(message => message.GetProperty("role").GetString() == "assistant"));
+        Assert.Equal(replayExpected, assistant.TryGetProperty("reasoning_content", out var replay));
+        if (replayExpected) Assert.Equal(reasoning, replay.GetString());
+        Assert.Equal("controlled-call", Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+    }
+
+    private sealed class ReasoningRoundsHttp : HttpMessageHandler
+    {
+        internal List<JsonElement> Requests { get; } = [];
+        internal static string Reasoning(int round) => "SYNTHETIC_ROUND_REASONING_" + round + "_中文😀";
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Assert.Equal("api.deepseek.com", request.RequestUri!.Host);
+            int round = Requests.Count;
+            Assert.InRange(round, 0, 2);
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+            Requests.Add(body.RootElement.Clone());
+            var chunks = new List<string>();
+            void Append(object delta, string? finish) => chunks.Add(JsonSerializer.Serialize(new
+            {
+                id = "round-" + round, @object = "chat.completion.chunk", created = 1, model = "deepseek-flash",
+                choices = new[] { new { index = 0, delta, finish_reason = finish } }
+            }));
+            if (round < 2)
+            {
+                foreach (var rune in Reasoning(round).EnumerateRunes()) Append(new { role = "assistant", reasoning_content = rune.ToString() }, null);
+                Append(new { role = "assistant", tool_calls = new[] { new { index = 0, id = "round-call-" + round, type = "function", function = new { name = "read_prepared_source", arguments = "{\"relativePath\":\"src/Order.cs\"}" } } } }, "tool_calls");
+            }
+            else Append(new { role = "assistant", content = UnitJson }, "stop");
+            chunks.Add(JsonSerializer.Serialize(new { id = "round-" + round, @object = "chat.completion.chunk", created = 1, model = "deepseek-flash", choices = Array.Empty<object>(), usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } }));
+            return new(HttpStatusCode.OK) { Content = new StringContent(string.Concat(chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
+        }
     }
 
     private sealed class ArgumentCorrectionHttp : HttpMessageHandler
@@ -2561,7 +2710,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         internal string ExpectedHost = "selected.example.test";
         internal bool ContentOnly;
         internal string? InitialTextOverride;
-        internal string? InitialReasoning;
+        internal string[]? InitialReasoningFragments;
         internal string? FinalTextOverride;
         internal Action<JsonElement, int>? ObserveRequest;
         internal bool MissingRequiredArgument;
@@ -2602,11 +2751,13 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                     choices = new[] { new { index = 0, delta = new { role = "assistant", content = "continue" }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } })];
             }
-            if (call == 0 && InitialReasoning is not null)
+            if (call == 0 && InitialReasoningFragments is not null)
             {
-                var first = System.Text.Json.Nodes.JsonNode.Parse(chunks[0])!;
-                first["choices"]![0]!["delta"]!["reasoning_content"] = InitialReasoning;
-                chunks[0] = first.ToJsonString();
+                chunks = [.. InitialReasoningFragments.Select(part => JsonSerializer.Serialize(new
+                {
+                    id = "controlled-tool", @object = "chat.completion.chunk", created = 1, model = "selected-model",
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", reasoning_content = part }, finish_reason = (string?)null } }
+                })), .. chunks];
             }
             if (call == 0 && InitialTextOverride is not null)
             {

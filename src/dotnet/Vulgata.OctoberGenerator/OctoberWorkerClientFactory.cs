@@ -136,13 +136,40 @@ public sealed class OctoberWorkerClientFactory
                 }
             };
             using IChatClient client = new ChatClient(model, new ApiKeyCredential(secret), settings).AsIChatClient();
-            await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync(messages, options, linked.Token)
+            // The current OpenAI adapter reads reasoning_content but does not
+            // serialize TextReasoningContent back into Chat Completions history.
+            // Adapt only the qualified DeepSeek endpoint, without mutating history.
+            IEnumerable<Microsoft.Extensions.AI.ChatMessage> replay = _useDeepSeekMaxTokens
+                ? WithDeepSeekReasoning(messages, options) : messages;
+            await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync(replay, options, linked.Token)
                 .WithCancellation(linked.Token))
             {
                 observation?.For(lease)?.Sdk(update);
                 yield return update;
             }
             observation?.For(lease)?.SdkCompleted();
+        }
+
+        private static IEnumerable<Microsoft.Extensions.AI.ChatMessage> WithDeepSeekReasoning(
+            IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options)
+        {
+            foreach (Microsoft.Extensions.AI.ChatMessage message in messages)
+            {
+                var reasoning = message.Contents.OfType<TextReasoningContent>().ToArray();
+                if (message.Role != ChatRole.Assistant || reasoning.Length == 0)
+                {
+                    yield return message;
+                    continue;
+                }
+                Microsoft.Extensions.AI.ChatMessage copy = message.Clone();
+                copy.RawRepresentation = null;
+                OpenAI.Chat.ChatMessage wireMessage = new[] { copy }.AsOpenAIChatMessages(options).Single();
+#pragma warning disable SCME0001 // The SDK's supported extension field mechanism.
+                wireMessage.Patch.Set("$.reasoning_content"u8, string.Concat(reasoning.Select(content => content.Text)));
+#pragma warning restore SCME0001
+                copy.RawRepresentation = wireMessage;
+                yield return copy;
+            }
         }
 
         public object? GetService(Type serviceType, object? serviceKey = null)

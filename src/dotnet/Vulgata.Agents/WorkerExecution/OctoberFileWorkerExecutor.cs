@@ -537,6 +537,7 @@ public sealed class OctoberFileWorkerExecutor
             long? actualOutputTokens = null;
             var buffered = new List<ChatResponseUpdate>();
             var calls = new List<FunctionCallContent>();
+            var reasoningHistory = new List<TextReasoningContent>();
             var text = new StringBuilder();
             ChatFinishReason? finish = null;
             try
@@ -600,6 +601,13 @@ public sealed class OctoberFileWorkerExecutor
                             ChargeOutput(reasoning.Text);
                             if (reasoning.ProtectedData is not null) ChargeOutput(reasoning.ProtectedData);
                             ChargeMetadata(reasoning);
+                            // Keep provider reasoning in conversation history, never in
+                            // LastText (the proposal/capture input). Do not carry opaque
+                            // raw SDK objects into the next request.
+                            reasoningHistory.Add(new TextReasoningContent(reasoning.Text)
+                            {
+                                ProtectedData = reasoning.ProtectedData
+                            });
                         }
                         else if (content is FunctionCallContent call && !call.InformationalOnly)
                         {
@@ -744,7 +752,7 @@ public sealed class OctoberFileWorkerExecutor
             {
                 Role = ChatRole.Assistant,
                 ResponseId = buffered.LastOrDefault()?.ResponseId,
-                Contents = [new TextContent(LastText), .. calls],
+                Contents = [.. reasoningHistory, new TextContent(LastText), .. calls],
                 FinishReason = finish
             };
         }
