@@ -191,6 +191,16 @@ timeout or cleanup doubt; capture remained off. Cap compatibility is fixed but
 real-source generation remains blocked. No further paid retry; any actual Worker
 HTTP-to-SDK raw observation needs a new bounded decision. Prior partial CL intact.
 
+The user subsequently approved ONE bounded in-memory comparison, no raw retention.
+Observer integrated `5661bfa2`; main382/382 affected tests passed, isolation
+`f2f876a1e832411e890aa66a61b6073a`. Run `phone-24c8f0d911f9` stopped EARLIER after49.26s:
+`ProviderFailed/ToolInvocation`, `SearchText/ResultAdmission/SourceOutcome:Denied`.
+Accepted0;3 requests/11,758 input/1,499 output tokens. No timeout or cleanup doubt.
+HTTP observation and parse failure null: the intended malformed-JSON comparison
+was not reached and its root cause remains unknown. No raw response persisted.
+Scan owns source-free diagnosis of the new typed search denial; no additional paid
+run or admission weakening is authorized by the completed one-run grant.
+
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
 CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,

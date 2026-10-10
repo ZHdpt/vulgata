@@ -699,3 +699,32 @@ run `phone-24c8f0d911f9`, batch `8efbd82b-8a6b-4e2c-8d57-4574979bde20`, database
 Temporary bootstrap Web stopped; prepare passed3.07s. No Generate/provider request
 at this preparation checkpoint; reviewed observation implementation is pending.
 Raw-file capture stays disabled. Prior data and original sources remain intact.
+
+### In-memory diagnostic outcome: target failure not reached
+
+Reviewed observation checkpoint `99ce34a2` integrated as `5661bfa2`. Main rebuilt
+current sources and passed **382/382** affected SelfContained tests, zero failures/
+skips, build zero errors; isolation `f2f876a1e832411e890aa66a61b6073a`.
+
+The ONE approved Generate used the exact prepared run above and process-local
+observation opt-in, with a CreateNew one-use guard and raw capture absent. It exited1
+after **49.26s wall /46.72s pipeline**, no timeout or cleanup doubt. Inventory77,
+accepted0, Documents0, no publication/matching/BL. Known usage: **3 requests,
+11,758 input/1,499 output tokens**. Local report:
+`generate-aababf895db74885966f25558f766700`.
+
+This run stopped earlier than the intended JSON boundary: `ProviderFailed /
+ToolInvocation`, retryNone, toolFailure `SearchText / ResultAdmission /
+SourceOutcome:Denied`; other tool details null. Parse failure, capture and HTTP
+observation were null. Therefore no HTTP/SDK/parse comparison exists and no cause
+of the prior malformed final JSON was established. Null observation is not a match.
+No raw-response file was retained; no capture directory exists. Observation raw
+references are discarded on the existing failure/disposal path.
+
+Static interpretation: SearchText returned a typed Denied outcome that the input
+ledger correctly refuses to admit. This finite outcome alone does not distinguish
+invalid source-tool arguments, source authorization/containment, or runtime binding
+failure. It is not evidence of a newline-excerpt mismatch, which cannot by itself
+explain the reported typed Denied outcome. Root requested source-free diagnosis
+from Scan, not another paid run, new capture, admission weakening or production fix.
+The single diagnostic grant is consumed; prior retained partial CL remains intact.
