@@ -84,3 +84,31 @@ Final guard selection `isolation-33611d73854343378c612c3235fbfc32`:
 1selected,1passed,0failed,0skipped. Independent reviewer confirmed final acceptance
 with no remaining findings. Controlled verification is complete; the one authorized
 real whole scan with hard mode is next. No complete Knowledge base is claimed yet.
+
+Implementation commit `64dbb66589391b00a6ee33efd72b9595a480ed1d`.
+Generator and test-copy Agents DLL SHA256 both
+`B32EE68EDA2C2D55C8956FA936DE5DE6400E874BD25809602D3E4D16256D8C66`;
+Generator SHA256 `D17DF854A42A671DEB9C3CAF0D619C3B4513B520785DDEC86546D51066AB7010`.
+`hard-whole-01` started with hardRetryMode and useTextForJsonCorrection true,
+transient retries zero and unchanged approved source/provider/resource/budget
+settings. No automatic further whole-run restart is configured.
+
+## Real hard-mode outcome
+
+`hard-whole-01` failed after274.24seconds:7accepted files of77selected,
+Partial coverage,0Documents,publication NotRequested. Root phone-0c4a45eb3851,
+database vulgata_oct_pilot_973f4f76090a4fa6907bdd6c42ae9f52,
+batch de25d53d-2bdf-45a0-ad31-2d4dbefbe0fd,
+report generate-b809629553d3426d8ca2fcd0860be5c7.stdout.
+Hard counters:3reserved extra attempts and3provider-client entries across the run.
+Actual usage:13requests,77983input/63291output tokens, all known.
+Process exit1, no timeout, no unresolved settlement check; all77source hashes match.
+
+account `src/main/java/cn/com/yitong/actions/cust/custcenter/GuestSyncOp.java`
+failed InvalidOutput/ProposalParse/Syntax/Root. HTTP/SDK/parser all retained the
+same3477UTF8 bytes; Stop/DONE; MissingClosingDelimiters atEOF with1object/1array
+open;1652reasoning tokens. Hard mode supplied bounded extra opportunities but did
+not eliminate the observed failure. No incomplete candidate was accepted and no
+partial corpus was represented as successful publication. Ordinary-reader access
+was not requalified. Both normal series and this single hard-mode run are exhausted;
+no further paid retry or format change is implicitly authorized by this outcome.

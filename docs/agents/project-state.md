@@ -175,7 +175,11 @@ hard-retry implementation is now independently reviewed: default off, two extra
 eligible corrections per file and sixteen per original run, same Worker/history,
 tools disabled, every original guard/cap unchanged, transient retries zero required.
 Full SelfContained4864/4865 with the same report-parser failure; the final added
-round-cap guard passes1/1. One authorized real hard-mode whole run is pending. See
+round-cap guard passes1/1. The authorized hard-mode whole run failed after274.24s:
+7accepted/77selected,0published Documents; GuestSyncOp.java still returned incomplete
+final JSON after bounded corrections.3extra reservations/client entries,13requests,
+known usage; settled and all source hashes matched. The authorized retry sequence
+is exhausted; no complete real corpus or ordinary-reader success is claimed. See
 [hard correction evidence](../../specs/20-1-Oct14-scan/hard-correction-verification.md) and
 [text correction evidence](../../specs/20-1-Oct14-scan/text-correction-verification.md).
 
