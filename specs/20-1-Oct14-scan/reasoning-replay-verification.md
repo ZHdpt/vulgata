@@ -69,3 +69,27 @@ provider calls. Exact local resource identities and outputs remain in the protec
 run directory, not tracked configuration. A create-new invocation marker prevents
 an accidental repeat. The existing bounded in-memory HTTP observer is enabled;
 raw responses and reasoning are not retained.
+
+## Launch blocked before execution
+
+The reviewed correction is committed as
+`5e02dbb6d75007c4889ba0c3d2762933d9d320ce`. The paid Generate command was rejected
+by automatic approval review before process creation. Its reason was missing
+exact source-payload/destination authorization in the current transcript.
+
+Read-only history verification found direct original user approvals in chat
+`01a1109d-ec4c-7500-8b73-642a5e22f59b`: message
+`01a11fd2-01e9-71a2-8edc-dc0793389b73` named the prepared login slice, DeepSeek
+endpoint/model/protected credential and available-balance spending; message
+`01a12028-a49f-71e2-8f93-5e01b6e04186` confirmed the immediately preceding
+request for relevant supporting content from all 77 files, excluding evaluation
+answers. The same command was resubmitted with those references. Review again
+rejected it because cross-chat tool output was not accepted as trusted user
+authorization in this transcript. No indirect execution or further retry followed.
+
+No Generate process, provider request, accepted file or Document resulted from
+this attempted trial. The invocation marker is absent and no Generate log exists.
+Prepared database/keys/configuration remain retained for the user's decision;
+the bootstrap host is stopped. Exact source-scope/destination confirmation in
+this chat is the remaining launch requirement. Real replay behavior and JSON
+truncation remain unqualified despite passing controlled replay tests.
