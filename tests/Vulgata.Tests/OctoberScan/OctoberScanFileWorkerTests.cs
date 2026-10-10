@@ -2176,6 +2176,113 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         { Reads++; return base.ReadAsync(buffer[..Math.Min(buffer.Length, maximum)], cancellationToken); }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("https://api.deepseek.com")]
+    [InlineData("https://api.deepseek.com/")]
+    public async Task DeepSeekRoot_ActualWorkerToolContinuationChangesOnlyCapFieldAsync(string endpoint)
+    {
+        var frame = new Frame("if (enabled) Run();\nreturn;"); var request = Request(frame);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var genericBodies = new List<JsonElement>(); var deepSeekBodies = new List<JsonElement>();
+        foreach (bool deepSeek in new[] { false, true })
+        {
+            using var transport = new FragmentedToolHttp
+            {
+                ExpectedHost = deepSeek ? "api.deepseek.com" : "selected.example.test",
+                ObserveRequest = (body, _) => (deepSeek ? deepSeekBodies : genericBodies).Add(body.Clone())
+            };
+            var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions, deepSeek ? endpoint : "https://selected.example.test/v1", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+            using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+            var scope = new Scope();
+            var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
+            Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(2, transport.Calls);
+            Assert.Equal(1, result.SettledToolCalls);
+            Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+        }
+        Assert.Equal(2, genericBodies.Count); Assert.Equal(2, deepSeekBodies.Count);
+        for (int leaf = 0; leaf < 2; leaf++)
+        {
+            int originalCap = genericBodies[leaf].GetProperty("max_completion_tokens").GetInt32();
+            Assert.Equal(originalCap, deepSeekBodies[leaf].GetProperty("max_tokens").GetInt32());
+            Assert.False(deepSeekBodies[leaf].TryGetProperty("max_completion_tokens", out _));
+            var generic = System.Text.Json.Nodes.JsonNode.Parse(genericBodies[leaf].GetRawText())!.AsObject();
+            var translated = System.Text.Json.Nodes.JsonNode.Parse(deepSeekBodies[leaf].GetRawText())!.AsObject();
+            generic.Remove("max_completion_tokens"); translated.Remove("max_tokens");
+            Assert.True(System.Text.Json.Nodes.JsonNode.DeepEquals(generic, translated));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("https://api.deepseek.com", true)]
+    [InlineData("https://api.deepseek.com:443/", true)]
+    [InlineData("https://selected.example.test/v1", false)]
+    [InlineData("https://api.deepseek.com/v1", false)]
+    [InlineData("http://api.deepseek.com/", false)]
+    [InlineData("https://api.deepseek.com:444/", false)]
+    [InlineData("https://api.deepseek.com.foreign.invalid/", false)]
+    [InlineData("https://api.deepseek.com/?controlled=1", false)]
+    public async Task DeepSeekRoot_ActualSdkPreservesNondefaultCapOnlyForExactEndpointAsync(string endpoint, bool translate)
+    {
+        using var transport = new ControlledHttp();
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions, endpoint, "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var port = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        await foreach (var update in port.GetAttemptStreamingResponseAsync([new(ChatRole.User, "synthetic cap input")],
+            new ChatOptions { MaxOutputTokens = 137, ResponseFormat = ChatResponseFormat.Json }, new Lease(Guid.NewGuid()))) { }
+        using var body = JsonDocument.Parse(Assert.Single(transport.Requests).Body);
+        Assert.Equal(137, body.RootElement.GetProperty(translate ? "max_tokens" : "max_completion_tokens").GetInt32());
+        Assert.False(body.RootElement.TryGetProperty(translate ? "max_completion_tokens" : "max_tokens", out _));
+        Assert.Equal("json_object", body.RootElement.GetProperty("response_format").GetProperty("type").GetString());
+        foreach (string key in new[] { "thinking", "reasoning_effort", "stop" }) Assert.False(body.RootElement.TryGetProperty(key, out _));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeepSeekRoot_BusinessFactorySharesCapTranslationAndFinalLeaseGuardAsync(bool deny)
+    {
+        using var transport = new ControlledHttp { NonStreaming = true };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var port = Assert.IsAssignableFrom<Vulgata.Agents.OctoberBusiness.IOctoberBusinessAttemptClient>(client);
+        var lease = new CapDispatchLease(new Lease(Guid.NewGuid()) { DenyAfterChecks = deny ? 0 : int.MaxValue });
+        int callbacks = 0;
+        try
+        {
+            var pending = port.GetAttemptResponseAsync([new(ChatRole.User, "synthetic accepted input")],
+                new ChatOptions { MaxOutputTokens = 137, ResponseFormat = ChatResponseFormat.Json }, lease, _ => callbacks++);
+            if (deny)
+            {
+                await Assert.ThrowsAnyAsync<Exception>(() => pending);
+                Assert.Empty(transport.Requests); Assert.Equal(0, callbacks); Assert.Equal(0, lease.Dispatches);
+            }
+            else
+            {
+                Assert.Equal(ChatFinishReason.Stop, (await pending).FinishReason);
+                using var body = JsonDocument.Parse(Assert.Single(transport.Requests).Body);
+                Assert.Equal(137, body.RootElement.GetProperty("max_tokens").GetInt32());
+                Assert.False(body.RootElement.TryGetProperty("max_completion_tokens", out _));
+                Assert.Equal("json_object", body.RootElement.GetProperty("response_format").GetProperty("type").GetString());
+                Assert.Equal(1, callbacks); Assert.Equal(1, lease.Dispatches);
+            }
+        }
+        finally { await lease.DisposeAsync(); }
+    }
+
+    private sealed class CapDispatchLease(Lease inner) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
+    {
+        internal int Dispatches;
+        public Guid AttemptId => inner.AttemptId;
+        public CancellationToken CancellationToken => inner.CancellationToken;
+        public Task<ProviderAdmissionStatus> CheckBeforeSendAsync(CancellationToken cancellationToken = default) => inner.CheckBeforeSendAsync(cancellationToken);
+        public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default) => inner.SettleAsync(usage, cancellationToken);
+        public ValueTask DisposeAsync() => inner.DisposeAsync();
+        public void RecordDispatch() => Dispatches++;
+        public void CompleteDispatchObservation() { }
+    }
     private sealed class AccountingSseHttp(string[] reasoning, string[] text) : HttpMessageHandler
     {
         internal int Calls;
@@ -2219,6 +2326,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     }
     private sealed class FragmentedToolHttp : HttpMessageHandler
     {
+        internal string ExpectedHost = "selected.example.test";
         internal bool ContentOnly;
         internal string? InitialTextOverride;
         internal string? FinalTextOverride;
@@ -2230,7 +2338,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         internal int Calls;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Assert.Equal("selected.example.test", request.RequestUri!.Host);
+            Assert.Equal(ExpectedHost, request.RequestUri!.Host);
             int call = Calls++;
             Assert.InRange(call, 0, 1);
             if (ObserveRequest is not null)
@@ -2305,11 +2413,16 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     private sealed class ControlledHttp : HttpMessageHandler
     {
         internal bool Fail { get; init; }
+        internal bool NonStreaming { get; init; }
         internal List<(string Uri, string? Authorization, string Body, long Timestamp)> Requests { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add((request.RequestUri!.ToString(), request.Headers.Authorization?.ToString(), await request.Content!.ReadAsStringAsync(cancellationToken), System.Diagnostics.Stopwatch.GetTimestamp()));
             if (Fail) return new(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("{\"error\":{\"message\":\"controlled transient failure\"}}", Encoding.UTF8, "application/json") };
+            if (NonStreaming) return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"id":"synthetic","object":"chat.completion","created":1,"model":"deepseek-flash","choices":[{"index":0,"message":{"role":"assistant","content":"{}"},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}""", Encoding.UTF8, "application/json")
+            };
             const string chunk = """{"id":"controlled","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{"role":"assistant","content":"controlled-response"},"finish_reason":"stop"}]}""";
             return new(HttpStatusCode.OK) { Content = new StringContent("data: " + chunk + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
         }

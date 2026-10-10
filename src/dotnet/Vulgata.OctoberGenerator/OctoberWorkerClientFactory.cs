@@ -3,6 +3,7 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Text.Json;
 using OpenAI;
 using OpenAI.Chat;
 using Vulgata.Agents.WorkerExecution;
@@ -55,6 +56,9 @@ public sealed class OctoberWorkerClientFactory
         : IChatClient, IOctoberWorkerAttemptClient, IOctoberBusinessAttemptClient
     {
         private readonly HttpMessageHandler _transport = supplied ?? new SocketsHttpHandler { AllowAutoRedirect = false };
+        private readonly bool _useDeepSeekMaxTokens = endpoint.Scheme == Uri.UriSchemeHttps && endpoint.IsDefaultPort &&
+            endpoint.Host.Equals("api.deepseek.com", StringComparison.OrdinalIgnoreCase) && endpoint.AbsolutePath == "/" &&
+            endpoint.Query.Length == 0 && endpoint.UserInfo.Length == 0 && endpoint.Fragment.Length == 0;
         private bool _disposed;
         public string ProviderProfileId => profileId;
 
@@ -77,7 +81,7 @@ public sealed class OctoberWorkerClientFactory
             if (lease is not IOctoberWorkerDispatchObserver)
                 throw new InvalidOperationException("An observable Business attempt lease is required.");
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
-            var handler = new LeaseHandler(_transport, lease, onDispatched, businessAttempt: true);
+            var handler = new LeaseHandler(_transport, lease, onDispatched, businessAttempt: true, useDeepSeekMaxTokens: _useDeepSeekMaxTokens);
             using var http = new HttpClient(handler, disposeHandler: true)
             {
                 Timeout = Timeout.InfiniteTimeSpan
@@ -111,7 +115,7 @@ public sealed class OctoberWorkerClientFactory
             ObjectDisposedException.ThrowIf(_disposed, this);
             ArgumentNullException.ThrowIfNull(lease);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
-            using var http = new HttpClient(new LeaseHandler(_transport, lease, onDispatched), disposeHandler: true)
+            using var http = new HttpClient(new LeaseHandler(_transport, lease, onDispatched, useDeepSeekMaxTokens: _useDeepSeekMaxTokens), disposeHandler: true)
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
@@ -144,12 +148,13 @@ public sealed class OctoberWorkerClientFactory
     }
 
     private sealed class LeaseHandler(HttpMessageHandler transport, IOctoberProviderAttemptLease lease,
-        Action<long>? onDispatched, bool businessAttempt = false) : HttpMessageHandler
+        Action<long>? onDispatched, bool businessAttempt = false, bool useDeepSeekMaxTokens = false) : HttpMessageHandler
     {
         private readonly HttpMessageInvoker _invoker = new(transport, disposeHandler: false);
         internal OctoberBusinessAttemptDeniedException? BusinessRefusal { get; private set; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            if (useDeepSeekMaxTokens) await TranslateDeepSeekTokenParameterAsync(request, cancellationToken);
             ProviderAdmissionStatus eligibility = await lease.CheckBeforeSendAsync(cancellationToken);
             if (eligibility != ProviderAdmissionStatus.Granted)
             {
@@ -162,6 +167,51 @@ public sealed class OctoberWorkerClientFactory
             (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
             Task<HttpResponseMessage> response = _invoker.SendAsync(request, cancellationToken);
             return await response;
+        }
+
+        private static async Task TranslateDeepSeekTokenParameterAsync(HttpRequestMessage request, CancellationToken token)
+        {
+            if (request.Content is not { } original) return;
+            byte[] body = await original.ReadAsByteArrayAsync(token);
+            using JsonDocument document = JsonDocument.Parse(body);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                throw new InvalidOperationException("DeepSeek request body is invalid.");
+            int sourceCount = 0, targetCount = 0;
+            JsonElement admitted = default;
+            foreach (JsonProperty property in document.RootElement.EnumerateObject())
+            {
+                if (property.NameEquals("max_completion_tokens")) { sourceCount++; admitted = property.Value; }
+                else if (property.NameEquals("max_tokens")) targetCount++;
+            }
+            if (sourceCount > 1 || targetCount > 1 || sourceCount != 0 && targetCount != 0)
+                throw new InvalidOperationException("DeepSeek token parameters are ambiguous.");
+            if (sourceCount == 0) return;
+            if (admitted.ValueKind != JsonValueKind.Number || !admitted.TryGetInt64(out long maximum) || maximum <= 0)
+                throw new InvalidOperationException("DeepSeek token parameter is invalid.");
+
+            using var output = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(output))
+            {
+                writer.WriteStartObject();
+                foreach (JsonProperty property in document.RootElement.EnumerateObject())
+                {
+                    writer.WritePropertyName(property.NameEquals("max_completion_tokens") ? "max_tokens" : property.Name);
+                    property.Value.WriteTo(writer);
+                }
+                writer.WriteEndObject();
+            }
+            token.ThrowIfCancellationRequested();
+            var replacement = new ByteArrayContent(output.ToArray());
+            try
+            {
+                foreach (var header in original.Headers)
+                    if (!header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase) &&
+                        !replacement.Headers.TryAddWithoutValidation(header.Key, header.Value))
+                        throw new InvalidOperationException("DeepSeek content headers are invalid.");
+                request.Content = replacement;
+            }
+            catch { replacement.Dispose(); throw; }
+            original.Dispose();
         }
         protected override void Dispose(bool disposing)
         {
