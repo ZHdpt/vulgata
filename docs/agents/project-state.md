@@ -146,6 +146,15 @@ seconds, one request, one accepted file and confirmed CL Document publication.
 Its prior malformed JSON did not reproduce; this does not qualify the whole scan.
 No subsequent whole run started; the exact retained version is in that evidence.
 
+October11: the user approved making the existing single JSON/structure correction
+tool-disabled, with host enforcement and safe numeric parser positions. Independent
+review accepted the narrow implementation; investigation, evidence/semantic
+validation, provider settings and all limits remain unchanged. Controlled tests
+and the separately authorized isolated-first/bounded whole-run retry series are
+tracked in [tool-disabled correction evidence](../../specs/20-1-Oct14-scan/tool-disabled-correction-verification.md).
+Later fix/retry or configurable hard-retry work is conditional on the recorded
+series failing; it never permits accepting invalid output or bypassing authority.
+
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

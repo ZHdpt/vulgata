@@ -624,6 +624,18 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     private static OctoberSelectedWorkerProvider Selected(ApiType type = ApiType.ChatCompletions) => new("explicit-source", "only-source", new("selected", type, "https://selected.example.test/v1", "selected-model", "credential://selected"), "synthetic-selected-cipher");
     private static OctoberFileWorkerRequest Request(Frame frame) => new(new("owned-db", "owned-target", Guid.NewGuid(), new string('a', 64)), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "selected", frame,
         [new(ContributorKind.Source, frame.Origin.RepositoryId, null, frame.Origin.RootBindingIdentity, null, frame.Origin.SourceDigest)], [], new());
+    private static OctoberWorkerParseDiagnosticSnapshot ExpectedSyntaxDiagnostic(string text)
+    {
+        JsonException parseError;
+        try
+        {
+            using var _ = JsonDocument.Parse(text, new JsonDocumentOptions { MaxDepth = 32 });
+            throw new InvalidOperationException("Expected the controlled parser fixture to be invalid JSON.");
+        }
+        catch (JsonException error) { parseError = error; }
+        return new(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root,
+            LineNumber: parseError.LineNumber, BytePositionInLine: parseError.BytePositionInLine);
+    }
     private static OctoberFileWorkerRequest WithToolBudget(OctoberFileWorkerRequest request, int advisory, int maximum)
     {
         var limits = request.Limits with { AdvisoryToolCalls = advisory, MaximumToolCalls = maximum };
@@ -915,7 +927,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await executor.ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        Assert.Equal(ExpectedSyntaxDiagnostic(finalText), result.ParseFailure);
         Assert.Equal(1, captures); Assert.True(captured == finalText);
         Assert.Equal(sinkThrows ? OctoberWorkerCaptureStatus.Failed : OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
         Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
@@ -1284,6 +1296,123 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
         Assert.Equal(OctoberWorkerParseFailure.Syntax, result.ParseFailure!.Category);
         Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_SyntaxFeedbackContainsOnlyBoundedParserLocationAsync()
+    {
+        const string firstMalformed = "{first malformed";
+        const string malformed = "{\n  \"units\": [\n    \"SYNTHETIC_PRIVATE_RAW_EXCERPT\"";
+        var firstParserError = Assert.ThrowsAny<JsonException>(() => JsonDocument.Parse(firstMalformed));
+        var finalParserError = Assert.ThrowsAny<JsonException>(() => JsonDocument.Parse(malformed));
+        using var client = new ScriptedClient([new(firstMalformed, ChatFinishReason.Stop), new(malformed, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(2, client.Requests.Count);
+        var parse = Assert.IsType<OctoberWorkerParseDiagnosticSnapshot>(result.ParseFailure);
+        var lineProperty = parse.GetType().GetProperty("LineNumber");
+        var bytePositionProperty = parse.GetType().GetProperty("BytePositionInLine");
+        Assert.NotNull(lineProperty);
+        Assert.NotNull(bytePositionProperty);
+        var line = Assert.IsType<long>(lineProperty!.GetValue(parse));
+        var bytePosition = Assert.IsType<long>(bytePositionProperty!.GetValue(parse));
+        Assert.Equal(finalParserError.LineNumber, line);
+        Assert.Equal(finalParserError.BytePositionInLine, bytePosition);
+        Assert.InRange(line, 0, 262144);
+        Assert.InRange(bytePosition, 0, 262144);
+        string correctionFeedback = string.Join("\n", client.Requests[1]
+            .Where(message => message.Role == ChatRole.User).SelectMany(message => message.Contents)
+            .OfType<TextContent>().Select(content => content.Text).Skip(1));
+        Assert.Contains($"\"lineNumber\":{firstParserError.LineNumber}", correctionFeedback, StringComparison.Ordinal);
+        Assert.Contains($"\"bytePositionInLine\":{firstParserError.BytePositionInLine}", correctionFeedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("SYNTHETIC_PRIVATE_RAW_EXCERPT", correctionFeedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("JsonException", correctionFeedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"message\":", correctionFeedback, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"path\":", correctionFeedback, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"rawExcerpt\":", correctionFeedback, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ActualDeepSeekWireDisablesToolsOnlyForCorrectionAndRetainsHistoryAsync()
+    {
+        var wireRequests = new List<JsonElement>();
+        int invoked = 0;
+        const string finalReasoning = "SYNTHETIC_FINAL_REASONING";
+        const string malformed = "{SYNTHETIC_FINAL_MALFORMED";
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com",
+            EnableCorrectionResponse = true,
+            InitialReasoningFragments = ["SYNTHETIC_INITIAL_REASONING"],
+            FinalReasoningOverride = finalReasoning,
+            FinalTextOverride = malformed,
+            CorrectionTextOverride = UnitJson,
+            ObserveRequest = (body, _) => wireRequests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => { Assert.Equal("src/Order.cs", relativePath); invoked++; return "contained result"; }, "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(1, invoked);
+        Assert.Equal(3, transport.Calls);
+        Assert.Equal(3, wireRequests.Count);
+        var initial = wireRequests[0];
+        var correction = wireRequests[2];
+        Assert.True(!initial.TryGetProperty("tool_choice", out var initialChoice) || initialChoice.GetString() == "auto");
+        Assert.Equal("none", correction.GetProperty("tool_choice").GetString());
+        Assert.Contains(correction.GetProperty("tools").EnumerateArray(), declaration =>
+            declaration.GetProperty("function").GetProperty("name").GetString() == tool.Name);
+        Assert.Equal(8192, correction.GetProperty("max_tokens").GetInt32());
+        Assert.Equal("json_object", correction.GetProperty("response_format").GetProperty("type").GetString());
+        var messages = correction.GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(messages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == "SYNTHETIC_INITIAL_REASONING");
+        Assert.Contains(messages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == finalReasoning && message.TryGetProperty("content", out var content) && content.GetString() == malformed);
+        Assert.Contains(messages, message => message.TryGetProperty("tool_calls", out var calls) && calls.GetArrayLength() > 0);
+        Assert.Contains(messages, message => message.TryGetProperty("role", out var role) && role.GetString() == "tool");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_UnexpectedToolOnDisabledCorrectionIsRejectedWithoutInvocationAsync()
+    {
+        int invoked = 0;
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com",
+            EnableCorrectionResponse = true,
+            InitialReasoningFragments = ["SYNTHETIC_INITIAL_REASONING"],
+            FinalTextOverride = "{SYNTHETIC_FINAL_MALFORMED",
+            CorrectionReturnsToolCall = true
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => { invoked++; return "should-not-run"; }, "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal("ToolsDisabled", result.TerminalFailure?.ToString());
+        Assert.Equal(1, invoked);
+        Assert.Null(result.Proposal);
+        Assert.Equal(1, result.SettledToolCalls);
+        Assert.Equal(3, transport.Calls);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -2967,10 +3096,11 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         int invoked = 0;
         var wireRequests = new List<(JsonElement Body, int Leaf)>();
         var frame = new Frame("if (enabled) Run();\nreturn;");
+        string finalText = finalKind switch { "empty" => string.Empty, "fenced" => "```json\n" + UnitJson + "\n```", "prose" => "controlled final prose", _ => UnitJson };
         using var transport = new FragmentedToolHttp
         {
             InitialTextOverride = finalKind == "empty" ? UnitJson : "controlled initial tool prose",
-            FinalTextOverride = finalKind switch { "empty" => string.Empty, "fenced" => "```json\n" + UnitJson + "\n```", "prose" => "controlled final prose", _ => UnitJson },
+            FinalTextOverride = finalText,
             ObserveRequest = (body, leaf) => wireRequests.Add((body.Clone(), leaf))
         };
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
@@ -3038,7 +3168,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Null(result.Proposal);
             Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-            Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+            Assert.Equal(ExpectedSyntaxDiagnostic(finalText), result.ParseFailure);
         }
         Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
         Assert.Equal(20, scope.Leases[0].Usage!.InputTokens); Assert.Equal(10, scope.Leases[0].Usage!.OutputTokens);
@@ -3058,8 +3188,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Null(result.Proposal);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(category, OctoberWorkerParseSlot.Root,
-            FieldFailure: depth == 32 ? OctoberWorkerFieldFailure.Unexpected : null), result.ParseFailure);
+        var expectedDiagnostic = depth == 33
+            ? ExpectedSyntaxDiagnostic(payload)
+            : new OctoberWorkerParseDiagnosticSnapshot(category, OctoberWorkerParseSlot.Root, FieldFailure: OctoberWorkerFieldFailure.Unexpected);
+        Assert.Equal(expectedDiagnostic, result.ParseFailure);
         Assert.Equal(1, transport.Calls); Assert.Equal(0, result.SettledToolCalls);
         var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
         Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens);
@@ -3188,7 +3320,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
             Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-            Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+            Assert.Equal(ExpectedSyntaxDiagnostic(incomplete), result.ParseFailure);
             Assert.Equal(1, captures); Assert.True(captured == incomplete);
             Assert.Equal(OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
         }
@@ -3463,7 +3595,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens); Assert.Null(result.CaptureStatus);
         if (scenario is "disabled" or "success") { Assert.Null(result.HttpObservation); return; }
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        Assert.Equal(ExpectedSyntaxDiagnostic(terminal), result.ParseFailure);
         var facts = Assert.IsType<OctoberWorkerHttpObservationSnapshot>(result.HttpObservation);
         if (scenario is "event-overflow" or "event-overflow-eof" or "wire-overflow" or "text-overflow")
         {
@@ -3638,9 +3770,13 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     {
         internal string ExpectedHost = "selected.example.test";
         internal bool ContentOnly;
+        internal bool EnableCorrectionResponse;
         internal string? InitialTextOverride;
         internal string[]? InitialReasoningFragments;
         internal string? FinalTextOverride;
+        internal string? FinalReasoningOverride;
+        internal string? CorrectionTextOverride;
+        internal bool CorrectionReturnsToolCall;
         internal Action<JsonElement, int>? ObserveRequest;
         internal bool MissingRequiredArgument;
         internal bool FailSecondRequest;
@@ -3651,7 +3787,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(ExpectedHost, request.RequestUri!.Host);
             int call = Calls++;
-            Assert.InRange(call, 0, 1);
+            Assert.InRange(call, 0, EnableCorrectionResponse ? 2 : 1);
             if (ObserveRequest is not null)
             {
                 using var requestBody = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
@@ -3668,10 +3804,24 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                     """{"id":"controlled-tool","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[],"usage":{"prompt_tokens":20,"completion_tokens":10,"total_tokens":30}}""",
                 ];
             }
-            else
+            else if (call == 1)
             {
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-terminal", @object = "chat.completion.chunk", created = 1, model = "selected-model",
-                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = FinalTextOverride ?? UnitJson }, finish_reason = "stop" } },
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", reasoning_content = FinalReasoningOverride, content = FinalTextOverride ?? UnitJson }, finish_reason = "stop" } },
+                    usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
+            }
+            else if (CorrectionReturnsToolCall)
+            {
+                chunks = [
+                    """{"id":"controlled-correction","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"unexpected-correction-tool","type":"function","function":{"name":"read_prepared_source","arguments":"{\"relativePath\":\"src/Order.cs\"}"}}]},"finish_reason":null}]}""",
+                    """{"id":"controlled-correction","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}""",
+                    """{"id":"controlled-correction","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[],"usage":{"prompt_tokens":30,"completion_tokens":20,"total_tokens":50}}""",
+                ];
+            }
+            else
+            {
+                chunks = [JsonSerializer.Serialize(new { id = "controlled-correction", @object = "chat.completion.chunk", created = 1, model = "selected-model",
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = CorrectionTextOverride ?? UnitJson }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
             }
             if (call == 0 && ContentOnly)

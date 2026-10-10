@@ -118,12 +118,13 @@ public enum OctoberWorkerParseSlot
 }
 public enum OctoberWorkerFieldFailure { Missing, Unexpected, Duplicate }
 public sealed record OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure? Category, OctoberWorkerParseSlot? Slot,
-    OctoberWorkerFieldFailure? FieldFailure = null, OctoberWorkerParseSlot? Field = null, int? UnitIndex = null);
+    OctoberWorkerFieldFailure? FieldFailure = null, OctoberWorkerParseSlot? Field = null, int? UnitIndex = null,
+    long? LineNumber = null, long? BytePositionInLine = null);
 public enum OctoberWorkerTerminalFailure
 {
     ContentAfterFinish, ConflictingFinish, NonAssistantRole, ToolCallError, MissingToolCallId,
     UnknownTool, RepeatedToolCallId, MissingFinish, UnsupportedFinish, ToolFinishWithoutCalls,
-    StopWithCalls, IncompleteTerminal, IncompleteCoverage
+    StopWithCalls, IncompleteTerminal, IncompleteCoverage, ToolsDisabled
 }
 
 public enum OctoberWorkerUnsupportedFinish { Length, ContentFilter, Other }
@@ -281,6 +282,7 @@ public sealed class OctoberFileWorkerExecutor
                     if (index != windows.Count - 1 || correction >= request.Limits.MaximumJsonCorrectionAttempts) break;
                     string? feedback = CorrectionFeedback(adapter.LastText, request);
                     if (feedback is null) break;
+                    adapter.BeginCorrection();
                     history.Add(new ChatMessage(ChatRole.User,
                         LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md") + "\n" + feedback));
                 }
@@ -434,7 +436,8 @@ public sealed class OctoberFileWorkerExecutor
                     category = failure.Category.ToString(), slot = failure.Slot.ToString(),
                     fieldFailure = failure.FieldFailure?.ToString(),
                     field = failure.Field is { } field ? SchemaName(field) : null,
-                    unitIndex = failure.UnitIndex, expectedFields = observation.ExpectedFields
+                    unitIndex = failure.UnitIndex, expectedFields = observation.ExpectedFields,
+                    lineNumber = failure.LineNumber, bytePositionInLine = failure.BytePositionInLine
                 });
         }
         return null;
@@ -548,6 +551,7 @@ public sealed class OctoberFileWorkerExecutor
         private int _inputBytes;
         private int _outputBytes;
         private bool _allUsageKnown = true;
+        private bool _correctionOnly;
         internal OctoberWorkerRetryDisposition RetryDisposition { get; private set; }
         internal int Rounds { get; private set; }
         internal int SettledTools { get; private set; }
@@ -561,6 +565,13 @@ public sealed class OctoberFileWorkerExecutor
         internal OctoberWorkerTerminalObservation? TerminalObservation { get; private set; }
         internal OctoberWorkerBudgetFailure? BudgetFailure { get; private set; }
         private OctoberWorkerFailureStage? _observedStage;
+
+        internal void BeginCorrection()
+        {
+            if (_pending.Count != 0 || Finish != ChatFinishReason.Stop)
+                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
+            _correctionOnly = true;
+        }
 
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
             ChatOptions? options = null, CancellationToken cancellationToken = default)
@@ -606,6 +617,9 @@ public sealed class OctoberFileWorkerExecutor
                 throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.RequestTokens);
             ChatOptions bounded = options?.Clone() ?? new();
             bounded.MaxOutputTokens = outputTokens;
+            // Keep declarations/history intact, but this existing correction is
+            // finalization only. Host enforcement below is independent of the provider.
+            if (_correctionOnly) bounded.ToolMode = ChatToolMode.None;
             var admissionRequest = new OctoberWorkerProviderAttemptRequest(request.RunId, request.FileWorkstreamId,
                 Guid.NewGuid(), request.ProviderProfileId, request.Limits.RequestTimeout ?? TimeSpan.FromMinutes(2),
                 requiredTokens);
@@ -742,6 +756,8 @@ public sealed class OctoberFileWorkerExecutor
                         else if (content is FunctionCallContent call && !call.InformationalOnly)
                         {
                             ChargeOutput(MeasureOutput(call.Arguments));
+                            if (_correctionOnly)
+                                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolsDisabled);
                             if (call.Exception is not null)
                                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolCallError);
                             if (string.IsNullOrWhiteSpace(call.CallId))
@@ -912,6 +928,8 @@ public sealed class OctoberFileWorkerExecutor
         internal async ValueTask<object?> InvokeAsync(FunctionInvocationContext context, CancellationToken token)
         {
             _observedStage = null;
+            if (_correctionOnly)
+                throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.ToolsDisabled);
             if (!_pending.TryGetValue(context.CallContent.CallId, out FunctionCallContent? call) || call.Name != context.Function.Name)
                 throw Fail(OctoberFileWorkerStatus.InvalidOutput);
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(token), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
@@ -1333,8 +1351,17 @@ public sealed class OctoberFileWorkerExecutor
                 ArgumentException or InvalidDataException or OverflowException or KeyNotFoundException)
             {
                 Record(category, slot);
+                if (category == OctoberWorkerParseFailure.Syntax && error is JsonException syntax && First is { } first)
+                    First = first with
+                    {
+                        LineNumber = SafePosition(syntax.LineNumber),
+                        BytePositionInLine = SafePosition(syntax.BytePositionInLine)
+                    };
                 throw;
             }
         }
+
+        // Numeric zero-based positions only: never expose exception text or JSON paths.
+        private static long? SafePosition(long? value) => value is >= 0 and <= 262144 ? value : null;
     }
 }
