@@ -229,3 +229,43 @@ passed**, zero skips. Those failures did not reproduce in the focused selection;
 this does not erase the failed full-suite result or establish their root causes.
 Independent final review accepted the scoped diagnostic with no outstanding code
 findings and explicitly retained the full-suite limitation. No paid run followed.
+
+## Isolated real POM trial after diagnostic approval
+
+The user subsequently requested a real scan of the POM alone, followed by a whole
+scan **only if the isolated trial succeeded**. A fresh owned database/workspace
+selected only `mbs_channel/pom.xml`; all 77 previously approved files remained
+available as supporting source. Prepare/select succeeded. Provider/model, limits,
+CL-only selection, observer and no-retry policy were unchanged.
+
+Target `phone-1bd85d8b04b3`, batch `33e136c6-678d-4eff-80e6-0e6286c74f9c`,
+report `generate-efb8aa6c4b3046b8a6f2189735757b21.stdout`: exit 1 after **26.75
+seconds**, no timeout, `NeedsSettlementCheck=false`, one provider request, zero
+accepted files/Documents and no publication. The observed terminal values were:
+
+| Observation | Value |
+| --- | --- |
+| Worker status/stage/failure | InvalidOutput / StreamTerminal / UnsupportedFinish |
+| Finish reason | Length |
+| Requested maximum output tokens | 4,011 |
+| Provider-reported input tokens | 9,748 |
+| Provider-reported output tokens | 4,011 |
+| Provider-reported reasoning tokens | 4,011 |
+| Unknown usage | false |
+
+This trial exhausted its requested output allowance, with all reported output
+tokens attributed to reasoning. Static inspection explains the reduced allowance:
+Generate supplies `MaximumTokensPerRequest = min(32768, policy total-token bound)`;
+the Worker sets output tokens to `min(8192, MaximumTokensPerRequest - MeasureInput)`.
+`MeasureInput` counts UTF-8 content plus framing/tool metadata as its conservative
+input reservation. With this run's 32,768 bound and observed 4,011 output cap, the
+derived reservation is 28,757, despite actual reported input usage of 9,748 tokens.
+The 28,757 figure is derived from code/configuration and the observed cap, not a
+separately recorded provider token count. No input estimator or limit was changed.
+
+The isolated trial failed, so the conditional whole-scan retry was **not started**.
+No other paid retry ran. All 77 prepared hashes remain unchanged; standard error
+is empty. Prior successful data remains preserved, and this fresh failed run is
+retained for diagnosis. No raw responses/reasoning were saved. This result does
+not establish the cause of earlier Stop/JSON syntax failures. The next correction
+to assess is per-request input/output reservation, before another unchanged run.
