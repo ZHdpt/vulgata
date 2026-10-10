@@ -19,6 +19,15 @@ namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static string? ReadDeepSeekWorkerReasoningEffort(IConfiguration configuration)
+    {
+        const string key = "October:DeepSeekWorkerReasoningEffort";
+        string? value = configuration[key];
+        if (configuration.GetSection(key).GetChildren().Any() || value is not (null or "low"))
+            throw new InvalidOperationException("October Worker reasoning configuration is invalid.");
+        return value;
+    }
+
     internal static OctoberWorkerHttpObservationOptions? ReadWorkerHttpObservationOptions(IConfiguration configuration,
         OctoberGeneratorCommand command, OctoberParseFailureCaptureOptions? captureOptions)
     {
@@ -203,11 +212,12 @@ public static class OctoberGeneratorEntryPoint
         OctoberBusinessSettings? settings,
         Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
         TimeProvider? timeProvider = null, OctoberOperatorRootSelectionOptions? operatorSelection = null,
-        OctoberParseFailureCapture? parseFailureCapture = null, OctoberWorkerHttpObservation? httpObservation = null)
+        OctoberParseFailureCapture? parseFailureCapture = null, OctoberWorkerHttpObservation? httpObservation = null,
+        string? deepSeekWorkerReasoningEffort = null)
     {
         TimeProvider clock = timeProvider ?? TimeProvider.System;
         if (parseFailureCapture is not null && httpObservation is not null) throw new InvalidOperationException("October diagnostic configuration is invalid.");
-        var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock, httpObservation);
+        var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock, httpObservation, deepSeekWorkerReasoningEffort);
         return new OctoberGenerateRunner(dependencies with
         {
             Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock),
@@ -286,7 +296,8 @@ public static class OctoberGeneratorEntryPoint
 
     private static OctoberGenerateRunnerDependencies ComposeGenerateDependencies(OctoberRuntimeConfiguration runtime,
         IOctoberLocalAuthority authority, IDbContextFactory<OctoberDbContext> contexts,
-        ISecretEncryptionService encryption, TimeProvider clock, OctoberWorkerHttpObservation? httpObservation = null)
+        ISecretEncryptionService encryption, TimeProvider clock, OctoberWorkerHttpObservation? httpObservation = null,
+        string? deepSeekWorkerReasoningEffort = null)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(authority);
@@ -295,7 +306,9 @@ public static class OctoberGeneratorEntryPoint
         if (!runtime.IsValid()) throw new InvalidOperationException("October runtime configuration is invalid.");
         var log = new OctoberKnowledgeOperationLog(runtime.LogDirectory, clock);
         var sources = new OctoberScanRunSourceFactory(runtime, authority, clock);
-        var clients = httpObservation is null ? new OctoberWorkerClientFactory(encryption) : new OctoberWorkerClientFactory(encryption, null, httpObservation);
+        var clients = httpObservation is null
+            ? new OctoberWorkerClientFactory(encryption, deepSeekWorkerReasoningEffort: deepSeekWorkerReasoningEffort)
+            : new OctoberWorkerClientFactory(encryption, null, httpObservation, deepSeekWorkerReasoningEffort);
         return new(authority, sources.ValidateSelection,
             (admissionAuthority, guard) => new OctoberGenerateAdmissionStore(contexts, admissionAuthority, guard, log),
             sources.OpenAsync, clients.CreateAsync,
@@ -361,6 +374,7 @@ public static class OctoberGeneratorEntryPoint
             OctoberOperatorRootSelectionOptions? operatorSelection = null;
             OctoberParseFailureCaptureOptions? captureOptions = null;
             OctoberWorkerHttpObservationOptions? observationOptions = null;
+            string? deepSeekWorkerReasoningEffort = null;
             string keyRingPath;
             string applicationName;
             try
@@ -368,6 +382,7 @@ public static class OctoberGeneratorEntryPoint
                 command = ReadCommand(configuration);
                 if (command.Mode == OctoberGeneratorMode.Generate)
                 {
+                    deepSeekWorkerReasoningEffort = ReadDeepSeekWorkerReasoningEffort(configuration);
                     runtime = await ReadRuntimeConfigurationAsync(configuration);
                     businessSettings = await ReadBusinessSettingsForPolicyAsync(configuration, command.ScanPolicy!);
                     operatorSelection = ReadOperatorRootSelectionOptions(configuration, command.ScanPolicy!, businessSettings, runtime);
@@ -491,7 +506,8 @@ public static class OctoberGeneratorEntryPoint
                     businessSettings, bindReader, operatorSelection: operatorSelection,
                     parseFailureCapture: captureOptions is null ? null : new OctoberParseFailureCapture(captureOptions,
                         CaptureExcludedPaths(configuration, runtime!, keyRingPath)),
-                    httpObservation: observationOptions is null ? null : new OctoberWorkerHttpObservation(observationOptions)) : null;
+                    httpObservation: observationOptions is null ? null : new OctoberWorkerHttpObservation(observationOptions),
+                    deepSeekWorkerReasoningEffort: deepSeekWorkerReasoningEffort) : null;
             OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
             return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
                 settle: generate is null ? null : () => generate.DisposeAsync());

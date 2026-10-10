@@ -20,6 +20,31 @@ namespace Vulgata.Tests.OctoberScan;
 
 public sealed class OctoberScanEntryPointTests
 {
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(null, true)]
+    [InlineData("low", true)]
+    [InlineData("", false)]
+    [InlineData("LOW", false)]
+    [InlineData(" low", false)]
+    [InlineData("high", false)]
+    [InlineData("PRIVATE_INVALID_VALUE", false)]
+    [InlineData("nested", false)]
+    public void DeepSeekLowReasoning_ConfigurationAcceptsOnlyAbsentOrExactLow(string? value, bool accepted)
+    {
+        var values = new Dictionary<string, string?>();
+        if (value == "nested") values["October:DeepSeekWorkerReasoningEffort:Effort"] = "low";
+        else if (value is not null) values["October:DeepSeekWorkerReasoningEffort"] = value;
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        if (accepted) Assert.Equal(value, OctoberGeneratorEntryPoint.ReadDeepSeekWorkerReasoningEffort(configuration));
+        else
+        {
+            var error = Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadDeepSeekWorkerReasoningEffort(configuration));
+            Assert.DoesNotContain("PRIVATE", error.Message);
+        }
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(0)]

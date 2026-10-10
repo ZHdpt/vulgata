@@ -21,15 +21,21 @@ public sealed class OctoberWorkerClientFactory
     private readonly ISecretEncryptionService _encryption;
     private readonly HttpMessageHandler? _transport;
     private readonly OctoberWorkerHttpObservation? _httpObservation;
+    private readonly string? _deepSeekWorkerReasoningEffort;
 
-    public OctoberWorkerClientFactory(ISecretEncryptionService encryption, HttpMessageHandler? transport = null)
+    public OctoberWorkerClientFactory(ISecretEncryptionService encryption, HttpMessageHandler? transport = null,
+        string? deepSeekWorkerReasoningEffort = null)
     {
+        if (deepSeekWorkerReasoningEffort is not (null or "low"))
+            throw new InvalidOperationException("The Worker reasoning configuration is invalid.");
         _encryption = encryption ?? throw new ArgumentNullException(nameof(encryption));
         _transport = transport;
+        _deepSeekWorkerReasoningEffort = deepSeekWorkerReasoningEffort;
     }
 
     internal OctoberWorkerClientFactory(ISecretEncryptionService encryption, HttpMessageHandler? transport,
-        OctoberWorkerHttpObservation observation) : this(encryption, transport)
+        OctoberWorkerHttpObservation observation, string? deepSeekWorkerReasoningEffort = null)
+        : this(encryption, transport, deepSeekWorkerReasoningEffort)
         => _httpObservation = observation;
 
     public async Task<IChatClient> CreateAsync(OctoberSelectedWorkerProvider selected,
@@ -44,6 +50,9 @@ public sealed class OctoberWorkerClientFactory
             endpoint.Scheme is not ("https" or "http") || endpoint.UserInfo.Length != 0 || endpoint.Fragment.Length != 0)
             throw new InvalidOperationException("The selected Worker profile is unsupported or invalid.");
 
+        if (_deepSeekWorkerReasoningEffort is not null && !IsDeepSeekEndpoint(endpoint))
+            throw new InvalidOperationException("Worker reasoning configuration requires the qualified DeepSeek endpoint.");
+
         string secret;
         try
         {
@@ -54,16 +63,20 @@ public sealed class OctoberWorkerClientFactory
         catch (Exception) { throw new InvalidOperationException("The selected Worker credential is unavailable."); }
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("The selected Worker credential is unavailable.");
-        return new SelectedClient(endpoint, selected.Profile.Name, selected.Profile.Model, secret, _transport, _httpObservation);
+        return new SelectedClient(endpoint, selected.Profile.Name, selected.Profile.Model, secret, _transport,
+            _httpObservation, _deepSeekWorkerReasoningEffort);
     }
 
-    private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied, OctoberWorkerHttpObservation? observation)
+    private static bool IsDeepSeekEndpoint(Uri endpoint) => endpoint.Scheme == Uri.UriSchemeHttps && endpoint.IsDefaultPort &&
+        endpoint.Host.Equals("api.deepseek.com", StringComparison.OrdinalIgnoreCase) && endpoint.AbsolutePath == "/" &&
+        endpoint.Query.Length == 0 && endpoint.UserInfo.Length == 0 && endpoint.Fragment.Length == 0;
+
+    private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied,
+        OctoberWorkerHttpObservation? observation, string? deepSeekWorkerReasoningEffort)
         : IChatClient, IOctoberWorkerAttemptClient, IOctoberBusinessAttemptClient
     {
         private readonly HttpMessageHandler _transport = supplied ?? new SocketsHttpHandler { AllowAutoRedirect = false };
-        private readonly bool _useDeepSeekMaxTokens = endpoint.Scheme == Uri.UriSchemeHttps && endpoint.IsDefaultPort &&
-            endpoint.Host.Equals("api.deepseek.com", StringComparison.OrdinalIgnoreCase) && endpoint.AbsolutePath == "/" &&
-            endpoint.Query.Length == 0 && endpoint.UserInfo.Length == 0 && endpoint.Fragment.Length == 0;
+        private readonly bool _useDeepSeekMaxTokens = IsDeepSeekEndpoint(endpoint);
         private bool _disposed;
         public string ProviderProfileId => profileId;
 
@@ -139,9 +152,19 @@ public sealed class OctoberWorkerClientFactory
             // The current OpenAI adapter reads reasoning_content but does not
             // serialize TextReasoningContent back into Chat Completions history.
             // Adapt only the qualified DeepSeek endpoint, without mutating history.
+            ChatOptions? requestOptions = options;
+            if (deepSeekWorkerReasoningEffort is not null)
+            {
+                requestOptions = options?.Clone() ?? new();
+                requestOptions.Reasoning = new ReasoningOptions
+                {
+                    Effort = ReasoningEffort.Low,
+                    Output = options?.Reasoning?.Output
+                };
+            }
             IEnumerable<Microsoft.Extensions.AI.ChatMessage> replay = _useDeepSeekMaxTokens
-                ? WithDeepSeekReasoning(messages, options) : messages;
-            await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync(replay, options, linked.Token)
+                ? WithDeepSeekReasoning(messages, requestOptions) : messages;
+            await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync(replay, requestOptions, linked.Token)
                 .WithCancellation(linked.Token))
             {
                 observation?.For(lease)?.Sdk(update);

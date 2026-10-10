@@ -2857,6 +2857,90 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         finally { await lease.DisposeAsync(); }
     }
 
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeepSeekLowReasoning_ActualWorkerWireKeeps8192AndReplayAcrossToolRoundsAsync(bool enabled)
+    {
+        var bodies = new List<JsonElement>();
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com", InitialReasoningFragments = ["controlled-", "reasoning"],
+            ObserveRequest = (body, _) => bodies.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
+            "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport, deepSeekWorkerReasoningEffort: enabled ? "low" : null).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(2, bodies.Count); Assert.Equal(1, result.SettledToolCalls);
+        foreach (var body in bodies)
+        {
+            Assert.Equal(8192, body.GetProperty("max_tokens").GetInt32());
+            Assert.False(body.TryGetProperty("max_completion_tokens", out _)); Assert.False(body.TryGetProperty("thinking", out _));
+            Assert.Equal(enabled, body.TryGetProperty("reasoning_effort", out var effort));
+            if (enabled) Assert.Equal("low", effort.GetString());
+        }
+        var assistant = Assert.Single(bodies[1].GetProperty("messages").EnumerateArray().Where(message => message.GetProperty("role").GetString() == "assistant"));
+        Assert.Equal("controlled-reasoning", assistant.GetProperty("reasoning_content").GetString());
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DeepSeekLowReasoning_ClonesCallerOptionsAndLeavesBusinessNonstreamingUnchangedAsync()
+    {
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
+            "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var transport = new ControlledHttp();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport, deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
+        var originalReasoning = new ReasoningOptions { Effort = ReasoningEffort.High };
+        var options = new ChatOptions { MaxOutputTokens = 8192, Reasoning = originalReasoning };
+        ChatMessage[] history = [new(ChatRole.User, "controlled input")];
+        string before = JsonSerializer.Serialize(history);
+        var port = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        await foreach (var update in port.GetAttemptStreamingResponseAsync(history, options, new Lease(Guid.NewGuid()))) { }
+        Assert.Same(originalReasoning, options.Reasoning); Assert.Equal(ReasoningEffort.High, options.Reasoning.Effort);
+        Assert.Equal(8192, options.MaxOutputTokens); Assert.Equal(before, JsonSerializer.Serialize(history));
+        using (var body = JsonDocument.Parse(Assert.Single(transport.Requests).Body))
+        {
+            Assert.Equal("low", body.RootElement.GetProperty("reasoning_effort").GetString());
+            Assert.Equal(8192, body.RootElement.GetProperty("max_tokens").GetInt32());
+        }
+        using var businessTransport = new ControlledHttp { NonStreaming = true };
+        using var business = await new OctoberWorkerClientFactory(new Secrets(), businessTransport, deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
+        var businessPort = Assert.IsAssignableFrom<Vulgata.Agents.OctoberBusiness.IOctoberBusinessAttemptClient>(business);
+        await using var businessLease = new CapDispatchLease(new Lease(Guid.NewGuid()));
+        await businessPort.GetAttemptResponseAsync(history, new ChatOptions { MaxOutputTokens = 8192 }, businessLease, _ => { });
+        using var businessBody = JsonDocument.Parse(Assert.Single(businessTransport.Requests).Body);
+        Assert.False(businessBody.RootElement.TryGetProperty("reasoning_effort", out _));
+        Assert.False(businessBody.RootElement.TryGetProperty("thinking", out _));
+        Assert.Equal(8192, businessBody.RootElement.GetProperty("max_tokens").GetInt32());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("https://selected.example.test", "low")]
+    [InlineData("https://api.deepseek.com/v1", "low")]
+    [InlineData("http://api.deepseek.com", "low")]
+    [InlineData("https://api.deepseek.com:444", "low")]
+    [InlineData("https://api.deepseek.com.foreign.invalid", "low")]
+    [InlineData("https://api.deepseek.com", "LOW")]
+    [InlineData("https://api.deepseek.com", "high")]
+    [InlineData("https://api.deepseek.com", "")]
+    public async Task DeepSeekLowReasoning_InvalidSelectionRefusesBeforeDecryptOrTransportAsync(string endpoint, string value)
+    {
+        var secrets = new Secrets(); using var transport = new ControlledHttp();
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
+            endpoint, "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await new OctoberWorkerClientFactory(secrets, transport, deepSeekWorkerReasoningEffort: value).CreateAsync(selected));
+        Assert.Empty(secrets.Decryptions); Assert.Empty(transport.Requests);
+    }
+
     private sealed class CapDispatchLease(Lease inner) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
         internal int Dispatches;

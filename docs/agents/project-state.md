@@ -47,6 +47,11 @@ reasoning. No local stream-budget failure, accepted CL or publication; no full-s
 retry ran. Current implementation and verification are in
 [stream aggregation evidence](../../specs/20-1-Oct14-scan/stream-aggregation-verification.md)
 and [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation-verification.md);
+the user subsequently authorized an explicit low-reasoning POM experiment while
+keeping the 8192 cap. Its optional command-local DeepSeek Worker setting is reviewed;
+all 19 new/453 affected cases pass, full SelfContained is 4761/4762 with the same
+report-parser failure. The fresh trial is prepared; see
+[low reasoning evidence](../../specs/20-1-Oct14-scan/low-reasoning-verification.md).
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
