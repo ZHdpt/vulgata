@@ -37,6 +37,7 @@ internal sealed record OctoberGenerateRunnerDependencies(
 {
     internal OctoberBusinessRunComposition? Business { get; init; }
     internal OctoberParseFailureCapture? ParseFailureCapture { get; init; }
+    internal OctoberWorkerHttpObservation? HttpObservation { get; init; }
 }
 
 /// <summary>Owns the original sequential Generate run; a stored receipt is never a restart grant.</summary>
@@ -188,6 +189,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         CancellationToken token = _runToken.Token;
         Guid runId = Guid.NewGuid();
         bool captureBound = _dependencies.ParseFailureCapture?.TryBind(execution, runId) == true;
+        bool observationBound = _dependencies.HttpObservation?.TryBind(execution, runId) == true;
+        if (_dependencies.HttpObservation is not null && (!observationBound || _dependencies.ParseFailureCapture is not null))
+            return Failure("invalid_run_configuration", disclose: false);
         if (execution.Policy.OutputStage == "cl-and-bl")
             _businessFinalizationOperation = new(_binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
         // Construction precedes Begin and all preparation, so no later phase receives
@@ -340,8 +344,21 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                         if (retrySafe) continue;
                         _coverage = _coverage.Add(new(admissionId, frame.Origin, IsCancelled ? CoverageDisposition.Cancelled : CoverageDisposition.Failed, "worker_not_completed"));
                         _admissionClosed = true;
+                        OctoberWorkerHttpObservationSnapshot? observation = null;
+                        if (observationBound && observed is { HttpObservation: not null, FailureStage: OctoberWorkerFailureStage.ProposalParse } &&
+                            Enum.IsDefined(observed.Status) && observed.Status != OctoberFileWorkerStatus.Completed)
+                        {
+                            try
+                            {
+                                if (FileAvailable && !token.IsCancellationRequested && execution.Session.ExpiresAtUtc > _time.GetUtcNow() &&
+                                    await ledger.VerifyCurrentAsync(token) && FileAvailable && !token.IsCancellationRequested &&
+                                    ReferenceEquals(_activeLedger, ledger) && execution.Session.ExpiresAtUtc > _time.GetUtcNow())
+                                    observation = observed.HttpObservation;
+                            }
+                            catch (Exception) { }
+                        }
                         return Failure("worker_not_completed", interrupted: IsCancelled) with
-                        { WorkerDiagnostics = CreateWorkerDiagnostics(observed)! with { ToolFailure = workerTools.FirstFailure } };
+                        { WorkerDiagnostics = CreateWorkerDiagnostics(observed)! with { ToolFailure = workerTools.FirstFailure, HttpObservation = observation } };
                     }
                     IOctoberKnowledgeWriter writer = _dependencies.CreateKnowledgeWriter(new(attempt, attempt, this, ledger, this));
                     KnowledgeWriteResult accepted = await StoreAsync(() => attempt.AcceptAsync(writer, token), token);
@@ -634,6 +651,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
 
     private async Task SettleResourcesAsync()
     {
+        _dependencies.HttpObservation?.Discard();
         await AwaitOriginalBusinessSettlementAsync();
         await AwaitBusinessOwnerCallsAsync();
         if (_businessGuard is not null) await _businessGuard.ObservePendingAsync();

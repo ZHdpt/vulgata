@@ -43,6 +43,7 @@ public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? St
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
     public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
     public OctoberWorkerCaptureStatus? CaptureStatus { get; init; }
+    public OctoberWorkerHttpObservationSnapshot? HttpObservation { get; init; }
     public OctoberToolDiagnosticSnapshot? ToolFailure { get; init; }
 }
 

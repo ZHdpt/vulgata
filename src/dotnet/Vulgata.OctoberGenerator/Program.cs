@@ -19,6 +19,43 @@ namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static OctoberWorkerHttpObservationOptions? ReadWorkerHttpObservationOptions(IConfiguration configuration,
+        OctoberGeneratorCommand command, OctoberParseFailureCaptureOptions? captureOptions)
+    {
+        const string prefix = "October:WorkerHttpObservation";
+        var children = configuration.GetSection(prefix).GetChildren().ToArray();
+        if (children.Length == 0 && configuration[prefix] is null) return null;
+        try
+        {
+            static string BooleanText(string? value) => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ? "true" :
+                string.Equals(value, "false", StringComparison.OrdinalIgnoreCase) ? "false" : throw new InvalidOperationException();
+            string[] names = ["Enabled", "TargetId", "BatchId", "SubjectId", "ManagementAuthorityId"];
+            if (configuration[prefix] is not null || children.Any(item => !names.Contains(item.Key, StringComparer.Ordinal) || item.GetChildren().Any()))
+                throw new InvalidOperationException();
+            if (configuration is IConfigurationRoot root)
+                foreach (string name in names)
+                    if (root.Providers.Select(provider => provider.TryGet(prefix + ":" + name, out string? value) ? value : null)
+                        .Select(value => name == "Enabled" && value is not null ? BooleanText(value) : value)
+                        .Where(value => value is not null).Distinct(StringComparer.Ordinal).Skip(1).Any()) throw new InvalidOperationException();
+            string enabled = BooleanText(configuration[prefix + ":Enabled"]);
+            if (enabled == "false" && children.Length == 1) return null;
+            if (enabled != "true" || children.Length != names.Length || captureOptions is not null || command.Mode != OctoberGeneratorMode.Generate)
+                throw new InvalidOperationException();
+            string Exact(string name)
+            {
+                string value = configuration[prefix + ":" + name] ?? throw new InvalidOperationException();
+                if (string.IsNullOrWhiteSpace(value) || value.Length > 4096 || value.Trim() != value || value.Any(char.IsControl)) throw new InvalidOperationException();
+                return value;
+            }
+            string target = Exact("TargetId");
+            if (target != command.TargetId || !Guid.TryParseExact(Exact("BatchId"), "D", out Guid batch) || batch == Guid.Empty || batch != command.BatchId)
+                throw new InvalidOperationException();
+            return new(target, batch, Exact("SubjectId"), Exact("ManagementAuthorityId"));
+        }
+        catch (Exception error) when (error is InvalidOperationException or ArgumentException)
+        { throw new InvalidOperationException("October Worker HTTP observation configuration is invalid."); }
+    }
+
     internal static OctoberParseFailureCaptureOptions? ReadParseFailureCaptureOptions(IConfiguration configuration,
         OctoberGeneratorCommand command, OctoberRuntimeConfiguration? runtime, string keyRingPath)
     {
@@ -166,14 +203,16 @@ public static class OctoberGeneratorEntryPoint
         OctoberBusinessSettings? settings,
         Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
         TimeProvider? timeProvider = null, OctoberOperatorRootSelectionOptions? operatorSelection = null,
-        OctoberParseFailureCapture? parseFailureCapture = null)
+        OctoberParseFailureCapture? parseFailureCapture = null, OctoberWorkerHttpObservation? httpObservation = null)
     {
         TimeProvider clock = timeProvider ?? TimeProvider.System;
-        var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock);
+        if (parseFailureCapture is not null && httpObservation is not null) throw new InvalidOperationException("October diagnostic configuration is invalid.");
+        var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock, httpObservation);
         return new OctoberGenerateRunner(dependencies with
         {
             Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock),
-            ParseFailureCapture = parseFailureCapture
+            ParseFailureCapture = parseFailureCapture,
+            HttpObservation = httpObservation
         }, clock);
     }
 
@@ -247,7 +286,7 @@ public static class OctoberGeneratorEntryPoint
 
     private static OctoberGenerateRunnerDependencies ComposeGenerateDependencies(OctoberRuntimeConfiguration runtime,
         IOctoberLocalAuthority authority, IDbContextFactory<OctoberDbContext> contexts,
-        ISecretEncryptionService encryption, TimeProvider clock)
+        ISecretEncryptionService encryption, TimeProvider clock, OctoberWorkerHttpObservation? httpObservation = null)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(authority);
@@ -256,7 +295,7 @@ public static class OctoberGeneratorEntryPoint
         if (!runtime.IsValid()) throw new InvalidOperationException("October runtime configuration is invalid.");
         var log = new OctoberKnowledgeOperationLog(runtime.LogDirectory, clock);
         var sources = new OctoberScanRunSourceFactory(runtime, authority, clock);
-        var clients = new OctoberWorkerClientFactory(encryption);
+        var clients = httpObservation is null ? new OctoberWorkerClientFactory(encryption) : new OctoberWorkerClientFactory(encryption, null, httpObservation);
         return new(authority, sources.ValidateSelection,
             (admissionAuthority, guard) => new OctoberGenerateAdmissionStore(contexts, admissionAuthority, guard, log),
             sources.OpenAsync, clients.CreateAsync,
@@ -321,6 +360,7 @@ public static class OctoberGeneratorEntryPoint
             OctoberBusinessSettings? businessSettings = null;
             OctoberOperatorRootSelectionOptions? operatorSelection = null;
             OctoberParseFailureCaptureOptions? captureOptions = null;
+            OctoberWorkerHttpObservationOptions? observationOptions = null;
             string keyRingPath;
             string applicationName;
             try
@@ -336,6 +376,7 @@ public static class OctoberGeneratorEntryPoint
                 keyRingPath = Required(configuration, "DataProtection:KeyRingPath");
                 applicationName = Required(configuration, "DataProtection:ApplicationName");
                 captureOptions = ReadParseFailureCaptureOptions(configuration, command, runtime, keyRingPath);
+                observationOptions = ReadWorkerHttpObservationOptions(configuration, command, captureOptions);
             }
             catch (Exception exception) when (exception is InvalidOperationException or JsonException or
                 ArgumentException)
@@ -449,7 +490,8 @@ public static class OctoberGeneratorEntryPoint
                     protection.GetRequiredService<ISecretEncryptionService>(), command.ScanPolicy!, workerProvider!,
                     businessSettings, bindReader, operatorSelection: operatorSelection,
                     parseFailureCapture: captureOptions is null ? null : new OctoberParseFailureCapture(captureOptions,
-                        CaptureExcludedPaths(configuration, runtime!, keyRingPath))) : null;
+                        CaptureExcludedPaths(configuration, runtime!, keyRingPath)),
+                    httpObservation: observationOptions is null ? null : new OctoberWorkerHttpObservation(observationOptions)) : null;
             OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
             return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
                 settle: generate is null ? null : () => generate.DisposeAsync());
@@ -560,6 +602,7 @@ public static class OctoberGeneratorEntryPoint
                     captureWorkerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed &&
                     worker.FailureStage == Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.ProposalParse
                     ? DefinedStatus(worker.CaptureStatus) : null,
+                HttpObservation = ProjectHttpObservation(worker),
                 ToolFailure = ProjectToolFailure(worker)
             } : null,
             Publication = publication,
@@ -599,6 +642,32 @@ public static class OctoberGeneratorEntryPoint
         {
             Converters = { new JsonStringEnumConverter() }
         });
+    }
+
+    private static object? ProjectHttpObservation(OctoberWorkerDiagnosticSnapshot worker)
+    {
+        if (worker.Status is not { } status || !Enum.IsDefined(status) ||
+            status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed ||
+            worker.FailureStage != Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.ProposalParse ||
+            worker.HttpObservation is not { } observed) return null;
+        static long? Bound(long? value, long maximum) => value is >= 0 && value <= maximum ? value : null;
+        static object? Json(Vulgata.Agents.WorkerExecution.OctoberWorkerJsonObservation? value) => value is null ? null : new
+        {
+            Kind = DefinedStatus(value.Kind), OpenObjects = Bound(value.OpenObjects, 32),
+            OpenArrays = Bound(value.OpenArrays, 32), value.AtEof
+        };
+        return new
+        {
+            Status = DefinedStatus(observed.Status), CapKey = DefinedStatus(observed.CapKey),
+            CapValue = observed.CapValue is > 0 ? Bound(observed.CapValue, int.MaxValue) : null,
+            HttpFinish = DefinedStatus(observed.HttpFinish), SdkFinish = DefinedStatus(observed.SdkFinish),
+            observed.DoneSeen, observed.EofSeen, observed.ContentAfterFinish, observed.ContentAfterDone,
+            WireBytes = Bound(observed.WireBytes, 4194304), HttpTextUtf8Bytes = Bound(observed.HttpTextUtf8Bytes, 262144),
+            SdkTextUtf8Bytes = Bound(observed.SdkTextUtf8Bytes, 262144), ParseInputUtf8Bytes = Bound(observed.ParseInputUtf8Bytes, 262144),
+            observed.HttpEqualsSdk, observed.SdkEqualsParse,
+            HttpJson = Json(observed.HttpJson), SdkJson = Json(observed.SdkJson), ParseJson = Json(observed.ParseJson),
+            HttpReasoningTokens = Bound(observed.HttpReasoningTokens, int.MaxValue), SdkReasoningTokens = Bound(observed.SdkReasoningTokens, int.MaxValue)
+        };
     }
 
     private static object? ProjectToolFailure(OctoberWorkerDiagnosticSnapshot worker)

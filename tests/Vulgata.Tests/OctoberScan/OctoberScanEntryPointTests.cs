@@ -451,7 +451,7 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "absent" or "foreign-binding") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "budgetFailure", "captureStatus", "failureStage", "parseFailure", "retryDisposition", "status", "terminalFailure", "toolFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "budgetFailure", "captureStatus", "failureStage", "httpObservation", "parseFailure", "retryDisposition", "status", "terminalFailure", "toolFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined") { Assert.All(diagnostic.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
         Assert.Equal(condition is "budget" or "undefined-budget" ? "BudgetExceeded" : condition == "completed-terminal" ? "Completed" : "InvalidOutput", diagnostic.GetProperty("status").GetString());
         Assert.Equal("None", diagnostic.GetProperty("retryDisposition").GetString());
@@ -655,6 +655,110 @@ public sealed class OctoberScanEntryPointTests
     private static OctoberRuntimeConfiguration CaptureConfigurationRuntime() => new([], @"C:\capture-diagnostic\tools\codegraph.ps1",
         new(@"C:\capture-diagnostic\state", TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
         new([@"C:\capture-diagnostic\tools"], [@"C:\capture-diagnostic\runtime"], @"C:\capture-diagnostic\system\cmd.exe", [@"C:\capture-diagnostic\tools"], @"C:\capture-diagnostic\jdk\bin"), @"C:\capture-diagnostic\log");
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("absent")]
+    [InlineData("disabled")]
+    [InlineData("valid")]
+    [InlineData("partial")]
+    [InlineData("unknown")]
+    [InlineData("mutual-capture")]
+    [InlineData("foreign-target")]
+    public void HttpObservationConfiguration_IsDefaultOffExactAndMutuallyExclusiveWithCapture(string condition)
+    {
+        var batch = Guid.NewGuid(); const string prefix = "October:WorkerHttpObservation:";
+        var values = new Dictionary<string, string?>();
+        if (condition != "absent") values[prefix + "Enabled"] = condition == "disabled" ? "false" : "true";
+        if (condition is not ("absent" or "disabled"))
+        {
+            values[prefix + "TargetId"] = condition == "foreign-target" ? "foreign" : "target";
+            values[prefix + "BatchId"] = batch.ToString(); values[prefix + "SubjectId"] = "subject";
+            values[prefix + "ManagementAuthorityId"] = "authority";
+        }
+        if (condition == "partial") values.Remove(prefix + "SubjectId");
+        if (condition == "unknown") values[prefix + "Payload"] = "SYNTHETIC_SECRET";
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var command = new OctoberGeneratorCommand(OctoberGeneratorMode.Generate, "target", batch, null, new() { OutputStage = "cl-only" });
+        OctoberParseFailureCaptureOptions? capture = condition == "mutual-capture" ? new("target", batch, "subject", "authority", @"C:\synthetic-unused") : null;
+        if (condition is "absent" or "disabled") Assert.Null(OctoberGeneratorEntryPoint.ReadWorkerHttpObservationOptions(configuration, command, capture));
+        else if (condition == "valid")
+        {
+            var options = Assert.IsType<OctoberWorkerHttpObservationOptions>(OctoberGeneratorEntryPoint.ReadWorkerHttpObservationOptions(configuration, command, capture));
+            Assert.Equal("target", options.TargetId); Assert.Equal(batch, options.BatchId);
+            Assert.Equal("subject", options.SubjectId); Assert.Equal("authority", options.ManagementAuthorityId);
+        }
+        else
+        {
+            var error = Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadWorkerHttpObservationOptions(configuration, command, capture));
+            Assert.DoesNotContain("SYNTHETIC", error.Message);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("defined")]
+    [InlineData("invalid-counts")]
+    [InlineData("undefined")]
+    [InlineData("completed")]
+    [InlineData("wrong-stage")]
+    [InlineData("absent")]
+    [InlineData("foreign-binding")]
+    public async Task HttpObservationProjection_EmitsOnlyFiniteFactsForAuthorizedParseFailureAsync(string condition)
+    {
+        bool undefined = condition == "undefined";
+        var jsonState = new OctoberWorkerJsonObservation(undefined ? (OctoberWorkerJsonObservationKind)99999 : OctoberWorkerJsonObservationKind.MissingClosingDelimiters, 1, 1, true);
+        var facts = new OctoberWorkerHttpObservationSnapshot(
+            undefined ? (OctoberWorkerHttpObservationStatus)99999 : OctoberWorkerHttpObservationStatus.Complete,
+            undefined ? (OctoberWorkerTokenCapKey)99999 : OctoberWorkerTokenCapKey.MaxCompletionTokens, 137,
+            undefined ? (OctoberWorkerObservedFinish)99999 : OctoberWorkerObservedFinish.Stop, OctoberWorkerObservedFinish.Stop,
+            true, false, false, null, 1024, 100, 100, 100, true, true, jsonState, jsonState, jsonState, 17, 17);
+        if (condition == "invalid-counts") facts = facts with
+        {
+            CapValue = long.MaxValue, WireBytes = long.MaxValue, HttpTextUtf8Bytes = -1,
+            SdkTextUtf8Bytes = int.MaxValue, ParseInputUtf8Bytes = -1,
+            HttpReasoningTokens = -1, SdkReasoningTokens = long.MaxValue,
+            HttpJson = new(OctoberWorkerJsonObservationKind.MissingClosingDelimiters, -1, int.MaxValue, true)
+        };
+        var worker = new OctoberWorkerDiagnosticSnapshot(condition == "completed" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput,
+            OctoberWorkerRetryDisposition.None, condition == "wrong-stage" ? OctoberWorkerFailureStage.ProposalValidation : OctoberWorkerFailureStage.ProposalParse)
+        { HttpObservation = condition == "absent" ? null : facts };
+        var batch = Guid.NewGuid();
+        var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero), new(null, null, null, true), []) { WorkerDiagnostics = worker };
+        if (condition == "foreign-binding") report = report with { Publication = new(new("SYNTHETIC_DATABASE", "foreign", batch, new string('a', 64)), Guid.NewGuid()) };
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", batch, null, new() { OutputStage = "cl-only" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        Assert.NotEqual(0, exit); Assert.DoesNotContain("SYNTHETIC", output.ToString()); Assert.DoesNotContain("99999", output.ToString());
+        using var serialized = JsonDocument.Parse(output.ToString());
+        bool present = serialized.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
+        if (condition == "foreign-binding") { Assert.False(present); return; }
+        Assert.True(present); var projected = diagnostic.GetProperty("httpObservation");
+        if (condition is "completed" or "wrong-stage" or "absent") { Assert.Equal(JsonValueKind.Null, projected.ValueKind); return; }
+        string[] names = ["status", "capKey", "capValue", "httpFinish", "sdkFinish", "doneSeen", "eofSeen", "contentAfterFinish", "contentAfterDone", "wireBytes", "httpTextUtf8Bytes", "sdkTextUtf8Bytes", "parseInputUtf8Bytes", "httpEqualsSdk", "sdkEqualsParse", "httpJson", "sdkJson", "parseJson", "httpReasoningTokens", "sdkReasoningTokens"];
+        Assert.Equal(names.Order(StringComparer.Ordinal), projected.EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal));
+        if (condition == "invalid-counts")
+        {
+            foreach (string name in new[] { "capValue", "wireBytes", "httpTextUtf8Bytes", "sdkTextUtf8Bytes", "parseInputUtf8Bytes", "httpReasoningTokens", "sdkReasoningTokens" })
+                Assert.Equal(JsonValueKind.Null, projected.GetProperty(name).ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("httpJson").GetProperty("openObjects").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("httpJson").GetProperty("openArrays").ValueKind);
+            return;
+        }
+        if (undefined)
+        {
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("status").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("capKey").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("httpFinish").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("httpJson").GetProperty("kind").ValueKind);
+        }
+        else
+        {
+            Assert.Equal("Complete", projected.GetProperty("status").GetString()); Assert.Equal(137, projected.GetProperty("capValue").GetInt64());
+            Assert.Equal(true, projected.GetProperty("httpEqualsSdk").GetBoolean()); Assert.Equal(17, projected.GetProperty("httpReasoningTokens").GetInt64());
+            Assert.Equal(new[] { "atEof", "kind", "openArrays", "openObjects" }, projected.GetProperty("parseJson").EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal));
+        }
+    }
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {
         internal int Calls;
