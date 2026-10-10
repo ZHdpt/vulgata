@@ -77,14 +77,46 @@ full-suite limitations; this is not release-gate acceptance or a waiver.
 
 The user's current instruction supplies the fresh POM-trial authority. Reused
 applicable source/provider/resource approvals are recorded in the retained-pilot
-plan and prior replay evidence. Only the completion reservation changes: fixed8192
-output within the new40960 per-call bound. Thinking, effort, prompt, tools, provider,
+plan and prior replay evidence. Only the completion reservation changes: fixed 8192
+output within the new 40960 per-call bound. Thinking, effort, prompt, tools, provider,
 model, cumulative policy, deadlines, byte limits and no-retry policy stay unchanged.
 
 A fresh owned database/workspace was prepared for target `phone-b463339e9bcd`,
-batch `ce9aa64a-2077-40cf-abb5-dd3284b4e7ee`. All77 approved manifest hashes matched;
+batch `ce9aa64a-2077-40cf-abb5-dd3284b4e7ee`. All 77 approved manifest hashes matched;
 only `mbs_channel/pom.xml` is selected, with the rest supporting. Prepare and select
 passed without provider calls. The temporary loopback bootstrap host was stopped.
 Prior successful/failed databases and the existing container/volume are preserved.
 Runtime physical bindings and protected keys remain outside Git. No raw provider
 response/reasoning capture is enabled. Generation results follow after invocation.
+
+## Real POM result
+
+The single real Generate invocation ran on reviewed commit
+`e5c53e00b7130cb83fc63414559a4493d3bf6a06`. Report
+`generate-b0ce09d1eb1d4d4e836e0618279f75e6.stdout` records exit 1 after **41.4
+seconds**, `TimedOut=false`, `NeedsSettlementCheck=false`:
+
+- Requested stage `cl-only`, execution Failed, coverage Partial, publication
+  NotRequested; zero accepted files and zero Documents, inventory 77.
+- Worker `BudgetExceeded`, failure stage `StreamTerminal`, budget failure
+  `StreamUpdates`, retry disposition None. No terminal/parse/tool failure,
+  terminal observation or HTTP comparison snapshot was reported.
+- One dispatched provider request, input/output token counts null,
+  `hasUnknownUsage=true`. Missing usage is not zero usage or proof of no charge;
+  unchanged settlement conservatively retains the reservation and stops dispatch.
+- Standard error is empty. All 77 prepared source hashes still match. Prior
+  successful results remain preserved; the new owned resources remain retained.
+
+The unchanged Worker guard rejects the next SDK update once its buffer contains
+8192 updates. These are streamed update objects, not provider token counts. This
+run therefore hit an independent local stream-count bound before terminal usage
+was observed; it does not establish Length, 8192 generated tokens, valid final
+JSON, or whether the fixed completion allowance would have been sufficient. The
+configured allowance was 8192 under the corrected code, not a new live wire
+capture claim. No raw responses or reasoning were retained.
+
+The isolated POM success condition was unmet, so **no whole-scan retry ran** and no
+further paid request was made. The next defect to evaluate is bounded streaming
+aggregation/update accounting; this correction does not raise or remove that
+guard, change thinking, repair JSON, accept drafts or skip the POM. Full-slice,
+ordinary-reader and prior Stop/JSON qualifications remain outstanding.

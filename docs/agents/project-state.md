@@ -33,8 +33,11 @@ The assigned Scan lane now has 77 manifest-verified prepared files and retained
 runtime bindings. Its real single-Java-file CL generation/publication passed after
 the reasoning replay correction; ordinary-reader access was not requalified in
 that run. The full slice then stopped at the channel POM, whose isolated trial
-confirmed Length at a reduced 4,011-token output cap. The user approved fixed-output
-admission and a new bounded POM trial. Current Scan-owned implementation and
+confirmed Length at a reduced 4,011-token output cap. The user-approved fixed-output
+admission is reviewed/committed at `e5c53e00`; 423 affected checks passed. Its real
+POM trial hit the unchanged 8192 streamed-update guard before terminal usage, with
+one request, unknown token usage and no accepted/published CL; no full-slice retry
+ran. Full SelfContained remains non-green (4730/4732). Current implementation and
 verification are in [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation-verification.md);
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
