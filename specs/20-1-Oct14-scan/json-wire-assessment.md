@@ -122,3 +122,42 @@ Independent review accepted the tests and assessment with no actionable findings
 it confirmed the distinction between serialized requests, provider compliance and
 live-cause attribution. Build completed with zero errors; existing analyzer
 warnings remain. `git diff --check` passed. No production change was made.
+
+## Output-cap field assessment (2026-10-10)
+
+Integrator reported exactly two newly authorized source-free native SDK probes:
+streaming and non-streaming both returned the expected tiny JSON object, HTTP 200
+and Stop, with equal HTTP/SDK text. Their serialized cap was
+`max_completion_tokens=8192`. Tiny outputs establish neither alias support nor cap
+enforcement. They do not identify the cause of the preceding real proposal rejection.
+
+The October Worker sets `MaxOutputTokens` to the smaller of 8192 and its remaining
+per-request allowance after measured input. `OctoberWorkerClientFactory` uses
+`ChatClient.AsIChatClient()` and forwards requests through its lease guard without
+rewriting the body. Resolved local assets contain OpenAI 2.10.0 and
+Microsoft.Extensions.AI.OpenAI 10.6.0. The existing controlled wire test now checks
+the cap field/value on initial and post-tool requests, alongside JSON mode, with
+no new fixture or production change.
+
+DeepSeek's official [integration guide](https://api-docs.deepseek.com/quick_start/agent_integrations/oh_my_pi/)
+specifies `max_tokens` rather than `max_completion_tokens`; its
+[Chat Completions reference](https://api-docs.deepseek.com/api/create-chat-completion/)
+documents `max_tokens`. These statements were available in indexed official-page
+results; direct page fetches timed out. No documented alias guarantee was found.
+This identifies a request-contract compatibility concern, not proof of how the
+deployed endpoint handles an unknown field or why real output was malformed.
+
+The separate historical `PreparedPass1JobExecutor` explicitly rewrites that field
+to `max_tokens`. October does not use its specialized handler. That handler also
+changes other provider semantics and must not be copied wholesale into this path.
+No cap, thinking, transport, parser or production policy change is made here.
+No paid/provider/native/PostgreSQL operation or new raw capture was performed.
+
+Controlled verification `3170cac576484c6497260b8129bc2349` selected and passed all
+four existing theory cases, zero failures/skips, current build zero errors, via
+the standard SelfContained launcher. Every initial and post-tool request carried
+`max_completion_tokens=8192`; `max_tokens`, `thinking`, `reasoning_effort` and
+`stop` were absent. This proves local factory/SDK/MAF serialization only. The first
+restricted attempt `ecee15f68ac34c8ab8733c0b3963e7a6` stopped at build exit 1 with
+no compiler diagnostics and no tests; the single approved escalated retry supplied
+the passing evidence above. Existing assertions remain intact.

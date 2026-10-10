@@ -1937,13 +1937,24 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
         var tool = AIFunctionFactory.Create((string relativePath) => { invoked++; return "contained result"; }, "read_prepared_source");
         var scope = new Scope();
-        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(frame), [tool]);
+        var request = Request(frame);
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
         Assert.Equal(2, wireRequests.Count);
         foreach (var (body, leaf) in wireRequests)
         {
             var format = body.GetProperty("response_format");
             Assert.Equal(new[] { "type" }, format.EnumerateObject().Select(item => item.Name).ToArray());
             Assert.Equal("json_object", format.GetProperty("type").GetString());
+            Assert.True(body.TryGetProperty("max_completion_tokens", out var capValue));
+            int cap = capValue.GetInt32();
+            Assert.InRange(cap, 1, (int)Math.Min(8192, request.Limits.MaximumTokensPerRequest));
+            Assert.False(body.TryGetProperty("max_tokens", out _));
+            bool thinking = body.TryGetProperty("thinking", out _);
+            bool reasoningEffort = body.TryGetProperty("reasoning_effort", out _);
+            bool stop = body.TryGetProperty("stop", out _);
+            Assert.False(thinking); Assert.False(reasoningEffort); Assert.False(stop);
+            output.WriteLine("wireCap: leaf={0}; field=max_completion_tokens; value={1}; maxTokens=false; thinking={2}; reasoningEffort={3}; stop={4}",
+                leaf, cap, thinking, reasoningEffort, stop);
             var messages = body.GetProperty("messages").EnumerateArray().ToArray();
             string MessageText(JsonElement message)
             {
