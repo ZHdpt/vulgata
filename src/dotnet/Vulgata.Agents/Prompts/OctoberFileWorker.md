@@ -38,9 +38,8 @@ without reading tool data. Correct the arguments within the remaining conversati
 and tool budgets; this refusal is not source evidence or proof of absence. Do not
 interpret genuine authorization or provenance failure as a correctable argument.
 
-When the application requests the final whole-file proposal, return one JSON
-object containing only units, observations and uncertainties. Use the exact
-semantic proposal format below. Cite exact source line ranges and preserve known gaps.
+When `finalWindow` is true, after any necessary allowed tool calls, return one complete JSON object containing only units, observations and uncertainties. Use the exact semantic proposal format below and include all closing array and object delimiters. Do not return a partial object or continuation fragment.
+Cite exact source line ranges and preserve known gaps.
 An empty units array is allowed only when the file contains no supported semantic
 unit, with an explicit uncertainty explaining that outcome. Do not include host
 binding, admission, attempt, publication, completion proof or credential fields.
