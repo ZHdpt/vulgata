@@ -23,6 +23,7 @@ public sealed record OctoberScanPolicy
     public int MaximumToolCallsPerFile { get; init; } = 48;
     public int MaximumTransientRetries { get; init; } = 2;
     public bool UseTextForJsonCorrection { get; init; }
+    public bool HardRetryMode { get; init; }
     public int MaximumProviderRequests { get; init; } = 64;
     public int MaximumRequestsPerMinute { get; init; } = 60;
     public long? MaximumTotalTokens { get; init; }
@@ -48,6 +49,8 @@ public sealed class OctoberScanPolicyValidator : AbstractValidator<OctoberScanPo
         RuleFor(policy => policy.AdvisoryToolCallsPerFile).GreaterThan(0)
             .LessThan(policy => policy.MaximumToolCallsPerFile);
         RuleFor(policy => policy.MaximumTransientRetries).InclusiveBetween(0, 2);
+        When(policy => policy.HardRetryMode, () =>
+            RuleFor(policy => policy.MaximumTransientRetries).Equal(0));
         RuleFor(policy => policy.MaximumProviderRequests).InclusiveBetween(1, 1_000_000);
         RuleFor(policy => policy.MaximumRequestsPerMinute).InclusiveBetween(1, 1_000_000);
         RuleFor(policy => policy.MaximumTotalTokens).NotNull().GreaterThan(0);

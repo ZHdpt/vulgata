@@ -110,6 +110,61 @@ public sealed class OctoberScanGenerateRunnerTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task HardRetryMode_PropagatesRunBudgetPublishesOnlyFinalCandidateAndHidesBudgetAfterRevocationAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        host.Client.TerminalTextSequence =
+        [
+            "{initial syntax failure",
+            "[]",
+            Harness.Model.ValidProposalJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal),
+            Harness.Model.ValidProposalJson
+        ];
+        var execution = host.Execution with
+        { Policy = host.Execution.Policy with { HardRetryMode = true, MaximumTransientRetries = 0 } };
+
+        var result = await host.Runner.ExecuteAsync(execution);
+
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(0, report.ExitCode);
+        Assert.Single(report.AcceptedFiles);
+        Assert.NotNull(report.Publication);
+        Assert.Equal(5, host.Client.Calls); // initial tool read plus four final-candidate attempts
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(2, 2), report.HardRetry);
+
+        var metadataOnly = report with { Inventory = [], AcceptedFiles = [], TerminalCoverage = [], Documents = [], Publication = null };
+        typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .SetValue(host.Runner, Task.FromResult(result with { Report = metadataOnly }));
+        host.AuthorityAllowed = false;
+        var hidden = await host.Runner.ExecuteAsync(execution);
+
+        Assert.Null(hidden.Report!.HardRetry);
+        Assert.Null(hidden.Report.WorkerDiagnostics);
+        Assert.Null(hidden.Report.Publication);
+        Assert.Empty(hidden.Report.AcceptedFiles);
+        Assert.Equal(5, host.Client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryMode_WithTransientRetryPolicyFailsBeforeAdmissionOrProviderCreationAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        var execution = host.Execution with
+        { Policy = host.Execution.Policy with { HardRetryMode = true, MaximumTransientRetries = 1 } };
+
+        var result = await host.Runner.ExecuteAsync(execution);
+
+        Assert.NotEqual(0, result.Report!.ExitCode);
+        Assert.Equal(0, host.BeginCalls);
+        Assert.Equal(0, host.SourceOpens);
+        Assert.Equal(0, host.ClientCreations);
+        Assert.Equal(0, host.Client.Calls);
+        Assert.Null(result.Report.HardRetry);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UnsupportedFinishObservation_ActualRunnerMapsFinalLeafAndReauthorizesDiagnosticReplayAsync()
     {
         await using var host = await Harness.CreateAsync();
@@ -1077,6 +1132,7 @@ public sealed class OctoberScanGenerateRunnerTests
         }
         internal sealed class Model : IChatClient
         {
+            internal const string ValidProposalJson = """{"units":[{"semanticSelector":"file","parentSelector":null,"title":"Conditional execution","anchors":[{"startLine":1,"endLine":2}],"sections":[{"sectionId":"logic","ordinal":0,"title":"Behavior","claims":[{"claimGroupId":"rule","text":"Run executes when enabled.","qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}],"limitations":[]}]}]}],"observations":[],"uncertainties":[]}""";
             internal int Calls;
             internal string? FirstReasoning;
             internal List<int?> OutputCaps { get; } = [];
@@ -1088,6 +1144,7 @@ public sealed class OctoberScanGenerateRunnerTests
             internal Task? ResponseGate;
             internal bool IncludeWitnessFreeUnknown;
             internal string? TerminalTextOverride;
+            internal IReadOnlyList<string>? TerminalTextSequence;
             internal bool OmitTerminalFinish;
             internal ChatFinishReason? TerminalFinishOverride;
             internal bool FirstCallJava;
@@ -1114,8 +1171,10 @@ public sealed class OctoberScanGenerateRunnerTests
                 else
                 {
                     SawToolResult = history.SelectMany(message => message.Contents).OfType<FunctionResultContent>().Any();
-                    const string json = """{"units":[{"semanticSelector":"file","parentSelector":null,"title":"Conditional execution","anchors":[{"startLine":1,"endLine":2}],"sections":[{"sectionId":"logic","ordinal":0,"title":"Behavior","claims":[{"claimGroupId":"rule","text":"Run executes when enabled.","qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}],"limitations":[]}]}]}],"observations":[],"uncertainties":[]}""";
-                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(TerminalTextOverride ?? (IncludeWitnessFreeUnknown ? json.Replace("\"uncertainties\":[]", "\"uncertainties\":[{\"key\":\"same-unknown\",\"explanation\":\"Runtime deployment is not established.\",\"evidence\":[],\"limitations\":[]}]") : json)), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = OmitTerminalFinish ? null : TerminalFinishOverride ?? ChatFinishReason.Stop };
+                    string json = ValidProposalJson;
+                    string terminal = TerminalTextSequence?.ElementAtOrDefault(call - 1) ?? TerminalTextOverride ??
+                        (IncludeWitnessFreeUnknown ? json.Replace("\"uncertainties\":[]", "\"uncertainties\":[{\"key\":\"same-unknown\",\"explanation\":\"Runtime deployment is not established.\",\"evidence\":[],\"limitations\":[]}]", StringComparison.Ordinal) : json);
+                    yield return new ChatResponseUpdate { Role = ChatRole.Assistant, Contents = [new TextContent(terminal), new UsageContent(new UsageDetails { InputTokenCount = 120, OutputTokenCount = 40 })], FinishReason = OmitTerminalFinish ? null : TerminalFinishOverride ?? ChatFinishReason.Stop };
                 }
             }
             public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;

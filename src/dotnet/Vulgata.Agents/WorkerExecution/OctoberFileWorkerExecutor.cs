@@ -77,7 +77,8 @@ public sealed record OctoberFileWorkerLimits(
     int MaximumOutputTokensPerRequest = 8192,
     int MaximumJsonCorrectionAttempts = 0,
     int? AdvisoryToolCalls = null,
-    bool UseTextForJsonCorrection = false);
+    bool UseTextForJsonCorrection = false,
+    bool HardRetryMode = false);
 
 public sealed record OctoberFileWorkerRequest(
     KnowledgeBinding Binding,
@@ -92,6 +93,7 @@ public sealed record OctoberFileWorkerRequest(
     OctoberFileWorkerLimits Limits)
 {
     public OctoberFileToolBudget? ToolBudget { get; init; }
+    public OctoberRunCorrectionBudget? HardRetryBudget { get; init; }
 }
 
 public enum OctoberFileWorkerStatus
@@ -197,6 +199,8 @@ public sealed class OctoberFileWorkerExecutor
             if (_client is IOctoberWorkerAttemptClient selectedClient &&
                 !string.Equals(selectedClient.ProviderProfileId, request.ProviderProfileId, StringComparison.Ordinal))
                 return Failed(OctoberFileWorkerStatus.InvalidInput) with { FailureStage = OctoberWorkerFailureStage.Admission };
+            if (request.HardRetryBudget is { } correctionBudget && !correctionBudget.Register(request))
+                return Failed(OctoberFileWorkerStatus.InvalidInput) with { FailureStage = OctoberWorkerFailureStage.Admission };
             string prompt = LoadPrompt();
             byte[] source = Utf8.GetBytes(request.Source.Text);
             if (source.LongLength != request.Source.ByteLength ||
@@ -280,12 +284,18 @@ public sealed class OctoberFileWorkerExecutor
                     // Preserve complete assistant/tool/reasoning history. A correction is another
                     // admitted leaf in this workstream, never a new run or a locally patched proposal.
                     history.AddRange(response.Messages);
-                    if (index != windows.Count - 1 || correction >= request.Limits.MaximumJsonCorrectionAttempts) break;
-                    string? feedback = CorrectionFeedback(adapter.LastText, request);
+                    if (index != windows.Count - 1) break;
+                    bool extraCorrection = correction >= request.Limits.MaximumJsonCorrectionAttempts;
+                    if (extraCorrection && !request.Limits.HardRetryMode) break;
+                    CorrectionFeedbackData? feedback = CorrectionFeedback(adapter.LastText, request);
                     if (feedback is null) break;
-                    adapter.BeginCorrection();
+                    // Reserve only an eligible extra candidate. Existing admission may still
+                    // refuse it; neither refusal nor source/runtime renewal refunds the slot.
+                    if (extraCorrection && !request.HardRetryBudget!.TryReserve(request)) break;
+                    adapter.BeginCorrection(extraCorrection);
                     history.Add(new ChatMessage(ChatRole.User,
-                        LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md") + "\n" + feedback));
+                        LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md") + "\n" +
+                        feedback.ToJson(request.HardRetryBudget?.Remaining(request) ?? 0)));
                 }
                 stage = null;
                 if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(cancellationToken), OctoberWorkerFailureStage.SourceVerification))
@@ -406,6 +416,8 @@ public sealed class OctoberFileWorkerExecutor
             limits.MaximumOutputUtf8Bytes is < 1 or > 1048576 || limits.MaximumTokensPerRequest is < 1 or > 1048576 ||
             limits.MaximumOutputTokensPerRequest is < 1 or > 393216 ||
             limits.MaximumJsonCorrectionAttempts is < 0 or > 1 ||
+            limits.HardRetryMode != (request.HardRetryBudget is not null) ||
+            limits.HardRetryMode && limits.MaximumJsonCorrectionAttempts != 1 ||
             limits.MaximumContinuationWindows is < 1 or > 100 ||
             limits.RequestTimeout is { } duration && (duration <= TimeSpan.Zero || duration > TimeSpan.FromMinutes(10)))
             return false;
@@ -418,7 +430,7 @@ public sealed class OctoberFileWorkerExecutor
                 .All(item => request.Advisory.Any(advisory => advisory.Contributor == item));
     }
 
-    private static string? CorrectionFeedback(string text, OctoberFileWorkerRequest request)
+    private static CorrectionFeedbackData? CorrectionFeedback(string text, OctoberFileWorkerRequest request)
     {
         var observation = new ParseObservation();
         OctoberWorkerFailureStage? stage = OctoberWorkerFailureStage.ProposalParse;
@@ -431,17 +443,22 @@ public sealed class OctoberFileWorkerExecutor
             if (stage == OctoberWorkerFailureStage.ProposalParse && observation.First is { } failure &&
                 failure.Category is OctoberWorkerParseFailure.Syntax or OctoberWorkerParseFailure.RootShape or
                     OctoberWorkerParseFailure.ClosedFields or OctoberWorkerParseFailure.ValueShape or OctoberWorkerParseFailure.Qualification)
-                return JsonSerializer.Serialize(new
-                {
-                    type = "validation_error", remainingCorrections = 0,
-                    category = failure.Category.ToString(), slot = failure.Slot.ToString(),
-                    fieldFailure = failure.FieldFailure?.ToString(),
-                    field = failure.Field is { } field ? SchemaName(field) : null,
-                    unitIndex = failure.UnitIndex, expectedFields = observation.ExpectedFields,
-                    lineNumber = failure.LineNumber, bytePositionInLine = failure.BytePositionInLine
-                });
+                return new(failure, observation.ExpectedFields);
         }
         return null;
+    }
+
+    private sealed record CorrectionFeedbackData(OctoberWorkerParseDiagnosticSnapshot Failure, string[]? ExpectedFields)
+    {
+        internal string ToJson(int remainingCorrections) => JsonSerializer.Serialize(new
+        {
+            type = "validation_error", remainingCorrections,
+            category = Failure.Category.ToString(), slot = Failure.Slot.ToString(),
+            fieldFailure = Failure.FieldFailure?.ToString(),
+            field = Failure.Field is { } field ? SchemaName(field) : null,
+            unitIndex = Failure.UnitIndex, expectedFields = ExpectedFields,
+            lineNumber = Failure.LineNumber, bytePositionInLine = Failure.BytePositionInLine
+        });
     }
 
     private static string SchemaName(OctoberWorkerParseSlot slot)
@@ -553,6 +570,7 @@ public sealed class OctoberFileWorkerExecutor
         private int _outputBytes;
         private bool _allUsageKnown = true;
         private bool _correctionOnly;
+        private bool _extraCorrectionPending;
         internal OctoberWorkerRetryDisposition RetryDisposition { get; private set; }
         internal int Rounds { get; private set; }
         internal int SettledTools { get; private set; }
@@ -567,11 +585,12 @@ public sealed class OctoberFileWorkerExecutor
         internal OctoberWorkerBudgetFailure? BudgetFailure { get; private set; }
         private OctoberWorkerFailureStage? _observedStage;
 
-        internal void BeginCorrection()
+        internal void BeginCorrection(bool extraCorrection)
         {
             if (_pending.Count != 0 || Finish != ChatFinishReason.Stop)
                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
             _correctionOnly = true;
+            _extraCorrectionPending = extraCorrection;
         }
 
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
@@ -691,6 +710,11 @@ public sealed class OctoberFileWorkerExecutor
                     timing.MarkDispatched(Stopwatch.GetTimestamp());
                 }
                 _observedStage = OctoberWorkerFailureStage.Transport;
+                if (_extraCorrectionPending)
+                {
+                    request.HardRetryBudget!.RecordProviderCallStarted(request);
+                    _extraCorrectionPending = false;
+                }
                 IAsyncEnumerable<ChatResponseUpdate> updates = client is IOctoberWorkerAttemptClient admittedClient
                     ? admittedClient.GetAttemptStreamingResponseAsync(snapshot, bounded, lease, linked.Token, timing.MarkDispatched)
                     : client.GetStreamingResponseAsync(snapshot, bounded, linked.Token);

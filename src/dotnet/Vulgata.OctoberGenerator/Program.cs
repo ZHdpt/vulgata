@@ -350,6 +350,7 @@ public static class OctoberGeneratorEntryPoint
                     TerminalCoverage = [], Inventory = [], Gaps = [new("output_binding_invalid")],
                     BusinessDiagnostics = null,
                     WorkerDiagnostics = null,
+                    HardRetry = null,
                     Matching = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable,
                     BusinessLogic = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable
                 };
@@ -613,6 +614,9 @@ public static class OctoberGeneratorEntryPoint
             Matching = PhaseStatus(report.Matching),
             BusinessLogic = PhaseStatus(report.BusinessLogic),
             BusinessDiagnostics = ProjectBusinessDiagnostics(report),
+            HardRetry = report.HardRetry is { ReservedAttempts: >= 0 and <= 16, ProviderCallsStarted: >= 0 and <= 16 } correction &&
+                correction.ProviderCallsStarted <= correction.ReservedAttempts
+                ? new { correction.ReservedAttempts, correction.ProviderCallsStarted } : null,
             WorkerDiagnostics = report.WorkerDiagnostics is { } worker ? new
             {
                 Status = DefinedStatus(worker.Status),

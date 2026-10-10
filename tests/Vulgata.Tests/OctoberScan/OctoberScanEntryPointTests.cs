@@ -490,6 +490,48 @@ public sealed class OctoberScanEntryPointTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData("absent")]
+    [InlineData("valid")]
+    [InlineData("negative-reserved")]
+    [InlineData("over-run-limit")]
+    [InlineData("started-exceeds-reserved")]
+    [InlineData("foreign-binding")]
+    public async Task HardRetryBudgetProjection_EmitsOnlyBoundedCountsForMatchingOutputAsync(string condition)
+    {
+        var batch = Guid.NewGuid();
+        int reserved = condition == "negative-reserved" ? -1 : condition == "over-run-limit" ? 17 : 2;
+        int started = condition == "started-exceeds-reserved" ? 3 : 1;
+        var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(null, null, null, true), [])
+        {
+            HardRetry = condition == "absent" ? null : new(reserved, started)
+        };
+        if (condition == "foreign-binding")
+            report = report with { Publication = new(new("PRIVATE_DATABASE", "foreign-target", batch, new string('a', 64)), Guid.NewGuid()) };
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(
+            new(OctoberGeneratorMode.Generate, "exact-target", batch, null, new() { OutputStage = "cl-only" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+
+        using var json = JsonDocument.Parse(output.ToString());
+        bool present = json.RootElement.TryGetProperty("hardRetry", out var projected) && projected.ValueKind != JsonValueKind.Null;
+        if (condition is "absent" or "negative-reserved" or "over-run-limit" or "started-exceeds-reserved" or "foreign-binding")
+        {
+            Assert.False(present);
+            Assert.DoesNotContain("PRIVATE_DATABASE", output.ToString(), StringComparison.Ordinal);
+            return;
+        }
+        Assert.True(present);
+        Assert.Equal(new[] { "providerCallsStarted", "reservedAttempts" },
+            projected.EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(2, projected.GetProperty("reservedAttempts").GetInt32());
+        Assert.Equal(1, projected.GetProperty("providerCallsStarted").GetInt32());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("defined")]
     [InlineData("zero")]
     [InlineData("missing")]

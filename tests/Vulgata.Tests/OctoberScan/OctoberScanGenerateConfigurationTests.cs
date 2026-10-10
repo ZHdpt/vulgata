@@ -97,6 +97,7 @@ public sealed class OctoberScanGenerateConfigurationTests
         Assert.Equal(32, policy.AdvisoryToolCallsPerFile);
         Assert.Equal(48, policy.MaximumToolCallsPerFile);
         Assert.Equal(2, policy.MaximumTransientRetries);
+        Assert.False(policy.HardRetryMode);
         Assert.Equal(30, policy.GracefulDrainSeconds);
         Assert.True(policy.MaximumProviderRequests > 0);
         Assert.True(policy.MaximumRequestsPerMinute > 0);
@@ -139,6 +140,7 @@ public sealed class OctoberScanGenerateConfigurationTests
     [InlineData("tool-advisory-equals-hard")]
     [InlineData("tool-advisory-above-hard")]
     [InlineData("tool-hard-over-ceiling")]
+    [InlineData("hard-retry-with-transient-retries")]
     public void ValidatePolicy_NonFiniteOrInconsistentBounds_Rejects(string fault)
     {
         var policy = ValidPolicy();
@@ -154,9 +156,18 @@ public sealed class OctoberScanGenerateConfigurationTests
             "tool-advisory-equals-hard" => policy with { AdvisoryToolCallsPerFile = 48, MaximumToolCallsPerFile = 48 },
             "tool-advisory-above-hard" => policy with { AdvisoryToolCallsPerFile = 49, MaximumToolCallsPerFile = 48 },
             "tool-hard-over-ceiling" => policy with { AdvisoryToolCallsPerFile = 32, MaximumToolCallsPerFile = 1001 },
+            "hard-retry-with-transient-retries" => policy with { HardRetryMode = true, MaximumTransientRetries = 1 },
             _ => throw new InvalidOperationException(),
         };
         Assert.False(new OctoberScanPolicyValidator().Validate(policy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ValidatePolicy_HardRetryModeRequiresTransientRetriesDisabled()
+    {
+        var policy = ValidPolicy() with { HardRetryMode = true, MaximumTransientRetries = 0 };
+        Assert.True(new OctoberScanPolicyValidator().Validate(policy).IsValid);
     }
 
     [Trait("Suite", "SelfContained")]

@@ -66,6 +66,27 @@ Run only the approved suites/resources. Native/provider extra consent flags rema
 
 ## Handoff
 
+### Optional bounded final-format recovery
+
+`hardRetryMode` defaults to `false` in the Generate scan-policy JSON. To enable
+the bounded experiment, set `hardRetryMode: true` and `maximumTransientRetries: 0`.
+Keep the explicit `outputStage`, source selection and original budget settings.
+`useTextForJsonCorrection: true` is an independent optional setting for the
+correction response format; initial and tool-continuation requests remain JSON.
+
+Hard mode permits at most two additional final-format corrections per file and
+sixteen across the original run after the ordinary correction fails. All original
+admission, deadline, source, authorization and acceptance guards still apply, so
+available correction slots do not guarantee another request. Tools remain disabled
+for corrections. It does not retry semantic/evidence failures, unknown application
+exceptions, uncertain writes or an entire failed run. Exhaustion is failure.
+
+The optional `hardRetry` report contains `reservedAttempts` and
+`providerCallsStarted`. The latter counts entry into the underlying client, not
+confirmed HTTP transmission; a reservation can be consumed before a guard refuses
+dispatch. These counters do not establish successful Knowledge. Require complete
+coverage and confirmed publication, and qualify ordinary-reader access separately.
+
 Record exact code/C0/schema versions, supported host/JDK/tool profile, non-secret configuration paths, prepared-origin identity, source selection, batch/publication binding, start/select/Generate/stop/fresh-batch instructions, actual limits/timings/usage and known gaps. Keep required keys/data protected. Distinguish controlled/native/PostgreSQL/real provider/usefulness observations and unresolved blockers.
 
 Integration owner combines the actual source-to-store-to-ordinary-Web route with Chat/reader/graph checks from the October integration plan. One final combined build and SelfContained run after corrections plus affected runtime checks suffice; additional repeats require changed behavior or unresolved defects. Scan alone does not certify release or generic product completion.

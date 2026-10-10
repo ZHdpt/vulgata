@@ -73,6 +73,7 @@ public sealed record OctoberScanReport(
     public OctoberPhaseStatus BusinessLogic { get; init; } = RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.NotStarted : OctoberPhaseStatus.NotRequested;
     public OctoberBusinessDiagnosticSnapshot? BusinessDiagnostics { get; init; }
     public OctoberWorkerDiagnosticSnapshot? WorkerDiagnostics { get; init; }
+    public OctoberCorrectionBudgetSnapshot? HardRetry { get; init; }
 
     public int ExitCode => (Execution, PublicationStatus) switch
     {

@@ -171,7 +171,12 @@ All31correction cases pass; full SelfContained4843/4844, sole existing report-pa
 failure. Isolated POM passed with1accepted file/6published Documents on one request
 (no correction exercised). All ten second-series whole trials failed final JSON
 validation with the flag enabled; none published. The user's conditional bounded
-hard-retry implementation and single qualification run are now authorized. See
+hard-retry implementation is now independently reviewed: default off, two extra
+eligible corrections per file and sixteen per original run, same Worker/history,
+tools disabled, every original guard/cap unchanged, transient retries zero required.
+Full SelfContained4864/4865 with the same report-parser failure; the final added
+round-cap guard passes1/1. One authorized real hard-mode whole run is pending. See
+[hard correction evidence](../../specs/20-1-Oct14-scan/hard-correction-verification.md) and
 [text correction evidence](../../specs/20-1-Oct14-scan/text-correction-verification.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)

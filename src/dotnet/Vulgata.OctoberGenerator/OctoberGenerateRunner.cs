@@ -78,6 +78,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
     private CancellationTokenSource? _deadline;
     private CancellationTokenSource? _runToken;
     private OctoberExecutionScope? _scope;
+    private OctoberRunCorrectionBudget? _hardRetryBudget;
     private IOctoberScanRunSource? _source;
     private OctoberWorkerInputLedger? _activeLedger;
     private Guid? _activeAdmission;
@@ -160,6 +161,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             report = report with { Execution = OctoberExecutionStatus.Indeterminate,
                 Gaps = report.Gaps.Add(new("owned_cleanup_unconfirmed")) };
         }
+        if (_hardRetryBudget is not null && !report.Inventory.IsEmpty)
+            report = report with { HardRetry = _hardRetryBudget.Read() };
         if (HasMetadata(report) && await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
             report = Hide(report, "authority_unavailable");
         await AwaitBusinessOwnerCallsAsync();
@@ -194,6 +197,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _runToken = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, _stop.Token, _caller);
         CancellationToken token = _runToken.Token;
         Guid runId = Guid.NewGuid();
+        if (execution.Policy.HardRetryMode) _hardRetryBudget = new(_binding, runId);
         bool captureBound = _dependencies.ParseFailureCapture?.TryBind(execution, runId) == true;
         bool observationBound = _dependencies.HttpObservation?.TryBind(execution, runId) == true;
         if (_dependencies.HttpObservation is not null && (!observationBound || _dependencies.ParseFailureCapture is not null))
@@ -301,7 +305,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                             MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens,
                             MaximumJsonCorrectionAttempts: 1,
                             AdvisoryToolCalls: execution.Policy.AdvisoryToolCallsPerFile,
-                            UseTextForJsonCorrection: execution.Policy.UseTextForJsonCorrection)) { ToolBudget = toolBudget };
+                            UseTextForJsonCorrection: execution.Policy.UseTextForJsonCorrection,
+                            HardRetryMode: execution.Policy.HardRetryMode))
+                    { ToolBudget = toolBudget, HardRetryBudget = _hardRetryBudget };
                     var ledger = new OctoberWorkerInputLedger(request,
                         async (path, callToken) =>
                         {
@@ -844,6 +850,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         TerminalCoverage = [], Inventory = [], Gaps = [new(code)],
         BusinessDiagnostics = null,
         WorkerDiagnostics = null,
+        HardRetry = null,
         Matching = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested,
         BusinessLogic = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested
     };
@@ -857,7 +864,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 _toolWait, snapshot?.ModelWait ?? TimeSpan.Zero, _storeWait + report.Timings.StoreWait)
         };
     }
-    private static bool HasMetadata(OctoberScanReport report) => report.WorkerDiagnostics is not null || report.BusinessDiagnostics is not null || report.Publication is not null ||
+    private static bool HasMetadata(OctoberScanReport report) => report.HardRetry is not null || report.WorkerDiagnostics is not null || report.BusinessDiagnostics is not null || report.Publication is not null ||
         !report.Documents.IsEmpty || !report.AcceptedFiles.IsEmpty || !report.TerminalCoverage.IsEmpty || !report.Inventory.IsEmpty;
     private static OctoberGeneratorExecutionResult Finished(OctoberScanReport report) => new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report);
     private static CommitGuardResult BeginDenied(CommitEligibilityStatus status) => new(status switch
