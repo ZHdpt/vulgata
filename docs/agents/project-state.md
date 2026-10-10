@@ -116,6 +116,13 @@ Fix committed at b164c7d2. Isolated LoginAntiSendOp.java completed/published in
 accepted seven account files over354.45 seconds, then failed GuestSyncOp.java
 on valid JSON with ClosedFields/Units schema rejection. Ten requests, usage known;
 no whole-run publication. All data retained; no additional retry or parser waiver.
+The user accepted structural correction and isolated-first qualification. The
+existing single allowance now covers syntax and parser-defined structural errors,
+with safe missing/unexpected/duplicate-field feedback and unit indices. Evidence
+and semantic failures remain non-correctable; all acceptance guards stay strict.
+All463 affected cases pass; prior full-suite failure remains visible. See
+[structural correction evidence](../../specs/20-1-Oct14-scan/structural-correction-verification.md)
+for review, limits, diagnostics and separate runtime outcomes.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

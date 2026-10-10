@@ -464,7 +464,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             ParseFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.ParseFailure is { } parse
                 ? new(parse.Category is { } category && Enum.IsDefined(category) ? category : null,
-                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null) : null,
+                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null,
+                    parse.FieldFailure is { } fieldFailure && Enum.IsDefined(fieldFailure) ? fieldFailure : null,
+                    parse.Field is { } field && Enum.IsDefined(field) ? field : null,
+                    parse.UnitIndex is >= 0 and <= 65535 ? parse.UnitIndex : null) : null,
             CaptureStatus = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.CaptureStatus is { } capture && Enum.IsDefined(capture)
                 ? capture : null

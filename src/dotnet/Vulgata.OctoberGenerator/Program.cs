@@ -630,7 +630,10 @@ public static class OctoberGeneratorEntryPoint
                     worker.ParseFailure is { } parse ? new
                     {
                         Category = DefinedStatus(parse.Category),
-                        Slot = DefinedStatus(parse.Slot)
+                        Slot = DefinedStatus(parse.Slot),
+                        FieldFailure = DefinedStatus(parse.FieldFailure),
+                        Field = DefinedStatus(parse.Field),
+                        UnitIndex = parse.UnitIndex is >= 0 and <= 65535 ? parse.UnitIndex : null
                     } : null,
                 CaptureStatus = worker.Status is { } captureWorkerStatus && Enum.IsDefined(captureWorkerStatus) &&
                     captureWorkerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed &&

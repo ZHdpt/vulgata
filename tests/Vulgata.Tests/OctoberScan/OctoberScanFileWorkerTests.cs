@@ -673,10 +673,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("syntax", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root)]
-    [InlineData("units-value", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Units)]
+    [InlineData("units-value", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Units)]
     [InlineData("claim-extra", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ClosedFields, OctoberWorkerParseSlot.Claims)]
     [InlineData("first-cause", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ClosedFields, OctoberWorkerParseSlot.Claims)]
-    [InlineData("parent-value", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.ParentSelector)]
+    [InlineData("parent-value", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.ParentSelector)]
     public async Task ParseFailure_ReportsFirstActualGuardWithoutInputEchoOrStatusRepairAsync(string scenario,
         OctoberFileWorkerStatus status, OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot)
     {
@@ -865,7 +865,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task ParseCapture_TypedParserFailureKeepsProviderFailedAndScrubsUnknownSinkStatusAsync(bool unknownStatus)
+    public async Task ParseCapture_TypedParserFailureKeepsInvalidOutputAndScrubsUnknownSinkStatusAsync(bool unknownStatus)
     {
         int captures = 0;
         string text = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"0\"");
@@ -874,9 +874,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope, captureParseFailure: (_, _) =>
         { captures++; return Task.FromResult(unknownStatus ? (OctoberWorkerCaptureStatus)99999 : OctoberWorkerCaptureStatus.Captured); })
             .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
-        Assert.Equal(1, captures); Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(1, captures); Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Ordinal), result.ParseFailure);
+        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Ordinal,
+            Field: OctoberWorkerParseSlot.Ordinal, UnitIndex: 0), result.ParseFailure);
         Assert.Equal(unknownStatus ? (OctoberWorkerCaptureStatus?)null : OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
         Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
@@ -893,7 +894,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("invalid-json", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse)]
-    [InlineData("typed-json", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerFailureStage.ProposalParse)]
+    [InlineData("typed-json", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse)]
     [InlineData("terminal", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.StreamTerminal)]
     [InlineData("cycle", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalValidation)]
     [InlineData("admission", OctoberFileWorkerStatus.Denied, OctoberWorkerFailureStage.Admission)]
@@ -1143,7 +1144,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task JsonCorrection_ValidJsonWithWrongSchemaDoesNotRetryAsync()
+    public async Task JsonCorrection_ValidJsonWrongRootCanBeReplacedOnceAsync()
     {
         using var client = new ScriptedClient([new("{}", ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
@@ -1151,9 +1152,101 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
 
-        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing-parent")]
+    [InlineData("unexpected-field")]
+    [InlineData("duplicate-title")]
+    [InlineData("wrong-type")]
+    [InlineData("wrong-root")]
+    public async Task JsonCorrection_EligibleStructuralResponseCanBeReplacedOnceAsync(string defect)
+    {
+        const string privateField = "PRIVATE_API_KEY";
+        const string privateValue = "SYNTHETIC_SECRET_VALUE";
+        string invalid = defect switch
+        {
+            "missing-parent" => UnitJson.Replace("\"parentSelector\":null,", "", StringComparison.Ordinal),
+            "unexpected-field" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"" + privateField + "\":\"" + privateValue + "\"", StringComparison.Ordinal),
+            "duplicate-title" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"title\":\"duplicate\"", StringComparison.Ordinal),
+            "wrong-type" => UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal),
+            "wrong-root" => "{}",
+            _ => throw new InvalidOperationException("Unknown structural correction case")
+        };
+        using var client = new ScriptedClient([new(invalid, ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, client.Requests.Count);
+        if (defect == "unexpected-field")
+        {
+            string correctionPrompt = client.Requests[1]
+                .Where(message => message.Role == ChatRole.User).SelectMany(message => message.Contents)
+                .OfType<TextContent>().Last().Text;
+            Assert.DoesNotContain(privateField, correctionPrompt, StringComparison.Ordinal);
+            Assert.DoesNotContain(privateValue, correctionPrompt, StringComparison.Ordinal);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing-parent", OctoberWorkerParseFailure.ClosedFields, OctoberWorkerFieldFailure.Missing, OctoberWorkerParseSlot.ParentSelector)]
+    [InlineData("unexpected-field", OctoberWorkerParseFailure.ClosedFields, OctoberWorkerFieldFailure.Unexpected, null)]
+    [InlineData("duplicate-title", OctoberWorkerParseFailure.ClosedFields, OctoberWorkerFieldFailure.Duplicate, OctoberWorkerParseSlot.Title)]
+    [InlineData("wrong-type", OctoberWorkerParseFailure.ValueShape, null, OctoberWorkerParseSlot.Ordinal)]
+    public async Task JsonCorrection_ExhaustedStructuralCorrectionReportsBoundedFieldDiagnosticsAsync(string defect,
+        OctoberWorkerParseFailure category, OctoberWorkerFieldFailure? fieldFailure, OctoberWorkerParseSlot? field)
+    {
+        string invalid = defect switch
+        {
+            "missing-parent" => UnitJson.Replace("\"parentSelector\":null,", "", StringComparison.Ordinal),
+            "unexpected-field" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"PRIVATE_UNKNOWN_FIELD\":\"SYNTHETIC_SECRET_VALUE\"", StringComparison.Ordinal),
+            "duplicate-title" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"title\":\"duplicate\"", StringComparison.Ordinal),
+            "wrong-type" => UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal),
+            _ => throw new InvalidOperationException("Unknown structural diagnostic case")
+        };
+        using var client = new ScriptedClient([new("{first syntax failure", ChatFinishReason.Stop), new(invalid, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Single(client.Requests);
+        Assert.Equal(2, client.Requests.Count); // Syntax and structural failures share the one correction allowance.
+        var parse = Assert.IsType<OctoberWorkerParseDiagnosticSnapshot>(result.ParseFailure);
+        Assert.Equal(category, parse.Category);
+        Assert.Equal(fieldFailure, parse.FieldFailure);
+        Assert.Equal(field, parse.Field);
+        Assert.Equal(0, parse.UnitIndex);
+        Assert.DoesNotContain("PRIVATE_UNKNOWN_FIELD", JsonSerializer.Serialize(parse), StringComparison.Ordinal);
+        Assert.DoesNotContain("SYNTHETIC_SECRET_VALUE", JsonSerializer.Serialize(parse), StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("cycle")]
+    [InlineData("evidence-index")]
+    public async Task JsonCorrection_SemanticAndEvidenceFailuresDoNotRetryAsync(string defect)
+    {
+        string invalid = defect == "cycle"
+            ? UnitJson.Replace("\"parentSelector\":null", "\"parentSelector\":\"file\"", StringComparison.Ordinal)
+            : UnitJson.Replace("\"evidence\":[{\"startLine\":1,\"endLine\":2}]", "\"evidence\":[{\"advisoryIndex\":0}]", StringComparison.Ordinal);
+        using var client = new ScriptedClient([new(invalid, ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(1, client.Requests.Count);
+        Assert.Equal(defect == "cycle" ? OctoberWorkerFailureStage.ProposalValidation : OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        if (defect == "evidence-index") Assert.Equal(OctoberWorkerParseFailure.EvidenceIndex, result.ParseFailure!.Category);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1538,8 +1631,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [InlineData("duplicate-key", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("wrong-case-key", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("wrong-root", OctoberFileWorkerStatus.InvalidOutput)]
-    [InlineData("numeric-string", OctoberFileWorkerStatus.ProviderFailed)]
-    [InlineData("numeric-overflow", OctoberFileWorkerStatus.ProviderFailed)]
+    [InlineData("numeric-string", OctoberFileWorkerStatus.InvalidOutput)]
+    [InlineData("numeric-overflow", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("qualification-case", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("advisory-index", OctoberFileWorkerStatus.InvalidOutput)]
     public async Task CurrentContract_ProposalShapeCharacterization_PreservesExactParserOutcomeAsync(string shape, OctoberFileWorkerStatus expected)
@@ -2770,7 +2863,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Null(result.Proposal);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(category, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(category, OctoberWorkerParseSlot.Root,
+            FieldFailure: depth == 32 ? OctoberWorkerFieldFailure.Unexpected : null), result.ParseFailure);
         Assert.Equal(1, transport.Calls); Assert.Equal(0, result.SettledToolCalls);
         var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
         Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens);

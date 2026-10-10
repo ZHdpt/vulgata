@@ -112,7 +112,9 @@ public enum OctoberWorkerParseSlot
     Operation, LogicalNamespace, LiteralsOrExpressions, Key, Explanation,
     AdvisoryIndex, StartLine, EndLine
 }
-public sealed record OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure? Category, OctoberWorkerParseSlot? Slot);
+public enum OctoberWorkerFieldFailure { Missing, Unexpected, Duplicate }
+public sealed record OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure? Category, OctoberWorkerParseSlot? Slot,
+    OctoberWorkerFieldFailure? FieldFailure = null, OctoberWorkerParseSlot? Field = null, int? UnitIndex = null);
 public enum OctoberWorkerTerminalFailure
 {
     ContentAfterFinish, ConflictingFinish, NonAssistantRole, ToolCallError, MissingToolCallId,
@@ -270,10 +272,11 @@ public sealed class OctoberFileWorkerExecutor
                     // Preserve complete assistant/tool/reasoning history. A correction is another
                     // admitted leaf in this workstream, never a new run or a locally patched proposal.
                     history.AddRange(response.Messages);
-                    if (index != windows.Count - 1 || correction >= request.Limits.MaximumJsonCorrectionAttempts ||
-                        HasValidJsonSyntax(adapter.LastText)) break;
+                    if (index != windows.Count - 1 || correction >= request.Limits.MaximumJsonCorrectionAttempts) break;
+                    string? feedback = CorrectionFeedback(adapter.LastText, request);
+                    if (feedback is null) break;
                     history.Add(new ChatMessage(ChatRole.User,
-                        LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md")));
+                        LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md") + "\n" + feedback));
                 }
                 stage = null;
                 if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(cancellationToken), OctoberWorkerFailureStage.SourceVerification))
@@ -308,6 +311,11 @@ public sealed class OctoberFileWorkerExecutor
             return Failed(OctoberFileWorkerStatus.Cancelled, exception);
         }
         catch (WorkerFailure failure) { terminalFailure = failure.TerminalFailure; return Failed(failure.Status, failure); }
+        catch (Exception exception) when (stage == OctoberWorkerFailureStage.ProposalParse && parseObservation.First is not null &&
+            exception is InvalidOperationException or FormatException or KeyNotFoundException)
+        {
+            return Failed(OctoberFileWorkerStatus.InvalidOutput, exception);
+        }
         catch (Exception exception) when (exception is JsonException or ArgumentException or InvalidDataException or OverflowException)
         {
             return Failed(adapter?.Failure ?? OctoberFileWorkerStatus.InvalidOutput, exception);
@@ -399,11 +407,40 @@ public sealed class OctoberFileWorkerExecutor
                 .All(item => request.Advisory.Any(advisory => advisory.Contributor == item));
     }
 
-    private static bool HasValidJsonSyntax(string text)
+    private static string? CorrectionFeedback(string text, OctoberFileWorkerRequest request)
     {
-        try { using JsonDocument document = JsonDocument.Parse(text); return true; }
-        catch (JsonException) { return false; }
+        var observation = new ParseObservation();
+        OctoberWorkerFailureStage? stage = OctoberWorkerFailureStage.ProposalParse;
+        try { _ = ParseProposal(text, request, ref stage, observation); }
+        catch (Exception error) when (error is JsonException or InvalidOperationException or FormatException or
+            ArgumentException or InvalidDataException or OverflowException or KeyNotFoundException)
+        {
+            // Only parser-defined structural errors are eligible. Evidence and semantic
+            // validation failures are not permission to invent data or alter authority.
+            if (stage == OctoberWorkerFailureStage.ProposalParse && observation.First is { } failure &&
+                failure.Category is OctoberWorkerParseFailure.Syntax or OctoberWorkerParseFailure.RootShape or
+                    OctoberWorkerParseFailure.ClosedFields or OctoberWorkerParseFailure.ValueShape or OctoberWorkerParseFailure.Qualification)
+                return JsonSerializer.Serialize(new
+                {
+                    type = "validation_error", remainingCorrections = 0,
+                    category = failure.Category.ToString(), slot = failure.Slot.ToString(),
+                    fieldFailure = failure.FieldFailure?.ToString(),
+                    field = failure.Field is { } field ? SchemaName(field) : null,
+                    unitIndex = failure.UnitIndex, expectedFields = observation.ExpectedFields
+                });
+        }
+        return null;
     }
+
+    private static string SchemaName(OctoberWorkerParseSlot slot)
+    {
+        string name = slot.ToString();
+        return char.ToLowerInvariant(name[0]) + name[1..];
+    }
+
+    private static OctoberWorkerParseSlot? KnownField(string name)
+        => Enum.TryParse(name, ignoreCase: true, out OctoberWorkerParseSlot field) && Enum.IsDefined(field) &&
+            SchemaName(field) == name ? field : null;
 
     private static string LoadPrompt(string name = "Vulgata.Agents.Prompts.OctoberFileWorker.md")
     {
@@ -1112,8 +1149,9 @@ public sealed class OctoberFileWorkerExecutor
             OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root);
         JsonElement root = document.RootElement;
         Fields(root, parse, OctoberWorkerParseSlot.Root, "units", "observations", "uncertainties");
-        ImmutableArray<SemanticUnitProposal> units = Array(root, "units", parse, OctoberWorkerParseSlot.Units).Select(unit =>
+        ImmutableArray<SemanticUnitProposal> units = Array(root, "units", parse, OctoberWorkerParseSlot.Units).Select((unit, index) =>
         {
+            parse.UnitIndex = index;
             Fields(unit, parse, OctoberWorkerParseSlot.Units, "semanticSelector", "parentSelector", "title", "anchors", "sections");
             ImmutableArray<DocumentSection> sections = Array(unit, "sections", parse, OctoberWorkerParseSlot.Sections).Select(section =>
             {
@@ -1137,6 +1175,7 @@ public sealed class OctoberFileWorkerExecutor
                 Array(unit, "anchors", parse, OctoberWorkerParseSlot.Anchors)
                     .Select(anchor => Anchor(anchor, request, parse, OctoberWorkerParseSlot.Anchors)).ToImmutableArray(), sections);
         }).ToImmutableArray();
+        parse.UnitIndex = null;
         ImmutableArray<CommunicationObservation> observations = Array(root, "observations", parse, OctoberWorkerParseSlot.Observations).Select(observation =>
         {
             Fields(observation, parse, OctoberWorkerParseSlot.Observations, "observationKey", "ownerSelector", "role", "mechanism", "operation", "logicalNamespace", "literalsOrExpressions", "qualification", "evidence");
@@ -1227,14 +1266,23 @@ public sealed class OctoberFileWorkerExecutor
         }
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (JsonProperty property in value.EnumerateObject())
-            if (!names.Contains(property.Name, StringComparer.Ordinal) || !seen.Add(property.Name))
-            {
-                parse.Record(OctoberWorkerParseFailure.ClosedFields, slot);
-                throw new InvalidDataException("Unknown or repeated proposal field.");
-            }
-        if (seen.Count != names.Length)
         {
-            parse.Record(OctoberWorkerParseFailure.ClosedFields, slot);
+            if (!names.Contains(property.Name, StringComparer.Ordinal))
+            {
+                // Unknown names may contain sensitive/model-controlled text; never echo them.
+                parse.RecordField(slot, OctoberWorkerFieldFailure.Unexpected, null, names);
+                throw new InvalidDataException("Unknown proposal field.");
+            }
+            if (!seen.Add(property.Name))
+            {
+                parse.RecordField(slot, OctoberWorkerFieldFailure.Duplicate, KnownField(property.Name), names);
+                throw new InvalidDataException("Repeated proposal field.");
+            }
+        }
+        foreach (string name in names)
+        {
+            if (seen.Contains(name)) continue;
+            parse.RecordField(slot, OctoberWorkerFieldFailure.Missing, KnownField(name), names);
             throw new InvalidDataException("Missing proposal field.");
         }
     }
@@ -1242,7 +1290,16 @@ public sealed class OctoberFileWorkerExecutor
     private sealed class ParseObservation
     {
         internal OctoberWorkerParseDiagnosticSnapshot? First { get; private set; }
-        internal void Record(OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot) => First ??= new(category, slot);
+        internal int? UnitIndex { get; set; }
+        internal string[]? ExpectedFields { get; private set; }
+        internal void Record(OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot)
+            => First ??= new(category, slot, Field: category == OctoberWorkerParseFailure.ValueShape ? slot : null, UnitIndex: UnitIndex);
+        internal void RecordField(OctoberWorkerParseSlot slot, OctoberWorkerFieldFailure failure, OctoberWorkerParseSlot? field, string[] expected)
+        {
+            if (First is not null) return;
+            First = new(OctoberWorkerParseFailure.ClosedFields, slot, failure, field, UnitIndex);
+            ExpectedFields = expected.ToArray();
+        }
         internal T Read<T>(Func<T> operation, OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot)
         {
             try { return operation(); }

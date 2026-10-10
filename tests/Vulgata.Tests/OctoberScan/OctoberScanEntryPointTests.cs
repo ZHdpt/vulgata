@@ -425,6 +425,11 @@ public sealed class OctoberScanEntryPointTests
     [InlineData("defined")]
     [InlineData("undefined-category")]
     [InlineData("undefined-slot")]
+    [InlineData("undefined-field-failure")]
+    [InlineData("undefined-field")]
+    [InlineData("negative-unit-index")]
+    [InlineData("excess-unit-index")]
+    [InlineData("structural")]
     [InlineData("completed")]
     [InlineData("wrong-stage")]
     [InlineData("cleared")]
@@ -433,7 +438,10 @@ public sealed class OctoberScanEntryPointTests
     {
         var parse = new OctoberWorkerParseDiagnosticSnapshot(
             condition == "undefined-category" ? (OctoberWorkerParseFailure)99999 : OctoberWorkerParseFailure.ClosedFields,
-            condition == "undefined-slot" ? (OctoberWorkerParseSlot)99999 : OctoberWorkerParseSlot.Claims);
+            condition == "undefined-slot" ? (OctoberWorkerParseSlot)99999 : OctoberWorkerParseSlot.Claims,
+            condition == "undefined-field-failure" ? (OctoberWorkerFieldFailure)99999 : condition == "structural" ? OctoberWorkerFieldFailure.Missing : null,
+            condition == "undefined-field" ? (OctoberWorkerParseSlot)99999 : condition == "structural" ? OctoberWorkerParseSlot.ParentSelector : null,
+            condition == "negative-unit-index" ? -1 : condition == "excess-unit-index" ? 65536 : condition == "structural" ? 0 : null);
         var snapshot = new OctoberWorkerDiagnosticSnapshot(
             condition == "completed" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput,
             OctoberWorkerRetryDisposition.None,
@@ -450,6 +458,7 @@ public sealed class OctoberScanEntryPointTests
             new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
         Assert.NotEqual(0, exit);
         Assert.DoesNotContain("PRIVATE", output.ToString()); Assert.DoesNotContain("99999", output.ToString());
+        Assert.DoesNotContain("65536", output.ToString());
         using var json = JsonDocument.Parse(output.ToString());
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var worker) && worker.ValueKind != JsonValueKind.Null;
         if (condition == "foreign-binding") { Assert.False(present); return; }
@@ -460,11 +469,23 @@ public sealed class OctoberScanEntryPointTests
             Assert.Equal(JsonValueKind.Null, projected.ValueKind);
             return;
         }
-        Assert.Equal(new[] { "category", "slot" }, projected.EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "category", "field", "fieldFailure", "slot", "unitIndex" }, projected.EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined-category") Assert.Equal(JsonValueKind.Null, projected.GetProperty("category").ValueKind);
         else Assert.Equal("ClosedFields", projected.GetProperty("category").GetString());
         if (condition == "undefined-slot") Assert.Equal(JsonValueKind.Null, projected.GetProperty("slot").ValueKind);
         else Assert.Equal("Claims", projected.GetProperty("slot").GetString());
+        if (condition == "structural")
+        {
+            Assert.Equal("Missing", projected.GetProperty("fieldFailure").GetString());
+            Assert.Equal("ParentSelector", projected.GetProperty("field").GetString());
+            Assert.Equal(0, projected.GetProperty("unitIndex").GetInt32());
+        }
+        else
+        {
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("fieldFailure").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("field").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("unitIndex").ValueKind);
+        }
     }
 
     [Trait("Suite", "SelfContained")]
