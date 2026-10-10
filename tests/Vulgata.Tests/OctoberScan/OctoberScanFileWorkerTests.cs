@@ -157,6 +157,179 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task ToolBudget_AdvisoryIsReportedOnNextLeafAndExecutionContinuesAsync()
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = WithToolBudget(baseline, advisory: 2, maximum: 3);
+        using var client = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-1", tool.Name, new Dictionary<string, object?>()), new FunctionCallContent("read-2", tool.Name, new Dictionary<string, object?>())]),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, invoked);
+        var budget = Assert.IsType<OctoberFileToolBudget>(request.ToolBudget).Read();
+        Assert.Equal(new OctoberFileToolBudgetSnapshot(2, 3, 2, 2, 2, 1, true), budget);
+        var initialPrompt = ReadToolBudgetPrompt(client.Requests[0]);
+        Assert.Equal(0, initialPrompt.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(0, initialPrompt.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(0, initialPrompt.GetProperty("executedCalls").GetInt32());
+        var prompt = ReadToolBudgetPrompt(client.Requests[1]);
+        Assert.Equal("file_tool_budget", prompt.GetProperty("type").GetString());
+        Assert.Equal("primary_file", prompt.GetProperty("scope").GetString());
+        Assert.Equal(2, prompt.GetProperty("advisoryLimit").GetInt32());
+        Assert.Equal(3, prompt.GetProperty("maximumLimit").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("executedCalls").GetInt32());
+        Assert.Equal(1, prompt.GetProperty("remainingCalls").GetInt32());
+        Assert.True(prompt.GetProperty("advisoryReached").GetBoolean());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ToolBudget_HardLimitRefusesNextCallBeforeExecutionAsync()
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var request = WithToolBudget(Request(new Frame("if (enabled) Run();\nreturn;")), advisory: 1, maximum: 2);
+        using var client = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [
+                new FunctionCallContent("read-1", tool.Name, new Dictionary<string, object?>()),
+                new FunctionCallContent("read-2", tool.Name, new Dictionary<string, object?>())]),
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-3", tool.Name, new Dictionary<string, object?>())])
+        ]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(OctoberWorkerBudgetFailure.ToolCalls, result.BudgetFailure);
+        Assert.Equal(2, invoked);
+        Assert.Equal(new OctoberFileToolBudgetSnapshot(1, 2, 3, 2, 2, 0, true), request.ToolBudget!.Read());
+        var prompt = ReadToolBudgetPrompt(client.Requests[1]);
+        Assert.Equal(2, prompt.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("executedCalls").GetInt32());
+        Assert.Equal(0, prompt.GetProperty("remainingCalls").GetInt32());
+        Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(16, true)]
+    [InlineData(17, false)]
+    public async Task ToolBudget_ThirtyTwoAdvisoryFortyEightHardBoundaryAsync(int secondLeafCalls, bool completes)
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var request = WithToolBudget(Request(new Frame("if (enabled) Run();\nreturn;")), advisory: 32, maximum: 48);
+        var firstLeaf = Enumerable.Range(1, 32).Select(index => (AIContent)new FunctionCallContent(
+            "first-" + index, tool.Name, new Dictionary<string, object?>())).ToArray();
+        var secondLeaf = Enumerable.Range(1, secondLeafCalls).Select(index => (AIContent)new FunctionCallContent(
+            "second-" + index, tool.Name, new Dictionary<string, object?>())).ToArray();
+        Round[] rounds = completes
+            ? [new(null, ChatFinishReason.ToolCalls, firstLeaf), new(null, ChatFinishReason.ToolCalls, secondLeaf), new(UnitJson, ChatFinishReason.Stop)]
+            : [new(null, ChatFinishReason.ToolCalls, firstLeaf), new(null, ChatFinishReason.ToolCalls, secondLeaf)];
+        using var client = new ScriptedClient(rounds);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(completes ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(completes ? null : OctoberWorkerBudgetFailure.ToolCalls, result.BudgetFailure);
+        Assert.Equal(completes ? 48 : 32, invoked);
+        Assert.Equal(completes ? 48 : 49, request.ToolBudget!.Read().RequestedCalls);
+        Assert.Equal(48, request.ToolBudget.Read().AdmittedCalls);
+        Assert.Equal(completes ? 48 : 32, request.ToolBudget.Read().ExecutedCalls);
+        Assert.Equal(completes ? 3 : 2, client.Requests.Count);
+        var warning = ReadToolBudgetPrompt(client.Requests[1]);
+        Assert.Equal(32, warning.GetProperty("advisoryLimit").GetInt32());
+        Assert.Equal(48, warning.GetProperty("maximumLimit").GetInt32());
+        Assert.Equal(32, warning.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(32, warning.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(32, warning.GetProperty("executedCalls").GetInt32());
+        Assert.Equal(16, warning.GetProperty("remainingCalls").GetInt32());
+        Assert.True(warning.GetProperty("advisoryReached").GetBoolean());
+        if (completes)
+        {
+            var exhausted = ReadToolBudgetPrompt(client.Requests[2]);
+            Assert.Equal(48, exhausted.GetProperty("requestedCalls").GetInt32());
+            Assert.Equal(48, exhausted.GetProperty("admittedCalls").GetInt32());
+            Assert.Equal(0, exhausted.GetProperty("remainingCalls").GetInt32());
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ToolBudget_IsSharedAcrossAttemptsForOneFileAndResetsForNewFileAsync()
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var firstRequest = WithToolBudget(Request(new Frame("if (enabled) Run();\nreturn;")), advisory: 2, maximum: 3);
+        firstRequest = firstRequest with { Limits = firstRequest.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        using (var failedAttempt = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-first", tool.Name, new Dictionary<string, object?>())]),
+            new("{malformed", ChatFinishReason.Stop),
+            new(UnitJson, ChatFinishReason.Stop)]))
+        {
+            var corrected = await new OctoberFileWorkerExecutor(failedAttempt, new Scope()).ExecuteAsync(firstRequest, [tool]);
+            Assert.Equal(OctoberFileWorkerStatus.Completed, corrected.Status);
+            Assert.Equal(1, firstRequest.ToolBudget!.Read().ExecutedCalls);
+            Assert.Equal(1, ReadToolBudgetPrompt(failedAttempt.Requests[2]).GetProperty("executedCalls").GetInt32());
+        }
+        var retryRequest = firstRequest with { AttemptId = Guid.NewGuid() };
+        using (var retry = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]))
+        {
+            Assert.Equal(OctoberFileWorkerStatus.Completed,
+                (await new OctoberFileWorkerExecutor(retry, new Scope()).ExecuteAsync(retryRequest, [tool])).Status);
+            var prompt = ReadToolBudgetPrompt(Assert.Single(retry.Requests));
+            Assert.Equal(1, prompt.GetProperty("requestedCalls").GetInt32());
+            Assert.Equal(1, prompt.GetProperty("executedCalls").GetInt32());
+        }
+        Assert.Equal(1, firstRequest.ToolBudget.Read().ExecutedCalls);
+
+        var secondFile = WithToolBudget(Request(new Frame("// different file\nreturn;")), advisory: 2, maximum: 3);
+        Assert.NotSame(firstRequest.ToolBudget, secondFile.ToolBudget);
+        Assert.Equal(0, secondFile.ToolBudget!.Read().RequestedCalls);
+        using var newFileClient = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-new-file", tool.Name, new Dictionary<string, object?>())]),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed,
+            (await new OctoberFileWorkerExecutor(newFileClient, new Scope()).ExecuteAsync(secondFile, [tool])).Status);
+        Assert.Equal(1, secondFile.ToolBudget.Read().ExecutedCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("run")]
+    [InlineData("workstream")]
+    [InlineData("admission")]
+    [InlineData("limits")]
+    public async Task ToolBudget_MismatchedBindingOrLimitsIsRejectedBeforeDispatchAsync(string mismatch)
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = WithToolBudget(baseline, advisory: 2, maximum: 3);
+        request = mismatch switch
+        {
+            "run" => request with { RunId = Guid.NewGuid() },
+            "workstream" => request with { FileWorkstreamId = Guid.NewGuid() },
+            "admission" => request with { AdmissionId = Guid.NewGuid() },
+            "limits" => request with { Limits = request.Limits with { MaximumToolCalls = 4 } },
+            _ => throw new InvalidOperationException("Unknown tool budget mismatch")
+        };
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(client.Requests);
+        Assert.Equal(0, request.ToolBudget!.Read().RequestedCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Execute_ForbiddenTool_IsRejectedBeforeProviderDispatchAsync()
     {
         using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
@@ -451,6 +624,26 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     private static OctoberSelectedWorkerProvider Selected(ApiType type = ApiType.ChatCompletions) => new("explicit-source", "only-source", new("selected", type, "https://selected.example.test/v1", "selected-model", "credential://selected"), "synthetic-selected-cipher");
     private static OctoberFileWorkerRequest Request(Frame frame) => new(new("owned-db", "owned-target", Guid.NewGuid(), new string('a', 64)), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "selected", frame,
         [new(ContributorKind.Source, frame.Origin.RepositoryId, null, frame.Origin.RootBindingIdentity, null, frame.Origin.SourceDigest)], [], new());
+    private static OctoberFileWorkerRequest WithToolBudget(OctoberFileWorkerRequest request, int advisory, int maximum)
+    {
+        var limits = request.Limits with { AdvisoryToolCalls = advisory, MaximumToolCalls = maximum };
+        var budget = new OctoberFileToolBudget(request.RunId, request.FileWorkstreamId, request.AdmissionId, advisory, maximum);
+        return request with { Limits = limits, ToolBudget = budget };
+    }
+    private static JsonElement ReadToolBudgetPrompt(ChatMessage[] messages)
+    {
+        foreach (var message in messages.Where(message => message.Role == ChatRole.System))
+        {
+            try
+            {
+                using var json = JsonDocument.Parse(message.Text);
+                if (json.RootElement.TryGetProperty("type", out var kind) && kind.GetString() == "file_tool_budget")
+                    return json.RootElement.Clone();
+            }
+            catch (JsonException) { }
+        }
+        throw new InvalidOperationException("The request did not include a structured primary-file tool budget.");
+    }
     private static string Digest(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
     private sealed class Frame(string text) : IOctoberVerifiedFileFrame
     {
@@ -1511,9 +1704,11 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             var workerType = typeof(OctoberFileWorkerExecutor).GetNestedType("WorkerClient", System.Reflection.BindingFlags.NonPublic)!;
             var observationsType = typeof(OctoberFileWorkerExecutor).GetNestedType("ExceptionObservation", System.Reflection.BindingFlags.NonPublic)!;
             object observations = Activator.CreateInstance(observationsType, nonPublic: true)!;
+            var toolBudget = new OctoberFileToolBudget(request.RunId, request.FileWorkstreamId, request.AdmissionId,
+                request.Limits.AdvisoryToolCalls, request.Limits.MaximumToolCalls);
             using var worker = Assert.IsAssignableFrom<IChatClient>(Activator.CreateInstance(workerType,
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
-                binder: null, args: [directClient, directScope, request, new AIFunction[] { tool }, observations], culture: null));
+                binder: null, args: [directClient, directScope, request, new AIFunction[] { tool }, observations, toolBudget], culture: null));
             var aggregates = new List<ChatResponseUpdate>();
             await foreach (var update in worker.GetStreamingResponseAsync([new(ChatRole.User, "controlled owned aggregation")], new ChatOptions { Tools = [tool] })) aggregates.Add(update);
             var aggregate = Assert.Single(aggregates);

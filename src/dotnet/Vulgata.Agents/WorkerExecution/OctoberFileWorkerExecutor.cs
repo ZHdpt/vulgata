@@ -75,7 +75,8 @@ public sealed record OctoberFileWorkerLimits(
     long MaximumTokensPerRequest = 32768,
     int MaximumContinuationWindows = 4,
     int MaximumOutputTokensPerRequest = 8192,
-    int MaximumJsonCorrectionAttempts = 0);
+    int MaximumJsonCorrectionAttempts = 0,
+    int? AdvisoryToolCalls = null);
 
 public sealed record OctoberFileWorkerRequest(
     KnowledgeBinding Binding,
@@ -87,7 +88,10 @@ public sealed record OctoberFileWorkerRequest(
     IOctoberVerifiedFileFrame Source,
     ImmutableArray<Contributor> Contributors,
     ImmutableArray<OctoberWorkerAdvisory> Advisory,
-    OctoberFileWorkerLimits Limits);
+    OctoberFileWorkerLimits Limits)
+{
+    public OctoberFileToolBudget? ToolBudget { get; init; }
+}
 
 public enum OctoberFileWorkerStatus
 {
@@ -205,7 +209,9 @@ public sealed class OctoberFileWorkerExecutor
             if (windows.Count > request.Limits.MaximumContinuationWindows)
                 return Failed(OctoberFileWorkerStatus.BudgetExceeded);
 
-            adapter = new WorkerClient(_client, _scope, request, tools, observations);
+            var toolBudget = request.ToolBudget ?? new OctoberFileToolBudget(request.RunId,
+                request.FileWorkstreamId, request.AdmissionId, request.Limits.AdvisoryToolCalls, request.Limits.MaximumToolCalls);
+            adapter = new WorkerClient(_client, _scope, request, tools, observations, toolBudget);
             using var invoking = new FunctionInvokingChatClient(adapter)
             {
                 AllowConcurrentInvocation = false,
@@ -391,6 +397,8 @@ public sealed class OctoberFileWorkerExecutor
             return false;
         OctoberFileWorkerLimits limits = request.Limits;
         if (limits.MaximumProviderRounds is < 1 or > 100 || limits.MaximumToolCalls is < 0 or > 1000 ||
+            limits.AdvisoryToolCalls is { } advisory && (advisory <= 0 || advisory >= limits.MaximumToolCalls) ||
+            request.ToolBudget is { } budget && !budget.Matches(request) ||
             limits.MaximumWindowUtf8Bytes is < 4 or > 1048576 || limits.MaximumInputUtf8Bytes is < 1 or > 16777216 ||
             limits.MaximumOutputUtf8Bytes is < 1 or > 1048576 || limits.MaximumTokensPerRequest is < 1 or > 1048576 ||
             limits.MaximumOutputTokensPerRequest is < 1 or > 393216 ||
@@ -532,13 +540,13 @@ public sealed class OctoberFileWorkerExecutor
     }
 
     private sealed class WorkerClient(IChatClient client, IOctoberWorkerExecutionScope scope,
-        OctoberFileWorkerRequest request, IReadOnlyList<AIFunction> tools, ExceptionObservation observations) : DelegatingChatClient(client)
+        OctoberFileWorkerRequest request, IReadOnlyList<AIFunction> tools, ExceptionObservation observations,
+        OctoberFileToolBudget toolBudget) : DelegatingChatClient(client)
     {
         private readonly Dictionary<string, FunctionCallContent> _pending = new(StringComparer.Ordinal);
         private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
         private int _inputBytes;
         private int _outputBytes;
-        private int _toolCount;
         private bool _allUsageKnown = true;
         internal OctoberWorkerRetryDisposition RetryDisposition { get; private set; }
         internal int Rounds { get; private set; }
@@ -571,7 +579,19 @@ public sealed class OctoberFileWorkerExecutor
             _observedStage = null;
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(cancellationToken), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
             _observedStage = OctoberWorkerFailureStage.Admission;
-            ChatMessage[] snapshot = messages.ToArray();
+            var budget = toolBudget.Read();
+            var currentMessages = messages.ToList();
+            // This fresh system metadata is not appended to persistent history: old counts
+            // must not accumulate across tool/correction rounds or obscure the current grant.
+            currentMessages.Insert(0, new ChatMessage(ChatRole.System, JsonSerializer.Serialize(new
+            {
+                type = "file_tool_budget", scope = "primary_file",
+                advisoryLimit = budget.AdvisoryLimit, maximumLimit = budget.MaximumLimit,
+                requestedCalls = budget.RequestedCalls, admittedCalls = budget.AdmittedCalls,
+                executedCalls = budget.ExecutedCalls, remainingCalls = budget.RemainingCalls,
+                advisoryReached = budget.AdvisoryReached
+            })));
+            ChatMessage[] snapshot = currentMessages.ToArray();
             int inputBytes = MeasureInputBytes(snapshot, options);
             _inputBytes = checked(_inputBytes + inputBytes);
             if (_inputBytes > request.Limits.MaximumInputUtf8Bytes)
@@ -730,7 +750,7 @@ public sealed class OctoberFileWorkerExecutor
                                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.UnknownTool);
                             if (!_seen.Add(call.CallId))
                                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.RepeatedToolCallId);
-                            if (++_toolCount > request.Limits.MaximumToolCalls)
+                            if (!toolBudget.TryAdmit())
                                 throw Fail(OctoberFileWorkerStatus.BudgetExceeded, budgetFailure: OctoberWorkerBudgetFailure.ToolCalls);
                             var arguments = JsonSerializer.Deserialize<Dictionary<string, object?>>(
                                 JsonSerializer.Serialize(call.Arguments ?? new Dictionary<string, object?>()))!;
@@ -898,8 +918,14 @@ public sealed class OctoberFileWorkerExecutor
             AIFunction function = tools.Single(tool => tool.Name == call.Name);
             bool unsupported = function.JsonSchema.TryGetProperty("properties", out JsonElement properties) &&
                 call.Arguments?.Keys.Any(key => !properties.TryGetProperty(key, out _)) == true;
-            object? result = unsupported ? new { status = "InvalidArguments" } :
-                await observations.RunAsync(() => function.InvokeAsync(new AIFunctionArguments(call.Arguments ?? new Dictionary<string, object?>()), token).AsTask(), OctoberWorkerFailureStage.ToolInvocation);
+            object? result;
+            if (unsupported) result = new { status = "InvalidArguments" };
+            else result = await observations.RunAsync(async () =>
+            {
+                var arguments = new AIFunctionArguments(call.Arguments ?? new Dictionary<string, object?>());
+                toolBudget.RecordExecution();
+                return await function.InvokeAsync(arguments, token);
+            }, OctoberWorkerFailureStage.ToolInvocation);
             ChargeOutput(observations.Run(() => MeasureOutput(result), OctoberWorkerFailureStage.ToolResultSerialization));
             if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(token), OctoberWorkerFailureStage.SourceVerification)) throw Fail(OctoberFileWorkerStatus.SourceChanged);
             _pending.Remove(call.CallId);

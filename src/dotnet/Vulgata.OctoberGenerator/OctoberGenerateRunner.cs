@@ -262,6 +262,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 _activeAdmission = admissionId;
                 _activeOrigin = frame.Origin;
                 Guid workstreamId = Guid.NewGuid();
+                var toolBudget = new OctoberFileToolBudget(runId, workstreamId, admissionId,
+                    execution.Policy.AdvisoryToolCallsPerFile, execution.Policy.MaximumToolCallsPerFile);
                 ImmutableArray<OctoberWorkerAdvisory> advisory = Advisory(repository.RepositoryId);
                 ImmutableArray<Contributor> baseline = [new(ContributorKind.Source, repository.RepositoryId,
                     repository.SystemId, repository.RootBindingIdentity, null, frame.Origin.SourceDigest), .. advisory.Select(item => item.Contributor)];
@@ -272,13 +274,15 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
                         execution.Provider.Profile.Name, frame, baseline, advisory,
                         new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
+                            MaximumToolCalls: execution.Policy.MaximumToolCallsPerFile,
                             // Input includes JSON escaping, prompt, tool schemas and replayed history,
                             // not just the source window. Reserve measured input at each leaf under
                             // the existing Worker ceiling and the run's cumulative policy.
                             RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(1048576L, execution.Policy.MaximumTotalTokens!.Value),
                             MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
                             MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens,
-                            MaximumJsonCorrectionAttempts: 1));
+                            MaximumJsonCorrectionAttempts: 1,
+                            AdvisoryToolCalls: execution.Policy.AdvisoryToolCallsPerFile)) { ToolBudget = toolBudget };
                     var ledger = new OctoberWorkerInputLedger(request,
                         async (path, callToken) =>
                         {

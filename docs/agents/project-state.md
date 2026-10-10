@@ -128,6 +128,15 @@ The conditional whole run then stopped on account pom.xml at98.88 seconds with
 the unchanged16-tool-call limit (BudgetFailure=ToolCalls), not a parse/schema
 failure. Three requests,83947 input/20898 output tokens, all known; no whole-run
 acceptance/publication. All data retained, no extra attempt or budget widening.
+
+The user subsequently approved two-level per-primary-file tool budgets: advisory32
+and hard48, explicit Scan policy settings and fresh model-visible counters before
+each request. Same-file attempts/corrections retain the counter; only a new primary
+file resets it. Other guards remain unchanged. Independent review accepted the
+implementation. Full SelfContained remains non-green; affected requalification and
+the authorized isolated account POM, then conditional whole-slice retry are recorded
+in [file tool budget evidence](../../specs/20-1-Oct14-scan/file-tool-budget-verification.md).
+
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

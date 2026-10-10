@@ -94,6 +94,8 @@ public sealed class OctoberScanGenerateConfigurationTests
         Assert.Equal(600, policy.FileDeadlineSeconds);
         Assert.Equal(4, policy.MaximumContinuationWindows);
         Assert.Equal(8, policy.MaximumModelRequestsPerFile);
+        Assert.Equal(32, policy.AdvisoryToolCallsPerFile);
+        Assert.Equal(48, policy.MaximumToolCallsPerFile);
         Assert.Equal(2, policy.MaximumTransientRetries);
         Assert.Equal(30, policy.GracefulDrainSeconds);
         Assert.True(policy.MaximumProviderRequests > 0);
@@ -133,6 +135,10 @@ public sealed class OctoberScanGenerateConfigurationTests
     [InlineData("zero-requests")]
     [InlineData("negative-retries")]
     [InlineData("zero-token-ceiling")]
+    [InlineData("zero-tool-advisory")]
+    [InlineData("tool-advisory-equals-hard")]
+    [InlineData("tool-advisory-above-hard")]
+    [InlineData("tool-hard-over-ceiling")]
     public void ValidatePolicy_NonFiniteOrInconsistentBounds_Rejects(string fault)
     {
         var policy = ValidPolicy();
@@ -144,6 +150,10 @@ public sealed class OctoberScanGenerateConfigurationTests
             "zero-requests" => policy with { MaximumProviderRequests = 0 },
             "negative-retries" => policy with { MaximumTransientRetries = -1 },
             "zero-token-ceiling" => policy with { MaximumTotalTokens = 0 },
+            "zero-tool-advisory" => policy with { AdvisoryToolCallsPerFile = 0 },
+            "tool-advisory-equals-hard" => policy with { AdvisoryToolCallsPerFile = 48, MaximumToolCallsPerFile = 48 },
+            "tool-advisory-above-hard" => policy with { AdvisoryToolCallsPerFile = 49, MaximumToolCallsPerFile = 48 },
+            "tool-hard-over-ceiling" => policy with { AdvisoryToolCallsPerFile = 32, MaximumToolCallsPerFile = 1001 },
             _ => throw new InvalidOperationException(),
         };
         Assert.False(new OctoberScanPolicyValidator().Validate(policy).IsValid);

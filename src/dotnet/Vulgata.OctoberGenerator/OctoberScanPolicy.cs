@@ -19,6 +19,8 @@ public sealed record OctoberScanPolicy
     public int GracefulDrainSeconds { get; init; } = 30;
     public int MaximumContinuationWindows { get; init; } = 4;
     public int MaximumModelRequestsPerFile { get; init; } = 8;
+    public int AdvisoryToolCallsPerFile { get; init; } = 32;
+    public int MaximumToolCallsPerFile { get; init; } = 48;
     public int MaximumTransientRetries { get; init; } = 2;
     public int MaximumProviderRequests { get; init; } = 64;
     public int MaximumRequestsPerMinute { get; init; } = 60;
@@ -41,6 +43,9 @@ public sealed class OctoberScanPolicyValidator : AbstractValidator<OctoberScanPo
             .LessThanOrEqualTo(policy => policy.MaximumModelRequestsPerFile);
         RuleFor(policy => policy.MaximumModelRequestsPerFile).GreaterThan(0)
             .LessThanOrEqualTo(policy => policy.MaximumProviderRequests);
+        RuleFor(policy => policy.MaximumToolCallsPerFile).InclusiveBetween(2, 1000);
+        RuleFor(policy => policy.AdvisoryToolCallsPerFile).GreaterThan(0)
+            .LessThan(policy => policy.MaximumToolCallsPerFile);
         RuleFor(policy => policy.MaximumTransientRetries).InclusiveBetween(0, 2);
         RuleFor(policy => policy.MaximumProviderRequests).InclusiveBetween(1, 1_000_000);
         RuleFor(policy => policy.MaximumRequestsPerMinute).InclusiveBetween(1, 1_000_000);
