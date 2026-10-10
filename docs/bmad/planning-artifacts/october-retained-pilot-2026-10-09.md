@@ -681,3 +681,21 @@ outcome and holds further changes/operations. A future discriminating observatio
 would compare actual failing Worker HTTP final content/framing against SDK text;
 it requires a new bounded privacy/runtime decision, not an inferred extension of
 the completed capture or single-trial grants. Prior partial CL remains preserved.
+
+## Approved one in-memory Worker comparison
+
+User explicitly approved: bounded in-memory comparison of the failing Worker's
+HTTP response and SDK text, ONE diagnostic run, no retained raw responses, and
+report the root cause supported by evidence. Root delegated only implementation,
+controlled tests and review to Scan; root retains all runtime ownership. Observer
+must be default-off/run-bound, bounded and transparent to streaming/acceptance,
+retain only finite sanitized facts, and never repair output or mask failure.
+No guarantee of attribution beyond the observed HTTP/SDK/Worker boundary is made.
+
+At clean `d57d42e5`, all77 hashes matched. Prior settled tool state archived inside
+its owned run after exact path/non-reparse checks. New production-API bootstrap:
+run `phone-24c8f0d911f9`, batch `8efbd82b-8a6b-4e2c-8d57-4574979bde20`, database
+`vulgata_oct_pilot_6729136baa7e484a94ee21b4dab449db`, same approved PG17 container.
+Temporary bootstrap Web stopped; prepare passed3.07s. No Generate/provider request
+at this preparation checkpoint; reviewed observation implementation is pending.
+Raw-file capture stays disabled. Prior data and original sources remain intact.
