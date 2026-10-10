@@ -1200,7 +1200,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         public Task SettleAsync(ProviderAttemptUsage usage, CancellationToken cancellationToken = default) { Settlements++; Usage = usage; if (SettleFailure is not null) throw SettleFailure; return Task.CompletedTask; }
         public ValueTask DisposeAsync() { Disposals++; if (DisposeFailure is not null) throw DisposeFailure; return ValueTask.CompletedTask; }
     }
-    private sealed class Secrets : ISecretEncryptionService
+    internal sealed class Secrets : ISecretEncryptionService
     {
         internal List<string> Decryptions { get; } = [];
         public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -2169,12 +2169,13 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     private sealed class FragmentedReadStream(byte[] bytes, int maximum) : MemoryStream(bytes)
     {
         internal int Reads;
-        public override int Read(byte[] buffer, int offset, int count) { Reads++; return base.Read(buffer, offset, Math.Min(count, maximum)); }
-        public override int Read(Span<byte> buffer) { Reads++; return base.Read(buffer[..Math.Min(buffer.Length, maximum)]); }
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        { Reads++; return base.ReadAsync(buffer, offset, Math.Min(count, maximum), cancellationToken); }
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        { Reads++; return base.ReadAsync(buffer[..Math.Min(buffer.Length, maximum)], cancellationToken); }
+        internal long BytesRead { get; private set; }
+        public override int Read(byte[] buffer, int offset, int count) { Reads++; int countRead = base.Read(buffer, offset, Math.Min(count, maximum)); BytesRead = Position; return countRead; }
+        public override int Read(Span<byte> buffer) { Reads++; int countRead = base.Read(buffer[..Math.Min(buffer.Length, maximum)]); BytesRead = Position; return countRead; }
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        { Reads++; int countRead = await base.ReadAsync(buffer, offset, Math.Min(count, maximum), cancellationToken); BytesRead = Position; return countRead; }
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        { Reads++; int countRead = await base.ReadAsync(buffer[..Math.Min(buffer.Length, maximum)], cancellationToken); BytesRead = Position; return countRead; }
     }
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
@@ -2283,12 +2284,184 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         public void RecordDispatch() => Dispatches++;
         public void CompleteDispatchObservation() { }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("incomplete")]
+    [InlineData("deepseek")]
+    [InlineData("utf8-crlf-multiline")]
+    [InlineData("eof")]
+    [InlineData("unread-tail")]
+    [InlineData("buffered-tail")]
+    [InlineData("malformed-prefix")]
+    [InlineData("escaped-brackets")]
+    [InlineData("event-overflow")]
+    [InlineData("event-overflow-eof")]
+    [InlineData("wire-overflow")]
+    [InlineData("text-overflow")]
+    [InlineData("disabled")]
+    [InlineData("success")]
+    public async Task HttpObservation_ActualFactoryComparesOnlyReadWireSdkAndFinalParseWithoutChangingOutcomeAsync(string scenario)
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var selected = scenario == "deepseek" ? new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher") : Selected();
+        var execution = host.Execution with { Provider = selected };
+        var frame = new Frame("if (enabled) Run();\nreturn;"); var request = Request(frame);
+        var observation = new OctoberWorkerHttpObservation(new(execution.Setup.TargetId, execution.Setup.BatchId,
+            execution.Session.SubjectId, execution.Session.ManagementAuthorityId));
+        if (scenario != "disabled") Assert.True(observation.TryBind(execution, request.RunId));
+        string complete = UnitJson.Replace("Conditional execution", "条件😀规则");
+        string terminal = scenario == "success" ? complete : scenario == "text-overflow" ? new string('x', 262145) : complete[..^2];
+        if (scenario == "text-overflow") request = request with { Limits = new(MaximumOutputUtf8Bytes: 1048576) };
+        if (scenario == "malformed-prefix") terminal = "{SYNTHETIC_INVALID_PREFIX";
+        if (scenario == "escaped-brackets") terminal = "{\"unknown\":" + JsonSerializer.Serialize("escaped \" [ } \\") + ",\"units\":[";
+        using var wire = new AccountingSseHttp([], scenario == "wire-overflow" ? [.. Enumerable.Repeat(string.Empty, 70), terminal] : [terminal])
+        {
+            ExpectedHost = scenario == "deepseek" ? "api.deepseek.com" : "selected.example.test", ReasoningTokens = 17,
+            RawWireUnicode = true, MaximumReadBytes = scenario is "utf8-crlf-multiline" or "unread-tail" ? 1 : 0,
+            CrLfMultiline = scenario == "utf8-crlf-multiline", OmitDone = scenario is "eof" or "event-overflow-eof",
+            AfterDoneText = scenario == "unread-tail" ? new string('z', 16384) : scenario == "buffered-tail" ? "]}" : null,
+            EventPadding = scenario is "event-overflow" or "event-overflow-eof" ? 524289 : scenario == "wire-overflow" ? 65536 : 0,
+            PadEveryEvent = scenario == "wire-overflow"
+        };
+        using var client = scenario == "disabled"
+            ? await new OctoberWorkerClientFactory(new Secrets(), wire).CreateAsync(selected)
+            : await new OctoberWorkerClientFactory(new Secrets(), wire, observation).CreateAsync(selected);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(scenario == "success" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(1, wire.Calls); Assert.Equal(0, result.SettledToolCalls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens); Assert.Null(result.CaptureStatus);
+        if (scenario is "disabled" or "success") { Assert.Null(result.HttpObservation); return; }
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        var facts = Assert.IsType<OctoberWorkerHttpObservationSnapshot>(result.HttpObservation);
+        if (scenario is "event-overflow" or "event-overflow-eof" or "wire-overflow" or "text-overflow")
+        {
+            Assert.Equal(OctoberWorkerHttpObservationStatus.LimitExceeded, facts.Status);
+            Assert.Null(facts.HttpEqualsSdk); Assert.Null(facts.SdkEqualsParse);
+            if (scenario == "event-overflow-eof")
+            {
+                Assert.Equal(true, facts.EofSeen); Assert.Null(facts.DoneSeen);
+                Assert.Null(facts.ContentAfterFinish); Assert.Null(facts.ContentAfterDone);
+            }
+            return;
+        }
+        Assert.Equal(OctoberWorkerHttpObservationStatus.Complete, facts.Status);
+        if (scenario == "deepseek") { Assert.Equal(OctoberWorkerTokenCapKey.MaxTokens, facts.CapKey); Assert.InRange(facts.CapValue!.Value, 1, 8192); }
+        else { Assert.Null(facts.CapKey); Assert.Null(facts.CapValue); }
+        Assert.Equal(17, facts.HttpReasoningTokens); Assert.Equal(17, facts.SdkReasoningTokens);
+        Assert.Equal(OctoberWorkerObservedFinish.Stop, facts.HttpFinish); Assert.Equal(OctoberWorkerObservedFinish.Stop, facts.SdkFinish);
+        Assert.Equal(scenario != "eof", facts.DoneSeen);
+        if (scenario == "eof") Assert.Equal(true, facts.EofSeen);
+        Assert.Equal(Encoding.UTF8.GetByteCount(scenario == "buffered-tail" ? terminal + "]}" : terminal), facts.HttpTextUtf8Bytes);
+        Assert.Equal(Encoding.UTF8.GetByteCount(terminal), facts.SdkTextUtf8Bytes); Assert.Equal(facts.SdkTextUtf8Bytes, facts.ParseInputUtf8Bytes);
+        Assert.Equal(scenario != "buffered-tail", facts.HttpEqualsSdk); Assert.Equal(true, facts.SdkEqualsParse);
+        foreach (var json in new[] { facts.HttpJson, facts.SdkJson, facts.ParseJson })
+        {
+            Assert.NotNull(json);
+            if (scenario == "buffered-tail" && ReferenceEquals(json, facts.HttpJson))
+            {
+                Assert.Equal(OctoberWorkerJsonObservationKind.ValidObject, json.Kind);
+                continue;
+            }
+            if (scenario == "malformed-prefix")
+            {
+                Assert.Equal(OctoberWorkerJsonObservationKind.InvalidSyntax, json.Kind);
+                continue;
+            }
+            Assert.Equal(OctoberWorkerJsonObservationKind.MissingClosingDelimiters, json.Kind);
+            Assert.Equal(1, json.OpenArrays); Assert.Equal(1, json.OpenObjects); Assert.Equal(true, json.AtEof);
+        }
+        if (scenario == "unread-tail")
+        {
+            Assert.True(wire.FragmentBytesRead < wire.TotalWireBytes); Assert.Equal(false, facts.EofSeen);
+            Assert.Null(facts.ContentAfterDone); Assert.Null(facts.ContentAfterFinish);
+            Assert.True(facts.WireBytes <= wire.FragmentBytesRead);
+        }
+        if (scenario == "buffered-tail") Assert.Equal(true, facts.ContentAfterDone);
+        if (scenario == "utf8-crlf-multiline") { Assert.True(wire.NonAsciiWireBytes > 0); Assert.True(wire.FragmentReads > 100); }
+        string safe = JsonSerializer.Serialize(facts);
+        Assert.DoesNotContain("条件", safe); Assert.DoesNotContain("semanticSelector", safe); Assert.DoesNotContain("selected.example", safe);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HttpObservation_PriorToolLeafIsNotIncludedInFinalFailedLeafComparisonAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var selected = Selected();
+        var execution = host.Execution with { Provider = selected };
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var observation = new OctoberWorkerHttpObservation(new(execution.Setup.TargetId, execution.Setup.BatchId, execution.Session.SubjectId, execution.Session.ManagementAuthorityId));
+        Assert.True(observation.TryBind(execution, request.RunId));
+        const string final = "{SYNTHETIC_FINAL_ONLY";
+        using var wire = new FragmentedToolHttp { InitialTextOverride = "SYNTHETIC_PRIOR_LEAF", FinalTextOverride = final };
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), wire, observation).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => "SYNTHETIC_TOOL_RESULT", "read_prepared_source");
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Equal(2, wire.Calls); Assert.Equal(1, result.SettledToolCalls);
+        var facts = Assert.IsType<OctoberWorkerHttpObservationSnapshot>(result.HttpObservation);
+        Assert.Equal(Encoding.UTF8.GetByteCount(final), facts.HttpTextUtf8Bytes); Assert.Equal(facts.HttpTextUtf8Bytes, facts.SdkTextUtf8Bytes);
+        Assert.Equal(facts.SdkTextUtf8Bytes, facts.ParseInputUtf8Bytes); Assert.Equal(true, facts.HttpEqualsSdk); Assert.Equal(true, facts.SdkEqualsParse);
+        Assert.DoesNotContain("SYNTHETIC", JsonSerializer.Serialize(facts));
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HttpObservation_CancellationPreservesWorkerOutcomeAndDoesNotPublishFactsAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var selected = Selected(); var execution = host.Execution with { Provider = selected };
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var observation = new OctoberWorkerHttpObservation(new(execution.Setup.TargetId, execution.Setup.BatchId, execution.Session.SubjectId, execution.Session.ManagementAuthorityId));
+        Assert.True(observation.TryBind(execution, request.RunId));
+        using var cancellation = new CancellationTokenSource();
+        using var wire = new AccountingSseHttp([], ["{SYNTHETIC_NOT_COMPLETED"]) { ObserveRequest = _ => cancellation.Cancel() };
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), wire, observation).CreateAsync(selected);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [], cancellation.Token);
+        Assert.Equal(OctoberFileWorkerStatus.Cancelled, result.Status); Assert.Null(result.HttpObservation); Assert.Null(result.Proposal);
+        Assert.Equal(1, wire.Calls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.Null(lease.Usage!.InputTokens); Assert.Null(lease.Usage.OutputTokens);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("array")]
+    [InlineData("span")]
+    [InlineData("task")]
+    [InlineData("memory")]
+    public async Task HttpObservation_ZeroLengthReadDoesNotClaimEofAsync(string overload)
+    {
+        var leaf = new OctoberWorkerHttpObservation.Leaf(new Lease(Guid.NewGuid()));
+        using var content = OctoberWorkerHttpObservation.Wrap(new StreamContent(new MemoryStream([32])), leaf);
+        await using var stream = await content.ReadAsStreamAsync();
+        int count = overload switch
+        {
+            "array" => stream.Read([], 0, 0),
+            "span" => stream.Read(Span<byte>.Empty),
+            "task" => await stream.ReadAsync([], 0, 0),
+            _ => await stream.ReadAsync(Memory<byte>.Empty)
+        };
+        Assert.Equal(0, count);
+        Assert.Equal(false, leaf.Complete(string.Empty).EofSeen);
+        var buffer = new byte[1];
+        Assert.Equal(1, await stream.ReadAsync(buffer));
+        Assert.Equal(0, await stream.ReadAsync(buffer));
+        Assert.Equal(true, leaf.Complete(string.Empty).EofSeen);
+    }
     private sealed class AccountingSseHttp(string[] reasoning, string[] text) : HttpMessageHandler
     {
         internal int Calls;
+        internal string ExpectedHost = "selected.example.test";
+        internal int? ReasoningTokens;
         internal string?[]? FinishOverrides;
         internal bool AppendEmptyStop, RawWireUnicode, OmitDone;
         internal int NonAsciiWireBytes;
+        internal bool CrLfMultiline, PadEveryEvent;
+        internal int EventPadding;
+        internal int TotalWireBytes;
+        internal long FragmentBytesRead => _fragmented?.BytesRead ?? 0;
         internal string? AfterDoneText;
         internal int MaximumReadBytes;
         internal Action<JsonElement>? ObserveRequest;
@@ -2296,7 +2469,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         internal int FragmentReads => _fragmented?.Reads ?? 0;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Assert.Equal("selected.example.test", request.RequestUri!.Host); Calls++; Assert.Equal(1, Calls);
+            Assert.Equal(ExpectedHost, request.RequestUri!.Host); Calls++; Assert.Equal(1, Calls);
             if (ObserveRequest is not null)
             {
                 using var requestJson = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
@@ -2304,14 +2477,22 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             }
             var jsonOptions = RawWireUnicode ? new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping } : null;
             var body = new StringBuilder();
-            void Append(object delta, string? finish) => body.Append("data: ").Append(JsonSerializer.Serialize(new { id = "controlled-accounting", @object = "chat.completion.chunk", created = 1, model = "selected-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } }, jsonOptions)).Append("\n\n");
+            void Append(object delta, string? finish)
+            {
+                string json = JsonSerializer.Serialize(new { id = "controlled-accounting", @object = "chat.completion.chunk", created = 1, model = "selected-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } }, jsonOptions);
+                if (EventPadding > 0 && (PadEveryEvent || finish == "stop")) json = json.Insert(1, new string(' ', EventPadding));
+                if (CrLfMultiline) json = json.Insert(1, "\r\ndata: ");
+                body.Append("data: ").Append(json).Append(CrLfMultiline ? "\r\n\r\n" : "\n\n");
+            }
             Append(new { role = "assistant" }, null);
             foreach (string part in reasoning) Append(new { reasoning_content = part }, null);
             for (int index = 0; index < text.Length; index++) Append(new { content = text[index] }, FinishOverrides is null ? (index == text.Length - 1 ? "stop" : null) : FinishOverrides[index]);
             if (AppendEmptyStop) Append(new { }, "stop");
             body.Append("data: {\"id\":\"controlled-accounting\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"selected-model\",\"choices\":[],\"usage\":{\"prompt_tokens\":100,\"completion_tokens\":50,\"total_tokens\":150}}\n\ndata: [DONE]\n\n");
+            if (ReasoningTokens is { } reasoningCount) body.Replace("\"completion_tokens\":50,\"total_tokens\":150", "\"completion_tokens\":50,\"total_tokens\":150,\"completion_tokens_details\":{\"reasoning_tokens\":" + reasoningCount.ToString(System.Globalization.CultureInfo.InvariantCulture) + "}");
             if (OmitDone) body.Replace("data: [DONE]\n\n", string.Empty);
             if (AfterDoneText is not null) Append(new { content = AfterDoneText }, null);
+            TotalWireBytes = Encoding.UTF8.GetByteCount(body.ToString());
             if (MaximumReadBytes > 0)
             {
                 byte[] bytes = Encoding.UTF8.GetBytes(body.ToString());
@@ -2324,7 +2505,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body.ToString(), Encoding.UTF8, "text/event-stream") };
         }
     }
-    private sealed class FragmentedToolHttp : HttpMessageHandler
+    internal sealed class FragmentedToolHttp : HttpMessageHandler
     {
         internal string ExpectedHost = "selected.example.test";
         internal bool ContentOnly;

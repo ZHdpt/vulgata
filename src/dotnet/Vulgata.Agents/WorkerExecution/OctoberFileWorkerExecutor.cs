@@ -25,6 +25,33 @@ public interface IOctoberWorkerAttemptClient
         Action<long>? onDispatched = null);
 }
 
+public interface IOctoberWorkerHttpObservationClient
+{
+    void BeginLeaf(Guid runId, IOctoberProviderAttemptLease lease);
+    OctoberWorkerHttpObservationSnapshot? CompleteParseFailure(Guid runId, IOctoberProviderAttemptLease lease, string parseInput);
+    void Discard(Guid runId);
+}
+
+public enum OctoberWorkerHttpObservationStatus { Complete, Incomplete, LimitExceeded, Unsupported, Failed }
+public enum OctoberWorkerTokenCapKey { MaxTokens, MaxCompletionTokens, Missing, Ambiguous }
+public enum OctoberWorkerObservedFinish { Stop, Length, ToolCalls, Other }
+public enum OctoberWorkerJsonObservationKind
+{
+    ValidObject, ValidNonObject, MissingClosingDelimiters, UnterminatedString,
+    MismatchedDelimiter, InvalidSyntax, DepthExceeded
+}
+public sealed record OctoberWorkerJsonObservation(OctoberWorkerJsonObservationKind? Kind = null,
+    int? OpenObjects = null, int? OpenArrays = null, bool? AtEof = null);
+public sealed record OctoberWorkerHttpObservationSnapshot(
+    OctoberWorkerHttpObservationStatus? Status = null,
+    OctoberWorkerTokenCapKey? CapKey = null, long? CapValue = null,
+    OctoberWorkerObservedFinish? HttpFinish = null, OctoberWorkerObservedFinish? SdkFinish = null,
+    bool? DoneSeen = null, bool? EofSeen = null, bool? ContentAfterFinish = null, bool? ContentAfterDone = null,
+    long? WireBytes = null, int? HttpTextUtf8Bytes = null, int? SdkTextUtf8Bytes = null, int? ParseInputUtf8Bytes = null,
+    bool? HttpEqualsSdk = null, bool? SdkEqualsParse = null,
+    OctoberWorkerJsonObservation? HttpJson = null, OctoberWorkerJsonObservation? SdkJson = null,
+    OctoberWorkerJsonObservation? ParseJson = null, long? HttpReasoningTokens = null, long? SdkReasoningTokens = null);
+
 /// <summary>Application-injected contained source; never constructed from provider JSON.</summary>
 public interface IOctoberVerifiedFileFrame
 {
@@ -106,6 +133,7 @@ public sealed record OctoberFileWorkerResult(
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
     public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
     public OctoberWorkerCaptureStatus? CaptureStatus { get; init; }
+    public OctoberWorkerHttpObservationSnapshot? HttpObservation { get; init; }
 }
 
 public sealed class OctoberFileWorkerExecutor
@@ -139,6 +167,10 @@ public sealed class OctoberFileWorkerExecutor
         OctoberWorkerFailureStage? stage = null;
         OctoberWorkerTerminalFailure? terminalFailure = null;
         OctoberWorkerCaptureStatus? captureStatus = null;
+        OctoberWorkerHttpObservationSnapshot? httpObservation = null;
+        IOctoberWorkerHttpObservationClient? httpObserver = null;
+        try { httpObserver = _client.GetService(typeof(IOctoberWorkerHttpObservationClient)) as IOctoberWorkerHttpObservationClient; }
+        catch (Exception) { }
         var observations = new ExceptionObservation();
         var parseObservation = new ParseObservation();
         try
@@ -239,6 +271,17 @@ public sealed class OctoberFileWorkerExecutor
             catch (Exception) when (stage == OctoberWorkerFailureStage.ProposalParse)
             {
                 captureStatus = await CaptureParseFailureAsync(adapter.LastText, request.Source, cancellationToken);
+                if (httpObserver is not null && adapter.LastLease is { } lastLease)
+                {
+                    // Consume bounded raw references even when fresh disclosure eligibility is lost.
+                    try
+                    {
+                        bool current = !cancellationToken.IsCancellationRequested && await request.Source.VerifyCurrentAsync(cancellationToken);
+                        var observed = httpObserver.CompleteParseFailure(request.RunId, lastLease, adapter.LastText);
+                        if (current && !cancellationToken.IsCancellationRequested) httpObservation = observed;
+                    }
+                    catch (Exception) { }
+                }
                 throw;
             }
             return new(OctoberFileWorkerStatus.Completed, proposal, covered, adapter.Rounds, adapter.SettledTools);
@@ -254,6 +297,11 @@ public sealed class OctoberFileWorkerExecutor
         }
         catch (Exception exception) { return Failed(adapter?.Failure ?? OctoberFileWorkerStatus.ProviderFailed, exception); }
 
+        finally
+        {
+            try { httpObserver?.Discard(request?.RunId ?? Guid.Empty); } catch (Exception) { }
+        }
+
         OctoberFileWorkerResult Failed(OctoberFileWorkerStatus status, Exception? exception = null)
             => new(status, null, covered, adapter?.Rounds ?? 0, adapter?.SettledTools ?? 0)
             {
@@ -267,7 +315,10 @@ public sealed class OctoberFileWorkerExecutor
                     ? parseObservation.First : null,
                 CaptureStatus = Enum.IsDefined(status) && status != OctoberFileWorkerStatus.Completed &&
                     (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.ProposalParse
-                    ? captureStatus : null
+                    ? captureStatus : null,
+                HttpObservation = Enum.IsDefined(status) && status != OctoberFileWorkerStatus.Completed &&
+                    (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.ProposalParse
+                    ? httpObservation : null
             };
     }
 
@@ -430,6 +481,7 @@ public sealed class OctoberFileWorkerExecutor
         internal int PendingCalls => _pending.Count;
         internal ChatFinishReason? Finish { get; private set; }
         internal string LastText { get; private set; } = string.Empty;
+        internal IOctoberProviderAttemptLease? LastLease { get; private set; }
         internal OctoberFileWorkerStatus? Failure { get; private set; }
         internal OctoberWorkerFailureStage? FailureStage { get; private set; }
         internal OctoberWorkerTerminalFailure? TerminalFailure { get; private set; }
@@ -470,6 +522,8 @@ public sealed class OctoberFileWorkerExecutor
                 throw Fail(admission.Status is ProviderAdmissionStatus.BudgetExhausted or ProviderAdmissionStatus.DeadlineExceeded
                     ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Denied);
             IOctoberProviderAttemptLease lease = admission.Lease;
+            try { (client.GetService(typeof(IOctoberWorkerHttpObservationClient)) as IOctoberWorkerHttpObservationClient)?.BeginLeaf(request.RunId, lease); }
+            catch (Exception) { }
             TimeSpan wait = Stopwatch.GetElapsedTime(waitStarted);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
             linked.CancelAfter(request.Limits.RequestTimeout ?? TimeSpan.FromMinutes(2));
@@ -685,6 +739,7 @@ public sealed class OctoberFileWorkerExecutor
             foreach (FunctionCallContent call in calls) _pending.Add(call.CallId, call);
             Finish = finish;
             LastText = text.ToString();
+            LastLease = lease;
             yield return new ChatResponseUpdate
             {
                 Role = ChatRole.Assistant,

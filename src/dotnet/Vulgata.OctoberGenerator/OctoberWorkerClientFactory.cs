@@ -20,12 +20,17 @@ public sealed class OctoberWorkerClientFactory
 {
     private readonly ISecretEncryptionService _encryption;
     private readonly HttpMessageHandler? _transport;
+    private readonly OctoberWorkerHttpObservation? _httpObservation;
 
     public OctoberWorkerClientFactory(ISecretEncryptionService encryption, HttpMessageHandler? transport = null)
     {
         _encryption = encryption ?? throw new ArgumentNullException(nameof(encryption));
         _transport = transport;
     }
+
+    internal OctoberWorkerClientFactory(ISecretEncryptionService encryption, HttpMessageHandler? transport,
+        OctoberWorkerHttpObservation observation) : this(encryption, transport)
+        => _httpObservation = observation;
 
     public async Task<IChatClient> CreateAsync(OctoberSelectedWorkerProvider selected,
         CancellationToken cancellationToken = default)
@@ -49,10 +54,10 @@ public sealed class OctoberWorkerClientFactory
         catch (Exception) { throw new InvalidOperationException("The selected Worker credential is unavailable."); }
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("The selected Worker credential is unavailable.");
-        return new SelectedClient(endpoint, selected.Profile.Name, selected.Profile.Model, secret, _transport);
+        return new SelectedClient(endpoint, selected.Profile.Name, selected.Profile.Model, secret, _transport, _httpObservation);
     }
 
-    private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied)
+    private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied, OctoberWorkerHttpObservation? observation)
         : IChatClient, IOctoberWorkerAttemptClient, IOctoberBusinessAttemptClient
     {
         private readonly HttpMessageHandler _transport = supplied ?? new SocketsHttpHandler { AllowAutoRedirect = false };
@@ -115,7 +120,7 @@ public sealed class OctoberWorkerClientFactory
             ObjectDisposedException.ThrowIf(_disposed, this);
             ArgumentNullException.ThrowIfNull(lease);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
-            using var http = new HttpClient(new LeaseHandler(_transport, lease, onDispatched, useDeepSeekMaxTokens: _useDeepSeekMaxTokens), disposeHandler: true)
+            using var http = new HttpClient(new LeaseHandler(_transport, lease, onDispatched, useDeepSeekMaxTokens: _useDeepSeekMaxTokens, observation: observation?.For(lease)), disposeHandler: true)
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
@@ -133,28 +138,34 @@ public sealed class OctoberWorkerClientFactory
             using IChatClient client = new ChatClient(model, new ApiKeyCredential(secret), settings).AsIChatClient();
             await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync(messages, options, linked.Token)
                 .WithCancellation(linked.Token))
+            {
+                observation?.For(lease)?.Sdk(update);
                 yield return update;
+            }
+            observation?.For(lease)?.SdkCompleted();
         }
 
         public object? GetService(Type serviceType, object? serviceKey = null)
-            => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+            => serviceKey is null && serviceType == typeof(IOctoberWorkerHttpObservationClient) ? observation :
+                serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
 
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
+            observation?.Discard();
             if (supplied is null) _transport.Dispose();
         }
     }
 
     private sealed class LeaseHandler(HttpMessageHandler transport, IOctoberProviderAttemptLease lease,
-        Action<long>? onDispatched, bool businessAttempt = false, bool useDeepSeekMaxTokens = false) : HttpMessageHandler
+        Action<long>? onDispatched, bool businessAttempt = false, bool useDeepSeekMaxTokens = false, OctoberWorkerHttpObservation.Leaf? observation = null) : HttpMessageHandler
     {
         private readonly HttpMessageInvoker _invoker = new(transport, disposeHandler: false);
         internal OctoberBusinessAttemptDeniedException? BusinessRefusal { get; private set; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (useDeepSeekMaxTokens) await TranslateDeepSeekTokenParameterAsync(request, cancellationToken);
+            if (useDeepSeekMaxTokens) await TranslateDeepSeekTokenParameterAsync(request, cancellationToken, observation);
             ProviderAdmissionStatus eligibility = await lease.CheckBeforeSendAsync(cancellationToken);
             if (eligibility != ProviderAdmissionStatus.Granted)
             {
@@ -166,10 +177,19 @@ public sealed class OctoberWorkerClientFactory
             onDispatched?.Invoke(Stopwatch.GetTimestamp());
             (lease as IOctoberWorkerDispatchObserver)?.RecordDispatch();
             Task<HttpResponseMessage> response = _invoker.SendAsync(request, cancellationToken);
-            return await response;
+            HttpResponseMessage result = await response;
+            // Observation never changes the original response or dispatch outcome on an observer failure.
+            try
+            {
+                if (observation is not null && result.IsSuccessStatusCode &&
+                    result.Content.Headers.ContentType?.MediaType == "text/event-stream")
+                    result.Content = OctoberWorkerHttpObservation.Wrap(result.Content, observation);
+            }
+            catch (Exception) { }
+            return result;
         }
 
-        private static async Task TranslateDeepSeekTokenParameterAsync(HttpRequestMessage request, CancellationToken token)
+        private static async Task TranslateDeepSeekTokenParameterAsync(HttpRequestMessage request, CancellationToken token, OctoberWorkerHttpObservation.Leaf? observation)
         {
             if (request.Content is not { } original) return;
             byte[] body = await original.ReadAsByteArrayAsync(token);
@@ -212,6 +232,7 @@ public sealed class OctoberWorkerClientFactory
             }
             catch { replacement.Dispose(); throw; }
             original.Dispose();
+            observation?.Cap(maximum);
         }
         protected override void Dispose(bool disposing)
         {

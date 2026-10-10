@@ -596,6 +596,59 @@ public sealed class OctoberScanGenerateRunnerTests
         }
         finally { Directory.Delete(parent, true); }
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("exact", true)]
+    [InlineData("target", false)]
+    [InlineData("batch", false)]
+    [InlineData("subject", false)]
+    [InlineData("management", false)]
+    public async Task HttpObservation_BindsOnlyConfiguredOriginalExecutionAndRunAsync(string mismatch, bool allowed)
+    {
+        await using var host = await Harness.CreateAsync();
+        var options = new OctoberWorkerHttpObservationOptions(mismatch == "target" ? "foreign" : host.Execution.Setup.TargetId,
+            mismatch == "batch" ? Guid.NewGuid() : host.Execution.Setup.BatchId,
+            mismatch == "subject" ? "foreign" : host.Session.SubjectId,
+            mismatch == "management" ? "foreign" : host.Session.ManagementAuthorityId);
+        var observation = new OctoberWorkerHttpObservation(options); var run = Guid.NewGuid();
+        Assert.Equal(allowed, observation.TryBind(host.Execution, run));
+        if (allowed)
+        {
+            Assert.False(observation.TryBind(host.Execution, Guid.NewGuid()));
+            Assert.False(observation.TryBind(host.Execution with { Session = new Harness.OperatorSession() }, run));
+        }
+        observation.Discard(run);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HttpObservation_ActualFactoryRunnerForwardsFinalFactsAndRevokedReplayClearsThemAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        var provider = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://selected.example.test/v1", "selected-model", "credential://selected"), "synthetic-selected-cipher");
+        var execution = host.Execution with { Provider = provider };
+        var observation = new OctoberWorkerHttpObservation(new(execution.Setup.TargetId, execution.Setup.BatchId,
+            execution.Session.SubjectId, execution.Session.ManagementAuthorityId));
+        using var wire = new OctoberScanFileWorkerTests.FragmentedToolHttp { FinalTextOverride = "{SYNTHETIC_OBSERVATION_ONLY" };
+        var factory = new OctoberWorkerClientFactory(new OctoberScanFileWorkerTests.Secrets(), wire, observation);
+        await using var runner = new OctoberGenerateRunner(host.Dependencies with
+        { HttpObservation = observation, CreateWorkerClient = (selected, token) => factory.CreateAsync(selected, token) });
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status);
+        var facts = Assert.IsType<OctoberWorkerHttpObservationSnapshot>(diagnostic.HttpObservation);
+        Assert.Equal(true, facts.HttpEqualsSdk); Assert.Equal(true, facts.SdkEqualsParse);
+        Assert.Equal(2, wire.Calls); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
+        // Retain only the observed diagnostics to exercise the cached-result disclosure fence.
+        typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .SetValue(runner, Task.FromResult(result with { Report = report with { Inventory = [], AcceptedFiles = [], TerminalCoverage = [], Documents = [], Publication = null } }));
+        host.AuthorityAllowed = false;
+        var hidden = await runner.ExecuteAsync(execution);
+        Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Null(hidden.Report.Publication); Assert.Empty(hidden.Report.Inventory);
+        Assert.Equal(2, wire.Calls); Assert.Same(facts, diagnostic.HttpObservation);
+    }
     private sealed class SelectedTarget(IOctoberHistoricalBoundSetupData setup) : IOctoberConfiguredTarget
     {
         public Task<OctoberGeneratorExecutionResult> ExecuteAsync(OctoberGeneratorCommand command, OctoberAuthorizedSelection authority, CancellationToken token = default)
