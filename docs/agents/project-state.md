@@ -160,15 +160,18 @@ repository and the cumulative native-session counter, and caps file work by
 genuine remaining authority. It does not reinitialize, delete/adopt retained state,
 extend issuer policy or change shared schemas. Independent review accepted;
 full SelfContained4838/4839 with sole existing report-parser failure. Controlled
-two-approval contained reads pass; real renewal remains separately unqualified.
+two-approval contained reads pass; second-series trial5 continued accepting files
+after genuine renewal in a real run. That run still failed final JSON validation.
 See [renewal evidence](../../specs/20-1-Oct14-scan/source-approval-renewal-verification.md).
 
 The user's conditional next experiment is implemented and independently reviewed:
 default-false UseTextForJsonCorrection changes only the existing
 eligible correction's response format, preserving strict parsing and every budget.
 All31correction cases pass; full SelfContained4843/4844, sole existing report-parser
-failure. Isolated POM precedes up to10 whole trials. No text-mode paid run yet;
-hard retry remains conditional and unimplemented. See
+failure. Isolated POM passed with1accepted file/6published Documents on one request
+(no correction exercised). All ten second-series whole trials failed final JSON
+validation with the flag enabled; none published. The user's conditional bounded
+hard-retry implementation and single qualification run are now authorized. See
 [text correction evidence](../../specs/20-1-Oct14-scan/text-correction-verification.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
