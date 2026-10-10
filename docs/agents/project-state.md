@@ -89,6 +89,12 @@ guards. No local JSON repair or schema relaxation. All 447 affected cases pass;
 full-suite GREEN remains unconfirmed. See
 [JSON correction evidence](../../specs/20-1-Oct14-scan/json-correction-verification.md)
 for official API sources, independent review and separate real qualification.
+Real retry on `0b16d4c8` accepted channel pom.xml, then failed on
+SdkAntiFraudHandleOp.java after the correction allowance: malformed JSON despite
+Stop, identical HTTP/SDK/parser text. 76.84 seconds, three requests, 21012 input
+and 16675 output tokens, all known. One accepted file, no publication/Documents;
+resources retained, no additional identical paid attempt. The provider output
+problem remains unresolved; bounded correction is not a guarantee of valid output.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
