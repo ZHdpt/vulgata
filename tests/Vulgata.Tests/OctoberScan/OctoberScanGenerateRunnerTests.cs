@@ -1,7 +1,9 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Runtime.CompilerServices;
+using System.Net;
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
@@ -177,7 +179,7 @@ public sealed class OctoberScanGenerateRunnerTests
         });
         var result = await runner.ExecuteAsync(host.Execution);
         var report = Assert.IsType<OctoberScanReport>(result.Report);
-        Assert.Equal(2, first.Calls); Assert.Equal(nextFile ? 2 : 1, creations);
+        Assert.Equal(nextFile ? 2 : 3, first.Calls); Assert.Equal(nextFile ? 2 : 1, creations);
         Assert.Equal(nextFile ? 1 : 0, report.AcceptedFiles.Length);
         var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status); Assert.Equal(OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
@@ -235,7 +237,7 @@ public sealed class OctoberScanGenerateRunnerTests
             Assert.Equal(OctoberWorkerParseSlot.Root, parse.Slot);
         }
         Assert.NotEqual(0, report.ExitCode); Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication);
-        Assert.Equal(0, harness.FreezeCalls); Assert.Equal(2, harness.Client.Calls);
+        Assert.Equal(0, harness.FreezeCalls); Assert.Equal(terminal || budget ? 2 : 3, harness.Client.Calls);
         // Isolate the metadata predicate with the actual observed immutable snapshot.
         var onlyDiagnostic = report with { Publication = null, Documents = [], AcceptedFiles = [], TerminalCoverage = [], Inventory = [] };
         typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
@@ -243,7 +245,7 @@ public sealed class OctoberScanGenerateRunnerTests
         harness.AuthorityAllowed = false;
         var hidden = await harness.Runner.ExecuteAsync(harness.Execution);
         Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Null(hidden.Report.Publication); Assert.Empty(hidden.Report.Documents);
-        Assert.Same(diagnostic, report.WorkerDiagnostics); Assert.Equal(2, harness.Client.Calls); Assert.Equal(1, harness.BeginCalls);
+        Assert.Same(diagnostic, report.WorkerDiagnostics); Assert.Equal(terminal || budget ? 2 : 3, harness.Client.Calls); Assert.Equal(1, harness.BeginCalls);
     }
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
@@ -581,7 +583,7 @@ public sealed class OctoberScanGenerateRunnerTests
             Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Report.WorkerDiagnostics.Status);
             Assert.True(await File.ReadAllTextAsync(Path.Combine(destination, "final-proposal.txt")) == host.Client.TerminalTextOverride);
             var replay = await runner.ExecuteAsync(host.Execution);
-            Assert.Equal(result.Report.WorkerDiagnostics.CaptureStatus, replay.Report!.WorkerDiagnostics!.CaptureStatus); Assert.Equal(result.Report.WorkerDiagnostics.Status, replay.Report.WorkerDiagnostics.Status); Assert.Equal(2, host.Client.Calls);
+            Assert.Equal(result.Report.WorkerDiagnostics.CaptureStatus, replay.Report!.WorkerDiagnostics!.CaptureStatus); Assert.Equal(result.Report.WorkerDiagnostics.Status, replay.Report.WorkerDiagnostics.Status); Assert.Equal(3, host.Client.Calls);
             host.AuthorityAllowed = false;
             var hidden = await runner.ExecuteAsync(host.Execution);
             Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Empty(hidden.Report.Documents); Assert.Null(hidden.Report.Publication);
@@ -736,11 +738,11 @@ public sealed class OctoberScanGenerateRunnerTests
     {
         await using var host = await Harness.CreateAsync();
         var provider = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
-            new("selected", ApiType.ChatCompletions, "https://selected.example.test/v1", "selected-model", "credential://selected"), "synthetic-selected-cipher");
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
         var execution = host.Execution with { Provider = provider };
         var observation = new OctoberWorkerHttpObservation(new(execution.Setup.TargetId, execution.Setup.BatchId,
             execution.Session.SubjectId, execution.Session.ManagementAuthorityId));
-        using var wire = new OctoberScanFileWorkerTests.FragmentedToolHttp { FinalTextOverride = "{SYNTHETIC_OBSERVATION_ONLY" };
+        using var wire = new CorrectionObservationHttp();
         var factory = new OctoberWorkerClientFactory(new OctoberScanFileWorkerTests.Secrets(), wire, observation);
         await using var runner = new OctoberGenerateRunner(host.Dependencies with
         { HttpObservation = observation, CreateWorkerClient = (selected, token) => factory.CreateAsync(selected, token) });
@@ -750,19 +752,70 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status);
         var facts = Assert.IsType<OctoberWorkerHttpObservationSnapshot>(diagnostic.HttpObservation);
         Assert.Equal(true, facts.HttpEqualsSdk); Assert.Equal(true, facts.SdkEqualsParse);
-        Assert.Equal(2, wire.Calls); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
+        Assert.Equal(Encoding.UTF8.GetByteCount(CorrectionObservationHttp.FinalMalformedText), facts.HttpTextUtf8Bytes);
+        Assert.Equal(facts.HttpTextUtf8Bytes, facts.ParseInputUtf8Bytes);
+        Assert.Equal(2, wire.Requests.Count); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
+        var correctionRequest = wire.Requests[1];
+        Assert.Equal(8192, correctionRequest.GetProperty("max_tokens").GetInt32());
+        Assert.Equal("json_object", correctionRequest.GetProperty("response_format").GetProperty("type").GetString());
+        var correctionMessages = correctionRequest.GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(correctionMessages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == CorrectionObservationHttp.FirstReasoning &&
+            message.TryGetProperty("content", out var content) && content.GetString() == CorrectionObservationHttp.FirstMalformedText);
+        Assert.Contains(correctionMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "user" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("complete", StringComparison.OrdinalIgnoreCase) &&
+            content.GetString()!.Contains("replace", StringComparison.OrdinalIgnoreCase));
         // Retain only the observed diagnostics to exercise the cached-result disclosure fence.
         typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .SetValue(runner, Task.FromResult(result with { Report = report with { Inventory = [], AcceptedFiles = [], TerminalCoverage = [], Documents = [], Publication = null } }));
         host.AuthorityAllowed = false;
         var hidden = await runner.ExecuteAsync(execution);
         Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Null(hidden.Report.Publication); Assert.Empty(hidden.Report.Inventory);
-        Assert.Equal(2, wire.Calls); Assert.Same(facts, diagnostic.HttpObservation);
+        Assert.Equal(2, wire.Requests.Count); Assert.Same(facts, diagnostic.HttpObservation);
     }
     private sealed class SelectedTarget(IOctoberHistoricalBoundSetupData setup) : IOctoberConfiguredTarget
     {
         public Task<OctoberGeneratorExecutionResult> ExecuteAsync(OctoberGeneratorCommand command, OctoberAuthorizedSelection authority, CancellationToken token = default)
             => Task.FromResult(new OctoberGeneratorExecutionResult(OctoberGeneratorExecutionStatus.Selected, BoundSetupData: setup));
+    }
+    private sealed class CorrectionObservationHttp : HttpMessageHandler
+    {
+        internal const string FirstMalformedText = "{SYNTHETIC_OBSERVATION_FIRST";
+        internal const string FinalMalformedText = "{SYNTHETIC_OBSERVATION_FINAL";
+        internal const string FirstReasoning = "SYNTHETIC_OBSERVATION_REASONING";
+        internal List<JsonElement> Requests { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+            Requests.Add(body.RootElement.Clone());
+            int call = Requests.Count - 1;
+            Assert.InRange(call, 0, 1);
+            string text = call == 0 ? FirstMalformedText : FinalMalformedText;
+            string? reasoning = call == 0 ? FirstReasoning : null;
+            string chunk = JsonSerializer.Serialize(new
+            {
+                id = "controlled-json-correction",
+                @object = "chat.completion.chunk",
+                created = 1,
+                model = "selected-model",
+                choices = new[] { new { index = 0, delta = new { role = "assistant", reasoning_content = reasoning, content = text }, finish_reason = "stop" } },
+            });
+            string usage = JsonSerializer.Serialize(new
+            {
+                id = "controlled-json-correction",
+                @object = "chat.completion.chunk",
+                created = 1,
+                model = "selected-model",
+                choices = Array.Empty<object>(),
+                usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 }
+            });
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("data: " + chunk + "\n\ndata: " + usage + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream")
+            };
+            return response;
+        }
     }
     private sealed class CancelAfterTerminal(IOctoberGenerateOperation inner, CancellationTokenSource cancellation) : IOctoberGenerateOperation
     {

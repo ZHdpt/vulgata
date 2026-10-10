@@ -82,6 +82,13 @@ and SDK Stop; bounded observation confirms identical HTTP/SDK/parser text.
 Three requests, 21276 input/26340 output tokens, all usage known. Two accepted
 files, zero returned Documents, publication not requested. No retry; owned data
 retained. This does not qualify complete generation/publication or reader access.
+The user then authorized a documentation-guided correction and whole retry.
+Generate permits one same-session corrective turn for syntactically invalid final
+JSON after Stop, preserving full reasoning replay and all admission/acceptance
+guards. No local JSON repair or schema relaxation. All 447 affected cases pass;
+full-suite GREEN remains unconfirmed. See
+[JSON correction evidence](../../specs/20-1-Oct14-scan/json-correction-verification.md)
+for official API sources, independent review and separate real qualification.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

@@ -277,7 +277,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                             // the existing Worker ceiling and the run's cumulative policy.
                             RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(1048576L, execution.Policy.MaximumTotalTokens!.Value),
                             MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
-                            MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens));
+                            MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens,
+                            MaximumJsonCorrectionAttempts: 1));
                     var ledger = new OctoberWorkerInputLedger(request,
                         async (path, callToken) =>
                         {

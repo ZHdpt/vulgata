@@ -74,7 +74,8 @@ public sealed record OctoberFileWorkerLimits(
     TimeSpan? RequestTimeout = null,
     long MaximumTokensPerRequest = 32768,
     int MaximumContinuationWindows = 4,
-    int MaximumOutputTokensPerRequest = 8192);
+    int MaximumOutputTokensPerRequest = 8192,
+    int MaximumJsonCorrectionAttempts = 0);
 
 public sealed record OctoberFileWorkerRequest(
     KnowledgeBinding Binding,
@@ -257,18 +258,27 @@ public sealed class OctoberFileWorkerExecutor
                     advisory = request.Advisory.Select((item, ordinal) => new { advisoryIndex = ordinal, text = item.Text })
                 });
                 history.Add(new ChatMessage(ChatRole.User, input));
-                stage = null;
-                AgentResponse response = await observations.RunAsync(async () => await agent.RunStreamingAsync(history, cancellationToken: cancellationToken)
-                    .ToAgentResponseAsync(cancellationToken), OctoberWorkerFailureStage.AgentOrchestration);
-                if (adapter.Failure is { } failure) throw new WorkerFailure(failure);
-                stage = OctoberWorkerFailureStage.StreamTerminal;
-                if (adapter.Finish != ChatFinishReason.Stop || adapter.PendingCalls != 0)
-                    throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
+                for (int correction = 0; ; correction++)
+                {
+                    stage = null;
+                    AgentResponse response = await observations.RunAsync(async () => await agent.RunStreamingAsync(history, cancellationToken: cancellationToken)
+                        .ToAgentResponseAsync(cancellationToken), OctoberWorkerFailureStage.AgentOrchestration);
+                    if (adapter.Failure is { } failure) throw new WorkerFailure(failure);
+                    stage = OctoberWorkerFailureStage.StreamTerminal;
+                    if (adapter.Finish != ChatFinishReason.Stop || adapter.PendingCalls != 0)
+                        throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
+                    // Preserve complete assistant/tool/reasoning history. A correction is another
+                    // admitted leaf in this workstream, never a new run or a locally patched proposal.
+                    history.AddRange(response.Messages);
+                    if (index != windows.Count - 1 || correction >= request.Limits.MaximumJsonCorrectionAttempts ||
+                        HasValidJsonSyntax(adapter.LastText)) break;
+                    history.Add(new ChatMessage(ChatRole.User,
+                        LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md")));
+                }
                 stage = null;
                 if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(cancellationToken), OctoberWorkerFailureStage.SourceVerification))
                     throw new WorkerFailure(OctoberFileWorkerStatus.SourceChanged);
                 covered = checked(covered + Utf8.GetByteCount(windows[index]));
-                history.AddRange(response.Messages);
             }
             stage = OctoberWorkerFailureStage.StreamTerminal;
             if (covered != source.Length) throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteCoverage);
@@ -376,6 +386,7 @@ public sealed class OctoberFileWorkerExecutor
             limits.MaximumWindowUtf8Bytes is < 4 or > 1048576 || limits.MaximumInputUtf8Bytes is < 1 or > 16777216 ||
             limits.MaximumOutputUtf8Bytes is < 1 or > 1048576 || limits.MaximumTokensPerRequest is < 1 or > 1048576 ||
             limits.MaximumOutputTokensPerRequest is < 1 or > 393216 ||
+            limits.MaximumJsonCorrectionAttempts is < 0 or > 1 ||
             limits.MaximumContinuationWindows is < 1 or > 100 ||
             limits.RequestTimeout is { } duration && (duration <= TimeSpan.Zero || duration > TimeSpan.FromMinutes(10)))
             return false;
@@ -388,9 +399,14 @@ public sealed class OctoberFileWorkerExecutor
                 .All(item => request.Advisory.Any(advisory => advisory.Contributor == item));
     }
 
-    private static string LoadPrompt()
+    private static bool HasValidJsonSyntax(string text)
     {
-        const string name = "Vulgata.Agents.Prompts.OctoberFileWorker.md";
+        try { using JsonDocument document = JsonDocument.Parse(text); return true; }
+        catch (JsonException) { return false; }
+    }
+
+    private static string LoadPrompt(string name = "Vulgata.Agents.Prompts.OctoberFileWorker.md")
+    {
         var assembly = typeof(OctoberFileWorkerExecutor).Assembly;
         if (assembly.GetManifestResourceNames().Count(value => value == name) != 1)
             throw new InvalidDataException("The fixed Worker prompt is unavailable.");

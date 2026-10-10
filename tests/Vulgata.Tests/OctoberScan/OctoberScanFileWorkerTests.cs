@@ -1036,6 +1036,145 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData("{\"units\":[")]
+    [InlineData("")]
+    public async Task JsonCorrection_OptInMalformedOrEmptyFinalResponseCanBeReplacedOnceAsync(string firstText)
+    {
+        const string reasoning = "CONTROLLED_FIRST_RESPONSE_REASONING";
+        using var client = new ScriptedClient([
+            new(firstText, ChatFinishReason.Stop, [new TextReasoningContent(reasoning)]),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var scope = new Scope();
+
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.FailureStage);
+        Assert.Equal(2, client.Requests.Count);
+        Assert.Equal(2, scope.Requests.Count);
+        Assert.All(scope.Leases, lease => Assert.Equal(1, lease.Settlements));
+        var firstMessages = client.Requests[0];
+        var correctionMessages = client.Requests[1];
+        Assert.True(correctionMessages.Length > firstMessages.Length);
+        Assert.Equal(ChatRole.User, correctionMessages[^1].Role);
+        Assert.Contains(firstMessages.Where(message => message.Role == ChatRole.User)
+            .SelectMany(message => message.Contents).OfType<TextContent>().Select(content => content.Text).Single(),
+            correctionMessages.Where(message => message.Role == ChatRole.User)
+                .SelectMany(message => message.Contents).OfType<TextContent>().Select(content => content.Text));
+        Assert.Contains(correctionMessages.SelectMany(message => message.Contents).OfType<TextContent>(),
+            content => content.Text == firstText);
+        Assert.Contains(correctionMessages.SelectMany(message => message.Contents).OfType<TextReasoningContent>(),
+            content => content.Text == reasoning);
+        Assert.Contains("JSON", correctionMessages[^1].Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("complete", correctionMessages[^1].Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("replace", correctionMessages[^1].Text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_SecondMalformedFinalResponseRemainsParserFailureAsync()
+    {
+        using var client = new ScriptedClient([
+            new("{first malformed", ChatFinishReason.Stop),
+            new("{second malformed", ChatFinishReason.Stop)
+        ]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(OctoberWorkerParseFailure.Syntax, result.ParseFailure!.Category);
+        Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_DefaultDisabledDoesNotRetryMalformedFinalResponseAsync()
+    {
+        using var client = new ScriptedClient([new("{malformed", ChatFinishReason.Stop)]);
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        Assert.Equal(0, request.Limits.MaximumJsonCorrectionAttempts);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(1, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    public async Task JsonCorrection_AttemptLimitAllowsOnlyZeroOrOneAsync(int attempts, bool allowed)
+    {
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = attempts } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(allowed ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Equal(allowed ? 1 : 0, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_LengthFinishDoesNotRetryMalformedResponseAsync()
+    {
+        using var client = new ScriptedClient([new("{truncated", ChatFinishReason.Length), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        Assert.Single(client.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ValidJsonWithWrongSchemaDoesNotRetryAsync()
+    {
+        using var client = new ScriptedClient([new("{}", ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Single(client.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ProviderRoundLimitPreventsSecondDispatchAsync()
+    {
+        using var client = new ScriptedClient([new("{malformed", ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumProviderRounds = 1, MaximumJsonCorrectionAttempts = 1 } };
+        var scope = new Scope();
+
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(OctoberWorkerBudgetFailure.ProviderRounds, result.BudgetFailure);
+        Assert.Single(client.Requests);
+        Assert.Single(scope.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task UnsupportedFinishObservation_NeverReusesPriorToolLeafUsageAsync(bool finalUsage)
