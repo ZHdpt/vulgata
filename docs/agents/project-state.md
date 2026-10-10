@@ -173,8 +173,16 @@ Both returned expected valid JSON, HTTP200/Stop and HTTP-to-installed-SDK text
 equality; streaming DONE present, no trailing content or timeout. No raw persistence,
 source, tools or DB involved. This establishes minimal provider behavior, not a
 Worker fix. SDK emitted `max_completion_tokens:8192`; DeepSeek documents `max_tokens`.
-Alias enforcement remains unproven; Scan is checking the real Worker serialization
-source-free. No further live request authorized by the completed two-probe grant.
+The original two-probe grant is complete. A later verified direct user instruction
+in OCT-SCAN authorized the narrow adapter and testing. Characterization integrated
+as `833a05c1`, adapter as `299227de`; main affected342/342 passed, zero failures/skips
+(isolation `43279885958c4d50865985b9523ea096`). Two new synthetic streaming requests
+with cap32 proved the old field did not enforce it (502 completion/378 reasoning,
+Stop), whereas `max_tokens` enforced32 (32 completion, all reasoning, Length).
+Both had DONE and matching HTTP/SDK text, no timeout. This establishes cap handling
+and reasoning accounting, NOT the cause of prior malformed Stop responses. No raw
+persistence, source Generate, DB or presentation qualification in these probes.
+The corrected adapter retains exact admitted limits; no automatic retries/cap rise.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

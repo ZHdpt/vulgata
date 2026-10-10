@@ -603,3 +603,47 @@ References: https://api-docs.deepseek.com/api/create-chat-completion/ (completio
 usage breakdown, max_tokens and finish semantics),
 https://api-docs.deepseek.com/guides/thinking_mode/ (thinking enabled by default).
 No retained Knowledge qualification or repair of the earlier failure is claimed.
+
+## DeepSeek cap adapter and enforcement comparison
+
+Root verified the direct human instruction in OCT-SCAN turn
+`01a1239e-251d-7090-9fd7-7928e1c69622`: implement a simple compatibility adapter
+and test whether max_tokens improves behavior. Reviewed characterization
+`d4f4afa9` integrated as `833a05c1`; reviewed adapter `6734662d` as `299227de`.
+The adapter changes only the cap key for the exact supported DeepSeek base URI;
+the admitted number, thinking, tools, format, parser, retries and other endpoints
+are unchanged. Lane controlled342/342 passed; root verification is recorded below
+once complete. No new source Generate is implied by this checkpoint.
+
+Root chose two small synthetic streaming calls before any new source run. Both
+requested the same complete JSON array of integers1..60, json_object, output cap32,
+120-second deadline, retries0, same approved endpoint/model/credential and default
+thinking. Only the cap property name differed. The standalone installed-SDK probe
+performed key-only translation for the canonical comparison; controlled tests
+separately verify the production adapter. In-memory bounded HTTP observation only,
+no raw persistence, source, tools, DB or new container. One-use probe guard consumed.
+
+| Measured outcome | max_completion_tokens:32 | max_tokens:32 |
+| --- | --- | --- |
+| Wall seconds |2.980|0.823|
+| HTTP |200|200|
+| Input tokens |92|92|
+| Completion tokens |502|32|
+| Included reasoning tokens |378|32|
+| Finish reason |stop|length|
+| Expected complete JSON |yes|no|
+| DONE / HTTP-to-SDK text equality |yes / yes|yes / yes|
+
+Neither request timed out or had content after termination. The old field did not
+enforce32 on the tested deployed endpoint; the documented field did enforce32,
+including reasoning. Invalid JSON for the deliberately tiny canonical limit is
+expected diagnostic evidence of truncation, not a generated-Knowledge regression.
+This proves a cap-compatibility improvement, not that the old Syntax/Root failures
+were cap failures: those reached Stop with much smaller output than8192. Correcting
+the cap may expose Length for reasoning-heavy tasks; no cap increase or automatic
+retry is introduced. No full Worker/source/presentation qualification is claimed.
+
+Root current-source combined verification completed: **342/342** selected affected
+SelfContained tests passed, zero failures/skips, isolation
+`43279885958c4d50865985b9523ea096`. This is affected-suite GREEN, not whole-project
+or full source-generation qualification. Scan received the measured live results.
