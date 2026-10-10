@@ -40,8 +40,11 @@ one request, unknown token usage and no accepted/published CL; no full-slice ret
 ran. The subsequent bounded stream-aggregation correction removes the unnecessary
 update list, coalesces plain reasoning and retains finite non-progress/segment
 bounds plus explicit synchronous cancellation checks. Its affected checks pass
-434/434; full SelfContained remains non-green (4741/4743). A fresh POM trial is
-prepared, with no result yet. Current implementation and verification are in
+434/434; full SelfContained remains non-green (4741/4743). The correction is
+committed at `c17b5cae`. Its fresh real POM trial reached Length with known usage:
+one request, 9748 input tokens and 8192 output tokens, all output reported as
+reasoning. No local stream-budget failure, accepted CL or publication; no full-slice
+retry ran. Current implementation and verification are in
 [stream aggregation evidence](../../specs/20-1-Oct14-scan/stream-aggregation-verification.md)
 and [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation-verification.md);
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)

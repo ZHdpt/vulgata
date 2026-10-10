@@ -113,3 +113,43 @@ Prepare/select passed without provider calls. Fixed 8192 output, 40960 reservati
 provider/model, thinking, prompt, tools, finite deadlines, byte limits, cumulative
 policy and zero automatic retries remain unchanged. No raw capture is enabled.
 Physical paths, keys and credential bindings remain in protected local files.
+
+## Real POM result
+
+One Generate invocation ran on reviewed commit
+`c17b5caed7d2c4bcf2e0269ba4ad20b6ba8a5f89`. Report
+`generate-686ff7fc856143119d64af2c555f83d7.stdout` records exit 1 after **38.91
+seconds**, no timeout and `NeedsSettlementCheck=false`:
+
+| Observation | Value |
+| --- | --- |
+| Stage / execution / coverage | cl-only / Failed / Partial |
+| Accepted files / Documents | 0 / 0 |
+| Publication | NotRequested |
+| Worker failure | InvalidOutput / StreamTerminal / UnsupportedFinish |
+| Finish reason | Length |
+| Requested output cap | 8192 |
+| Provider requests | 1 |
+| Input / output tokens | 9748 / 8192 |
+| Reasoning tokens | 8192 |
+| Unknown usage | false |
+| Retry disposition | None |
+
+No stream-count or byte-budget failure was reported. The corrected stream path
+reached the provider's terminal finish and usage instead of stopping at the prior
+local update-count guard. This is direct evidence that the provider exhausted the
+unchanged 8192 completion allowance, all reported as reasoning; it does not prove
+that a larger allowance would finish successfully. No proposal-parse failure or
+HTTP comparison snapshot exists for this terminal rejection, and no raw response
+or reasoning was retained. Historical Stop/malformed-JSON failures remain separate.
+
+Standard error is empty. All 77 prepared source hashes still match. The fresh
+owned database/workspace and prior successful publication remain retained. The
+bootstrap Web host is stopped. This is real source/provider failure evidence,
+not successful generation or ordinary-reader qualification.
+
+The POM success condition was not met: **no full-slice retry and no further paid
+request ran**. The next separately bounded sizing experiment would be an explicit
+16384 completion allowance with sufficient pre-dispatch reservation, preserving
+thinking/prompt and all other guards. This run does not authorize or implement
+that increase, automatic escalation, JSON repair or acceptance of incomplete work.
