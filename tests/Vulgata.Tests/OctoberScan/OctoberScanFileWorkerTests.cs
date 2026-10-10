@@ -1252,7 +1252,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             new(UnitJson, ChatFinishReason.Stop)
         ]);
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
-        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
         var scope = new Scope();
 
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
@@ -1280,21 +1281,37 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     }
 
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task JsonCorrection_SecondMalformedFinalResponseRemainsParserFailureAsync()
+    [SuiteTheory("SelfContained")]
+    [InlineData("syntax", OctoberWorkerParseFailure.Syntax)]
+    [InlineData("prose", OctoberWorkerParseFailure.Syntax)]
+    [InlineData("fenced", OctoberWorkerParseFailure.Syntax)]
+    [InlineData("duplicate", OctoberWorkerParseFailure.ClosedFields)]
+    public async Task JsonCorrection_TextFormatStillRejectsMalformedProseFencesAndDuplicatePropertiesAsync(
+        string defect, OctoberWorkerParseFailure expectedFailure)
     {
+        string correction = defect switch
+        {
+            "syntax" => "{second malformed",
+            "prose" => "Here is the complete JSON:\n" + UnitJson,
+            "fenced" => "```json\n" + UnitJson + "\n```",
+            "duplicate" => UnitJson.Replace("\"title\":\"Conditional execution\"",
+                "\"title\":\"Conditional execution\",\"title\":\"duplicate\"", StringComparison.Ordinal),
+            _ => throw new InvalidOperationException("Unknown correction response case")
+        };
         using var client = new ScriptedClient([
             new("{first malformed", ChatFinishReason.Stop),
-            new("{second malformed", ChatFinishReason.Stop)
+            new(correction, ChatFinishReason.Stop)
         ]);
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
-        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
 
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(OctoberWorkerParseFailure.Syntax, result.ParseFailure!.Category);
+        Assert.Equal(expectedFailure, result.ParseFailure!.Category);
+        Assert.Null(result.Proposal);
         Assert.Equal(2, client.Requests.Count);
     }
 
@@ -1308,7 +1325,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var finalParserError = Assert.ThrowsAny<JsonException>(() => JsonDocument.Parse(malformed));
         using var client = new ScriptedClient([new(firstMalformed, ChatFinishReason.Stop), new(malformed, ChatFinishReason.Stop)]);
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
-        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
 
@@ -1338,8 +1356,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     }
 
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task JsonCorrection_ActualDeepSeekWireDisablesToolsOnlyForCorrectionAndRetainsHistoryAsync()
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task JsonCorrection_ActualDeepSeekWireChangesOnlyCorrectionFormatAndRetainsHistoryAsync(bool useText)
     {
         var wireRequests = new List<JsonElement>();
         int invoked = 0;
@@ -1360,7 +1380,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
         var tool = AIFunctionFactory.Create((string relativePath) => { Assert.Equal("src/Order.cs", relativePath); invoked++; return "contained result"; }, "read_prepared_source");
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
-        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = useText } };
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
 
@@ -1369,13 +1390,18 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(3, transport.Calls);
         Assert.Equal(3, wireRequests.Count);
         var initial = wireRequests[0];
+        var continuation = wireRequests[1];
         var correction = wireRequests[2];
         Assert.True(!initial.TryGetProperty("tool_choice", out var initialChoice) || initialChoice.GetString() == "auto");
+        Assert.Equal("json_object", initial.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.Equal("json_object", continuation.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.All(wireRequests, body => Assert.Equal(8192, body.GetProperty("max_tokens").GetInt32()));
         Assert.Equal("none", correction.GetProperty("tool_choice").GetString());
         Assert.Contains(correction.GetProperty("tools").EnumerateArray(), declaration =>
             declaration.GetProperty("function").GetProperty("name").GetString() == tool.Name);
         Assert.Equal(8192, correction.GetProperty("max_tokens").GetInt32());
-        Assert.Equal("json_object", correction.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.Equal(useText ? "text" : "json_object",
+            correction.GetProperty("response_format").GetProperty("type").GetString());
         var messages = correction.GetProperty("messages").EnumerateArray().ToArray();
         Assert.Contains(messages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
             reasoning.GetString() == "SYNTHETIC_INITIAL_REASONING");
@@ -1403,7 +1429,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
         var tool = AIFunctionFactory.Create((string relativePath) => { invoked++; return "should-not-run"; }, "read_prepared_source");
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
-        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
 
@@ -1422,6 +1449,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         using var client = new ScriptedClient([new("{malformed", ChatFinishReason.Stop)]);
         var request = Request(new Frame("if (enabled) Run();\nreturn;"));
         Assert.Equal(0, request.Limits.MaximumJsonCorrectionAttempts);
+        Assert.False(new OctoberFileWorkerLimits().UseTextForJsonCorrection);
+        Assert.False(request.Limits.UseTextForJsonCorrection);
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
 
@@ -1500,7 +1529,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         };
         using var client = new ScriptedClient([new(invalid, ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
-        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
 
@@ -1561,7 +1591,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             : UnitJson.Replace("\"evidence\":[{\"startLine\":1,\"endLine\":2}]", "\"evidence\":[{\"advisoryIndex\":0}]", StringComparison.Ordinal);
         using var client = new ScriptedClient([new(invalid, ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
-        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
 
         var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
 

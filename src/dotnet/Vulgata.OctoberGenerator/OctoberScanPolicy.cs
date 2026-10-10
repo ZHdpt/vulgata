@@ -22,6 +22,7 @@ public sealed record OctoberScanPolicy
     public int AdvisoryToolCallsPerFile { get; init; } = 32;
     public int MaximumToolCallsPerFile { get; init; } = 48;
     public int MaximumTransientRetries { get; init; } = 2;
+    public bool UseTextForJsonCorrection { get; init; }
     public int MaximumProviderRequests { get; init; } = 64;
     public int MaximumRequestsPerMinute { get; init; } = 60;
     public long? MaximumTotalTokens { get; init; }

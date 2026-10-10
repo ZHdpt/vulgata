@@ -146,35 +146,30 @@ seconds, one request, one accepted file and confirmed CL Document publication.
 Its prior malformed JSON did not reproduce; this does not qualify the whole scan.
 No subsequent whole run started; the exact retained version is in that evidence.
 
-October11: the user approved making the existing single JSON/structure correction
-tool-disabled, with host enforcement and safe numeric parser positions. Independent
-review accepted the narrow implementation; investigation, evidence/semantic
-validation, provider settings and all limits remain unchanged. Controlled tests
-and the separately authorized isolated-first/bounded whole-run retry series are
-tracked in [tool-disabled correction evidence](../../specs/20-1-Oct14-scan/tool-disabled-correction-verification.md).
-Later fix/retry or configurable hard-retry work is conditional on the recorded
-series failing; it never permits accepting invalid output or bypassing authority.
-The isolated GuestSync trial published successfully. The initial whole run and
-restarts1-5 still failed final JSON; restart6 reached23accepted files before a
-separate ten-minute source-approval expiry stopped it. All77source hashes matched.
-The consumer-only renewal correction is tracked in
-[source approval renewal evidence](../../specs/20-1-Oct14-scan/source-approval-renewal-verification.md).
-It replaces still-current approval-bound runtimes only at settled file boundaries,
-retains cumulative native capacity and caps file work by genuine remaining
-authority. Issuer policy and shared schemas are unchanged. Independent review
-accepted;70 final affected checks pass. Full SelfContained is4830/4832 with the
-report-parser and historical streaming-timing failures, not GREEN. Restarts7-10
-remain available after the isolated failed-file check; text-mode correction and
-hard retry remain conditional, not implemented or qualified.
-Restarts7-8 repeated malformed final JSON. Restart9 renewed genuine approvals but
-exposed a Scan ownership defect: runtime replacement tried to prepare CodeGraph
-again against retained state. The existing refusal is correct. The correction
-retains one original run-owned descriptor per repository, lends it to replacement
-runtimes with their own current approvals, and disposes it after all borrowers.
-It does not delete/adopt state or relax currentness. Independent review accepted;
-full SelfContained4838/4839, all owner/renewal cases passing, sole existing report
-parser failure. Native qualification and remaining restart10 are recorded in the
-renewal evidence above.
+October11 Scan status: the tool-disabled single JSON correction and safe numeric
+syntax feedback are reviewed and implemented. The initial whole attempt plus10
+restarts produced no complete publication. Most failed malformed final JSON;
+restart10 hit the retained cumulative input-byte limit. Isolated GuestSync,
+QueryAllCreditCardOp and channel userAuth trials published successfully. Exact
+results are in [tool-disabled correction evidence](../../specs/20-1-Oct14-scan/tool-disabled-correction-verification.md).
+
+Real runs exposed and prompted correction of approval expiry and descriptor
+ownership. Current Scan replaces still-current approval-bound runtimes only at
+settled file boundaries, retains one original run-owned CodeGraph descriptor per
+repository and the cumulative native-session counter, and caps file work by
+genuine remaining authority. It does not reinitialize, delete/adopt retained state,
+extend issuer policy or change shared schemas. Independent review accepted;
+full SelfContained4838/4839 with sole existing report-parser failure. Controlled
+two-approval contained reads pass; real renewal remains separately unqualified.
+See [renewal evidence](../../specs/20-1-Oct14-scan/source-approval-renewal-verification.md).
+
+The user's conditional next experiment is implemented and independently reviewed:
+default-false UseTextForJsonCorrection changes only the existing
+eligible correction's response format, preserving strict parsing and every budget.
+All31correction cases pass; full SelfContained4843/4844, sole existing report-parser
+failure. Isolated POM precedes up to10 whole trials. No text-mode paid run yet;
+hard retry remains conditional and unimplemented. See
+[text correction evidence](../../specs/20-1-Oct14-scan/text-correction-verification.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.

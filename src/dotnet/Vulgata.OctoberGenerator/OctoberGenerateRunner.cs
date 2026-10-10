@@ -300,7 +300,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                             MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
                             MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens,
                             MaximumJsonCorrectionAttempts: 1,
-                            AdvisoryToolCalls: execution.Policy.AdvisoryToolCallsPerFile)) { ToolBudget = toolBudget };
+                            AdvisoryToolCalls: execution.Policy.AdvisoryToolCallsPerFile,
+                            UseTextForJsonCorrection: execution.Policy.UseTextForJsonCorrection)) { ToolBudget = toolBudget };
                     var ledger = new OctoberWorkerInputLedger(request,
                         async (path, callToken) =>
                         {

@@ -76,7 +76,8 @@ public sealed record OctoberFileWorkerLimits(
     int MaximumContinuationWindows = 4,
     int MaximumOutputTokensPerRequest = 8192,
     int MaximumJsonCorrectionAttempts = 0,
-    int? AdvisoryToolCalls = null);
+    int? AdvisoryToolCalls = null,
+    bool UseTextForJsonCorrection = false);
 
 public sealed record OctoberFileWorkerRequest(
     KnowledgeBinding Binding,
@@ -619,7 +620,11 @@ public sealed class OctoberFileWorkerExecutor
             bounded.MaxOutputTokens = outputTokens;
             // Keep declarations/history intact, but this existing correction is
             // finalization only. Host enforcement below is independent of the provider.
-            if (_correctionOnly) bounded.ToolMode = ChatToolMode.None;
+            if (_correctionOnly)
+            {
+                bounded.ToolMode = ChatToolMode.None;
+                if (request.Limits.UseTextForJsonCorrection) bounded.ResponseFormat = ChatResponseFormat.Text;
+            }
             var admissionRequest = new OctoberWorkerProviderAttemptRequest(request.RunId, request.FileWorkstreamId,
                 Guid.NewGuid(), request.ProviderProfileId, request.Limits.RequestTimeout ?? TimeSpan.FromMinutes(2),
                 requiredTokens);
