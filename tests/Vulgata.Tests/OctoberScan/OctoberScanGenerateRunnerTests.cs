@@ -285,6 +285,39 @@ public sealed class OctoberScanGenerateRunnerTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task FileWindowIsEnsuredBeforeEachPrimaryFrameAndDoesNotReopenRunSourceAsync()
+    {
+        await using var harness = await Harness.CreateAsync();
+        await harness.AddSelectedFileAsync();
+
+        var result = await harness.Runner.ExecuteAsync(harness.Execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+
+        Assert.Equal(0, report.ExitCode);
+        Assert.Equal(2, report.AcceptedFiles.Length);
+        Assert.Equal(["window", "frame", "window", "frame"], harness.SourceLifecycleEvents);
+        Assert.Equal(1, harness.SourceOpens);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ZeroUsableAuthorityWindowStopsBeforeProviderDispatchAsync()
+    {
+        await using var harness = await Harness.CreateAsync();
+        harness.AuthorityWindow = TimeSpan.Zero;
+
+        var result = await harness.Runner.ExecuteAsync(harness.Execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+
+        Assert.Contains(report.Gaps, gap => gap.Code == "file_deadline_exceeded");
+        Assert.Equal(0, harness.ClientCreations);
+        Assert.Equal(0, harness.Client.Calls);
+        Assert.Empty(report.AcceptedFiles);
+        Assert.Null(report.Publication);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task InvalidSourceConfiguration_StopsBeforeBeginSourceAndProviderAsync()
     {
         await using var harness = await Harness.CreateAsync();
@@ -858,6 +891,8 @@ public sealed class OctoberScanGenerateRunnerTests
         internal TaskCompletionSource SourceDisposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal Action? AfterPublish;
         internal Action<Guid>? BeforeFrame;
+        internal List<string> SourceLifecycleEvents { get; } = [];
+        internal TimeSpan? AuthorityWindow;
         internal Exception? JavaOpenFailure;
         internal IOctoberLocalAuthority Authority => _authority;
         internal bool AuthorityAllowed { get => _authority.Allowed; set => _authority.Allowed = value; }
@@ -987,8 +1022,14 @@ public sealed class OctoberScanGenerateRunnerTests
         }
         private sealed class ObservedSource(Harness owner, IOctoberScanRunSource inner) : IOctoberScanRunSource
         {
+            public async Task<TimeSpan> EnsureFileWindowAsync(TimeSpan requiredLifetime, CancellationToken token = default)
+            {
+                owner.SourceLifecycleEvents.Add("window");
+                TimeSpan available = await inner.EnsureFileWindowAsync(requiredLifetime, token);
+                return owner.AuthorityWindow is { } overrideWindow && overrideWindow < available ? overrideWindow : available;
+            }
             public Task<PreparedSourceResult> ListSourceAsync(Guid repository, PreparedSourceListRequest request, CancellationToken token = default) => inner.ListSourceAsync(repository, request, token);
-            public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) { owner.BeforeFrame?.Invoke(repository); return inner.AcquireFrameAsync(repository, path, token); }
+            public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) { owner.SourceLifecycleEvents.Add("frame"); owner.BeforeFrame?.Invoke(repository); return inner.AcquireFrameAsync(repository, path, token); }
             public OctoberToolRuntime GetRuntime(Guid repository) => inner.GetRuntime(repository);
             public async ValueTask DisposeAsync()
             {
@@ -1002,6 +1043,11 @@ public sealed class OctoberScanGenerateRunnerTests
         }
         private sealed class MultipleSources(Dictionary<Guid, Source> sources) : IOctoberScanRunSource
         {
+            public async Task<TimeSpan> EnsureFileWindowAsync(TimeSpan requiredLifetime, CancellationToken token = default)
+            {
+                var windows = await Task.WhenAll(sources.Values.Select(source => source.EnsureFileWindowAsync(requiredLifetime, token)));
+                return windows.Min();
+            }
             public Task<PreparedSourceResult> ListSourceAsync(Guid repository, PreparedSourceListRequest request, CancellationToken token = default) => sources[repository].ListSourceAsync(repository, request, token);
             public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) => sources[repository].AcquireFrameAsync(repository, path, token);
             public OctoberToolRuntime GetRuntime(Guid repository) => sources[repository].GetRuntime(repository);
@@ -1021,6 +1067,7 @@ public sealed class OctoberScanGenerateRunnerTests
                     (_, _, token) => issuer.IssueAsync(new(approval, files.PreparedRootPath, PreparedSourceGrantLimits.Default), descriptor, token),
                     issuer.ObserveFileIdentityAsync, (_, _) => throw javaOpenFailure ?? new InvalidOperationException("Unexpected native Java"), (owner, _) => owner.OpenSession()));
             }
+            public Task<TimeSpan> EnsureFileWindowAsync(TimeSpan requiredLifetime, CancellationToken token = default) => Task.FromResult(requiredLifetime);
             public Task<PreparedSourceResult> ListSourceAsync(Guid repository, PreparedSourceListRequest request, CancellationToken token = default) => _runtime.ListAsync(request, token);
             public Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repository, string path, CancellationToken token = default) => _runtime.AcquireFileFrameAsync(path, cancellationToken: token);
             public OctoberToolRuntime GetRuntime(Guid repository) => _runtime;

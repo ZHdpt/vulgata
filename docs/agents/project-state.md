@@ -154,6 +154,18 @@ and the separately authorized isolated-first/bounded whole-run retry series are
 tracked in [tool-disabled correction evidence](../../specs/20-1-Oct14-scan/tool-disabled-correction-verification.md).
 Later fix/retry or configurable hard-retry work is conditional on the recorded
 series failing; it never permits accepting invalid output or bypassing authority.
+The isolated GuestSync trial published successfully. The initial whole run and
+restarts1-5 still failed final JSON; restart6 reached23accepted files before a
+separate ten-minute source-approval expiry stopped it. All77source hashes matched.
+The consumer-only renewal correction is tracked in
+[source approval renewal evidence](../../specs/20-1-Oct14-scan/source-approval-renewal-verification.md).
+It replaces still-current approval-bound runtimes only at settled file boundaries,
+retains cumulative native capacity and caps file work by genuine remaining
+authority. Issuer policy and shared schemas are unchanged. Independent review
+accepted;70 final affected checks pass. Full SelfContained is4830/4832 with the
+report-parser and historical streaming-timing failures, not GREEN. Restarts7-10
+remain available after the isolated failed-file check; text-mode correction and
+hard retry remain conditional, not implemented or qualified.
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.

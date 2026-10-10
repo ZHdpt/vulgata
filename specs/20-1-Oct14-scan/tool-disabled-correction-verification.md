@@ -150,3 +150,16 @@ Failed src/main/java/cn/com/yitong/actions/acct/GetMobileToReplaceResOp.java : S
 MissingClosingDelimiters atEOF,1object/1array open. HTTP/SDK/parser identical5579
 bytes, Stop/DONE,251reasoning tokens. Usage: {"requests":10,"inputTokens":204807,"outputTokens":42645,"hasUnknownUsage":false}.
 All77 source hashes match; data retained. Restart6 follows under original grant.
+
+Restart6: target phone-5ab5ec8229e4, database vulgata_oct_pilot_9cf2fef48ab842ea9d0b9f7e4163c7d1,
+batch 2f1efce1-88e2-44ab-9c98-e3991372a869, report generate-2a90aa1fd4704ec689f288372173df68.stdout.
+Exit1 in611.28seconds, settled/no timeout,23accepted/0Documents/NotRequested.
+QueryAllCreditCardOp.java failed SourceChanged (not a formatting/tool budget error).
+Usage: {"requests":32,"inputTokens":275763,"outputTokens":123837,"hasUnknownUsage":false}. All77 source hashes match.
+Paid restarts7-10 held for diagnosis: ownedDB read-only expiry metadata shows both
+source approvals expire at2026-10-10T17:04:29Z and are not revoked. Authority issues
+10minute approvals; Scan factory pins each runtime once to that expiry even though
+run deadline is30minutes. This independently explains the later source verification
+refusal. No approval token or secret was output. No lifetime waiver or blind retry.
+Consumer renewal boundary and native-budget/provenance implications are under
+independent assessment; consultation received this distinct error for advice.

@@ -34,7 +34,8 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     private ICodeGraphWorkerToolSession? _session;
     private IPreparedJavaNavigationContext? _java;
     private int _sessionCalls;
-    private int _sessions;
+    private OctoberCodeGraphSessionBudget _sessionBudget;
+    private bool _sessionBudgetBound;
     private bool _faulted;
     private bool _cleanupFailed;
     private bool _closed;
@@ -173,6 +174,7 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             remainingRunLifetime > TimeSpan.FromMinutes(30))
             throw new ArgumentOutOfRangeException(nameof(remainingRunLifetime));
         RepositoryId = approval.RepositoryId;
+        _sessionBudget = new(RepositoryId);
         _approval = approval;
         _clock = clock;
         _started = clock.GetTimestamp();
@@ -182,6 +184,14 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     }
 
     public Guid RepositoryId { get; }
+    internal void UseSessionBudget(OctoberCodeGraphSessionBudget budget)
+    {
+        if (_closed || _sessionBudgetBound || _connection is not null || _session is not null ||
+            _java is not null || _sessionBudget.Used != 0 || budget.RepositoryId != RepositoryId)
+            throw new InvalidOperationException("Native session accounting must be bound before runtime use.");
+        _sessionBudget = budget;
+        _sessionBudgetBound = true;
+    }
     internal bool HasPreparedBinding(Guid repositoryId, string rootBindingIdentity, string preparedVersion)
         => repositoryId == _approval.RepositoryId &&
             string.Equals(rootBindingIdentity, _approval.RootBindingIdentity, StringComparison.Ordinal) &&
@@ -565,9 +575,8 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     {
         if (_session is null)
         {
-            if (_sessions >= 21) throw new InvalidOperationException("CodeGraph session replacements are exhausted.");
+            if (!_sessionBudget.TryReserve()) throw new InvalidOperationException("CodeGraph session replacements are exhausted.");
             _session = _dependencies.OpenCodeGraph(_connection!, OpenSourceAsync);
-            _sessions++;
             _sessionCalls = 0;
         }
         return await _session.DiscoverAsync(token);

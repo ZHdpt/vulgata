@@ -12,6 +12,7 @@ namespace Vulgata.OctoberGenerator;
 /// <summary>Host-owned contained access, opened only after the original run's Begin receipt.</summary>
 internal interface IOctoberScanRunSource : IAsyncDisposable
 {
+    Task<TimeSpan> EnsureFileWindowAsync(TimeSpan requiredLifetime, CancellationToken cancellationToken = default);
     Task<PreparedSourceResult> ListSourceAsync(Guid repositoryId, PreparedSourceListRequest request,
         CancellationToken cancellationToken = default);
     Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repositoryId, string relativePath,
@@ -71,6 +72,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
     private Task? _analysisCleanup;
     private long _started;
     private long? _fileStarted;
+    private long? _sourceWindowStarted;
+    private TimeSpan _sourceWindow;
     private CancellationToken _caller;
     private CancellationTokenSource? _deadline;
     private CancellationTokenSource? _runToken;
@@ -247,6 +250,21 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             foreach (var selectedFile in selected)
             {
                 if (!RunAvailable) return Failure("run_ineligible", interrupted: IsCancelled);
+                if (Unresolved() || _scope?.GetSnapshot().OutstandingAttempts != 0 || _attempts.Any(attempt => !attempt.IsSettledForFreeze))
+                    return Failure("source_window_unsettled", indeterminate: true);
+                try
+                {
+                    // Start before renewal so its latency cannot extend the returned authority window.
+                    _sourceWindowStarted = _time.GetTimestamp();
+                    _sourceWindow = await ToolAsync(() => _source.EnsureFileWindowAsync(
+                        Min(TimeSpan.FromSeconds(execution.Policy.FileDeadlineSeconds + 30), RemainingRun), token), token);
+                }
+                catch (OctoberSourceWindowException error)
+                {
+                    return Failure("source_window_" + error.Reason.ToString().ToLowerInvariant(),
+                        indeterminate: error.Reason == OctoberSourceWindowFailure.CleanupUnconfirmed,
+                        disclose: error.Reason != OctoberSourceWindowFailure.AuthorityUnavailable);
+                }
                 OctoberSourceFrameResult acquired = await ToolAsync(() => _source.AcquireFrameAsync(
                     selectedFile.RepositoryId, selectedFile.RelativePath, token), token);
                 if (acquired.Status != OctoberSourceFrameStatus.Acquired || acquired.Frame is null)
@@ -756,8 +774,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _beginSettlement == CommitSettlement.Indeterminate || _attempts.Any(attempt =>
             attempt.HasSubmitted && !attempt.IsSettledForFreeze) || _scope?.GetSnapshot().HasUnconfirmedSettlement == true;
     private TimeSpan RemainingRun => TimeSpan.FromSeconds(_execution!.Policy.RunDeadlineSeconds) - _time.GetElapsedTime(_started);
-    private TimeSpan RemainingFile => _fileStarted is { } started
-        ? Min(RemainingRun, TimeSpan.FromSeconds(_execution!.Policy.FileDeadlineSeconds) - _time.GetElapsedTime(started)) : RemainingRun;
+    private TimeSpan RemainingFile => Min(
+        _fileStarted is { } started
+            ? Min(RemainingRun, TimeSpan.FromSeconds(_execution!.Policy.FileDeadlineSeconds) - _time.GetElapsedTime(started)) : RemainingRun,
+        _sourceWindowStarted is { } windowStarted ? _sourceWindow - _time.GetElapsedTime(windowStarted) : RemainingRun);
     private bool RunAvailable => !_fenced && !_disposed && !IsCancelled && RemainingRun > TimeSpan.Zero;
     private bool FileAvailable => RunAvailable && RemainingFile > TimeSpan.Zero;
     private bool IsCancelled => _caller.IsCancellationRequested || _stop.IsCancellationRequested;
