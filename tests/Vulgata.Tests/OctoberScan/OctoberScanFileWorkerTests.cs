@@ -2046,19 +2046,160 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(0, result.SettledToolCalls); Assert.Null(result.ParseFailure);
         Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("separate-before-stop")]
+    [InlineData("object-on-stop")]
+    [InlineData("both-on-stop")]
+    [InlineData("utf8-network-fragments")]
+    [InlineData("incomplete-stop")]
+    [InlineData("closers-after-stop")]
+    [InlineData("closers-after-done")]
+    [InlineData("incomplete-length")]
+    [InlineData("clean-eof-after-stop")]
+    public async Task CurrentContract_ActualSdkClosingDelimitersPreserveMappedFinalTextAndStrictTerminationAsync(string scenario)
+    {
+        string complete = UnitJson.Replace("Conditional execution", "条件😀规则");
+        Assert.True(complete.EndsWith("]}", StringComparison.Ordinal));
+        string incomplete = complete[..^2]; // One array and its containing root object remain unclosed.
+        incomplete += new string(' ', 5412 - Encoding.UTF8.GetByteCount(incomplete));
+        complete = incomplete + "]}";
+        Assert.Equal(5412, Encoding.UTF8.GetByteCount(incomplete));
+        Assert.Equal(5414, Encoding.UTF8.GetByteCount(complete));
+        AccountingSseHttp Wire()
+        {
+            string[] parts = scenario switch
+            {
+                "separate-before-stop" or "object-on-stop" or "closers-after-stop" => [incomplete, "]", "}"],
+                "both-on-stop" => [incomplete, "]}"],
+                "utf8-network-fragments" or "clean-eof-after-stop" => [complete],
+                _ => [incomplete]
+            };
+            string?[]? finishes = scenario switch
+            {
+                "separate-before-stop" => [null, null, null],
+                "closers-after-stop" => ["stop", null, null],
+                "incomplete-length" => ["length"],
+                _ => null
+            };
+            return new([], parts)
+            {
+                FinishOverrides = finishes, AppendEmptyStop = scenario == "separate-before-stop",
+                AfterDoneText = scenario == "closers-after-done" ? "]}" : null,
+                MaximumReadBytes = scenario == "utf8-network-fragments" ? 1 : 0,
+                RawWireUnicode = scenario == "utf8-network-fragments", OmitDone = scenario == "clean-eof-after-stop"
+            };
+        }
+        string mapped; long? mappedInput = null, mappedOutput = null;
+        using (var observation = Wire())
+        using (var client = await new OctoberWorkerClientFactory(new Secrets(), observation).CreateAsync(Selected()))
+        {
+            var leaf = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+            var text = new StringBuilder(); int updates = 0;
+            await foreach (var update in leaf.GetAttemptStreamingResponseAsync([new(ChatRole.User, "synthetic closing-delimiter control")],
+                new ChatOptions(), new Lease(Guid.NewGuid())))
+            {
+                updates++; Assert.InRange(updates, 1, 32);
+                foreach (var part in update.Contents.OfType<TextContent>()) text.Append(part.Text);
+                foreach (var usage in update.Contents.OfType<UsageContent>()) { mappedInput = usage.Details.InputTokenCount; mappedOutput = usage.Details.OutputTokenCount; }
+            }
+            mapped = text.ToString();
+            bool expectedComplete = scenario is "separate-before-stop" or "object-on-stop" or "both-on-stop" or "utf8-network-fragments" or "clean-eof-after-stop";
+            if (expectedComplete) Assert.True(mapped == complete);
+            else if (scenario != "closers-after-stop") Assert.True(mapped == incomplete);
+            else Assert.True(mapped == complete); // Installed SDK delivers illegal post-Stop deltas; Worker must reject them.
+            if (scenario == "utf8-network-fragments") { Assert.True(observation.FragmentReads > 100); Assert.True(observation.NonAsciiWireBytes > 0); }
+            output.WriteLine("closingWire: case={0}; mappedBytes={1}; complete={2}; updates={3}; fragmentedReads={4}",
+                scenario, Encoding.UTF8.GetByteCount(mapped), mapped == complete, updates, observation.FragmentReads);
+        }
+        using var transport = Wire();
+        bool? hasStopParameter = null;
+        transport.ObserveRequest = body => hasStopParameter = body.TryGetProperty("stop", out _);
+        using var actual = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        string? captured = null; int captures = 0;
+        var scope = new Scope(); var frame = new Frame("if (enabled) Run();\nreturn;");
+        var result = await new OctoberFileWorkerExecutor(actual, scope, captureParseFailure: (text, _) =>
+        { captures++; captured = text; return Task.FromResult(OctoberWorkerCaptureStatus.Captured); }).ExecuteAsync(Request(frame), []);
+        Assert.Equal(false, hasStopParameter); Assert.Equal(1, transport.Calls);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        if (scenario is "incomplete-length" or "closers-after-stop")
+        {
+            Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+            Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+            Assert.Equal(scenario == "incomplete-length" ? OctoberWorkerTerminalFailure.UnsupportedFinish : OctoberWorkerTerminalFailure.ContentAfterFinish, result.TerminalFailure);
+            Assert.Equal(0, captures); Assert.Null(result.CaptureStatus); Assert.Null(result.ParseFailure);
+        }
+        else if (mapped == incomplete)
+        {
+            Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+            Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+            Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+            Assert.Equal(1, captures); Assert.True(captured == incomplete);
+            Assert.Equal(OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
+        }
+        else
+        {
+            Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(0, captures);
+            var unit = Assert.Single(result.Proposal!.Units); Assert.True(unit.Title == "条件😀规则");
+            Assert.Equal(frame.Origin, Assert.Single(Assert.Single(Assert.Single(unit.Sections).Claims).Evidence).Source!.Origin);
+        }
+        if (result.Status != OctoberFileWorkerStatus.Completed) Assert.Null(result.Proposal);
+        var settled = Assert.Single(scope.Leases); Assert.Equal(1, settled.Settlements); Assert.Equal(1, settled.Disposals);
+        if (scenario == "closers-after-stop")
+        { Assert.Null(settled.Usage!.InputTokens); Assert.Null(settled.Usage.OutputTokens); }
+        else { Assert.Equal(mappedInput, settled.Usage!.InputTokens); Assert.Equal(mappedOutput, settled.Usage.OutputTokens); }
+        Assert.Equal(0, result.SettledToolCalls);
+    }
+
+    private sealed class FragmentedReadStream(byte[] bytes, int maximum) : MemoryStream(bytes)
+    {
+        internal int Reads;
+        public override int Read(byte[] buffer, int offset, int count) { Reads++; return base.Read(buffer, offset, Math.Min(count, maximum)); }
+        public override int Read(Span<byte> buffer) { Reads++; return base.Read(buffer[..Math.Min(buffer.Length, maximum)]); }
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        { Reads++; return base.ReadAsync(buffer, offset, Math.Min(count, maximum), cancellationToken); }
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        { Reads++; return base.ReadAsync(buffer[..Math.Min(buffer.Length, maximum)], cancellationToken); }
+    }
     private sealed class AccountingSseHttp(string[] reasoning, string[] text) : HttpMessageHandler
     {
         internal int Calls;
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        internal string?[]? FinishOverrides;
+        internal bool AppendEmptyStop, RawWireUnicode, OmitDone;
+        internal int NonAsciiWireBytes;
+        internal string? AfterDoneText;
+        internal int MaximumReadBytes;
+        internal Action<JsonElement>? ObserveRequest;
+        private FragmentedReadStream? _fragmented;
+        internal int FragmentReads => _fragmented?.Reads ?? 0;
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Assert.Equal("selected.example.test", request.RequestUri!.Host); Calls++; Assert.Equal(1, Calls);
+            if (ObserveRequest is not null)
+            {
+                using var requestJson = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+                ObserveRequest(requestJson.RootElement);
+            }
+            var jsonOptions = RawWireUnicode ? new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping } : null;
             var body = new StringBuilder();
-            void Append(object delta, string? finish) => body.Append("data: ").Append(JsonSerializer.Serialize(new { id = "controlled-accounting", @object = "chat.completion.chunk", created = 1, model = "selected-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } })).Append("\n\n");
+            void Append(object delta, string? finish) => body.Append("data: ").Append(JsonSerializer.Serialize(new { id = "controlled-accounting", @object = "chat.completion.chunk", created = 1, model = "selected-model", choices = new[] { new { index = 0, delta, finish_reason = finish } } }, jsonOptions)).Append("\n\n");
             Append(new { role = "assistant" }, null);
             foreach (string part in reasoning) Append(new { reasoning_content = part }, null);
-            for (int index = 0; index < text.Length; index++) Append(new { content = text[index] }, index == text.Length - 1 ? "stop" : null);
+            for (int index = 0; index < text.Length; index++) Append(new { content = text[index] }, FinishOverrides is null ? (index == text.Length - 1 ? "stop" : null) : FinishOverrides[index]);
+            if (AppendEmptyStop) Append(new { }, "stop");
             body.Append("data: {\"id\":\"controlled-accounting\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"selected-model\",\"choices\":[],\"usage\":{\"prompt_tokens\":100,\"completion_tokens\":50,\"total_tokens\":150}}\n\ndata: [DONE]\n\n");
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body.ToString(), Encoding.UTF8, "text/event-stream") });
+            if (OmitDone) body.Replace("data: [DONE]\n\n", string.Empty);
+            if (AfterDoneText is not null) Append(new { content = AfterDoneText }, null);
+            if (MaximumReadBytes > 0)
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(body.ToString());
+                NonAsciiWireBytes = bytes.Count(value => value > 127);
+                _fragmented = new FragmentedReadStream(bytes, MaximumReadBytes);
+                var content = new StreamContent(_fragmented);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/event-stream");
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+            }
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body.ToString(), Encoding.UTF8, "text/event-stream") };
         }
     }
     private sealed class FragmentedToolHttp : HttpMessageHandler
