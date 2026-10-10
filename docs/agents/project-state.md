@@ -184,6 +184,13 @@ and reasoning accounting, NOT the cause of prior malformed Stop responses. No ra
 persistence, source Generate, DB or presentation qualification in these probes.
 The corrected adapter retains exact admitted limits; no automatic retries/cap rise.
 
+ONE subsequent explicitly approved corrected-cap source trial `phone-5afd5e5f8d70`
+failed after67.45s: same `InvalidOutput/ProposalParse/Syntax/Root`, accepted0,
+3 requests/17,082 input/3,831 output tokens. No terminal/budget/tool failure,
+timeout or cleanup doubt; capture remained off. Cap compatibility is fixed but
+real-source generation remains blocked. No further paid retry; any actual Worker
+HTTP-to-SDK raw observation needs a new bounded decision. Prior partial CL intact.
+
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted
 CL Document/confirmed publication; actual ordinary Identity HTTP/SSR reading,

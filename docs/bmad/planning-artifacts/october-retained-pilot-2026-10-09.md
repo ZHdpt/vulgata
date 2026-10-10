@@ -647,3 +647,37 @@ Root current-source combined verification completed: **342/342** selected affect
 SelfContained tests passed, zero failures/skips, isolation
 `43279885958c4d50865985b9523ea096`. This is affected-suite GREEN, not whole-project
 or full source-generation qualification. Scan received the measured live results.
+
+## Approved corrected-cap source trial
+
+The user explicitly approved ONE fresh-database source-generation trial with the
+corrected adapter, unchanged8192 output ceiling/default thinking/strict acceptance,
+capture disabled and no automatic retry. At clean `b023e8ef`, all77 prepared source
+hashes matched. Previous trial-owned index state was archived outside the source
+roots after exact path/non-reparse checks; no source files or prior data changed.
+
+New run `phone-5afd5e5f8d70`, batch `626b757d-58c2-4f73-8325-1b998fbee1d0`, database
+`vulgata_oct_pilot_7c5c5336818b4e04b58b519fcca5649f` uses the same approved existing
+PG17 container. Bootstrap used production Identity/System/Repository APIs; owned
+temporary Web stopped. Prepare passed3.14s. The current verified Generator binary
+started the single Generate with existing selected9/supporting68 scope, same
+provider/credential, run1800s/file300s/operator120s/drain30s. Local configuration
+contains no capture opt-in. Results follow after settlement; startup alone is not
+qualification.
+
+### Corrected-cap source trial result
+
+`phone-5afd5e5f8d70` exited1 after **67.45s wall /65.04s pipeline**, no timeout or
+cleanup doubt. Known usage **3 requests,17,082 input/3,831 output tokens**. Inventory77,
+accepted0, Documents0, no publication/matching/BL. Worker result remained
+`InvalidOutput / ProposalParse / Syntax / Root`, retryNone; terminal/budget/tool
+failure null. Capture disabled/null, no capture directory. Local safe report
+`generate-f386159d217b4aa19f69a78d401102c3`.
+
+The corrected cap enforcement did not solve this source-generation failure.
+No Length termination, timeout or actual shape of malformed response was observed
+for this trial. No unchanged paid retry is launched. Scan receives the sanitized
+outcome and holds further changes/operations. A future discriminating observation
+would compare actual failing Worker HTTP final content/framing against SDK text;
+it requires a new bounded privacy/runtime decision, not an inferred extension of
+the completed capture or single-trial grants. Prior partial CL remains preserved.
