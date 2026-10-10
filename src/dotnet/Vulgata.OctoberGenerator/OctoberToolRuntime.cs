@@ -41,6 +41,16 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     private bool _closed;
     private Task? _disposal;
     private PreparedSourceOutcome? _sourceFailure;
+    private OctoberCodeGraphOwner? _graphOwner;
+
+    internal void UseGraphOwner(OctoberCodeGraphOwner owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        if (_closed || _graphOwner is not null || _connection is not null || _session is not null || _java is not null ||
+            owner.RepositoryId != RepositoryId || owner.RootBindingIdentity != _approval.RootBindingIdentity)
+            throw new InvalidOperationException("The original CodeGraph owner cannot be attached.");
+        _graphOwner = owner;
+    }
     private readonly AsyncLocal<ToolObservationScope?> _observation = new();
 
     public OctoberToolRuntime(PreparedSourceApproval approval, PreparedSourceBinding sourceBinding,
@@ -563,7 +573,9 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     private async Task EnsurePreparedAsync(CancellationToken token)
     {
         if (_connection is not null) return;
-        _connection = await _dependencies.PrepareCodeGraph(Remaining, token);
+        _connection = _graphOwner is null
+            ? await _dependencies.PrepareCodeGraph(Remaining, token)
+            : await _graphOwner.GetOrCreateAsync(_dependencies.PrepareCodeGraph, token);
         if (_connection.RepositoryId != RepositoryId || !Available)
             throw new InvalidOperationException("Prepared CodeGraph binding is unavailable.");
     }
@@ -627,7 +639,9 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             if (_jdtLeases.Any(lease => lease.Lifetime != PreparedToolWorkspaceLifetime.Disposed))
                 _cleanupFailed = true;
             if (_cleanupFailed) throw new InvalidOperationException("Tool cleanup remains unconfirmed.");
-            if (_connection is not null) await _connection.DisposeAsync();
+            // Borrowed state survives approval replacement; this runtime has
+            // already settled its native session and JDT resources above.
+            if (_connection is not null && _graphOwner is null) await _connection.DisposeAsync();
         }
         finally { _gate.Release(); }
     }

@@ -93,3 +93,57 @@ zero-window dispatch guard. Generator and test-copy assembly SHA256 both
 The unchanged historical streaming-inactivity test passed1/1 when rerun alone
 through the same runner: `isolation-e59773a2067e47ba8277e47313b896eb`.
 This does not erase its full-suite failure or prove complete regression GREEN.
+
+Committed implementation: `b4a8e5fe926d8f56decfe724782baeae54d67d2e`.
+Real isolated QueryAllCreditCardOp.java trial `renewal-isolated-01` passed in33.28s,
+Completed/Complete/Confirmed,1accepted file/1Document, no timeout or uncertain
+process settlement. All77 prepared hashes match. One request,4208input/4083output
+tokens, known usage. Root phone-bec479723a0c, database
+vulgata_oct_pilot_cadb0a89eeb143cc83f6d9378598f3d6, batch57f6f564-fa3e-43a6-b07c-79702c26c0a8,
+report generate-a49bfd6c14e84fa99c83c0d7cb9fedb6.stdout. Retained publication
+80e97dd9-9d52-470b-b313-fbedf26931a6, logical Document
+c5386ea8-d4e0-fd3b-27e1-fcc203b4f1bb, exact version1dfc7bc8-af56-48b2-a87d-391b25a2b30a.
+This short run does not exercise renewal or ordinary-reader access. Whole restart7
+follows within the existing bounded series; JSON behavior remains unchanged.
+
+## Real renewal exposed retained-descriptor ownership defect
+
+Restart9 reached13accepted files and then source_frame_unavailable at285.51s.
+Both new approval rows were issued at17:56:00UTC (expiry18:06:00UTC), immediately
+before failure; old rows were still current. All77source hashes matched, and the
+next userAuth.xml file was1449bytes/valid UTF-8. Runtime replacement had disposed
+the descriptor, while its intentional disposal retains .codegraph. The next
+PrepareAsync rejects that preexisting state by design. This is a defect in this
+Scan lifecycle correction, not a reason to bypass the factory's ownership guard.
+The earlier controlled tests used inert runtimes and missed the descriptor handoff.
+
+Plan.md109-114 requires one preparation and retained same-process descriptor per
+Repository. Independent assessment accepts a per-run/per-repository CodeGraph
+owner holding only that exact descriptor and its original run/session lifetime.
+Replacement runtimes borrow it, keep their own new source approval/verifier and
+close native sessions/JDT before replacement. Final source cleanup closes all
+runtimes then owners, even on cleanup failure. Failed creation is terminal and
+cannot retry against partially created state. No deletion, path-based reconstruction,
+foreign adoption, shared schema or authority-policy change. Original session count,
+source/root/state/currentness and deadline checks remain mandatory. Restart10 is
+held for controlled RED/GREEN and review of this correction.
+
+Ownership regression RED `isolation-d086a8cddf2f449197a2fd50a941b5d3`:
+34selected,32passed,2failed,0skipped. Runtime preparation received its1minute
+authority-bound lifetime rather than the5minute owner lifetime; factory replacement
+had no shared owner. These are behavioral failures, not build errors.
+The correction keeps original preparation under the existing current-approval,
+30second lease/preparation cancellation checks and the runtime cancellation token;
+only descriptor retention uses original run/session remaining time. Every new
+source context still verifies the replacement approval and exact root/state.
+Added a real contained-read controlled test against test-owned files: two approval
+identities produce their own immutable frame origins using the same descriptor,
+one preparation and no native/provider call. Runtime disposal settles borrowers;
+owner disposal releases the descriptor once. Final full-suite verification follows.
+
+Independent implementation review accepted the owner correction. Full SelfContained
+`isolation-e1f2ed78bdb748dbbb92d6d5c7a0418f`:4839selected,4838passed,1failed,
+0skipped. All13 selected owner/renewal-named cases passed, including real contained
+frames with different genuine test approval identities. The sole failure is the
+existing generated-report parser case. No assertion changes or full-suite GREEN
+claim. No native/provider qualification is inferred from these controlled tests.

@@ -166,6 +166,15 @@ accepted;70 final affected checks pass. Full SelfContained is4830/4832 with the
 report-parser and historical streaming-timing failures, not GREEN. Restarts7-10
 remain available after the isolated failed-file check; text-mode correction and
 hard retry remain conditional, not implemented or qualified.
+Restarts7-8 repeated malformed final JSON. Restart9 renewed genuine approvals but
+exposed a Scan ownership defect: runtime replacement tried to prepare CodeGraph
+again against retained state. The existing refusal is correct. The correction
+retains one original run-owned descriptor per repository, lends it to replacement
+runtimes with their own current approvals, and disposes it after all borrowers.
+It does not delete/adopt state or relax currentness. Independent review accepted;
+full SelfContained4838/4839, all owner/renewal cases passing, sole existing report
+parser failure. Native qualification and remaining restart10 are recorded in the
+renewal evidence above.
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.

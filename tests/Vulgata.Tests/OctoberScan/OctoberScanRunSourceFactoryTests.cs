@@ -99,6 +99,8 @@ public sealed class OctoberScanRunSourceFactoryTests
         Assert.NotEqual(runtimeApprovals[0].ApprovalIdentity, runtimeApprovals[1].ApprovalIdentity);
         Assert.True(runtimes[1].HasPreparedBinding(authority.Approval.RepositoryId,
             authority.Approval.RootBindingIdentity, runtimeApprovals[1].ApprovalIdentity));
+        object firstOwner = Assert.IsAssignableFrom<object>(GraphOwner(runtimes[0]));
+        Assert.Same(firstOwner, GraphOwner(runtimes[1]));
         Assert.All(authority.Verified, item => Assert.Same(harness.Execution.Session, item));
     }
 
@@ -348,4 +350,7 @@ public sealed class OctoberScanRunSourceFactoryTests
 
     private static bool TryReserve(object budget) =>
         (bool)budget.GetType().GetMethod("TryReserve", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(budget, null)!;
+
+    private static object? GraphOwner(OctoberToolRuntime runtime) =>
+        typeof(OctoberToolRuntime).GetField("_graphOwner", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(runtime);
 }

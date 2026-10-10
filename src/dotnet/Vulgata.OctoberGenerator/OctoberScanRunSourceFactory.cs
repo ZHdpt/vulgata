@@ -68,6 +68,7 @@ internal sealed class OctoberScanRunSourceFactory
             throw new InvalidOperationException("The exact source configuration is unavailable.");
         long started = _clock.GetTimestamp();
         var runtimes = new Dictionary<Guid, RuntimeBinding>();
+        var graphOwners = new List<OctoberCodeGraphOwner>();
         TimeSpan RunRemaining() => Min(remainingRunLifetime - _clock.GetElapsedTime(started),
             execution.Session.ExpiresAtUtc - _clock.GetUtcNow());
         using var opening = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -77,24 +78,27 @@ internal sealed class OctoberScanRunSourceFactory
             foreach (OctoberRepositorySelection selected in execution.Setup.Snapshot.Request.Repositories)
             {
                 opening.Token.ThrowIfCancellationRequested();
+                var graphOwner = new OctoberCodeGraphOwner(selected.RepositoryId, selected.RootBindingIdentity, RunRemaining);
+                graphOwners.Add(graphOwner);
                 runtimes.Add(selected.RepositoryId, await IssueRuntimeAsync(execution, selected,
-                    new(selected.RepositoryId), RunRemaining, TimeSpan.Zero, null, opening.Token));
+                    new(selected.RepositoryId), graphOwner, RunRemaining, TimeSpan.Zero, null, opening.Token));
             }
             opening.Token.ThrowIfCancellationRequested();
             return new Source(this, execution, runtimes, RunRemaining);
         }
         catch
         {
-            await DisposeRuntimesAsync(runtimes.Values.Select(value => value.Runtime));
+            await DisposeResourcesAsync(runtimes.Values, graphOwners);
             throw;
         }
     }
 
     private sealed record RuntimeBinding(OctoberRepositorySelection Selection, PreparedSourceApproval Approval,
-        DateTimeOffset Expires, long Started, TimeSpan Lifetime, OctoberToolRuntime Runtime, OctoberCodeGraphSessionBudget Budget);
+        DateTimeOffset Expires, long Started, TimeSpan Lifetime, OctoberToolRuntime Runtime,
+        OctoberCodeGraphSessionBudget Budget, OctoberCodeGraphOwner GraphOwner);
 
     private async Task<RuntimeBinding> IssueRuntimeAsync(OctoberGenerateExecution execution,
-        OctoberRepositorySelection selected, OctoberCodeGraphSessionBudget budget, Func<TimeSpan> runRemaining,
+        OctoberRepositorySelection selected, OctoberCodeGraphSessionBudget budget, OctoberCodeGraphOwner graphOwner, Func<TimeSpan> runRemaining,
         TimeSpan requiredLifetime, Func<CancellationToken, Task>? verifyPrevious, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
@@ -143,11 +147,12 @@ internal sealed class OctoberScanRunSourceFactory
         try
         {
             runtime.UseSessionBudget(budget);
+            runtime.UseGraphOwner(graphOwner);
             token.ThrowIfCancellationRequested();
             RequireWindow();
             if (!runtime.HasPreparedBinding(selected.RepositoryId, approval.RootBindingIdentity, approval.ApprovalIdentity))
                 throw new OctoberSourceWindowException(OctoberSourceWindowFailure.BindingMismatch);
-            return new(selected, approval, expires, started, lifetime, runtime, budget);
+            return new(selected, approval, expires, started, lifetime, runtime, budget, graphOwner);
         }
         catch
         {
@@ -164,12 +169,21 @@ internal sealed class OctoberScanRunSourceFactory
         try { await task; } catch (Exception) { }
     }
 
-    private static async Task DisposeRuntimesAsync(IEnumerable<OctoberToolRuntime> runtimes)
+    private static async Task DisposeResourcesAsync(IEnumerable<RuntimeBinding> bindings,
+        IEnumerable<OctoberCodeGraphOwner>? graphOwners = null)
     {
+        RuntimeBinding[] owned = bindings.ToArray();
         bool failed = false;
-        foreach (OctoberToolRuntime runtime in runtimes)
+        foreach (RuntimeBinding value in owned)
         {
-            try { await runtime.DisposeAsync(); }
+            try { await value.Runtime.DisposeAsync(); }
+            catch (Exception) { failed = true; }
+        }
+        // Retire original descriptors only after all approval-bound borrowers.
+        // Still attempt owner cleanup when a borrower could not confirm settlement.
+        foreach (OctoberCodeGraphOwner owner in (graphOwners ?? owned.Select(value => value.GraphOwner)).Distinct())
+        {
+            try { await owner.DisposeAsync(); }
             catch (Exception) { failed = true; }
         }
         if (failed) throw new InvalidOperationException("Owned source cleanup could not be confirmed.");
@@ -244,7 +258,7 @@ internal sealed class OctoberScanRunSourceFactory
                     try { await previous.Runtime.DisposeAsync(); }
                     catch { throw new OctoberSourceWindowException(OctoberSourceWindowFailure.CleanupUnconfirmed); }
                     await VerifyOldAsync(previous, cancellationToken);
-                    RuntimeBinding replacement = await owner.IssueRuntimeAsync(execution, previous.Selection, previous.Budget,
+                    RuntimeBinding replacement = await owner.IssueRuntimeAsync(execution, previous.Selection, previous.Budget, previous.GraphOwner,
                         runRemaining, requiredLifetime, token => VerifyOldAsync(previous, token), cancellationToken);
                     try
                     {
@@ -303,7 +317,7 @@ internal sealed class OctoberScanRunSourceFactory
         private async Task DisposeCoreAsync()
         {
             await _gate.WaitAsync();
-            try { await DisposeRuntimesAsync(runtimes.Values.Select(value => value.Runtime)); }
+            try { await DisposeResourcesAsync(runtimes.Values); }
             finally { _gate.Release(); }
         }
     }

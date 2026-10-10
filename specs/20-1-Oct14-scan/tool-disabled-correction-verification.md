@@ -163,3 +163,36 @@ run deadline is30minutes. This independently explains the later source verificat
 refusal. No approval token or secret was output. No lifetime waiver or blind retry.
 Consumer renewal boundary and native-budget/provenance implications are under
 independent assessment; consultation received this distinct error for advice.
+
+Renewal correction reviewed/tested/committed at `b4a8e5fe`; see its separate evidence.
+Isolated QueryAllCreditCardOp.java passed before resuming whole restarts.
+Restart7: phone-08e44d8627fd, database vulgata_oct_pilot_a9182fe5bcdf48a3b35132b2757231af,
+batch a68a130f-5714-4761-bd1c-bdb56156e4e5,
+report generate-971ff42b310f42d7b0ea0c65f12ae0ed.stdout.
+Exit1 in145.44s, settled/no timeout,3accepted/0Documents/NotRequested.
+GuestSessionCreateOp.java failed Syntax/Root, MissingClosingDelimiters atEOF,
+1object/1array open; HTTP/SDK/parser identical5336bytes, Stop/DONE,
+256reasoning tokens.5requests,33848input/35149output, all known;77source hashes match.
+This short run did not exercise renewal. Restart8 follows under the same grant.
+
+Restart8: phone-db14f4b7f0a6, database vulgata_oct_pilot_eccce48c89ed49edacc16c8419ed3bc7,
+batch8b374a90-a91b-45f4-8f10-d77d559a3685,
+report generate-63311640c7ef4ed9b635ac204a4f9965.stdout.
+Exit1 in81.54s, settled/no timeout,1accepted/0Documents/NotRequested.
+SdkAntiFraudHandleOp.java failed Syntax/Root, MissingClosingDelimiters atEOF,
+1object/1array open; HTTP/SDK/parser identical5104bytes, Stop/DONE,
+400reasoning tokens.3requests,18250input/18840output, all known;77source hashes match.
+Restart9 follows under the original bounded grant.
+
+Restart9: phone-392ce8600ac7, database vulgata_oct_pilot_725ff009d2e64d7ebb84ea2c5700a142,
+batch c2c41e19-d0ec-4aa3-b314-e0b4f33f0919,
+report generate-635988be2cc84b4ea3c2dd49b8078c73.stdout.
+Exit1 in285.51s, settled/no timeout,13accepted/0Documents/NotRequested.
+No Worker diagnostic: source_frame_unavailable before userAuth.xml frame.
+15requests,80749input/58821output, known usage;77source hashes match.
+Both repository approvals were genuinely renewed immediately before failure.
+Diagnosis: renewal disposed the original CodeGraph descriptor then attempted
+PrepareAsync against retained .codegraph, correctly rejected as preexisting state.
+This is a Scan-owned lifecycle defect in b4a8e5fe, not JSON or source-byte change.
+Restart10 is held for correction to retain one original run-bound descriptor,
+as already required by plan.md109-114. No deletion/adoption bypass is authorized.
