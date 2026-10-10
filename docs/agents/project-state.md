@@ -63,6 +63,11 @@ for the separately recorded real POM retry on `7c5e82fc`: one provider request,
 9748 input/1816 output tokens, followed by local BudgetExceeded/Admission. No
 Length diagnostic this time, but no accepted CL/publication or whole-slice retry.
 The report does not identify the exact admission limit; existing guards remain.
+The user's subsequent explicit whole-slice attempt selected all 77 files but
+stopped on `mbs_account/pom.xml` before any provider call with the same
+BudgetExceeded/Admission classification. Zero accepted files/Documents; no
+publication. The maximum-cap evidence above retains this distinct run and its
+fresh owned resources. No additional retry ran.
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

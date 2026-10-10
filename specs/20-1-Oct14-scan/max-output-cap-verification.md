@@ -58,3 +58,28 @@ measurement of this failed request. No input/byte/deadline guard was widened, no
 raw provider reasoning was retained, and no extra paid attempt or whole-slice
 retry ran. Resources and previous successful data remain retained. This is failed
 real generation evidence, not reader qualification or completion of the slice.
+
+## Explicit whole-slice attempt
+
+The user subsequently explicitly requested "Try a whole scan", superseding the
+earlier condition that POM success precede a whole-slice attempt. On unchanged
+production code at `75fb437893736c18c530f5b7ad1538d0f2e87855`, a fresh owned target
+`phone-87fc12c89012`, batch `aca855cb-8d31-4dca-a3e4-6a66bb79a385`, database
+`vulgata_oct_pilot_31eda76f1dc94a21bc506628d33cafd6` selected all 77 approved files
+across both prepared roots. CL-only, low reasoning, 393216 output cap, existing
+execution/authorization limits and zero automatic retries remained configured.
+Bootstrap, prepare and select passed; no new implementation or test changes.
+
+Report `generate-650b851d1b184dd59bbb79301c52adfe.stdout` records exit 1 after
+17.34 seconds, no timeout, `NeedsSettlementCheck=false`, empty stderr. The first
+file was `mbs_account/pom.xml`; it failed `BudgetExceeded / Admission` before any
+provider call. Requests/input/output were all zero, unknown usage false. Inventory
+and selected counts were both 77; accepted files and Documents were both zero,
+coverage Partial, execution Failed, publication NotRequested. Remaining files
+were not completed. The exact admission sub-limit is still not exposed by the
+report. This is a local refusal, not provider output truncation.
+
+All 77 copied source hashes remained unchanged. Previous data, this new owned
+database and diagnostics are retained; shared container/volume are preserved.
+No additional retry or reader qualification occurred. Previous controlled suite
+results remain unchanged and are not a claim of successful real generation.
