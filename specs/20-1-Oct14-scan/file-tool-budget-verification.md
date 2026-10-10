@@ -119,3 +119,25 @@ isolated and partial historical/whole-run data remain retained. Controlled budge
 behavior and isolated POM real publication pass; whole-slice publication and
 ordinary-reader qualification remain incomplete. PostgreSQL suite was not rerun;
 these real operations used only the separately approved owned databases.
+
+## User-requested isolated GuestSync retry
+
+The user next requested the failed file alone. No code/configuration-limit change:
+reviewed implementation `c82adf22`, checkout `3ba6822e`, explicit32/48, low reasoning,
+MaxTokens393216 and existing source/authorization/deadline guards. Fresh target
+`phone-4dbbb84d3bdd`, batch `63b36ac1-1012-4064-81e8-249aea634965`, database
+`vulgata_oct_pilot_a02f3b6c6285431582f6ffb61b5d86ff`. Only account
+`src/main/java/cn/com/yitong/actions/cust/custcenter/GuestSyncOp.java` selected;
+the rest of the approved77-file scope remains supporting.
+
+Report `generate-73e56de83e2b4efc8c5585cd3aa3be4a.stdout`: exit0 in22.73 seconds,
+no timeout/settlement check, empty stderr, Completed/Complete/Confirmed. One
+provider request,3321 input/931 output tokens, all known. One accepted file and
+one CL Document; publication `66341c56-22f6-4f93-ab6c-e2bfea782658`, logical
+Document `daa1bb88-5923-c7a7-bada-7c022ab05233`, exact version
+`9c943846-7e8a-4a0e-8784-eb5d7d40a8f9`. All77 prepared-source hashes match.
+
+The previous malformed JSON did not reproduce in this isolated attempt. This is
+not a reliability guarantee or proof of the whole scan/ordinary reader. All data
+retained. No additional whole-scan retry ran in this request; no controlled suite
+rerun was needed because production/test code remained unchanged.

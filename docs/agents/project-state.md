@@ -141,6 +141,10 @@ Syntax/Root JSON error, MismatchedDelimiter before EOF, identical HTTP/SDK/parse
 text despite Stop. No tool-budget or deadline failure;17 requests, usage known,
 no whole-run publication. Data retained, no further paid retry. See
 [file tool budget evidence](../../specs/20-1-Oct14-scan/file-tool-budget-verification.md).
+The user's subsequent isolated GuestSyncOp.java retry succeeded unchanged in22.73
+seconds, one request, one accepted file and confirmed CL Document publication.
+Its prior malformed JSON did not reproduce; this does not qualify the whole scan.
+No subsequent whole run started; the exact retained version is in that evidence.
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
