@@ -19,6 +19,62 @@ namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static OctoberParseFailureCaptureOptions? ReadParseFailureCaptureOptions(IConfiguration configuration,
+        OctoberGeneratorCommand command, OctoberRuntimeConfiguration? runtime, string keyRingPath)
+    {
+        const string prefix = "October:ParseFailureCapture";
+        var children = configuration.GetSection(prefix).GetChildren().ToArray();
+        if (children.Length == 0 && configuration[prefix] is null) return null;
+        try
+        {
+            static string BooleanText(string? value) =>
+                string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ? "true" :
+                string.Equals(value, "false", StringComparison.OrdinalIgnoreCase) ? "false" : throw new InvalidOperationException();
+            string[] names = ["Enabled", "TargetId", "BatchId", "SubjectId", "ManagementAuthorityId", "Directory"];
+            if (configuration[prefix] is not null || children.Any(item => !names.Contains(item.Key, StringComparer.Ordinal) || item.GetChildren().Any()))
+                throw new InvalidOperationException();
+            if (configuration is IConfigurationRoot root)
+                foreach (string name in names)
+                    if (root.Providers.Select(provider => provider.TryGet(prefix + ":" + name, out string? value) ? value : null)
+                        .Select(value => name == "Enabled" && value is not null ? BooleanText(value) : value)
+                        .Where(value => value is not null).Distinct(StringComparer.Ordinal).Skip(1).Any()) throw new InvalidOperationException();
+            string enabled = BooleanText(configuration[prefix + ":Enabled"]);
+            if (enabled == "false" && children.Length == 1) return null;
+            if (enabled != "true" || children.Length != names.Length || command.Mode != OctoberGeneratorMode.Generate || runtime is null)
+                throw new InvalidOperationException();
+            string Exact(string name)
+            {
+                string value = configuration[prefix + ":" + name] ?? throw new InvalidOperationException();
+                if (string.IsNullOrWhiteSpace(value) || value.Length > 4096 || value.Trim() != value || value.Any(char.IsControl))
+                    throw new InvalidOperationException();
+                return value;
+            }
+            string target = Exact("TargetId");
+            if (target != command.TargetId || !Guid.TryParseExact(Exact("BatchId"), "D", out Guid batch) || batch != command.BatchId)
+                throw new InvalidOperationException();
+            string directory = Exact("Directory");
+            string[] exclusions = CaptureExcludedPaths(configuration, runtime, keyRingPath);
+            if (!OctoberParseFailureCapture.SafePath(directory) || exclusions.Any(path => !OctoberParseFailureCapture.SafePath(path, allowRoot: true)) ||
+                exclusions.Any(path => OctoberParseFailureCapture.Overlaps(directory, path))) throw new InvalidOperationException();
+            return new(target, batch, Exact("SubjectId"), Exact("ManagementAuthorityId"), directory);
+        }
+        catch (Exception error) when (error is InvalidOperationException or ArgumentException or NotSupportedException or IOException)
+        { throw new InvalidOperationException("October parse capture configuration is invalid."); }
+    }
+
+    private static string[] CaptureExcludedPaths(IConfiguration configuration, OctoberRuntimeConfiguration runtime, string keyRingPath)
+        => runtime.PreparedRoots.Select(root => root.PhysicalRootPath)
+            .Concat([runtime.JavaNavigation.DisposableStateRoot, runtime.LogDirectory, keyRingPath,
+                runtime.JavaHostPolicy.JavaBinDirectory, Path.GetDirectoryName(runtime.CodeGraphCommandPath)!,
+                Path.GetDirectoryName(runtime.JavaHostPolicy.FixedCmdAbsolutePath)!])
+            .Concat(runtime.JavaHostPolicy.DeclaredRuntimeReadRoots)
+            .Concat(runtime.JavaHostPolicy.ApprovedExecutableDirectories)
+            .Concat(runtime.JavaHostPolicy.FixedChildPathEntries)
+            .Concat(new[] { "October:Operator:CredentialFile", "October:Providers:ConfigurationFile", "October:RuntimeFile",
+                "October:ScanPolicyFile", "October:BusinessSettingsFile", "October:BusinessRootSelectionDirectory" }
+                .Select(key => configuration[key]).OfType<string>())
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
     internal static OctoberOperatorRootSelectionOptions? ReadOperatorRootSelectionOptions(IConfiguration configuration,
         OctoberScanPolicy policy, OctoberBusinessSettings? settings, OctoberRuntimeConfiguration runtime)
     {
@@ -109,13 +165,15 @@ public static class OctoberGeneratorEntryPoint
         ISecretEncryptionService encryption, OctoberScanPolicy policy, OctoberSelectedWorkerProvider provider,
         OctoberBusinessSettings? settings,
         Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
-        TimeProvider? timeProvider = null, OctoberOperatorRootSelectionOptions? operatorSelection = null)
+        TimeProvider? timeProvider = null, OctoberOperatorRootSelectionOptions? operatorSelection = null,
+        OctoberParseFailureCapture? parseFailureCapture = null)
     {
         TimeProvider clock = timeProvider ?? TimeProvider.System;
         var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock);
         return new OctoberGenerateRunner(dependencies with
         {
-            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock)
+            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock),
+            ParseFailureCapture = parseFailureCapture
         }, clock);
     }
 
@@ -262,6 +320,7 @@ public static class OctoberGeneratorEntryPoint
             OctoberRuntimeConfiguration? runtime = null;
             OctoberBusinessSettings? businessSettings = null;
             OctoberOperatorRootSelectionOptions? operatorSelection = null;
+            OctoberParseFailureCaptureOptions? captureOptions = null;
             string keyRingPath;
             string applicationName;
             try
@@ -276,6 +335,7 @@ public static class OctoberGeneratorEntryPoint
                 authorityConfiguration = ReadAuthorityConfiguration(configuration, command);
                 keyRingPath = Required(configuration, "DataProtection:KeyRingPath");
                 applicationName = Required(configuration, "DataProtection:ApplicationName");
+                captureOptions = ReadParseFailureCaptureOptions(configuration, command, runtime, keyRingPath);
             }
             catch (Exception exception) when (exception is InvalidOperationException or JsonException or
                 ArgumentException)
@@ -387,7 +447,9 @@ public static class OctoberGeneratorEntryPoint
                 ? ComposeGenerate(runtime!, localAuthority,
                     new ConfiguredContextFactory(scope.ServiceProvider.GetRequiredService<DbContextOptions<OctoberDbContext>>()),
                     protection.GetRequiredService<ISecretEncryptionService>(), command.ScanPolicy!, workerProvider!,
-                    businessSettings, bindReader, operatorSelection: operatorSelection) : null;
+                    businessSettings, bindReader, operatorSelection: operatorSelection,
+                    parseFailureCapture: captureOptions is null ? null : new OctoberParseFailureCapture(captureOptions,
+                        CaptureExcludedPaths(configuration, runtime!, keyRingPath))) : null;
             OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
             return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
                 settle: generate is null ? null : () => generate.DisposeAsync());
@@ -494,6 +556,10 @@ public static class OctoberGeneratorEntryPoint
                         Category = DefinedStatus(parse.Category),
                         Slot = DefinedStatus(parse.Slot)
                     } : null,
+                CaptureStatus = worker.Status is { } captureWorkerStatus && Enum.IsDefined(captureWorkerStatus) &&
+                    captureWorkerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed &&
+                    worker.FailureStage == Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.ProposalParse
+                    ? DefinedStatus(worker.CaptureStatus) : null,
                 ToolFailure = ProjectToolFailure(worker)
             } : null,
             Publication = publication,

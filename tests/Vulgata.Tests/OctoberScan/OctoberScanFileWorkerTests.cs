@@ -679,6 +679,186 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var lease = Assert.Single(scope.Leases);
         Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ParseCapture_UsesOnlyFinalFailedProposalAndPreservesOriginalOutcomeAsync(bool sinkThrows)
+    {
+        const string finalText = "{SYNTHETIC_CAPTURE_FINAL";
+        string? captured = null; int captures = 0;
+        using var transport = new FragmentedToolHttp { InitialTextOverride = "SYNTHETIC_PRIOR_NOT_CAPTURED", FinalTextOverride = finalText };
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        var tool = AIFunctionFactory.Create((string relativePath) => "SYNTHETIC_TOOL_NOT_CAPTURED", "read_prepared_source");
+        var scope = new Scope();
+        var executor = new OctoberFileWorkerExecutor(client, scope, captureParseFailure: (text, token) =>
+        {
+            token.ThrowIfCancellationRequested(); captures++; captured = text;
+            return sinkThrows ? Task.FromException<OctoberWorkerCaptureStatus>(new IOException("SYNTHETIC_SINK_EXCEPTION"))
+                : Task.FromResult(OctoberWorkerCaptureStatus.Captured);
+        });
+        var result = await executor.ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        Assert.Equal(1, captures); Assert.True(captured == finalText);
+        Assert.Equal(sinkThrows ? OctoberWorkerCaptureStatus.Failed : OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
+        Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(2, transport.Calls); Assert.Equal(1, result.SettledToolCalls);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+        Assert.Equal(20, scope.Leases[0].Usage!.InputTokens); Assert.Equal(10, scope.Leases[0].Usage!.OutputTokens);
+        Assert.Equal(30, scope.Leases[1].Usage!.InputTokens); Assert.Equal(20, scope.Leases[1].Usage!.OutputTokens);
+        Assert.DoesNotContain("SYNTHETIC", JsonSerializer.Serialize(result));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("disabled")]
+    [InlineData("success")]
+    [InlineData("validation")]
+    [InlineData("terminal")]
+    [InlineData("budget")]
+    [InlineData("admission")]
+    [InlineData("source")]
+    [InlineData("cancelled")]
+    public async Task ParseCapture_ExcludedBoundariesNeverInvokeSinkAsync(string condition)
+    {
+        int captures = 0;
+        using var cancellation = new CancellationTokenSource();
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        bool current = true;
+        frame.Verify = _ => Task.FromResult(current);
+        string text = condition switch
+        {
+            "success" => UnitJson,
+            "validation" => UnitJson.Replace("\"parentSelector\":null", "\"parentSelector\":\"file\""),
+            "budget" => new string('x', 262145),
+            _ => "{SYNTHETIC_PARSE_FAILURE"
+        };
+        using var client = new ScriptedClient([new(text, condition == "terminal" ? ChatFinishReason.Length : ChatFinishReason.Stop)], () =>
+        {
+            if (condition == "source") current = false;
+            if (condition == "cancelled") cancellation.Cancel();
+        });
+        var scope = new Scope { Denied = condition == "admission" };
+        Func<string, CancellationToken, Task<OctoberWorkerCaptureStatus>>? sink = condition == "disabled" ? null : (_, _) =>
+        { captures++; return Task.FromResult(OctoberWorkerCaptureStatus.Captured); };
+        var result = await new OctoberFileWorkerExecutor(client, scope, captureParseFailure: sink)
+            .ExecuteAsync(Request(frame), [], cancellation.Token);
+        Assert.Equal(0, captures); Assert.Null(result.CaptureStatus);
+        Assert.Equal(condition switch
+        {
+            "success" => OctoberFileWorkerStatus.Completed,
+            "budget" => OctoberFileWorkerStatus.BudgetExceeded,
+            "admission" => OctoberFileWorkerStatus.Denied,
+            "source" => OctoberFileWorkerStatus.SourceChanged,
+            "cancelled" => OctoberFileWorkerStatus.Cancelled,
+            _ => OctoberFileWorkerStatus.InvalidOutput
+        }, result.Status);
+        if (condition == "validation") Assert.Equal(OctoberWorkerFailureStage.ProposalValidation, result.FailureStage);
+        if (condition == "disabled") Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        if (condition != "success") Assert.Null(result.Proposal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ParseCapture_CancellationCannotAbandonActualSinkTaskAsync()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var client = new ScriptedClient([new("{SYNTHETIC_PARSE_FAILURE", ChatFinishReason.Stop)]);
+        var scope = new Scope();
+        int captures = 0;
+        var executor = new OctoberFileWorkerExecutor(client, scope, captureParseFailure: async (_, token) =>
+        {
+            captures++; using var registration = token.Register(() => cancelled.TrySetResult());
+            entered.TrySetResult(); await release.Task;
+            return OctoberWorkerCaptureStatus.Suppressed;
+        });
+        var pending = executor.ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [], cancellation.Token);
+        try
+        {
+            await Task.WhenAny(entered.Task, pending).WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.True(entered.Task.IsCompleted);
+            cancellation.Cancel(); await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            await Task.WhenAny(pending, Task.Delay(100));
+            Assert.False(pending.IsCompleted);
+        }
+        finally { release.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(3)); }
+        var result = await pending;
+        Assert.Equal(1, captures); Assert.Null(result.Proposal);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.NotEqual(OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ParseCapture_StrictUtf8ByteCapIsIndependentOfLargerWorkerOutputAllowanceAsync(bool extraByte)
+    {
+        string text = "{" + new string('中', 87381) + (extraByte ? "x" : string.Empty);
+        Assert.Equal(262144 + (extraByte ? 1 : 0), Encoding.UTF8.GetByteCount(text));
+        int captures = 0;
+        using var client = new ScriptedClient([new(text, ChatFinishReason.Stop)]);
+        var scope = new Scope();
+        var request = Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputUtf8Bytes: 1048576) };
+        var result = await new OctoberFileWorkerExecutor(client, scope, captureParseFailure: (captured, _) =>
+        {
+            captures++; Assert.True(captured == text);
+            return Task.FromResult(OctoberWorkerCaptureStatus.Captured);
+        }).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(extraByte ? OctoberWorkerCaptureStatus.TooLarge : OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
+        Assert.Equal(extraByte ? 0 : 1, captures); Assert.Null(result.Proposal); Assert.Null(result.BudgetFailure);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ParseCapture_RechecksSourceAfterExistingFinalVerificationBoundaryAsync()
+    {
+        int baselineChecks = 0;
+        var baselineFrame = new Frame("if (enabled) Run();\nreturn;") { Verify = _ => { baselineChecks++; return Task.FromResult(true); } };
+        using (var baseline = new ScriptedClient([new("{SYNTHETIC_PARSE_FAILURE", ChatFinishReason.Stop)]))
+        {
+            var result = await new OctoberFileWorkerExecutor(baseline, new Scope()).ExecuteAsync(Request(baselineFrame), []);
+            Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Null(result.CaptureStatus);
+        }
+        Assert.True(baselineChecks > 0);
+        int checks = 0, captures = 0;
+        var frame = new Frame("if (enabled) Run();\nreturn;") { Verify = _ => Task.FromResult(++checks <= baselineChecks) };
+        using var client = new ScriptedClient([new("{SYNTHETIC_PARSE_FAILURE", ChatFinishReason.Stop)]);
+        var actual = await new OctoberFileWorkerExecutor(client, new Scope(), captureParseFailure: (_, _) =>
+        { captures++; return Task.FromResult(OctoberWorkerCaptureStatus.Captured); }).ExecuteAsync(Request(frame), []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, actual.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, actual.FailureStage);
+        Assert.True(checks > baselineChecks); Assert.Equal(0, captures);
+        Assert.Equal(OctoberWorkerCaptureStatus.Suppressed, actual.CaptureStatus); Assert.Null(actual.Proposal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ParseCapture_TypedParserFailureKeepsProviderFailedAndScrubsUnknownSinkStatusAsync(bool unknownStatus)
+    {
+        int captures = 0;
+        string text = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"0\"");
+        using var client = new ScriptedClient([new(text, ChatFinishReason.Stop)]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope, captureParseFailure: (_, _) =>
+        { captures++; return Task.FromResult(unknownStatus ? (OctoberWorkerCaptureStatus)99999 : OctoberWorkerCaptureStatus.Captured); })
+            .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(1, captures); Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Ordinal), result.ParseFailure);
+        Assert.Equal(unknownStatus ? (OctoberWorkerCaptureStatus?)null : OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
+        Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
     private sealed class SynchronousFailureTransport : HttpMessageHandler
     {
         internal int Calls;

@@ -36,6 +36,7 @@ internal sealed record OctoberGenerateRunnerDependencies(
     IOctoberKnowledgeOperationLog OperationLog)
 {
     internal OctoberBusinessRunComposition? Business { get; init; }
+    internal OctoberParseFailureCapture? ParseFailureCapture { get; init; }
 }
 
 /// <summary>Owns the original sequential Generate run; a stored receipt is never a restart grant.</summary>
@@ -186,6 +187,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _runToken = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, _stop.Token, _caller);
         CancellationToken token = _runToken.Token;
         Guid runId = Guid.NewGuid();
+        bool captureBound = _dependencies.ParseFailureCapture?.TryBind(execution, runId) == true;
         if (execution.Policy.OutputStage == "cl-and-bl")
             _businessFinalizationOperation = new(_binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
         // Construction precedes Begin and all preparation, so no later phase receives
@@ -282,7 +284,19 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     tools = tools.Select(tool => (AIFunction)new MeasuredTool(this, tool)).ToArray();
                     IChatClient client = execution.Policy.OutputStage == "cl-and-bl" && _businessClient is not null
                         ? _businessClient : await AcquireClientAsync(execution.Provider, token);
-                    var executor = new OctoberFileWorkerExecutor(client, _scope);
+                    Func<string, CancellationToken, Task<OctoberWorkerCaptureStatus>>? capture = _dependencies.ParseFailureCapture is { } sink
+                        ? (text, callToken) => captureBound
+                            ? sink.TryCaptureAsync(execution, runId, text, async verificationToken =>
+                            {
+                                if (!FileAvailable || verificationToken.IsCancellationRequested || !ReferenceEquals(_execution, execution) ||
+                                    !ReferenceEquals(_activeLedger, ledger) || execution.Session.ExpiresAtUtc <= _time.GetUtcNow()) return false;
+                                bool current = await ledger.VerifyCurrentAsync(verificationToken);
+                                return current && FileAvailable && !verificationToken.IsCancellationRequested &&
+                                    ReferenceEquals(_activeLedger, ledger) && execution.Session.ExpiresAtUtc > _time.GetUtcNow();
+                            }, callToken)
+                            : Task.FromResult(OctoberWorkerCaptureStatus.Suppressed)
+                        : null;
+                    var executor = new OctoberFileWorkerExecutor(client, _scope, capture);
                     Task<OctoberFileWorkerResult>? actualWorker = null;
                     var attempt = new OctoberAttemptState(new(_binding.BatchId, OperationKind.AcceptFile, Guid.NewGuid()), request,
                         callToken => actualWorker = executor.ExecuteAsync(request, tools, callToken),
@@ -417,7 +431,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             ParseFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.ParseFailure is { } parse
                 ? new(parse.Category is { } category && Enum.IsDefined(category) ? category : null,
-                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null) : null
+                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null) : null,
+            CaptureStatus = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
+                result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.CaptureStatus is { } capture && Enum.IsDefined(capture)
+                ? capture : null
         };
     }
 

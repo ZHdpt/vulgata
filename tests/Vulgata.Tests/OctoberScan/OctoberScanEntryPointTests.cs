@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using System.Text;
 using System.Collections.Immutable;
 using Microsoft.AspNetCore.DataProtection;
@@ -450,7 +451,7 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "absent" or "foreign-binding") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "budgetFailure", "failureStage", "parseFailure", "retryDisposition", "status", "terminalFailure", "toolFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "budgetFailure", "captureStatus", "failureStage", "parseFailure", "retryDisposition", "status", "terminalFailure", "toolFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined") { Assert.All(diagnostic.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
         Assert.Equal(condition is "budget" or "undefined-budget" ? "BudgetExceeded" : condition == "completed-terminal" ? "Completed" : "InvalidOutput", diagnostic.GetProperty("status").GetString());
         Assert.Equal("None", diagnostic.GetProperty("retryDisposition").GetString());
@@ -509,6 +510,151 @@ public sealed class OctoberScanEntryPointTests
         if (condition == "unknown-status") Assert.Equal(JsonValueKind.Null, projected.GetProperty("cleanupConfirmed").ValueKind);
         else Assert.True(projected.GetProperty("cleanupConfirmed").GetBoolean());
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("absent")]
+    [InlineData("disabled")]
+    [InlineData("valid")]
+    [InlineData("partial")]
+    [InlineData("unknown")]
+    [InlineData("disabled-with-fields")]
+    [InlineData("wrong-target")]
+    [InlineData("wrong-batch")]
+    [InlineData("relative-directory")]
+    [InlineData("log-overlap")]
+    public void ParseCaptureConfiguration_IsExplicitRunBoundAndDefaultOffAsync(string condition)
+    {
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-config-" + Guid.NewGuid().ToString("N"));
+        Guid batch = Guid.NewGuid();
+        const string prefix = "October:ParseFailureCapture:";
+        var values = new Dictionary<string, string?>();
+        if (condition != "absent") values[prefix + "Enabled"] = condition.StartsWith("disabled", StringComparison.Ordinal) ? "false" : "true";
+        if (condition is not ("absent" or "disabled"))
+        {
+            values[prefix + "TargetId"] = condition == "wrong-target" ? "foreign" : "target";
+            values[prefix + "BatchId"] = (condition == "wrong-batch" ? Guid.NewGuid() : batch).ToString();
+            values[prefix + "SubjectId"] = "controlled-subject";
+            values[prefix + "ManagementAuthorityId"] = "controlled-authority";
+            values[prefix + "Directory"] = condition == "relative-directory" ? "relative-capture" : Path.Combine(parent, condition == "log-overlap" ? "log" : "capture");
+        }
+        if (condition == "partial") values.Remove(prefix + "SubjectId");
+        if (condition == "unknown") values[prefix + "Unexpected"] = "SYNTHETIC_SECRET";
+        var configuration = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var command = new OctoberGeneratorCommand(OctoberGeneratorMode.Generate, "target", batch, null, new() { OutputStage = "cl-only" });
+        var runtime = new OctoberRuntimeConfiguration([], Path.Combine(parent, "tools", "codegraph.ps1"),
+            new(Path.Combine(parent, "state"), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
+            new([Path.Combine(parent, "tools")], [Path.Combine(parent, "runtime")], Path.Combine(parent, "system", "cmd.exe"), [Path.Combine(parent, "tools")], Path.Combine(parent, "jdk", "bin")), Path.Combine(parent, "log"));
+        if (condition is "absent" or "disabled")
+            Assert.Null(OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, null, string.Empty));
+        else if (condition == "valid")
+        {
+            var options = Assert.IsType<OctoberParseFailureCaptureOptions>(OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, runtime, Path.Combine(parent, "keys")));
+            Assert.Equal("target", options.TargetId); Assert.Equal(batch, options.BatchId);
+            Assert.Equal("controlled-subject", options.SubjectId); Assert.Equal("controlled-authority", options.ManagementAuthorityId);
+            Assert.True(options.Directory == Path.Combine(parent, "capture"));
+        }
+        else
+        {
+            var error = Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, runtime, Path.Combine(parent, "keys")));
+            Assert.DoesNotContain("SYNTHETIC", error.Message); Assert.DoesNotContain(parent, error.Message);
+        }
+        Assert.False(Directory.Exists(parent));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("captured")]
+    [InlineData("unknown")]
+    [InlineData("completed")]
+    [InlineData("wrong-stage")]
+    [InlineData("foreign-binding")]
+    public async Task ParseCaptureStatus_ProjectionNeverEchoesCaptureDataOrUndefinedStatusAsync(string condition)
+    {
+        var batch = Guid.NewGuid();
+        var worker = new OctoberWorkerDiagnosticSnapshot(condition == "completed" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput,
+            OctoberWorkerRetryDisposition.None, condition == "wrong-stage" ? OctoberWorkerFailureStage.ProposalValidation : OctoberWorkerFailureStage.ProposalParse)
+        { CaptureStatus = condition == "unknown" ? (OctoberWorkerCaptureStatus)99999 : OctoberWorkerCaptureStatus.Captured };
+        var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(null, null, null, true), []) { WorkerDiagnostics = worker };
+        if (condition == "foreign-binding") report = report with { Publication = new(new("SYNTHETIC_DATABASE", "foreign", batch, new string('a', 64)), Guid.NewGuid()) };
+        using var output = new StringWriter(); using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "target", batch, null, new() { OutputStage = "cl-only" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        Assert.NotEqual(0, exit); Assert.DoesNotContain("SYNTHETIC", output.ToString()); Assert.DoesNotContain("99999", output.ToString());
+        using var json = JsonDocument.Parse(output.ToString());
+        bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
+        if (condition == "foreign-binding") { Assert.False(present); return; }
+        Assert.True(present);
+        var capture = diagnostic.GetProperty("captureStatus");
+        if (condition == "captured") Assert.Equal("Captured", capture.GetString());
+        else Assert.Equal(JsonValueKind.Null, capture.ValueKind);
+        Assert.DoesNotContain("directory", diagnostic.GetRawText(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("payload", diagnostic.GetRawText(), StringComparison.OrdinalIgnoreCase);
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("true")]
+    [InlineData("false")]
+    [InlineData("equivalent-layer")]
+    [InlineData("conflicting-layer")]
+    public void ParseCaptureConfiguration_JsonBooleanAndEquivalentProviderLayerUseSameMeaning(string condition)
+    {
+        Guid batch = Guid.NewGuid();
+        var section = new Dictionary<string, object?> { ["Enabled"] = condition != "false" };
+        if (condition != "false")
+        {
+            section["TargetId"] = "target"; section["BatchId"] = batch.ToString();
+            section["SubjectId"] = "controlled-subject"; section["ManagementAuthorityId"] = "controlled-authority";
+            section["Directory"] = @"C:\capture-diagnostic\output";
+        }
+        byte[] json = JsonSerializer.SerializeToUtf8Bytes(new { October = new { ParseFailureCapture = section } });
+        using var stream = new MemoryStream(json);
+        var builder = new ConfigurationBuilder().AddJsonStream(stream);
+        if (condition is "equivalent-layer" or "conflicting-layer")
+            builder.AddInMemoryCollection(new Dictionary<string, string?> { ["October:ParseFailureCapture:Enabled"] = condition == "equivalent-layer" ? "true" : "false" });
+        var configuration = builder.Build();
+        var command = new OctoberGeneratorCommand(OctoberGeneratorMode.Generate, "target", batch, null, new() { OutputStage = "cl-only" });
+        if (condition == "false")
+            Assert.Null(OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, null, string.Empty));
+        else if (condition == "conflicting-layer")
+            Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, CaptureConfigurationRuntime(), @"C:\capture-diagnostic\keys"));
+        else
+        {
+            var options = Assert.IsType<OctoberParseFailureCaptureOptions>(OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, CaptureConfigurationRuntime(), @"C:\capture-diagnostic\keys"));
+            Assert.Equal("target", options.TargetId); Assert.Equal(batch, options.BatchId);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(@"\\controlled-unreachable\share\runtime.json", false)]
+    [InlineData(@"\\?\C:\controlled\runtime.json", false)]
+    [InlineData(@"\\.\C:\controlled\runtime.json", false)]
+    [InlineData(@"relative\runtime.json", false)]
+    [InlineData(@"G:\", true)]
+    public void ParseCaptureConfiguration_ExclusionPathsAreValidatedLexicallyWithoutOpeningThem(string excluded, bool accepted)
+    {
+        var batch = Guid.NewGuid();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["October:ParseFailureCapture:Enabled"] = "true",
+            ["October:ParseFailureCapture:TargetId"] = "target",
+            ["October:ParseFailureCapture:BatchId"] = batch.ToString(),
+            ["October:ParseFailureCapture:SubjectId"] = "controlled-subject",
+            ["October:ParseFailureCapture:ManagementAuthorityId"] = "controlled-authority",
+            ["October:ParseFailureCapture:Directory"] = @"C:\capture-diagnostic\output",
+            ["October:RuntimeFile"] = excluded
+        }).Build();
+        var command = new OctoberGeneratorCommand(OctoberGeneratorMode.Generate, "target", batch, null, new() { OutputStage = "cl-only" });
+        // ReadOptions only: deliberately never instantiate a sink or probe these paths.
+        if (accepted) Assert.NotNull(OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, CaptureConfigurationRuntime(), @"C:\capture-diagnostic\keys"));
+        else Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadParseFailureCaptureOptions(configuration, command, CaptureConfigurationRuntime(), @"C:\capture-diagnostic\keys"));
+    }
+
+    private static OctoberRuntimeConfiguration CaptureConfigurationRuntime() => new([], @"C:\capture-diagnostic\tools\codegraph.ps1",
+        new(@"C:\capture-diagnostic\state", TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
+        new([@"C:\capture-diagnostic\tools"], [@"C:\capture-diagnostic\runtime"], @"C:\capture-diagnostic\system\cmd.exe", [@"C:\capture-diagnostic\tools"], @"C:\capture-diagnostic\jdk\bin"), @"C:\capture-diagnostic\log");
     private sealed class Module(OctoberGeneratorExecutionResult result) : IOctoberGeneratorModule
     {
         internal int Calls;
