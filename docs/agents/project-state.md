@@ -144,10 +144,18 @@ Wire assessment `3a17cd1a` accepted: lane199/199 controls prove JSONmode remains
 initial/posttool and only finalleaf is parsed; no wire/assembly defect reproduced.
 User explicitly approved ONE diagnosticrun and protected local capture of only the
 failed finalproposal, at most256KiB, outsideGit. No reasoning/request/credentials;
-rootinspects, keeps sanitizeddiagnosis and deletes rawcapture afterward. Scan now
-owns default-off run-bound injected capture seam with syntheticchecks/review;
-no realruntime/capture in lane. Root's single live run stays blocked until reviewed
-integration. No outputrepair/normalization/depthraise. PriorpartialCL retained.
+root inspects, keeps sanitized diagnosis and deletes raw capture afterward.
+Reviewed capture implementation integrated as `1f4f4ecf`; root current-source
+affected tests **321/321** passed (isolation `bdf45ce41cd2482a9a668eabe69b4449`).
+The single approved run `phone-b6a9aec9fb24` ended after **52.59s**, accepted0,
+3 requests/11,599 input/3,367 output tokens, no timeout or cleanup doubt.
+Captured final proposal was 5,412 UTF8 bytes: JSON failed at EOF, with one array
+and one object unclosed, not fences or depth32. Diagnostic-only in-memory closing
+brackets yielded valid JSON; no repaired content was accepted or persisted.
+Raw capture was deleted and absence verified. Scan owns source-free diagnosis of
+possible final-chunk assembly versus incomplete model output; causal attribution
+is not yet established. No further paid run, output repair or parser weakening
+is authorized by the one-capture grant. Prior partial CL remains retained.
 
 Latest qualification: corrected B E2E **1/1** passed on `e3804063`, run
 `ba60d34f60a54c40b14b46b5b00ef629`. One real Worker request produced one accepted

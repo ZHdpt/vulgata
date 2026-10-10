@@ -482,3 +482,37 @@ Syntheticcontrols, separateowners and independentreview precede rootintegration 
 the one paidrun. The lane has no realprovider/native/PG/source-root/capture authority.
 Existing retained partialCL and sharedcontainer remain untouched. Root config/paths
 stay outsideGit; no outputrepair or modelresponse normalization is approved.
+
+## Approved protected observation completed (October 10)
+
+Reviewed capture checkpoint `9f1ee796` integrated as `1f4f4ecf`. Root built current
+sources and passed **321/321** affected tests, zero failures/skips, isolation
+`bdf45ce41cd2482a9a668eabe69b4449`. This is affected-test GREEN, not full-suite GREEN.
+
+One explicitly opted-in Generate used fresh run `phone-b6a9aec9fb24`, batch
+`577bbf61-e168-4c31-b559-8ee6e87dec9f`, owned database
+`vulgata_oct_pilot_50386ea33a534ea39fe5b78a4c33b5f3` in the existing shared PG17
+container. Preparation passed. Generate exited1 after **52.59s wall /50.39s pipeline**,
+without timeout or cleanup doubt. Inventory77, accepted0, no publication or BL.
+Usage was known: **3 requests,11,599 input and3,367 output tokens**.
+Safe report: `InvalidOutput / ProposalParse / Syntax / Root`, capture `Captured`;
+no terminal, budget or tool failure. Local report identity:
+`generate-3833177011de44d09874896b33f6de12`.
+
+Private bounded inspection found 5,412 strictUTF8 bytes beginning with an object,
+no Markdown fence, failing JSON at EOF (line0,byte5412) at both depth32 and128.
+Lexical inspection found no unfinished string or mismatched closing delimiter;
+exactly one array and one object remained open. Adding their two closing delimiters
+in memory made syntax valid. This was diagnosis only, not schema/semantic validation,
+repair, acceptance or persistence. The exact owned raw file was deleted afterward;
+absence verified. No raw content, dynamic fields, reasoning or credentials retained
+in this evidence. Capture opt-in was child-process-local and an external CreateNew
+invocation marker prevents accidental reuse of that launcher grant.
+
+This establishes incomplete final JSON, not its causal origin. Existing terminal
+guards require an accepted Stop before proposal parsing; token-length termination
+is not proven. Scan received only sanitized facts and is authorized source-free
+synthetic/SDK assembly diagnosis and a bounded remediation proposal, not production
+repair or further paid/capture/native/database runs. The earlier accepted partial
+CL/database and shared container/volume remain untouched. No presentation-ready
+dataset, ordinary-user read, BL, Chat or graph success is claimed for this run.
