@@ -66,3 +66,38 @@ The actual SDK tests prove low on both tool-conversation requests, unchanged 819
 cap and reasoning replay, immutable caller options/history, unset omission,
 Business isolation and invalid configuration/endpoint rejection before decryption.
 These are controlled checks, not live provider or generated-knowledge evidence.
+
+## Real POM result with low requested
+
+One Generate invocation ran on reviewed commit
+`b319289999f6e16621d54391369cd425f4691996`, using the explicit low child setting.
+The executed Generator assembly matches the tested copy by SHA-256. Report
+`generate-094dd867165c43a38d6e4fa0a419e344.stdout` records exit 1 after **44.05
+seconds**, no timeout, `NeedsSettlementCheck=false`:
+
+| Observation | Value |
+| --- | --- |
+| Execution / coverage / publication | Failed / Partial / NotRequested |
+| Accepted files / Documents | 0 / 0 |
+| Worker failure | InvalidOutput / StreamTerminal / UnsupportedFinish |
+| Finish reason | Length |
+| Requested output cap | 8192 |
+| Provider requests | 1 |
+| Input / output / reasoning tokens | 9748 / 8192 / 8192 |
+| Unknown usage | false |
+| Retry disposition | None |
+
+No byte/stream-budget, tool or proposal-parse failure was reported. The low setting
+did not make this instance complete within the unchanged allowance: all reported
+output tokens were still reasoning. This result does not prove the provider ignored
+low or establish equal internal behavior to high; no raw response/reasoning was
+retained, and the terminal rejection has no HTTP comparison snapshot. Exact low
+serialization is established by the controlled SDK tests, while the real launcher's
+low configuration and tested binary binding were separately verified.
+
+Standard error is empty, and all 77 source hashes remain unchanged. Prior successful
+data and this fresh owned run are retained. The bootstrap host is stopped. No
+whole-slice retry or additional paid attempt ran because the isolated POM did not
+succeed. A thinking-disabled comparison would be a different, separately bounded
+experiment and would require checking resulting explanation/evidence quality;
+it was not performed or automatically substituted here.

@@ -50,7 +50,9 @@ and [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation
 the user subsequently authorized an explicit low-reasoning POM experiment while
 keeping the 8192 cap. Its optional command-local DeepSeek Worker setting is reviewed;
 all 19 new/453 affected cases pass, full SelfContained is 4761/4762 with the same
-report-parser failure. The fresh trial is prepared; see
+report-parser failure. Committed at `b3192899`, the real low-effort trial also ended
+with Length: one request, 9748 input/8192 output tokens, all output reported as
+reasoning; no accepted CL/publication and no whole-slice retry. See
 [low reasoning evidence](../../specs/20-1-Oct14-scan/low-reasoning-verification.md).
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
