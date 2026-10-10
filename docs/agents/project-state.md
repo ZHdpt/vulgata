@@ -95,6 +95,15 @@ Stop, identical HTTP/SDK/parser text. 76.84 seconds, three requests, 21012 input
 and 16675 output tokens, all known. One accepted file, no publication/Documents;
 resources retained, no additional identical paid attempt. The provider output
 problem remains unresolved; bounded correction is not a guarantee of valid output.
+The user next requested explicit stop/JSON checks and an isolated-first retry.
+Four actual-SDK controlled wire cases pass: stop absent, json_object present on
+initial/tool/correction requests. No production request change was needed.
+The isolated SdkAntiFraudHandleOp.java succeeded in29.1 seconds with one confirmed
+CL publication. Its conditionally authorized whole scan accepted four channel
+files, then stopped on LoginAntiSendOp.java with host run_unavailable after153.48
+seconds; no Worker diagnostic identifies the exception. Four requests, all usage
+known, no whole-run publication. Both fresh databases and isolated publication
+are retained. See [stop/JSON evidence](../../specs/20-1-Oct14-scan/stop-json-wire-verification.md).
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
