@@ -1,3 +1,5 @@
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
@@ -347,6 +349,252 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal(0, harness.FreezeCalls);
         await using var context = harness.Database.Factory.CreateDbContext();
         Assert.Equal(0, await context.KnowledgePublications.CountAsync());
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ParseCaptureSink_BindsOriginalSessionAndRun_WritesExactBytesOnceAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(parent);
+        string destination = Path.Combine(parent, "capture");
+        try
+        {
+            var sink = new OctoberParseFailureCapture(new(host.Execution.Setup.TargetId, host.Execution.Setup.BatchId,
+                host.Session.SubjectId, host.Session.ManagementAuthorityId, destination), []);
+            var run = Guid.NewGuid();
+            Assert.True(sink.TryBind(host.Execution, run));
+            Assert.False(sink.TryBind(host.Execution, Guid.NewGuid()));
+            string text = "{SYNTHETIC_CAPTURE_中😀";
+            int checks = 0;
+            var status = await sink.TryCaptureAsync(host.Execution, run, text, _ => { checks++; return Task.FromResult(true); });
+            Assert.Equal(OctoberWorkerCaptureStatus.Captured, status); Assert.True(checks > 0);
+            string file = Assert.Single(Directory.GetFiles(destination)); Assert.Equal("final-proposal.txt", Path.GetFileName(file));
+            AssertCaptureAcl(new DirectoryInfo(destination).GetAccessControl(AccessControlSections.Access | AccessControlSections.Owner));
+            AssertCaptureAcl(new FileInfo(file).GetAccessControl(AccessControlSections.Access | AccessControlSections.Owner));
+            Assert.True((await File.ReadAllBytesAsync(file)).SequenceEqual(Encoding.UTF8.GetBytes(text)));
+            Assert.Equal(OctoberWorkerCaptureStatus.AlreadyAttempted,
+                await sink.TryCaptureAsync(host.Execution, run, "replacement", _ => Task.FromResult(true)));
+            Assert.True((await File.ReadAllBytesAsync(file)).SequenceEqual(Encoding.UTF8.GetBytes(text)));
+        }
+        finally { Directory.Delete(parent, true); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("wrong-run")]
+    [InlineData("foreign-session")]
+    [InlineData("revoked")]
+    [InlineData("cancelled")]
+    [InlineData("oversize")]
+    [InlineData("unencodable")]
+    public async Task ParseCaptureSink_RejectsWrongAuthorityOrUnboundedTextWithoutAFileAsync(string scenario)
+    {
+        await using var host = await Harness.CreateAsync();
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(parent);
+        string destination = Path.Combine(parent, "capture");
+        try
+        {
+            var sink = new OctoberParseFailureCapture(new(host.Execution.Setup.TargetId, host.Execution.Setup.BatchId,
+                host.Session.SubjectId, host.Session.ManagementAuthorityId, destination), []);
+            var run = Guid.NewGuid(); Assert.True(sink.TryBind(host.Execution, run));
+            var execution = scenario == "foreign-session" ? host.Execution with { Session = new Harness.OperatorSession() } : host.Execution;
+            using var cancellation = new CancellationTokenSource(); if (scenario == "cancelled") cancellation.Cancel();
+            string text = scenario switch { "oversize" => new string('中', 87382), "unencodable" => "\uD800", _ => "synthetic" };
+            var status = await sink.TryCaptureAsync(execution, scenario == "wrong-run" ? Guid.NewGuid() : run, text,
+                _ => Task.FromResult(scenario != "revoked"), cancellation.Token);
+            Assert.Equal(scenario switch
+            {
+                "oversize" => OctoberWorkerCaptureStatus.TooLarge,
+                "unencodable" => OctoberWorkerCaptureStatus.Unencodable,
+                _ => OctoberWorkerCaptureStatus.Suppressed
+            }, status);
+            Assert.False(File.Exists(Path.Combine(destination, "final-proposal.txt")));
+        }
+        finally { Directory.Delete(parent, true); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("target")]
+    [InlineData("batch")]
+    [InlineData("subject")]
+    [InlineData("management")]
+    public async Task ParseCaptureSink_ConfigurationIdentityMismatchCannotBindAsync(string field)
+    {
+        await using var host = await Harness.CreateAsync();
+        string destination = Path.Combine(Path.GetTempPath(), "october-capture-unused-" + Guid.NewGuid().ToString("N"));
+        var sink = new OctoberParseFailureCapture(new(
+            field == "target" ? "foreign-target" : host.Execution.Setup.TargetId,
+            field == "batch" ? Guid.NewGuid() : host.Execution.Setup.BatchId,
+            field == "subject" ? "foreign-subject" : host.Session.SubjectId,
+            field == "management" ? "foreign-authority" : host.Session.ManagementAuthorityId, destination), []);
+        Assert.False(sink.TryBind(host.Execution, Guid.NewGuid())); Assert.False(Directory.Exists(destination));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ParseCaptureSink_PreexistingDestinationIsNeverAdoptedOrOverwrittenAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-test-" + Guid.NewGuid().ToString("N"));
+        string destination = Path.Combine(parent, "existing"); Directory.CreateDirectory(destination);
+        string marker = Path.Combine(destination, "final-proposal.txt"); await File.WriteAllTextAsync(marker, "owned-foreign-marker");
+        try
+        {
+            var sink = new OctoberParseFailureCapture(new(host.Execution.Setup.TargetId, host.Execution.Setup.BatchId,
+                host.Session.SubjectId, host.Session.ManagementAuthorityId, destination), []);
+            var run = Guid.NewGuid(); Assert.True(sink.TryBind(host.Execution, run));
+            var status = await sink.TryCaptureAsync(host.Execution, run, "replacement", _ => Task.FromResult(true));
+            Assert.Equal(OctoberWorkerCaptureStatus.Failed, status);
+            Assert.True(await File.ReadAllTextAsync(marker) == "owned-foreign-marker"); Assert.Single(Directory.GetFiles(destination));
+        }
+        finally { Directory.Delete(parent, true); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Runner_ParseCaptureUsesBoundSinkOnceAndRevokedReplayClearsStatusAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-test-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(parent);
+        string destination = Path.Combine(parent, "capture");
+        try
+        {
+            host.Client.TerminalTextOverride = "{SYNTHETIC_FINAL_CAPTURE";
+            var sink = new OctoberParseFailureCapture(new(host.Execution.Setup.TargetId, host.Execution.Setup.BatchId,
+                host.Session.SubjectId, host.Session.ManagementAuthorityId, destination), []);
+            await using var runner = new OctoberGenerateRunner(host.Dependencies with { ParseFailureCapture = sink });
+            var result = await runner.ExecuteAsync(host.Execution);
+            Assert.Equal(OctoberWorkerCaptureStatus.Captured, result.Report!.WorkerDiagnostics!.CaptureStatus);
+            Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Report.WorkerDiagnostics.Status);
+            Assert.True(await File.ReadAllTextAsync(Path.Combine(destination, "final-proposal.txt")) == host.Client.TerminalTextOverride);
+            var replay = await runner.ExecuteAsync(host.Execution);
+            Assert.Equal(result.Report.WorkerDiagnostics.CaptureStatus, replay.Report!.WorkerDiagnostics!.CaptureStatus); Assert.Equal(result.Report.WorkerDiagnostics.Status, replay.Report.WorkerDiagnostics.Status); Assert.Equal(2, host.Client.Calls);
+            host.AuthorityAllowed = false;
+            var hidden = await runner.ExecuteAsync(host.Execution);
+            Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Empty(hidden.Report.Documents); Assert.Null(hidden.Report.Publication);
+            Assert.Single(Directory.GetFiles(destination)); Assert.Equal(0, host.FreezeCalls);
+        }
+        finally { Directory.Delete(parent, true); }
+    }
+    private static void AssertCaptureAcl(FileSystemSecurity security)
+    {
+        var current = WindowsIdentity.GetCurrent().User!;
+        Assert.Equal(current, security.GetOwner(typeof(SecurityIdentifier)));
+        Assert.True(security.AreAccessRulesProtected);
+        var grants = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>()
+            .Where(rule => rule.AccessControlType == AccessControlType.Allow).ToArray();
+        Assert.NotEmpty(grants);
+        Assert.All(grants, rule => Assert.Equal(current, rule.IdentityReference));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("git-directory")]
+    [InlineData("git-file")]
+    [InlineData("excluded")]
+    [InlineData("ambiguous")]
+    [InlineData("reparse")]
+    public async Task ParseCaptureSink_UnsafeDestinationNeverReceivesPayloadAsync(string scenario)
+    {
+        await using var host = await Harness.CreateAsync();
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-security-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(parent);
+        string? link = null;
+        try
+        {
+            string boundary = Path.Combine(parent, "boundary"); Directory.CreateDirectory(boundary);
+            string marker = Path.Combine(boundary, "foreign-marker.txt"); await File.WriteAllTextAsync(marker, "preserve");
+            if (scenario == "git-directory") Directory.CreateDirectory(Path.Combine(boundary, ".git"));
+            if (scenario == "git-file") await File.WriteAllTextAsync(Path.Combine(boundary, ".git"), "gitdir: controlled-foreign");
+            string destination = Path.Combine(boundary, scenario == "ambiguous" ? "capture." : "capture");
+            if (scenario == "reparse")
+            {
+                link = Path.Combine(parent, "link"); Directory.CreateSymbolicLink(link, boundary);
+                destination = Path.Combine(link, "capture");
+            }
+            var sink = new OctoberParseFailureCapture(new(host.Execution.Setup.TargetId, host.Execution.Setup.BatchId,
+                host.Session.SubjectId, host.Session.ManagementAuthorityId, destination), scenario == "excluded" ? [boundary] : []);
+            var run = Guid.NewGuid(); Assert.True(sink.TryBind(host.Execution, run));
+            var status = await sink.TryCaptureAsync(host.Execution, run, "SYNTHETIC_SECRET", _ => Task.FromResult(true));
+            Assert.True(Enum.IsDefined(status)); Assert.NotEqual(OctoberWorkerCaptureStatus.Captured, status);
+            Assert.True(await File.ReadAllTextAsync(marker) == "preserve");
+            Assert.False(File.Exists(Path.Combine(boundary, "capture", "final-proposal.txt")));
+            Assert.False(File.Exists(Path.Combine(destination, "final-proposal.txt")));
+        }
+        finally
+        {
+            if (link is not null && Directory.Exists(link)) Directory.Delete(link);
+            Directory.Delete(parent, true);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ParseCaptureSink_ConcurrentDuplicateAndLateCancellationRetainSingleOwnedAttemptAsync(bool cancel)
+    {
+        await using var host = await Harness.CreateAsync();
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-concurrency-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(parent);
+        string destination = Path.Combine(parent, "capture");
+        using var cancellation = new CancellationTokenSource();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task<OctoberWorkerCaptureStatus>? pending = null;
+        try
+        {
+            var sink = new OctoberParseFailureCapture(new(host.Execution.Setup.TargetId, host.Execution.Setup.BatchId,
+                host.Session.SubjectId, host.Session.ManagementAuthorityId, destination), []);
+            var run = Guid.NewGuid(); Assert.True(sink.TryBind(host.Execution, run));
+            pending = sink.TryCaptureAsync(host.Execution, run, "first", async _ => { entered.TrySetResult(); await release.Task; return true; }, cancellation.Token);
+            await Task.WhenAny(entered.Task, pending).WaitAsync(TimeSpan.FromSeconds(3)); Assert.True(entered.Task.IsCompleted);
+            Assert.Equal(OctoberWorkerCaptureStatus.AlreadyAttempted,
+                await sink.TryCaptureAsync(host.Execution, run, "second", _ => Task.FromResult(true)).WaitAsync(TimeSpan.FromSeconds(3)));
+            if (cancel) cancellation.Cancel();
+            await Task.WhenAny(pending, Task.Delay(100)); Assert.False(pending.IsCompleted);
+            release.TrySetResult();
+            Assert.Equal(cancel ? OctoberWorkerCaptureStatus.Suppressed : OctoberWorkerCaptureStatus.Captured,
+                await pending.WaitAsync(TimeSpan.FromSeconds(3)));
+            if (cancel) Assert.False(Directory.Exists(destination));
+            else Assert.True(await File.ReadAllTextAsync(Path.Combine(destination, "final-proposal.txt")) == "first");
+        }
+        finally
+        {
+            release.TrySetResult();
+            if (pending is not null) await pending.WaitAsync(TimeSpan.FromSeconds(3));
+            Directory.Delete(parent, true);
+        }
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ParseCaptureSink_CreateNewRacePreservesForeignFileAndReportsCleanupUnconfirmedAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        string parent = Path.Combine(Path.GetTempPath(), "october-capture-race-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(parent);
+        string destination = Path.Combine(parent, "capture");
+        string file = Path.Combine(destination, "final-proposal.txt"); bool inserted = false;
+        try
+        {
+            var sink = new OctoberParseFailureCapture(new(host.Execution.Setup.TargetId, host.Execution.Setup.BatchId,
+                host.Session.SubjectId, host.Session.ManagementAuthorityId, destination), []);
+            var run = Guid.NewGuid(); Assert.True(sink.TryBind(host.Execution, run));
+            var status = await sink.TryCaptureAsync(host.Execution, run, "SYNTHETIC_CAPTURE_PAYLOAD", async _ =>
+            {
+                if (Directory.Exists(destination) && !inserted)
+                {
+                    await File.WriteAllTextAsync(file, "foreign-marker"); inserted = true;
+                }
+                return true;
+            });
+            Assert.True(inserted);
+            Assert.Equal(OctoberWorkerCaptureStatus.CleanupUnconfirmed, status);
+            Assert.True(await File.ReadAllTextAsync(file) == "foreign-marker"); Assert.Single(Directory.GetFiles(destination));
+            Assert.Equal(OctoberWorkerCaptureStatus.AlreadyAttempted,
+                await sink.TryCaptureAsync(host.Execution, run, "replacement", _ => Task.FromResult(true)));
+        }
+        finally { Directory.Delete(parent, true); }
     }
     private sealed class SelectedTarget(IOctoberHistoricalBoundSetupData setup) : IOctoberConfiguredTarget
     {

@@ -74,6 +74,7 @@ public enum OctoberWorkerFailureStage
 }
 public enum OctoberWorkerBudgetFailure { OutputBytes, ToolCalls, StreamUpdates }
 public enum OctoberWorkerParseFailure { Syntax, RootShape, ClosedFields, ValueShape, Qualification, EvidenceIndex }
+public enum OctoberWorkerCaptureStatus { Captured, TooLarge, Unencodable, Suppressed, Failed, AlreadyAttempted, CleanupUnconfirmed }
 public enum OctoberWorkerParseSlot
 {
     Root, Units, Sections, Claims, Anchors, Observations, Uncertainties, Evidence,
@@ -104,6 +105,7 @@ public sealed record OctoberFileWorkerResult(
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
     public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
+    public OctoberWorkerCaptureStatus? CaptureStatus { get; init; }
 }
 
 public sealed class OctoberFileWorkerExecutor
@@ -116,12 +118,15 @@ public sealed class OctoberFileWorkerExecutor
     };
     private readonly IChatClient _client;
     private readonly IOctoberWorkerExecutionScope _scope;
+    private readonly Func<string, CancellationToken, Task<OctoberWorkerCaptureStatus>>? _captureParseFailure;
     private int _used;
 
-    public OctoberFileWorkerExecutor(IChatClient client, IOctoberWorkerExecutionScope scope)
+    public OctoberFileWorkerExecutor(IChatClient client, IOctoberWorkerExecutionScope scope,
+        Func<string, CancellationToken, Task<OctoberWorkerCaptureStatus>>? captureParseFailure = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _scope = scope ?? throw new ArgumentNullException(nameof(scope));
+        _captureParseFailure = captureParseFailure;
     }
 
     public async Task<OctoberFileWorkerResult> ExecuteAsync(OctoberFileWorkerRequest request,
@@ -133,6 +138,7 @@ public sealed class OctoberFileWorkerExecutor
         int covered = 0;
         OctoberWorkerFailureStage? stage = null;
         OctoberWorkerTerminalFailure? terminalFailure = null;
+        OctoberWorkerCaptureStatus? captureStatus = null;
         var observations = new ExceptionObservation();
         var parseObservation = new ParseObservation();
         try
@@ -228,7 +234,13 @@ public sealed class OctoberFileWorkerExecutor
             stage = OctoberWorkerFailureStage.StreamTerminal;
             if (covered != source.Length) throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteCoverage);
             stage = OctoberWorkerFailureStage.ProposalParse;
-            CompletedFileProposal proposal = ParseProposal(adapter.LastText, request, ref stage, parseObservation);
+            CompletedFileProposal proposal;
+            try { proposal = ParseProposal(adapter.LastText, request, ref stage, parseObservation); }
+            catch (Exception) when (stage == OctoberWorkerFailureStage.ProposalParse)
+            {
+                captureStatus = await CaptureParseFailureAsync(adapter.LastText, request.Source, cancellationToken);
+                throw;
+            }
             return new(OctoberFileWorkerStatus.Completed, proposal, covered, adapter.Rounds, adapter.SettledTools);
         }
         catch (OperationCanceledException exception)
@@ -252,8 +264,39 @@ public sealed class OctoberFileWorkerExecutor
                 BudgetFailure = status == OctoberFileWorkerStatus.BudgetExceeded ? adapter?.BudgetFailure : null,
                 ParseFailure = Enum.IsDefined(status) && status != OctoberFileWorkerStatus.Completed &&
                     (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.ProposalParse
-                    ? parseObservation.First : null
+                    ? parseObservation.First : null,
+                CaptureStatus = Enum.IsDefined(status) && status != OctoberFileWorkerStatus.Completed &&
+                    (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.ProposalParse
+                    ? captureStatus : null
             };
+    }
+
+    private async Task<OctoberWorkerCaptureStatus?> CaptureParseFailureAsync(string text,
+        IOctoberVerifiedFileFrame source, CancellationToken token)
+    {
+        if (_captureParseFailure is null) return null;
+        try
+        {
+            if (Utf8.GetByteCount(text) > 262144) return OctoberWorkerCaptureStatus.TooLarge;
+        }
+        catch (EncoderFallbackException) { return OctoberWorkerCaptureStatus.Unencodable; }
+        catch (Exception) { return OctoberWorkerCaptureStatus.Failed; }
+        try
+        {
+            if (token.IsCancellationRequested || !await source.VerifyCurrentAsync(token) || token.IsCancellationRequested)
+                return OctoberWorkerCaptureStatus.Suppressed;
+        }
+        catch (Exception) { return OctoberWorkerCaptureStatus.Suppressed; }
+        try
+        {
+            // The original Worker owns the actual sink task through settlement;
+            // cancellation cannot abandon a callback that may still write.
+            token.ThrowIfCancellationRequested();
+            OctoberWorkerCaptureStatus status = await _captureParseFailure(text, token);
+            return Enum.IsDefined(status) ? status : null;
+        }
+        catch (OperationCanceledException) { return OctoberWorkerCaptureStatus.Suppressed; }
+        catch (Exception) { return OctoberWorkerCaptureStatus.Failed; }
     }
 
     private static bool ValidRequest(OctoberFileWorkerRequest request, IReadOnlyList<AIFunction> tools)
