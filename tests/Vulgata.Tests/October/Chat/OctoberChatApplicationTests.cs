@@ -32,6 +32,54 @@ public sealed class OctoberChatApplicationTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ChatPage_AsyncHostContextResolution_RendersWithoutLegacyFallbackAsync(bool unavailable)
+    {
+        await using var fixture = await ApplicationFixture.CreateAsync();
+        using var context = new ChatPageTests();
+        var provider = new PendingContext();
+        context.Services.AddSingleton(fixture.Application);
+        context.Services.AddSingleton(fixture.Entry);
+        context.Services.AddSingleton<IOctoberChatContextProvider>(provider);
+
+        try
+        {
+            var page = context.Render<ChatPage>();
+            Assert.Contains("正在准备对话", page.Markup, StringComparison.Ordinal);
+            Assert.Empty(page.FindAll("form, #chat-question, .repository-picker__trigger"));
+            Assert.Empty(fixture.RequestBodies);
+
+            provider.Completion.SetResult(unavailable ? null : fixture.Selection);
+            page.WaitForAssertion(() => Assert.NotEmpty(page.FindAll("#october-chat-question")));
+            Assert.Empty(page.FindAll("form, #chat-question, .repository-picker__trigger"));
+            Assert.Empty(fixture.RequestBodies);
+            if (unavailable)
+                Assert.True(page.Find("#october-chat-question").HasAttribute("disabled"));
+        }
+        finally
+        {
+            provider.Completion.TrySetResult(null);
+        }
+    }
+
+    private sealed class PendingContext : IOctoberChatContextProvider
+    {
+        public event Action? ContextChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public TaskCompletionSource<ReadSelectionRequest?> Completion { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<ReadSelectionRequest?> GetCurrentAsync(CancellationToken cancellationToken = default) =>
+            Completion.Task.WaitAsync(cancellationToken);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(KnowledgeMode.IT, "输入技术问题…")]
     [InlineData(KnowledgeMode.Business, "描述你想了解的业务流程…")]
     public async Task ChatPage_ComposerShowsPreparationOnlyDuringActualOpenThenReadyModePromptAsync(KnowledgeMode mode, string readyPrompt)

@@ -9,7 +9,13 @@
 
 <PageTitle>对话</PageTitle>
 
-@if (_boundOctoberEntry is { } october)
+@if (!_compositionResolved)
+{
+    <section class="chat-surface" aria-label="对话记录" aria-busy="true" data-load-state="Loading">
+        <p role="status">正在准备对话…</p>
+    </section>
+}
+else if (_boundOctoberEntry is { } october)
 {
     <div class="chat-page @(october.ThemeName == "dark" ? "chat-page--it" : "chat-page--business")"
          data-theme="@october.ThemeName" data-load-state="@october.LoadState">

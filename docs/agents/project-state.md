@@ -1,5 +1,12 @@
 # Project state for agent resumption
 
+October 11 login correction: ChatPage now renders a loading state while asynchronous
+October host context resolution is pending, preventing the uninitialized legacy
+EditForm from crashing the post-login route. Two controlled regression cases reproduced
+the live exception before correction; 123 affected Chat checks pass afterward.
+Real login and authenticated reload passed on the retained October IT host with Chat
+dispatch disabled. This does not qualify provider execution or Document disclosure.
+
 Latest integration (October 11): user-authorized Scan integration and Business
 synchronization includes Scan `c473ad15` (existing-CL continuation `5c220d55`)
 on main `9309ecaf`, preserving the Chat/Explorer improvements below. The new

@@ -57,6 +57,7 @@ public partial class ChatPage : IAsyncDisposable
         Mode = PreparedChatMode.Business,
     };
     private EditContext _editContext = null!;
+    private bool _compositionResolved;
     private ElementReference _questionElement;
     private ElementReference _conversationElement;
     private readonly HashSet<string> _selectedUiRepositories = new(StringComparer.Ordinal);
@@ -114,10 +115,12 @@ public partial class ChatPage : IAsyncDisposable
         _octoberApplicationSelected = OctoberApplication is not null || _octoberLocatorSupplied;
         if (OctoberEntry is not null || _octoberApplicationSelected)
         {
+            _compositionResolved = true;
             return;
         }
 
         _editContext = new EditContext(_formRequest);
+        _compositionResolved = true;
         _loadState = LoadState.Loading;
         try
         {
