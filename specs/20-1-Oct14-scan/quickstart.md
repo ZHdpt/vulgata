@@ -77,6 +77,9 @@ See [review and verification](configurable-run-deadline.md).
 
 ### BL from an existing complete CL publication
 
+BL generation is handed to the Business spec. Start with the
+[CL/BL contracts, boundaries and LLM troubleshooting handoff](handoff-business-generation.md).
+
 Use a fresh authenticated Generate invocation with an explicit Business policy:
 
 ```json
