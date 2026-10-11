@@ -44,7 +44,8 @@ internal sealed class OctoberJsonCorrectionLog
             {
                 if (entry is null || !Enum.IsDefined(entry.Phase) || entry.RetryOrdinal is < 0 or > 3 ||
                     entry.WindowOrdinal is < 1 or > 100 || entry.ProviderRounds is < 0 or > 100 ||
-                    entry.ElapsedMilliseconds < 0 || entry.CandidateUtf8Bytes is < 0 or > 1048576)
+                    entry.ElapsedMilliseconds < 0 || entry.CandidateUtf8Bytes is < 0 or > 1048576 ||
+                    !Enum.IsDefined(entry.Strategy) || entry.RemovedMessages is < 0 or > 1000000)
                     return false;
                 // Explicit projection prevents a future result/request property from leaking
                 // source, model text, reasoning, physical paths or credentials into the log.
@@ -72,7 +73,8 @@ internal sealed class OctoberJsonCorrectionLog
                     } : null,
                     status = entry.Status?.ToString(), failureStage = entry.FailureStage?.ToString(),
                     budgetFailure = entry.BudgetFailure?.ToString(), terminalFailure = entry.TerminalFailure?.ToString(),
-                    finishReason = entry.FinishReason?.ToString()
+                    finishReason = entry.FinishReason?.ToString(), strategy = entry.Strategy.ToString(),
+                    removedMessages = entry.RemovedMessages
                 });
                 if (Encoding.UTF8.GetByteCount(line) > 4096) return false;
                 lines.Append(line).Append('\n');

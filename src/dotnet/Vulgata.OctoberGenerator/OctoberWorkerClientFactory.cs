@@ -73,12 +73,13 @@ public sealed class OctoberWorkerClientFactory
 
     private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied,
         OctoberWorkerHttpObservation? observation, string? deepSeekWorkerReasoningEffort)
-        : IChatClient, IOctoberWorkerAttemptClient, IOctoberBusinessAttemptClient
+        : IChatClient, IOctoberWorkerCorrectionClient, IOctoberBusinessAttemptClient
     {
         private readonly HttpMessageHandler _transport = supplied ?? new SocketsHttpHandler { AllowAutoRedirect = false };
         private readonly bool _useDeepSeekMaxTokens = IsDeepSeekEndpoint(endpoint);
         private bool _disposed;
         public string ProviderProfileId => profileId;
+        public bool SupportsFinalizationStrategy => _useDeepSeekMaxTokens;
 
         public Task<ChatResponse> GetResponseAsync(IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages,
             ChatOptions? options = null, CancellationToken cancellationToken = default)
@@ -125,15 +126,31 @@ public sealed class OctoberWorkerClientFactory
             }
         }
 
-        public async IAsyncEnumerable<ChatResponseUpdate> GetAttemptStreamingResponseAsync(
+        public IAsyncEnumerable<ChatResponseUpdate> GetAttemptStreamingResponseAsync(
             IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options,
-            IOctoberProviderAttemptLease lease, [EnumeratorCancellation] CancellationToken cancellationToken = default,
+            IOctoberProviderAttemptLease lease, CancellationToken cancellationToken = default,
             Action<long>? onDispatched = null)
+            => StreamAttemptAsync(messages, options, lease, OctoberWorkerCorrectionStrategy.Configured, cancellationToken, onDispatched);
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetCorrectionStreamingResponseAsync(
+            IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options, IOctoberProviderAttemptLease lease,
+            OctoberWorkerCorrectionStrategy strategy, CancellationToken cancellationToken = default, Action<long>? onDispatched = null)
+            => StreamAttemptAsync(messages, options, lease, strategy, cancellationToken, onDispatched);
+
+        private async IAsyncEnumerable<ChatResponseUpdate> StreamAttemptAsync(
+            IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options, IOctoberProviderAttemptLease lease,
+            OctoberWorkerCorrectionStrategy strategy, [EnumeratorCancellation] CancellationToken cancellationToken,
+            Action<long>? onDispatched)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             ArgumentNullException.ThrowIfNull(lease);
+            bool disableThinking = strategy != OctoberWorkerCorrectionStrategy.Configured;
+            if (!Enum.IsDefined(strategy) || disableThinking && (!SupportsFinalizationStrategy ||
+                !Equals(options?.ToolMode, ChatToolMode.None) || !Equals(options?.ResponseFormat, Microsoft.Extensions.AI.ChatResponseFormat.Json)))
+                throw new InvalidOperationException("The Worker correction strategy is unsupported or outside finalization.");
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
-            using var http = new HttpClient(new LeaseHandler(_transport, lease, onDispatched, useDeepSeekMaxTokens: _useDeepSeekMaxTokens, observation: observation?.For(lease)), disposeHandler: true)
+            using var http = new HttpClient(new LeaseHandler(_transport, lease, onDispatched, useDeepSeekMaxTokens: _useDeepSeekMaxTokens,
+                observation: observation?.For(lease), disableThinking: disableThinking), disposeHandler: true)
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
@@ -153,7 +170,12 @@ public sealed class OctoberWorkerClientFactory
             // serialize TextReasoningContent back into Chat Completions history.
             // Adapt only the qualified DeepSeek endpoint, without mutating history.
             ChatOptions? requestOptions = options;
-            if (deepSeekWorkerReasoningEffort is not null)
+            if (disableThinking)
+            {
+                requestOptions = options?.Clone() ?? new();
+                requestOptions.Reasoning = null;
+            }
+            else if (deepSeekWorkerReasoningEffort is not null)
             {
                 requestOptions = options?.Clone() ?? new();
                 requestOptions.Reasoning = new ReasoningOptions
@@ -209,13 +231,14 @@ public sealed class OctoberWorkerClientFactory
     }
 
     private sealed class LeaseHandler(HttpMessageHandler transport, IOctoberProviderAttemptLease lease,
-        Action<long>? onDispatched, bool businessAttempt = false, bool useDeepSeekMaxTokens = false, OctoberWorkerHttpObservation.Leaf? observation = null) : HttpMessageHandler
+        Action<long>? onDispatched, bool businessAttempt = false, bool useDeepSeekMaxTokens = false,
+        OctoberWorkerHttpObservation.Leaf? observation = null, bool disableThinking = false) : HttpMessageHandler
     {
         private readonly HttpMessageInvoker _invoker = new(transport, disposeHandler: false);
         internal OctoberBusinessAttemptDeniedException? BusinessRefusal { get; private set; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (useDeepSeekMaxTokens) await TranslateDeepSeekTokenParameterAsync(request, cancellationToken, observation);
+            if (useDeepSeekMaxTokens) await TranslateDeepSeekTokenParameterAsync(request, cancellationToken, observation, disableThinking);
             ProviderAdmissionStatus eligibility = await lease.CheckBeforeSendAsync(cancellationToken);
             if (eligibility != ProviderAdmissionStatus.Granted)
             {
@@ -239,24 +262,30 @@ public sealed class OctoberWorkerClientFactory
             return result;
         }
 
-        private static async Task TranslateDeepSeekTokenParameterAsync(HttpRequestMessage request, CancellationToken token, OctoberWorkerHttpObservation.Leaf? observation)
+        private static async Task TranslateDeepSeekTokenParameterAsync(HttpRequestMessage request, CancellationToken token,
+            OctoberWorkerHttpObservation.Leaf? observation, bool disableThinking)
         {
             if (request.Content is not { } original) return;
             byte[] body = await original.ReadAsByteArrayAsync(token);
             using JsonDocument document = JsonDocument.Parse(body);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
                 throw new InvalidOperationException("DeepSeek request body is invalid.");
-            int sourceCount = 0, targetCount = 0;
+            int sourceCount = 0, targetCount = 0, thinkingCount = 0, effortCount = 0;
             JsonElement admitted = default;
             foreach (JsonProperty property in document.RootElement.EnumerateObject())
             {
                 if (property.NameEquals("max_completion_tokens")) { sourceCount++; admitted = property.Value; }
                 else if (property.NameEquals("max_tokens")) targetCount++;
+                else if (property.NameEquals("thinking")) thinkingCount++;
+                else if (property.NameEquals("reasoning_effort")) effortCount++;
             }
             if (sourceCount > 1 || targetCount > 1 || sourceCount != 0 && targetCount != 0)
                 throw new InvalidOperationException("DeepSeek token parameters are ambiguous.");
-            if (sourceCount == 0) return;
-            if (admitted.ValueKind != JsonValueKind.Number || !admitted.TryGetInt64(out long maximum) || maximum <= 0)
+            if (disableThinking && (thinkingCount > 1 || effortCount > 1))
+                throw new InvalidOperationException("DeepSeek thinking parameters are ambiguous.");
+            if (sourceCount == 0 && !disableThinking) return;
+            long maximum = 0;
+            if (sourceCount > 0 && (admitted.ValueKind != JsonValueKind.Number || !admitted.TryGetInt64(out maximum) || maximum <= 0))
                 throw new InvalidOperationException("DeepSeek token parameter is invalid.");
 
             using var output = new MemoryStream();
@@ -265,8 +294,15 @@ public sealed class OctoberWorkerClientFactory
                 writer.WriteStartObject();
                 foreach (JsonProperty property in document.RootElement.EnumerateObject())
                 {
+                    if (disableThinking && (property.NameEquals("thinking") || property.NameEquals("reasoning_effort"))) continue;
                     writer.WritePropertyName(property.NameEquals("max_completion_tokens") ? "max_tokens" : property.Name);
                     property.Value.WriteTo(writer);
+                }
+                if (disableThinking)
+                {
+                    writer.WriteStartObject("thinking");
+                    writer.WriteString("type", "disabled");
+                    writer.WriteEndObject();
                 }
                 writer.WriteEndObject();
             }
@@ -282,7 +318,7 @@ public sealed class OctoberWorkerClientFactory
             }
             catch { replacement.Dispose(); throw; }
             original.Dispose();
-            observation?.Cap(maximum);
+            if (sourceCount > 0) observation?.Cap(maximum);
         }
         protected override void Dispose(bool disposing)
         {

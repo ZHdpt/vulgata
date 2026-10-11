@@ -74,6 +74,21 @@ The model receives safe parser feedback and the remaining correction count. This
 does not restart investigation or reset the original budgets. A transient failure
 after correction begins cannot restart the Worker to replenish this allowance.
 
+For the qualified DeepSeek endpoint, final-format retries now use these stages:
+
+| Regeneration | Thinking | Request context |
+| --- | --- | --- |
+| 1 | Configured behavior (low in the pilot) | Existing history and safe feedback |
+| 2 | Explicitly disabled | Existing history and newest safe feedback |
+| 3 | Explicitly disabled | Preserved investigation plus newest safe feedback; rejected final proposals and obsolete correction turns removed |
+
+Compaction retains every original source window/advisory input, system schema and
+settled tool exchange, including protocol-required reasoning. It is deterministic,
+uses no summarization call, and does not reset cumulative budgets. Thinking is a
+per-request override; the next file on the same client uses configured behavior
+again after either success or failure. Other providers and Business calls are
+unchanged. See [staged correction evidence](staged-correction-verification.md).
+
 `hardRetryMode` defaults to `false` in the Generate scan-policy JSON. To enable
 the bounded experiment, set `hardRetryMode: true` and `maximumTransientRetries: 0`.
 Keep the explicit `outputStage`, source selection and original budget settings.
@@ -103,6 +118,8 @@ Events buffered in memory can be lost on process failure before settlement.
 sent; admission may still refuse it. The shared log uses an exclusive, fail-fast
 append: concurrent writer contention produces the incomplete-log warning rather
 than blocking execution or replaying provider work.
+The staged strategy and removed-message count are logged as bounded diagnostics;
+no compacted text or rejected proposal is written to this log.
 
 The optional `hardRetry` report contains `reservedAttempts` and
 `providerCallsStarted`. The latter counts entry into the underlying client, not

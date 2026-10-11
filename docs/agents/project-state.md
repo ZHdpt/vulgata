@@ -204,6 +204,13 @@ after a correction; LoginNoticeOp.java exhausted all three regenerations, with
 normally ended but incomplete JSON. No timeout, unknown usage or unresolved
 settlement check; source hashes matched. This new single-run grant is consumed.
 See [real three-correction outcome](../../specs/20-1-Oct14-scan/three-correction-whole-run.md).
+The user's next staged correction strategy is now implemented and independently
+accepted: regeneration 1 retains configured thinking, 2 disables it, and 3 first
+prunes rejected correction turns while preserving original evidence, then disables
+thinking. Overrides are request-local; the next file restores configured behavior.
+Affected Worker/GenerateRunner checks pass 383/383; the known unrelated full-suite
+report-parser failure remains. One further whole scan is explicitly authorized
+and pending in [staged correction evidence](../../specs/20-1-Oct14-scan/staged-correction-verification.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.

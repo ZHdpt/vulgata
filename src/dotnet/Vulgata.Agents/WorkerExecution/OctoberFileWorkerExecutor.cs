@@ -25,6 +25,18 @@ public interface IOctoberWorkerAttemptClient
         Action<long>? onDispatched = null);
 }
 
+public enum OctoberWorkerCorrectionStrategy { Configured, ThinkingDisabled, CompactedThinkingDisabled }
+
+/// <summary>Host-selected, per-call finalization behavior; never a provider/model fallback.</summary>
+public interface IOctoberWorkerCorrectionClient : IOctoberWorkerAttemptClient
+{
+    bool SupportsFinalizationStrategy { get; }
+    IAsyncEnumerable<ChatResponseUpdate> GetCorrectionStreamingResponseAsync(
+        IEnumerable<ChatMessage> messages, ChatOptions? options, IOctoberProviderAttemptLease lease,
+        OctoberWorkerCorrectionStrategy strategy, CancellationToken cancellationToken = default,
+        Action<long>? onDispatched = null);
+}
+
 public interface IOctoberWorkerHttpObservationClient
 {
     void BeginLeaf(Guid runId, IOctoberProviderAttemptLease lease);
@@ -137,7 +149,8 @@ public sealed record OctoberJsonCorrectionEvent(OctoberJsonCorrectionPhase Phase
     int WindowOrdinal, int ProviderRounds, long ElapsedMilliseconds, int CandidateUtf8Bytes,
     OctoberWorkerParseDiagnosticSnapshot? Diagnostic = null, OctoberFileWorkerStatus? Status = null,
     OctoberWorkerFailureStage? FailureStage = null, OctoberWorkerBudgetFailure? BudgetFailure = null,
-    OctoberWorkerTerminalFailure? TerminalFailure = null, OctoberWorkerObservedFinish? FinishReason = null);
+    OctoberWorkerTerminalFailure? TerminalFailure = null, OctoberWorkerObservedFinish? FinishReason = null,
+    OctoberWorkerCorrectionStrategy Strategy = OctoberWorkerCorrectionStrategy.Configured, int RemovedMessages = 0);
 public sealed record OctoberWorkerTerminalObservation(
     OctoberWorkerUnsupportedFinish? FinishReason = null, int? MaximumOutputTokens = null,
     long? InputTokens = null, long? OutputTokens = null, long? ReasoningTokens = null);
@@ -192,6 +205,10 @@ public sealed class OctoberFileWorkerExecutor
         WorkerClient? adapter = null;
         long started = Stopwatch.GetTimestamp();
         int correctionAttempts = 0, currentWindow = 0;
+        OctoberWorkerCorrectionStrategy correctionStrategy = OctoberWorkerCorrectionStrategy.Configured;
+        int removedMessages = 0;
+        ChatMessage[]? correctionBase = null;
+        bool stagedCorrections = _client is IOctoberWorkerCorrectionClient { SupportsFinalizationStrategy: true };
         var correctionEvents = ImmutableArray.CreateBuilder<OctoberJsonCorrectionEvent>();
         int covered = 0;
         OctoberWorkerFailureStage? stage = null;
@@ -307,9 +324,33 @@ public sealed class OctoberFileWorkerExecutor
                     // Reserve only an eligible extra candidate. Existing admission may still
                     // refuse it; neither refusal nor source/runtime renewal refunds the slot.
                     if (extraCorrection && !request.HardRetryBudget!.TryReserve(request)) break;
+                    if (stagedCorrections && correction == 0)
+                    {
+                        // Keep the complete investigation, including all source windows and
+                        // settled tool exchanges. Only the terminal rejected proposal is excluded.
+                        if (response.Messages.Count == 0 && adapter.LastText.Length == 0)
+                            correctionBase = history.ToArray();
+                        else if (response.Messages.Count > 0 && response.Messages[^1] is { Role: var role } candidate &&
+                            role == ChatRole.Assistant && !candidate.Contents.OfType<FunctionCallContent>().Any() &&
+                            string.Concat(candidate.Contents.OfType<TextContent>().Select(item => item.Text)) == adapter.LastText)
+                            correctionBase = history.Take(history.Count - 1).ToArray();
+                        else
+                            throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
+                    }
                     correctionAttempts++;
+                    correctionStrategy = stagedCorrections && correctionAttempts >= 2
+                        ? correctionAttempts == 3 ? OctoberWorkerCorrectionStrategy.CompactedThinkingDisabled : OctoberWorkerCorrectionStrategy.ThinkingDisabled
+                        : OctoberWorkerCorrectionStrategy.Configured;
+                    if (correctionStrategy == OctoberWorkerCorrectionStrategy.CompactedThinkingDisabled)
+                    {
+                        if (correctionBase is null)
+                            throw new WorkerFailure(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
+                        removedMessages = history.Count - correctionBase.Length;
+                        history.Clear();
+                        history.AddRange(correctionBase);
+                    }
                     RecordCorrection(OctoberJsonCorrectionPhase.RetryRequested, feedback.Failure);
-                    adapter.BeginCorrection(extraCorrection);
+                    adapter.BeginCorrection(extraCorrection, correctionStrategy);
                     history.Add(new ChatMessage(ChatRole.User,
                         LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md") + "\n" +
                         feedback.ToJson(request.HardRetryBudget?.Remaining(request) ??
@@ -396,7 +437,8 @@ public sealed class OctoberFileWorkerExecutor
             correctionEvents.Add(new(phase, correctionAttempts, currentWindow, adapter?.Rounds ?? 0,
                 (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds,
                 Encoding.UTF8.GetByteCount(adapter?.LastText ?? string.Empty), diagnostic, result?.Status,
-                result?.FailureStage, result?.BudgetFailure, result?.TerminalFailure, adapter?.DiagnosticFinish));
+                result?.FailureStage, result?.BudgetFailure, result?.TerminalFailure, adapter?.DiagnosticFinish,
+                correctionStrategy, removedMessages));
         }
 
         OctoberFileWorkerResult FinishResult(OctoberFileWorkerResult result)
@@ -607,6 +649,7 @@ public sealed class OctoberFileWorkerExecutor
         private bool _allUsageKnown = true;
         private bool _correctionOnly;
         private bool _extraCorrectionPending;
+        private OctoberWorkerCorrectionStrategy _correctionStrategy;
         internal OctoberWorkerRetryDisposition RetryDisposition { get; private set; }
         internal int Rounds { get; private set; }
         internal int SettledTools { get; private set; }
@@ -622,12 +665,13 @@ public sealed class OctoberFileWorkerExecutor
         internal OctoberWorkerBudgetFailure? BudgetFailure { get; private set; }
         private OctoberWorkerFailureStage? _observedStage;
 
-        internal void BeginCorrection(bool extraCorrection)
+        internal void BeginCorrection(bool extraCorrection, OctoberWorkerCorrectionStrategy strategy)
         {
             if (_pending.Count != 0 || Finish != ChatFinishReason.Stop)
                 throw Fail(OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerTerminalFailure.IncompleteTerminal);
             _correctionOnly = true;
             _extraCorrectionPending = extraCorrection;
+            _correctionStrategy = strategy;
         }
 
         public override Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages,
@@ -755,7 +799,10 @@ public sealed class OctoberFileWorkerExecutor
                     request.HardRetryBudget!.RecordProviderCallStarted(request);
                     _extraCorrectionPending = false;
                 }
-                IAsyncEnumerable<ChatResponseUpdate> updates = client is IOctoberWorkerAttemptClient admittedClient
+                IAsyncEnumerable<ChatResponseUpdate> updates = _correctionStrategy != OctoberWorkerCorrectionStrategy.Configured &&
+                    client is IOctoberWorkerCorrectionClient correctionClient
+                    ? correctionClient.GetCorrectionStreamingResponseAsync(snapshot, bounded, lease, _correctionStrategy, linked.Token, timing.MarkDispatched)
+                    : client is IOctoberWorkerAttemptClient admittedClient
                     ? admittedClient.GetAttemptStreamingResponseAsync(snapshot, bounded, lease, linked.Token, timing.MarkDispatched)
                     : client.GetStreamingResponseAsync(snapshot, bounded, linked.Token);
                 iterator = updates.GetAsyncEnumerator(linked.Token);

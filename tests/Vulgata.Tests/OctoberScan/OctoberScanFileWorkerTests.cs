@@ -1467,6 +1467,196 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task JsonCorrection_ActualDeepSeekStagesThinkingAndCompactsOnlyRejectedCandidatesAsync(bool eventuallyValid)
+    {
+        string wrongValue = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal);
+        var wireRequests = new List<JsonElement>();
+        const string finalReasoning = "SYNTHETIC_REJECTED_FINAL_REASONING";
+        const string firstMalformed = "{SYNTHETIC_REJECTED_FIRST";
+        const string advisoryText = "SYNTHETIC_ADVISORY_FACT_KEEP_AS_UNTRUSTED_DATA";
+        string sourceText = "if (enabled) Run();\nreturn;";
+        var frame = new Frame(sourceText);
+        var advisory = new Contributor(ContributorKind.RepositoryAdvisory, frame.Origin.RepositoryId,
+            null, null, Guid.NewGuid(), Digest(advisoryText));
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com",
+            EnableCorrectionResponse = true,
+            ContinueBeforeFinalCandidate = true,
+            AdditionalResponseCount = 2,
+            InitialReasoningFragments = ["SYNTHETIC_INITIAL_TOOL_REASONING"],
+            FinalReasoningOverride = finalReasoning,
+            FinalTextOverride = firstMalformed,
+            CorrectionTextSequence = ["[]", wrongValue,
+                eventuallyValid ? UnitJson : "{SYNTHETIC_REJECTED_FINAL"],
+            ObserveRequest = (body, _) => wireRequests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"),
+            "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport,
+            deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) =>
+        {
+            Assert.Equal("src/Order.cs", relativePath);
+            return "contained source result";
+        }, "read_prepared_source");
+        var baseline = Request(frame);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3, MaximumWindowUtf8Bytes = 16 },
+            Advisory = [new(advisory, advisoryText)],
+            Contributors = [.. baseline.Contributors, advisory]
+        };
+
+        var scope = new Scope();
+        var executor = new OctoberFileWorkerExecutor(client, scope);
+        var result = await executor.ExecuteAsync(request, [tool]);
+
+        Assert.Equal(eventuallyValid ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        Assert.Equal(1, result.SettledToolCalls);
+        Assert.Equal(6, transport.Calls);
+        Assert.Equal(6, wireRequests.Count);
+        var initialTool = wireRequests[0];
+        var continuation = wireRequests[1];
+        var initialCandidate = wireRequests[2];
+        var configuredCorrection = wireRequests[3];
+        var thinkingDisabledCorrection = wireRequests[4];
+        var compactedCorrection = wireRequests[5];
+        Assert.All(wireRequests, body =>
+        {
+            Assert.Equal(8192, body.GetProperty("max_tokens").GetInt32());
+            Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
+        });
+        foreach (var body in new[] { initialTool, continuation, initialCandidate, configuredCorrection })
+        {
+            Assert.Equal("low", body.GetProperty("reasoning_effort").GetString());
+            Assert.False(body.TryGetProperty("thinking", out _));
+        }
+        Assert.Equal("none", configuredCorrection.GetProperty("tool_choice").GetString());
+        foreach (var body in new[] { thinkingDisabledCorrection, compactedCorrection })
+        {
+            Assert.False(body.TryGetProperty("reasoning_effort", out _));
+            Assert.Equal("disabled", body.GetProperty("thinking").GetProperty("type").GetString());
+            Assert.Equal("none", body.GetProperty("tool_choice").GetString());
+            Assert.Contains(body.GetProperty("tools").EnumerateArray(), declaration =>
+                declaration.GetProperty("function").GetProperty("name").GetString() == tool.Name);
+        }
+        var compactedMessages = compactedCorrection.GetProperty("messages").EnumerateArray().ToArray();
+        string InitialSystemPrompt(JsonElement body) => body.GetProperty("messages").EnumerateArray()
+            .Where(message => message.GetProperty("role").GetString() == "system")
+            .Select(message => message.GetProperty("content").GetString()!)
+            .Single(content => !content.StartsWith("{\"type\":\"file_tool_budget\"", StringComparison.Ordinal));
+        Assert.Contains(compactedMessages, message => message.GetProperty("role").GetString() == "system" &&
+            message.GetProperty("content").GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(InitialSystemPrompt(initialTool), InitialSystemPrompt(compactedCorrection));
+        Assert.Contains(compactedMessages, message => message.TryGetProperty("tool_calls", out var calls) && calls.GetArrayLength() > 0);
+        Assert.Contains(compactedMessages, message => message.GetProperty("role").GetString() == "tool" &&
+            message.GetProperty("content").GetString()!.Contains("contained source result", StringComparison.Ordinal));
+        var userContents = compactedMessages.Where(message => message.GetProperty("role").GetString() == "user")
+            .Select(message => message.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.String
+                ? content.GetString()! : string.Empty).ToArray();
+        Assert.Contains(userContents, content => content.Contains(advisoryText, StringComparison.Ordinal));
+        var retainedWindows = new List<(int Ordinal, string Text)>();
+        foreach (string content in userContents)
+        {
+            try
+            {
+                using var window = JsonDocument.Parse(content);
+                if (window.RootElement.ValueKind == JsonValueKind.Object &&
+                    window.RootElement.TryGetProperty("windowOrdinal", out var ordinal) && ordinal.TryGetInt32(out int ordinalValue) &&
+                    window.RootElement.TryGetProperty("sourceText", out var source) && source.ValueKind == JsonValueKind.String)
+                    retainedWindows.Add((ordinalValue, source.GetString()!));
+            }
+            catch (JsonException) { }
+        }
+        var orderedWindows = retainedWindows.OrderBy(window => window.Ordinal).ToArray();
+        Assert.Equal(2, orderedWindows.Length);
+        Assert.Equal(["if (enabled) Run", "();\nreturn;"], orderedWindows.Select(window => window.Text));
+        Assert.Equal(sourceText, string.Concat(orderedWindows.Select(window => window.Text)));
+        Assert.Contains(compactedMessages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == "SYNTHETIC_INITIAL_TOOL_REASONING");
+        Assert.DoesNotContain(compactedMessages, message => message.TryGetProperty("content", out var content) &&
+            content.ValueKind == JsonValueKind.String && (content.GetString() == firstMalformed ||
+                content.GetString() == "[]" || content.GetString() == wrongValue));
+        Assert.DoesNotContain(compactedMessages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == finalReasoning);
+        string[] retainedCorrectionPrompts = compactedMessages
+            .Where(message => message.GetProperty("role").GetString() == "user")
+            .Select(message => message.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.String
+                ? content.GetString()! : string.Empty)
+            .Where(content => content.Contains("\"type\":\"validation_error\"", StringComparison.Ordinal)).ToArray();
+        Assert.Single(retainedCorrectionPrompts);
+        Assert.Contains(compactedMessages, message => message.GetProperty("role").GetString() == "user" &&
+            message.GetProperty("content").GetString()!.Contains("ValueShape", StringComparison.Ordinal));
+        var retryEvents = result.JsonCorrections.Where(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested).ToArray();
+        Assert.Equal([OctoberWorkerCorrectionStrategy.Configured, OctoberWorkerCorrectionStrategy.ThinkingDisabled,
+            OctoberWorkerCorrectionStrategy.CompactedThinkingDisabled], retryEvents.Select(item => item.Strategy));
+        Assert.Equal(0, retryEvents[0].RemovedMessages);
+        Assert.Equal(0, retryEvents[1].RemovedMessages);
+        Assert.True(retryEvents[2].RemovedMessages > 0);
+
+        // A subsequent primary file on this exact SDK client returns to configured low reasoning,
+        // whether the previous file succeeded or exhausted its correction candidates.
+        var nextResult = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(frame) with
+        { Limits = request.Limits }, [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, nextResult.Status);
+        Assert.Equal(8, transport.Calls);
+        Assert.Equal(8, wireRequests.Count);
+        Assert.Equal("low", wireRequests[6].GetProperty("reasoning_effort").GetString());
+        Assert.False(wireRequests[6].TryGetProperty("thinking", out _));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_NonDeepSeekProviderKeepsConfiguredStrategyAndFullHistoryAsync()
+    {
+        string wrongValue = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal);
+        var wireRequests = new List<JsonElement>();
+        const string malformed = "{SYNTHETIC_NON_DEEPSEEK_MALFORMED";
+        using var transport = new FragmentedToolHttp
+        {
+            EnableCorrectionResponse = true,
+            FinalTextOverride = malformed,
+            CorrectionTextSequence = ["[]", wrongValue, UnitJson],
+            ObserveRequest = (body, _) => wireRequests.Add(body.Clone())
+        };
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        Assert.False((client as IOctoberWorkerCorrectionClient)?.SupportsFinalizationStrategy ?? false);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        Assert.Equal(5, wireRequests.Count);
+        Assert.All(wireRequests, body =>
+        {
+            Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
+            Assert.False(body.TryGetProperty("thinking", out _));
+            Assert.False(body.TryGetProperty("reasoning_effort", out _));
+        });
+        Assert.All(wireRequests.Skip(2), body => Assert.Equal("none", body.GetProperty("tool_choice").GetString()));
+        var compactAttempt = wireRequests[4].GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(compactAttempt, message => message.TryGetProperty("content", out var content) && content.GetString() == malformed);
+        Assert.Contains(compactAttempt, message => message.TryGetProperty("content", out var content) && content.GetString() == "[]");
+        Assert.Contains(compactAttempt, message => message.TryGetProperty("content", out var content) && content.GetString() == wrongValue);
+        var retryEvents = result.JsonCorrections.Where(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested).ToArray();
+        Assert.Equal(3, retryEvents.Length);
+        Assert.All(retryEvents, item =>
+        {
+            Assert.Equal(OctoberWorkerCorrectionStrategy.Configured, item.Strategy);
+            Assert.Equal(0, item.RemovedMessages);
+        });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task ActualSdkStreamAdapter_PreservesUtf8FinalSuffixForJsonAndTextFormatsAsync(bool jsonFormat)
@@ -1690,14 +1880,17 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             [
                 new(OctoberJsonCorrectionPhase.CandidateRejected, 0, 1, 1, 4,
                     Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
-                    FinishReason: OctoberWorkerObservedFinish.Stop),
+                    FinishReason: OctoberWorkerObservedFinish.Stop,
+                    Strategy: OctoberWorkerCorrectionStrategy.Configured, RemovedMessages: 0),
                 new(OctoberJsonCorrectionPhase.RetryRequested, 1, 1, 1, 5,
                     Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
-                    FinishReason: OctoberWorkerObservedFinish.Stop),
+                    FinishReason: OctoberWorkerObservedFinish.Stop,
+                    Strategy: OctoberWorkerCorrectionStrategy.ThinkingDisabled, RemovedMessages: 7),
                 new(OctoberJsonCorrectionPhase.WorkerFinished, 1, 1, 2, 9,
                     Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
                     OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse,
-                    FinishReason: OctoberWorkerObservedFinish.Stop)
+                    FinishReason: OctoberWorkerObservedFinish.Stop,
+                    Strategy: OctoberWorkerCorrectionStrategy.CompactedThinkingDisabled, RemovedMessages: 11)
             ];
             var log = new OctoberJsonCorrectionLog(root, TimeProvider.System);
 
@@ -1706,7 +1899,9 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             string path = Path.Combine(root, "worker-json-corrections.jsonl");
             string[] lines = await File.ReadAllLinesAsync(path);
             Assert.Equal(events.Length, lines.Length);
-            foreach (string line in lines)
+            string[] expectedStrategies = ["Configured", "ThinkingDisabled", "CompactedThinkingDisabled"];
+            int[] expectedRemovedMessages = [0, 7, 11];
+            foreach ((string line, int index) in lines.Select((line, index) => (line, index)))
             {
                 using var json = JsonDocument.Parse(line);
                 var record = json.RootElement;
@@ -1728,6 +1923,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                 Assert.Equal("Syntax", record.GetProperty("diagnostic").GetProperty("category").GetString());
                 Assert.Equal("Root", record.GetProperty("diagnostic").GetProperty("slot").GetString());
                 Assert.Equal("Stop", record.GetProperty("finishReason").GetString());
+                Assert.Equal(expectedStrategies[index], record.GetProperty("strategy").GetString());
+                Assert.Equal(expectedRemovedMessages[index], record.GetProperty("removedMessages").GetInt32());
             }
             string logged = await File.ReadAllTextAsync(path);
             Assert.DoesNotContain(privateSource, logged, StringComparison.Ordinal);
@@ -4365,11 +4562,14 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         internal string ExpectedHost = "selected.example.test";
         internal bool ContentOnly;
         internal bool EnableCorrectionResponse;
+        internal bool ContinueBeforeFinalCandidate;
+        internal int AdditionalResponseCount;
         internal string? InitialTextOverride;
         internal string[]? InitialReasoningFragments;
         internal string? FinalTextOverride;
         internal string? FinalReasoningOverride;
         internal string? CorrectionTextOverride;
+        internal string[]? CorrectionTextSequence;
         internal bool CorrectionReturnsToolCall;
         internal Action<JsonElement, int>? ObserveRequest;
         internal bool MissingRequiredArgument;
@@ -4381,7 +4581,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(ExpectedHost, request.RequestUri!.Host);
             int call = Calls++;
-            Assert.InRange(call, 0, EnableCorrectionResponse ? 2 : 1);
+            int finalCandidateCall = ContinueBeforeFinalCandidate ? 2 : 1;
+            Assert.InRange(call, 0, EnableCorrectionResponse
+                ? finalCandidateCall + (CorrectionTextSequence?.Length ?? 1) + AdditionalResponseCount
+                : 1);
             if (ObserveRequest is not null)
             {
                 using var requestBody = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
@@ -4398,13 +4601,19 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                     """{"id":"controlled-tool","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[],"usage":{"prompt_tokens":20,"completion_tokens":10,"total_tokens":30}}""",
                 ];
             }
-            else if (call == 1)
+            else if (call == 1 && ContinueBeforeFinalCandidate)
+            {
+                chunks = [JsonSerializer.Serialize(new { id = "controlled-window", @object = "chat.completion.chunk", created = 1, model = "selected-model",
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = "continue" }, finish_reason = "stop" } },
+                    usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } })];
+            }
+            else if (call == finalCandidateCall)
             {
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-terminal", @object = "chat.completion.chunk", created = 1, model = "selected-model",
                     choices = new[] { new { index = 0, delta = new { role = "assistant", reasoning_content = FinalReasoningOverride, content = FinalTextOverride ?? UnitJson }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
             }
-            else if (CorrectionReturnsToolCall)
+            else if (call == finalCandidateCall + 1 && CorrectionReturnsToolCall)
             {
                 chunks = [
                     """{"id":"controlled-correction","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"unexpected-correction-tool","type":"function","function":{"name":"read_prepared_source","arguments":"{\"relativePath\":\"src/Order.cs\"}"}}]},"finish_reason":null}]}""",
@@ -4414,8 +4623,11 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             }
             else
             {
+                string correctionText = CorrectionTextSequence is { } sequence && call - finalCandidateCall - 1 < sequence.Length
+                    ? sequence[call - finalCandidateCall - 1]
+                    : CorrectionTextOverride ?? UnitJson;
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-correction", @object = "chat.completion.chunk", created = 1, model = "selected-model",
-                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = CorrectionTextOverride ?? UnitJson }, finish_reason = "stop" } },
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = correctionText }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
             }
             if (call == 0 && ContentOnly)

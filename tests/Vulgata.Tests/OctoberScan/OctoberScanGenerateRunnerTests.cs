@@ -987,7 +987,8 @@ public sealed class OctoberScanGenerateRunnerTests
         var observation = new OctoberWorkerHttpObservation(new(execution.Setup.TargetId, execution.Setup.BatchId,
             execution.Session.SubjectId, execution.Session.ManagementAuthorityId));
         using var wire = new CorrectionObservationHttp();
-        var factory = new OctoberWorkerClientFactory(new OctoberScanFileWorkerTests.Secrets(), wire, observation);
+        var factory = new OctoberWorkerClientFactory(new OctoberScanFileWorkerTests.Secrets(), wire, observation,
+            deepSeekWorkerReasoningEffort: "low");
         await using var runner = new OctoberGenerateRunner(host.Dependencies with
         { HttpObservation = observation, CreateWorkerClient = (selected, token) => factory.CreateAsync(selected, token) });
         var result = await runner.ExecuteAsync(execution);
@@ -1000,6 +1001,7 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal(facts.HttpTextUtf8Bytes, facts.ParseInputUtf8Bytes);
         Assert.Equal(4, wire.Requests.Count); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
         Assert.All(wire.Requests, body => Assert.False(body.TryGetProperty("stop", out _)));
+        Assert.Equal("low", wire.Requests[0].GetProperty("reasoning_effort").GetString());
         Assert.Equal("json_object", wire.Requests[0].GetProperty("response_format").GetProperty("type").GetString());
         Assert.Contains(wire.Requests[0].GetProperty("messages").EnumerateArray(), message =>
             message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
@@ -1011,6 +1013,13 @@ public sealed class OctoberScanGenerateRunnerTests
             Assert.Equal("json_object", request.GetProperty("response_format").GetProperty("type").GetString());
             Assert.Equal("none", request.GetProperty("tool_choice").GetString());
         });
+        Assert.Equal("low", wire.Requests[1].GetProperty("reasoning_effort").GetString());
+        Assert.False(wire.Requests[1].TryGetProperty("thinking", out _));
+        foreach (var request in wire.Requests.Skip(2))
+        {
+            Assert.False(request.TryGetProperty("reasoning_effort", out _));
+            Assert.Equal("disabled", request.GetProperty("thinking").GetProperty("type").GetString());
+        }
         var correctionMessages = correctionRequest.GetProperty("messages").EnumerateArray().ToArray();
         Assert.Contains(correctionMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
             message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
@@ -1021,6 +1030,12 @@ public sealed class OctoberScanGenerateRunnerTests
             message.TryGetProperty("content", out var content) && content.GetString()!.Contains("complete", StringComparison.OrdinalIgnoreCase) &&
             content.GetString()!.Contains("replace", StringComparison.OrdinalIgnoreCase) &&
             content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
+        var compactedMessages = wire.Requests[3].GetProperty("messages").EnumerateArray().ToArray();
+        Assert.DoesNotContain(compactedMessages, message => message.TryGetProperty("content", out var content) &&
+            content.ValueKind == JsonValueKind.String &&
+            (content.GetString() == CorrectionObservationHttp.FirstMalformedText || content.GetString() == CorrectionObservationHttp.FinalMalformedText));
+        Assert.Contains(compactedMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "user" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("Syntax", StringComparison.Ordinal));
         // Retain only the observed diagnostics to exercise the cached-result disclosure fence.
         typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .SetValue(runner, Task.FromResult(result with { Report = report with { Inventory = [], AcceptedFiles = [], TerminalCoverage = [], Documents = [], Publication = null } }));
