@@ -241,3 +241,62 @@ Evidence: `TestResults/business-catalog-verification/result.json`, SHA-256
 The earlier command's historical exit-1 report remains truthful and unchanged.
 This correction qualifies its catalog phase against the already published result;
 it does not claim a second complete Generate run or new cross-repository qualification.
+
+## Additional authorized end-to-end execution — successful
+
+The user requested a successful BL run with generated data and then explicitly
+replied **“Authorize this one additional run”** to the same four-call / six-million-token
+proposal, including canonical publication writes and one temporary ordinary-reader
+account. The corrected checkpoint `341243ffdee4dbfe110bbcc9637a121437b8a8b9`
+was clean on `oct14/business`. Preflight confirmed the same 163-version CL corpus,
+single root and unchanged settings, with the prior Begin/Complete pair both present.
+A fresh separate local launch marker was consumed; prior markers remained untouched.
+
+Executed 2026-10-11 **20:45:40–20:47:18 Asia/Shanghai**. The command returned
+**exit 0**, requested/completed stage `cl-and-bl`, execution Completed, publication
+Confirmed, Business diagnostics Completed with no operation mismatch. Catalog
+verification returned 164 exact handles. No timeout or unknown settlement occurred.
+
+- RunId / Begin and Complete operation: `8b970cea-0c5f-4724-80d9-f1776f84dea4`.
+- Finalization operation: `8e5079bd-5b8e-4a08-a83f-1b1fd7d1fecb`.
+- New publication: `464743bc-93f3-4254-bda0-ec992a5ae7b8`.
+- Same logical BL document: `50a6b29d-57bc-92d9-f778-5fcf58b43d0c`.
+- New immutable BL version: `37c2b676-d9aa-5509-a4e7-d867b8161947`.
+- Title: **手机银行自助注册流程业务说明（局部）**.
+- One provider call, input **12272**, output **11301**, total **23573 tokens**;
+  all usage known, no structural replacement or provider retry. Process 98.53 seconds.
+
+Both new admission/completion receipts are committed. Original CL membership/content
+digest and original root readability remain unchanged. The first BL publication and
+its document content also remain unchanged. The new version reuses the canonical
+flow group and complete lineage: 163 document dependencies, one member, zero accepted
+relationship dependencies and 240 file-uncertainty dependencies. Evidence queries
+follow the new document's group reference, since the group's creation operation
+correctly remains the first finalization operation.
+
+Real Identity password authentication of a new User-only account succeeded.
+Canonical Business search/read returned the complete new BL in one page and denied
+CL exact reads without metadata. The account was deleted and absence verified.
+Nine generated claims map to known claims of the exact selected CL version, with no
+foreign or advisory evidence references. The document describes registration-type
+branches, SMS verification outcomes, writes/transaction sequence, optional login
+logging and post-commit declarations, plus explicit uncertainty. As before, SMS
+presence prose follows CL descriptions of smsSerialNo; deployed behavior and other
+services' implementation are not independently established by this local-flow result.
+
+The report's Complete/matching-completed values describe completion under the current
+bounded policy and selected-root scope. They do not establish cross-repository
+completeness: zero accepted cross-repository links and 355 NotEvaluated dispositions
+remain. No source rescan, migration, host startup, manual Knowledge seeding, CL
+mutation, merge or push occurred. This additional grant is consumed; stop reached.
+
+Local evidence:
+
+- `TestResults/minimal-bl-run-2/stdout.log`, SHA-256
+  `22A72BE84DD0090B0EEBC5E3496DBB03B0B08BA6AE9512B04EA8ED7F8BBEB3EB`.
+- `TestResults/business-postrun-2/inspection.json`, SHA-256
+  `BEF862E15156CAFF6810D254F83CF66F6CF0921C53E440573A32604B73B9B953`.
+- `TestResults/business-postrun-2/ordinary-reader-content.txt`, SHA-256
+  `FB4BEBFCE26AF4EAC2CCDABF4E88F236DFBD8E13BC3550BC8505CC6CAF0DC8CB`.
+- `TestResults/business-postrun-2/settlement.json`, SHA-256
+  `BAD14E1CF888F41FBBDE98C7D06CDBCAAF9B97A074B9F15A5F4380F6E9AC8431`.

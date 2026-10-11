@@ -21,6 +21,12 @@ A subsequent authorized bounded-paging correction passed 67/67 controlled tests 
 read-only verification of all 164 exact existing publication members, without another
 provider call or database write. See the checkpoint for exact IDs and evidence.
 
+One separately authorized additional Generate subsequently **completed with exit 0**
+on `341243ff`, publishing `464743bc-93f3-4254-bda0-ec992a5ae7b8`. Its new local-flow
+BL version was verified by an ordinary User; original CL and first BL remain unchanged.
+One provider call / 23573 tokens, settled receipts, no rescan. This grant is consumed.
+Cross-repository completeness remains deferred; the milestone is now stopped.
+
 ## Accepted integration and superseded assessment
 
 Assigned checkout: `C:/Users/13728/.codex/worktrees/f081/vulgata`, `oct14/business`.
