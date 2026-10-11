@@ -1,182 +1,175 @@
 # Existing accepted CL → Business Logic: owner handoff
 
-Date: 2026-10-11. Scope: October first deliverable, login/registration presentation.
-The user is management/coordination owner. The former integration chat is advice-only.
-No other chat was contacted or dispatched for this assessment. This document is a
-source-checked handoff, not a new implementation plan or runtime grant.
+Reconciled: 2026-10-11. Scope: October first deliverable, login/registration presentation.
+The user retains management authority. The user explicitly authorized integration
+and Business synchronization, followed by a separate prompt to start Business work.
+This synchronization grants no provider, database, source, host or retained-data operation.
 
-## Verified boundary
+## Accepted integration and superseded assessment
 
-Assigned checkout: `C:/Users/13728/.codex/worktrees/f081/vulgata`, branch
-`oct14/business`, clean starting HEAD `19a2e19c8151c08cf2d9ec593fdece45cbdfd95e`.
-Latest locally available integration ref inspected:
-`oct14/main` = `d623c509de19824a444babe9d55085e2220128c0`.
-Business Core contracts/policies, Agents/prompt, October persistence and Knowledge
-tests match that integration ref. No reset, merge, remote fetch, other-worktree
-inspection or assessment of Scan's unfinished existing-CL command was performed.
+Assigned checkout: `C:/Users/13728/.codex/worktrees/f081/vulgata`, `oct14/business`.
+Starting Business HEAD: `3820d77a7ec9b76f05a197279a4391411fecbe04`, clean.
+Accepted main checkpoint: **`2bb30f4a6c6aa242b832cc9130b0ec07e353c627`**, including
+Scan `c473ad15` / implementation `5c220d55` and preserved Chat/Explorer improvements.
+Business merge: `643a21574c9a3465011cc07a73d73a1019cb060e`, without conflicts or reset.
+The merged tree exactly matched accepted main: `a41a2b9f49472b6d183e4e4d89241583f7c5175f`.
+Only this handoff and Business qualification notes are changed after that merge.
 
-The resolution, flow planner, synthesis executor and atomic BL publication store
-already exist. They consume immutable accepted CL, not source files. No Business
-engine replacement, new schema or migration is indicated by this inspection.
-The missing integration capability must not be confused with missing BL algorithms:
-**the current finalizer's dispatch contract permits only the original live
-BeginGenerate admission, not a new process continuing a completed CL-only run.**
+The earlier assessment at `d623c509` correctly described the older APIs but is now
+superseded **for the explicit existing-CL route**. Publication-to-corpus loading,
+fresh exclusive Business admission and validated partial resolution reuse now exist.
+The competing Business dispatch-extension proposal remains held/superseded; do not
+implement it in parallel. Ordinary fresh BeginGenerate retains its original rules.
+The older original-slot XML prose still mentions only BeginGenerate; the implemented
+new admission and `OriginalAdmissionMatches` route are the current reference here.
+No canonical-contract/source edit is made during this documentation reconciliation.
 
-## Exact input contract — reuse these owner types
+Business receives BL continuation and its transferred existing-CL command seam per
+[Scan's handoff](../20-1-Oct14-scan/handoff-business-generation.md). Shared fresh-Scan,
+CL execution and Web composition boundaries remain intact. Implementation or runtime
+continuation waits for the user's next Business prompt.
 
-| Required input | Existing type / origin | Required semantics |
-| --- | --- | --- |
-| Database/target/batch selection | `KnowledgeBinding(CanonicalDatabaseIdentity, TargetId, BatchId, SelectionDigest)` | Exact retained binding, with currently authorized access to that target. An arbitrary connection string, batch label or directory name is not equivalent. |
-| Frozen accepted corpus | `CorpusHandle(Binding, CorpusId, CorpusDigest)` returned by `FreezeCorpusAsync` | Exact owner-issued immutable corpus. Keep the freeze operation key and canonical digest for `IOctoberKnowledgeWriter.LookupOperationAsync`; do not reconstruct a handle from document counts or a 'latest' query. |
-| Optional prior CL publication | `PublicationBinding(Knowledge, PublicationId)` | Identifies an ordinary readable CL selection. It is not a `CorpusHandle` and is not required for private producer processing of an already frozen accepted corpus. A prior publication must remain unchanged. There is no current public publication-to-corpus resolver port. |
-| Accepted source identity | Stored `DocumentVersionReference`, manifest and `PreparedOrigin` | Same batch, exact logical/version IDs; RepositoryId, root binding, relative path, prepared version, digest and anchors remain owner-loaded. No source reread or rescan is required by B1/B2. Do not remap existing documents into a fresh batch. |
-| Coverage and gaps | Stored `FileCoverage`, file uncertainties, resolution outcomes/dispositions and flow frontiers | Preserve failed/cancelled/unprocessed/zero-unit inputs and every manifest-qualified uncertainty. Successful CLI exit or a subset of CL documents cannot replace terminal coverage. |
-| Context | Accepted qualified claims and complete stored contributor ledger | Retain source/advisory/hypothesis/uncertain qualification and all contributors, including supplemental/uncited inputs. Current synthesis receives `{ input, group, gaps }`; it has no free-form evaluation-answer input or new-context acceptance port. Presentation goals can help select roots, not manufacture facts. |
-| Flow roots | `FlowRootSelection(UnitId, Document, Kind, Selector)` from owner-loaded `FlowPlanningInput.Units` | Choose exact stored unit/version/semantic selector, with supported `SelectedCodeUnit` kind. Login and registration roots remain distinct even when they share helpers. Do not guess GUIDs, use the first unit implicitly, or infer roots from names alone. Explicit empty roots means durable NoContent; default roots are invalid. |
-| Fresh dispatch/commit authority | Original slot, `IOctoberExecutionScope` plus `IOctoberBusinessHandoffLifetime`, producer authorization, `IOctoberCommitSubmissionGuard` | These are independently issued host capabilities, never inferred from a stored receipt or successful read. See the dispatch decision below. |
-| Provider selection | `BusinessProviderConfigurationProjection`, profile-bound `IOctoberBusinessAttemptClient`, prompt digest, token ceiling, run ID | Same frozen actual client/credential lifetime and host budget/capacity/deadline; fingerprints are not credentials or permission. No provider work is authorized by this handoff. |
+## Exact retained input and command selection
 
-A corpus is one exact batch. Two repositories can belong to it; unrelated batches
-cannot be silently unioned. If Scan's accepted CL spans separate batches, report
-that mismatch instead of copying identities or rescanning unchanged source.
-If only accepted-file receipts exist, freezing still requires the existing trusted
-freeze authority and complete settled terminal coverage. If only a publication ID
-survives, a bounded owner selection/recovery API would need separate contract approval.
+The pinned Scan handoff reports 77/77 completed files and 163 CL Documents, with a
+confirmed publication. This synchronization did not query or independently qualify
+the retained database, source or ordinary reader.
 
-## Supported owner API sequence
+| Binding | Handoff value / requirement |
+| --- | --- |
+| Target | `phone-15bfe12615eb` |
+| Batch | `1a327657-6a55-4e65-ba06-6992f423d40e` |
+| Original CL publication | `fff8ddfc-d8ae-480c-aadd-286f03c8f4d9` |
+| Selection digest | `52fde3a3354bb00ce686d6eb4f10feb9279d0f2d9daea9a6b8473f51e48b43bd` |
+| Database binding | Use the exact existing protected target/database configuration; a database name alone is not CanonicalDatabaseIdentity. Verify live binding only under authorized runtime scope. |
+| Policy | `outputStage: cl-and-bl`, `existingClPublicationId` set to that exact publication; retain explicit finite policy limits and repository scope. |
+| Entry configuration | `October__Mode=generate`, `October__ScanPolicyFile` pointing to a fresh authorized policy, and `October__BusinessSettingsFile` or the bounded operator root-selection route. This is a configuration contract, not an instruction to launch now. |
 
-1. Establish the exact `CorpusHandle` and current all-contributor producer authority.
-   `IOctoberResolutionStore.LoadCorpusAsync` reloads accepted CL with exact provenance.
-   It does not read the source repositories or generate missing CL.
-2. `OctoberResolutionPolicy.Plan` derives finite inquiries and explicit dispositions.
-   For genuinely outstanding inquiries, the host composes `OctoberResolutionExecutor`
-   with its authorized scope/client. Accept proposals through `AcceptOutcomeAsync`
-   using `ResolutionAcceptanceRequest` and `OctoberResolutionStore.ComputeAcceptanceDigest`.
-   The owner recomputes evidence/outcomes; the model never creates an authoritative edge.
-   Retain operation/attempt IDs and digests. Reconcile known operations through
-   `LookupOutcomeAsync`, without regeneration. Existing accepted resolution must be
-   reused; an unavailable read or conflicting write is not permission to overwrite it.
-3. `IOctoberFlowPlanningInputLoader.LoadAsync(corpus, [])` supplies exact selectable
-   units only when required resolution/provenance checks succeed. Reload with the
-   selected roots for planning. Missing required resolution, bad bindings or failed
-   authority yield unavailable input, not partial permission. The loader includes
-   complete coverage, contributors, file uncertainties and accepted resolution.
-   If partially completed B1 work exists but operation receipts were lost, current
-   ports do not enumerate per-inquiry recovery receipts; surface that owner-read gap
-   before blindly regenerating every inquiry.
-4. `OctoberFlowPlanner.Plan` computes bounded directed groups. Current hard ceilings
-   are 256 nodes, 512 edges and depth16; finalization accepts at most256 roots.
-   Unsupported root kinds produce explicit dispositions, not invented classifications.
-5. Construct `BusinessFinalizationSelection` and same-batch `OperationKey` with kind
-   `FinalizeCorpus`; use `OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint`
-   and `ComputeRequestDigest`. Call `IOctoberBusinessFinalizer.FinalizeAsync` only with
-   the valid original slot and same host scope. The current wrapper loads inputs,
-   synthesizes from accepted documents and submits original proposals to the owner.
-6. `IOctoberFlowPublicationStore` reloads/revalidates and atomically stores BL,
-   exact document/relationship/uncertainty dependencies and publication membership.
-   `LookupAsync` is exact reconciliation only. Missing/unavailable rows remain
-   CommitIndeterminate; they never authorize model dispatch. Failed/partial outcomes
-   and LogUnavailable must remain distinct from a fully successful publication.
-7. Use the returned publication with the canonical reader's `OpenReadSelectionAsync`,
-   bounded search, exact reads and permitted related reads under the ordinary user's
-   live subject, purpose, repository scope and **Business** mode. Producer authority
-   is not reader authority. Do not substitute another publication if these reads fail.
+Absence of the selector preserves fresh Generate. Empty selector or use with cl-only
+is rejected. The selected publication must be a committed CL publication whose exact
+membership matches the frozen corpus, with matching retained coverage/provenance.
+Do not use Prepare, create a replacement batch, regenerate CL, union different batches
+or retarget the original publication. Environment paths and credentials stay in
+protected local configuration, not tracked examples or evaluation inputs.
 
-An existing B0 CL publication is not a prerequisite for B1/B2, and it is not replaced
-by them. The BL publication includes exact corpus CL membership internally while
-Business readers see only permitted BL. Complete dependencies are owner-maintained;
-Chat/Explorer must not reconstruct them from citations or convert dependency rows
-into graph relationships.
+## Implemented owner admission and settlement
 
-## Decision required before detached existing-CL dispatch
+Use [OctoberBusinessFromClContracts.cs](../../src/dotnet/Vulgata.Core/DomainServices/OctoberBusinessFromClContracts.cs)
+and [OctoberBusinessFromClStore.cs](../../src/dotnet/Vulgata.Infrastructure/Data/October/Knowledge/OctoberBusinessFromClStore.cs),
+not a competing DTO/store or a manually reconstructed corpus.
 
-`IOctoberOriginalBusinessFinalizationSlot` explicitly binds dispatch to Scan's
-original live BeginGenerate admission. `OctoberBusinessFinalizer` refuses a missing
-slot; successful absent lookup grants none. `OctoberGenerateAdmissionStore` refuses
-fresh admission on a batch that already contains operations/accepted files/corpus.
-Thus a new CLI process cannot merely reopen a CL batch and pretend to be its old run.
-The existing same-live-run CL-and-BL path remains supported.
+- `BusinessFromClRequest(PublicationBinding, SubjectId, RunId, CanonicalPayloadDigest)`
+  binds the exact publication, current subject and fresh run. Use
+  `OctoberBusinessFromClPolicy.ComputeBeginDigest`.
+- `IOctoberBusinessFromClStore.BeginAsync` validates the stored binding, publication,
+  full corpus membership, manifests, coverage, contributors and retained resolutions.
+  Its `BusinessFromClSnapshot` supplies `Corpus`, `AcceptedFiles`, `Coverage`,
+  `Contributors` and `ExistingResolutions`; the caller need not recover a lost freeze
+  receipt or reconstruct contributor authority from citations.
+- `BeginBusinessFromCl` (kind6) and `CompleteBusinessFromCl` (kind7) use the existing
+  immutable KnowledgeOperations journal. Begin/completion serialize under the batch
+  row lock; an unmatched begin blocks another attempt. No migration is introduced.
+- The returned `BusinessFromClAdmission` is an issuer-verified, process-local,
+  nonserialized capability. A receipt, lookup, elapsed time or new process cannot
+  recreate it or claim takeover. Same-request lookup is reconciliation, not dispatch.
+- `CompleteAsync` / `LookupCompletionAsync` require that original capability and
+  `IOctoberBusinessFromClSettlementAuthority`. Complete is cleanup bookkeeping after
+  semantic work is closed and all actual calls/commits/transports are settled; it
+  grants no content disclosure or provider authority. Settled cleanup can finish
+  after cancellation/expiry/revocation, while new admission requires fresh authority.
+- Unknown commit/transport state, unfinished work or a lost owner remains blocked.
+  Never clear unmatched receipts to force a retry. A later explicit fresh attempt
+  is permitted only after confirmed original settlement/completion.
 
-For a separate existing-CL command, the smallest proposed **shared-contract change**
-is authorization of a fresh, explicit Business-only dispatch against one existing
-immutable CorpusHandle, with a new run/finalization operation, pinned roots/provider/
-prompt, one consumed original callback and the same F1 commit guard/F2 capacity,
-stop, deadline and live-authority requirements. Keep BeginGenerate's fresh-batch
-semantics and ordinary receipt/lookup behavior unchanged; no takeover, automatic
-retry, cross-batch remapping or rescanning. This changes the permitted origin of a
-Business dispatch; it must be agreed before Scan issues such a capability.
+The command's [ExistingCl branch](../../src/dotnet/Vulgata.OctoberGenerator/OctoberGenerateRunner.ExistingCl.cs)
+uses these capabilities and skips BeginGenerate, source inventory/native tools,
+Worker CL generation, file acceptance, corpus freezing and replacement CL publication.
+The original finalization slot still binds the exact live run/request/corpus/scope;
+its issuer now validates either original admission route. No stored result grants it.
 
-**Not implemented here.** Approve that bounded semantic extension, or require the
-existing original live run instead. Business would own the narrow contract and
-conformance changes; Scan would own command admission, selection and dispatch.
-The proposed first patch would update the permitted issuer semantics in `OctoberBusinessOriginalDispatchContracts.cs` and the owning contract documentation, plus conformance tests for fresh existing-corpus dispatch, exact replay and denial/fencing. No public method signature change or second Knowledge store is proposed. Scan admission implementation remains Scan-owned.
-No migration is presently proposed. If durable admission/exclusion needs an added
-record, its exact schema and compatibility impact must be presented separately
-before implementation; this document is not permission to migrate a target.
+## Resolution, roots, context and publication
 
-## Real-data qualification checklist (not executed)
+1. Load the exact accepted corpus through `IOctoberResolutionStore.LoadCorpusAsync`.
+   `OctoberResolutionPolicy.Plan` computes finite inquiries and explicit dispositions.
+   The new route reuses validated Supported/Unresolved outcomes in the owner snapshot.
+   Provider/parse/budget failures with no witness stop this route before persisting
+   Failed/NotEvaluated resolution, allowing a later settled fresh attempt to retry
+   only unfinished work. Legacy retained Failed/NotEvaluated outcomes fail closed;
+   do not overwrite them. Original fresh cl-and-bl behavior is unchanged.
+2. Use `IOctoberFlowPlanningInputLoader.LoadAsync` and its exact units to select
+   `FlowRootSelection(UnitId, Document, SelectedCodeUnit, Selector)`. Keep login and
+   registration distinct even when they share helpers. No inferred first/all roots.
+   Default roots are invalid; explicit empty roots yield NoContent, not useful BL.
+3. Preserve exact `DocumentVersionReference` and `PreparedOrigin` bindings, coverage,
+   manifest-qualified uncertainties, resolution evidence and complete contributor union.
+   Supplemental dependencies are not necessarily flow members or graph edges.
+4. Current synthesis consumes `{ input, group, gaps }` from accepted evidence. Context
+   can guide root recognition, but accepted source must support behavior/relationships.
+   Advisory/hypothesis/uncertain claims keep their qualification. Never feed evaluation
+   answers into generation or manually seed accepted knowledge to satisfy a checklist.
+5. Bind the same authorized scope/client, current authority, hard stop/deadline and
+   commit guard. Finalization uses canonical provider/request/outcome digests and
+   `IOctoberFlowPublicationStore` revalidation. Success creates a separate BL
+   publication; earlier CL versions, content and membership remain immutable.
+6. Keep semantic and persistence outcomes distinct: Failed/AlreadyCommitted is durable
+   failure, not successful BL. Exact lookup cannot regenerate. Reader selection is
+   not automatically retargeted: verify the returned BL publication explicitly.
 
-- [ ] Pin code revision, exact corpus/batch/digest, repository/source bindings,
-  accepted document versions, terminal coverage, selected roots and runtime owner.
-  Verify Scan's actual acceptance/freeze/publication receipts; successful CL reporting
-  alone is insufficient. Keep evaluator answers out of generation input.
-- [ ] Login and registration have meaningful distinct source-backed roots. Shared
-  helpers do not merge purposes; local-only flows are allowed when no link is proved.
-- [ ] Each claimed cross-repository edge has exact directed endpoints and accepted
-  caller action, provider operation and connecting evidence. Names, confidence,
-  advisory descriptions and assumed deployment are insufficient; retain opposition.
-- [ ] Review generated conditions, alternatives, validation/error paths and effects
-  against the exact authorized source revision. Mark missing evidence and omissions;
-  do not rewrite accepted knowledge manually to make the presentation pass.
-- [ ] Uncertain routing, unprocessed inputs and bounded frontiers remain explicit.
-  Advisory context stays advisory at statement level, never source-proven behavior.
-- [ ] BL publication and full exact dependencies are coherent, including supplemental
-  and uncited contributors; prior CL versions/publications remain unchanged. Replay
-  resolves the same operation without duplicate versions or another provider call.
-- [ ] An ordinary authorized User can search/open complete BL through the exact
-  canonical Business selection, including paging. CL titles/IDs/paths/counts and
-  unauthorized references are absent. Revocation of any contributor fails closed.
-- [ ] Separately record semantic review, controlled tests, PostgreSQL qualification,
-  real provider execution and actual presentation UI evidence. Declare partial/failed
-  outcomes and resource cleanup/retention honestly; no fixture-as-real claim.
+The resolution/synthesis executors do not automatically acquire Scan's staged Worker
+JSON correction, reasoning replay or tool-budget behavior. Their current known-SDK
+reasoning metadata handling and strict final-text validation remain in place. Review
+actual Business requests/settings before any paid run; do not copy large Worker caps
+or add repair/retry behavior merely because it helped CL.
 
-No external/runtime database, provider, host, production-source or retained-dataset operation is
-covered by the current instruction. Request exact runtime/source/provider/spend and
-retention authority only once the command and its input/admission contract are ready.
+## Remaining inputs before BL execution
 
+- Explicit stored login/registration roots. Scan reports the last inspected settings
+  had `roots: []`, limits64 nodes/128 edges/depth8 and maximumAttemptTokens32768;
+  these are reported settings, not approved or independently inspected BL choices.
+- Confirmed provider/model, finite budgets/deadlines, current operator and every
+  contributor's authority, genuine ordinary-reader Identity binding and exact database
+  configuration. A fingerprint or management identity is not reader authorization.
+- Fresh user-authorized invocation, log/process boundary, spend/resource and retention
+  scope. Consumed CL grants and an old wrapper's single-use marker are not BL authority.
+- Resolve or explicitly account for the known strict qualification-report parser
+  mismatch before relying on that helper. No concrete API compatibility blocker was
+  identified in this bounded source review; paid BL and presentation readiness remain
+  unqualified. Do not start resources during this sync.
 
-## Verification and review for this handoff
+## Real-data qualification checklist (not executed by this sync)
 
-Current-source `eng/test.ps1` SelfContained run
-`bed1870f25ba4b5e9632fca369968ead`: **462 selected / 462 passed / 0 failed / 0 skipped**;
-build zero errors (14,942 existing analyzer warnings). Filter:
+- [ ] Pin exact accepted corpus/publication, source versions, coverage and selected roots;
+  confirm old CL remains readable before and after BL, without Prepare or rescanning.
+- [ ] Confirm meaningful distinct login/registration flows and bounded cycles/frontiers.
+- [ ] Review each cross-repository link's directed exact endpoints and connecting source
+  evidence; shared names, advisory context or confidence do not prove deployment.
+- [ ] Check useful conditions, branches, validation/error paths and effects against the
+  authorized source revision. Record omissions and uncertainty rather than invent facts.
+- [ ] Verify coherent BL publication and complete exact dependencies, including uncited
+  and supplemental contributors; preserve all source/advisory qualifications.
+- [ ] Ordinary authorized User can search/page/open full BL through canonical Business
+  reads. CL metadata and unauthorized references stay hidden; revocation fails closed.
+- [ ] Record actual provider usage, outcome, settlement/completion, retained resources and
+  any unresolved failures. Controlled tests are not paid-generation or UI evidence.
 
-```text
-FullyQualifiedName~OctoberBusiness|FullyQualifiedName~OctoberFlow|FullyQualifiedName~OctoberResolution|FullyQualifiedName~OctoberPublication|FullyQualifiedName~OctoberDisclosure|FullyQualifiedName~OctoberKnowledgeContract|FullyQualifiedName~OctoberGenerateAdmissionTests
-```
+## Verification provenance and limits
 
-These existing fixtures use controlled transports and ephemeral test SQLite/in-memory
-state only. No previous disposable-runtime grant was reused. PostgreSQL, native,
-External, E2E and HistoricalBoundary suites were excluded and are not qualified by
-this run. No new production defect was demonstrated, so no speculative production
-patch or manufactured RED test was added.
+[Accepted integration record](../../docs/bmad/planning-artifacts/october-scan-business-integration-2026-10-11.md):
+full SelfContained **4915/4917**, zero skips/build errors, run
+`7d1d42bbbca34259a31a625b2ff5adca`. The CodeGraph readiness failure was caused by an
+omitted installed directory in the launcher's process-local PATH; unchanged focused
+replay passed1/1 (`8380bb7b7e7642128368f379145b0c56`). This does not erase the full-run
+failure. The strict `OctoberGeneratedClReport` field-set mismatch remains unresolved.
+Do not claim full-suite GREEN or qualification-helper compatibility.
 
-Source review checked this handoff against the exact owner interfaces, original
-slot contract, fresh-admission guard, loader/provenance checks, planner limits and
-publication/read tests. In particular, existing tests verify accepted/frozen-batch
-admission refusal, missing-slot refusal, original-only generation, exact replay,
-publication without changing earlier CL/B0, full dependency authorization and
-Business reader exclusion. This was a local source/document review; no independent
-agent or other chat was dispatched under the user's coordination restriction.
+Scan records focused existing-CL6/6 and owned PostgreSQL10/10 with cleanup in
+[business-from-existing-cl.md](../20-1-Oct14-scan/business-from-existing-cl.md).
+Those are imported lane evidence, not new executions here or proof of paid BL.
+Business's earlier462/462 at `bed1870f25ba4b5e9632fca369968ead` belongs to its earlier
+source boundary; it does not qualify the newly integrated route.
 
-Primary implementation pointers:
-
-- [Owner identities and writer/reader ports](../../src/dotnet/Vulgata.Core/DomainServices/OctoberKnowledgeContracts.cs)
-- [Resolution store](../../src/dotnet/Vulgata.Infrastructure/Data/October/Knowledge/OctoberResolutionStore.cs)
-- [Trusted flow input loader](../../src/dotnet/Vulgata.Infrastructure/Data/October/Knowledge/OctoberFlowPlanningInputLoader.cs)
-- [Flow planner](../../src/dotnet/Vulgata.Core/DomainServices/OctoberFlowPlanner.cs)
-- [Finalizer](../../src/dotnet/Vulgata.Agents/OctoberBusiness/OctoberBusinessFinalizer.cs)
-- [Original dispatch boundary](../../src/dotnet/Vulgata.Core/DomainServices/OctoberBusinessOriginalDispatchContracts.cs)
-- [Atomic BL publication](../../src/dotnet/Vulgata.Infrastructure/Data/October/Knowledge/OctoberFlowPublicationStore.cs)
-The full SelfContained suite was not rerun. The integration project-state record's
-unresolved full-suite result is not superseded by this focused passing selection.
+This synchronization verified clean checkout, conflict-free merge and identical tree
+hash to accepted main, then source-checked the documentation against compiled contracts
+and runner/store behavior. No production edits, new tests, migrations, provider calls,
+database access, production-source access or host startup occurred. No other chat was messaged.
+Stop here for the user's next Business prompt.

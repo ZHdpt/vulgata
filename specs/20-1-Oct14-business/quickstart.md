@@ -482,3 +482,20 @@ existing API sequence, detached-dispatch contract decision and login/registratio
 qualification checklist are in [the existing-CL handoff](existing-cl-handoff.md).
 The engines are implemented; a completed CL run does not by itself grant a new
 Business dispatch slot. Scan's unfinished command remains unassessed.
+
+### Accepted existing-CL route synchronization — 2026-10-11
+
+The user explicitly authorized integration and Business synchronization before a
+separate BL-start prompt. Clean Business `3820d77a` merged accepted main
+`2bb30f4a6c6aa242b832cc9130b0ec07e353c627` without conflicts at `643a2157`.
+Both merge and accepted-main trees were `a41a2b9f49472b6d183e4e4d89241583f7c5175f`.
+Scan's `c473ad15` history includes exact-publication snapshot loading, fresh exclusive
+Business admission/settlement and retained resolution reuse. The immediately preceding
+missing-dispatch assessment is superseded for this implemented route; the competing
+extension stays held/superseded. See [the reconciled handoff](existing-cl-handoff.md).
+
+Imported integration evidence is **4915/4917**, not full GREEN. The environment-bound
+CodeGraph case passed an unchanged focused1/1 replay; the strict report-parser mismatch
+remains. No tests/runtime were repeated during this documentation-only synchronization.
+Explicit roots, provider/budget/permission and fresh runtime authorization remain required.
+Do not Prepare, regenerate CL, clear uncertain receipts or reuse consumed paid-run grants.
