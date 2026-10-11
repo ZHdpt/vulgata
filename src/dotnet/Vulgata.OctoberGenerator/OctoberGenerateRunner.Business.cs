@@ -378,14 +378,36 @@ internal sealed partial class OctoberGenerateRunner
         _businessDiagnostics = _businessDiagnostics with { Boundary = OctoberBusinessDiagnosticBoundary.ExactReader };
         var opened = await StoreAsync(() => RetainBusinessOwnerCall(() => reader.OpenReadSelectionAsync(binding.Selection, token)), token);
         if (opened.Status != KnowledgeReadStatus.Success || opened.Selection is null) return [];
+        return await ReadBusinessCatalogAsync(publication, opened.Selection,
+            request => StoreAsync(() => RetainBusinessOwnerCall(() => reader.SearchAsync(request, token)), token),
+            () => BusinessRunAvailable, token);
+    }
+
+    internal static async Task<ImmutableArray<DocumentHandle>> ReadBusinessCatalogAsync(PublicationBinding publication,
+        ReadSelection selection, Func<KnowledgeSearchRequest, Task<SearchPage>> searchAsync,
+        Func<bool> isAvailable, CancellationToken token)
+    {
         var handles = ImmutableArray.CreateBuilder<DocumentHandle>();
         var continuations = new HashSet<string>(StringComparer.Ordinal);
         ContinuationToken? cursor = null;
         int pages = 0;
+        int pageSize = KnowledgeContract.MaximumPageSize;
         do
         {
-            if (!BusinessRunAvailable || handles.Count >= 4096 || pages++ >= 256) return [];
-            var page = await StoreAsync(() => RetainBusinessOwnerCall(() => reader.SearchAsync(new(opened.Selection, "", KnowledgeContract.MaximumPageSize, cursor), token)), token);
+            token.ThrowIfCancellationRequested();
+            if (!isAvailable() || handles.Count >= 4096 || pages++ >= 256) return [];
+            var page = await searchAsync(new(selection, "", pageSize, cursor));
+            token.ThrowIfCancellationRequested();
+            if (page.Status == KnowledgeReadStatus.ReadBudgetExceeded && pageSize > 1)
+            {
+                // Cursors bind the requested page size. Restart this exact immutable selection;
+                // retain the total-call limit across restarts and disclose only a complete catalog.
+                pageSize /= 2;
+                cursor = null;
+                handles.Clear();
+                continuations.Clear();
+                continue;
+            }
             if (page.Status != KnowledgeReadStatus.Success || page.Documents.IsDefault ||
                 page.Documents.IsEmpty && page.Next is not null ||
                 page.Documents.Any(document => document.Handle.BatchId != publication.Knowledge.BatchId ||
@@ -398,8 +420,8 @@ internal sealed partial class OctoberGenerateRunner
             }
             cursor = page.Next;
             if (cursor is not null && !continuations.Add(cursor.Value)) return [];
-        } while (cursor is not null);
-        return handles.ToImmutable();
+            if (cursor is null) return handles.ToImmutable();
+        } while (true);
     }
 
     private Task DisposeBusinessReadersAsync() => _businessReaderCleanup ??= DisposeBusinessReadersCoreAsync();

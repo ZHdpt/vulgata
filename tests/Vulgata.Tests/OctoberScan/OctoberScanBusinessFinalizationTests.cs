@@ -19,6 +19,121 @@ namespace Vulgata.Tests.OctoberScan;
 public sealed class OctoberScanBusinessFinalizationTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("initial-overflow")]
+    [InlineData("later-overflow")]
+    [InlineData("minimum-overflow")]
+    [InlineData("denied")]
+    [InlineData("aggregate-limit")]
+    public async Task ExistingClContinuation_PublicationCatalogBudget_RestartsOnlyBoundedReadsAsync(string scenario)
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var cl = await host.Runner.ExecuteAsync(host.Execution);
+        var original = Assert.IsType<PublicationBinding>(cl.Report!.Publication);
+        var execution = ExistingClExecution(host.Execution, original);
+        using var transport = new NaturalTransport();
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        CatalogBudgetReader? observed = null;
+        dependencies = dependencies with { Business = dependencies.Business! with
+        {
+            BindReader = (session, publication, _) =>
+            {
+                var bound = ControlledBinding(host, publication, session, null);
+                observed = new CatalogBudgetReader(bound.Reader, scenario);
+                return Task.FromResult<OctoberVerifiedReaderBinding?>(bound with { Reader = observed });
+            }
+        } };
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.NotNull(observed);
+        Assert.Equal(1, transport.BusinessRequests);
+        Assert.Equal(0, transport.WorkerRequests);
+        Assert.Equal(100, observed.Requests[0].PageSize);
+        if (scenario is "initial-overflow" or "later-overflow")
+        {
+            Assert.Equal(0, report.ExitCode);
+            Assert.NotEmpty(report.Documents);
+            Assert.Equal(report.Documents.Length, report.Documents.Distinct().Count());
+            Assert.True(observed.Documents.Select(document => document.Handle).ToHashSet().SetEquals(report.Documents));
+            int restart = scenario == "initial-overflow" ? 1 : 2;
+            Assert.Equal(50, observed.Requests[restart].PageSize);
+            Assert.Null(observed.Requests[restart].Continuation);
+            Assert.Equal(scenario == "initial-overflow" ? 2 : 4, observed.Requests.Count);
+            if (scenario == "later-overflow")
+            {
+                Assert.Equal(100, observed.Requests[1].PageSize);
+                Assert.NotNull(observed.Requests[1].Continuation);
+                Assert.Equal(50, observed.Requests[3].PageSize);
+                Assert.NotNull(observed.Requests[3].Continuation);
+            }
+        }
+        else
+        {
+            Assert.NotEqual(0, report.ExitCode);
+            Assert.Empty(report.Documents);
+            if (scenario == "aggregate-limit")
+            {
+                Assert.Equal(256, observed.Requests.Count);
+                Assert.Equal(131, observed.Requests.Count(request => request.PageSize == 100));
+                Assert.Equal(125, observed.Requests.Count(request => request.PageSize == 50));
+                Assert.Null(observed.Requests[131].Continuation);
+            }
+            else
+            {
+                Assert.Equal(scenario == "denied" ? new[] { 100 } : new[] { 100, 50, 25, 12, 6, 3, 1 },
+                    observed.Requests.Select(request => request.PageSize).ToArray());
+                Assert.All(observed.Requests, request => Assert.Null(request.Continuation));
+            }
+        }
+        await using var context = host.Database.Factory.CreateDbContext();
+        Assert.Equal(2, await context.KnowledgePublications.CountAsync());
+        Assert.True(await context.KnowledgePublications.AnyAsync(publication => publication.PublicationId == original.PublicationId));
+    }
+
+    private sealed class CatalogBudgetReader(IOctoberKnowledgeReader inner, string scenario) : IOctoberKnowledgeReader
+    {
+        public List<KnowledgeSearchRequest> Requests { get; } = [];
+        public ImmutableArray<DocumentSummary> Documents { get; private set; } = [];
+        public Task<ReadSelectionResult> OpenReadSelectionAsync(ReadSelectionRequest request, CancellationToken token = default) => inner.OpenReadSelectionAsync(request, token);
+        public async Task<SearchPage> SearchAsync(KnowledgeSearchRequest request, CancellationToken token = default)
+        {
+            Requests.Add(request);
+            if (scenario == "denied") return new(KnowledgeReadStatus.Unavailable, [], null, null);
+            if (scenario == "aggregate-limit" && Requests.Count == 131)
+                return new(KnowledgeReadStatus.ReadBudgetExceeded, [], null, null);
+            if (scenario == "minimum-overflow" || scenario == "initial-overflow" && request.PageSize == 100 ||
+                scenario == "later-overflow" && request.PageSize == 100 && request.Continuation is not null)
+                return new(KnowledgeReadStatus.ReadBudgetExceeded, [], null, null);
+            if (Documents.IsEmpty)
+            {
+                var actual = await inner.SearchAsync(request with { Continuation = null }, token);
+                Assert.Equal(KnowledgeReadStatus.Success, actual.Status);
+                Assert.Null(actual.Next);
+                Documents = actual.Documents;
+                Assert.True(Documents.Length >= 2);
+            }
+            if (scenario == "aggregate-limit")
+            {
+                // Controlled endless catalog envelopes use distinct validly bound identities.
+                // They never claim these synthetic handles were persisted or readable.
+                var document = Documents[0] with { Handle = Documents[0].Handle with { DocumentVersionId = Guid.NewGuid() } };
+                return new(KnowledgeReadStatus.Success, [document], new("controlled-next-" + Requests.Count), null);
+            }
+            if (scenario == "later-overflow")
+            {
+                if (request.Continuation is null)
+                    return new(KnowledgeReadStatus.Success, [Documents[0]], new("controlled-page-size-" + request.PageSize), null);
+                Assert.Equal("controlled-page-size-" + request.PageSize, request.Continuation.Value);
+                return new(KnowledgeReadStatus.Success, Documents.RemoveAt(0), null, null);
+            }
+            return new(KnowledgeReadStatus.Success, Documents, null, null);
+        }
+        public Task<ContentPage> ReadExactAsync(ExactReadRequest request, CancellationToken token = default) => inner.ReadExactAsync(request, token);
+        public Task<RelatedPage> GetRelatedAsync(RelatedReadRequest request, CancellationToken token = default) => inner.GetRelatedAsync(request, token);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task BusinessFromClStore_BeginsOnlyAgainstAnExactPublishedClPublicationAsync()
     {

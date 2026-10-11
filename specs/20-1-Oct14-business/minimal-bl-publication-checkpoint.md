@@ -195,3 +195,49 @@ Local evidence (ignored, no credentials):
 
 **Local-flow BL published and ordinary-reader verified; cross-repository behavior
 remains unconfirmed.** Stop reached before the four-hour checkpoint. No merge/push.
+
+## Focused post-publication catalog correction
+
+The user subsequently authorized fixing the response-limit defect, focused tests,
+independent review and verification against the existing publication, explicitly
+without regeneration or another provider call. Starting checkout `04bdda0b` was clean.
+
+The Business continuation now halves its catalog page size only on ReadBudgetExceeded,
+down to one. Because cursors bind the requested page size, each reduction restarts the
+same immutable selection and discards the incomplete accumulated catalog. The existing
+256 total-call ceiling is retained across restarts; exact publication identities,
+duplicate/nonprogress checks, live authorization, original operation lifetimes,
+deadline/cancellation and the 4096-document ceiling remain intact. Other failures and
+an oversized single item fail closed. No response limit, schema, publication or
+provider behavior changes.
+
+The existing loop is extracted into one internal Business paging method so the
+read-only qualification can invoke the actual production algorithm without starting
+Generate or acquiring provider/commit capability. The command still supplies its
+original retained-call wrapper and run-availability checks.
+
+Focused RED: `TestResults/isolation-63543ce94cd540878be5b13d7aa69491/results.trx`,
+four selected / one passed / three failed on the original implementation: first-page
+overflow, later-page restart and minimum-page bounded failure. The non-budget failure
+already stopped correctly.
+
+Focused GREEN: **67/67 passed, zero failures/skips**, including five new paging cases
+and all 62 existing Business-finalization/lifecycle cases, through `eng/test.ps1` in
+SelfContained. Evidence: `TestResults/isolation-df5d7ee8353643569972802744a22609/results.trx`.
+The additional case confirms the total 256 calls do not reset after size reduction.
+Independent focused source review accepted with no actionable findings.
+
+Real read-only verification at 2026-10-11 20:32 Asia/Shanghai invoked this exact
+production paging method through the authenticated owner reader on publication
+`5a9d50ef-d738-4fec-b04f-bb58c9f61562`. Size 100 and 50 returned ReadBudgetExceeded;
+size 25 returned seven pages (six of 25 and one of 14). All **164 distinct exact
+handles** matched the immutable publication: original 163 CL versions plus the BL.
+Original CL digest and full current publication content digest were unchanged;
+Knowledge operation count remained 83. Connections enforced PostgreSQL read-only;
+there was no Generate invocation, provider call, database write or account creation.
+
+Evidence: `TestResults/business-catalog-verification/result.json`, SHA-256
+`2DBCB3021C2832C871AC1E0FE3B1993D72448553C8AAEA75B4909D930EF4BBD7`.
+The earlier command's historical exit-1 report remains truthful and unchanged.
+This correction qualifies its catalog phase against the already published result;
+it does not claim a second complete Generate run or new cross-repository qualification.

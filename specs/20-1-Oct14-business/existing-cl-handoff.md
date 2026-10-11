@@ -16,8 +16,10 @@ root evidence, complete owner lineage, corrected provider accounting/settings an
 373 passing controlled tests. That checkpoint supersedes the earlier multi-root
 execution proposal. The user subsequently authorized one invocation: one registration
 BL is now canonically published and ordinary-reader verified, with original CL intact.
-The command's post-publication catalog check still reports a response-budget failure;
-see the checkpoint for exact IDs, usage, settlement and the milestone stop boundary.
+The original command reported a post-publication catalog response-budget failure.
+A subsequent authorized bounded-paging correction passed 67/67 controlled tests and
+read-only verification of all 164 exact existing publication members, without another
+provider call or database write. See the checkpoint for exact IDs and evidence.
 
 ## Accepted integration and superseded assessment
 
