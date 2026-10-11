@@ -198,6 +198,12 @@ Bounded, redacted correction diagnostics use the owned JSONL log. Independent
 static review is accepted; controlled verification and the unchanged real-run
 qualification boundary are recorded in
 [three-correction verification](../../specs/20-1-Oct14-scan/three-correction-verification.md).
+The user's subsequent explicitly confirmed whole run on `7fb5ce2e` failed after
+600.43 seconds: 15/77 files accepted, zero published Documents. One file recovered
+after a correction; LoginNoticeOp.java exhausted all three regenerations, with
+normally ended but incomplete JSON. No timeout, unknown usage or unresolved
+settlement check; source hashes matched. This new single-run grant is consumed.
+See [real three-correction outcome](../../specs/20-1-Oct14-scan/three-correction-whole-run.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
