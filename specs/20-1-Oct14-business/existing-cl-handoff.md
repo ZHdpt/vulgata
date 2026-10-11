@@ -14,7 +14,10 @@ The approved narrow correction is now recorded in the
 [one local-flow BL checkpoint](minimal-bl-publication-checkpoint.md): compact exact
 root evidence, complete owner lineage, corrected provider accounting/settings and
 373 passing controlled tests. That checkpoint supersedes the earlier multi-root
-execution proposal; one real invocation still requires the stated runtime authority.
+execution proposal. The user subsequently authorized one invocation: one registration
+BL is now canonically published and ordinary-reader verified, with original CL intact.
+The command's post-publication catalog check still reports a response-budget failure;
+see the checkpoint for exact IDs, usage, settlement and the milestone stop boundary.
 
 ## Accepted integration and superseded assessment
 

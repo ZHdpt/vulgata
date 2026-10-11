@@ -88,7 +88,7 @@ Run through `eng/test.ps1` in the SelfContained inventory. This does not establi
 real-provider success, retained-database BL publication or ordinary-reader qualification.
 The unrelated historical qualification-report parser mismatch remains separate.
 
-## Single execution proposal — runtime authority pending
+## Single execution proposal — subsequently authorized and consumed
 
 Use the existing `cl-and-bl` continuation with the exact existing publication and
 single root above. Selected profile `selected`, model `deepseek-flash`, exact
@@ -123,3 +123,75 @@ exact publication. Review useful conditions, branches, effects and limitations
 against the accepted root, without supplying evaluation answers to generation.
 Report **“Local-flow BL published; cross-repository behavior remains unconfirmed.”**
 Browser/Chat/graph qualification remains separate. Stop after this first success.
+
+## Authorized execution and qualified result
+
+User explicitly replied **“authorize one execution”** to the complete proposal above.
+Executed the reviewed implementation `616cae1f9b1995ff886e91a529e7a6c4dfc02b10`
+once on 2026-10-11, 20:12:37–20:13:26 Asia/Shanghai. The fresh local marker is
+consumed. No second generation, structural replacement, migration, source execution,
+host startup or unmatched-receipt clearing occurred.
+
+- RunId / Begin and Complete operation: `19114288-0afa-4a2d-a1be-7080de879f64`.
+- Finalization operation: `f2e65272-5bce-4e98-bcc2-28d161b76bed`.
+- Separate publication: `5a9d50ef-d738-4fec-b04f-bb58c9f61562`.
+- BL logical document: `50a6b29d-57bc-92d9-f778-5fcf58b43d0c`.
+- BL version: `ce649bf4-a4cd-0469-b6f5-70e8402e80f5`.
+- Title: **手机银行自助注册流程业务说明**.
+- One provider request; known input 12272 / output 11126 / total **23398 tokens**.
+  Model wait 36.918 seconds; owned process duration 48.96 seconds. No watchdog
+  timeout, unknown usage or outstanding process. Both Business receipts committed.
+
+The canonical finalizer committed and exact lookup returned Published. The command
+nonetheless exited 1 with `business_publication_read_unavailable` at ExactReader:
+its catalog request used 100 documents and exceeded the existing 64 KiB response
+budget. Read-only reproduction returned ReadBudgetExceeded for 100 and Success for
+1. This is a **post-publication command verification defect**, not an indeterminate
+publication and not permission to regenerate. The original report is preserved;
+no parser helper was used to turn it into a successful command report. A later
+bounded correction should use bounded catalog pages without weakening budgets or
+the exact-publication check; it is not implemented after this milestone stop.
+
+Independent post-run ordinary-reader qualification used real Identity password
+authentication and a newly created account with exactly the existing User role.
+Canonical Business search returned only the BL; its full content read succeeded
+in one page. An exact CL handle was denied without content or metadata. The owned
+account was deleted through UserManager and absence verified. This is API/Identity
+qualification, not browser/UI qualification.
+
+Content review compared all 12 generated claims with the selected root's 29 accepted
+CL claims and exact source anchors: registration-type alternatives; SMS presence
+and success/failure conditions; transaction/write sequence; the counterintuitive
+needLoginLog 1/0 branches; post-commit channel/SMS/synchronization declarations;
+and the no-password branch. All generated evidence references resolve to that exact
+root and known claim IDs; none promotes advisory context to source-supported facts.
+This verifies synthesis against accepted CL evidence, not fresh source execution or
+deployed side effects. The SMS presence wording follows the CL description; the exact
+underlying condition is smsSerialNo presence, not independently validated OTP presence.
+
+Complete conservative lineage remains: 163 exact document dependencies, one selected
+member, zero accepted relationship dependencies, 240 file-uncertainty dependencies;
+850 inherited gap explanations/limitations remain owner-held in the synthetic gap
+claim. Business displays the concise uncertainty projection. Stored finalization is
+Published and its coverage IsPartial flag is false for completion of the selected
+root; that flag **does not establish cross-repository completeness**. Resolution
+still has 355 NotEvaluated dispositions. No supported cross-repository link is claimed.
+
+Original CL publication still has 163 versions, unchanged content digest recorded
+above, and its selected root was reopened and read successfully through its exact
+original publication. New publication membership contains those exact 163 CL versions
+plus one BL; Business mode exposes only BL. No original publication was altered.
+
+Local evidence (ignored, no credentials):
+
+- `TestResults/minimal-bl-run/stdout.log`, SHA-256
+  `B9DA523228BE90EB9DB2CE8E022DC45F07E28403085A540E206066B6054BF39A`.
+- `TestResults/business-postrun/inspection.json`, SHA-256
+  `6A82781F7513B44D76CB16A32B16332DA8C38426FF00E884CC830F73CB05100E`.
+- `TestResults/business-postrun/ordinary-reader-content.txt`, SHA-256
+  `8C9762BAC055979FBA95F5C7FB1FD0C0B1FF1810D54401196686902B5610BA62`.
+- `TestResults/business-postrun/settlement.json`, SHA-256
+  `DAFBC9E9C46FAC9B3E14F72B0DFA135641ED0452D782675D193F03F11E06F0E9`.
+
+**Local-flow BL published and ordinary-reader verified; cross-repository behavior
+remains unconfirmed.** Stop reached before the four-hour checkpoint. No merge/push.
