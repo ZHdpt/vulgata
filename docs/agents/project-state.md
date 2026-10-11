@@ -183,6 +183,13 @@ is exhausted; no complete real corpus or ordinary-reader success is claimed. See
 [hard correction evidence](../../specs/20-1-Oct14-scan/hard-correction-verification.md) and
 [text correction evidence](../../specs/20-1-Oct14-scan/text-correction-verification.md).
 
+Current response-format disposition: the user restored json_object for Scan JSON
+proposals/corrections only. The old text-correction flag is compatibility input
+and no longer changes format; hard-mode limits and correction guards remain.
+Independent stream review found no proven loss of valid pre-DONE content, but
+passive observation does not prove HTTP EOF and comparisons cover only parse
+failures. See [format rollback and review](../../specs/20-1-Oct14-scan/json-format-stream-review.md).
+
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

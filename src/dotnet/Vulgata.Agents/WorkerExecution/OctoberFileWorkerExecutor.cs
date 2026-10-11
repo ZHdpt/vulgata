@@ -642,7 +642,9 @@ public sealed class OctoberFileWorkerExecutor
             if (_correctionOnly)
             {
                 bounded.ToolMode = ChatToolMode.None;
-                if (request.Limits.UseTextForJsonCorrection) bounded.ResponseFormat = ChatResponseFormat.Text;
+                // Proposals and their corrections require JSON. Retain the legacy
+                // experiment flag as input compatibility only; it cannot select text.
+                bounded.ResponseFormat = ChatResponseFormat.Json;
             }
             var admissionRequest = new OctoberWorkerProviderAttemptRequest(request.RunId, request.FileWorkstreamId,
                 Guid.NewGuid(), request.ProviderProfileId, request.Limits.RequestTimeout ?? TimeSpan.FromMinutes(2),

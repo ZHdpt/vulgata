@@ -22,6 +22,7 @@ public sealed record OctoberScanPolicy
     public int AdvisoryToolCallsPerFile { get; init; } = 32;
     public int MaximumToolCallsPerFile { get; init; } = 48;
     public int MaximumTransientRetries { get; init; } = 2;
+    /// <summary>Retained configuration compatibility; JSON corrections always request json_object.</summary>
     public bool UseTextForJsonCorrection { get; init; }
     public bool HardRetryMode { get; init; }
     public int MaximumProviderRequests { get; init; } = 64;

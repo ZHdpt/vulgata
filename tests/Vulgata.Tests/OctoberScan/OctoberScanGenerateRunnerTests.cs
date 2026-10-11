@@ -824,7 +824,7 @@ public sealed class OctoberScanGenerateRunnerTests
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task HttpObservation_ActualFactoryRunnerForwardsFinalFactsAndCorrectionTextOptInAsync(bool useText)
+    public async Task HttpObservation_ActualFactoryRunnerKeepsJsonCorrectionFormatForLegacyTextFlagAsync(bool useText)
     {
         await using var host = await Harness.CreateAsync();
         var provider = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
@@ -849,17 +849,22 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal(2, wire.Requests.Count); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
         Assert.All(wire.Requests, body => Assert.False(body.TryGetProperty("stop", out _)));
         Assert.Equal("json_object", wire.Requests[0].GetProperty("response_format").GetProperty("type").GetString());
+        Assert.Contains(wire.Requests[0].GetProperty("messages").EnumerateArray(), message =>
+            message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
         var correctionRequest = wire.Requests[1];
         Assert.Equal(8192, correctionRequest.GetProperty("max_tokens").GetInt32());
-        Assert.Equal(useText ? "text" : "json_object",
-            correctionRequest.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.Equal("json_object", correctionRequest.GetProperty("response_format").GetProperty("type").GetString());
         var correctionMessages = correctionRequest.GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(correctionMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(correctionMessages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
             reasoning.GetString() == CorrectionObservationHttp.FirstReasoning &&
             message.TryGetProperty("content", out var content) && content.GetString() == CorrectionObservationHttp.FirstMalformedText);
         Assert.Contains(correctionMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "user" &&
             message.TryGetProperty("content", out var content) && content.GetString()!.Contains("complete", StringComparison.OrdinalIgnoreCase) &&
-            content.GetString()!.Contains("replace", StringComparison.OrdinalIgnoreCase));
+            content.GetString()!.Contains("replace", StringComparison.OrdinalIgnoreCase) &&
+            content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
         // Retain only the observed diagnostics to exercise the cached-result disclosure fence.
         typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .SetValue(runner, Task.FromResult(result with { Report = report with { Inventory = [], AcceptedFiles = [], TerminalCoverage = [], Documents = [], Publication = null } }));

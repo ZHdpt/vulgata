@@ -71,8 +71,10 @@ Run only the approved suites/resources. Native/provider extra consent flags rema
 `hardRetryMode` defaults to `false` in the Generate scan-policy JSON. To enable
 the bounded experiment, set `hardRetryMode: true` and `maximumTransientRetries: 0`.
 Keep the explicit `outputStage`, source selection and original budget settings.
-`useTextForJsonCorrection: true` is an independent optional setting for the
-correction response format; initial and tool-continuation requests remain JSON.
+JSON proposals and corrections request `json_object`. The former
+`useTextForJsonCorrection` experiment setting is accepted for configuration
+compatibility but no longer selects text, even when true. Ordinary non-JSON
+conversations are unaffected.
 
 Hard mode permits at most two additional final-format corrections per file and
 sixteen across the original run after the ordinary correction fails. All original

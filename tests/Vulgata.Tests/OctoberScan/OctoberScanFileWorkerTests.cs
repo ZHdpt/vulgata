@@ -1359,7 +1359,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task JsonCorrection_ActualDeepSeekWireChangesOnlyCorrectionFormatAndRetainsHistoryAsync(bool useText)
+    public async Task JsonCorrection_ActualDeepSeekWireRemainsJsonForLegacyTextFlagAndRetainsHistoryAsync(bool useText)
     {
         var wireRequests = new List<JsonElement>();
         int invoked = 0;
@@ -1400,15 +1400,64 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Contains(correction.GetProperty("tools").EnumerateArray(), declaration =>
             declaration.GetProperty("function").GetProperty("name").GetString() == tool.Name);
         Assert.Equal(8192, correction.GetProperty("max_tokens").GetInt32());
-        Assert.Equal(useText ? "text" : "json_object",
-            correction.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.Equal("json_object", correction.GetProperty("response_format").GetProperty("type").GetString());
+        var initialMessages = initial.GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(initialMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
         var messages = correction.GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(messages, message => message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(messages, message => message.TryGetProperty("role", out var role) && role.GetString() == "user" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("complete", StringComparison.OrdinalIgnoreCase) &&
+            content.GetString()!.Contains("replace", StringComparison.OrdinalIgnoreCase) &&
+            content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(messages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
             reasoning.GetString() == "SYNTHETIC_INITIAL_REASONING");
         Assert.Contains(messages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
             reasoning.GetString() == finalReasoning && message.TryGetProperty("content", out var content) && content.GetString() == malformed);
         Assert.Contains(messages, message => message.TryGetProperty("tool_calls", out var calls) && calls.GetArrayLength() > 0);
         Assert.Contains(messages, message => message.TryGetProperty("role", out var role) && role.GetString() == "tool");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActualSdkStreamAdapter_PreservesUtf8FinalSuffixForJsonAndTextFormatsAsync(bool jsonFormat)
+    {
+        string final = FragmentedToolHttp.CharacterizationJson;
+        string prefix = final[..^2];
+        string suffix = final[^2..];
+        var sentRequests = new List<JsonElement>();
+        using var transport = new AccountingSseHttp([], [prefix, suffix])
+        {
+            ExpectedHost = "api.deepseek.com",
+            FinishOverrides = [null, "stop"],
+            RawWireUnicode = true,
+            MaximumReadBytes = 1,
+            ObserveRequest = body => sentRequests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var attemptClient = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (var update in attemptClient.GetAttemptStreamingResponseAsync(
+            [new(ChatRole.System, "Return one complete JSON object."), new(ChatRole.User, "controlled stream fixture")],
+            new ChatOptions { ResponseFormat = jsonFormat ? ChatResponseFormat.Json : ChatResponseFormat.Text },
+            new Lease(Guid.NewGuid())))
+            updates.Add(update);
+
+        string received = string.Concat(updates.SelectMany(update => update.Contents).OfType<TextContent>().Select(content => content.Text));
+        Assert.Equal(final, received);
+        Assert.EndsWith(suffix, received);
+        Assert.Equal(ChatFinishReason.Stop, updates.Last(update => update.FinishReason is not null).FinishReason);
+        Assert.Equal(1, transport.Calls);
+        Assert.True(transport.NonAsciiWireBytes > 0);
+        Assert.True(transport.FragmentReads > 100);
+        var wireRequest = Assert.Single(sentRequests);
+        Assert.Equal(jsonFormat ? "json_object" : "text",
+            wireRequest.GetProperty("response_format").GetProperty("type").GetString());
     }
 
     [Trait("Suite", "SelfContained")]
@@ -4189,8 +4238,9 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                     chunks[index] = fragment.ToJsonString();
                 }
             }
+            string responseBody = string.Join("", chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n";
             return new HttpResponseMessage(HttpStatusCode.OK)
-            { Content = new StringContent(string.Join("", chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
+            { Content = new StringContent(responseBody, Encoding.UTF8, "text/event-stream") };
         }
     }
     private sealed class ControlledHttp : HttpMessageHandler
