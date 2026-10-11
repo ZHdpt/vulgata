@@ -27,6 +27,14 @@ BL version was verified by an ordinary User; original CL and first BL remain unc
 One provider call / 23573 tokens, settled receipts, no rescan. This grant is consumed.
 Cross-repository completeness remains deferred; the milestone is now stopped.
 
+The subsequent user-authorized 22-root expansion with a two-hour/trillion-token
+budget did **not** publish: exit 4, 23 calls / 334902 known tokens, unmatched Begin
+`4a38a325-98bb-428c-beb3-32d0110ef0a4`. Read-only inspection confirmed prior data
+unchanged and no new BL. Controlled validation alone exceeded the fixed ten-second
+publication bounds. See [expanded qualification](expanded-bl-run-2026-10-11.md).
+Do not retry or clear the receipt; publication scaling and canonical recovery need
+resolution before another run. The prior successful BL remains available.
+
 ## Accepted integration and superseded assessment
 
 Assigned checkout: `C:/Users/13728/.codex/worktrees/f081/vulgata`, `oct14/business`.
