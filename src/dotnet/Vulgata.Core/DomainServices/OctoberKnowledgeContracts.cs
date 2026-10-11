@@ -21,7 +21,7 @@ public enum ClaimQualification { SourceSupported, Advisory, Hypothesis, Uncertai
 public enum ContributorKind { Source = 0, GlobalAdvisory = 1, SystemAdvisory = 2, RepositoryAdvisory = 3, SourceMetadata = 4 }
 public enum CoverageDisposition { Accepted, CompletedZeroUnit, Failed, Cancelled, Unprocessed }
 public enum RelationshipKind { References, GeneratedFrom }
-public enum OperationKind { AcceptFile = 0, FreezeCorpus = 1, PublishSelection = 2, FinalizeCorpus = 3, AcceptResolution = 4, BeginGenerate = 5 }
+public enum OperationKind { AcceptFile = 0, FreezeCorpus = 1, PublishSelection = 2, FinalizeCorpus = 3, AcceptResolution = 4, BeginGenerate = 5, BeginBusinessFromCl = 6, CompleteBusinessFromCl = 7 }
 public enum KnowledgeWriteStatus
 {
     Committed, AlreadyCommitted, Conflict, InvalidProposal, NotCompleted, StaleOrFenced,

@@ -157,6 +157,179 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task ToolBudget_AdvisoryIsReportedOnNextLeafAndExecutionContinuesAsync()
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = WithToolBudget(baseline, advisory: 2, maximum: 3);
+        using var client = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-1", tool.Name, new Dictionary<string, object?>()), new FunctionCallContent("read-2", tool.Name, new Dictionary<string, object?>())]),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, invoked);
+        var budget = Assert.IsType<OctoberFileToolBudget>(request.ToolBudget).Read();
+        Assert.Equal(new OctoberFileToolBudgetSnapshot(2, 3, 2, 2, 2, 1, true), budget);
+        var initialPrompt = ReadToolBudgetPrompt(client.Requests[0]);
+        Assert.Equal(0, initialPrompt.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(0, initialPrompt.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(0, initialPrompt.GetProperty("executedCalls").GetInt32());
+        var prompt = ReadToolBudgetPrompt(client.Requests[1]);
+        Assert.Equal("file_tool_budget", prompt.GetProperty("type").GetString());
+        Assert.Equal("primary_file", prompt.GetProperty("scope").GetString());
+        Assert.Equal(2, prompt.GetProperty("advisoryLimit").GetInt32());
+        Assert.Equal(3, prompt.GetProperty("maximumLimit").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("executedCalls").GetInt32());
+        Assert.Equal(1, prompt.GetProperty("remainingCalls").GetInt32());
+        Assert.True(prompt.GetProperty("advisoryReached").GetBoolean());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ToolBudget_HardLimitRefusesNextCallBeforeExecutionAsync()
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var request = WithToolBudget(Request(new Frame("if (enabled) Run();\nreturn;")), advisory: 1, maximum: 2);
+        using var client = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [
+                new FunctionCallContent("read-1", tool.Name, new Dictionary<string, object?>()),
+                new FunctionCallContent("read-2", tool.Name, new Dictionary<string, object?>())]),
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-3", tool.Name, new Dictionary<string, object?>())])
+        ]);
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(OctoberWorkerBudgetFailure.ToolCalls, result.BudgetFailure);
+        Assert.Equal(2, invoked);
+        Assert.Equal(new OctoberFileToolBudgetSnapshot(1, 2, 3, 2, 2, 0, true), request.ToolBudget!.Read());
+        var prompt = ReadToolBudgetPrompt(client.Requests[1]);
+        Assert.Equal(2, prompt.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(2, prompt.GetProperty("executedCalls").GetInt32());
+        Assert.Equal(0, prompt.GetProperty("remainingCalls").GetInt32());
+        Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(16, true)]
+    [InlineData(17, false)]
+    public async Task ToolBudget_ThirtyTwoAdvisoryFortyEightHardBoundaryAsync(int secondLeafCalls, bool completes)
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var request = WithToolBudget(Request(new Frame("if (enabled) Run();\nreturn;")), advisory: 32, maximum: 48);
+        var firstLeaf = Enumerable.Range(1, 32).Select(index => (AIContent)new FunctionCallContent(
+            "first-" + index, tool.Name, new Dictionary<string, object?>())).ToArray();
+        var secondLeaf = Enumerable.Range(1, secondLeafCalls).Select(index => (AIContent)new FunctionCallContent(
+            "second-" + index, tool.Name, new Dictionary<string, object?>())).ToArray();
+        Round[] rounds = completes
+            ? [new(null, ChatFinishReason.ToolCalls, firstLeaf), new(null, ChatFinishReason.ToolCalls, secondLeaf), new(UnitJson, ChatFinishReason.Stop)]
+            : [new(null, ChatFinishReason.ToolCalls, firstLeaf), new(null, ChatFinishReason.ToolCalls, secondLeaf)];
+        using var client = new ScriptedClient(rounds);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(completes ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(completes ? null : OctoberWorkerBudgetFailure.ToolCalls, result.BudgetFailure);
+        Assert.Equal(completes ? 48 : 32, invoked);
+        Assert.Equal(completes ? 48 : 49, request.ToolBudget!.Read().RequestedCalls);
+        Assert.Equal(48, request.ToolBudget.Read().AdmittedCalls);
+        Assert.Equal(completes ? 48 : 32, request.ToolBudget.Read().ExecutedCalls);
+        Assert.Equal(completes ? 3 : 2, client.Requests.Count);
+        var warning = ReadToolBudgetPrompt(client.Requests[1]);
+        Assert.Equal(32, warning.GetProperty("advisoryLimit").GetInt32());
+        Assert.Equal(48, warning.GetProperty("maximumLimit").GetInt32());
+        Assert.Equal(32, warning.GetProperty("requestedCalls").GetInt32());
+        Assert.Equal(32, warning.GetProperty("admittedCalls").GetInt32());
+        Assert.Equal(32, warning.GetProperty("executedCalls").GetInt32());
+        Assert.Equal(16, warning.GetProperty("remainingCalls").GetInt32());
+        Assert.True(warning.GetProperty("advisoryReached").GetBoolean());
+        if (completes)
+        {
+            var exhausted = ReadToolBudgetPrompt(client.Requests[2]);
+            Assert.Equal(48, exhausted.GetProperty("requestedCalls").GetInt32());
+            Assert.Equal(48, exhausted.GetProperty("admittedCalls").GetInt32());
+            Assert.Equal(0, exhausted.GetProperty("remainingCalls").GetInt32());
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ToolBudget_IsSharedAcrossAttemptsForOneFileAndResetsForNewFileAsync()
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((Func<string>)(() => { invoked++; return "contained"; }), "read_prepared_source");
+        var firstRequest = WithToolBudget(Request(new Frame("if (enabled) Run();\nreturn;")), advisory: 2, maximum: 3);
+        firstRequest = firstRequest with { Limits = firstRequest.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        using (var failedAttempt = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-first", tool.Name, new Dictionary<string, object?>())]),
+            new("{malformed", ChatFinishReason.Stop),
+            new(UnitJson, ChatFinishReason.Stop)]))
+        {
+            var corrected = await new OctoberFileWorkerExecutor(failedAttempt, new Scope()).ExecuteAsync(firstRequest, [tool]);
+            Assert.Equal(OctoberFileWorkerStatus.Completed, corrected.Status);
+            Assert.Equal(1, firstRequest.ToolBudget!.Read().ExecutedCalls);
+            Assert.Equal(1, ReadToolBudgetPrompt(failedAttempt.Requests[2]).GetProperty("executedCalls").GetInt32());
+        }
+        var retryRequest = firstRequest with { AttemptId = Guid.NewGuid() };
+        using (var retry = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]))
+        {
+            Assert.Equal(OctoberFileWorkerStatus.Completed,
+                (await new OctoberFileWorkerExecutor(retry, new Scope()).ExecuteAsync(retryRequest, [tool])).Status);
+            var prompt = ReadToolBudgetPrompt(Assert.Single(retry.Requests));
+            Assert.Equal(1, prompt.GetProperty("requestedCalls").GetInt32());
+            Assert.Equal(1, prompt.GetProperty("executedCalls").GetInt32());
+        }
+        Assert.Equal(1, firstRequest.ToolBudget.Read().ExecutedCalls);
+
+        var secondFile = WithToolBudget(Request(new Frame("// different file\nreturn;")), advisory: 2, maximum: 3);
+        Assert.NotSame(firstRequest.ToolBudget, secondFile.ToolBudget);
+        Assert.Equal(0, secondFile.ToolBudget!.Read().RequestedCalls);
+        using var newFileClient = new ScriptedClient([
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("read-new-file", tool.Name, new Dictionary<string, object?>())]),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed,
+            (await new OctoberFileWorkerExecutor(newFileClient, new Scope()).ExecuteAsync(secondFile, [tool])).Status);
+        Assert.Equal(1, secondFile.ToolBudget.Read().ExecutedCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("run")]
+    [InlineData("workstream")]
+    [InlineData("admission")]
+    [InlineData("limits")]
+    public async Task ToolBudget_MismatchedBindingOrLimitsIsRejectedBeforeDispatchAsync(string mismatch)
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = WithToolBudget(baseline, advisory: 2, maximum: 3);
+        request = mismatch switch
+        {
+            "run" => request with { RunId = Guid.NewGuid() },
+            "workstream" => request with { FileWorkstreamId = Guid.NewGuid() },
+            "admission" => request with { AdmissionId = Guid.NewGuid() },
+            "limits" => request with { Limits = request.Limits with { MaximumToolCalls = 4 } },
+            _ => throw new InvalidOperationException("Unknown tool budget mismatch")
+        };
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(client.Requests);
+        Assert.Equal(0, request.ToolBudget!.Read().RequestedCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Execute_ForbiddenTool_IsRejectedBeforeProviderDispatchAsync()
     {
         using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
@@ -193,7 +366,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var scope = new Scope();
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
         Assert.Equal(exhaust ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
-        Assert.Null(result.BudgetFailure);
+        Assert.Equal(exhaust ? OctoberWorkerBudgetFailure.ProviderRounds : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
         if (exhaust) Assert.Null(result.Proposal);
         else
         {
@@ -312,10 +485,32 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var scope = new Scope();
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
         Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
-        Assert.Null(result.BudgetFailure);
+        Assert.Equal(OctoberWorkerBudgetFailure.InputBytes, result.BudgetFailure);
         Assert.Null(result.Proposal);
         Assert.Empty(client.Requests);
         Assert.Empty(scope.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Execute_InitialSerializedInputAbove32768Bytes_IsAdmittedWithinLargerRequestBudgetAsync()
+    {
+        var frame = new Frame("//" + new string('x', 48000) + "\nreturn;");
+        var request = Request(frame) with
+        {
+            Limits = new(MaximumWindowUtf8Bytes: 60000, MaximumInputUtf8Bytes: 1048576,
+                MaximumTokensPerRequest: 1048576, MaximumOutputTokensPerRequest: 8192)
+        };
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+        var scope = new Scope();
+
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.BudgetFailure);
+        Assert.True(frame.ByteLength > 32768);
+        Assert.True(Assert.Single(scope.Requests).MaximumTokens > 32768);
+        Assert.Single(client.Requests);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -429,6 +624,38 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     private static OctoberSelectedWorkerProvider Selected(ApiType type = ApiType.ChatCompletions) => new("explicit-source", "only-source", new("selected", type, "https://selected.example.test/v1", "selected-model", "credential://selected"), "synthetic-selected-cipher");
     private static OctoberFileWorkerRequest Request(Frame frame) => new(new("owned-db", "owned-target", Guid.NewGuid(), new string('a', 64)), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "selected", frame,
         [new(ContributorKind.Source, frame.Origin.RepositoryId, null, frame.Origin.RootBindingIdentity, null, frame.Origin.SourceDigest)], [], new());
+    private static OctoberWorkerParseDiagnosticSnapshot ExpectedSyntaxDiagnostic(string text)
+    {
+        JsonException parseError;
+        try
+        {
+            using var _ = JsonDocument.Parse(text, new JsonDocumentOptions { MaxDepth = 32 });
+            throw new InvalidOperationException("Expected the controlled parser fixture to be invalid JSON.");
+        }
+        catch (JsonException error) { parseError = error; }
+        return new(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root,
+            LineNumber: parseError.LineNumber, BytePositionInLine: parseError.BytePositionInLine);
+    }
+    private static OctoberFileWorkerRequest WithToolBudget(OctoberFileWorkerRequest request, int advisory, int maximum)
+    {
+        var limits = request.Limits with { AdvisoryToolCalls = advisory, MaximumToolCalls = maximum };
+        var budget = new OctoberFileToolBudget(request.RunId, request.FileWorkstreamId, request.AdmissionId, advisory, maximum);
+        return request with { Limits = limits, ToolBudget = budget };
+    }
+    private static JsonElement ReadToolBudgetPrompt(ChatMessage[] messages)
+    {
+        foreach (var message in messages.Where(message => message.Role == ChatRole.System))
+        {
+            try
+            {
+                using var json = JsonDocument.Parse(message.Text);
+                if (json.RootElement.TryGetProperty("type", out var kind) && kind.GetString() == "file_tool_budget")
+                    return json.RootElement.Clone();
+            }
+            catch (JsonException) { }
+        }
+        throw new InvalidOperationException("The request did not include a structured primary-file tool budget.");
+    }
     private static string Digest(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
     private sealed class Frame(string text) : IOctoberVerifiedFileFrame
     {
@@ -460,6 +687,24 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(1, Assert.Single(scope.Leases).Settlements);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_TransportFailureAfterRetryRequestIsNotAdvertisedAsSafeTransientAsync()
+    {
+        using var client = new MalformedThenTransientClient();
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.Transport, result.FailureStage);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(1, result.JsonCorrectionAttempts);
+        AssertCorrectionLifecycle(result, expectedRejected: 1, finishedStatus: OctoberFileWorkerStatus.ProviderFailed,
+            expectedRetries: 1);
+    }
+
     private sealed class TransientClient(bool knownUsage) : IChatClient
     {
         internal bool DisposedStream { get; private set; }
@@ -473,6 +718,34 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                 throw new HttpRequestException("Controlled transient unavailable", null, HttpStatusCode.ServiceUnavailable);
             }
             finally { DisposedStream = true; }
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+    private sealed class MalformedThenTransientClient : IChatClient
+    {
+        internal int Calls { get; private set; }
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            if (Calls++ == 0)
+            {
+                yield return new ChatResponseUpdate
+                {
+                    Role = ChatRole.Assistant,
+                    Contents = [new TextContent("{controlled malformed candidate"),
+                        new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 8 })],
+                    FinishReason = ChatFinishReason.Stop
+                };
+                yield break;
+            }
+            yield return new ChatResponseUpdate
+            { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 8 })] };
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new HttpRequestException("controlled transient after correction", null, HttpStatusCode.ServiceUnavailable);
         }
         public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
         public void Dispose() { }
@@ -651,10 +924,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("syntax", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root)]
-    [InlineData("units-value", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Units)]
+    [InlineData("units-value", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Units)]
     [InlineData("claim-extra", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ClosedFields, OctoberWorkerParseSlot.Claims)]
     [InlineData("first-cause", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ClosedFields, OctoberWorkerParseSlot.Claims)]
-    [InlineData("parent-value", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.ParentSelector)]
+    [InlineData("parent-value", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.ParentSelector)]
     public async Task ParseFailure_ReportsFirstActualGuardWithoutInputEchoOrStatusRepairAsync(string scenario,
         OctoberFileWorkerStatus status, OctoberWorkerParseFailure category, OctoberWorkerParseSlot slot)
     {
@@ -687,7 +960,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     {
         const string finalText = "{SYNTHETIC_CAPTURE_FINAL";
         string? captured = null; int captures = 0;
-        using var transport = new FragmentedToolHttp { InitialTextOverride = "SYNTHETIC_PRIOR_NOT_CAPTURED", FinalTextOverride = finalText };
+        using var transport = new FragmentedToolHttp { InitialTextOverride = "SYNTHETIC_PRIOR_NOT_CAPTURED", InitialReasoningFragments = ["SYNTHETIC_REASONING_", "NOT_CAPTURED"], FinalTextOverride = finalText };
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
         var tool = AIFunctionFactory.Create((string relativePath) => "SYNTHETIC_TOOL_NOT_CAPTURED", "read_prepared_source");
         var scope = new Scope();
@@ -700,7 +973,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await executor.ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        Assert.Equal(ExpectedSyntaxDiagnostic(finalText), result.ParseFailure);
         Assert.Equal(1, captures); Assert.True(captured == finalText);
         Assert.Equal(sinkThrows ? OctoberWorkerCaptureStatus.Failed : OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
         Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
@@ -843,7 +1116,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task ParseCapture_TypedParserFailureKeepsProviderFailedAndScrubsUnknownSinkStatusAsync(bool unknownStatus)
+    public async Task ParseCapture_TypedParserFailureKeepsInvalidOutputAndScrubsUnknownSinkStatusAsync(bool unknownStatus)
     {
         int captures = 0;
         string text = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"0\"");
@@ -852,9 +1125,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope, captureParseFailure: (_, _) =>
         { captures++; return Task.FromResult(unknownStatus ? (OctoberWorkerCaptureStatus)99999 : OctoberWorkerCaptureStatus.Captured); })
             .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
-        Assert.Equal(1, captures); Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(1, captures); Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Ordinal), result.ParseFailure);
+        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.ValueShape, OctoberWorkerParseSlot.Ordinal,
+            Field: OctoberWorkerParseSlot.Ordinal, UnitIndex: 0), result.ParseFailure);
         Assert.Equal(unknownStatus ? (OctoberWorkerCaptureStatus?)null : OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
         Assert.Null(result.Proposal); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
@@ -871,7 +1145,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("invalid-json", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse)]
-    [InlineData("typed-json", OctoberFileWorkerStatus.ProviderFailed, OctoberWorkerFailureStage.ProposalParse)]
+    [InlineData("typed-json", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse)]
     [InlineData("terminal", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.StreamTerminal)]
     [InlineData("cycle", OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalValidation)]
     [InlineData("admission", OctoberFileWorkerStatus.Denied, OctoberWorkerFailureStage.Admission)]
@@ -934,6 +1208,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
         Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
         Assert.Equal(defect, result.TerminalFailure); Assert.Null(result.Proposal);
+        if (defect != OctoberWorkerTerminalFailure.UnsupportedFinish) Assert.Null(result.TerminalObservation);
         Assert.Equal(0, toolCalls); Assert.Equal(1, client.Calls);
     }
 
@@ -958,7 +1233,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
         Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
-        Assert.Equal(limit, result.BudgetFailure); Assert.Null(result.TerminalFailure);
+        Assert.Equal(limit, result.BudgetFailure); Assert.Null(result.TerminalFailure); Assert.Null(result.TerminalObservation);
         Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition); Assert.Null(result.Proposal);
         Assert.Equal(0, toolsInvoked); Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
         Assert.Single(scope.Requests);
@@ -967,6 +1242,1487 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var usage = Assert.IsType<ProviderAttemptUsage>(lease.Usage);
         Assert.Null(usage.InputTokens); Assert.Null(usage.OutputTokens); Assert.Null(usage.Cost);
     }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("length", "known", false)]
+    [InlineData("filter", "known", false)]
+    [InlineData("PRIVATE_UNKNOWN_FINISH", "known", false)]
+    [InlineData("length", "missing", false)]
+    [InlineData("length", "zero", false)]
+    [InlineData("length", "negative", false)]
+    [InlineData("length", "known", true)]
+    public async Task UnsupportedFinishObservation_ReportsOnlyCurrentLeafScalarsWithoutChangingOutcomeAsync(string finishKind, string usageKind, bool lowCap)
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        if (lowCap) request = request with { Limits = request.Limits with { MaximumOutputTokensPerRequest = 137 } };
+        ChatFinishReason finish = finishKind == "length" ? ChatFinishReason.Length : finishKind == "filter" ? ChatFinishReason.ContentFilter : new(finishKind);
+        var updates = new List<ChatResponseUpdate> { new() { Role = ChatRole.Assistant, Contents = [new TextContent("PRIVATE_UNACCEPTED_FRAGMENT")], FinishReason = finish } };
+        if (usageKind != "missing") updates.Insert(0, new() { Contents = [new UsageContent(new UsageDetails
+        { InputTokenCount = 123, OutputTokenCount = 456, ReasoningTokenCount = 789 })] });
+        if (usageKind != "missing") updates.Add(new() { Contents = [new UsageContent(new UsageDetails
+        {
+            InputTokenCount = usageKind == "zero" ? 0 : usageKind == "negative" ? -1 : 101,
+            OutputTokenCount = usageKind == "zero" ? 0 : usageKind == "negative" ? -2 : 37,
+            ReasoningTokenCount = usageKind == "zero" ? 0 : usageKind == "negative" ? -3 : 29
+        })] });
+        using var client = new TerminalObservationClient([[.. updates]]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Null(result.Proposal); Assert.Null(result.ParseFailure); Assert.Null(result.CaptureStatus);
+        var observation = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+        Assert.Equal(finishKind == "length" ? OctoberWorkerUnsupportedFinish.Length : finishKind == "filter" ? OctoberWorkerUnsupportedFinish.ContentFilter : OctoberWorkerUnsupportedFinish.Other, observation.FinishReason);
+        Assert.Equal(lowCap ? 137 : 8192, observation.MaximumOutputTokens);
+        Assert.Equal(Assert.Single(client.Caps), observation.MaximumOutputTokens);
+        Assert.Equal(usageKind == "known" ? 101L : usageKind == "zero" ? 0L : (long?)null, observation.InputTokens);
+        Assert.Equal(usageKind == "known" ? 37L : usageKind == "zero" ? 0L : (long?)null, observation.OutputTokens);
+        Assert.Equal(usageKind == "known" ? 29L : usageKind == "zero" ? 0L : (long?)null, observation.ReasoningTokens);
+        var lease = Assert.Single(scope.Leases);
+        Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.DoesNotContain("PRIVATE", JsonSerializer.Serialize(result));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("{\"units\":[")]
+    [InlineData("")]
+    public async Task JsonCorrection_OptInMalformedOrEmptyFinalResponseCanBeReplacedOnceAsync(string firstText)
+    {
+        const string reasoning = "CONTROLLED_FIRST_RESPONSE_REASONING";
+        using var client = new ScriptedClient([
+            new(firstText, ChatFinishReason.Stop, [new TextReasoningContent(reasoning)]),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
+        var scope = new Scope();
+
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Null(result.FailureStage);
+        Assert.Equal(2, client.Requests.Count);
+        Assert.Equal(2, scope.Requests.Count);
+        Assert.All(scope.Leases, lease => Assert.Equal(1, lease.Settlements));
+        var firstMessages = client.Requests[0];
+        var correctionMessages = client.Requests[1];
+        Assert.True(correctionMessages.Length > firstMessages.Length);
+        Assert.Equal(ChatRole.User, correctionMessages[^1].Role);
+        Assert.Contains(firstMessages.Where(message => message.Role == ChatRole.User)
+            .SelectMany(message => message.Contents).OfType<TextContent>().Select(content => content.Text).Single(),
+            correctionMessages.Where(message => message.Role == ChatRole.User)
+                .SelectMany(message => message.Contents).OfType<TextContent>().Select(content => content.Text));
+        Assert.Contains(correctionMessages.SelectMany(message => message.Contents).OfType<TextContent>(),
+            content => content.Text == firstText);
+        Assert.Contains(correctionMessages.SelectMany(message => message.Contents).OfType<TextReasoningContent>(),
+            content => content.Text == reasoning);
+        Assert.Contains("JSON", correctionMessages[^1].Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("complete", correctionMessages[^1].Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("replace", correctionMessages[^1].Text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("syntax", OctoberWorkerParseFailure.Syntax)]
+    [InlineData("prose", OctoberWorkerParseFailure.Syntax)]
+    [InlineData("fenced", OctoberWorkerParseFailure.Syntax)]
+    [InlineData("duplicate", OctoberWorkerParseFailure.ClosedFields)]
+    public async Task JsonCorrection_TextFormatStillRejectsMalformedProseFencesAndDuplicatePropertiesAsync(
+        string defect, OctoberWorkerParseFailure expectedFailure)
+    {
+        string correction = defect switch
+        {
+            "syntax" => "{second malformed",
+            "prose" => "Here is the complete JSON:\n" + UnitJson,
+            "fenced" => "```json\n" + UnitJson + "\n```",
+            "duplicate" => UnitJson.Replace("\"title\":\"Conditional execution\"",
+                "\"title\":\"Conditional execution\",\"title\":\"duplicate\"", StringComparison.Ordinal),
+            _ => throw new InvalidOperationException("Unknown correction response case")
+        };
+        using var client = new ScriptedClient([
+            new("{first malformed", ChatFinishReason.Stop),
+            new(correction, ChatFinishReason.Stop)
+        ]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(expectedFailure, result.ParseFailure!.Category);
+        Assert.Null(result.Proposal);
+        Assert.Equal(2, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_SyntaxFeedbackContainsOnlyBoundedParserLocationAsync()
+    {
+        const string firstMalformed = "{first malformed";
+        const string malformed = "{\n  \"units\": [\n    \"SYNTHETIC_PRIVATE_RAW_EXCERPT\"";
+        var firstParserError = Assert.ThrowsAny<JsonException>(() => JsonDocument.Parse(firstMalformed));
+        var finalParserError = Assert.ThrowsAny<JsonException>(() => JsonDocument.Parse(malformed));
+        using var client = new ScriptedClient([new(firstMalformed, ChatFinishReason.Stop), new(malformed, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(2, client.Requests.Count);
+        var parse = Assert.IsType<OctoberWorkerParseDiagnosticSnapshot>(result.ParseFailure);
+        var lineProperty = parse.GetType().GetProperty("LineNumber");
+        var bytePositionProperty = parse.GetType().GetProperty("BytePositionInLine");
+        Assert.NotNull(lineProperty);
+        Assert.NotNull(bytePositionProperty);
+        var line = Assert.IsType<long>(lineProperty!.GetValue(parse));
+        var bytePosition = Assert.IsType<long>(bytePositionProperty!.GetValue(parse));
+        Assert.Equal(finalParserError.LineNumber, line);
+        Assert.Equal(finalParserError.BytePositionInLine, bytePosition);
+        Assert.InRange(line, 0, 262144);
+        Assert.InRange(bytePosition, 0, 262144);
+        string correctionFeedback = string.Join("\n", client.Requests[1]
+            .Where(message => message.Role == ChatRole.User).SelectMany(message => message.Contents)
+            .OfType<TextContent>().Select(content => content.Text).Skip(1));
+        Assert.Contains($"\"lineNumber\":{firstParserError.LineNumber}", correctionFeedback, StringComparison.Ordinal);
+        Assert.Contains($"\"bytePositionInLine\":{firstParserError.BytePositionInLine}", correctionFeedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("SYNTHETIC_PRIVATE_RAW_EXCERPT", correctionFeedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("JsonException", correctionFeedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"message\":", correctionFeedback, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"path\":", correctionFeedback, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"rawExcerpt\":", correctionFeedback, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task JsonCorrection_ActualDeepSeekWireRemainsJsonForLegacyTextFlagAndRetainsHistoryAsync(bool useText)
+    {
+        var wireRequests = new List<JsonElement>();
+        int invoked = 0;
+        const string finalReasoning = "SYNTHETIC_FINAL_REASONING";
+        const string malformed = "{SYNTHETIC_FINAL_MALFORMED";
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com",
+            EnableCorrectionResponse = true,
+            InitialReasoningFragments = ["SYNTHETIC_INITIAL_REASONING"],
+            FinalReasoningOverride = finalReasoning,
+            FinalTextOverride = malformed,
+            CorrectionTextOverride = UnitJson,
+            ObserveRequest = (body, _) => wireRequests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => { Assert.Equal("src/Order.cs", relativePath); invoked++; return "contained result"; }, "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = useText } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(1, invoked);
+        Assert.Equal(3, transport.Calls);
+        Assert.Equal(3, wireRequests.Count);
+        var initial = wireRequests[0];
+        var continuation = wireRequests[1];
+        var correction = wireRequests[2];
+        Assert.True(!initial.TryGetProperty("tool_choice", out var initialChoice) || initialChoice.GetString() == "auto");
+        Assert.Equal("json_object", initial.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.Equal("json_object", continuation.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.All(wireRequests, body => Assert.Equal(8192, body.GetProperty("max_tokens").GetInt32()));
+        Assert.Equal("none", correction.GetProperty("tool_choice").GetString());
+        Assert.Contains(correction.GetProperty("tools").EnumerateArray(), declaration =>
+            declaration.GetProperty("function").GetProperty("name").GetString() == tool.Name);
+        Assert.Equal(8192, correction.GetProperty("max_tokens").GetInt32());
+        Assert.Equal("json_object", correction.GetProperty("response_format").GetProperty("type").GetString());
+        var initialMessages = initial.GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(initialMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
+        var messages = correction.GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(messages, message => message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(messages, message => message.TryGetProperty("role", out var role) && role.GetString() == "user" &&
+            message.TryGetProperty("content", out var content) && content.GetString()!.Contains("complete", StringComparison.OrdinalIgnoreCase) &&
+            content.GetString()!.Contains("replace", StringComparison.OrdinalIgnoreCase) &&
+            content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(messages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == "SYNTHETIC_INITIAL_REASONING");
+        Assert.Contains(messages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == finalReasoning && message.TryGetProperty("content", out var content) && content.GetString() == malformed);
+        Assert.Contains(messages, message => message.TryGetProperty("tool_calls", out var calls) && calls.GetArrayLength() > 0);
+        Assert.Contains(messages, message => message.TryGetProperty("role", out var role) && role.GetString() == "tool");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task JsonCorrection_ActualDeepSeekStagesThinkingAndCompactsOnlyRejectedCandidatesAsync(bool eventuallyValid)
+    {
+        string wrongValue = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal);
+        var wireRequests = new List<JsonElement>();
+        const string finalReasoning = "SYNTHETIC_REJECTED_FINAL_REASONING";
+        const string firstMalformed = "{SYNTHETIC_REJECTED_FIRST";
+        const string advisoryText = "SYNTHETIC_ADVISORY_FACT_KEEP_AS_UNTRUSTED_DATA";
+        string sourceText = "if (enabled) Run();\nreturn;";
+        var frame = new Frame(sourceText);
+        var advisory = new Contributor(ContributorKind.RepositoryAdvisory, frame.Origin.RepositoryId,
+            null, null, Guid.NewGuid(), Digest(advisoryText));
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com",
+            EnableCorrectionResponse = true,
+            ContinueBeforeFinalCandidate = true,
+            AdditionalResponseCount = 2,
+            InitialReasoningFragments = ["SYNTHETIC_INITIAL_TOOL_REASONING"],
+            FinalReasoningOverride = finalReasoning,
+            FinalTextOverride = firstMalformed,
+            CorrectionTextSequence = ["[]", wrongValue,
+                eventuallyValid ? UnitJson : "{SYNTHETIC_REJECTED_FINAL"],
+            ObserveRequest = (body, _) => wireRequests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"),
+            "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport,
+            deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) =>
+        {
+            Assert.Equal("src/Order.cs", relativePath);
+            return "contained source result";
+        }, "read_prepared_source");
+        var baseline = Request(frame);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3, MaximumWindowUtf8Bytes = 16 },
+            Advisory = [new(advisory, advisoryText)],
+            Contributors = [.. baseline.Contributors, advisory]
+        };
+
+        var scope = new Scope();
+        var executor = new OctoberFileWorkerExecutor(client, scope);
+        var result = await executor.ExecuteAsync(request, [tool]);
+
+        Assert.Equal(eventuallyValid ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        Assert.Equal(1, result.SettledToolCalls);
+        Assert.Equal(6, transport.Calls);
+        Assert.Equal(6, wireRequests.Count);
+        var initialTool = wireRequests[0];
+        var continuation = wireRequests[1];
+        var initialCandidate = wireRequests[2];
+        var configuredCorrection = wireRequests[3];
+        var thinkingDisabledCorrection = wireRequests[4];
+        var compactedCorrection = wireRequests[5];
+        Assert.All(wireRequests, body =>
+        {
+            Assert.Equal(8192, body.GetProperty("max_tokens").GetInt32());
+            Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
+        });
+        foreach (var body in new[] { initialTool, continuation, initialCandidate, configuredCorrection })
+        {
+            Assert.Equal("low", body.GetProperty("reasoning_effort").GetString());
+            Assert.False(body.TryGetProperty("thinking", out _));
+        }
+        Assert.Equal("none", configuredCorrection.GetProperty("tool_choice").GetString());
+        foreach (var body in new[] { thinkingDisabledCorrection, compactedCorrection })
+        {
+            Assert.False(body.TryGetProperty("reasoning_effort", out _));
+            Assert.Equal("disabled", body.GetProperty("thinking").GetProperty("type").GetString());
+            Assert.Equal("none", body.GetProperty("tool_choice").GetString());
+            Assert.Contains(body.GetProperty("tools").EnumerateArray(), declaration =>
+                declaration.GetProperty("function").GetProperty("name").GetString() == tool.Name);
+        }
+        var compactedMessages = compactedCorrection.GetProperty("messages").EnumerateArray().ToArray();
+        string InitialSystemPrompt(JsonElement body) => body.GetProperty("messages").EnumerateArray()
+            .Where(message => message.GetProperty("role").GetString() == "system")
+            .Select(message => message.GetProperty("content").GetString()!)
+            .Single(content => !content.StartsWith("{\"type\":\"file_tool_budget\"", StringComparison.Ordinal));
+        Assert.Contains(compactedMessages, message => message.GetProperty("role").GetString() == "system" &&
+            message.GetProperty("content").GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(InitialSystemPrompt(initialTool), InitialSystemPrompt(compactedCorrection));
+        Assert.Contains(compactedMessages, message => message.TryGetProperty("tool_calls", out var calls) && calls.GetArrayLength() > 0);
+        Assert.Contains(compactedMessages, message => message.GetProperty("role").GetString() == "tool" &&
+            message.GetProperty("content").GetString()!.Contains("contained source result", StringComparison.Ordinal));
+        var userContents = compactedMessages.Where(message => message.GetProperty("role").GetString() == "user")
+            .Select(message => message.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.String
+                ? content.GetString()! : string.Empty).ToArray();
+        Assert.Contains(userContents, content => content.Contains(advisoryText, StringComparison.Ordinal));
+        var retainedWindows = new List<(int Ordinal, string Text)>();
+        foreach (string content in userContents)
+        {
+            try
+            {
+                using var window = JsonDocument.Parse(content);
+                if (window.RootElement.ValueKind == JsonValueKind.Object &&
+                    window.RootElement.TryGetProperty("windowOrdinal", out var ordinal) && ordinal.TryGetInt32(out int ordinalValue) &&
+                    window.RootElement.TryGetProperty("sourceText", out var source) && source.ValueKind == JsonValueKind.String)
+                    retainedWindows.Add((ordinalValue, source.GetString()!));
+            }
+            catch (JsonException) { }
+        }
+        var orderedWindows = retainedWindows.OrderBy(window => window.Ordinal).ToArray();
+        Assert.Equal(2, orderedWindows.Length);
+        Assert.Equal(["if (enabled) Run", "();\nreturn;"], orderedWindows.Select(window => window.Text));
+        Assert.Equal(sourceText, string.Concat(orderedWindows.Select(window => window.Text)));
+        Assert.Contains(compactedMessages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == "SYNTHETIC_INITIAL_TOOL_REASONING");
+        Assert.DoesNotContain(compactedMessages, message => message.TryGetProperty("content", out var content) &&
+            content.ValueKind == JsonValueKind.String && (content.GetString() == firstMalformed ||
+                content.GetString() == "[]" || content.GetString() == wrongValue));
+        Assert.DoesNotContain(compactedMessages, message => message.TryGetProperty("reasoning_content", out var reasoning) &&
+            reasoning.GetString() == finalReasoning);
+        string[] retainedCorrectionPrompts = compactedMessages
+            .Where(message => message.GetProperty("role").GetString() == "user")
+            .Select(message => message.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.String
+                ? content.GetString()! : string.Empty)
+            .Where(content => content.Contains("\"type\":\"validation_error\"", StringComparison.Ordinal)).ToArray();
+        Assert.Single(retainedCorrectionPrompts);
+        Assert.Contains(compactedMessages, message => message.GetProperty("role").GetString() == "user" &&
+            message.GetProperty("content").GetString()!.Contains("ValueShape", StringComparison.Ordinal));
+        var retryEvents = result.JsonCorrections.Where(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested).ToArray();
+        Assert.Equal([OctoberWorkerCorrectionStrategy.Configured, OctoberWorkerCorrectionStrategy.ThinkingDisabled,
+            OctoberWorkerCorrectionStrategy.CompactedThinkingDisabled], retryEvents.Select(item => item.Strategy));
+        Assert.Equal(0, retryEvents[0].RemovedMessages);
+        Assert.Equal(0, retryEvents[1].RemovedMessages);
+        Assert.True(retryEvents[2].RemovedMessages > 0);
+
+        // A subsequent primary file on this exact SDK client returns to configured low reasoning,
+        // whether the previous file succeeded or exhausted its correction candidates.
+        var nextResult = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(Request(frame) with
+        { Limits = request.Limits }, [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, nextResult.Status);
+        Assert.Equal(8, transport.Calls);
+        Assert.Equal(8, wireRequests.Count);
+        Assert.Equal("low", wireRequests[6].GetProperty("reasoning_effort").GetString());
+        Assert.False(wireRequests[6].TryGetProperty("thinking", out _));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_NonDeepSeekProviderKeepsConfiguredStrategyAndFullHistoryAsync()
+    {
+        string wrongValue = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal);
+        var wireRequests = new List<JsonElement>();
+        const string malformed = "{SYNTHETIC_NON_DEEPSEEK_MALFORMED";
+        using var transport = new FragmentedToolHttp
+        {
+            EnableCorrectionResponse = true,
+            FinalTextOverride = malformed,
+            CorrectionTextSequence = ["[]", wrongValue, UnitJson],
+            ObserveRequest = (body, _) => wireRequests.Add(body.Clone())
+        };
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+        Assert.False((client as IOctoberWorkerCorrectionClient)?.SupportsFinalizationStrategy ?? false);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        Assert.Equal(5, wireRequests.Count);
+        Assert.All(wireRequests, body =>
+        {
+            Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
+            Assert.False(body.TryGetProperty("thinking", out _));
+            Assert.False(body.TryGetProperty("reasoning_effort", out _));
+        });
+        Assert.All(wireRequests.Skip(2), body => Assert.Equal("none", body.GetProperty("tool_choice").GetString()));
+        var compactAttempt = wireRequests[4].GetProperty("messages").EnumerateArray().ToArray();
+        Assert.Contains(compactAttempt, message => message.TryGetProperty("content", out var content) && content.GetString() == malformed);
+        Assert.Contains(compactAttempt, message => message.TryGetProperty("content", out var content) && content.GetString() == "[]");
+        Assert.Contains(compactAttempt, message => message.TryGetProperty("content", out var content) && content.GetString() == wrongValue);
+        var retryEvents = result.JsonCorrections.Where(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested).ToArray();
+        Assert.Equal(3, retryEvents.Length);
+        Assert.All(retryEvents, item =>
+        {
+            Assert.Equal(OctoberWorkerCorrectionStrategy.Configured, item.Strategy);
+            Assert.Equal(0, item.RemovedMessages);
+        });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActualSdkStreamAdapter_PreservesUtf8FinalSuffixForJsonAndTextFormatsAsync(bool jsonFormat)
+    {
+        string final = FragmentedToolHttp.CharacterizationJson;
+        string prefix = final[..^2];
+        string suffix = final[^2..];
+        var sentRequests = new List<JsonElement>();
+        using var transport = new AccountingSseHttp([], [prefix, suffix])
+        {
+            ExpectedHost = "api.deepseek.com",
+            FinishOverrides = [null, "stop"],
+            RawWireUnicode = true,
+            MaximumReadBytes = 1,
+            ObserveRequest = body => sentRequests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var attemptClient = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (var update in attemptClient.GetAttemptStreamingResponseAsync(
+            [new(ChatRole.System, "Return one complete JSON object."), new(ChatRole.User, "controlled stream fixture")],
+            new ChatOptions { ResponseFormat = jsonFormat ? ChatResponseFormat.Json : ChatResponseFormat.Text },
+            new Lease(Guid.NewGuid())))
+            updates.Add(update);
+
+        string received = string.Concat(updates.SelectMany(update => update.Contents).OfType<TextContent>().Select(content => content.Text));
+        Assert.Equal(final, received);
+        Assert.EndsWith(suffix, received);
+        Assert.Equal(ChatFinishReason.Stop, updates.Last(update => update.FinishReason is not null).FinishReason);
+        Assert.Equal(1, transport.Calls);
+        Assert.True(transport.NonAsciiWireBytes > 0);
+        Assert.True(transport.FragmentReads > 100);
+        var wireRequest = Assert.Single(sentRequests);
+        Assert.Equal(jsonFormat ? "json_object" : "text",
+            wireRequest.GetProperty("response_format").GetProperty("type").GetString());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_UnexpectedToolOnDisabledCorrectionIsRejectedWithoutInvocationAsync()
+    {
+        int invoked = 0;
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com",
+            EnableCorrectionResponse = true,
+            InitialReasoningFragments = ["SYNTHETIC_INITIAL_REASONING"],
+            FinalTextOverride = "{SYNTHETIC_FINAL_MALFORMED",
+            CorrectionReturnsToolCall = true
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => { invoked++; return "should-not-run"; }, "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal("ToolsDisabled", result.TerminalFailure?.ToString());
+        Assert.Equal(1, invoked);
+        Assert.Null(result.Proposal);
+        Assert.Equal(1, result.SettledToolCalls);
+        Assert.Equal(3, transport.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_DefaultDisabledDoesNotRetryMalformedFinalResponseAsync()
+    {
+        using var client = new ScriptedClient([new("{malformed", ChatFinishReason.Stop)]);
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        Assert.Equal(0, request.Limits.MaximumJsonCorrectionAttempts);
+        Assert.False(new OctoberFileWorkerLimits().UseTextForJsonCorrection);
+        Assert.False(request.Limits.UseTextForJsonCorrection);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(1, client.Requests.Count);
+        Assert.Equal(0, result.JsonCorrectionAttempts);
+        AssertCorrectionLifecycle(result, expectedRejected: 1, finishedStatus: OctoberFileWorkerStatus.InvalidOutput,
+            expectedRetries: 0);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(1, true)]
+    [InlineData(2, true)]
+    [InlineData(3, true)]
+    [InlineData(4, false)]
+    public async Task JsonCorrection_AttemptLimitAllowsZeroThroughThreeAsync(int attempts, bool allowed)
+    {
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = attempts } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(allowed ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Equal(allowed ? 1 : 0, client.Requests.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_LengthFinishDoesNotRetryMalformedResponseAsync()
+    {
+        using var client = new ScriptedClient([new("{truncated", ChatFinishReason.Length), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        Assert.Single(client.Requests);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(0, 0), budget.Read());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ValidJsonWrongRootCanBeReplacedOnceAsync()
+    {
+        using var client = new ScriptedClient([new("{}", ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, client.Requests.Count);
+        Assert.Equal(1, result.JsonCorrectionAttempts);
+        Assert.Contains(result.JsonCorrections, item => item.Phase == OctoberJsonCorrectionPhase.CandidateRejected &&
+            item.Diagnostic?.Category == OctoberWorkerParseFailure.ClosedFields);
+        Assert.Contains(result.JsonCorrections, item => item.Phase == OctoberJsonCorrectionPhase.WorkerFinished &&
+            item.Status == OctoberFileWorkerStatus.Completed);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ThreeOrdinaryRetriesRecoverAcrossLatestParserCategoriesAsync()
+    {
+        string wrongValue = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal);
+        using var client = new ScriptedClient([
+            new("{initial syntax failure", ChatFinishReason.Stop),
+            new("[]", ChatFinishReason.Stop),
+            new(wrongValue, ChatFinishReason.Stop),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(4, client.Requests.Count);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        string[] expectedCategories = ["Syntax", "RootShape", "ValueShape"];
+        for (int index = 0; index < expectedCategories.Length; index++)
+        {
+            string feedback = LastUserText(client.Requests[index + 1]);
+            Assert.Contains($"\"category\":\"{expectedCategories[index]}\"", feedback, StringComparison.Ordinal);
+            Assert.Contains($"\"remainingCorrections\":{2 - index}", feedback, StringComparison.Ordinal);
+        }
+        AssertCorrectionLifecycle(result, expectedRejected: 3, finishedStatus: OctoberFileWorkerStatus.Completed);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ThreeOrdinaryRetriesExhaustWithoutAcceptingInvalidCandidateAsync()
+    {
+        using var client = new ScriptedClient(Enumerable.Range(0, 5)
+            .Select(index => new Round("{ordinary malformed " + index, ChatFinishReason.Stop)).ToArray());
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Null(result.Proposal);
+        Assert.Equal(4, client.Requests.Count);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        AssertCorrectionLifecycle(result, expectedRejected: 4, finishedStatus: OctoberFileWorkerStatus.InvalidOutput,
+            expectedRetries: 3);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrectionLog_AppendsBoundedRedactedBatchAndRejectsPartialLineOrCancellationAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "october-json-correction-log-" + Guid.NewGuid().ToString("N"));
+        string partialRoot = root + "-partial";
+        string cancelledRoot = root + "-cancelled";
+        string lockedRoot = root + "-locked";
+        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(partialRoot);
+        Directory.CreateDirectory(cancelledRoot);
+        Directory.CreateDirectory(lockedRoot);
+        try
+        {
+            const string privateSource = "SYNTHETIC_PRIVATE_SOURCE_CONTENT";
+            const string privateProviderOutput = "SYNTHETIC_PROVIDER_RAW_OUTPUT";
+            var request = Request(new Frame(privateSource));
+            var diagnostic = new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax,
+                OctoberWorkerParseSlot.Root, LineNumber: 1, BytePositionInLine: 2);
+            ImmutableArray<OctoberJsonCorrectionEvent> events =
+            [
+                new(OctoberJsonCorrectionPhase.CandidateRejected, 0, 1, 1, 4,
+                    Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
+                    FinishReason: OctoberWorkerObservedFinish.Stop,
+                    Strategy: OctoberWorkerCorrectionStrategy.Configured, RemovedMessages: 0),
+                new(OctoberJsonCorrectionPhase.RetryRequested, 1, 1, 1, 5,
+                    Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
+                    FinishReason: OctoberWorkerObservedFinish.Stop,
+                    Strategy: OctoberWorkerCorrectionStrategy.ThinkingDisabled, RemovedMessages: 7),
+                new(OctoberJsonCorrectionPhase.WorkerFinished, 1, 1, 2, 9,
+                    Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
+                    OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse,
+                    FinishReason: OctoberWorkerObservedFinish.Stop,
+                    Strategy: OctoberWorkerCorrectionStrategy.CompactedThinkingDisabled, RemovedMessages: 11)
+            ];
+            var log = new OctoberJsonCorrectionLog(root, TimeProvider.System);
+
+            Assert.True(await log.AppendAsync(request, events));
+
+            string path = Path.Combine(root, "worker-json-corrections.jsonl");
+            string[] lines = await File.ReadAllLinesAsync(path);
+            Assert.Equal(events.Length, lines.Length);
+            string[] expectedStrategies = ["Configured", "ThinkingDisabled", "CompactedThinkingDisabled"];
+            int[] expectedRemovedMessages = [0, 7, 11];
+            foreach ((string line, int index) in lines.Select((line, index) => (line, index)))
+            {
+                using var json = JsonDocument.Parse(line);
+                var record = json.RootElement;
+                Assert.True(record.GetProperty("recordedAtUtc").GetDateTimeOffset() > DateTimeOffset.MinValue);
+                Assert.Equal(request.RunId, record.GetProperty("runId").GetGuid());
+                Assert.Equal(request.FileWorkstreamId, record.GetProperty("fileWorkstreamId").GetGuid());
+                Assert.Equal(request.AdmissionId, record.GetProperty("admissionId").GetGuid());
+                Assert.Equal(request.AttemptId, record.GetProperty("attemptId").GetGuid());
+                string expectedPathHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(request.Source.Origin.RelativePath))).ToLowerInvariant();
+                Assert.Equal(expectedPathHash, record.GetProperty("relativePathSha256").GetString());
+                Assert.Equal(64, record.GetProperty("providerSha256").GetString()!.Length);
+                Assert.False(record.GetProperty("hardRetryMode").GetBoolean());
+                Assert.Equal(request.Limits.MaximumOutputTokensPerRequest,
+                    record.GetProperty("maximumOutputTokensPerRequest").GetInt32());
+                Assert.Equal(request.Limits.MaximumInputUtf8Bytes,
+                    record.GetProperty("maximumInputUtf8Bytes").GetInt32());
+                Assert.Equal(request.Limits.MaximumOutputUtf8Bytes,
+                    record.GetProperty("maximumOutputUtf8Bytes").GetInt32());
+                Assert.Equal("Syntax", record.GetProperty("diagnostic").GetProperty("category").GetString());
+                Assert.Equal("Root", record.GetProperty("diagnostic").GetProperty("slot").GetString());
+                Assert.Equal("Stop", record.GetProperty("finishReason").GetString());
+                Assert.Equal(expectedStrategies[index], record.GetProperty("strategy").GetString());
+                Assert.Equal(expectedRemovedMessages[index], record.GetProperty("removedMessages").GetInt32());
+            }
+            string logged = await File.ReadAllTextAsync(path);
+            Assert.DoesNotContain(privateSource, logged, StringComparison.Ordinal);
+            Assert.DoesNotContain(privateProviderOutput, logged, StringComparison.Ordinal);
+            Assert.DoesNotContain(request.Source.Origin.RelativePath, logged, StringComparison.Ordinal);
+            Assert.DoesNotContain(request.ProviderProfileId, logged, StringComparison.Ordinal);
+
+            string partialPath = Path.Combine(partialRoot, "worker-json-corrections.jsonl");
+            const string partialLine = "{\"existing\":true";
+            await File.WriteAllTextAsync(partialPath, partialLine);
+            Assert.False(await new OctoberJsonCorrectionLog(partialRoot).AppendAsync(request, events));
+            Assert.Equal(partialLine, await File.ReadAllTextAsync(partialPath));
+
+            using var cancelled = new CancellationTokenSource();
+            cancelled.Cancel();
+            Assert.False(await new OctoberJsonCorrectionLog(cancelledRoot).AppendAsync(request, events, cancelled.Token));
+            Assert.False(File.Exists(Path.Combine(cancelledRoot, "worker-json-corrections.jsonl")));
+
+            string lockedPath = Path.Combine(lockedRoot, "worker-json-corrections.jsonl");
+            const string existingLine = "{\"existing\":true}\n";
+            await File.WriteAllTextAsync(lockedPath, existingLine);
+            await using (var held = new FileStream(lockedPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                long originalLength = held.Length;
+                Assert.False(await new OctoberJsonCorrectionLog(lockedRoot).AppendAsync(request, events));
+                Assert.Equal(originalLength, held.Length);
+            }
+            Assert.Equal(existingLine, await File.ReadAllTextAsync(lockedPath));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+            Directory.Delete(partialRoot, true);
+            Directory.Delete(cancelledRoot, true);
+            Directory.Delete(lockedRoot, true);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing-parent")]
+    [InlineData("unexpected-field")]
+    [InlineData("duplicate-title")]
+    [InlineData("wrong-type")]
+    [InlineData("wrong-root")]
+    public async Task JsonCorrection_EligibleStructuralResponseCanBeReplacedOnceAsync(string defect)
+    {
+        const string privateField = "PRIVATE_API_KEY";
+        const string privateValue = "SYNTHETIC_SECRET_VALUE";
+        string invalid = defect switch
+        {
+            "missing-parent" => UnitJson.Replace("\"parentSelector\":null,", "", StringComparison.Ordinal),
+            "unexpected-field" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"" + privateField + "\":\"" + privateValue + "\"", StringComparison.Ordinal),
+            "duplicate-title" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"title\":\"duplicate\"", StringComparison.Ordinal),
+            "wrong-type" => UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal),
+            "wrong-root" => "{}",
+            _ => throw new InvalidOperationException("Unknown structural correction case")
+        };
+        using var client = new ScriptedClient([new(invalid, ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, client.Requests.Count);
+        if (defect == "unexpected-field")
+        {
+            string correctionPrompt = client.Requests[1]
+                .Where(message => message.Role == ChatRole.User).SelectMany(message => message.Contents)
+                .OfType<TextContent>().Last().Text;
+            Assert.DoesNotContain(privateField, correctionPrompt, StringComparison.Ordinal);
+            Assert.DoesNotContain(privateValue, correctionPrompt, StringComparison.Ordinal);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing-parent", OctoberWorkerParseFailure.ClosedFields, OctoberWorkerFieldFailure.Missing, OctoberWorkerParseSlot.ParentSelector)]
+    [InlineData("unexpected-field", OctoberWorkerParseFailure.ClosedFields, OctoberWorkerFieldFailure.Unexpected, null)]
+    [InlineData("duplicate-title", OctoberWorkerParseFailure.ClosedFields, OctoberWorkerFieldFailure.Duplicate, OctoberWorkerParseSlot.Title)]
+    [InlineData("wrong-type", OctoberWorkerParseFailure.ValueShape, null, OctoberWorkerParseSlot.Ordinal)]
+    public async Task JsonCorrection_ExhaustedStructuralCorrectionReportsBoundedFieldDiagnosticsAsync(string defect,
+        OctoberWorkerParseFailure category, OctoberWorkerFieldFailure? fieldFailure, OctoberWorkerParseSlot? field)
+    {
+        string invalid = defect switch
+        {
+            "missing-parent" => UnitJson.Replace("\"parentSelector\":null,", "", StringComparison.Ordinal),
+            "unexpected-field" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"PRIVATE_UNKNOWN_FIELD\":\"SYNTHETIC_SECRET_VALUE\"", StringComparison.Ordinal),
+            "duplicate-title" => UnitJson.Replace("\"title\":\"Conditional execution\"", "\"title\":\"Conditional execution\",\"title\":\"duplicate\"", StringComparison.Ordinal),
+            "wrong-type" => UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal),
+            _ => throw new InvalidOperationException("Unknown structural diagnostic case")
+        };
+        using var client = new ScriptedClient([new("{first syntax failure", ChatFinishReason.Stop), new(invalid, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1 } };
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(2, client.Requests.Count); // Syntax and structural failures share the one correction allowance.
+        var parse = Assert.IsType<OctoberWorkerParseDiagnosticSnapshot>(result.ParseFailure);
+        Assert.Equal(category, parse.Category);
+        Assert.Equal(fieldFailure, parse.FieldFailure);
+        Assert.Equal(field, parse.Field);
+        Assert.Equal(0, parse.UnitIndex);
+        Assert.DoesNotContain("PRIVATE_UNKNOWN_FIELD", JsonSerializer.Serialize(parse), StringComparison.Ordinal);
+        Assert.DoesNotContain("SYNTHETIC_SECRET_VALUE", JsonSerializer.Serialize(parse), StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("cycle")]
+    [InlineData("evidence-index")]
+    public async Task JsonCorrection_SemanticAndEvidenceFailuresDoNotRetryAsync(string defect)
+    {
+        string invalid = defect == "cycle"
+            ? UnitJson.Replace("\"parentSelector\":null", "\"parentSelector\":\"file\"", StringComparison.Ordinal)
+            : UnitJson.Replace("\"evidence\":[{\"startLine\":1,\"endLine\":2}]", "\"evidence\":[{\"advisoryIndex\":0}]", StringComparison.Ordinal);
+        using var client = new ScriptedClient([new(invalid, ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with { Limits = baseline.Limits with
+        { MaximumJsonCorrectionAttempts = 1, UseTextForJsonCorrection = true, HardRetryMode = true }, HardRetryBudget = budget };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.NotEqual(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(1, client.Requests.Count);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(0, 0), budget.Read());
+        Assert.Equal(defect == "cycle" ? OctoberWorkerFailureStage.ProposalValidation : OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        if (defect == "evidence-index") Assert.Equal(OctoberWorkerParseFailure.EvidenceIndex, result.ParseFailure!.Category);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryBudget_DoesNotResetForAnotherWorkerOnSameWorkstreamAsync()
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var firstRequest = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        using var firstClient = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+        var first = await new OctoberFileWorkerExecutor(firstClient, new Scope()).ExecuteAsync(firstRequest, []);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, first.Status);
+
+        var repeated = firstRequest with { AdmissionId = Guid.NewGuid(), AttemptId = Guid.NewGuid() };
+        using var secondClient = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+        var second = await new OctoberFileWorkerExecutor(secondClient, new Scope()).ExecuteAsync(repeated, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, second.Status);
+        Assert.Empty(secondClient.Requests);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(0, 0), budget.Read());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryMode_UnexpectedToolOnExtraCorrectionIsRejectedBeforeInvocationAsync()
+    {
+        int invoked = 0;
+        var tool = AIFunctionFactory.Create((string relativePath) => { invoked++; return relativePath; }, "read_prepared_source");
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        using var client = new ScriptedClient([
+            new("{initial syntax failure", ChatFinishReason.Stop),
+            new("{ordinary correction malformed", ChatFinishReason.Stop),
+            new(null, ChatFinishReason.ToolCalls, [new FunctionCallContent("forbidden-hard-retry-tool", tool.Name,
+                new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs" })])
+        ]);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [tool]);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerTerminalFailure.ToolsDisabled, result.TerminalFailure);
+        Assert.Equal(0, invoked);
+        Assert.Equal(3, client.Requests.Count);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(1, 1), budget.Read());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ProviderRoundLimitPreventsSecondDispatchAsync()
+    {
+        using var client = new ScriptedClient([new("{malformed", ChatFinishReason.Stop), new(UnitJson, ChatFinishReason.Stop)]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumProviderRounds = 1, MaximumJsonCorrectionAttempts = 1 } };
+        var scope = new Scope();
+
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(OctoberWorkerBudgetFailure.ProviderRounds, result.BudgetFailure);
+        Assert.Single(client.Requests);
+        Assert.Single(scope.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryMode_ProviderRoundCapReservesButDoesNotStartExtraCorrectionAsync()
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with
+            {
+                MaximumProviderRounds = 2,
+                MaximumJsonCorrectionAttempts = 1,
+                HardRetryMode = true
+            },
+            HardRetryBudget = budget
+        };
+        using var client = new ScriptedClient([
+            new("{initial syntax failure", ChatFinishReason.Stop),
+            new("{ordinary correction also invalid", ChatFinishReason.Stop),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(OctoberWorkerBudgetFailure.ProviderRounds, result.BudgetFailure);
+        Assert.Equal(2, client.Requests.Count);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(1, 0), budget.Read());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryMode_UsesTwoAdditionalCorrectionsAndLatestParserFeedbackAsync()
+    {
+        string wrongRoot = "[]";
+        string wrongValue = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        using var client = new ScriptedClient([
+            new("{initial syntax failure", ChatFinishReason.Stop),
+            new(wrongRoot, ChatFinishReason.Stop),
+            new(wrongValue, ChatFinishReason.Stop),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(4, client.Requests.Count); // one ordinary correction plus two hard retries
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(2, 2), budget.Read());
+        Assert.Contains("\"category\":\"Syntax\"", LastUserText(client.Requests[1]), StringComparison.Ordinal);
+        Assert.Contains("\"remainingCorrections\":2", LastUserText(client.Requests[1]), StringComparison.Ordinal);
+        Assert.Contains("\"category\":\"RootShape\"", LastUserText(client.Requests[2]), StringComparison.Ordinal);
+        Assert.Contains("\"remainingCorrections\":1", LastUserText(client.Requests[2]), StringComparison.Ordinal);
+        Assert.Contains("\"category\":\"ValueShape\"", LastUserText(client.Requests[3]), StringComparison.Ordinal);
+        Assert.Contains("\"remainingCorrections\":0", LastUserText(client.Requests[3]), StringComparison.Ordinal);
+        AssertCorrectionLifecycle(result, expectedRejected: 3, finishedStatus: OctoberFileWorkerStatus.Completed);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryMode_StopsAfterTwoAdditionalInvalidCandidatesAsync()
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        using var client = new ScriptedClient(Enumerable.Range(0, 5)
+            .Select(index => new Round("{malformed " + index, ChatFinishReason.Stop)).ToArray());
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Equal(4, client.Requests.Count); // hard mode is bounded to two extra leaves
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(2, 2), budget.Read());
+        AssertCorrectionLifecycle(result, expectedRejected: 4, finishedStatus: OctoberFileWorkerStatus.InvalidOutput,
+            expectedRetries: 3);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryBudget_EnforcesTwoPerFileAndSixteenPerRunAsync()
+    {
+        var seed = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(seed.Binding, seed.RunId);
+        for (int file = 0; file < 8; file++)
+        {
+            var request = seed with
+            {
+                FileWorkstreamId = Guid.NewGuid(), AdmissionId = Guid.NewGuid(), AttemptId = Guid.NewGuid(),
+                Limits = seed.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+                HardRetryBudget = budget
+            };
+            using var client = new ScriptedClient(Enumerable.Range(0, 5)
+                .Select(index => new Round("{candidate " + index, ChatFinishReason.Stop)).ToArray());
+
+            var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+            Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+            Assert.Equal(4, client.Requests.Count);
+        }
+
+        var ninth = seed with
+        {
+            FileWorkstreamId = Guid.NewGuid(), AdmissionId = Guid.NewGuid(), AttemptId = Guid.NewGuid(),
+            Limits = seed.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        using var finalClient = new ScriptedClient(Enumerable.Range(0, 4)
+            .Select(index => new Round("{ninth candidate " + index, ChatFinishReason.Stop)).ToArray());
+        var final = await new OctoberFileWorkerExecutor(finalClient, new Scope()).ExecuteAsync(ninth, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, final.Status);
+        Assert.Equal(2, finalClient.Requests.Count); // the run ceiling refuses the ninth file's first extra candidate
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(16, 16), budget.Read());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("binding")]
+    [InlineData("run")]
+    public async Task HardRetryBudget_RejectsForeignBindingOrRunBeforeProviderDispatchAsync(string mismatch)
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding,
+            mismatch == "run" ? Guid.NewGuid() : baseline.RunId);
+        var request = baseline with
+        {
+            Binding = mismatch == "binding" ? baseline.Binding with { TargetId = "foreign-target" } : baseline.Binding,
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(client.Requests);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(0, 0), budget.Read());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryBudget_DeniedAdmissionDoesNotRefundReservedCorrectionAsync()
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        using var client = new ScriptedClient([
+            new("{initial syntax failure", ChatFinishReason.Stop),
+            new("{ordinary correction also invalid", ChatFinishReason.Stop)
+        ]);
+        var scope = new Scope { DenyRequestNumber = 3 };
+
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Denied, result.Status);
+        Assert.Equal(2, client.Requests.Count);
+        Assert.Equal(3, scope.Requests.Count);
+        Assert.Equal(new OctoberCorrectionBudgetSnapshot(1, 0), budget.Read());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task HardRetryBudget_SourceCancellationAfterDispatchStopsWithoutFurtherRetryAsync()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var budget = new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId);
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = true },
+            HardRetryBudget = budget
+        };
+        ScriptedClient? client = null;
+        client = new ScriptedClient(Enumerable.Repeat(new Round("{still malformed", ChatFinishReason.Stop), 5).ToArray(),
+            () => { if (client!.Requests.Count == 3) cancellation.Cancel(); });
+        using (client)
+        {
+            var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, [], cancellation.Token);
+
+            Assert.Equal(OctoberFileWorkerStatus.Cancelled, result.Status);
+            Assert.Equal(3, client.Requests.Count);
+            Assert.Equal(new OctoberCorrectionBudgetSnapshot(1, 1), budget.Read());
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task HardRetryMode_RequiresARegisteredRunBudget(bool enabled, bool suppliedBudget)
+    {
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with
+        {
+            Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 1, HardRetryMode = enabled },
+            HardRetryBudget = suppliedBudget ? new OctoberRunCorrectionBudget(baseline.Binding, baseline.RunId) : null
+        };
+        using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(client.Requests);
+    }
+
+    private static string LastUserText(ChatMessage[] messages) => messages.Last(message => message.Role == ChatRole.User)
+        .Contents.OfType<TextContent>().Last().Text;
+    private static void AssertCorrectionLifecycle(OctoberFileWorkerResult result, int expectedRejected,
+        OctoberFileWorkerStatus finishedStatus, int? expectedRetries = null)
+    {
+        var events = result.JsonCorrections;
+        Assert.Equal(expectedRejected, events.Count(item => item.Phase == OctoberJsonCorrectionPhase.CandidateRejected));
+        Assert.Equal(expectedRetries ?? expectedRejected, events.Count(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested));
+        Assert.Single(events.Where(item => item.Phase == OctoberJsonCorrectionPhase.WorkerFinished && item.Status == finishedStatus));
+        Assert.All(events.Where(item => item.Phase is OctoberJsonCorrectionPhase.CandidateRejected or
+            OctoberJsonCorrectionPhase.RetryRequested or OctoberJsonCorrectionPhase.ResponseReceived),
+            item => Assert.Equal(OctoberWorkerObservedFinish.Stop, item.FinishReason));
+        Assert.All(events, item =>
+        {
+            Assert.InRange(item.RetryOrdinal, 0, 3);
+            Assert.InRange(item.WindowOrdinal, 1, 4);
+            Assert.InRange(item.ProviderRounds, 0, 8);
+            Assert.InRange(item.ElapsedMilliseconds, 0, long.MaxValue);
+            Assert.InRange(item.CandidateUtf8Bytes, 0, 262144);
+        });
+        string safeEvents = JsonSerializer.Serialize(events);
+        Assert.DoesNotContain("initial syntax failure", safeEvents, StringComparison.Ordinal);
+        Assert.DoesNotContain("wrong", safeEvents, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UnsupportedFinishObservation_NeverReusesPriorToolLeafUsageAsync(bool finalUsage)
+    {
+        var tool = AIFunctionFactory.Create(() => "controlled result", "read_prepared_source");
+        ChatResponseUpdate[] first =
+        [
+            new() { Role = ChatRole.Assistant, Contents = [new FunctionCallContent("controlled-prior", tool.Name, new Dictionary<string, object?>())], FinishReason = ChatFinishReason.ToolCalls },
+            new() { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 900, OutputTokenCount = 800, ReasoningTokenCount = 700 })] }
+        ];
+        var second = new List<ChatResponseUpdate> { new() { Role = ChatRole.Assistant, FinishReason = ChatFinishReason.Length } };
+        if (finalUsage) second.Add(new() { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 9, OutputTokenCount = 8, ReasoningTokenCount = 7 })] });
+        using var client = new TerminalObservationClient([first, [.. second]]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        var observation = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+        Assert.Equal(finalUsage ? 9L : (long?)null, observation.InputTokens);
+        Assert.Equal(finalUsage ? 8L : (long?)null, observation.OutputTokens);
+        Assert.Equal(finalUsage ? 7L : (long?)null, observation.ReasoningTokens);
+        Assert.Equal(2, client.Caps.Count); Assert.Equal(client.Caps[1], observation.MaximumOutputTokens);
+        Assert.Equal(1, result.SettledToolCalls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task UnsupportedFinishObservation_ActualSdkMapsLengthAndUsageTrailerAsync()
+    {
+        int? wireCap = null;
+        using var transport = new AccountingSseHttp(["PRIVATE_REASONING"], ["{PRIVATE_INCOMPLETE"])
+        {
+            ExpectedHost = "api.deepseek.com", FinishOverrides = ["length"], ReasoningTokens = 17,
+            ObserveRequest = body => wireCap = body.GetProperty("max_tokens").GetInt32()
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.StreamTerminal, result.FailureStage);
+        Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+        var observation = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+        Assert.Equal(OctoberWorkerUnsupportedFinish.Length, observation.FinishReason);
+        Assert.Equal(8192, wireCap); Assert.Equal(wireCap, observation.MaximumOutputTokens);
+        Assert.Equal(100L, observation.InputTokens); Assert.Equal(50L, observation.OutputTokens); Assert.Equal(17L, observation.ReasoningTokens);
+        Assert.Equal(1, transport.Calls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        Assert.DoesNotContain("PRIVATE", JsonSerializer.Serialize(result));
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(8192, false)]
+    [InlineData(8192, true)]
+    [InlineData(137, false)]
+    [InlineData(137, true)]
+    [InlineData(393216, false)]
+    [InlineData(393216, true)]
+    public async Task MaxOutputCap_FixedOutputReservationExactFitAndOneLessBoundaryAsync(int outputCap, bool under)
+    {
+        var request = Request(new Frame("if (enabled) Run();\nreturn;")) with
+        { Limits = new(MaximumTokensPerRequest: 32768L + outputCap, MaximumOutputTokensPerRequest: outputCap) };
+        ChatResponseUpdate[][] leaves = [[new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]];
+        using var measure = new TerminalObservationClient(leaves);
+        var measuredScope = new Scope();
+        Assert.Equal(OctoberFileWorkerStatus.Completed, (await new OctoberFileWorkerExecutor(measure, measuredScope).ExecuteAsync(request, [])).Status);
+        // The measured reservation includes the actual input proxy plus the requested output cap.
+        long required = Assert.Single(measuredScope.Requests).MaximumTokens;
+        Assert.Equal(outputCap, Assert.Single(measure.Caps));
+        using var client = new TerminalObservationClient(leaves);
+        var scope = new Scope();
+        var bounded = request with { Limits = request.Limits with { MaximumTokensPerRequest = required - (under ? 1 : 0) } };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(bounded, []);
+        Assert.Equal(under ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        if (under)
+        {
+            Assert.Empty(client.Caps); Assert.Empty(scope.Requests); Assert.Empty(scope.Leases);
+            Assert.Null(result.Proposal); Assert.Null(result.TerminalObservation);
+            Assert.Equal(OctoberWorkerBudgetFailure.RequestTokens, result.BudgetFailure);
+        }
+        else
+        {
+            Assert.Equal(outputCap, Assert.Single(client.Caps));
+            Assert.Equal(required, Assert.Single(scope.Requests).MaximumTokens);
+            Assert.Null(result.BudgetFailure);
+            var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FixedOutputReservation_GrowingReasoningAndToolHistoryRejectsNextLeafBeforeAdmissionAsync()
+    {
+        const string reasoning = "CONTROLLED_REPLAY_中文😀";
+        var tool = AIFunctionFactory.Create(() => "controlled tool result enlarges history", "read_prepared_source");
+        ChatResponseUpdate[][] leaves =
+        [
+            [new() { Role = ChatRole.Assistant, Contents = [new TextReasoningContent(reasoning), new FunctionCallContent("controlled", tool.Name, new Dictionary<string, object?>())], FinishReason = ChatFinishReason.ToolCalls }],
+            [new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]
+        ];
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        using var measure = new TerminalObservationClient(leaves);
+        var measuredScope = new Scope();
+        Assert.Equal(OctoberFileWorkerStatus.Completed, (await new OctoberFileWorkerExecutor(measure, measuredScope).ExecuteAsync(request, [tool])).Status);
+        Assert.Equal(2, measuredScope.Requests.Count);
+        Assert.True(measuredScope.Requests[1].MaximumTokens > measuredScope.Requests[0].MaximumTokens);
+        Assert.All(measure.Caps, cap => Assert.Equal(8192, cap));
+        using var client = new TerminalObservationClient(leaves);
+        var scope = new Scope();
+        var bounded = request with { Limits = request.Limits with { MaximumTokensPerRequest = measuredScope.Requests[1].MaximumTokens - 1 } };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(bounded, [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status);
+        Assert.Equal(8192, Assert.Single(client.Caps)); Assert.Single(scope.Requests);
+        Assert.Equal(1, result.SettledToolCalls); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(OctoberWorkerBudgetFailure.RequestTokens, result.BudgetFailure);
+        Assert.Null(result.Proposal); Assert.Null(result.TerminalObservation);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(0)]
+    [InlineData(393217)]
+    public async Task MaxOutputCap_InvalidConfiguredOutputRefusesBeforeAdmissionAsync(int outputCap)
+    {
+        using var client = new TerminalObservationClient([]);
+        var scope = new Scope();
+        var request = Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumOutputTokensPerRequest: outputCap) };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(scope.Requests); Assert.Empty(client.Caps); Assert.Null(result.Proposal);
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FixedOutputReservation_InvalidOverflowSizedTotalRefusesBeforeAdmissionAsync()
+    {
+        using var client = new TerminalObservationClient([]);
+        var scope = new Scope();
+        var request = Request(new Frame("if (enabled) Run();\nreturn;")) with { Limits = new(MaximumTokensPerRequest: long.MaxValue) };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.InvalidInput, result.Status);
+        Assert.Empty(scope.Requests); Assert.Empty(client.Caps); Assert.Null(result.Proposal);
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("text", "stop")]
+    [InlineData("text", "length")]
+    [InlineData("reasoning", "stop")]
+    [InlineData("reasoning", "length")]
+    public async Task BoundedStream_ActualSdkOver8192ProgressFragmentsEquivalentToSinglePayloadAsync(string kind, string finish)
+    {
+        const int fragments = 8300;
+        string padding = new(' ', fragments);
+        string reason = new('r', fragments);
+        foreach (bool fragmented in new[] { false, true })
+        {
+            string[] text = kind == "text" ? fragmented ? [.. Enumerable.Repeat(" ", fragments), UnitJson] : [padding + UnitJson] : [UnitJson];
+            string[] reasoning = kind == "reasoning" ? fragmented ? Enumerable.Repeat("r", fragments).ToArray() : [reason] : [];
+            using var transport = new AccountingSseHttp(reasoning, text)
+            {
+                FinishOverrides = [.. Enumerable.Repeat<string?>(null, text.Length - 1), finish], ReasoningTokens = 17
+            };
+            using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
+            var scope = new Scope();
+            var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+            Assert.Equal(finish == "stop" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput, result.Status);
+            Assert.Null(result.BudgetFailure); Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+            if (finish == "stop") Assert.Equal("Conditional execution", Assert.Single(result.Proposal!.Units).Title);
+            else
+            {
+                Assert.Equal(OctoberWorkerTerminalFailure.UnsupportedFinish, result.TerminalFailure);
+                var observed = Assert.IsType<OctoberWorkerTerminalObservation>(result.TerminalObservation);
+                Assert.Equal(OctoberWorkerUnsupportedFinish.Length, observed.FinishReason);
+                Assert.Equal(100L, observed.InputTokens); Assert.Equal(50L, observed.OutputTokens); Assert.Equal(17L, observed.ReasoningTokens);
+            }
+            Assert.Equal(1, transport.Calls);
+            var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+            Assert.Equal(100L, lease.Usage!.InputTokens); Assert.Equal(50L, lease.Usage.OutputTokens);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BoundedStream_NonProgressAllowanceIsCumulativeAcrossPayloadAndUsageUpdatesAsync(bool over)
+    {
+        var updates = Enumerable.Range(0, 4096).Select(_ => new ChatResponseUpdate { Role = ChatRole.Assistant }).ToList();
+        updates.Add(new() { Role = ChatRole.Assistant, Contents = [new TextContent(" ")] });
+        updates.AddRange(Enumerable.Range(0, 4096 + (over ? 1 : 0)).Select(_ => new ChatResponseUpdate
+        { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 100, OutputTokenCount = 50 })] }));
+        updates.Add(new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop });
+        using var client = new UpdateClient([.. updates]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(over ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(over ? OctoberWorkerBudgetFailure.StreamUpdates : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+        Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
+        if (over) Assert.Null(result.Proposal); else Assert.NotNull(result.Proposal);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(null)]
+    [InlineData("controlled-last-response")]
+    public async Task BoundedStream_ToolReplayCoalescesPlainReasoningButRetainsProtectedSegmentsInOrderAsync(string? lastResponseId)
+    {
+        var tool = AIFunctionFactory.Create(() => "contained result", "read_prepared_source");
+        ChatResponseUpdate[] first =
+        [
+            new() { Role = ChatRole.Assistant, Contents = [new TextReasoningContent("a")] },
+            new() { Contents = [new TextReasoningContent("") { ProtectedData = "" }] },
+            new() { Contents = [new TextReasoningContent("b")] },
+            new() { Contents = [new TextReasoningContent("c") { ProtectedData = "opaque-one" }] },
+            new() { Contents = [new TextReasoningContent("d")] },
+            new() { Contents = [new TextReasoningContent("e")] },
+            new() { Contents = [new TextReasoningContent("f") { ProtectedData = "" }] },
+            new() { Contents = [new TextReasoningContent("g")] },
+            new() { Contents = [new TextReasoningContent("") { ProtectedData = "opaque-two" }] },
+            new() { Contents = [new TextReasoningContent("")] },
+            new() { Contents = [new FunctionCallContent("bounded-call", tool.Name, new Dictionary<string, object?>())], FinishReason = ChatFinishReason.ToolCalls }
+        ];
+        first[0].ResponseId = "controlled-earlier-response";
+        first[^1].ResponseId = lastResponseId;
+        using (var directClient = new TerminalObservationClient([first]))
+        {
+            var directScope = new Scope();
+            var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+            // Inspect the owned aggregate before MAF's documented content coalescing.
+            var workerType = typeof(OctoberFileWorkerExecutor).GetNestedType("WorkerClient", System.Reflection.BindingFlags.NonPublic)!;
+            var observationsType = typeof(OctoberFileWorkerExecutor).GetNestedType("ExceptionObservation", System.Reflection.BindingFlags.NonPublic)!;
+            object observations = Activator.CreateInstance(observationsType, nonPublic: true)!;
+            var toolBudget = new OctoberFileToolBudget(request.RunId, request.FileWorkstreamId, request.AdmissionId,
+                request.Limits.AdvisoryToolCalls, request.Limits.MaximumToolCalls);
+            using var worker = Assert.IsAssignableFrom<IChatClient>(Activator.CreateInstance(workerType,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                binder: null, args: [directClient, directScope, request, new AIFunction[] { tool }, observations, toolBudget], culture: null));
+            var aggregates = new List<ChatResponseUpdate>();
+            await foreach (var update in worker.GetStreamingResponseAsync([new(ChatRole.User, "controlled owned aggregation")], new ChatOptions { Tools = [tool] })) aggregates.Add(update);
+            var aggregate = Assert.Single(aggregates);
+            Assert.Equal(lastResponseId, aggregate.ResponseId);
+            Assert.Equal(ChatFinishReason.ToolCalls, aggregate.FinishReason);
+            var ownedReasoning = aggregate.Contents.OfType<TextReasoningContent>().ToArray();
+            Assert.Equal(new[] { "a", "", "b", "c", "de", "f", "g", "", "" }, ownedReasoning.Select(content => content.Text));
+            Assert.Equal(new string?[] { null, "", null, "opaque-one", null, "", null, "opaque-two", null }, ownedReasoning.Select(content => content.ProtectedData));
+            Assert.Equal("bounded-call", Assert.Single(aggregate.Contents.OfType<FunctionCallContent>()).CallId);
+            var lease = Assert.Single(directScope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+        }
+        using var client = new TerminalObservationClient([first, [new() { Role = ChatRole.Assistant, Contents = [new TextContent(UnitJson)], FinishReason = ChatFinishReason.Stop }]]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(1, result.SettledToolCalls);
+        var assistant = Assert.Single(client.Histories[1].Where(message => message.Role == ChatRole.Assistant));
+        var reasoning = assistant.Contents.OfType<TextReasoningContent>().ToArray();
+        // The installed MAF adapter also coalesces reasoning. Compare its final
+        // replay to the legacy aggregate shape, including protected data pairs.
+        var legacyAggregate = new ChatResponseUpdate
+        {
+            Role = ChatRole.Assistant, FinishReason = ChatFinishReason.ToolCalls,
+            Contents = [.. first.SelectMany(update => update.Contents).OfType<TextReasoningContent>()
+                .Select(content => new TextReasoningContent(content.Text) { ProtectedData = content.ProtectedData }),
+                new TextContent(""), .. first.SelectMany(update => update.Contents).OfType<FunctionCallContent>()]
+        };
+        var expectedReplay = new[] { legacyAggregate }.ToChatResponse().Messages.SelectMany(message => message.Contents)
+            .OfType<TextReasoningContent>().Select(content => (content.Text, content.ProtectedData)).ToArray();
+        Assert.Equal(expectedReplay, reasoning.Select(content => (content.Text, content.ProtectedData)).ToArray());
+        Assert.Equal("bounded-call", Assert.Single(assistant.Contents.OfType<FunctionCallContent>()).CallId);
+        Assert.DoesNotContain("opaque-", JsonSerializer.Serialize(result));
+        Assert.Equal(2, scope.Leases.Count); Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BoundedStream_SynchronouslyCompletedMoveChecksCancellationBeforeAnotherMoveAsync()
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var client = new SynchronousCancellingClient(cancellation);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [], cancellation.Token);
+        Assert.Equal(OctoberFileWorkerStatus.Cancelled, result.Status);
+        Assert.Equal(1, client.Moves); Assert.True(client.Disposed); Assert.Null(result.Proposal);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BoundedStream_RetainedReasoningSegmentBoundAlsoAppliesInsideSingleUpdateAsync(bool over)
+    {
+        var contents = Enumerable.Range(0, 8192 + (over ? 1 : 0))
+            .Select(_ => (AIContent)new TextReasoningContent("") { ProtectedData = "" }).ToList();
+        contents.Add(new TextContent(UnitJson));
+        using var client = new UpdateClient([new() { Role = ChatRole.Assistant, Contents = contents, FinishReason = ChatFinishReason.Stop }]);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
+        Assert.Equal(over ? OctoberFileWorkerStatus.BudgetExceeded : OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(over ? OctoberWorkerBudgetFailure.StreamUpdates : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+        Assert.Equal(1, client.Calls); Assert.True(client.StreamDisposed);
+        if (over) Assert.Null(result.Proposal); else Assert.NotNull(result.Proposal);
+        var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
+    }
+
+    private sealed class SynchronousCancellingClient(CancellationTokenSource cancellation) : IChatClient, IAsyncEnumerable<ChatResponseUpdate>, IAsyncEnumerator<ChatResponseUpdate>
+    {
+        internal int Moves;
+        internal bool Disposed;
+        public ChatResponseUpdate Current => new() { Role = ChatRole.Assistant };
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => this;
+        public IAsyncEnumerator<ChatResponseUpdate> GetAsyncEnumerator(CancellationToken cancellationToken = default) => this;
+        public ValueTask<bool> MoveNextAsync() { Moves++; if (Moves == 1) cancellation.Cancel(); return ValueTask.FromResult(Moves <= 9000); }
+        public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+
+    private sealed class TerminalObservationClient(ChatResponseUpdate[][] leaves) : IChatClient
+    {
+        internal List<int?> Caps { get; } = [];
+        internal List<ChatMessage[]> Histories { get; } = [];
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            int index = Caps.Count; Caps.Add(options?.MaxOutputTokens); Histories.Add(messages.ToArray());
+            Assert.InRange(index, 0, leaves.Length - 1);
+            foreach (var update in leaves[index]) { await Task.Yield(); cancellationToken.ThrowIfCancellationRequested(); yield return update; }
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+
     private sealed class UpdateClient(ChatResponseUpdate[] updates) : IChatClient
     {
         internal bool StreamDisposed;
@@ -988,8 +2744,8 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [InlineData("duplicate-key", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("wrong-case-key", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("wrong-root", OctoberFileWorkerStatus.InvalidOutput)]
-    [InlineData("numeric-string", OctoberFileWorkerStatus.ProviderFailed)]
-    [InlineData("numeric-overflow", OctoberFileWorkerStatus.ProviderFailed)]
+    [InlineData("numeric-string", OctoberFileWorkerStatus.InvalidOutput)]
+    [InlineData("numeric-overflow", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("qualification-case", OctoberFileWorkerStatus.InvalidOutput)]
     [InlineData("advisory-index", OctoberFileWorkerStatus.InvalidOutput)]
     public async Task CurrentContract_ProposalShapeCharacterization_PreservesExactParserOutcomeAsync(string shape, OctoberFileWorkerStatus expected)
@@ -1170,13 +2926,15 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     private sealed class Scope : IOctoberWorkerExecutionScope
     {
         internal bool Denied;
+        internal int? DenyRequestNumber;
         internal Exception? SettleFailure, DisposeFailure;
         internal List<OctoberWorkerProviderAttemptRequest> Requests { get; } = [];
         internal List<Lease> Leases { get; } = [];
         public Task<ProviderAdmission> AcquireWorkerAttemptAsync(OctoberWorkerProviderAttemptRequest request, CancellationToken cancellationToken = default)
         {
             Requests.Add(request);
-            if (Denied) return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.Denied, null));
+            if (Denied || Requests.Count == DenyRequestNumber)
+                return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.Denied, null));
             var lease = new Lease(request.AttemptId) { SettleFailure = SettleFailure, DisposeFailure = DisposeFailure }; Leases.Add(lease);
             return Task.FromResult(new ProviderAdmission(ProviderAdmissionStatus.Granted, lease));
         }
@@ -1516,9 +3274,210 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         else
         {
             Assert.Equal(OctoberFileWorkerStatus.BudgetExceeded, result.Status); Assert.Null(result.Proposal);
-            Assert.Equal(scenario == "tool-limit" ? OctoberWorkerBudgetFailure.ToolCalls : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
+            Assert.Equal(scenario == "tool-limit" ? OctoberWorkerBudgetFailure.ToolCalls :
+                scenario == "provider-limit" ? OctoberWorkerBudgetFailure.ProviderRounds : (OctoberWorkerBudgetFailure?)null, result.BudgetFailure);
         }
         if (transport.Calls > 1) Assert.True(transport.SawExactRefusal);
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActualSdkWorker_SecondRequestPreservesExactToolLeafReasoningReplayAsync(bool fragmented)
+    {
+        const string reasoning = "SYNTHETIC_TOOL_REASONING_中文😀";
+        string[] fragments = fragmented ? reasoning.EnumerateRunes().Select(rune => rune.ToString()).ToArray() : [reasoning];
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        using (var transport = new FragmentedToolHttp { ExpectedHost = "api.deepseek.com", InitialReasoningFragments = fragments })
+        using (var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected))
+        {
+            var mapped = new StringBuilder();
+            var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+            await foreach (var update in admitted.GetAttemptStreamingResponseAsync([new(ChatRole.User, "controlled replay observation")],
+                new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid())))
+                foreach (var content in update.Contents.OfType<TextReasoningContent>()) mapped.Append(content.Text);
+            Assert.Equal(reasoning, mapped.ToString());
+        }
+        JsonElement? secondRequest = null;
+        using var executionTransport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com", InitialReasoningFragments = fragments,
+            ObserveRequest = (body, call) => { if (call == 1) secondRequest = body.Clone(); }
+        };
+        using var executionClient = await new OctoberWorkerClientFactory(new Secrets(), executionTransport).CreateAsync(selected);
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(executionClient, scope)
+            .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, executionTransport.Calls);
+        Assert.Equal(1, result.SettledToolCalls);
+        Assert.Equal(2, scope.Leases.Count);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.DoesNotContain("SYNTHETIC_TOOL_REASONING_", JsonSerializer.Serialize(result.Proposal));
+        Assert.DoesNotContain("SYNTHETIC_TOOL_REASONING_", JsonSerializer.Serialize(result));
+        Assert.NotNull(secondRequest);
+        var messages = secondRequest.Value.GetProperty("messages").EnumerateArray().ToArray();
+        var assistant = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "assistant" && message.TryGetProperty("tool_calls", out _)));
+        Assert.Equal("controlled-call", Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+        var toolResult = Assert.Single(messages.Where(message => message.GetProperty("role").GetString() == "tool"));
+        Assert.Equal("controlled-call", toolResult.GetProperty("tool_call_id").GetString());
+        Assert.True(assistant.TryGetProperty("reasoning_content", out var replay), "Tool-bearing assistant history must replay reasoning_content.");
+        Assert.Equal(reasoning, replay.GetString());
+        Assert.All(messages.Where(message => message.GetProperty("role").GetString() != "assistant"),
+            message => Assert.False(message.TryGetProperty("reasoning_content", out _)));
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualSdkWorker_ReasoningReplayRetainsPlainAssistantAcrossSourceWindowsAsync()
+    {
+        const string reasoning = "SYNTHETIC_WINDOW_REASONING_中文😀";
+        var requests = new List<JsonElement>();
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com", ContentOnly = true,
+            InitialReasoningFragments = ["SYNTHETIC_WINDOW_", "REASONING_中文😀"],
+            ObserveRequest = (body, _) => requests.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var frame = new Frame("if (enabled) Run();\nreturn;");
+        var request = Request(frame) with { Limits = new(MaximumWindowUtf8Bytes: 20, MaximumContinuationWindows: 2) };
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, []);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(2, requests.Count);
+        var assistant = Assert.Single(requests[1].GetProperty("messages").EnumerateArray()
+            .Where(message => message.GetProperty("role").GetString() == "assistant"));
+        Assert.True(assistant.TryGetProperty("reasoning_content", out var replay));
+        Assert.Equal(reasoning, replay.GetString());
+        Assert.False(assistant.TryGetProperty("tool_calls", out _));
+        Assert.Equal(0, result.SettledToolCalls);
+        Assert.Equal(frame.ByteLength, result.CoveredUtf8Bytes);
+        Assert.DoesNotContain("SYNTHETIC_WINDOW_REASONING_", JsonSerializer.Serialize(result));
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ActualSdkWorker_ReasoningReplayKeepsEveryToolRoundAssociatedWithoutDuplicationAsync()
+    {
+        using var transport = new ReasoningRoundsHttp();
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var scope = new Scope();
+        var result = await new OctoberFileWorkerExecutor(client, scope)
+            .ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(3, transport.Requests.Count);
+        Assert.Equal(2, result.SettledToolCalls);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+        for (int requestIndex = 1; requestIndex <= 2; requestIndex++)
+        {
+            var messages = transport.Requests[requestIndex].GetProperty("messages").EnumerateArray().ToArray();
+            var assistants = messages.Where(message => message.GetProperty("role").GetString() == "assistant").ToArray();
+            var results = messages.Where(message => message.GetProperty("role").GetString() == "tool").ToArray();
+            Assert.Equal(requestIndex, assistants.Length);
+            Assert.Equal(requestIndex, results.Length);
+            for (int prior = 0; prior < requestIndex; prior++)
+            {
+                Assert.True(assistants[prior].TryGetProperty("reasoning_content", out var replay));
+                Assert.Equal(ReasoningRoundsHttp.Reasoning(prior), replay.GetString());
+                string callId = "round-call-" + prior;
+                Assert.Equal(callId, Assert.Single(assistants[prior].GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+                Assert.Equal(callId, results[prior].GetProperty("tool_call_id").GetString());
+            }
+        }
+        Assert.DoesNotContain("SYNTHETIC_ROUND_REASONING", JsonSerializer.Serialize(result));
+    }
+
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("https://api.deepseek.com", true)]
+    [InlineData("https://api.deepseek.com:443/", true)]
+    [InlineData("https://selected.example.test", false)]
+    [InlineData("https://api.deepseek.com/v1", false)]
+    [InlineData("http://api.deepseek.com/", false)]
+    [InlineData("https://api.deepseek.com:444/", false)]
+    [InlineData("https://api.deepseek.com.foreign.invalid/", false)]
+    public async Task ActualSdkFactory_ReasoningHistorySerializesOnlyForExactEndpointWithoutMutatingHistoryAsync(string endpoint, bool replayExpected)
+    {
+        const string reasoning = "SYNTHETIC_DIRECT_HISTORY_中文😀";
+        JsonElement? observed = null;
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = new Uri(endpoint).Host, Calls = 1,
+            ObserveRequest = (body, _) => observed = body.Clone()
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source",
+            new("selected", ApiType.ChatCompletions, endpoint, "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(selected);
+        var admitted = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var reasoningContent = new TextReasoningContent(reasoning);
+        object originalRaw = new();
+        ChatMessage[] history =
+        [
+            new(ChatRole.User, "controlled direct history serialization"),
+            new(ChatRole.Assistant, [reasoningContent, new FunctionCallContent("controlled-call", tool.Name,
+                new Dictionary<string, object?> { ["relativePath"] = "src/Order.cs" })]),
+            new(ChatRole.Tool, [new FunctionResultContent("controlled-call", "contained result")])
+        ];
+        history[1].RawRepresentation = originalRaw;
+        var originalContents = history[1].Contents;
+        var originalCall = history[1].Contents.OfType<FunctionCallContent>().Single();
+        await foreach (var update in admitted.GetAttemptStreamingResponseAsync(history, new ChatOptions { Tools = [tool] }, new Lease(Guid.NewGuid()))) { }
+        Assert.Same(originalRaw, history[1].RawRepresentation);
+        Assert.Same(originalContents, history[1].Contents);
+        Assert.Same(reasoningContent, history[1].Contents.OfType<TextReasoningContent>().Single());
+        Assert.Same(originalCall, history[1].Contents.OfType<FunctionCallContent>().Single());
+        Assert.Equal(reasoning, reasoningContent.Text);
+        Assert.Equal("controlled-call", originalCall.CallId);
+        Assert.NotNull(observed);
+        var assistant = Assert.Single(observed.Value.GetProperty("messages").EnumerateArray()
+            .Where(message => message.GetProperty("role").GetString() == "assistant"));
+        Assert.Equal(replayExpected, assistant.TryGetProperty("reasoning_content", out var replay));
+        if (replayExpected) Assert.Equal(reasoning, replay.GetString());
+        Assert.Equal("controlled-call", Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+    }
+
+    private sealed class ReasoningRoundsHttp : HttpMessageHandler
+    {
+        internal List<JsonElement> Requests { get; } = [];
+        internal static string Reasoning(int round) => "SYNTHETIC_ROUND_REASONING_" + round + "_中文😀";
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Assert.Equal("api.deepseek.com", request.RequestUri!.Host);
+            int round = Requests.Count;
+            Assert.InRange(round, 0, 2);
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+            Requests.Add(body.RootElement.Clone());
+            var chunks = new List<string>();
+            void Append(object delta, string? finish) => chunks.Add(JsonSerializer.Serialize(new
+            {
+                id = "round-" + round, @object = "chat.completion.chunk", created = 1, model = "deepseek-flash",
+                choices = new[] { new { index = 0, delta, finish_reason = finish } }
+            }));
+            if (round < 2)
+            {
+                foreach (var rune in Reasoning(round).EnumerateRunes()) Append(new { role = "assistant", reasoning_content = rune.ToString() }, null);
+                Append(new { role = "assistant", tool_calls = new[] { new { index = 0, id = "round-call-" + round, type = "function", function = new { name = "read_prepared_source", arguments = "{\"relativePath\":\"src/Order.cs\"}" } } } }, "tool_calls");
+            }
+            else Append(new { role = "assistant", content = UnitJson }, "stop");
+            chunks.Add(JsonSerializer.Serialize(new { id = "round-" + round, @object = "chat.completion.chunk", created = 1, model = "deepseek-flash", choices = Array.Empty<object>(), usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } }));
+            return new(HttpStatusCode.OK) { Content = new StringContent(string.Concat(chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
+        }
     }
 
     private sealed class ArgumentCorrectionHttp : HttpMessageHandler
@@ -1928,10 +3887,11 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         int invoked = 0;
         var wireRequests = new List<(JsonElement Body, int Leaf)>();
         var frame = new Frame("if (enabled) Run();\nreturn;");
+        string finalText = finalKind switch { "empty" => string.Empty, "fenced" => "```json\n" + UnitJson + "\n```", "prose" => "controlled final prose", _ => UnitJson };
         using var transport = new FragmentedToolHttp
         {
             InitialTextOverride = finalKind == "empty" ? UnitJson : "controlled initial tool prose",
-            FinalTextOverride = finalKind switch { "empty" => string.Empty, "fenced" => "```json\n" + UnitJson + "\n```", "prose" => "controlled final prose", _ => UnitJson },
+            FinalTextOverride = finalText,
             ObserveRequest = (body, leaf) => wireRequests.Add((body.Clone(), leaf))
         };
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport).CreateAsync(Selected());
@@ -1947,7 +3907,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
             Assert.Equal("json_object", format.GetProperty("type").GetString());
             Assert.True(body.TryGetProperty("max_completion_tokens", out var capValue));
             int cap = capValue.GetInt32();
-            Assert.InRange(cap, 1, (int)Math.Min(8192, request.Limits.MaximumTokensPerRequest));
+            Assert.Equal(request.Limits.MaximumOutputTokensPerRequest, cap);
             Assert.False(body.TryGetProperty("max_tokens", out _));
             bool thinking = body.TryGetProperty("thinking", out _);
             bool reasoningEffort = body.TryGetProperty("reasoning_effort", out _);
@@ -1999,7 +3959,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Null(result.Proposal);
             Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-            Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+            Assert.Equal(ExpectedSyntaxDiagnostic(finalText), result.ParseFailure);
         }
         Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
         Assert.Equal(20, scope.Leases[0].Usage!.InputTokens); Assert.Equal(10, scope.Leases[0].Usage!.OutputTokens);
@@ -2019,7 +3979,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(Request(new Frame("if (enabled) Run();\nreturn;")), []);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status); Assert.Null(result.Proposal);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(category, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        var expectedDiagnostic = depth == 33
+            ? ExpectedSyntaxDiagnostic(payload)
+            : new OctoberWorkerParseDiagnosticSnapshot(category, OctoberWorkerParseSlot.Root, FieldFailure: OctoberWorkerFieldFailure.Unexpected);
+        Assert.Equal(expectedDiagnostic, result.ParseFailure);
         Assert.Equal(1, transport.Calls); Assert.Equal(0, result.SettledToolCalls);
         var lease = Assert.Single(scope.Leases); Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals);
         Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens);
@@ -2148,7 +4111,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
             Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-            Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+            Assert.Equal(ExpectedSyntaxDiagnostic(incomplete), result.ParseFailure);
             Assert.Equal(1, captures); Assert.True(captured == incomplete);
             Assert.Equal(OctoberWorkerCaptureStatus.Captured, result.CaptureStatus);
         }
@@ -2273,6 +4236,95 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         finally { await lease.DisposeAsync(); }
     }
 
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false, 8192)]
+    [InlineData(true, 8192)]
+    [InlineData(true, 393216)]
+    public async Task MaxOutputCap_DeepSeekLowReasoningActualWorkerWirePreservesCapAndReplayAcrossToolRoundsAsync(bool enabled, int outputCap)
+    {
+        var bodies = new List<JsonElement>();
+        using var transport = new FragmentedToolHttp
+        {
+            ExpectedHost = "api.deepseek.com", InitialReasoningFragments = ["controlled-", "reasoning"],
+            ObserveRequest = (body, _) => bodies.Add(body.Clone())
+        };
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
+            "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport, deepSeekWorkerReasoningEffort: enabled ? "low" : null).CreateAsync(selected);
+        var tool = AIFunctionFactory.Create((string relativePath) => "contained result", "read_prepared_source");
+        var scope = new Scope();
+        var request = Request(new Frame("if (enabled) Run();\nreturn;"));
+        request = request with { Limits = request.Limits with { MaximumTokensPerRequest = 32768L + outputCap, MaximumOutputTokensPerRequest = outputCap } };
+        var result = await new OctoberFileWorkerExecutor(client, scope).ExecuteAsync(request, [tool]);
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status); Assert.Equal(2, bodies.Count); Assert.Equal(1, result.SettledToolCalls);
+        foreach (var body in bodies)
+        {
+            Assert.Equal(outputCap, body.GetProperty("max_tokens").GetInt32());
+            Assert.False(body.TryGetProperty("max_completion_tokens", out _)); Assert.False(body.TryGetProperty("thinking", out _));
+            Assert.False(body.TryGetProperty("stop", out _));
+            Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
+            Assert.Equal(enabled, body.TryGetProperty("reasoning_effort", out var effort));
+            if (enabled) Assert.Equal("low", effort.GetString());
+        }
+        var assistant = Assert.Single(bodies[1].GetProperty("messages").EnumerateArray().Where(message => message.GetProperty("role").GetString() == "assistant"));
+        Assert.Equal("controlled-reasoning", assistant.GetProperty("reasoning_content").GetString());
+        Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Settlements); Assert.Equal(1, lease.Disposals); });
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DeepSeekLowReasoning_ClonesCallerOptionsAndLeavesBusinessNonstreamingUnchangedAsync()
+    {
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
+            "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var transport = new ControlledHttp();
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport, deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
+        var originalReasoning = new ReasoningOptions { Effort = ReasoningEffort.High };
+        var options = new ChatOptions { MaxOutputTokens = 8192, Reasoning = originalReasoning };
+        ChatMessage[] history = [new(ChatRole.User, "controlled input")];
+        string before = JsonSerializer.Serialize(history);
+        var port = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
+        await foreach (var update in port.GetAttemptStreamingResponseAsync(history, options, new Lease(Guid.NewGuid()))) { }
+        Assert.Same(originalReasoning, options.Reasoning); Assert.Equal(ReasoningEffort.High, options.Reasoning.Effort);
+        Assert.Equal(8192, options.MaxOutputTokens); Assert.Equal(before, JsonSerializer.Serialize(history));
+        using (var body = JsonDocument.Parse(Assert.Single(transport.Requests).Body))
+        {
+            Assert.Equal("low", body.RootElement.GetProperty("reasoning_effort").GetString());
+            Assert.Equal(8192, body.RootElement.GetProperty("max_tokens").GetInt32());
+        }
+        using var businessTransport = new ControlledHttp { NonStreaming = true };
+        using var business = await new OctoberWorkerClientFactory(new Secrets(), businessTransport, deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
+        var businessPort = Assert.IsAssignableFrom<Vulgata.Agents.OctoberBusiness.IOctoberBusinessAttemptClient>(business);
+        await using var businessLease = new CapDispatchLease(new Lease(Guid.NewGuid()));
+        await businessPort.GetAttemptResponseAsync(history, new ChatOptions { MaxOutputTokens = 8192 }, businessLease, _ => { });
+        using var businessBody = JsonDocument.Parse(Assert.Single(businessTransport.Requests).Body);
+        Assert.False(businessBody.RootElement.TryGetProperty("reasoning_effort", out _));
+        Assert.False(businessBody.RootElement.TryGetProperty("thinking", out _));
+        Assert.Equal(8192, businessBody.RootElement.GetProperty("max_tokens").GetInt32());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("https://selected.example.test", "low")]
+    [InlineData("https://api.deepseek.com/v1", "low")]
+    [InlineData("http://api.deepseek.com", "low")]
+    [InlineData("https://api.deepseek.com:444", "low")]
+    [InlineData("https://api.deepseek.com.foreign.invalid", "low")]
+    [InlineData("https://api.deepseek.com", "LOW")]
+    [InlineData("https://api.deepseek.com", "high")]
+    [InlineData("https://api.deepseek.com", "")]
+    public async Task DeepSeekLowReasoning_InvalidSelectionRefusesBeforeDecryptOrTransportAsync(string endpoint, string value)
+    {
+        var secrets = new Secrets(); using var transport = new ControlledHttp();
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
+            endpoint, "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await new OctoberWorkerClientFactory(secrets, transport, deepSeekWorkerReasoningEffort: value).CreateAsync(selected));
+        Assert.Empty(secrets.Decryptions); Assert.Empty(transport.Requests);
+    }
+
     private sealed class CapDispatchLease(Lease inner) : IOctoberProviderAttemptLease, IOctoberWorkerDispatchObserver
     {
         internal int Dispatches;
@@ -2334,7 +4386,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(100, lease.Usage!.InputTokens); Assert.Equal(50, lease.Usage.OutputTokens); Assert.Null(result.CaptureStatus);
         if (scenario is "disabled" or "success") { Assert.Null(result.HttpObservation); return; }
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
-        Assert.Equal(new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax, OctoberWorkerParseSlot.Root), result.ParseFailure);
+        Assert.Equal(ExpectedSyntaxDiagnostic(terminal), result.ParseFailure);
         var facts = Assert.IsType<OctoberWorkerHttpObservationSnapshot>(result.HttpObservation);
         if (scenario is "event-overflow" or "event-overflow-eof" or "wire-overflow" or "text-overflow")
         {
@@ -2509,8 +4561,16 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     {
         internal string ExpectedHost = "selected.example.test";
         internal bool ContentOnly;
+        internal bool EnableCorrectionResponse;
+        internal bool ContinueBeforeFinalCandidate;
+        internal int AdditionalResponseCount;
         internal string? InitialTextOverride;
+        internal string[]? InitialReasoningFragments;
         internal string? FinalTextOverride;
+        internal string? FinalReasoningOverride;
+        internal string? CorrectionTextOverride;
+        internal string[]? CorrectionTextSequence;
+        internal bool CorrectionReturnsToolCall;
         internal Action<JsonElement, int>? ObserveRequest;
         internal bool MissingRequiredArgument;
         internal bool FailSecondRequest;
@@ -2521,7 +4581,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         {
             Assert.Equal(ExpectedHost, request.RequestUri!.Host);
             int call = Calls++;
-            Assert.InRange(call, 0, 1);
+            int finalCandidateCall = ContinueBeforeFinalCandidate ? 2 : 1;
+            Assert.InRange(call, 0, EnableCorrectionResponse
+                ? finalCandidateCall + (CorrectionTextSequence?.Length ?? 1) + AdditionalResponseCount
+                : 1);
             if (ObserveRequest is not null)
             {
                 using var requestBody = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
@@ -2538,10 +4601,33 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                     """{"id":"controlled-tool","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[],"usage":{"prompt_tokens":20,"completion_tokens":10,"total_tokens":30}}""",
                 ];
             }
-            else
+            else if (call == 1 && ContinueBeforeFinalCandidate)
+            {
+                chunks = [JsonSerializer.Serialize(new { id = "controlled-window", @object = "chat.completion.chunk", created = 1, model = "selected-model",
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = "continue" }, finish_reason = "stop" } },
+                    usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } })];
+            }
+            else if (call == finalCandidateCall)
             {
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-terminal", @object = "chat.completion.chunk", created = 1, model = "selected-model",
-                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = FinalTextOverride ?? UnitJson }, finish_reason = "stop" } },
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", reasoning_content = FinalReasoningOverride, content = FinalTextOverride ?? UnitJson }, finish_reason = "stop" } },
+                    usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
+            }
+            else if (call == finalCandidateCall + 1 && CorrectionReturnsToolCall)
+            {
+                chunks = [
+                    """{"id":"controlled-correction","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"unexpected-correction-tool","type":"function","function":{"name":"read_prepared_source","arguments":"{\"relativePath\":\"src/Order.cs\"}"}}]},"finish_reason":null}]}""",
+                    """{"id":"controlled-correction","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}""",
+                    """{"id":"controlled-correction","object":"chat.completion.chunk","created":1,"model":"selected-model","choices":[],"usage":{"prompt_tokens":30,"completion_tokens":20,"total_tokens":50}}""",
+                ];
+            }
+            else
+            {
+                string correctionText = CorrectionTextSequence is { } sequence && call - finalCandidateCall - 1 < sequence.Length
+                    ? sequence[call - finalCandidateCall - 1]
+                    : CorrectionTextOverride ?? UnitJson;
+                chunks = [JsonSerializer.Serialize(new { id = "controlled-correction", @object = "chat.completion.chunk", created = 1, model = "selected-model",
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", content = correctionText }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 30, completion_tokens = 20, total_tokens = 50 } })];
             }
             if (call == 0 && ContentOnly)
@@ -2549,6 +4635,14 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                 chunks = [JsonSerializer.Serialize(new { id = "controlled-window", @object = "chat.completion.chunk", created = 1, model = "selected-model",
                     choices = new[] { new { index = 0, delta = new { role = "assistant", content = "continue" }, finish_reason = "stop" } },
                     usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } })];
+            }
+            if (call == 0 && InitialReasoningFragments is not null)
+            {
+                chunks = [.. InitialReasoningFragments.Select(part => JsonSerializer.Serialize(new
+                {
+                    id = "controlled-tool", @object = "chat.completion.chunk", created = 1, model = "selected-model",
+                    choices = new[] { new { index = 0, delta = new { role = "assistant", reasoning_content = part }, finish_reason = (string?)null } }
+                })), .. chunks];
             }
             if (call == 0 && InitialTextOverride is not null)
             {
@@ -2587,8 +4681,9 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                     chunks[index] = fragment.ToJsonString();
                 }
             }
+            string responseBody = string.Join("", chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n";
             return new HttpResponseMessage(HttpStatusCode.OK)
-            { Content = new StringContent(string.Join("", chunks.Select(chunk => "data: " + chunk + "\n\n")) + "data: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
+            { Content = new StringContent(responseBody, Encoding.UTF8, "text/event-stream") };
         }
     }
     private sealed class ControlledHttp : HttpMessageHandler

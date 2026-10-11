@@ -74,7 +74,7 @@ internal sealed class OctoberKnowledgePublicationCommitter
                 context.Database.AutoSavepointsEnabled = false;
                 if (context.Database.IsNpgsql())
                 {
-                    if (kind == OperationKind.FreezeCorpus)
+                    if (kind is OperationKind.FreezeCorpus or OperationKind.BeginBusinessFromCl or OperationKind.CompleteBusinessFromCl)
                         await context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM october.\"OctoberBatches\" WHERE \"BatchId\" = {binding.BatchId} FOR UPDATE", ct);
                     else
                         await context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM october.\"OctoberBatches\" WHERE \"BatchId\" = {binding.BatchId} FOR SHARE", ct);

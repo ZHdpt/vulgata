@@ -253,7 +253,7 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
         catch { _ = ObserveAsync(checking); throw; }
     }
 
-    private static async Task PreflightAsync(OctoberDbContext context, CorpusHandle handle, OctoberKnowledgeStoredReadBudget budget, CancellationToken ct)
+    internal static async Task PreflightAsync(OctoberDbContext context, CorpusHandle handle, OctoberKnowledgeStoredReadBudget budget, CancellationToken ct)
     {
         Guid batch = handle.Binding.BatchId;
         Guid corpusId = handle.CorpusId;

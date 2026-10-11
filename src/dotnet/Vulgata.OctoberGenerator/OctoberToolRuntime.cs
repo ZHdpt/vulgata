@@ -34,12 +34,23 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     private ICodeGraphWorkerToolSession? _session;
     private IPreparedJavaNavigationContext? _java;
     private int _sessionCalls;
-    private int _sessions;
+    private OctoberCodeGraphSessionBudget _sessionBudget;
+    private bool _sessionBudgetBound;
     private bool _faulted;
     private bool _cleanupFailed;
     private bool _closed;
     private Task? _disposal;
     private PreparedSourceOutcome? _sourceFailure;
+    private OctoberCodeGraphOwner? _graphOwner;
+
+    internal void UseGraphOwner(OctoberCodeGraphOwner owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        if (_closed || _graphOwner is not null || _connection is not null || _session is not null || _java is not null ||
+            owner.RepositoryId != RepositoryId || owner.RootBindingIdentity != _approval.RootBindingIdentity)
+            throw new InvalidOperationException("The original CodeGraph owner cannot be attached.");
+        _graphOwner = owner;
+    }
     private readonly AsyncLocal<ToolObservationScope?> _observation = new();
 
     public OctoberToolRuntime(PreparedSourceApproval approval, PreparedSourceBinding sourceBinding,
@@ -173,6 +184,7 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             remainingRunLifetime > TimeSpan.FromMinutes(30))
             throw new ArgumentOutOfRangeException(nameof(remainingRunLifetime));
         RepositoryId = approval.RepositoryId;
+        _sessionBudget = new(RepositoryId);
         _approval = approval;
         _clock = clock;
         _started = clock.GetTimestamp();
@@ -182,6 +194,14 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     }
 
     public Guid RepositoryId { get; }
+    internal void UseSessionBudget(OctoberCodeGraphSessionBudget budget)
+    {
+        if (_closed || _sessionBudgetBound || _connection is not null || _session is not null ||
+            _java is not null || _sessionBudget.Used != 0 || budget.RepositoryId != RepositoryId)
+            throw new InvalidOperationException("Native session accounting must be bound before runtime use.");
+        _sessionBudget = budget;
+        _sessionBudgetBound = true;
+    }
     internal bool HasPreparedBinding(Guid repositoryId, string rootBindingIdentity, string preparedVersion)
         => repositoryId == _approval.RepositoryId &&
             string.Equals(rootBindingIdentity, _approval.RootBindingIdentity, StringComparison.Ordinal) &&
@@ -229,7 +249,17 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
         => RunAsync(async token =>
         {
             await EnsurePreparedAsync(token);
-            return await EnsureSessionAsync(token);
+            CodeGraphToolReadiness readiness = await EnsureSessionAsync(token);
+            // New-file tool registration also discovers the cached native session.
+            // Renew its bounded lifetime just as ExploreAsync does, never before
+            // old-session settlement or outside the original runtime lifetime.
+            if (readiness.Status == CodeGraphToolReadinessStatus.Expired && Available)
+            {
+                await CloseSessionAsync();
+                token.ThrowIfCancellationRequested();
+                if (Available) readiness = await EnsureSessionAsync(token);
+            }
+            return readiness;
         }, cancelled => new CodeGraphToolReadiness(cancelled ? CodeGraphToolReadinessStatus.Cancelled : CodeGraphToolReadinessStatus.Unavailable,
             RepositoryId, CodeGraphToolStage.Preparation, cancelled ? CodeGraphToolIssueCode.Cancelled : CodeGraphToolIssueCode.SourceUnprepared), cancellationToken);
 
@@ -543,7 +573,9 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     private async Task EnsurePreparedAsync(CancellationToken token)
     {
         if (_connection is not null) return;
-        _connection = await _dependencies.PrepareCodeGraph(Remaining, token);
+        _connection = _graphOwner is null
+            ? await _dependencies.PrepareCodeGraph(Remaining, token)
+            : await _graphOwner.GetOrCreateAsync(_dependencies.PrepareCodeGraph, token);
         if (_connection.RepositoryId != RepositoryId || !Available)
             throw new InvalidOperationException("Prepared CodeGraph binding is unavailable.");
     }
@@ -555,9 +587,8 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     {
         if (_session is null)
         {
-            if (_sessions >= 21) throw new InvalidOperationException("CodeGraph session replacements are exhausted.");
+            if (!_sessionBudget.TryReserve()) throw new InvalidOperationException("CodeGraph session replacements are exhausted.");
             _session = _dependencies.OpenCodeGraph(_connection!, OpenSourceAsync);
-            _sessions++;
             _sessionCalls = 0;
         }
         return await _session.DiscoverAsync(token);
@@ -608,7 +639,9 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             if (_jdtLeases.Any(lease => lease.Lifetime != PreparedToolWorkspaceLifetime.Disposed))
                 _cleanupFailed = true;
             if (_cleanupFailed) throw new InvalidOperationException("Tool cleanup remains unconfirmed.");
-            if (_connection is not null) await _connection.DisposeAsync();
+            // Borrowed state survives approval replacement; this runtime has
+            // already settled its native session and JDT resources above.
+            if (_connection is not null && _graphOwner is null) await _connection.DisposeAsync();
         }
         finally { _gate.Release(); }
     }

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using FluentValidation;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.OctoberGenerator;
 
@@ -13,13 +14,20 @@ public sealed record OctoberScanSourceRule(
 public sealed record OctoberScanPolicy
 {
     public string? OutputStage { get; init; }
+    /// <summary>Explicit BL-only execution over an exact, already published CL corpus.</summary>
+    public Guid? ExistingClPublicationId { get; init; }
     public int WorkerCap { get; init; } = 1;
     public int RunDeadlineSeconds { get; init; } = 1800;
     public int FileDeadlineSeconds { get; init; } = 600;
     public int GracefulDrainSeconds { get; init; } = 30;
     public int MaximumContinuationWindows { get; init; } = 4;
     public int MaximumModelRequestsPerFile { get; init; } = 8;
+    public int AdvisoryToolCallsPerFile { get; init; } = 32;
+    public int MaximumToolCallsPerFile { get; init; } = 48;
     public int MaximumTransientRetries { get; init; } = 2;
+    /// <summary>Retained configuration compatibility; JSON corrections always request json_object.</summary>
+    public bool UseTextForJsonCorrection { get; init; }
+    public bool HardRetryMode { get; init; }
     public int MaximumProviderRequests { get; init; } = 64;
     public int MaximumRequestsPerMinute { get; init; } = 60;
     public long? MaximumTotalTokens { get; init; }
@@ -31,8 +39,10 @@ public sealed class OctoberScanPolicyValidator : AbstractValidator<OctoberScanPo
     public OctoberScanPolicyValidator()
     {
         RuleFor(policy => policy.OutputStage).Must(stage => stage is "cl-only" or "cl-and-bl");
+        RuleFor(policy => policy).Must(policy => policy.ExistingClPublicationId is null ||
+            policy.ExistingClPublicationId != Guid.Empty && policy.OutputStage == "cl-and-bl");
         RuleFor(policy => policy.WorkerCap).InclusiveBetween(1, 64);
-        RuleFor(policy => policy.RunDeadlineSeconds).InclusiveBetween(1, 1800);
+        RuleFor(policy => policy.RunDeadlineSeconds).InclusiveBetween(1, ExecutionOwnerLifetime.MaximumSeconds);
         RuleFor(policy => policy.FileDeadlineSeconds).GreaterThan(0)
             .LessThanOrEqualTo(policy => policy.RunDeadlineSeconds);
         RuleFor(policy => policy.GracefulDrainSeconds).GreaterThan(0)
@@ -41,7 +51,12 @@ public sealed class OctoberScanPolicyValidator : AbstractValidator<OctoberScanPo
             .LessThanOrEqualTo(policy => policy.MaximumModelRequestsPerFile);
         RuleFor(policy => policy.MaximumModelRequestsPerFile).GreaterThan(0)
             .LessThanOrEqualTo(policy => policy.MaximumProviderRequests);
+        RuleFor(policy => policy.MaximumToolCallsPerFile).InclusiveBetween(2, 1000);
+        RuleFor(policy => policy.AdvisoryToolCallsPerFile).GreaterThan(0)
+            .LessThan(policy => policy.MaximumToolCallsPerFile);
         RuleFor(policy => policy.MaximumTransientRetries).InclusiveBetween(0, 2);
+        When(policy => policy.HardRetryMode, () =>
+            RuleFor(policy => policy.MaximumTransientRetries).Equal(0));
         RuleFor(policy => policy.MaximumProviderRequests).InclusiveBetween(1, 1_000_000);
         RuleFor(policy => policy.MaximumRequestsPerMinute).InclusiveBetween(1, 1_000_000);
         RuleFor(policy => policy.MaximumTotalTokens).NotNull().GreaterThan(0);

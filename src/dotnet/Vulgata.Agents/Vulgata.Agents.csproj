@@ -37,6 +37,8 @@
                       LogicalName="Vulgata.Agents.Prompts.OctoberChatIT.txt" />
     <EmbeddedResource Include="Prompts\OctoberFileWorker.md"
                       LogicalName="Vulgata.Agents.Prompts.OctoberFileWorker.md" />
+    <EmbeddedResource Include="Prompts\OctoberFileWorkerCorrection.md"
+                        LogicalName="Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md" />
     <EmbeddedResource Include="Prompts\OctoberBusiness\Resolution.md"
                       LogicalName="Vulgata.Agents.Prompts.OctoberBusiness.Resolution.md" />
     <EmbeddedResource Include="Prompts\OctoberBusiness\Synthesis.md"

@@ -64,7 +64,115 @@ Run only the approved suites/resources. Native/provider extra consent flags rema
 - **Execution scope / F2 probes**: Cap=1 with two concurrent inquiries, then inquiry+synthesis: at most one active provider attempt, queued child progresses after settled release, no outer orchestration permit/deadlock. Hard stop with one active/one queued cancels active I/O and bars queued/new/late/retry dispatch; late proposal cannot newly publish. Test grant-to-send cancellation, host rate delay/denial (no send before admission, original deadline retained), exhausted budget, missing scope, retry reacquisition without allowance reset, exact-once actual/unknown accounting and conservative unknown reservation. Unconfirmed cancellation/disposal must stop dispatch without early permit release. These initial controlled probes need the shared contract/fixture, not completed production consumers or paid calls; real claims still require later authorized runtime checks.
 - **Fresh batch**: After abrupt interruption, do not restart/adopt sessions/index automatically. Preserve accepted history and source. Use explicitly authorized fresh prepared target/root handling; preexisting `.codegraph` is a blocker for operator resolution, not an instruction for automatic delete or source copy.
 
+The run policy accepts `runDeadlineSeconds` from 1 through 86400 (24 hours),
+default 1800. For an explicitly approved four-hour run use 14400. This changes
+only the run-owner lifetime: existing file/tool/provider budgets, ten-minute
+source grants and live authorization checks still apply. Generate derives its
+operator-session expiry from max(one hour, configured run duration); it does not
+renew an expired session. CL publication remains capped at 30 minutes within the
+remaining run. When using `eng/watch-october-batch.ps1`, pass
+`-RunDeadlineSeconds` from that same policy instead of `-TimeoutSeconds`; its
+60-second startup/cleanup allowance does not extend the application deadline.
+See [review and verification](configurable-run-deadline.md).
+
+### BL from an existing complete CL publication
+
+BL generation is handed to the Business spec. Start with the
+[CL/BL contracts, boundaries and LLM troubleshooting handoff](handoff-business-generation.md).
+
+Use a fresh authenticated Generate invocation with an explicit Business policy:
+
+```json
+{
+  "outputStage": "cl-and-bl",
+  "existingClPublicationId": "fff8ddfc-d8ae-480c-aadd-286f03c8f4d9"
+}
+```
+
+This is a policy fragment: retain the explicit finite budgets and repository
+scope rules in the complete policy file. Bind the exact existing target,
+database, batch and selection, and supply the existing protected provider and
+Identity configuration. `October__Mode=generate` and
+`October__ScanPolicyFile=<absolute new policy file>` select this route.
+`October__BusinessSettingsFile` must contain explicit roots (Repository ID,
+relative path, semantic selector and SelectedCodeUnit kind), planning limits and
+maximum attempt tokens; alternatively use the existing bounded operator root
+selection mechanism. A genuinely verified Identity reader binding is mandatory.
+An old paid-run wrapper's single-use marker is not permission to invoke it again;
+prepare a separately authorized BL invocation/log boundary with the same protected
+bindings. Do not run prepare or create another CL batch for this route.
+
+The selector is valid only with cl-and-bl. It reuses the owner-validated exact CL
+corpus and bypasses CL/source-tool execution and freezing. New BL publications
+have their own identities; the original publication and all CL versions remain
+unchanged. A fresh attempt can start after the previous attempt's owner confirms
+settlement and writes its terminal receipt. Unconfirmed commits/transports or a
+lost original process block; there is no automatic crash takeover or retry.
+Reader selection is not automatically changed. See
+[scope, safety and evidence](business-from-existing-cl.md).
+
 ## Handoff
+
+### Bounded final-format recovery
+
+Normal Generate permits three consecutive regenerations after an unparseable or
+structurally invalid final JSON proposal (four candidates total), in the same file/window and conversation.
+The model receives safe parser feedback and the remaining correction count. This
+does not restart investigation or reset the original budgets. A transient failure
+after correction begins cannot restart the Worker to replenish this allowance.
+
+For the qualified DeepSeek endpoint, final-format retries now use these stages:
+
+| Regeneration | Thinking | Request context |
+| --- | --- | --- |
+| 1 | Configured behavior (low in the pilot) | Existing history and safe feedback |
+| 2 | Explicitly disabled | Existing history and newest safe feedback |
+| 3 | Explicitly disabled | Preserved investigation plus newest safe feedback; rejected final proposals and obsolete correction turns removed |
+
+Compaction retains every original source window/advisory input, system schema and
+settled tool exchange, including protocol-required reasoning. It is deterministic,
+uses no summarization call, and does not reset cumulative budgets. Thinking is a
+per-request override; the next file on the same client uses configured behavior
+again after either success or failure. Other providers and Business calls are
+unchanged. See [staged correction evidence](staged-correction-verification.md).
+
+`hardRetryMode` defaults to `false` in the Generate scan-policy JSON. To enable
+the bounded experiment, set `hardRetryMode: true` and `maximumTransientRetries: 0`.
+Keep the explicit `outputStage`, source selection and original budget settings.
+JSON proposals and corrections request `json_object`. The former
+`useTextForJsonCorrection` experiment setting is accepted for configuration
+compatibility but no longer selects text, even when true. Ordinary non-JSON
+conversations are unaffected.
+
+Legacy hard mode retains one ordinary correction plus at most two additional
+corrections per file, with sixteen additional corrections across the original run;
+it never stacks extra corrections on top of the normal three. All original
+admission, deadline, source, authorization and acceptance guards still apply, so
+available correction slots do not guarantee another request. Tools remain disabled
+for corrections. It does not retry semantic/evidence failures, unknown application
+exceptions, uncertain writes or an entire failed run. Exhaustion is failure.
+
+Generate writes bounded diagnostic events to `worker-json-corrections.jsonl` in
+the configured owned log directory after each Worker settles. Records correlate
+batch/run/workstream/admission/attempt IDs, hashed file/provider identities, retry
+ordinal, source-window ordinal, elapsed Worker time, provider-round count, response
+byte count, normalized finish reason, typed parser diagnostics and final Worker outcome. They contain no raw
+source, model response, reasoning, prompts or secrets. `Completed` here means the
+proposal passed validation, not acceptance or publication. Logging failure adds
+`json-correction-log-incomplete` to the report and never causes another request.
+Events buffered in memory can be lost on process failure before settlement.
+`RetryRequested` means a correction was scheduled, not that an HTTP request was
+sent; admission may still refuse it. The shared log uses an exclusive, fail-fast
+append: concurrent writer contention produces the incomplete-log warning rather
+than blocking execution or replaying provider work.
+The staged strategy and removed-message count are logged as bounded diagnostics;
+no compacted text or rejected proposal is written to this log.
+
+The optional `hardRetry` report contains `reservedAttempts` and
+`providerCallsStarted`. The latter counts entry into the underlying client, not
+confirmed HTTP transmission; a reservation can be consumed before a guard refuses
+dispatch. These counters do not establish successful Knowledge. Require complete
+coverage and confirmed publication, and qualify ordinary-reader access separately.
 
 Record exact code/C0/schema versions, supported host/JDK/tool profile, non-secret configuration paths, prepared-origin identity, source selection, batch/publication binding, start/select/Generate/stop/fresh-batch instructions, actual limits/timings/usage and known gaps. Keep required keys/data protected. Distinguish controlled/native/PostgreSQL/real provider/usefulness observations and unresolved blockers.
 

@@ -19,6 +19,304 @@ namespace Vulgata.Tests.OctoberScan;
 public sealed class OctoberScanBusinessFinalizationTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BusinessFromClStore_BeginsOnlyAgainstAnExactPublishedClPublicationAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var clResult = await host.Runner.ExecuteAsync(host.Execution);
+        Assert.Equal(0, clResult.Report!.ExitCode);
+        var publication = Assert.IsType<PublicationBinding>(clResult.Report.Publication);
+        Assert.NotEmpty(clResult.Report.Documents);
+        ExistingClCounts before = await CaptureExistingClCountsAsync(host);
+
+        var unsigned = new BusinessFromClRequest(publication, host.Execution.Session.SubjectId, Guid.NewGuid(), string.Empty);
+        var request = unsigned with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeBeginDigest(unsigned) };
+        var authority = new ControlledBusinessFromClAuthority();
+        var settlement = new ControlledBusinessFromClSettlementAuthority();
+        var store = new OctoberBusinessFromClStore(host.Database.Factory, authority, host.Database.Guard,
+            host.Database.Guard, settlement, host.Database.Log);
+
+        var result = await store.BeginAsync(request);
+
+        Assert.Equal(KnowledgeWriteStatus.Committed, result.Status);
+        Assert.Equal(OctoberBusinessFromClPolicy.BeginOperation(request), result.Operation);
+        Assert.NotNull(result.Admission);
+        var snapshot = Assert.IsType<BusinessFromClSnapshot>(result.Snapshot);
+        Assert.Equal(publication, snapshot.Publication);
+        Assert.Single(snapshot.AcceptedFiles);
+        Assert.NotEmpty(snapshot.AcceptedFiles[0].Documents);
+        Assert.NotNull(snapshot.Corpus);
+        Assert.True(authority.Calls >= 1);
+        Assert.All(authority.ContributorChecks, checkedContributors => Assert.False(checkedContributors.IsDefault));
+        Assert.Equal(before, await CaptureExistingClCountsAsync(host));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BusinessFromClStore_UnacknowledgedBeginBlocksConcurrentFreshRunUntilSettledAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var cl = await host.Runner.ExecuteAsync(host.Execution);
+        var publication = Assert.IsType<PublicationBinding>(cl.Report!.Publication);
+        var beginGuard = new HeldCommitAcknowledgementGuard(host.Database.Guard);
+        var store = CreateBusinessFromClStore(host, new ControlledBusinessFromClAuthority(),
+            new ControlledBusinessFromClSettlementAuthority(), beginGuard);
+        var firstRequest = BusinessFromClRequestFor(publication, host.Execution.Session.SubjectId);
+
+        Task<BusinessFromClResult> firstPending = store.BeginAsync(firstRequest);
+        await beginGuard.CommitSettled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var competing = await store.BeginAsync(BusinessFromClRequestFor(publication, host.Execution.Session.SubjectId));
+
+        Assert.NotEqual(KnowledgeWriteStatus.Committed, competing.Status);
+        Assert.Null(competing.Admission);
+        beginGuard.ReleaseAcknowledgement.TrySetResult();
+        var first = await firstPending.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(KnowledgeWriteStatus.Committed, first.Status);
+        Assert.NotNull(first.Admission);
+        Assert.Equal(1, beginGuard.Submissions);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BusinessFromClStore_OnlyOriginalCapabilityAndSettledCompletionReleaseNextAttemptAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var cl = await host.Runner.ExecuteAsync(host.Execution);
+        var publication = Assert.IsType<PublicationBinding>(cl.Report!.Publication);
+        ExistingClCounts before = await CaptureExistingClCountsAsync(host);
+        var authority = new ControlledBusinessFromClAuthority();
+        var settlement = new ControlledBusinessFromClSettlementAuthority();
+        var store = CreateBusinessFromClStore(host, authority, settlement);
+        var request = BusinessFromClRequestFor(publication, host.Execution.Session.SubjectId);
+        var begin = await store.BeginAsync(request);
+        Assert.Equal(KnowledgeWriteStatus.Committed, begin.Status);
+        var admission = Assert.IsAssignableFrom<BusinessFromClAdmission>(begin.Admission);
+        var completionBase = new BusinessFromClCompletionRequest(request, string.Empty);
+        var completion = completionBase with
+        { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeCompletionDigest(completionBase) };
+
+        var freshStore = CreateBusinessFromClStore(host, authority, settlement);
+        var freshIssuerAttempt = await freshStore.CompleteAsync(completion, admission);
+        Assert.Equal(KnowledgeWriteStatus.Denied, freshIssuerAttempt.Status);
+        var forgedAttempt = await store.CompleteAsync(completion, new ForgedBusinessFromClAdmission());
+        Assert.Equal(KnowledgeWriteStatus.Denied, forgedAttempt.Status);
+        Assert.Equal(0, await CountBusinessFromClCompletionsAsync(host));
+
+        settlement.Status = BusinessFromClSettlement.Unsettled;
+        var unsettled = await store.CompleteAsync(completion, admission);
+        Assert.Equal(KnowledgeWriteStatus.CommitIndeterminate, unsettled.Status);
+        Assert.Equal(0, await CountBusinessFromClCompletionsAsync(host));
+        var blocked = await store.BeginAsync(BusinessFromClRequestFor(publication, host.Execution.Session.SubjectId));
+        Assert.NotEqual(KnowledgeWriteStatus.Committed, blocked.Status);
+        Assert.Null(blocked.Admission);
+
+        // Cleanup remains possible after the user loses disclosure authority, but returns no corpus metadata.
+        authority.Status = DisclosureStatus.Denied;
+        settlement.Status = BusinessFromClSettlement.Settled;
+        var closed = await store.CompleteAsync(completion, admission);
+        Assert.Equal(KnowledgeWriteStatus.Committed, closed.Status);
+        Assert.Null(closed.AcceptedFile);
+        Assert.Null(closed.Corpus);
+        Assert.Null(closed.Publication);
+        var undisclosedReplay = await store.LookupAsync(request);
+        Assert.Null(undisclosedReplay.Snapshot);
+
+        authority.Status = DisclosureStatus.Allowed;
+        var next = await store.BeginAsync(BusinessFromClRequestFor(publication, host.Execution.Session.SubjectId));
+        Assert.Equal(KnowledgeWriteStatus.Committed, next.Status);
+        Assert.NotNull(next.Admission);
+        Assert.Equal(1, await CountBusinessFromClCompletionsAsync(host));
+        Assert.Equal(before, await CaptureExistingClCountsAsync(host));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BusinessFromClStore_NonExactPublicationCannotIssueAdmissionAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var cl = await host.Runner.ExecuteAsync(host.Execution);
+        var publication = Assert.IsType<PublicationBinding>(cl.Report!.Publication);
+        var wrong = publication with { PublicationId = Guid.NewGuid() };
+        var store = CreateBusinessFromClStore(host, new ControlledBusinessFromClAuthority(),
+            new ControlledBusinessFromClSettlementAuthority());
+
+        var result = await store.BeginAsync(BusinessFromClRequestFor(wrong, host.Execution.Session.SubjectId));
+
+        Assert.NotEqual(KnowledgeWriteStatus.Committed, result.Status);
+        Assert.Null(result.Snapshot);
+        Assert.Null(result.Admission);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExistingClBusiness_FailedAttemptPreservesOriginalClAndFreshSettledAttemptCanSucceedAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var original = await host.Runner.ExecuteAsync(host.Execution);
+        Assert.Equal(0, original.Report!.ExitCode);
+        var originalPublication = Assert.IsType<PublicationBinding>(original.Report.Publication);
+        DocumentHandle[] originalHandles = original.Report.Documents.OrderBy(handle => handle.LogicalDocumentId).ToArray();
+        ExistingClCounts before = await CaptureExistingClCountsAsync(host);
+        var originalMembers = await CapturePublicationMembersAsync(host, originalPublication.PublicationId);
+        var originalContent = await CaptureOriginalClContentAsync(host, originalPublication, originalHandles);
+        int originalSourceOpens = host.SourceOpens;
+        int originalAdmissions = host.BeginCalls;
+        int originalFreezes = host.FreezeCalls;
+
+        using (var failedTransport = new NaturalTransport { InvalidSynthesisProposal = true })
+        {
+            var failedExecution = ExistingClExecution(host.Execution, originalPublication);
+            await using var failedRunner = new OctoberGenerateRunner(ExistingClDependencies(host, failedExecution, failedTransport));
+            var failed = await failedRunner.ExecuteAsync(failedExecution);
+
+            Assert.NotEqual(0, failed.Report!.ExitCode);
+            Assert.Equal(0, failedTransport.WorkerRequests);
+            Assert.Equal(1, failedTransport.BusinessRequests);
+        }
+
+        Assert.Equal(originalSourceOpens, host.SourceOpens);
+        Assert.Equal(originalAdmissions, host.BeginCalls);
+        Assert.Equal(originalFreezes, host.FreezeCalls);
+        Assert.Equal(before, await CaptureExistingClCountsAsync(host));
+        Assert.True(originalMembers.SequenceEqual(await CapturePublicationMembersAsync(host, originalPublication.PublicationId)));
+        Assert.True(originalContent.SequenceEqual(await CaptureOriginalClContentAsync(host, originalPublication, originalHandles)));
+
+        using (var successfulTransport = new NaturalTransport())
+        {
+            var successfulExecution = ExistingClExecution(host.Execution, originalPublication);
+            await using var successfulRunner = new OctoberGenerateRunner(ExistingClDependencies(host, successfulExecution, successfulTransport));
+            var successful = await successfulRunner.ExecuteAsync(successfulExecution);
+
+            Assert.Equal(0, successful.Report!.ExitCode);
+            var successfulPublication = Assert.IsType<PublicationBinding>(successful.Report.Publication);
+            Assert.All(successful.Report.Documents, handle => Assert.Equal(successfulPublication.PublicationId, handle.PublicationId));
+            Assert.All(originalHandles, originalHandle => Assert.Contains(successful.Report.Documents, handle =>
+                handle.BatchId == originalHandle.BatchId &&
+                handle.LogicalDocumentId == originalHandle.LogicalDocumentId &&
+                handle.DocumentVersionId == originalHandle.DocumentVersionId));
+            Assert.Equal(0, successfulTransport.WorkerRequests);
+            Assert.Equal(1, successfulTransport.BusinessRequests);
+        }
+
+        Assert.Equal(originalSourceOpens, host.SourceOpens);
+        Assert.Equal(originalAdmissions, host.BeginCalls);
+        Assert.Equal(originalFreezes, host.FreezeCalls);
+        Assert.True(originalMembers.SequenceEqual(await CapturePublicationMembersAsync(host, originalPublication.PublicationId)));
+        Assert.True(originalContent.SequenceEqual(await CaptureOriginalClContentAsync(host, originalPublication, originalHandles)));
+
+        using (var repeatedTransport = new NaturalTransport())
+        {
+            var repeatedExecution = ExistingClExecution(host.Execution, originalPublication);
+            await using var repeatedRunner = new OctoberGenerateRunner(ExistingClDependencies(host, repeatedExecution, repeatedTransport));
+            var repeated = await repeatedRunner.ExecuteAsync(repeatedExecution);
+
+            Assert.Equal(0, repeated.Report!.ExitCode);
+            var repeatedPublication = Assert.IsType<PublicationBinding>(repeated.Report.Publication);
+            Assert.NotEqual(originalPublication.PublicationId, repeatedPublication.PublicationId);
+            Assert.All(originalHandles, originalHandle => Assert.Contains(repeated.Report.Documents, handle =>
+                handle.BatchId == originalHandle.BatchId &&
+                handle.LogicalDocumentId == originalHandle.LogicalDocumentId &&
+                handle.DocumentVersionId == originalHandle.DocumentVersionId));
+            Assert.Equal(0, repeatedTransport.WorkerRequests);
+            Assert.Equal(1, repeatedTransport.BusinessRequests);
+        }
+
+        Assert.Equal(originalSourceOpens, host.SourceOpens);
+        Assert.Equal(originalAdmissions, host.BeginCalls);
+        Assert.Equal(originalFreezes, host.FreezeCalls);
+        Assert.True(originalMembers.SequenceEqual(await CapturePublicationMembersAsync(host, originalPublication.PublicationId)));
+        Assert.True(originalContent.SequenceEqual(await CaptureOriginalClContentAsync(host, originalPublication, originalHandles)));
+        await using var context = host.Database.Factory.CreateDbContext();
+        Assert.Contains(await context.KnowledgePublications.ToArrayAsync(), item =>
+            item.PublicationId == originalPublication.PublicationId && item.CorpusId != Guid.Empty);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExistingClBusiness_DoesNotPersistFailedResolutionThenReusesUnresolvedOutcomeAfterSynthesisFailureAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        string callerObservation = """{"observationKey":"local-call","ownerSelector":"file","role":"caller","mechanism":"call","operation":"Run","logicalNamespace":null,"literalsOrExpressions":["Run()"],"qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}]}""";
+        host.Client.TerminalTextOverride = OctoberScanGenerateRunnerTests.Harness.Model.ValidProposalJson.Replace(
+            "\"observations\":[]", "\"observations\":[" + callerObservation + "]", StringComparison.Ordinal);
+        var original = await host.Runner.ExecuteAsync(host.Execution);
+        Assert.Equal(0, original.Report!.ExitCode);
+        var originalPublication = Assert.IsType<PublicationBinding>(original.Report.Publication);
+        Assert.Contains(original.Report.Documents, handle => handle.PublicationId == originalPublication.PublicationId);
+
+        using (var invalidResolutionTransport = new NaturalTransport { IncludeCallerObservation = true })
+        {
+            var execution = ExistingClExecution(host.Execution, originalPublication);
+            await using var runner = new OctoberGenerateRunner(ExistingClDependencies(host, execution, invalidResolutionTransport));
+            var failed = await runner.ExecuteAsync(execution);
+            Assert.NotEqual(0, failed.Report!.ExitCode);
+            Assert.Equal(1, invalidResolutionTransport.ResolutionRequests);
+            Assert.Equal(0, invalidResolutionTransport.WorkerRequests);
+        }
+
+        await using (var context = host.Database.Factory.CreateDbContext())
+            Assert.Empty(await context.ResolutionItems.ToArrayAsync());
+
+        using (var validUnresolvedTransport = new NaturalTransport
+        {
+            IncludeCallerObservation = true,
+            ReturnUnresolved = true,
+            InvalidSynthesisProposal = true
+        })
+        {
+            var execution = ExistingClExecution(host.Execution, originalPublication);
+            await using var runner = new OctoberGenerateRunner(ExistingClDependencies(host, execution, validUnresolvedTransport));
+            var failedAfterProgress = await runner.ExecuteAsync(execution);
+            Assert.NotEqual(0, failedAfterProgress.Report!.ExitCode);
+            Assert.Equal(1, validUnresolvedTransport.ResolutionRequests);
+            Assert.Equal(2, validUnresolvedTransport.BusinessRequests);
+        }
+
+        string persistedOutcomeJson;
+        await using (var context = host.Database.Factory.CreateDbContext())
+        {
+            var item = Assert.Single(await context.ResolutionItems.AsNoTracking().ToArrayAsync());
+            persistedOutcomeJson = item.OutcomeJson;
+            var persisted = JsonSerializer.Deserialize<ResolutionOutcome>(persistedOutcomeJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.Equal(ResolutionOutcomeKind.Unresolved, persisted.Kind);
+            Assert.Null(persisted.Relationship);
+        }
+
+        using (var retryTransport = new NaturalTransport
+        {
+            IncludeCallerObservation = true,
+            ReturnUnresolved = true,
+            ExpectedBusinessRequests = 1
+        })
+        {
+            var execution = ExistingClExecution(host.Execution, originalPublication);
+            await using var runner = new OctoberGenerateRunner(ExistingClDependencies(host, execution, retryTransport));
+            var recovered = await runner.ExecuteAsync(execution);
+            Assert.Equal(0, recovered.Report!.ExitCode);
+            Assert.Equal(0, retryTransport.ResolutionRequests);
+            Assert.Equal(1, retryTransport.BusinessRequests);
+            Assert.IsType<PublicationBinding>(recovered.Report.Publication);
+        }
+
+        await using (var context = host.Database.Factory.CreateDbContext())
+        {
+            var rows = await context.ResolutionItems.AsNoTracking().ToArrayAsync();
+            var onlyRow = Assert.Single(rows);
+            var finalOutcome = JsonSerializer.Deserialize<ResolutionOutcome>(onlyRow.OutcomeJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.Equal(persistedOutcomeJson, onlyRow.OutcomeJson);
+            Assert.Equal(ResolutionOutcomeKind.Unresolved, finalOutcome!.Kind);
+            Assert.DoesNotContain(rows, item =>
+            {
+                var outcome = JsonSerializer.Deserialize<ResolutionOutcome>(item.OutcomeJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return outcome?.Kind is ResolutionOutcomeKind.Failed or ResolutionOutcomeKind.NotEvaluated;
+            });
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(false, false)]
     [InlineData(true, false)]
@@ -841,6 +1139,116 @@ public sealed class OctoberScanBusinessFinalizationTests
     private static OctoberKnowledgeReader Reader(OctoberScanGenerateRunnerTests.Harness host, PublicationBinding publication, string subject) => new(
         new OctoberKnowledgePublishedSource(host.Database.Factory), publication, new B0bReaderDisclosure { CurrentSubject = subject },
         new OctoberKnowledgeCursorProtector(new OctoberKnowledgeDataProtectionTokenProtector(new EphemeralDataProtectionProvider()), new B0bReadClock()), new B0bReadLog());
+
+    private static async Task<ImmutableArray<OriginalClContentSnapshot>> CaptureOriginalClContentAsync(OctoberScanGenerateRunnerTests.Harness host,
+        PublicationBinding publication, IReadOnlyCollection<DocumentHandle> handles)
+    {
+        var reader = Reader(host, publication, host.Execution.Session.SubjectId);
+        var subject = new KnowledgeSubject(host.Execution.Session.SubjectId, "existing-cl-preservation-check");
+        var opened = await reader.OpenReadSelectionAsync(new(publication, subject, KnowledgeMode.IT,
+            KnowledgePurpose.Reader, [.. host.Execution.Authority.RepositoryIds]));
+        Assert.Equal(KnowledgeReadStatus.Success, opened.Status);
+        var snapshots = ImmutableArray.CreateBuilder<OriginalClContentSnapshot>(handles.Count);
+        foreach (DocumentHandle handle in handles)
+        {
+            var read = await reader.ReadExactAsync(new(opened.Selection!, handle));
+            Assert.Equal(KnowledgeReadStatus.Success, read.Status);
+            Assert.Equal(handle, read.Document!.Handle);
+            Assert.NotEmpty(read.Content!);
+            snapshots.Add(new(handle, read.Content!));
+        }
+        return snapshots.ToImmutable();
+    }
+
+    private sealed record OriginalClContentSnapshot(DocumentHandle Handle, string Content);
+
+    private static OctoberGenerateExecution ExistingClExecution(OctoberGenerateExecution execution,
+        PublicationBinding publication) => execution with
+    {
+        Policy = execution.Policy with { OutputStage = "cl-and-bl", ExistingClPublicationId = publication.PublicationId }
+    };
+
+    private static OctoberGenerateRunnerDependencies ExistingClDependencies(
+        OctoberScanGenerateRunnerTests.Harness host, OctoberGenerateExecution execution, NaturalTransport transport)
+    {
+        var selected = execution.Provider;
+        var profile = selected.Profile;
+        var projection = new BusinessProviderConfigurationProjection(selected.SourceIdentity, 0, profile.Name,
+            "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference);
+        var business = new OctoberBusinessRunComposition(
+            (authority, guard) => new OctoberResolutionStore(host.Database.Factory, authority, guard, host.Database.Log),
+            authority => new OctoberFlowPlanningInputLoader(host.Database.Factory, authority),
+            (authority, guard) => new OctoberFlowPublicationStore(host.Database.Factory, authority, guard, host.Database.Log),
+            input =>
+            {
+                var unit = Assert.Single(input.Units.Where(item => item.SemanticSelector == "file" &&
+                    item.PrimaryOrigin.RepositoryId == host.Database.Origin.RepositoryId));
+                transport.Root = unit.Document;
+                return [new FlowRootSelection(unit.UnitId, unit.Document, FlowRootKind.SelectedCodeUnit, unit.SemanticSelector)];
+            }, projection, "Use accepted source evidence only.", "Preserve existing CL and qualifications.", new(), 32768)
+        {
+            BindReader = (session, publication, _) =>
+            {
+                Assert.Same(execution.Session, session);
+                return Task.FromResult<OctoberVerifiedReaderBinding?>(ControlledBinding(host, publication, session, null));
+            }
+        };
+        return host.Dependencies with
+        {
+            ValidateSourceConfiguration = _ => throw new InvalidOperationException("Existing CL route must not validate new source scopes."),
+            CreateAdmissionStore = (_, _) => throw new InvalidOperationException("Existing CL route must not begin a fresh CL scan."),
+            OpenSource = (_, _, _) => throw new InvalidOperationException("Existing CL route must not open source tools."),
+            CreateKnowledgeWriter = _ => throw new InvalidOperationException("Existing CL route must not accept or freeze CL content."),
+            CreateBusinessFromClStore = (authority, begin, completion, settlement) =>
+                new OctoberBusinessFromClStore(host.Database.Factory, authority, begin, completion, settlement, host.Database.Log),
+            Business = business,
+            CreateWorkerClient = async (provider, token) =>
+            {
+                Assert.Same(selected, provider);
+                return await new OctoberWorkerClientFactory(new SyntheticSecret(), transport).CreateAsync(provider, token);
+            }
+        };
+    }
+
+    private static async Task<ImmutableArray<PublicationMemberSnapshot>> CapturePublicationMembersAsync(
+        OctoberScanGenerateRunnerTests.Harness host, Guid publicationId)
+    {
+        await using var context = host.Database.Factory.CreateDbContext();
+        return (await context.PublicationMembers.AsNoTracking().Where(item => item.PublicationId == publicationId)
+            .OrderBy(item => item.Ordinal).Select(item => new PublicationMemberSnapshot(item.BatchId, item.PublicationId,
+                item.CorpusId, item.LogicalDocumentId, item.VersionId, item.Ordinal)).ToArrayAsync()).ToImmutableArray();
+    }
+
+    private sealed record PublicationMemberSnapshot(Guid BatchId, Guid PublicationId, Guid CorpusId,
+        Guid LogicalDocumentId, Guid VersionId, int Ordinal);
+
+    private static OctoberBusinessFromClStore CreateBusinessFromClStore(
+        OctoberScanGenerateRunnerTests.Harness host, IOctoberBusinessFromClAuthority authority,
+        IOctoberBusinessFromClSettlementAuthority settlement, IOctoberCommitSubmissionGuard? beginGuard = null) =>
+        new(host.Database.Factory, authority, beginGuard ?? host.Database.Guard, host.Database.Guard,
+            settlement, host.Database.Log);
+
+    private static BusinessFromClRequest BusinessFromClRequestFor(PublicationBinding publication, string subject)
+    {
+        var unsigned = new BusinessFromClRequest(publication, subject, Guid.NewGuid(), string.Empty);
+        return unsigned with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeBeginDigest(unsigned) };
+    }
+
+    private static async Task<int> CountBusinessFromClCompletionsAsync(OctoberScanGenerateRunnerTests.Harness host)
+    {
+        await using var context = host.Database.Factory.CreateDbContext();
+        return await context.KnowledgeOperations.CountAsync(item => item.Kind == OperationKind.CompleteBusinessFromCl);
+    }
+
+    private static async Task<ExistingClCounts> CaptureExistingClCountsAsync(OctoberScanGenerateRunnerTests.Harness host)
+    {
+        await using var context = host.Database.Factory.CreateDbContext();
+        return new(await context.DocumentVersions.CountAsync(), await context.KnowledgePublications.CountAsync(),
+            await context.PublicationMembers.CountAsync());
+    }
+
+    private sealed record ExistingClCounts(int DocumentVersions, int Publications, int PublicationMembers);
+
     private sealed class SyntheticSecret : ISecretEncryptionService
     {
         public Task<string> EncryptAsync(string purpose, string plaintext, CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -851,11 +1259,59 @@ public sealed class OctoberScanBusinessFinalizationTests
             return Task.FromResult("synthetic-approved-token");
         }
     }
+    private sealed class ControlledBusinessFromClAuthority : IOctoberBusinessFromClAuthority
+    {
+        internal int Calls { get; private set; }
+        internal DisclosureStatus Status { get; set; } = DisclosureStatus.Allowed;
+        internal List<ImmutableArray<Contributor>> ContributorChecks { get; } = [];
+        public Task<DisclosureStatus> CheckAsync(BusinessFromClRequest request,
+            ImmutableArray<Contributor> contributors, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            ContributorChecks.Add(contributors);
+            return Task.FromResult(Status);
+        }
+    }
+    private sealed class ControlledBusinessFromClSettlementAuthority : IOctoberBusinessFromClSettlementAuthority
+    {
+        internal BusinessFromClSettlement Status { get; set; } = BusinessFromClSettlement.Settled;
+        internal int Calls { get; private set; }
+        public Task<BusinessFromClSettlement> VerifyAsync(BusinessFromClCompletionRequest request,
+            BusinessFromClAdmission admission, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return Task.FromResult(Status);
+        }
+    }
+    private sealed class ForgedBusinessFromClAdmission : BusinessFromClAdmission { }
+    private sealed class HeldCommitAcknowledgementGuard(IOctoberCommitSubmissionGuard inner) : IOctoberCommitSubmissionGuard
+    {
+        internal int Submissions { get; private set; }
+        internal TaskCompletionSource<CommitSettlement> CommitSettled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal TaskCompletionSource ReleaseAcknowledgement { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<CommitEligibilityStatus> CheckBeforeTransactionAsync(CommitAttempt attempt,
+            CancellationToken cancellationToken = default) => inner.CheckBeforeTransactionAsync(attempt, cancellationToken);
+
+        public async Task<CommitGuardResult> SubmitAsync(CommitAttempt attempt,
+            Func<CancellationToken, SubmittedCommit> submitAsync, CancellationToken cancellationToken = default)
+        {
+            if (await inner.CheckBeforeTransactionAsync(attempt, cancellationToken) != CommitEligibilityStatus.Eligible)
+                return new(CommitSubmissionStatus.StaleOrFenced, null);
+            SubmittedCommit submitted = submitAsync(cancellationToken);
+            Submissions++;
+            CommitSettlement settlement = await submitted.Settlement.WaitAsync(cancellationToken);
+            CommitSettled.TrySetResult(settlement);
+            await ReleaseAcknowledgement.Task.WaitAsync(cancellationToken);
+            return new(CommitSubmissionStatus.Submitted, settlement);
+        }
+    }
     private sealed class NaturalTransport : HttpMessageHandler
     {
         internal DocumentVersionReference? Root;
         internal int WorkerRequests, BusinessRequests, ResolutionRequests;
         internal int ExpectedWorkers = 1;
+        internal int? ExpectedBusinessRequests;
         internal bool IncludeCallerObservation, ReturnUnresolved, InvalidSynthesisProposal;
         internal List<(string Endpoint, string? Authorization, string Model)> Requests { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -889,7 +1345,7 @@ public sealed class OctoberScanBusinessFinalizationTests
                 string failed = JsonSerializer.Serialize(new { id = "controlled-resolution", @object = "chat.completion", created = 1, model, choices = new[] { new { index = 0, message = new { role = "assistant", content = resolution }, finish_reason = "stop" } }, usage = new { prompt_tokens = 30, completion_tokens = 10, total_tokens = 40 } });
                 return new(HttpStatusCode.OK) { Content = new StringContent(failed, Encoding.UTF8, "application/json") };
             }
-            Assert.Equal(IncludeCallerObservation ? 2 : 1, BusinessRequests);
+            Assert.Equal(ExpectedBusinessRequests ?? (IncludeCallerObservation ? 2 : 1), BusinessRequests);
             var root = Assert.IsType<DocumentVersionReference>(Root);
             var proposal = new BusinessSynthesisProposal("条件处理", [new("business", 0, "处理规则", [new("rule", "满足条件时执行处理。", ClaimQualification.SourceSupported, [new(root, "logic", "rule")], [])])]);
             string json = JsonSerializer.Serialize(new { id = "controlled-business", @object = "chat.completion", created = 1, model,

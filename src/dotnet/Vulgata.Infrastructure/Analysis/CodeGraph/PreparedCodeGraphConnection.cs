@@ -29,7 +29,7 @@ public sealed class PreparedCodeGraphConnection : IAsyncDisposable
         _releaseOwner = releaseOwner;
         _sessionFactory = sessionFactory ?? (connection => new NativeCodeGraphMcpClient(connection));
         _ownerLifetime = remainingLifetime ?? TimeSpan.FromMinutes(30);
-        if (_ownerLifetime <= TimeSpan.Zero || _ownerLifetime > TimeSpan.FromMinutes(30))
+        if (_ownerLifetime <= TimeSpan.Zero || _ownerLifetime > ExecutionOwnerLifetime.Maximum)
         {
             throw new ArgumentOutOfRangeException(nameof(remainingLifetime));
         }

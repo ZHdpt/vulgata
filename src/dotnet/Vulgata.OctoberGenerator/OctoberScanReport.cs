@@ -40,6 +40,7 @@ public sealed record OctoberWorkerDiagnosticSnapshot(OctoberFileWorkerStatus? St
     OctoberWorkerRetryDisposition? RetryDisposition, OctoberWorkerFailureStage? FailureStage)
 {
     public OctoberWorkerTerminalFailure? TerminalFailure { get; init; }
+    public OctoberWorkerTerminalObservation? TerminalObservation { get; init; }
     public OctoberWorkerBudgetFailure? BudgetFailure { get; init; }
     public OctoberWorkerParseDiagnosticSnapshot? ParseFailure { get; init; }
     public OctoberWorkerCaptureStatus? CaptureStatus { get; init; }
@@ -72,6 +73,7 @@ public sealed record OctoberScanReport(
     public OctoberPhaseStatus BusinessLogic { get; init; } = RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.NotStarted : OctoberPhaseStatus.NotRequested;
     public OctoberBusinessDiagnosticSnapshot? BusinessDiagnostics { get; init; }
     public OctoberWorkerDiagnosticSnapshot? WorkerDiagnostics { get; init; }
+    public OctoberCorrectionBudgetSnapshot? HardRetry { get; init; }
 
     public int ExitCode => (Execution, PublicationStatus) switch
     {

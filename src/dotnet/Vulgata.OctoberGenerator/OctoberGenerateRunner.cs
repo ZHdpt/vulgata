@@ -12,6 +12,7 @@ namespace Vulgata.OctoberGenerator;
 /// <summary>Host-owned contained access, opened only after the original run's Begin receipt.</summary>
 internal interface IOctoberScanRunSource : IAsyncDisposable
 {
+    Task<TimeSpan> EnsureFileWindowAsync(TimeSpan requiredLifetime, CancellationToken cancellationToken = default);
     Task<PreparedSourceResult> ListSourceAsync(Guid repositoryId, PreparedSourceListRequest request,
         CancellationToken cancellationToken = default);
     Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repositoryId, string relativePath,
@@ -36,14 +37,19 @@ internal sealed record OctoberGenerateRunnerDependencies(
     IOctoberKnowledgeOperationLog OperationLog)
 {
     internal OctoberBusinessRunComposition? Business { get; init; }
+    internal Func<IOctoberBusinessFromClAuthority, IOctoberCommitSubmissionGuard,
+        IOctoberCommitSubmissionGuard, IOctoberBusinessFromClSettlementAuthority, IOctoberBusinessFromClStore>? CreateBusinessFromClStore { get; init; }
     internal OctoberParseFailureCapture? ParseFailureCapture { get; init; }
     internal OctoberWorkerHttpObservation? HttpObservation { get; init; }
+    internal int MaximumWorkerOutputTokens { get; init; } = 8192;
+    internal Func<OctoberFileWorkerRequest, ImmutableArray<OctoberJsonCorrectionEvent>, CancellationToken, Task<bool>>? JsonCorrectionLog { get; init; }
 }
 
 /// <summary>Owns the original sequential Generate run; a stored receipt is never a restart grant.</summary>
 internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncDisposable,
     IOctoberGenerateAdmissionAuthority, IOctoberCommitSubmissionGuard, IOctoberCorpusFreezeAuthority,
-    IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority
+    IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority,
+    IOctoberBusinessFromClAuthority, IOctoberBusinessFromClSettlementAuthority
 {
     private readonly OctoberGenerateRunnerDependencies _dependencies;
     private readonly TimeProvider _time;
@@ -70,10 +76,13 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
     private Task? _analysisCleanup;
     private long _started;
     private long? _fileStarted;
+    private long? _sourceWindowStarted;
+    private TimeSpan _sourceWindow;
     private CancellationToken _caller;
     private CancellationTokenSource? _deadline;
     private CancellationTokenSource? _runToken;
     private OctoberExecutionScope? _scope;
+    private OctoberRunCorrectionBudget? _hardRetryBudget;
     private IOctoberScanRunSource? _source;
     private OctoberWorkerInputLedger? _activeLedger;
     private Guid? _activeAdmission;
@@ -94,6 +103,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         TimeProvider? timeProvider = null)
     {
         _dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
+        if (dependencies.MaximumWorkerOutputTokens is < 1 or > 393216)
+            throw new ArgumentOutOfRangeException(nameof(dependencies.MaximumWorkerOutputTokens));
         ArgumentNullException.ThrowIfNull(dependencies.Authority);
         ArgumentNullException.ThrowIfNull(dependencies.ValidateSourceConfiguration);
         ArgumentNullException.ThrowIfNull(dependencies.CreateAdmissionStore);
@@ -154,6 +165,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             report = report with { Execution = OctoberExecutionStatus.Indeterminate,
                 Gaps = report.Gaps.Add(new("owned_cleanup_unconfirmed")) };
         }
+        report = await CloseExistingClBusinessAsync(report);
+        if (_hardRetryBudget is not null && !report.Inventory.IsEmpty)
+            report = report with { HardRetry = _hardRetryBudget.Read() };
         if (HasMetadata(report) && await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
             report = Hide(report, "authority_unavailable");
         await AwaitBusinessOwnerCallsAsync();
@@ -180,7 +194,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         OctoberGenerateExecution execution = _execution!;
         if (!new OctoberScanPolicyValidator().Validate(execution.Policy).IsValid ||
             (execution.Policy.OutputStage != "cl-only" && !BusinessConfigurationMatches(execution)) || execution.Policy.WorkerCap != 1 ||
-            !_dependencies.ValidateSourceConfiguration(execution) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
+            (execution.Policy.ExistingClPublicationId is null ? !_dependencies.ValidateSourceConfiguration(execution)
+                : _dependencies.CreateBusinessFromClStore is null) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
             return Failure("invalid_run_configuration", disclose: false);
         _binding = new(execution.Authority.CanonicalDatabaseIdentity, execution.Authority.TargetId,
             execution.Authority.BatchId, execution.Authority.SelectionDigest);
@@ -188,6 +203,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _runToken = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, _stop.Token, _caller);
         CancellationToken token = _runToken.Token;
         Guid runId = Guid.NewGuid();
+        if (execution.Policy.HardRetryMode) _hardRetryBudget = new(_binding, runId);
         bool captureBound = _dependencies.ParseFailureCapture?.TryBind(execution, runId) == true;
         bool observationBound = _dependencies.HttpObservation?.TryBind(execution, runId) == true;
         if (_dependencies.HttpObservation is not null && (!observationBound || _dependencies.ParseFailureCapture is not null))
@@ -200,6 +216,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             CheckProviderEligibilityAsync, _businessFinalizationOperation, timeProvider: _time, hardStop: token);
         if (await CheckPermissionsAsync([], token) != DisclosureStatus.Allowed)
             return Failure("authority_unavailable", disclose: false);
+        if (execution.Policy.ExistingClPublicationId is not null)
+            return await RunExistingClBusinessAsync(runId, token);
         var begin = new GenerateAdmissionRequest(_binding, execution.Session.SubjectId, runId, Guid.NewGuid(), "");
         _beginRequest = begin with { CanonicalPayloadDigest = OctoberGenerateAdmissionPolicy.ComputePayloadDigest(begin) };
         IOctoberGenerateAdmissionStore admission = _dependencies.CreateAdmissionStore(this, this);
@@ -244,6 +262,21 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             foreach (var selectedFile in selected)
             {
                 if (!RunAvailable) return Failure("run_ineligible", interrupted: IsCancelled);
+                if (Unresolved() || _scope?.GetSnapshot().OutstandingAttempts != 0 || _attempts.Any(attempt => !attempt.IsSettledForFreeze))
+                    return Failure("source_window_unsettled", indeterminate: true);
+                try
+                {
+                    // Start before renewal so its latency cannot extend the returned authority window.
+                    _sourceWindowStarted = _time.GetTimestamp();
+                    _sourceWindow = await ToolAsync(() => _source.EnsureFileWindowAsync(
+                        Min(TimeSpan.FromSeconds(execution.Policy.FileDeadlineSeconds + 30), RemainingRun), token), token);
+                }
+                catch (OctoberSourceWindowException error)
+                {
+                    return Failure("source_window_" + error.Reason.ToString().ToLowerInvariant(),
+                        indeterminate: error.Reason == OctoberSourceWindowFailure.CleanupUnconfirmed,
+                        disclose: error.Reason != OctoberSourceWindowFailure.AuthorityUnavailable);
+                }
                 OctoberSourceFrameResult acquired = await ToolAsync(() => _source.AcquireFrameAsync(
                     selectedFile.RepositoryId, selectedFile.RelativePath, token), token);
                 if (acquired.Status != OctoberSourceFrameStatus.Acquired || acquired.Frame is null)
@@ -259,6 +292,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 _activeAdmission = admissionId;
                 _activeOrigin = frame.Origin;
                 Guid workstreamId = Guid.NewGuid();
+                var toolBudget = new OctoberFileToolBudget(runId, workstreamId, admissionId,
+                    execution.Policy.AdvisoryToolCallsPerFile, execution.Policy.MaximumToolCallsPerFile);
                 ImmutableArray<OctoberWorkerAdvisory> advisory = Advisory(repository.RepositoryId);
                 ImmutableArray<Contributor> baseline = [new(ContributorKind.Source, repository.RepositoryId,
                     repository.SystemId, repository.RootBindingIdentity, null, frame.Origin.SourceDigest), .. advisory.Select(item => item.Contributor)];
@@ -269,8 +304,18 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
                         execution.Provider.Profile.Name, frame, baseline, advisory,
                         new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
-                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(32768, execution.Policy.MaximumTotalTokens!.Value),
-                            MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows));
+                            MaximumToolCalls: execution.Policy.MaximumToolCallsPerFile,
+                            // Input includes JSON escaping, prompt, tool schemas and replayed history,
+                            // not just the source window. Reserve measured input at each leaf under
+                            // the existing Worker ceiling and the run's cumulative policy.
+                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(1048576L, execution.Policy.MaximumTotalTokens!.Value),
+                            MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
+                            MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens,
+                            MaximumJsonCorrectionAttempts: execution.Policy.HardRetryMode ? 1 : 3,
+                            AdvisoryToolCalls: execution.Policy.AdvisoryToolCallsPerFile,
+                            UseTextForJsonCorrection: execution.Policy.UseTextForJsonCorrection,
+                            HardRetryMode: execution.Policy.HardRetryMode))
+                    { ToolBudget = toolBudget, HardRetryBudget = _hardRetryBudget };
                     var ledger = new OctoberWorkerInputLedger(request,
                         async (path, callToken) =>
                         {
@@ -310,9 +355,21 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     CompletedFileSubmission? submission = await attempt.ExecuteAndSealAsync(token);
                     // The bounded seal can stop waiting before the actual executor
                     // has finished transport cleanup. Retain that ownership first.
+                    OctoberFileWorkerResult? diagnosticResult = null;
                     if (actualWorker is not null)
-                        try { await actualWorker; } catch (Exception) { /* Settlement remains the scope's authority. */ }
+                        try { diagnosticResult = await actualWorker; } catch (Exception) { /* Settlement remains the scope's authority. */ }
                     var accounting = _scope.GetSnapshot();
+                    if (diagnosticResult is { JsonCorrections.IsDefaultOrEmpty: false } && _dependencies.JsonCorrectionLog is { } correctionLog)
+                    {
+                        // The actual Worker is settled. Logging never holds a provider permit
+                        // and cannot change admission, acceptance or the correction allowance.
+                        bool logged;
+                        try { logged = !accounting.HasUnconfirmedSettlement && accounting.OutstandingAttempts == 0 &&
+                            await correctionLog(request, diagnosticResult.JsonCorrections, token); }
+                        catch (Exception) { logged = false; }
+                        if (!logged && !_gaps.Any(gap => gap.Code == "json-correction-log-incomplete"))
+                            _gaps = _gaps.Add(new("json-correction-log-incomplete"));
+                    }
                     if (accounting.HasUnconfirmedSettlement || accounting.OutstandingAttempts != 0)
                         return Failure("provider_settlement_unconfirmed", indeterminate: true);
                     if (execution.Policy.OutputStage == "cl-only" || submission is null)
@@ -326,7 +383,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     {
                         OctoberFileWorkerResult? observed = attempt.WorkerResult;
                         bool retrySafe = observed is { Status: OctoberFileWorkerStatus.ProviderFailed,
-                            RetryDisposition: OctoberWorkerRetryDisposition.KnownSafeTransient } &&
+                            RetryDisposition: OctoberWorkerRetryDisposition.KnownSafeTransient, JsonCorrectionAttempts: 0 } &&
                             !accounting.Usage.HasUnknownUsage && attempt.IsSettledForFreeze && !attempt.HasSubmitted &&
                             retry < execution.Policy.MaximumTransientRetries && FileAvailable;
                         if (retrySafe)
@@ -407,7 +464,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         var freeze = new CorpusFreezeRequest(phaseRequest.FreezeOperation, _binding, "", _accepted, _coverage);
         _expectedFreeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
         _publication = new(phaseRequest, (guard, freezeAuthority) => _dependencies.CreateKnowledgeWriter(new(this, guard, freezeAuthority, this, this)),
-            this, callToken => CheckPermissionsAsync(_observedContributors, callToken), RemainingRun, _time, token);
+            this, callToken => CheckPermissionsAsync(_observedContributors, callToken),
+            Min(RemainingRun, TimeSpan.FromMinutes(30)), _time, token);
         OctoberScanReport published = await _publication.ExecuteAsync(token);
         if (published.ExitCode == 4 && RunAvailable) published = await _publication.ReconcileAsync(token);
         if (await DisclosureAsync(token) != DisclosureStatus.Allowed) return Hide(published, "authority_unavailable");
@@ -443,12 +501,23 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         {
             TerminalFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.TerminalFailure is { } terminal && Enum.IsDefined(terminal) ? terminal : null,
+            TerminalObservation = result.Status == OctoberFileWorkerStatus.InvalidOutput &&
+                result.FailureStage == OctoberWorkerFailureStage.StreamTerminal &&
+                result.TerminalFailure == OctoberWorkerTerminalFailure.UnsupportedFinish && result.TerminalObservation is { } observed
+                ? new(observed.FinishReason is { } finish && Enum.IsDefined(finish) ? finish : null,
+                    observed.MaximumOutputTokens is > 0 and <= 393216 ? observed.MaximumOutputTokens : null,
+                    observed.InputTokens is >= 0 ? observed.InputTokens : null,
+                    observed.OutputTokens is >= 0 ? observed.OutputTokens : null,
+                    observed.ReasoningTokens is >= 0 ? observed.ReasoningTokens : null) : null,
             BudgetFailure = result.Status == OctoberFileWorkerStatus.BudgetExceeded &&
                 result.BudgetFailure is { } budget && Enum.IsDefined(budget) ? budget : null,
             ParseFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.ParseFailure is { } parse
                 ? new(parse.Category is { } category && Enum.IsDefined(category) ? category : null,
-                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null) : null,
+                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null,
+                    parse.FieldFailure is { } fieldFailure && Enum.IsDefined(fieldFailure) ? fieldFailure : null,
+                    parse.Field is { } field && Enum.IsDefined(field) ? field : null,
+                    parse.UnitIndex is >= 0 and <= 65535 ? parse.UnitIndex : null) : null,
             CaptureStatus = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
                 result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.CaptureStatus is { } capture && Enum.IsDefined(capture)
                 ? capture : null
@@ -633,6 +702,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         {
             if (!RunAvailable || _beginClosed) return CommitEligibilityStatus.StaleOrFenced;
             if (token.IsCancellationRequested) return CommitEligibilityStatus.Cancelled;
+            if (_existingClRequest is { } existing)
+                return attempt.Operation == OctoberBusinessFromClPolicy.BeginOperation(existing) &&
+                    attempt.AttemptId == existing.RunId && attempt.PayloadDigest == existing.CanonicalPayloadDigest
+                    ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;
             return _beginRequest is not null && attempt.Operation == OctoberGenerateAdmissionPolicy.OperationFor(_beginRequest.Binding) &&
                 attempt.AttemptId == _beginRequest.RunId && attempt.PayloadDigest == _beginRequest.CanonicalPayloadDigest
                 ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;
@@ -733,8 +806,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _beginSettlement == CommitSettlement.Indeterminate || _attempts.Any(attempt =>
             attempt.HasSubmitted && !attempt.IsSettledForFreeze) || _scope?.GetSnapshot().HasUnconfirmedSettlement == true;
     private TimeSpan RemainingRun => TimeSpan.FromSeconds(_execution!.Policy.RunDeadlineSeconds) - _time.GetElapsedTime(_started);
-    private TimeSpan RemainingFile => _fileStarted is { } started
-        ? Min(RemainingRun, TimeSpan.FromSeconds(_execution!.Policy.FileDeadlineSeconds) - _time.GetElapsedTime(started)) : RemainingRun;
+    private TimeSpan RemainingFile => Min(
+        _fileStarted is { } started
+            ? Min(RemainingRun, TimeSpan.FromSeconds(_execution!.Policy.FileDeadlineSeconds) - _time.GetElapsedTime(started)) : RemainingRun,
+        _sourceWindowStarted is { } windowStarted ? _sourceWindow - _time.GetElapsedTime(windowStarted) : RemainingRun);
     private bool RunAvailable => !_fenced && !_disposed && !IsCancelled && RemainingRun > TimeSpan.Zero;
     private bool FileAvailable => RunAvailable && RemainingFile > TimeSpan.Zero;
     private bool IsCancelled => _caller.IsCancellationRequested || _stop.IsCancellationRequested;
@@ -800,6 +875,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         TerminalCoverage = [], Inventory = [], Gaps = [new(code)],
         BusinessDiagnostics = null,
         WorkerDiagnostics = null,
+        HardRetry = null,
         Matching = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested,
         BusinessLogic = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested
     };
@@ -813,7 +889,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 _toolWait, snapshot?.ModelWait ?? TimeSpan.Zero, _storeWait + report.Timings.StoreWait)
         };
     }
-    private static bool HasMetadata(OctoberScanReport report) => report.WorkerDiagnostics is not null || report.BusinessDiagnostics is not null || report.Publication is not null ||
+    private static bool HasMetadata(OctoberScanReport report) => report.HardRetry is not null || report.WorkerDiagnostics is not null || report.BusinessDiagnostics is not null || report.Publication is not null ||
         !report.Documents.IsEmpty || !report.AcceptedFiles.IsEmpty || !report.TerminalCoverage.IsEmpty || !report.Inventory.IsEmpty;
     private static OctoberGeneratorExecutionResult Finished(OctoberScanReport report) => new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report);
     private static CommitGuardResult BeginDenied(CommitEligibilityStatus status) => new(status switch

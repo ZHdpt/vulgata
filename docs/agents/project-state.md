@@ -1,6 +1,19 @@
 # Project state for agent resumption
 
-Latest integration (October 11): user-authorized step 1 selectively imported
+Latest integration (October 11): user-authorized Scan integration and Business
+synchronization includes Scan `c473ad15` (existing-CL continuation `5c220d55`)
+on main `9309ecaf`, preserving the Chat/Explorer improvements below. The new
+route reuses an exact committed CL publication and publishes BL separately;
+Business's competing extension remains held. Full controlled suite: 4,915/4,917,
+with the known report-helper field mismatch and a process-PATH CodeGraph lookup
+failure. The latter passed its unchanged focused replay 1/1 after process-local
+PATH correction; full-suite GREEN is not claimed. Scan reports 77 files/163 CL
+Documents retained; no new BL/provider/database/browser qualification occurred
+here. Business must reconcile its old handoff before runtime readiness. The user
+retains management ownership. See the
+[Scan-to-Business checkpoint](../bmad/planning-artifacts/october-scan-business-integration-2026-10-11.md).
+
+Earlier same-day integration: user-authorized step 1 selectively imported
 Business handoff `3820d77a`, Explorer `112b38d1`, and Chat `d1d158a6`/`92feb0ad`
 through `6be78bd9`. Combined current-source affected SelfContained verification
 passed **1,290/1,290**, zero failures/skips, build zero errors. This adds graph
@@ -39,8 +52,220 @@ Preparation is delegated to the MBS sample chat. Keep actual prepared-root paths
 out of tracked code/config; use CLI or ignored local configuration. Successful
 presentation data is retained until explicit deletion; later runs use fresh owned
 databases. Failed incomplete owned runs may be cleaned after settlement/diagnostics.
-Exact sample scope and retained runtime bindings remain pending preparation; no
-real-source run is implied by the completed disposable synthetic qualification.
+The assigned Scan lane now has 77 manifest-verified prepared files and retained
+runtime bindings. Its real single-Java-file CL generation/publication passed after
+the reasoning replay correction; ordinary-reader access was not requalified in
+that run. The full slice then stopped at the channel POM, whose isolated trial
+confirmed Length at a reduced 4,011-token output cap. The user-approved fixed-output
+admission is reviewed/committed at `e5c53e00`; 423 affected checks passed. Its real
+POM trial hit the unchanged 8192 streamed-update guard before terminal usage, with
+one request, unknown token usage and no accepted/published CL; no full-slice retry
+ran. The subsequent bounded stream-aggregation correction removes the unnecessary
+update list, coalesces plain reasoning and retains finite non-progress/segment
+bounds plus explicit synchronous cancellation checks. Its affected checks pass
+434/434; full SelfContained remains non-green (4741/4743). The correction is
+committed at `c17b5cae`. Its fresh real POM trial reached Length with known usage:
+one request, 9748 input tokens and 8192 output tokens, all output reported as
+reasoning. No local stream-budget failure, accepted CL or publication; no full-slice
+retry ran. Current implementation and verification are in
+[stream aggregation evidence](../../specs/20-1-Oct14-scan/stream-aggregation-verification.md)
+and [output reservation evidence](../../specs/20-1-Oct14-scan/output-reservation-verification.md);
+the user subsequently authorized an explicit low-reasoning POM experiment while
+keeping the 8192 cap. Its optional command-local DeepSeek Worker setting is reviewed;
+all 19 new/453 affected cases pass, full SelfContained is 4761/4762 with the same
+report-parser failure. Committed at `b3192899`, the real low-effort trial also ended
+with Length: one request, 9748 input/8192 output tokens, all output reported as
+reasoning; no accepted CL/publication and no whole-slice retry. See
+[low reasoning evidence](../../specs/20-1-Oct14-scan/low-reasoning-verification.md).
+The subsequent user-requested 393216 output-cap experiment is opt-in through
+`October:WorkerMaxOutputTokens`, retaining the 8192 default and other guards.
+All 20 cap/replay and 434 affected-class checks pass; full SelfContained is
+4773/4775 (report parser and CodeGraph cancellation failures). See
+[maximum-cap evidence](../../specs/20-1-Oct14-scan/max-output-cap-verification.md)
+for the separately recorded real POM retry on `7c5e82fc`: one provider request,
+9748 input/1816 output tokens, followed by local BudgetExceeded/Admission. No
+Length diagnostic this time, but no accepted CL/publication or whole-slice retry.
+The report does not identify the exact admission limit; existing guards remain.
+The user's subsequent explicit whole-slice attempt selected all 77 files but
+stopped on `mbs_account/pom.xml` before any provider call with the same
+BudgetExceeded/Admission classification. Zero accepted files/Documents; no
+publication. The maximum-cap evidence above retains this distinct run and its
+fresh owned resources. No additional retry ran.
+The user subsequently authorized correcting admission and another whole scan.
+Generate now uses the existing 1048576 per-request Worker ceiling, capped by run
+policy, instead of 32768 input bytes plus output. Actual leaf reservations and
+other finite guards remain; specific budget categories distinguish local failures.
+All 436 affected tests pass; full-suite GREEN remains unconfirmed. See
+[input admission evidence](../../specs/20-1-Oct14-scan/input-admission-verification.md)
+for diagnosis, review, test failures and the separately recorded live attempt.
+On `d0f3b691`, the post-fix whole scan passed admission and accepted the account
+POM plus EleAcctCustInfoCacheOp.java. It stopped on GetMobileByAccessCodeOp.java
+after 109.05 seconds: InvalidOutput/ProposalParse, incomplete JSON despite HTTP
+and SDK Stop; bounded observation confirms identical HTTP/SDK/parser text.
+Three requests, 21276 input/26340 output tokens, all usage known. Two accepted
+files, zero returned Documents, publication not requested. No retry; owned data
+retained. This does not qualify complete generation/publication or reader access.
+The user then authorized a documentation-guided correction and whole retry.
+Generate permits one same-session corrective turn for syntactically invalid final
+JSON after Stop, preserving full reasoning replay and all admission/acceptance
+guards. No local JSON repair or schema relaxation. All 447 affected cases pass;
+full-suite GREEN remains unconfirmed. See
+[JSON correction evidence](../../specs/20-1-Oct14-scan/json-correction-verification.md)
+for official API sources, independent review and separate real qualification.
+Real retry on `0b16d4c8` accepted channel pom.xml, then failed on
+SdkAntiFraudHandleOp.java after the correction allowance: malformed JSON despite
+Stop, identical HTTP/SDK/parser text. 76.84 seconds, three requests, 21012 input
+and 16675 output tokens, all known. One accepted file, no publication/Documents;
+resources retained, no additional identical paid attempt. The provider output
+problem remains unresolved; bounded correction is not a guarantee of valid output.
+The user next requested explicit stop/JSON checks and an isolated-first retry.
+Four actual-SDK controlled wire cases pass: stop absent, json_object present on
+initial/tool/correction requests. No production request change was needed.
+The isolated SdkAntiFraudHandleOp.java succeeded in29.1 seconds with one confirmed
+CL publication. Its conditionally authorized whole scan accepted four channel
+files, then stopped on LoginAntiSendOp.java with host run_unavailable after153.48
+seconds; no Worker diagnostic identifies the exception. Four requests, all usage
+known, no whole-run publication. Both fresh databases and isolated publication
+are retained. See [stop/JSON evidence](../../specs/20-1-Oct14-scan/stop-json-wire-verification.md).
+The user authorized fixing this host failure and isolated-first qualification.
+A matching CodeGraph lifecycle defect is corrected: next-file preparation now
+renews an expired native session once, only after confirmed old-session cleanup
+and within the existing runtime lifetime/replacement cap. Original exception was
+not captured; historical causality is inferred from the deterministic path/timing.
+All100 affected tests pass; SelfContained4791/4792 retains the report-parser failure.
+See [session renewal evidence](../../specs/20-1-Oct14-scan/session-renewal-verification.md).
+Fix committed at b164c7d2. Isolated LoginAntiSendOp.java completed/published in
+33.6 seconds. The conditional whole scan passed the prior host boundary and
+accepted seven account files over354.45 seconds, then failed GuestSyncOp.java
+on valid JSON with ClosedFields/Units schema rejection. Ten requests, usage known;
+no whole-run publication. All data retained; no additional retry or parser waiver.
+The user accepted structural correction and isolated-first qualification. The
+existing single allowance now covers syntax and parser-defined structural errors,
+with safe missing/unexpected/duplicate-field feedback and unit indices. Evidence
+and semantic failures remain non-correctable; all acceptance guards stay strict.
+All463 affected cases pass; prior full-suite failure remains visible. See
+[structural correction evidence](../../specs/20-1-Oct14-scan/structural-correction-verification.md)
+for review, limits, diagnostics and separate runtime outcomes.
+Committed at5bcdc246. Isolated GuestSyncOp.java succeeded/published in52.23 seconds.
+The conditional whole run then stopped on account pom.xml at98.88 seconds with
+the unchanged16-tool-call limit (BudgetFailure=ToolCalls), not a parse/schema
+failure. Three requests,83947 input/20898 output tokens, all known; no whole-run
+acceptance/publication. All data retained, no extra attempt or budget widening.
+
+The user subsequently approved two-level per-primary-file tool budgets: advisory32
+and hard48, explicit Scan policy settings and fresh model-visible counters before
+each request. Same-file attempts/corrections retain the counter; only a new primary
+file resets it. Other guards remain unchanged. Independent review accepted the
+implementation, committed at `c82adf22`. All1052 affected SelfContained checks pass;
+full-suite GREEN remains unconfirmed. The isolated account POM completed in74.82
+seconds with five CL Documents and confirmed publication. The conditional whole
+scan accepted seven files, then stopped on GuestSyncOp.java after431.11 seconds:
+Syntax/Root JSON error, MismatchedDelimiter before EOF, identical HTTP/SDK/parser
+text despite Stop. No tool-budget or deadline failure;17 requests, usage known,
+no whole-run publication. Data retained, no further paid retry. See
+[file tool budget evidence](../../specs/20-1-Oct14-scan/file-tool-budget-verification.md).
+The user's subsequent isolated GuestSyncOp.java retry succeeded unchanged in22.73
+seconds, one request, one accepted file and confirmed CL Document publication.
+Its prior malformed JSON did not reproduce; this does not qualify the whole scan.
+No subsequent whole run started; the exact retained version is in that evidence.
+
+October11 Scan status: the tool-disabled single JSON correction and safe numeric
+syntax feedback are reviewed and implemented. The initial whole attempt plus10
+restarts produced no complete publication. Most failed malformed final JSON;
+restart10 hit the retained cumulative input-byte limit. Isolated GuestSync,
+QueryAllCreditCardOp and channel userAuth trials published successfully. Exact
+results are in [tool-disabled correction evidence](../../specs/20-1-Oct14-scan/tool-disabled-correction-verification.md).
+
+Real runs exposed and prompted correction of approval expiry and descriptor
+ownership. Current Scan replaces still-current approval-bound runtimes only at
+settled file boundaries, retains one original run-owned CodeGraph descriptor per
+repository and the cumulative native-session counter, and caps file work by
+genuine remaining authority. It does not reinitialize, delete/adopt retained state,
+extend issuer policy or change shared schemas. Independent review accepted;
+full SelfContained4838/4839 with sole existing report-parser failure. Controlled
+two-approval contained reads pass; second-series trial5 continued accepting files
+after genuine renewal in a real run. That run still failed final JSON validation.
+See [renewal evidence](../../specs/20-1-Oct14-scan/source-approval-renewal-verification.md).
+
+The user's conditional next experiment is implemented and independently reviewed:
+default-false UseTextForJsonCorrection changes only the existing
+eligible correction's response format, preserving strict parsing and every budget.
+All31correction cases pass; full SelfContained4843/4844, sole existing report-parser
+failure. Isolated POM passed with1accepted file/6published Documents on one request
+(no correction exercised). All ten second-series whole trials failed final JSON
+validation with the flag enabled; none published. The user's conditional bounded
+hard-retry implementation is now independently reviewed: default off, two extra
+eligible corrections per file and sixteen per original run, same Worker/history,
+tools disabled, every original guard/cap unchanged, transient retries zero required.
+Full SelfContained4864/4865 with the same report-parser failure; the final added
+round-cap guard passes1/1. The authorized hard-mode whole run failed after274.24s:
+7accepted/77selected,0published Documents; GuestSyncOp.java still returned incomplete
+final JSON after bounded corrections.3extra reservations/client entries,13requests,
+known usage; settled and all source hashes matched. The authorized retry sequence
+is exhausted; no complete real corpus or ordinary-reader success is claimed. See
+[hard correction evidence](../../specs/20-1-Oct14-scan/hard-correction-verification.md) and
+[text correction evidence](../../specs/20-1-Oct14-scan/text-correction-verification.md).
+
+Current response-format disposition: the user restored json_object for Scan JSON
+proposals/corrections only. The old text-correction flag is compatibility input
+and no longer changes format; hard-mode limits and correction guards remain.
+Independent stream review found no proven loss of valid pre-DONE content, but
+passive observation does not prove HTTP EOF and comparisons cover only parse
+failures. See [format rollback and review](../../specs/20-1-Oct14-scan/json-format-stream-review.md).
+
+Current Scan correction behavior (2026-10-11): normal Generate now permits three
+same-file final-JSON regenerations; legacy hard mode remains one ordinary plus
+two additional corrections, never stacked. Existing budgets/authorization remain,
+and a correction cannot obtain a fresh allowance through outer transient replay.
+Bounded, redacted correction diagnostics use the owned JSONL log. Independent
+static review is accepted; controlled verification and the unchanged real-run
+qualification boundary are recorded in
+[three-correction verification](../../specs/20-1-Oct14-scan/three-correction-verification.md).
+The user's subsequent explicitly confirmed whole run on `7fb5ce2e` failed after
+600.43 seconds: 15/77 files accepted, zero published Documents. One file recovered
+after a correction; LoginNoticeOp.java exhausted all three regenerations, with
+normally ended but incomplete JSON. No timeout, unknown usage or unresolved
+settlement check; source hashes matched. This new single-run grant is consumed.
+See [real three-correction outcome](../../specs/20-1-Oct14-scan/three-correction-whole-run.md).
+The user's next staged correction strategy is now implemented and independently
+accepted: regeneration 1 retains configured thinking, 2 disables it, and 3 first
+prunes rejected correction turns while preserving original evidence, then disables
+thinking. Overrides are request-local; the next file restores configured behavior.
+Affected Worker/GenerateRunner checks pass 383/383; the known unrelated full-suite
+report-parser failure remains. The authorized whole scan completed with 49/77
+accepted, zero published Documents, and Transport/Cancelled on RegistUserAuth.java
+after 1773.18 seconds. All nine JSON correction sequences recovered, including
+one real compacted third regeneration. Launcher timeout was false; the terminal
+report does not identify the cancellation origin. Usage is unknown; source hashes
+matched and no settlement check is needed. This single-run grant is consumed;
+see [staged correction evidence](../../specs/20-1-Oct14-scan/staged-correction-verification.md).
+The user then held resume work and approved configurable run duration plus one
+fresh 240-minute whole scan. The reviewed implementation supports 1..86400 seconds,
+retaining the 1800-second default and other budgets/live authorization checks.
+Final affected tests passed 143/143; the known unrelated report-parser full-suite
+failure remains. Fresh real run `deadline240-whole-01` completed on implementation
+`36f19c4e`, batch `1a327657-6a55-4e65-ba06-6992f423d40e`: 77/77 files accepted,
+163 Documents, complete coverage and confirmed CL-only publication in 2765.81s
+under the 14400-second run deadline. All source hashes matched; no timeout or
+settlement check. The one-run grant is consumed. Ordinary reader verification
+is separate from this successful generation/publication result. See
+[configurable deadline evidence](../../specs/20-1-Oct14-scan/configurable-run-deadline.md).
+
+The narrow BL-from-existing-CL route now selects an exact complete CL-only
+publication through `existingClPublicationId` in a `cl-and-bl` Generate policy.
+It bypasses CL generation/source tools and appends BL separately, preserving
+the original CL Documents and publication. Owner admission/settlement receipts
+exclude overlapping attempts; a settled failure allows a fresh authorized run
+and reuses committed resolution outcomes. Unknown commits or lost processes
+remain blocked; generic resume/crash recovery is not implemented. No schema
+migration or real retained-database mutation was needed. Current verification
+and the still-required explicit roots, provider/budget and fresh invocation
+authority are recorded in
+[BL-from-existing-CL evidence](../../specs/20-1-Oct14-scan/business-from-existing-cl.md).
+No paid BL run has been started under this implementation authorization.
+
+earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
+retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and
 volume, creating only a new isolated database; do not stop/delete shared resources.
 The user removed cumulative request/token caps for this run; current finite fields

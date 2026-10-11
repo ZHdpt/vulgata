@@ -20,6 +20,55 @@ namespace Vulgata.Tests.OctoberScan;
 
 public sealed class OctoberScanEntryPointTests
 {
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("absent", 8192)]
+    [InlineData("minimum", 1)]
+    [InlineData("default", 8192)]
+    [InlineData("maximum", 393216)]
+    [InlineData("zero", 0)]
+    [InlineData("above-maximum", 393217)]
+    [InlineData("malformed", -1)]
+    public void MaxOutputCap_WorkerConfigurationDefaultsAndEnforcesInclusiveBounds(string condition, int expected)
+    {
+        var values = new Dictionary<string, string?>();
+        if (condition != "absent")
+            values["October:WorkerMaxOutputTokens"] = condition == "malformed" ? "not-an-integer" : expected.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+
+        if (condition is "zero" or "above-maximum" or "malformed")
+        {
+            var error = Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadWorkerMaxOutputTokens(configuration));
+            Assert.DoesNotContain("not-an-integer", error.Message, StringComparison.Ordinal);
+        }
+        else Assert.Equal(expected, OctoberGeneratorEntryPoint.ReadWorkerMaxOutputTokens(configuration));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(null, true)]
+    [InlineData("low", true)]
+    [InlineData("", false)]
+    [InlineData("LOW", false)]
+    [InlineData(" low", false)]
+    [InlineData("high", false)]
+    [InlineData("PRIVATE_INVALID_VALUE", false)]
+    [InlineData("nested", false)]
+    public void DeepSeekLowReasoning_ConfigurationAcceptsOnlyAbsentOrExactLow(string? value, bool accepted)
+    {
+        var values = new Dictionary<string, string?>();
+        if (value == "nested") values["October:DeepSeekWorkerReasoningEffort:Effort"] = "low";
+        else if (value is not null) values["October:DeepSeekWorkerReasoningEffort"] = value;
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        if (accepted) Assert.Equal(value, OctoberGeneratorEntryPoint.ReadDeepSeekWorkerReasoningEffort(configuration));
+        else
+        {
+            var error = Assert.Throws<InvalidOperationException>(() => OctoberGeneratorEntryPoint.ReadDeepSeekWorkerReasoningEffort(configuration));
+            Assert.DoesNotContain("PRIVATE", error.Message);
+        }
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(0)]
@@ -376,6 +425,11 @@ public sealed class OctoberScanEntryPointTests
     [InlineData("defined")]
     [InlineData("undefined-category")]
     [InlineData("undefined-slot")]
+    [InlineData("undefined-field-failure")]
+    [InlineData("undefined-field")]
+    [InlineData("negative-unit-index")]
+    [InlineData("excess-unit-index")]
+    [InlineData("structural")]
     [InlineData("completed")]
     [InlineData("wrong-stage")]
     [InlineData("cleared")]
@@ -384,7 +438,10 @@ public sealed class OctoberScanEntryPointTests
     {
         var parse = new OctoberWorkerParseDiagnosticSnapshot(
             condition == "undefined-category" ? (OctoberWorkerParseFailure)99999 : OctoberWorkerParseFailure.ClosedFields,
-            condition == "undefined-slot" ? (OctoberWorkerParseSlot)99999 : OctoberWorkerParseSlot.Claims);
+            condition == "undefined-slot" ? (OctoberWorkerParseSlot)99999 : OctoberWorkerParseSlot.Claims,
+            condition == "undefined-field-failure" ? (OctoberWorkerFieldFailure)99999 : condition == "structural" ? OctoberWorkerFieldFailure.Missing : null,
+            condition == "undefined-field" ? (OctoberWorkerParseSlot)99999 : condition == "structural" ? OctoberWorkerParseSlot.ParentSelector : null,
+            condition == "negative-unit-index" ? -1 : condition == "excess-unit-index" ? 65536 : condition == "structural" ? 0 : null);
         var snapshot = new OctoberWorkerDiagnosticSnapshot(
             condition == "completed" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput,
             OctoberWorkerRetryDisposition.None,
@@ -401,6 +458,7 @@ public sealed class OctoberScanEntryPointTests
             new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
         Assert.NotEqual(0, exit);
         Assert.DoesNotContain("PRIVATE", output.ToString()); Assert.DoesNotContain("99999", output.ToString());
+        Assert.DoesNotContain("65536", output.ToString());
         using var json = JsonDocument.Parse(output.ToString());
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var worker) && worker.ValueKind != JsonValueKind.Null;
         if (condition == "foreign-binding") { Assert.False(present); return; }
@@ -411,12 +469,118 @@ public sealed class OctoberScanEntryPointTests
             Assert.Equal(JsonValueKind.Null, projected.ValueKind);
             return;
         }
-        Assert.Equal(new[] { "category", "slot" }, projected.EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "category", "field", "fieldFailure", "slot", "unitIndex" }, projected.EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined-category") Assert.Equal(JsonValueKind.Null, projected.GetProperty("category").ValueKind);
         else Assert.Equal("ClosedFields", projected.GetProperty("category").GetString());
         if (condition == "undefined-slot") Assert.Equal(JsonValueKind.Null, projected.GetProperty("slot").ValueKind);
         else Assert.Equal("Claims", projected.GetProperty("slot").GetString());
+        if (condition == "structural")
+        {
+            Assert.Equal("Missing", projected.GetProperty("fieldFailure").GetString());
+            Assert.Equal("ParentSelector", projected.GetProperty("field").GetString());
+            Assert.Equal(0, projected.GetProperty("unitIndex").GetInt32());
+        }
+        else
+        {
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("fieldFailure").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("field").ValueKind);
+            Assert.Equal(JsonValueKind.Null, projected.GetProperty("unitIndex").ValueKind);
+        }
     }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("absent")]
+    [InlineData("valid")]
+    [InlineData("negative-reserved")]
+    [InlineData("over-run-limit")]
+    [InlineData("started-exceeds-reserved")]
+    [InlineData("foreign-binding")]
+    public async Task HardRetryBudgetProjection_EmitsOnlyBoundedCountsForMatchingOutputAsync(string condition)
+    {
+        var batch = Guid.NewGuid();
+        int reserved = condition == "negative-reserved" ? -1 : condition == "over-run-limit" ? 17 : 2;
+        int started = condition == "started-exceeds-reserved" ? 3 : 1;
+        var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(null, null, null, true), [])
+        {
+            HardRetry = condition == "absent" ? null : new(reserved, started)
+        };
+        if (condition == "foreign-binding")
+            report = report with { Publication = new(new("PRIVATE_DATABASE", "foreign-target", batch, new string('a', 64)), Guid.NewGuid()) };
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(
+            new(OctoberGeneratorMode.Generate, "exact-target", batch, null, new() { OutputStage = "cl-only" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+
+        using var json = JsonDocument.Parse(output.ToString());
+        bool present = json.RootElement.TryGetProperty("hardRetry", out var projected) && projected.ValueKind != JsonValueKind.Null;
+        if (condition is "absent" or "negative-reserved" or "over-run-limit" or "started-exceeds-reserved" or "foreign-binding")
+        {
+            Assert.False(present);
+            Assert.DoesNotContain("PRIVATE_DATABASE", output.ToString(), StringComparison.Ordinal);
+            return;
+        }
+        Assert.True(present);
+        Assert.Equal(new[] { "providerCallsStarted", "reservedAttempts" },
+            projected.EnumerateObject().Select(item => item.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(2, projected.GetProperty("reservedAttempts").GetInt32());
+        Assert.Equal(1, projected.GetProperty("providerCallsStarted").GetInt32());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("defined")]
+    [InlineData("zero")]
+    [InlineData("missing")]
+    [InlineData("wrong-status")]
+    [InlineData("wrong-stage")]
+    [InlineData("wrong-failure")]
+    [InlineData("undefined-enum")]
+    [InlineData("negative-counts")]
+    [InlineData("excess-cap")]
+    [InlineData("max-cap")]
+    public async Task UnsupportedFinishObservation_ConsoleProjectsOnlyWhitelistedScalarsAtExactFailureBoundaryAsync(string condition)
+    {
+        var observation = condition == "missing" ? new OctoberWorkerTerminalObservation() : new OctoberWorkerTerminalObservation(
+            condition == "undefined-enum" ? (OctoberWorkerUnsupportedFinish)99999 : OctoberWorkerUnsupportedFinish.Length,
+            condition == "negative-counts" ? -1 : condition == "excess-cap" ? 393217 : condition == "max-cap" ? 393216 : 137,
+            condition == "negative-counts" ? -1 : condition == "zero" ? 0 : 101,
+            condition == "negative-counts" ? -2 : condition == "zero" ? 0 : 37,
+            condition == "negative-counts" ? -3 : condition == "zero" ? 0 : 29);
+        var snapshot = new OctoberWorkerDiagnosticSnapshot(
+            condition == "wrong-status" ? OctoberFileWorkerStatus.Completed : OctoberFileWorkerStatus.InvalidOutput,
+            OctoberWorkerRetryDisposition.None,
+            condition == "wrong-stage" ? OctoberWorkerFailureStage.ProposalParse : OctoberWorkerFailureStage.StreamTerminal)
+        {
+            TerminalFailure = condition == "wrong-failure" ? OctoberWorkerTerminalFailure.MissingFinish : OctoberWorkerTerminalFailure.UnsupportedFinish,
+            TerminalObservation = observation
+        };
+        var batch = Guid.NewGuid();
+        var report = new OctoberScanReport("cl-only", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(null, null, null, true), []) { WorkerDiagnostics = snapshot };
+        using var output = new StringWriter(); using var error = new StringWriter();
+        await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(new(OctoberGeneratorMode.Generate, "exact-target", batch, null, new() { OutputStage = "cl-only" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        Assert.DoesNotContain("99999", output.ToString());
+        using var json = JsonDocument.Parse(output.ToString());
+        var projected = json.RootElement.GetProperty("workerDiagnostics").GetProperty("terminalObservation");
+        if (condition is "wrong-status" or "wrong-stage" or "wrong-failure") { Assert.Equal(JsonValueKind.Null, projected.ValueKind); return; }
+        Assert.Equal(new[] { "finishReason", "inputTokens", "maximumOutputTokens", "outputTokens", "reasoningTokens" }, projected.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        if (condition == "missing") { Assert.All(projected.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
+        if (condition == "undefined-enum") Assert.Equal(JsonValueKind.Null, projected.GetProperty("finishReason").ValueKind);
+        else Assert.Equal("Length", projected.GetProperty("finishReason").GetString());
+        if (condition is "negative-counts" or "excess-cap") Assert.Equal(JsonValueKind.Null, projected.GetProperty("maximumOutputTokens").ValueKind);
+        else if (condition == "max-cap") Assert.Equal(393216, projected.GetProperty("maximumOutputTokens").GetInt32());
+        else Assert.Equal(137, projected.GetProperty("maximumOutputTokens").GetInt32());
+        foreach (var name in new[] { "inputTokens", "outputTokens", "reasoningTokens" })
+            if (condition == "negative-counts") Assert.Equal(JsonValueKind.Null, projected.GetProperty(name).ValueKind);
+            else Assert.Equal(condition == "zero" ? 0 : name == "inputTokens" ? 101 : name == "outputTokens" ? 37 : 29, projected.GetProperty(name).GetInt64());
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("defined")]
@@ -451,7 +615,7 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("workerDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "absent" or "foreign-binding") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "budgetFailure", "captureStatus", "failureStage", "httpObservation", "parseFailure", "retryDisposition", "status", "terminalFailure", "toolFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "budgetFailure", "captureStatus", "failureStage", "httpObservation", "parseFailure", "retryDisposition", "status", "terminalFailure", "terminalObservation", "toolFailure" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
         if (condition == "undefined") { Assert.All(diagnostic.EnumerateObject(), property => Assert.Equal(JsonValueKind.Null, property.Value.ValueKind)); return; }
         Assert.Equal(condition is "budget" or "undefined-budget" ? "BudgetExceeded" : condition == "completed-terminal" ? "Completed" : "InvalidOutput", diagnostic.GetProperty("status").GetString());
         Assert.Equal("None", diagnostic.GetProperty("retryDisposition").GetString());

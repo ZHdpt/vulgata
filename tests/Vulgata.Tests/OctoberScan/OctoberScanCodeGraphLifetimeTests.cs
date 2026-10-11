@@ -5,6 +5,7 @@ using Vulgata.Tests.PreparedSource;
 using Vulgata.Infrastructure.Source;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
+using Vulgata.OctoberGenerator;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.OctoberScan;
@@ -12,6 +13,36 @@ namespace Vulgata.Tests.OctoberScan;
 /// <summary>Controlled descriptor lifecycle tests. Creating/disposal without discovery never starts a native process.</summary>
 public sealed class OctoberScanCodeGraphLifetimeTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CodeGraphOwner_RetainsOneDescriptorAcrossThirtyMinutesWithinFourHourRunAsync()
+    {
+        Guid repositoryId = Guid.NewGuid();
+        TimeSpan remaining = TimeSpan.FromHours(4);
+        int releases = 0, preparations = 0;
+        var descriptor = new PreparedCodeGraphConnection(repositoryId,
+            Path.Combine(Path.GetTempPath(), "never-executed.ps1"), "controlled", [], Path.GetTempPath(),
+            new Dictionary<string, string>(), () => releases++, _ => new ControlledSession(),
+            remainingLifetime: remaining);
+        await using var owner = new OctoberCodeGraphOwner(repositoryId, "owned-root", () => remaining);
+
+        var first = await owner.GetOrCreateAsync((lifetime, _) =>
+        {
+            preparations++;
+            Assert.Equal(TimeSpan.FromHours(4), lifetime);
+            return Task.FromResult(descriptor);
+        });
+        remaining -= TimeSpan.FromMinutes(31);
+        var afterThirtyMinutes = await owner.GetOrCreateAsync((_, _) =>
+            throw new InvalidOperationException("The original prepared descriptor must be reused."));
+
+        Assert.Same(descriptor, first);
+        Assert.Same(first, afterThirtyMinutes);
+        Assert.Equal(1, preparations);
+        Assert.Equal(0, releases);
+        await owner.DisposeAsync();
+        Assert.Equal(1, releases);
+    }
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task OpenSession_DisposedCurrentSession_AllowsReplacementOnSameDescriptorAsync()
@@ -509,6 +540,27 @@ public sealed class OctoberScanCodeGraphLifetimeTests
         await using var descriptor = await factory.PrepareAsync(fixture.Approval.RepositoryId, fixture.PreparedRootPath, remaining, CancellationToken.None);
         Assert.Equal(1, runner.Calls);
         Assert.True(runner.LastToken.CanBeCanceled, "Init needs a linked finite deadline even without caller cancellation.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_FourHourRunKeepsInitializationTimeoutAtExistingTwoMinuteCapAsync()
+    {
+        await using var fixture = await PreparedSourceFixture.CreateAsync();
+        var command = Path.Combine(fixture.SandboxPath, "never-executed.ps1");
+        await File.WriteAllTextAsync(command, "# controlled runner only");
+        var runner = new ControlledInitRunner(request =>
+        {
+            Assert.Equal(TimeSpan.FromMinutes(2), request.Timeout);
+            File.WriteAllText(Path.Combine(request.WorkingDirectory, ".codegraph", "codegraph.db"), "controlled index");
+        });
+        var factory = new PreparedCodeGraphConnectionFactory(command, runner, static (_, _) => Task.CompletedTask);
+
+        await using var descriptor = await factory.PrepareAsync(fixture.Approval.RepositoryId,
+            fixture.PreparedRootPath, TimeSpan.FromHours(4), CancellationToken.None);
+
+        Assert.Equal(1, runner.Calls);
+        Assert.True(runner.LastToken.CanBeCanceled);
     }
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
