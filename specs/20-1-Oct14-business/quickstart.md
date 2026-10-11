@@ -470,3 +470,15 @@ The production change is prompt-only. It maps `input.Corpus.Documents[i].Version
 Required-launcher `isolation-9f9a9e5ffbc74906bf5123d709765c7d` selected3, passed2/failed1: actual selected SDK request-to-proposal controls already proved exact wire-derived references are accepted and an output section label substituted as an input locator yields SectionReference. Only the embedded prompt's missing explicit mapping was RED. The controlled handler derives references from the actual serialized request rather than hardcoding fixture identities. Independent prompt review and separate test-owner assessment passed; this does not prove the runtime model confused those ID scopes.
 
 Affected source-free GREEN passed **342/342**, zero failures/skips, in `isolation-14d9d6193398487da80fc0682910b437`, selecting Business, Flow and OctoberScanBusinessFinalizationTests through the required launcher. Both independent review and separate test-owner assessment passed. Integrator must include this embedded prompt in the next fresh coordinated run so its existing prompt fingerprint reflects the clarification. No runtime attempt, PostgreSQL, provider call or new real-content qualification was consumed here; the last runtime attempt remains Integrator-owned.
+
+### Existing accepted CL readiness — 2026-10-11
+
+The user now owns management/coordination; no other chat was contacted. Business
+owner code matches local integration `d623c509`; the assigned branch was preserved.
+Existing controlled owner checks passed **462/462**, zero failures/skips,
+`isolation-bed1870f25ba4b5e9632fca369968ead`. No production patch, shared-contract
+change, migration or runtime qualification was performed. The exact Scan inputs,
+existing API sequence, detached-dispatch contract decision and login/registration
+qualification checklist are in [the existing-CL handoff](existing-cl-handoff.md).
+The engines are implemented; a completed CL run does not by itself grant a new
+Business dispatch slot. Scan's unfinished command remains unassessed.
