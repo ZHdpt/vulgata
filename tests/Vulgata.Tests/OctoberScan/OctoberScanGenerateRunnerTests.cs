@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Runtime.CompilerServices;
@@ -165,6 +166,157 @@ public sealed class OctoberScanGenerateRunnerTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task Generate_OrdinaryPolicyAllowsThreeJsonCorrectionsAndLogsBoundedEventsAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        host.Client.TerminalTextSequence =
+        [
+            "{initial syntax failure",
+            "[]",
+            Harness.Model.ValidProposalJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal),
+            Harness.Model.ValidProposalJson
+        ];
+        int logCalls = 0;
+        ImmutableArray<OctoberJsonCorrectionEvent> loggedEvents = [];
+        await using var runner = new OctoberGenerateRunner(host.Dependencies with
+        {
+            JsonCorrectionLog = (request, events, _) =>
+            {
+                Assert.Equal(host.Execution.Setup.TargetId, request.Binding.TargetId);
+                logCalls++;
+                loggedEvents = events;
+                return Task.FromResult(true);
+            }
+        });
+
+        var result = await runner.ExecuteAsync(host.Execution);
+
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(0, report.ExitCode);
+        Assert.Single(report.AcceptedFiles);
+        Assert.NotNull(report.Publication);
+        Assert.Equal(5, host.Client.Calls); // source tool read plus four complete proposal candidates
+        Assert.Equal(1, logCalls);
+        Assert.Equal(3, loggedEvents.Count(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested));
+        Assert.Equal(3, loggedEvents.Count(item => item.Phase == OctoberJsonCorrectionPhase.CandidateRejected));
+        Assert.Contains(loggedEvents, item => item.Phase == OctoberJsonCorrectionPhase.WorkerFinished &&
+            item.Status == OctoberFileWorkerStatus.Completed);
+        Assert.Null(report.HardRetry); // ordinary three-retry policy never enables the extra run budget
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Generate_CorrectionLogFailureAddsSafeGapWithoutChangingPublicationAsync(bool throwFromLog)
+    {
+        await using var host = await Harness.CreateAsync();
+        host.Client.TerminalTextSequence =
+        [
+            "{initial syntax failure",
+            "[]",
+            Harness.Model.ValidProposalJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal),
+            Harness.Model.ValidProposalJson
+        ];
+        int logCalls = 0;
+        await using var runner = new OctoberGenerateRunner(host.Dependencies with
+        {
+            JsonCorrectionLog = (_, _, _) =>
+            {
+                logCalls++;
+                return throwFromLog
+                    ? Task.FromException<bool>(new IOException("SYNTHETIC_PRIVATE_LOG_FAILURE"))
+                    : Task.FromResult(false);
+            }
+        });
+
+        var result = await runner.ExecuteAsync(host.Execution);
+
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(0, report.ExitCode);
+        Assert.Single(report.AcceptedFiles);
+        Assert.NotNull(report.Publication);
+        Assert.Contains(report.Gaps, gap => gap.Code == "json-correction-log-incomplete");
+        Assert.Equal(5, host.Client.Calls);
+        Assert.Equal(1, logCalls);
+        Assert.DoesNotContain("SYNTHETIC_PRIVATE_LOG_FAILURE", JsonSerializer.Serialize(report), StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Generate_KnownSafeTransientAfterJsonCorrectionDoesNotResetOrRetryWorkerAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        var client = new CorrectionThenTransientClient();
+        int creations = 0;
+        ImmutableArray<OctoberJsonCorrectionEvent> correctionEvents = [];
+        await using var runner = new OctoberGenerateRunner(host.Dependencies with
+        {
+            CreateWorkerClient = (_, _) =>
+            {
+                creations++;
+                return Task.FromResult<IChatClient>(client);
+            },
+            JsonCorrectionLog = (_, events, _) =>
+            {
+                correctionEvents = events;
+                return Task.FromResult(true);
+            }
+        });
+        var execution = host.Execution with
+        { Policy = host.Execution.Policy with { MaximumTransientRetries = 2 } };
+
+        var result = await runner.ExecuteAsync(execution);
+
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
+        Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, diagnostic.Status);
+        Assert.Equal(OctoberWorkerFailureStage.Transport, diagnostic.FailureStage);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, diagnostic.RetryDisposition);
+        Assert.Equal(1, creations); // no outer worker restart after a correction was requested
+        Assert.Equal(2, client.Calls); // malformed candidate, then the failed correction leaf
+        Assert.Equal(1, host.BeginCalls);
+        Assert.Equal(1, host.SourceOpens);
+        Assert.Empty(report.AcceptedFiles);
+        Assert.Null(report.Publication);
+        Assert.Equal(1, correctionEvents.Count(item => item.Phase == OctoberJsonCorrectionPhase.CandidateRejected));
+        Assert.Equal(1, correctionEvents.Count(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested));
+        Assert.All(correctionEvents.Where(item => item.Phase is OctoberJsonCorrectionPhase.CandidateRejected or
+            OctoberJsonCorrectionPhase.RetryRequested),
+            item => Assert.Equal(OctoberWorkerObservedFinish.Stop, item.FinishReason));
+        Assert.Contains(correctionEvents, item => item.Phase == OctoberJsonCorrectionPhase.WorkerFinished &&
+            item.Status == OctoberFileWorkerStatus.ProviderFailed && item.FailureStage == OctoberWorkerFailureStage.Transport &&
+            item.FinishReason is null);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Generate_KnownSafeTransientBeforeJsonCorrectionKeepsOuterRetryAsync()
+    {
+        await using var host = await Harness.CreateAsync();
+        var first = new KnownSafeTransientClient();
+        int creations = 0;
+        await using var runner = new OctoberGenerateRunner(host.Dependencies with
+        {
+            CreateWorkerClient = (_, _) => Task.FromResult<IChatClient>(++creations == 1 ? first : host.Client)
+        });
+        var execution = host.Execution with
+        { Policy = host.Execution.Policy with { MaximumTransientRetries = 1 } };
+
+        var result = await runner.ExecuteAsync(execution);
+
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(0, report.ExitCode);
+        Assert.Single(report.AcceptedFiles);
+        Assert.NotNull(report.Publication);
+        Assert.Equal(2, creations);
+        Assert.Equal(1, first.Calls);
+        Assert.Equal(2, host.Client.Calls); // the restarted worker reads source and submits its final proposal
+        Assert.Equal(1, host.BeginCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UnsupportedFinishObservation_ActualRunnerMapsFinalLeafAndReauthorizesDiagnosticReplayAsync()
     {
         await using var host = await Harness.CreateAsync();
@@ -234,7 +386,7 @@ public sealed class OctoberScanGenerateRunnerTests
         });
         var result = await runner.ExecuteAsync(host.Execution);
         var report = Assert.IsType<OctoberScanReport>(result.Report);
-        Assert.Equal(nextFile ? 2 : 3, first.Calls); Assert.Equal(nextFile ? 2 : 1, creations);
+        Assert.Equal(nextFile ? 2 : 5, first.Calls); Assert.Equal(nextFile ? 2 : 1, creations);
         Assert.Equal(nextFile ? 1 : 0, report.AcceptedFiles.Length);
         var diagnostic = Assert.IsType<OctoberWorkerDiagnosticSnapshot>(report.WorkerDiagnostics);
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, diagnostic.Status); Assert.Equal(OctoberWorkerFailureStage.ProposalParse, diagnostic.FailureStage);
@@ -292,7 +444,7 @@ public sealed class OctoberScanGenerateRunnerTests
             Assert.Equal(OctoberWorkerParseSlot.Root, parse.Slot);
         }
         Assert.NotEqual(0, report.ExitCode); Assert.Empty(report.AcceptedFiles); Assert.Null(report.Publication);
-        Assert.Equal(0, harness.FreezeCalls); Assert.Equal(terminal || budget ? 2 : 3, harness.Client.Calls);
+        Assert.Equal(0, harness.FreezeCalls); Assert.Equal(terminal || budget ? 2 : 5, harness.Client.Calls);
         // Isolate the metadata predicate with the actual observed immutable snapshot.
         var onlyDiagnostic = report with { Publication = null, Documents = [], AcceptedFiles = [], TerminalCoverage = [], Inventory = [] };
         typeof(OctoberGenerateRunner).GetField("_executionTask", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
@@ -300,7 +452,7 @@ public sealed class OctoberScanGenerateRunnerTests
         harness.AuthorityAllowed = false;
         var hidden = await harness.Runner.ExecuteAsync(harness.Execution);
         Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Null(hidden.Report.Publication); Assert.Empty(hidden.Report.Documents);
-        Assert.Same(diagnostic, report.WorkerDiagnostics); Assert.Equal(terminal || budget ? 2 : 3, harness.Client.Calls); Assert.Equal(1, harness.BeginCalls);
+        Assert.Same(diagnostic, report.WorkerDiagnostics); Assert.Equal(terminal || budget ? 2 : 5, harness.Client.Calls); Assert.Equal(1, harness.BeginCalls);
     }
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
@@ -671,7 +823,7 @@ public sealed class OctoberScanGenerateRunnerTests
             Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Report.WorkerDiagnostics.Status);
             Assert.True(await File.ReadAllTextAsync(Path.Combine(destination, "final-proposal.txt")) == host.Client.TerminalTextOverride);
             var replay = await runner.ExecuteAsync(host.Execution);
-            Assert.Equal(result.Report.WorkerDiagnostics.CaptureStatus, replay.Report!.WorkerDiagnostics!.CaptureStatus); Assert.Equal(result.Report.WorkerDiagnostics.Status, replay.Report.WorkerDiagnostics.Status); Assert.Equal(3, host.Client.Calls);
+            Assert.Equal(result.Report.WorkerDiagnostics.CaptureStatus, replay.Report!.WorkerDiagnostics!.CaptureStatus); Assert.Equal(result.Report.WorkerDiagnostics.Status, replay.Report.WorkerDiagnostics.Status); Assert.Equal(5, host.Client.Calls);
             host.AuthorityAllowed = false;
             var hidden = await runner.ExecuteAsync(host.Execution);
             Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Empty(hidden.Report.Documents); Assert.Null(hidden.Report.Publication);
@@ -846,15 +998,19 @@ public sealed class OctoberScanGenerateRunnerTests
         Assert.Equal(true, facts.HttpEqualsSdk); Assert.Equal(true, facts.SdkEqualsParse);
         Assert.Equal(Encoding.UTF8.GetByteCount(CorrectionObservationHttp.FinalMalformedText), facts.HttpTextUtf8Bytes);
         Assert.Equal(facts.HttpTextUtf8Bytes, facts.ParseInputUtf8Bytes);
-        Assert.Equal(2, wire.Requests.Count); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
+        Assert.Equal(4, wire.Requests.Count); Assert.Equal(0, host.FreezeCalls); Assert.Null(report.Publication);
         Assert.All(wire.Requests, body => Assert.False(body.TryGetProperty("stop", out _)));
         Assert.Equal("json_object", wire.Requests[0].GetProperty("response_format").GetProperty("type").GetString());
         Assert.Contains(wire.Requests[0].GetProperty("messages").EnumerateArray(), message =>
             message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
             message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
         var correctionRequest = wire.Requests[1];
-        Assert.Equal(8192, correctionRequest.GetProperty("max_tokens").GetInt32());
-        Assert.Equal("json_object", correctionRequest.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.All(wire.Requests.Skip(1), request =>
+        {
+            Assert.Equal(8192, request.GetProperty("max_tokens").GetInt32());
+            Assert.Equal("json_object", request.GetProperty("response_format").GetProperty("type").GetString());
+            Assert.Equal("none", request.GetProperty("tool_choice").GetString());
+        });
         var correctionMessages = correctionRequest.GetProperty("messages").EnumerateArray().ToArray();
         Assert.Contains(correctionMessages, message => message.TryGetProperty("role", out var role) && role.GetString() == "system" &&
             message.TryGetProperty("content", out var content) && content.GetString()!.Contains("JSON", StringComparison.OrdinalIgnoreCase));
@@ -871,7 +1027,7 @@ public sealed class OctoberScanGenerateRunnerTests
         host.AuthorityAllowed = false;
         var hidden = await runner.ExecuteAsync(execution);
         Assert.Null(hidden.Report!.WorkerDiagnostics); Assert.Null(hidden.Report.Publication); Assert.Empty(hidden.Report.Inventory);
-        Assert.Equal(2, wire.Requests.Count); Assert.Same(facts, diagnostic.HttpObservation);
+        Assert.Equal(4, wire.Requests.Count); Assert.Same(facts, diagnostic.HttpObservation);
     }
     private sealed class SelectedTarget(IOctoberHistoricalBoundSetupData setup) : IOctoberConfiguredTarget
     {
@@ -890,7 +1046,7 @@ public sealed class OctoberScanGenerateRunnerTests
             using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
             Requests.Add(body.RootElement.Clone());
             int call = Requests.Count - 1;
-            Assert.InRange(call, 0, 1);
+            Assert.InRange(call, 0, 3);
             string text = call == 0 ? FirstMalformedText : FinalMalformedText;
             string? reasoning = call == 0 ? FirstReasoning : null;
             string chunk = JsonSerializer.Serialize(new
@@ -916,6 +1072,53 @@ public sealed class OctoberScanGenerateRunnerTests
             };
             return response;
         }
+    }
+    private sealed class CorrectionThenTransientClient : IChatClient
+    {
+        internal int Calls { get; private set; }
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            if (Calls++ == 0)
+            {
+                yield return new ChatResponseUpdate
+                {
+                    Role = ChatRole.Assistant,
+                    Contents = [new TextContent("{controlled malformed candidate"),
+                        new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 8 })],
+                    FinishReason = ChatFinishReason.Stop
+                };
+                yield break;
+            }
+
+            yield return new ChatResponseUpdate
+            { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 8 })] };
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new HttpRequestException("controlled transient after correction", null, HttpStatusCode.ServiceUnavailable);
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+    private sealed class KnownSafeTransientClient : IChatClient
+    {
+        internal int Calls { get; private set; }
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            yield return new ChatResponseUpdate
+            { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 0 })] };
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new HttpRequestException("controlled transient before correction", null, HttpStatusCode.ServiceUnavailable);
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
     }
     private sealed class CancelAfterTerminal(IOctoberGenerateOperation inner, CancellationTokenSource cancellation) : IOctoberGenerateOperation
     {

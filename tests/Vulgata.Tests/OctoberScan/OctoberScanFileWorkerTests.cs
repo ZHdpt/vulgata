@@ -687,6 +687,24 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(1, Assert.Single(scope.Leases).Settlements);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_TransportFailureAfterRetryRequestIsNotAdvertisedAsSafeTransientAsync()
+    {
+        using var client = new MalformedThenTransientClient();
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.ProviderFailed, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.Transport, result.FailureStage);
+        Assert.Equal(OctoberWorkerRetryDisposition.None, result.RetryDisposition);
+        Assert.Equal(1, result.JsonCorrectionAttempts);
+        AssertCorrectionLifecycle(result, expectedRejected: 1, finishedStatus: OctoberFileWorkerStatus.ProviderFailed,
+            expectedRetries: 1);
+    }
+
     private sealed class TransientClient(bool knownUsage) : IChatClient
     {
         internal bool DisposedStream { get; private set; }
@@ -700,6 +718,34 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
                 throw new HttpRequestException("Controlled transient unavailable", null, HttpStatusCode.ServiceUnavailable);
             }
             finally { DisposedStream = true; }
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+    private sealed class MalformedThenTransientClient : IChatClient
+    {
+        internal int Calls { get; private set; }
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            if (Calls++ == 0)
+            {
+                yield return new ChatResponseUpdate
+                {
+                    Role = ChatRole.Assistant,
+                    Contents = [new TextContent("{controlled malformed candidate"),
+                        new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 8 })],
+                    FinishReason = ChatFinishReason.Stop
+                };
+                yield break;
+            }
+            yield return new ChatResponseUpdate
+            { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 12, OutputTokenCount = 8 })] };
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new HttpRequestException("controlled transient after correction", null, HttpStatusCode.ServiceUnavailable);
         }
         public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
         public void Dispose() { }
@@ -1506,6 +1552,9 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
         Assert.Equal(1, client.Requests.Count);
+        Assert.Equal(0, result.JsonCorrectionAttempts);
+        AssertCorrectionLifecycle(result, expectedRejected: 1, finishedStatus: OctoberFileWorkerStatus.InvalidOutput,
+            expectedRetries: 0);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1513,8 +1562,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
     [InlineData(-1, false)]
     [InlineData(0, true)]
     [InlineData(1, true)]
-    [InlineData(2, false)]
-    public async Task JsonCorrection_AttemptLimitAllowsOnlyZeroOrOneAsync(int attempts, bool allowed)
+    [InlineData(2, true)]
+    [InlineData(3, true)]
+    [InlineData(4, false)]
+    public async Task JsonCorrection_AttemptLimitAllowsZeroThroughThreeAsync(int attempts, bool allowed)
     {
         using var client = new ScriptedClient([new(UnitJson, ChatFinishReason.Stop)]);
         var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
@@ -1560,6 +1611,159 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Equal(2, client.Requests.Count);
+        Assert.Equal(1, result.JsonCorrectionAttempts);
+        Assert.Contains(result.JsonCorrections, item => item.Phase == OctoberJsonCorrectionPhase.CandidateRejected &&
+            item.Diagnostic?.Category == OctoberWorkerParseFailure.ClosedFields);
+        Assert.Contains(result.JsonCorrections, item => item.Phase == OctoberJsonCorrectionPhase.WorkerFinished &&
+            item.Status == OctoberFileWorkerStatus.Completed);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ThreeOrdinaryRetriesRecoverAcrossLatestParserCategoriesAsync()
+    {
+        string wrongValue = UnitJson.Replace("\"ordinal\":0", "\"ordinal\":\"wrong\"", StringComparison.Ordinal);
+        using var client = new ScriptedClient([
+            new("{initial syntax failure", ChatFinishReason.Stop),
+            new("[]", ChatFinishReason.Stop),
+            new(wrongValue, ChatFinishReason.Stop),
+            new(UnitJson, ChatFinishReason.Stop)
+        ]);
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
+        Assert.Equal(4, client.Requests.Count);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        string[] expectedCategories = ["Syntax", "RootShape", "ValueShape"];
+        for (int index = 0; index < expectedCategories.Length; index++)
+        {
+            string feedback = LastUserText(client.Requests[index + 1]);
+            Assert.Contains($"\"category\":\"{expectedCategories[index]}\"", feedback, StringComparison.Ordinal);
+            Assert.Contains($"\"remainingCorrections\":{2 - index}", feedback, StringComparison.Ordinal);
+        }
+        AssertCorrectionLifecycle(result, expectedRejected: 3, finishedStatus: OctoberFileWorkerStatus.Completed);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrection_ThreeOrdinaryRetriesExhaustWithoutAcceptingInvalidCandidateAsync()
+    {
+        using var client = new ScriptedClient(Enumerable.Range(0, 5)
+            .Select(index => new Round("{ordinary malformed " + index, ChatFinishReason.Stop)).ToArray());
+        var baseline = Request(new Frame("if (enabled) Run();\nreturn;"));
+        var request = baseline with { Limits = baseline.Limits with { MaximumJsonCorrectionAttempts = 3 } };
+
+        var result = await new OctoberFileWorkerExecutor(client, new Scope()).ExecuteAsync(request, []);
+
+        Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
+        Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
+        Assert.Null(result.Proposal);
+        Assert.Equal(4, client.Requests.Count);
+        Assert.Equal(3, result.JsonCorrectionAttempts);
+        AssertCorrectionLifecycle(result, expectedRejected: 4, finishedStatus: OctoberFileWorkerStatus.InvalidOutput,
+            expectedRetries: 3);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task JsonCorrectionLog_AppendsBoundedRedactedBatchAndRejectsPartialLineOrCancellationAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "october-json-correction-log-" + Guid.NewGuid().ToString("N"));
+        string partialRoot = root + "-partial";
+        string cancelledRoot = root + "-cancelled";
+        string lockedRoot = root + "-locked";
+        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(partialRoot);
+        Directory.CreateDirectory(cancelledRoot);
+        Directory.CreateDirectory(lockedRoot);
+        try
+        {
+            const string privateSource = "SYNTHETIC_PRIVATE_SOURCE_CONTENT";
+            const string privateProviderOutput = "SYNTHETIC_PROVIDER_RAW_OUTPUT";
+            var request = Request(new Frame(privateSource));
+            var diagnostic = new OctoberWorkerParseDiagnosticSnapshot(OctoberWorkerParseFailure.Syntax,
+                OctoberWorkerParseSlot.Root, LineNumber: 1, BytePositionInLine: 2);
+            ImmutableArray<OctoberJsonCorrectionEvent> events =
+            [
+                new(OctoberJsonCorrectionPhase.CandidateRejected, 0, 1, 1, 4,
+                    Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
+                    FinishReason: OctoberWorkerObservedFinish.Stop),
+                new(OctoberJsonCorrectionPhase.RetryRequested, 1, 1, 1, 5,
+                    Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
+                    FinishReason: OctoberWorkerObservedFinish.Stop),
+                new(OctoberJsonCorrectionPhase.WorkerFinished, 1, 1, 2, 9,
+                    Encoding.UTF8.GetByteCount(privateProviderOutput), diagnostic,
+                    OctoberFileWorkerStatus.InvalidOutput, OctoberWorkerFailureStage.ProposalParse,
+                    FinishReason: OctoberWorkerObservedFinish.Stop)
+            ];
+            var log = new OctoberJsonCorrectionLog(root, TimeProvider.System);
+
+            Assert.True(await log.AppendAsync(request, events));
+
+            string path = Path.Combine(root, "worker-json-corrections.jsonl");
+            string[] lines = await File.ReadAllLinesAsync(path);
+            Assert.Equal(events.Length, lines.Length);
+            foreach (string line in lines)
+            {
+                using var json = JsonDocument.Parse(line);
+                var record = json.RootElement;
+                Assert.True(record.GetProperty("recordedAtUtc").GetDateTimeOffset() > DateTimeOffset.MinValue);
+                Assert.Equal(request.RunId, record.GetProperty("runId").GetGuid());
+                Assert.Equal(request.FileWorkstreamId, record.GetProperty("fileWorkstreamId").GetGuid());
+                Assert.Equal(request.AdmissionId, record.GetProperty("admissionId").GetGuid());
+                Assert.Equal(request.AttemptId, record.GetProperty("attemptId").GetGuid());
+                string expectedPathHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(request.Source.Origin.RelativePath))).ToLowerInvariant();
+                Assert.Equal(expectedPathHash, record.GetProperty("relativePathSha256").GetString());
+                Assert.Equal(64, record.GetProperty("providerSha256").GetString()!.Length);
+                Assert.False(record.GetProperty("hardRetryMode").GetBoolean());
+                Assert.Equal(request.Limits.MaximumOutputTokensPerRequest,
+                    record.GetProperty("maximumOutputTokensPerRequest").GetInt32());
+                Assert.Equal(request.Limits.MaximumInputUtf8Bytes,
+                    record.GetProperty("maximumInputUtf8Bytes").GetInt32());
+                Assert.Equal(request.Limits.MaximumOutputUtf8Bytes,
+                    record.GetProperty("maximumOutputUtf8Bytes").GetInt32());
+                Assert.Equal("Syntax", record.GetProperty("diagnostic").GetProperty("category").GetString());
+                Assert.Equal("Root", record.GetProperty("diagnostic").GetProperty("slot").GetString());
+                Assert.Equal("Stop", record.GetProperty("finishReason").GetString());
+            }
+            string logged = await File.ReadAllTextAsync(path);
+            Assert.DoesNotContain(privateSource, logged, StringComparison.Ordinal);
+            Assert.DoesNotContain(privateProviderOutput, logged, StringComparison.Ordinal);
+            Assert.DoesNotContain(request.Source.Origin.RelativePath, logged, StringComparison.Ordinal);
+            Assert.DoesNotContain(request.ProviderProfileId, logged, StringComparison.Ordinal);
+
+            string partialPath = Path.Combine(partialRoot, "worker-json-corrections.jsonl");
+            const string partialLine = "{\"existing\":true";
+            await File.WriteAllTextAsync(partialPath, partialLine);
+            Assert.False(await new OctoberJsonCorrectionLog(partialRoot).AppendAsync(request, events));
+            Assert.Equal(partialLine, await File.ReadAllTextAsync(partialPath));
+
+            using var cancelled = new CancellationTokenSource();
+            cancelled.Cancel();
+            Assert.False(await new OctoberJsonCorrectionLog(cancelledRoot).AppendAsync(request, events, cancelled.Token));
+            Assert.False(File.Exists(Path.Combine(cancelledRoot, "worker-json-corrections.jsonl")));
+
+            string lockedPath = Path.Combine(lockedRoot, "worker-json-corrections.jsonl");
+            const string existingLine = "{\"existing\":true}\n";
+            await File.WriteAllTextAsync(lockedPath, existingLine);
+            await using (var held = new FileStream(lockedPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                long originalLength = held.Length;
+                Assert.False(await new OctoberJsonCorrectionLog(lockedRoot).AppendAsync(request, events));
+                Assert.Equal(originalLength, held.Length);
+            }
+            Assert.Equal(existingLine, await File.ReadAllTextAsync(lockedPath));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+            Directory.Delete(partialRoot, true);
+            Directory.Delete(cancelledRoot, true);
+            Directory.Delete(lockedRoot, true);
+        }
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1783,6 +1987,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
         Assert.Equal(OctoberFileWorkerStatus.Completed, result.Status);
         Assert.Equal(4, client.Requests.Count); // one ordinary correction plus two hard retries
+        Assert.Equal(3, result.JsonCorrectionAttempts);
         Assert.Equal(new OctoberCorrectionBudgetSnapshot(2, 2), budget.Read());
         Assert.Contains("\"category\":\"Syntax\"", LastUserText(client.Requests[1]), StringComparison.Ordinal);
         Assert.Contains("\"remainingCorrections\":2", LastUserText(client.Requests[1]), StringComparison.Ordinal);
@@ -1790,6 +1995,7 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Contains("\"remainingCorrections\":1", LastUserText(client.Requests[2]), StringComparison.Ordinal);
         Assert.Contains("\"category\":\"ValueShape\"", LastUserText(client.Requests[3]), StringComparison.Ordinal);
         Assert.Contains("\"remainingCorrections\":0", LastUserText(client.Requests[3]), StringComparison.Ordinal);
+        AssertCorrectionLifecycle(result, expectedRejected: 3, finishedStatus: OctoberFileWorkerStatus.Completed);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1811,7 +2017,10 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         Assert.Equal(OctoberFileWorkerStatus.InvalidOutput, result.Status);
         Assert.Equal(OctoberWorkerFailureStage.ProposalParse, result.FailureStage);
         Assert.Equal(4, client.Requests.Count); // hard mode is bounded to two extra leaves
+        Assert.Equal(3, result.JsonCorrectionAttempts);
         Assert.Equal(new OctoberCorrectionBudgetSnapshot(2, 2), budget.Read());
+        AssertCorrectionLifecycle(result, expectedRejected: 4, finishedStatus: OctoberFileWorkerStatus.InvalidOutput,
+            expectedRetries: 3);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1948,6 +2157,28 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     private static string LastUserText(ChatMessage[] messages) => messages.Last(message => message.Role == ChatRole.User)
         .Contents.OfType<TextContent>().Last().Text;
+    private static void AssertCorrectionLifecycle(OctoberFileWorkerResult result, int expectedRejected,
+        OctoberFileWorkerStatus finishedStatus, int? expectedRetries = null)
+    {
+        var events = result.JsonCorrections;
+        Assert.Equal(expectedRejected, events.Count(item => item.Phase == OctoberJsonCorrectionPhase.CandidateRejected));
+        Assert.Equal(expectedRetries ?? expectedRejected, events.Count(item => item.Phase == OctoberJsonCorrectionPhase.RetryRequested));
+        Assert.Single(events.Where(item => item.Phase == OctoberJsonCorrectionPhase.WorkerFinished && item.Status == finishedStatus));
+        Assert.All(events.Where(item => item.Phase is OctoberJsonCorrectionPhase.CandidateRejected or
+            OctoberJsonCorrectionPhase.RetryRequested or OctoberJsonCorrectionPhase.ResponseReceived),
+            item => Assert.Equal(OctoberWorkerObservedFinish.Stop, item.FinishReason));
+        Assert.All(events, item =>
+        {
+            Assert.InRange(item.RetryOrdinal, 0, 3);
+            Assert.InRange(item.WindowOrdinal, 1, 4);
+            Assert.InRange(item.ProviderRounds, 0, 8);
+            Assert.InRange(item.ElapsedMilliseconds, 0, long.MaxValue);
+            Assert.InRange(item.CandidateUtf8Bytes, 0, 262144);
+        });
+        string safeEvents = JsonSerializer.Serialize(events);
+        Assert.DoesNotContain("initial syntax failure", safeEvents, StringComparison.Ordinal);
+        Assert.DoesNotContain("wrong", safeEvents, StringComparison.Ordinal);
+    }
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]

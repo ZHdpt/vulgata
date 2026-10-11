@@ -190,6 +190,15 @@ Independent stream review found no proven loss of valid pre-DONE content, but
 passive observation does not prove HTTP EOF and comparisons cover only parse
 failures. See [format rollback and review](../../specs/20-1-Oct14-scan/json-format-stream-review.md).
 
+Current Scan correction behavior (2026-10-11): normal Generate now permits three
+same-file final-JSON regenerations; legacy hard mode remains one ordinary plus
+two additional corrections, never stacked. Existing budgets/authorization remain,
+and a correction cannot obtain a fresh allowance through outer transient replay.
+Bounded, redacted correction diagnostics use the owned JSONL log. Independent
+static review is accepted; controlled verification and the unchanged real-run
+qualification boundary are recorded in
+[three-correction verification](../../specs/20-1-Oct14-scan/three-correction-verification.md).
+
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

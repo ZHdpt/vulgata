@@ -40,6 +40,7 @@ internal sealed record OctoberGenerateRunnerDependencies(
     internal OctoberParseFailureCapture? ParseFailureCapture { get; init; }
     internal OctoberWorkerHttpObservation? HttpObservation { get; init; }
     internal int MaximumWorkerOutputTokens { get; init; } = 8192;
+    internal Func<OctoberFileWorkerRequest, ImmutableArray<OctoberJsonCorrectionEvent>, CancellationToken, Task<bool>>? JsonCorrectionLog { get; init; }
 }
 
 /// <summary>Owns the original sequential Generate run; a stored receipt is never a restart grant.</summary>
@@ -303,7 +304,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                             RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(1048576L, execution.Policy.MaximumTotalTokens!.Value),
                             MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
                             MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens,
-                            MaximumJsonCorrectionAttempts: 1,
+                            MaximumJsonCorrectionAttempts: execution.Policy.HardRetryMode ? 1 : 3,
                             AdvisoryToolCalls: execution.Policy.AdvisoryToolCallsPerFile,
                             UseTextForJsonCorrection: execution.Policy.UseTextForJsonCorrection,
                             HardRetryMode: execution.Policy.HardRetryMode))
@@ -347,9 +348,21 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     CompletedFileSubmission? submission = await attempt.ExecuteAndSealAsync(token);
                     // The bounded seal can stop waiting before the actual executor
                     // has finished transport cleanup. Retain that ownership first.
+                    OctoberFileWorkerResult? diagnosticResult = null;
                     if (actualWorker is not null)
-                        try { await actualWorker; } catch (Exception) { /* Settlement remains the scope's authority. */ }
+                        try { diagnosticResult = await actualWorker; } catch (Exception) { /* Settlement remains the scope's authority. */ }
                     var accounting = _scope.GetSnapshot();
+                    if (diagnosticResult is { JsonCorrections.IsDefaultOrEmpty: false } && _dependencies.JsonCorrectionLog is { } correctionLog)
+                    {
+                        // The actual Worker is settled. Logging never holds a provider permit
+                        // and cannot change admission, acceptance or the correction allowance.
+                        bool logged;
+                        try { logged = !accounting.HasUnconfirmedSettlement && accounting.OutstandingAttempts == 0 &&
+                            await correctionLog(request, diagnosticResult.JsonCorrections, token); }
+                        catch (Exception) { logged = false; }
+                        if (!logged && !_gaps.Any(gap => gap.Code == "json-correction-log-incomplete"))
+                            _gaps = _gaps.Add(new("json-correction-log-incomplete"));
+                    }
                     if (accounting.HasUnconfirmedSettlement || accounting.OutstandingAttempts != 0)
                         return Failure("provider_settlement_unconfirmed", indeterminate: true);
                     if (execution.Policy.OutputStage == "cl-only" || submission is null)
@@ -363,7 +376,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                     {
                         OctoberFileWorkerResult? observed = attempt.WorkerResult;
                         bool retrySafe = observed is { Status: OctoberFileWorkerStatus.ProviderFailed,
-                            RetryDisposition: OctoberWorkerRetryDisposition.KnownSafeTransient } &&
+                            RetryDisposition: OctoberWorkerRetryDisposition.KnownSafeTransient, JsonCorrectionAttempts: 0 } &&
                             !accounting.Usage.HasUnknownUsage && attempt.IsSettledForFreeze && !attempt.HasSubmitted &&
                             retry < execution.Policy.MaximumTransientRetries && FileAvailable;
                         if (retrySafe)

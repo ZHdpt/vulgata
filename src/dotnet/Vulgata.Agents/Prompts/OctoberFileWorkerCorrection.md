@@ -12,3 +12,6 @@ evidence. A missing field is not permission to invent a value or silently assume
 an empty array. Do not omit unsupported findings merely to pass validation.
 If supplied, lineNumber and bytePositionInLine are zero-based positions in the
 rejected JSON text, not source-code coordinates. Return a complete replacement.
+remainingCorrections is the allowance left after this requested replacement, for
+this file only. You are still at the same final source window; do not move to a
+new file or restart investigation. All original request, token and time limits apply.

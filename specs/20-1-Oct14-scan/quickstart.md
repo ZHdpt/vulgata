@@ -66,7 +66,13 @@ Run only the approved suites/resources. Native/provider extra consent flags rema
 
 ## Handoff
 
-### Optional bounded final-format recovery
+### Bounded final-format recovery
+
+Normal Generate permits three consecutive regenerations after an unparseable or
+structurally invalid final JSON proposal (four candidates total), in the same file/window and conversation.
+The model receives safe parser feedback and the remaining correction count. This
+does not restart investigation or reset the original budgets. A transient failure
+after correction begins cannot restart the Worker to replenish this allowance.
 
 `hardRetryMode` defaults to `false` in the Generate scan-policy JSON. To enable
 the bounded experiment, set `hardRetryMode: true` and `maximumTransientRetries: 0`.
@@ -76,12 +82,27 @@ JSON proposals and corrections request `json_object`. The former
 compatibility but no longer selects text, even when true. Ordinary non-JSON
 conversations are unaffected.
 
-Hard mode permits at most two additional final-format corrections per file and
-sixteen across the original run after the ordinary correction fails. All original
+Legacy hard mode retains one ordinary correction plus at most two additional
+corrections per file, with sixteen additional corrections across the original run;
+it never stacks extra corrections on top of the normal three. All original
 admission, deadline, source, authorization and acceptance guards still apply, so
 available correction slots do not guarantee another request. Tools remain disabled
 for corrections. It does not retry semantic/evidence failures, unknown application
 exceptions, uncertain writes or an entire failed run. Exhaustion is failure.
+
+Generate writes bounded diagnostic events to `worker-json-corrections.jsonl` in
+the configured owned log directory after each Worker settles. Records correlate
+batch/run/workstream/admission/attempt IDs, hashed file/provider identities, retry
+ordinal, source-window ordinal, elapsed Worker time, provider-round count, response
+byte count, normalized finish reason, typed parser diagnostics and final Worker outcome. They contain no raw
+source, model response, reasoning, prompts or secrets. `Completed` here means the
+proposal passed validation, not acceptance or publication. Logging failure adds
+`json-correction-log-incomplete` to the report and never causes another request.
+Events buffered in memory can be lost on process failure before settlement.
+`RetryRequested` means a correction was scheduled, not that an HTTP request was
+sent; admission may still refuse it. The shared log uses an exclusive, fail-fast
+append: concurrent writer contention produces the incomplete-log warning rather
+than blocking execution or replaying provider work.
 
 The optional `hardRetry` report contains `reservedAttempts` and
 `providerCallsStarted`. The latter counts entry into the underlying client, not

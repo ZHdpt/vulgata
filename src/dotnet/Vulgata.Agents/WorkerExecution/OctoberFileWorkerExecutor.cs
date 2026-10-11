@@ -131,6 +131,13 @@ public enum OctoberWorkerTerminalFailure
 }
 
 public enum OctoberWorkerUnsupportedFinish { Length, ContentFilter, Other }
+public enum OctoberJsonCorrectionPhase { CandidateRejected, RetryRequested, ResponseReceived, WorkerFinished }
+/// <summary>Bounded diagnostics only; Completed means a validated proposal, never publication.</summary>
+public sealed record OctoberJsonCorrectionEvent(OctoberJsonCorrectionPhase Phase, int RetryOrdinal,
+    int WindowOrdinal, int ProviderRounds, long ElapsedMilliseconds, int CandidateUtf8Bytes,
+    OctoberWorkerParseDiagnosticSnapshot? Diagnostic = null, OctoberFileWorkerStatus? Status = null,
+    OctoberWorkerFailureStage? FailureStage = null, OctoberWorkerBudgetFailure? BudgetFailure = null,
+    OctoberWorkerTerminalFailure? TerminalFailure = null, OctoberWorkerObservedFinish? FinishReason = null);
 public sealed record OctoberWorkerTerminalObservation(
     OctoberWorkerUnsupportedFinish? FinishReason = null, int? MaximumOutputTokens = null,
     long? InputTokens = null, long? OutputTokens = null, long? ReasoningTokens = null);
@@ -143,6 +150,8 @@ public sealed record OctoberFileWorkerResult(
     int ProviderRounds = 0,
     int SettledToolCalls = 0)
 {
+    public int JsonCorrectionAttempts { get; init; }
+    public ImmutableArray<OctoberJsonCorrectionEvent> JsonCorrections { get; init; } = [];
     public OctoberWorkerRetryDisposition RetryDisposition { get; init; }
     public TimeSpan? RetryAfter { get; init; }
     public OctoberWorkerFailureStage? FailureStage { get; init; }
@@ -181,6 +190,9 @@ public sealed class OctoberFileWorkerExecutor
         if (Interlocked.Exchange(ref _used, 1) != 0)
             return new(OctoberFileWorkerStatus.InvalidInput) { FailureStage = OctoberWorkerFailureStage.Admission };
         WorkerClient? adapter = null;
+        long started = Stopwatch.GetTimestamp();
+        int correctionAttempts = 0, currentWindow = 0;
+        var correctionEvents = ImmutableArray.CreateBuilder<OctoberJsonCorrectionEvent>();
         int covered = 0;
         OctoberWorkerFailureStage? stage = null;
         OctoberWorkerTerminalFailure? terminalFailure = null;
@@ -243,6 +255,7 @@ public sealed class OctoberFileWorkerExecutor
             bool previousCarriageReturn = false;
             for (int index = 0; index < windows.Count; index++)
             {
+                currentWindow = index + 1;
                 cancellationToken.ThrowIfCancellationRequested();
                 int windowStartLine = sourceLine, windowStartColumn = sourceColumn;
                 foreach (Rune scalar in windows[index].EnumerateRunes())
@@ -277,6 +290,7 @@ public sealed class OctoberFileWorkerExecutor
                     stage = null;
                     AgentResponse response = await observations.RunAsync(async () => await agent.RunStreamingAsync(history, cancellationToken: cancellationToken)
                         .ToAgentResponseAsync(cancellationToken), OctoberWorkerFailureStage.AgentOrchestration);
+                    if (correction > 0) RecordCorrection(OctoberJsonCorrectionPhase.ResponseReceived);
                     if (adapter.Failure is { } failure) throw new WorkerFailure(failure);
                     stage = OctoberWorkerFailureStage.StreamTerminal;
                     if (adapter.Finish != ChatFinishReason.Stop || adapter.PendingCalls != 0)
@@ -285,17 +299,21 @@ public sealed class OctoberFileWorkerExecutor
                     // admitted leaf in this workstream, never a new run or a locally patched proposal.
                     history.AddRange(response.Messages);
                     if (index != windows.Count - 1) break;
-                    bool extraCorrection = correction >= request.Limits.MaximumJsonCorrectionAttempts;
-                    if (extraCorrection && !request.Limits.HardRetryMode) break;
                     CorrectionFeedbackData? feedback = CorrectionFeedback(adapter.LastText, request);
                     if (feedback is null) break;
+                    RecordCorrection(OctoberJsonCorrectionPhase.CandidateRejected, feedback.Failure);
+                    bool extraCorrection = correction >= request.Limits.MaximumJsonCorrectionAttempts;
+                    if (extraCorrection && !request.Limits.HardRetryMode) break;
                     // Reserve only an eligible extra candidate. Existing admission may still
                     // refuse it; neither refusal nor source/runtime renewal refunds the slot.
                     if (extraCorrection && !request.HardRetryBudget!.TryReserve(request)) break;
+                    correctionAttempts++;
+                    RecordCorrection(OctoberJsonCorrectionPhase.RetryRequested, feedback.Failure);
                     adapter.BeginCorrection(extraCorrection);
                     history.Add(new ChatMessage(ChatRole.User,
                         LoadPrompt("Vulgata.Agents.Prompts.OctoberFileWorkerCorrection.md") + "\n" +
-                        feedback.ToJson(request.HardRetryBudget?.Remaining(request) ?? 0)));
+                        feedback.ToJson(request.HardRetryBudget?.Remaining(request) ??
+                            Math.Max(0, request.Limits.MaximumJsonCorrectionAttempts - correctionAttempts))));
                 }
                 stage = null;
                 if (!await observations.RunAsync(() => request.Source.VerifyCurrentAsync(cancellationToken), OctoberWorkerFailureStage.SourceVerification))
@@ -323,7 +341,7 @@ public sealed class OctoberFileWorkerExecutor
                 }
                 throw;
             }
-            return new(OctoberFileWorkerStatus.Completed, proposal, covered, adapter.Rounds, adapter.SettledTools);
+            return FinishResult(new(OctoberFileWorkerStatus.Completed, proposal, covered, adapter.Rounds, adapter.SettledTools));
         }
         catch (OperationCanceledException exception)
         {
@@ -347,9 +365,9 @@ public sealed class OctoberFileWorkerExecutor
         }
 
         OctoberFileWorkerResult Failed(OctoberFileWorkerStatus status, Exception? exception = null)
-            => new(status, null, covered, adapter?.Rounds ?? 0, adapter?.SettledTools ?? 0)
+            => FinishResult(new(status, null, covered, adapter?.Rounds ?? 0, adapter?.SettledTools ?? 0)
             {
-                RetryDisposition = status == OctoberFileWorkerStatus.ProviderFailed
+                RetryDisposition = status == OctoberFileWorkerStatus.ProviderFailed && correctionAttempts == 0
                     ? adapter?.RetryDisposition ?? OctoberWorkerRetryDisposition.None : OctoberWorkerRetryDisposition.None,
                 FailureStage = observations.For(exception) ?? stage ?? adapter?.FailureStage,
                 TerminalFailure = terminalFailure ?? adapter?.TerminalFailure,
@@ -367,7 +385,25 @@ public sealed class OctoberFileWorkerExecutor
                 HttpObservation = Enum.IsDefined(status) && status != OctoberFileWorkerStatus.Completed &&
                     (observations.For(exception) ?? stage ?? adapter?.FailureStage) == OctoberWorkerFailureStage.ProposalParse
                     ? httpObservation : null
-            };
+            });
+
+        void RecordCorrection(OctoberJsonCorrectionPhase phase, OctoberWorkerParseDiagnosticSnapshot? diagnostic = null,
+            OctoberFileWorkerResult? result = null)
+        {
+            // At most four rejected candidates, three requests/responses and one terminal
+            // event. No provider strings or raw content are retained in this diagnostic ledger.
+            if (correctionEvents.Count >= 11) return;
+            correctionEvents.Add(new(phase, correctionAttempts, currentWindow, adapter?.Rounds ?? 0,
+                (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+                Encoding.UTF8.GetByteCount(adapter?.LastText ?? string.Empty), diagnostic, result?.Status,
+                result?.FailureStage, result?.BudgetFailure, result?.TerminalFailure, adapter?.DiagnosticFinish));
+        }
+
+        OctoberFileWorkerResult FinishResult(OctoberFileWorkerResult result)
+        {
+            if (correctionEvents.Count > 0) RecordCorrection(OctoberJsonCorrectionPhase.WorkerFinished, result.ParseFailure, result);
+            return result with { JsonCorrectionAttempts = correctionAttempts, JsonCorrections = correctionEvents.ToImmutable() };
+        }
     }
 
     private async Task<OctoberWorkerCaptureStatus?> CaptureParseFailureAsync(string text,
@@ -415,7 +451,7 @@ public sealed class OctoberFileWorkerExecutor
             limits.MaximumWindowUtf8Bytes is < 4 or > 1048576 || limits.MaximumInputUtf8Bytes is < 1 or > 16777216 ||
             limits.MaximumOutputUtf8Bytes is < 1 or > 1048576 || limits.MaximumTokensPerRequest is < 1 or > 1048576 ||
             limits.MaximumOutputTokensPerRequest is < 1 or > 393216 ||
-            limits.MaximumJsonCorrectionAttempts is < 0 or > 1 ||
+            limits.MaximumJsonCorrectionAttempts is < 0 or > 3 ||
             limits.HardRetryMode != (request.HardRetryBudget is not null) ||
             limits.HardRetryMode && limits.MaximumJsonCorrectionAttempts != 1 ||
             limits.MaximumContinuationWindows is < 1 or > 100 ||
@@ -576,6 +612,7 @@ public sealed class OctoberFileWorkerExecutor
         internal int SettledTools { get; private set; }
         internal int PendingCalls => _pending.Count;
         internal ChatFinishReason? Finish { get; private set; }
+        internal OctoberWorkerObservedFinish? DiagnosticFinish { get; private set; }
         internal string LastText { get; private set; } = string.Empty;
         internal IOctoberProviderAttemptLease? LastLease { get; private set; }
         internal OctoberFileWorkerStatus? Failure { get; private set; }
@@ -601,6 +638,7 @@ public sealed class OctoberFileWorkerExecutor
             IEnumerable<ChatMessage> messages, ChatOptions? options = null,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            DiagnosticFinish = null;
             _observedStage = OctoberWorkerFailureStage.StreamTerminal;
             cancellationToken.ThrowIfCancellationRequested();
             if (Failure is not null || _pending.Count != 0)
@@ -739,6 +777,10 @@ public sealed class OctoberFileWorkerExecutor
                     if (!next) break;
                     _observedStage = OctoberWorkerFailureStage.StreamTerminal;
                     ChatResponseUpdate update = iterator.Current;
+                    if (update.FinishReason is { } observedFinish)
+                        DiagnosticFinish = observedFinish == ChatFinishReason.Stop ? OctoberWorkerObservedFinish.Stop :
+                            observedFinish == ChatFinishReason.Length ? OctoberWorkerObservedFinish.Length :
+                            observedFinish == ChatFinishReason.ToolCalls ? OctoberWorkerObservedFinish.ToolCalls : OctoberWorkerObservedFinish.Other;
                     int outputBytesBefore = _outputBytes;
                     // The qualified OpenAI adapter emits complete calls in one
                     // aggregate after its empty ToolCalls finish and usage updates.

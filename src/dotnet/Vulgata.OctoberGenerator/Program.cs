@@ -327,7 +327,8 @@ public static class OctoberGeneratorEntryPoint
             (admissionAuthority, guard) => new OctoberGenerateAdmissionStore(contexts, admissionAuthority, guard, log),
             sources.OpenAsync, clients.CreateAsync,
             ports => new OctoberKnowledgeWriter(contexts, ports.CompletionAuthority, ports.SourceVerifier,
-                ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log);
+                ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log)
+        { JsonCorrectionLog = new OctoberJsonCorrectionLog(runtime.LogDirectory, clock).AppendAsync };
     }
 
     internal static async Task<int> ExecuteConfiguredAsync(OctoberGeneratorCommand command,
@@ -783,7 +784,7 @@ public static class OctoberGeneratorEntryPoint
 
     private static string SafeGapCode(string code) => code switch
     {
-        "owned_cleanup_unconfirmed" or "coverage_incomplete" or "invalid_run_configuration" or "authority_unavailable" or
+        "json-correction-log-incomplete" or "owned_cleanup_unconfirmed" or "coverage_incomplete" or "invalid_run_configuration" or "authority_unavailable" or
         "begin_indeterminate" or "begin_settlement_pending" or "fresh_run_required" or "run_ineligible" or "run_interrupted" or
         "run_unavailable" or "single_file_checkpoint_limit" or "source_frame_unavailable" or "source_frame_binding_changed" or
         "file_deadline_exceeded" or "provider_settlement_unconfirmed" or "worker_not_completed" or "file_acceptance_unavailable" or
