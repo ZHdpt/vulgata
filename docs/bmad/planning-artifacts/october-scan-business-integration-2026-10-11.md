@@ -24,6 +24,12 @@ Business inspected the pinned APIs and reported no concrete compatibility blocke
 Its older missing-publication-to-corpus and original-Generate-only restrictions
 are superseded for this route, not erased as historical observations.
 
+Accepted integration commit: `2bb30f4a`. Business merged it without conflicts at
+`643a2157`, with an identical tree, and committed its two-file handoff/quickstart
+reconciliation at `158e8bb9`. Main fast-forwarded to that reviewed checkpoint.
+Business reported its worktree clean and stopped before runtime. Production,
+tests and engineering files are unchanged by this documentation reconciliation.
+
 ## Verification and qualification limits
 
 Full combined SelfContained verification selected 4,917 tests: **4,915 passed,

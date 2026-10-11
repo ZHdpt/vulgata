@@ -9,7 +9,8 @@ with the known report-helper field mismatch and a process-PATH CodeGraph lookup
 failure. The latter passed its unchanged focused replay 1/1 after process-local
 PATH correction; full-suite GREEN is not claimed. Scan reports 77 files/163 CL
 Documents retained; no new BL/provider/database/browser qualification occurred
-here. Business must reconcile its old handoff before runtime readiness. The user
+here. Business synchronized and reconciled its handoff at `158e8bb9`; that
+documentation-only checkpoint is integrated. Runtime readiness remains pending. The user
 retains management ownership. See the
 [Scan-to-Business checkpoint](../bmad/planning-artifacts/october-scan-business-integration-2026-10-11.md).
 
