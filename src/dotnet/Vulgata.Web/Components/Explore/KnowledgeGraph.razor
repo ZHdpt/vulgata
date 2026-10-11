@@ -39,7 +39,7 @@
                 <FluentButton aria-label="缩小" OnClick="ZoomOut" Disabled="@(_zoom <= .25)">缩小</FluentButton>
                 <FluentButton aria-label="适应视图" OnClick="Fit">适应视图</FluentButton>
             </div>
-            <svg class="graph-canvas" viewBox="@ViewBox" role="img" aria-label="带方向的知识图谱；完整文字与操作见下方文档和关系列表">
+            <svg class="graph-canvas" viewBox="@ViewBox" role="group" aria-label="带方向的知识图谱；选择节点查看详情，完整文字见下方列表">
                 <defs>
                     <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                         <path d="M0 0 L8 4 L0 8 Z" class="arrowhead" />
@@ -58,7 +58,9 @@
                     @foreach (var node in Graph.Nodes)
                     {
                         var position = _positions[node.Handle];
-                        <g data-node-id="@node.Handle.DocumentVersionId" class="@(_selected == node.Handle ? "graph-node selected" : "graph-node")">
+                        <g data-node-id="@node.Handle.DocumentVersionId" class="@(_selected == node.Handle ? "graph-node selected" : "graph-node")"
+                           role="button" tabindex="0" aria-label="选择 @node.Title" aria-pressed="@(_selected == node.Handle ? "true" : "false")"
+                           @onclick="() => SelectNode(node.Handle)" @onkeydown="args => SelectWithKeyboard(args, node.Handle)">
                             <circle cx="@Number(position.X)" cy="@Number(position.Y)" r="25" />
                             <text x="@Number(position.X)" y="@Number(position.Y + 45)" text-anchor="middle">@CanvasLabel(node.Title)</text>
                             <title>@node.Title</title>
@@ -66,6 +68,36 @@
                     }
                 </g>
             </svg>
+            @if (Graph.Nodes.FirstOrDefault(node => node.Handle == _selected) is { } selected)
+            {
+                <section class="selected-node-detail" aria-label="所选文档详情" aria-live="polite">
+                    <h2>@selected.Title</h2>
+                    <p>@(selected.Kind == DocumentKind.BusinessLogic ? "业务逻辑文档" : "代码逻辑文档")</p>
+                    <a href="@ExactDocumentLinkBuilder.Build(selected.Handle)">打开此精确版本的文档</a>
+                    @foreach (var claim in selected.QualifiedExcerpt)
+                    {
+                        <div class="qualified-claim">
+                            <p class="qualification">@QualificationLabel(claim.Qualification)</p>
+                            <p>@claim.Text</p>
+                            <ul aria-label="所选文档说明限制">
+                                @foreach (var limitation in claim.Limitations) { <li>@limitation</li> }
+                            </ul>
+                        </div>
+                    }
+                    <p>以下仅列出本次图谱中已披露的关联，不代表全部依赖。</p>
+                    <ul class="selected-relations">
+                        @foreach (var edge in Graph.Edges.Where(edge => edge.From == selected.Handle || edge.To == selected.Handle))
+                        {
+                            var other = edge.From == selected.Handle ? edge.To : edge.From;
+                            <li>@EdgeDescription(edge)：@edge.Meaning <a href="@ExactDocumentLinkBuilder.Build(other)">打开关联文档</a></li>
+                        }
+                    </ul>
+                </section>
+            }
+            else
+            {
+                <p class="selection-hint">选择图中节点或下方“定位”按钮，查看文档说明与已披露关联。</p>
+            }
         }
         <h2>文档</h2>
         <ul class="node-list" aria-label="可访问的文档及说明">
@@ -103,6 +135,10 @@
             }
         </ul>
         <h2>已接受的关系</h2>
+        @if (Graph.Edges.IsEmpty)
+        {
+            <p>本次范围未显示已接受的关系；不会从文档内容推测连线。</p>
+        }
         <ul class="edge-list" aria-label="关系方向与含义">
             @foreach (var edge in Graph.Edges)
             {
@@ -216,6 +252,11 @@
         _selected = handle;
         _panX = _originX + _width / 2 - point.X * _zoom;
         _panY = _originY + _height / 2 - point.Y * _zoom;
+    }
+
+    private void SelectWithKeyboard(KeyboardEventArgs args, DocumentHandle handle)
+    {
+        if (args.Key is "Enter" or " ") { SelectNode(handle); }
     }
 
     private string EdgePath(RelatedDocument edge, int index)

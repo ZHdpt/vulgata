@@ -62,7 +62,7 @@ public static class KnowledgeGraphProjector
         var coverage = knownCoverage.Length == 0 ? null : new CoverageProjection(knownCoverage.Any(item => item.IsPartial),
             knownCoverage.SelectMany(item => item.PermittedGaps).Distinct(StringComparer.Ordinal).ToImmutableArray());
         return new(visibleNodes, visibleEdges.Take(MaximumEdges).ToImmutableArray(), uncertainties.Values.ToImmutableArray(),
-            acquisitionIncomplete || nodes.Count > MaximumNodes || visibleEdges.Length > MaximumEdges ||
+            acquisitionIncomplete || nodes.Count > MaximumNodes || visibleEdges.Length > MaximumEdges || edges.Count > visibleEdges.Length ||
                 seedPages.Any(page => page.Next is not null) || relatedPages.Any(page => page.Next is not null),
             coverage, coverages.Any(item => item is null));
     }
