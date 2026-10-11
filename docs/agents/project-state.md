@@ -1,5 +1,15 @@
 # Project state for agent resumption
 
+Latest integration (October 11): user-authorized step 1 selectively imported
+Business handoff `3820d77a`, Explorer `112b38d1`, and Chat `d1d158a6`/`92feb0ad`
+through `6be78bd9`. Combined current-source affected SelfContained verification
+passed **1,290/1,290**, zero failures/skips, build zero errors. This adds graph
+selection/details and accurate composer state messages, not live qualification.
+No schema/shared DI/runtime changes; Scan's existing-CL work is not included and
+Business's competing dispatch extension remains held. The user retains management
+ownership; no automatic next-wave dispatch is authorized. See the
+[October 11 integration checkpoint](../bmad/planning-artifacts/october-integration-2026-10-11.md).
+
 Test infrastructure (2026-09-29): the standard command is now
 `pwsh -NoProfile -File eng/test.ps1`, which builds current sources and selects the
 classified SelfContained suite. Direct CLI/IDE execution has the same safe default
@@ -8,7 +18,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-09 (real synthetic CL-and-BL Generate-to-ordinary-Business-reader passed; retained presentation operation remains separately pending).
+October 9 qualification checkpoint (real synthetic CL-and-BL Generate-to-ordinary-Business-reader passed; later retained presentation operations are recorded below).
 
 Newest qualification supersedes older BL-pending statements below for this exact
 synthetic scenario only: attempt 5 on `ea611586` passed **1/1**, run
