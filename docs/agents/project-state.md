@@ -209,8 +209,13 @@ accepted: regeneration 1 retains configured thinking, 2 disables it, and 3 first
 prunes rejected correction turns while preserving original evidence, then disables
 thinking. Overrides are request-local; the next file restores configured behavior.
 Affected Worker/GenerateRunner checks pass 383/383; the known unrelated full-suite
-report-parser failure remains. One further whole scan is explicitly authorized
-and pending in [staged correction evidence](../../specs/20-1-Oct14-scan/staged-correction-verification.md).
+report-parser failure remains. The authorized whole scan completed with 49/77
+accepted, zero published Documents, and Transport/Cancelled on RegistUserAuth.java
+after 1773.18 seconds. All nine JSON correction sequences recovered, including
+one real compacted third regeneration. Launcher timeout was false; the terminal
+report does not identify the cancellation origin. Usage is unknown; source hashes
+matched and no settlement check is needed. This single-run grant is consumed;
+see [staged correction evidence](../../specs/20-1-Oct14-scan/staged-correction-verification.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.

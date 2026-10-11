@@ -61,8 +61,61 @@ corrected by explicitly selecting Microsoft.Extensions.AI.ChatResponseFormat;
 this is not behavioral RED. Independent implementation review accepted the final
 scoped change after affected GREEN. No production edits followed that review.
 
-The newly authorized single whole-run result will be recorded below. The preceding
-run remains the separately recorded failed 15/77 result; it is not resumed or
-relabelled. The new run will use the same approved 77-file source, provider/model,
-limits and owned resource pattern, with a fresh owned batch and no automatic
-whole-scan restart. No additional run series is inferred.
+## Real whole-run result (2026-10-11)
+
+The single authorized run `staged-whole-01` used implementation
+`c2272e2090c310271898275ac4515e6c13de6179`, the same approved 77-file source,
+DeepSeek flash, configured low reasoning, max_tokens 393216, existing budgets
+and fresh owned resources. Hard retry remained off. The grant is consumed;
+no automatic whole-scan restart was performed.
+
+- Result: Failed / Partial; 49/77 accepted, one failed and 27 unstarted.
+  Publication NotRequested, zero Documents. Ordinary reader qualification was
+  therefore not reached. Partial accepted data and diagnostic evidence are retained.
+- Process: exit 1 after 1773.18 seconds; TimedOut=false and
+  NeedsSettlementCheck=false. Generator elapsed time was 29:31.0614321.
+- Terminal file: account
+  `src/main/java/cn/com/yitong/actions/register/selfregist/RegistUserAuth.java`.
+  Worker reports Cancelled at Transport, with no parse or budget failure detail.
+  This is not a JSON retry exhaustion or demonstrated launcher timeout. The
+  cancellation origin is not identified by the retained terminal report; proximity
+  to the 1800-second run limit alone does not prove that limit fired.
+- Usage: 80 requests, unknown aggregate input/output usage. No precise total
+  tokens or cost is claimed. All 77 original source hashes matched afterward.
+- Matching and Business Logic both report not-requested; no correction-log gap
+  was reported.
+
+Nine files needed JSON regeneration and all nine recovered: eight on regeneration
+1, one on regeneration 3. Eleven correction requests were logged: nine Configured,
+one ThinkingDisabled and one CompactedThinkingDisabled. The latter file was
+account `src/main/java/cn/com/yitong/actions/domain/login/SaveVersionCacheOp.java`,
+admission `68783462-98cd-4497-92b6-e5f4a8610012`, and its final coverage is Accepted.
+
+| Candidate | Strategy | Bytes | Worker elapsed | Result |
+| --- | --- | ---: | ---: | --- |
+| Initial | Configured | 5100 | 11.652s | Syntax, EOF position 5100 |
+| Regeneration 1 | Configured | 5000 | 18.737s | Syntax, EOF position 5000 |
+| Regeneration 2 | ThinkingDisabled | 4888 | 24.165s | Syntax, EOF position 4888 |
+| Regeneration 3 | CompactedThinkingDisabled | 5037 | 30.653s | Valid; Worker Completed at 30.897s |
+
+All four responses reported Stop. Compaction removed five rejected/obsolete
+messages while preserving the original evidence base. This is real evidence that
+the third stage can recover a file; one observation does not establish its general
+success rate or isolate compaction as the cause. Request-local restoration is
+proven by the controlled actual-SDK wire tests above; subsequent real files
+continued, but raw provider requests were not retained as proof of their settings.
+
+### Retained evidence
+
+- Owned root: `C:\Users\13728\AppData\Local\Vulgata\OctoberRuns\phone-ca0a24b79da8`
+- Owned database: `vulgata_oct_pilot_37bba955b9614185a96312a72fd29c02`
+- Batch: `6bc93d43-a833-440d-a710-6d5febc75d46`
+- Ignored ledger: `TestResults/replay-paid/staged-whole-01.json`
+- Root-relative report: `logs/generate-3c9e321e88ff4bd38a2c892045e932ff.stdout`
+  (SHA256 `E6AEDC20AFF664AD5877D6EAC302E9A540EB59C152703269016F526BAA31C03E`)
+- Root-relative corrections: `logs/generator/worker-json-corrections.jsonl`
+  (SHA256 `36B4F785C32FDE3EE1BC9A1243799243403C7AC446B8905B5F77D553B88DE523`)
+- Executed Agents DLL SHA256:
+  `F16DF58FFC181E32FB1E8687A83470CC2A54CE440630DB7581D0C126C10F9C6B`
+- Executed Generator DLL SHA256:
+  `A2D7432263E85CBDCD2F92BDD997EB7EA46B214B9011C66C8447FEA441C2C2FB`
