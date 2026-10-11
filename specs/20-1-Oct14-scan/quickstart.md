@@ -64,6 +64,17 @@ Run only the approved suites/resources. Native/provider extra consent flags rema
 - **Execution scope / F2 probes**: Cap=1 with two concurrent inquiries, then inquiry+synthesis: at most one active provider attempt, queued child progresses after settled release, no outer orchestration permit/deadlock. Hard stop with one active/one queued cancels active I/O and bars queued/new/late/retry dispatch; late proposal cannot newly publish. Test grant-to-send cancellation, host rate delay/denial (no send before admission, original deadline retained), exhausted budget, missing scope, retry reacquisition without allowance reset, exact-once actual/unknown accounting and conservative unknown reservation. Unconfirmed cancellation/disposal must stop dispatch without early permit release. These initial controlled probes need the shared contract/fixture, not completed production consumers or paid calls; real claims still require later authorized runtime checks.
 - **Fresh batch**: After abrupt interruption, do not restart/adopt sessions/index automatically. Preserve accepted history and source. Use explicitly authorized fresh prepared target/root handling; preexisting `.codegraph` is a blocker for operator resolution, not an instruction for automatic delete or source copy.
 
+The run policy accepts `runDeadlineSeconds` from 1 through 86400 (24 hours),
+default 1800. For an explicitly approved four-hour run use 14400. This changes
+only the run-owner lifetime: existing file/tool/provider budgets, ten-minute
+source grants and live authorization checks still apply. Generate derives its
+operator-session expiry from max(one hour, configured run duration); it does not
+renew an expired session. CL publication remains capped at 30 minutes within the
+remaining run. When using `eng/watch-october-batch.ps1`, pass
+`-RunDeadlineSeconds` from that same policy instead of `-TimeoutSeconds`; its
+60-second startup/cleanup allowance does not extend the application deadline.
+See [review and verification](configurable-run-deadline.md).
+
 ## Handoff
 
 ### Bounded final-format recovery

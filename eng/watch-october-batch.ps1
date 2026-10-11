@@ -6,8 +6,17 @@ function Invoke-OctoberBatchMonitored {
         [string[]]$Arguments = @(),
         [hashtable]$Environment = @{},
         [ValidateRange(1, 1800)][int]$TimeoutSeconds = 1800,
+        [ValidateRange(1, 86400)][int]$RunDeadlineSeconds,
         [ValidateRange(1, 60)][int]$UpdateSeconds = 15
     )
+    $watchdogSeconds = $TimeoutSeconds
+    if ($PSBoundParameters.ContainsKey('RunDeadlineSeconds')) {
+        if ($PSBoundParameters.ContainsKey('TimeoutSeconds')) {
+            throw 'Supply either an application run deadline or a direct process timeout.'
+        }
+        # The application retains its exact deadline; this margin only allows startup/cleanup.
+        $watchdogSeconds = $RunDeadlineSeconds + 60
+    }
     $start = [Diagnostics.ProcessStartInfo]::new()
     $start.FileName = (Get-Command $File -ErrorAction Stop).Source
     $start.UseShellExecute = $false
@@ -33,7 +42,7 @@ function Invoke-OctoberBatchMonitored {
         $stderr = $process.StandardError.ReadToEndAsync()
         while (!$process.HasExited) {
             $elapsed = $clock.Elapsed.TotalSeconds
-            if ($elapsed -ge $TimeoutSeconds) {
+            if ($elapsed -ge $watchdogSeconds) {
                 $timedOut = $true
                 # Only this process, created above, and its descendants. Never Docker/database cleanup.
                 $process.Kill($true)
@@ -41,13 +50,13 @@ function Invoke-OctoberBatchMonitored {
                 break
             }
             if ($elapsed -ge $nextUpdate) {
-                $percent = [Math]::Min(99, [int](100 * $elapsed / $TimeoutSeconds))
-                $remaining = [Math]::Max(0, [int]($TimeoutSeconds - $elapsed))
+                $percent = [Math]::Min(99, [int](100 * $elapsed / $watchdogSeconds))
+                $remaining = [Math]::Max(0, [int]($watchdogSeconds - $elapsed))
                 Write-Progress -Id 74 -Activity 'October batch: elapsed deadline (not work completion)' -Status "Running; elapsed $([int]$elapsed)s; remaining ${remaining}s; work completion unknown" -PercentComplete $percent
-                Write-Host "Batch running: $([int]$elapsed)s elapsed / ${TimeoutSeconds}s deadline; ${remaining}s remaining."
+                Write-Host "Batch running: $([int]$elapsed)s elapsed / ${watchdogSeconds}s deadline; ${remaining}s remaining."
                 $nextUpdate = $elapsed + $UpdateSeconds
             }
-            $null = $process.WaitForExit([Math]::Max(1, [Math]::Min(250, [int](1000 * ($TimeoutSeconds - $elapsed)))))
+            $null = $process.WaitForExit([Math]::Max(1, [Math]::Min(250, [int](1000 * ($watchdogSeconds - $elapsed)))))
         }
         $drained = [Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($stdout, $stderr), 5000)
         [pscustomobject]@{

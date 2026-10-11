@@ -457,7 +457,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         var freeze = new CorpusFreezeRequest(phaseRequest.FreezeOperation, _binding, "", _accepted, _coverage);
         _expectedFreeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
         _publication = new(phaseRequest, (guard, freezeAuthority) => _dependencies.CreateKnowledgeWriter(new(this, guard, freezeAuthority, this, this)),
-            this, callToken => CheckPermissionsAsync(_observedContributors, callToken), RemainingRun, _time, token);
+            this, callToken => CheckPermissionsAsync(_observedContributors, callToken),
+            Min(RemainingRun, TimeSpan.FromMinutes(30)), _time, token);
         OctoberScanReport published = await _publication.ExecuteAsync(token);
         if (published.ExitCode == 4 && RunAvailable) published = await _publication.ReconcileAsync(token);
         if (await DisclosureAsync(token) != DisclosureStatus.Allowed) return Hide(published, "authority_unavailable");

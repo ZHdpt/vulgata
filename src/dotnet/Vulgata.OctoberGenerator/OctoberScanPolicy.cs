@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using FluentValidation;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.OctoberGenerator;
 
@@ -37,7 +38,7 @@ public sealed class OctoberScanPolicyValidator : AbstractValidator<OctoberScanPo
     {
         RuleFor(policy => policy.OutputStage).Must(stage => stage is "cl-only" or "cl-and-bl");
         RuleFor(policy => policy.WorkerCap).InclusiveBetween(1, 64);
-        RuleFor(policy => policy.RunDeadlineSeconds).InclusiveBetween(1, 1800);
+        RuleFor(policy => policy.RunDeadlineSeconds).InclusiveBetween(1, ExecutionOwnerLifetime.MaximumSeconds);
         RuleFor(policy => policy.FileDeadlineSeconds).GreaterThan(0)
             .LessThanOrEqualTo(policy => policy.RunDeadlineSeconds);
         RuleFor(policy => policy.GracefulDrainSeconds).GreaterThan(0)

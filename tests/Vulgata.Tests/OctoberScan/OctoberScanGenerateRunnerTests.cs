@@ -189,10 +189,12 @@ public sealed class OctoberScanGenerateRunnerTests
             }
         });
 
-        var result = await runner.ExecuteAsync(host.Execution);
+        var longRunExecution = host.Execution with
+        { Policy = host.Execution.Policy with { RunDeadlineSeconds = 14400 } };
+        var result = await runner.ExecuteAsync(longRunExecution);
 
         var report = Assert.IsType<OctoberScanReport>(result.Report);
-        Assert.Equal(0, report.ExitCode);
+        Assert.True(report.ExitCode == 0, string.Join("; ", report.Gaps.Select(gap => gap.Code)));
         Assert.Single(report.AcceptedFiles);
         Assert.NotNull(report.Publication);
         Assert.Equal(5, host.Client.Calls); // source tool read plus four complete proposal candidates
@@ -1343,7 +1345,8 @@ public sealed class OctoberScanGenerateRunnerTests
                 var issuer = new PreparedSourceContextIssuer(files.Authority);
                 var descriptor = new PreparedCodeGraphConnection(approval.RepositoryId, Path.Combine(files.SandboxPath, "never-executed.ps1"), "never-executed", [], files.PreparedRootPath, new Dictionary<string, string>(), static () => { }, _ => new OctoberScanToolRuntimeTests.ControlledCodeGraph(approval.RepositoryId));
                 _descriptor = descriptor;
-                _runtime = new(approval, remaining, new OctoberToolRuntimeDependencies((_, _) => Task.FromResult(descriptor),
+                TimeSpan runtimeLifetime = remaining < TimeSpan.FromMinutes(10) ? remaining : TimeSpan.FromMinutes(10);
+                _runtime = new(approval, runtimeLifetime, new OctoberToolRuntimeDependencies((_, _) => Task.FromResult(descriptor),
                     (_, _, token) => issuer.IssueAsync(new(approval, files.PreparedRootPath, PreparedSourceGrantLimits.Default), descriptor, token),
                     issuer.ObserveFileIdentityAsync, (_, _) => throw javaOpenFailure ?? new InvalidOperationException("Unexpected native Java"), (owner, _) => owner.OpenSession()));
             }

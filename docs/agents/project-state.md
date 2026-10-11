@@ -216,6 +216,12 @@ one real compacted third regeneration. Launcher timeout was false; the terminal
 report does not identify the cancellation origin. Usage is unknown; source hashes
 matched and no settlement check is needed. This single-run grant is consumed;
 see [staged correction evidence](../../specs/20-1-Oct14-scan/staged-correction-verification.md).
+The user then held resume work and approved configurable run duration plus one
+fresh 240-minute whole scan. The reviewed implementation supports 1..86400 seconds,
+retaining the 1800-second default and other budgets/live authorization checks.
+Final affected tests passed 143/143; the known unrelated report-parser full-suite
+failure remains. Runtime qualification is pending; see
+[configurable deadline evidence](../../specs/20-1-Oct14-scan/configurable-run-deadline.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.

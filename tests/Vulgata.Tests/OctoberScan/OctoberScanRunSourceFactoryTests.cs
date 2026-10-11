@@ -31,6 +31,92 @@ public sealed class OctoberScanRunSourceFactoryTests
     }
 
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task OpenAsync_FourHourRunRenewsShortApprovalsAfterOneHourAndStopsOnRevocationAsync(bool revokeAfterOneHour)
+    {
+        await using var harness = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var clock = new ControlledClock();
+        DateTimeOffset runStartedAt = clock.GetUtcNow();
+        var session = new LongSession("owned-operator", "controlled-authority", runStartedAt.AddHours(5));
+        var execution = harness.Execution with
+        {
+            Session = session,
+            Policy = harness.Execution.Policy with { RunDeadlineSeconds = 14400 }
+        };
+        var authority = new Authority(execution, clock) { ApprovalLifetime = TimeSpan.FromMinutes(10) };
+        var runtimes = new List<OctoberToolRuntime>();
+        var factory = new OctoberScanRunSourceFactory(Configuration(execution), authority,
+            (approval, _, _, _, _, remaining) =>
+            {
+                var runtime = Inert(approval, remaining);
+                runtimes.Add(runtime);
+                return runtime;
+            }, clock);
+        await using var source = await factory.OpenAsync(execution, TimeSpan.FromHours(4));
+
+        TimeSpan usableWindow = TimeSpan.Zero;
+        for (int renewal = 0; renewal < 8; renewal++)
+        {
+            clock.Advance(TimeSpan.FromMinutes(8));
+            if (revokeAfterOneHour && renewal == 7)
+            {
+                authority.VerifyStatus = PreparedSourceAuthorityStatus.Revoked;
+                var error = await Record.ExceptionAsync(() => source.EnsureFileWindowAsync(TimeSpan.FromMinutes(5)));
+                Assert.Equal(OctoberSourceWindowFailure.AuthorityUnavailable,
+                    Assert.IsType<OctoberSourceWindowException>(error).Reason);
+                Assert.True(clock.GetUtcNow() - runStartedAt > TimeSpan.FromHours(1));
+                Assert.Equal(8, authority.Issues);
+                Assert.Equal(8, runtimes.Count);
+                return;
+            }
+
+            usableWindow = await source.EnsureFileWindowAsync(TimeSpan.FromMinutes(5));
+        }
+
+        Assert.True(clock.GetUtcNow() - runStartedAt > TimeSpan.FromHours(1));
+        Assert.True(usableWindow > TimeSpan.FromMinutes(9));
+        Assert.Equal(9, authority.Issues);
+        Assert.Equal(9, runtimes.Count);
+        Assert.All(authority.Verified, verified => Assert.Same(session, verified));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OpenAsync_FourHourRunStopsWhenOriginalAuthoritySessionExpiresAsync()
+    {
+        await using var harness = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var clock = new ControlledClock();
+        DateTimeOffset started = clock.GetUtcNow();
+        var session = new LongSession("owned-operator", "controlled-authority", started.AddHours(3));
+        var execution = harness.Execution with
+        {
+            Session = session,
+            Policy = harness.Execution.Policy with { RunDeadlineSeconds = 14400 }
+        };
+        var authority = new Authority(execution, clock) { ApprovalLifetime = TimeSpan.FromMinutes(10) };
+        var factory = new OctoberScanRunSourceFactory(Configuration(execution), authority,
+            (approval, _, _, _, _, remaining) => Inert(approval, remaining), clock);
+        await using var source = await factory.OpenAsync(execution, TimeSpan.FromHours(4));
+
+        OctoberSourceWindowException? failure = null;
+        for (int renewal = 0; renewal < 30 && failure is null; renewal++)
+        {
+            clock.Advance(TimeSpan.FromMinutes(8));
+            try { await source.EnsureFileWindowAsync(TimeSpan.FromMinutes(5)); }
+            catch (OctoberSourceWindowException error) { failure = error; }
+        }
+
+        Assert.NotNull(failure);
+        Assert.Equal(OctoberSourceWindowFailure.Expired, failure.Reason);
+        Assert.True(clock.GetUtcNow() - started >= TimeSpan.FromHours(3));
+        Assert.True(clock.GetUtcNow() - started < TimeSpan.FromHours(4));
+        Assert.Equal(23, authority.Issues);
+        Assert.All(authority.Verified, verified => Assert.Same(session, verified));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task EnsureFileWindow_DefaultTenMinuteFileAndGrant_ReturnsUsableWindowAfterReserveAsync()
     {
@@ -330,7 +416,10 @@ public sealed class OctoberScanRunSourceFactoryTests
         public Task<PreparedSourceAuthorityResult> VerifySourceApprovalAsync(IOctoberOperatorSession session, string target, PreparedSourceApproval approval, CancellationToken token)
         {
             Verified.Add(session);
-            return Task.FromResult(new PreparedSourceAuthorityResult(VerifyStatus, VerifyStatus == PreparedSourceAuthorityStatus.Current ? approval : null));
+            var status = session.ExpiresAtUtc <= _clock.GetUtcNow()
+                ? PreparedSourceAuthorityStatus.Revoked : VerifyStatus;
+            return Task.FromResult(new PreparedSourceAuthorityResult(status,
+                status == PreparedSourceAuthorityStatus.Current ? approval : null));
         }
         public Task<OctoberRevocationStatus> RevokeSourceApprovalAsync(IOctoberOperatorSession session, string target, string identity, CancellationToken token) => Task.FromResult(OctoberRevocationStatus.Revoked);
     }
@@ -343,6 +432,12 @@ public sealed class OctoberScanRunSourceFactoryTests
         public override long TimestampFrequency => TimeSpan.TicksPerSecond;
         public override long GetTimestamp() => _ticks;
         internal void Advance(TimeSpan duration) { _now += duration; _ticks += duration.Ticks; }
+    }
+
+    private sealed record LongSession(string SubjectId, string ManagementAuthorityId,
+        DateTimeOffset ExpiresAtUtc) : IOctoberOperatorSession
+    {
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private static object SessionBudget(OctoberToolRuntime runtime) =>

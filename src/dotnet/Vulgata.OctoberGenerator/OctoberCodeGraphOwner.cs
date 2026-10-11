@@ -1,4 +1,5 @@
 using Vulgata.Infrastructure.Analysis.CodeGraph;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.OctoberGenerator;
 
@@ -24,7 +25,7 @@ internal sealed class OctoberCodeGraphOwner(Guid repositoryId, string rootBindin
         {
             token.ThrowIfCancellationRequested();
             TimeSpan remaining = remainingRun();
-            if (_closed || _faulted || remaining <= TimeSpan.Zero || remaining > TimeSpan.FromMinutes(30))
+            if (_closed || _faulted || remaining <= TimeSpan.Zero || remaining > ExecutionOwnerLifetime.Maximum)
                 throw new InvalidOperationException("The original CodeGraph owner is unavailable.");
             if (_connection is not null) return _connection;
             try

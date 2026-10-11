@@ -1034,7 +1034,15 @@ public static class OctoberGeneratorEntryPoint
             Required(configuration, "October:Authority:Id"),
             command.TargetId, command.BatchId, canonicalIdentity,
             dataConnection, identityConnection, identityCanonical,
-            targets.ToImmutable(), TimeSpan.FromSeconds(30), TimeSpan.FromHours(1));
+            targets.ToImmutable(), TimeSpan.FromSeconds(30), AuthoritySessionLifetime(command));
+    }
+
+    internal static TimeSpan AuthoritySessionLifetime(OctoberGeneratorCommand command)
+    {
+        if (command.Mode != OctoberGeneratorMode.Generate) return TimeSpan.FromHours(1);
+        if (command.ScanPolicy is not { } policy || !new OctoberScanPolicyValidator().Validate(policy).IsValid)
+            throw new InvalidOperationException("A validated Generate policy is required for the session lifetime.");
+        return TimeSpan.FromSeconds(Math.Max(3600, policy.RunDeadlineSeconds));
     }
 
     private static string Required(IConfiguration configuration, string key)

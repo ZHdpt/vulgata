@@ -56,7 +56,7 @@ public sealed class OctoberAuthorityConfiguration
             throw new ArgumentOutOfRangeException(nameof(operationTimeout));
         }
 
-        if (sessionLifetime <= TimeSpan.Zero || sessionLifetime > TimeSpan.FromHours(1))
+        if (sessionLifetime <= TimeSpan.Zero || sessionLifetime > ExecutionOwnerLifetime.Maximum)
         {
             throw new ArgumentOutOfRangeException(nameof(sessionLifetime));
         }

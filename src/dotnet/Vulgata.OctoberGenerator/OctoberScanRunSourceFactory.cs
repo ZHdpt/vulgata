@@ -64,7 +64,7 @@ internal sealed class OctoberScanRunSourceFactory
         TimeSpan remainingRunLifetime, CancellationToken cancellationToken = default)
     {
         if (!ValidateSelection(execution) || remainingRunLifetime <= TimeSpan.Zero ||
-            remainingRunLifetime > TimeSpan.FromMinutes(30))
+            remainingRunLifetime > ExecutionOwnerLifetime.Maximum)
             throw new InvalidOperationException("The exact source configuration is unavailable.");
         long started = _clock.GetTimestamp();
         var runtimes = new Dictionary<Guid, RuntimeBinding>();

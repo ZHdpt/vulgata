@@ -105,6 +105,61 @@ public sealed class OctoberScanGenerateConfigurationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(14400)]
+    [InlineData(86400)]
+    public void ReadCommand_GenerateAcceptsLongRunDeadline(int runDeadlineSeconds)
+    {
+        var policy = ValidPolicy() with { RunDeadlineSeconds = runDeadlineSeconds };
+        using var policyFile = new PolicyFile(JsonSerializer.Serialize(policy,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        var command = InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values));
+
+        Assert.Equal(runDeadlineSeconds, Assert.IsType<OctoberScanPolicy>(command.ScanPolicy).RunDeadlineSeconds);
+        Assert.True(new OctoberScanPolicyValidator().Validate(command.ScanPolicy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    [InlineData(86400, true)]
+    [InlineData(86401, false)]
+    public void ValidatePolicy_RunDeadlineUsesFiniteOneDayBounds(int runDeadlineSeconds, bool expectedValid)
+    {
+        var policy = ValidPolicy() with
+        {
+            RunDeadlineSeconds = runDeadlineSeconds,
+            FileDeadlineSeconds = 1,
+            GracefulDrainSeconds = 1
+        };
+
+        Assert.Equal(expectedValid, new OctoberScanPolicyValidator().Validate(policy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(1800, OctoberGeneratorMode.Generate, 3600)]
+    [InlineData(14400, OctoberGeneratorMode.Generate, 14400)]
+    [InlineData(86400, OctoberGeneratorMode.Generate, 86400)]
+    [InlineData(0, OctoberGeneratorMode.Prepare, 3600)]
+    [InlineData(0, OctoberGeneratorMode.Select, 3600)]
+    public void AuthoritySessionLifetime_GenerateIsRunBoundOtherModesKeepOneHour(
+        int runDeadlineSeconds, OctoberGeneratorMode mode, int expectedSeconds)
+    {
+        OctoberScanPolicy? policy = mode == OctoberGeneratorMode.Generate
+            ? ValidPolicy() with { RunDeadlineSeconds = runDeadlineSeconds }
+            : null;
+        var command = new OctoberGeneratorCommand(mode, Target, Batch, null, policy);
+
+        Assert.Equal(TimeSpan.FromSeconds(expectedSeconds),
+            OctoberGeneratorEntryPoint.AuthoritySessionLifetime(command));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("{\"maximumTotalTokens\":12000}")]
     [InlineData("{\"outputStage\":\"auto\",\"maximumTotalTokens\":12000}")]
     [InlineData("{\"outputStage\":\"cl-only\"}")]
@@ -132,6 +187,7 @@ public sealed class OctoberScanGenerateConfigurationTests
     [SuiteTheory("SelfContained")]
     [InlineData("zero-cap")]
     [InlineData("negative-deadline")]
+    [InlineData("run-deadline-above-maximum")]
     [InlineData("file-exceeds-run")]
     [InlineData("zero-requests")]
     [InlineData("negative-retries")]
@@ -148,6 +204,7 @@ public sealed class OctoberScanGenerateConfigurationTests
         {
             "zero-cap" => policy with { WorkerCap = 0 },
             "negative-deadline" => policy with { RunDeadlineSeconds = -1 },
+            "run-deadline-above-maximum" => policy with { RunDeadlineSeconds = 86401 },
             "file-exceeds-run" => policy with { FileDeadlineSeconds = 1801 },
             "zero-requests" => policy with { MaximumProviderRequests = 0 },
             "negative-retries" => policy with { MaximumTransientRetries = -1 },
