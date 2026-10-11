@@ -34,6 +34,22 @@ public partial class ChatPage
     private bool OctoberComposerDisabled => OctoberEntry?.Conversation is null ||
         _boundOctoberApplication?.IsReady != true;
 
+    private string OctoberComposerPlaceholder
+    {
+        get
+        {
+            if (!OctoberComposerDisabled)
+                return _boundOctoberEntry?.ThemeName == "dark" ? "输入技术问题…" : "描述你想了解的业务流程…";
+            if (_octoberLocatorInvalid) return "对话链接暂不可用";
+            if (_openingOctober || _boundOctoberEntry?.LoadState == Vulgata.Shared.LoadState.Loading)
+                return "正在准备对话…";
+            if (_boundOctoberApplication?.IsSaveUncertain == true)
+                return _boundOctoberApplication.StatusMessage ?? "对话状态待确认。";
+            if (_boundOctoberApplication?.IsBusy == true) return "正在处理当前问题…";
+            return "对话服务暂不可用";
+        }
+    }
+
     private async Task ResolveOctoberCompositionAsync()
     {
         ReadOctoberLocator();

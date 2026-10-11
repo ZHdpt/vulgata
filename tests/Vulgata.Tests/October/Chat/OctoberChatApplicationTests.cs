@@ -31,6 +31,145 @@ namespace Vulgata.Tests.October.Chat;
 public sealed class OctoberChatApplicationTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(KnowledgeMode.IT, "输入技术问题…")]
+    [InlineData(KnowledgeMode.Business, "描述你想了解的业务流程…")]
+    public async Task ChatPage_ComposerShowsPreparationOnlyDuringActualOpenThenReadyModePromptAsync(KnowledgeMode mode, string readyPrompt)
+    {
+        await using var fixture = await ApplicationFixture.CreateAsync();
+        var attachment = await fixture.CreateReattachmentAsync(fixture.Selection with { Mode = mode });
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.AfterOpen = async (_, _) => { entered.TrySetResult(); await release.Task; };
+        using var context = new ChatPageTests();
+        var page = context.Render<ChatPage>(parameters => parameters.Add(item => item.OctoberEntry, attachment.Entry)
+            .Add(item => item.OctoberSelection, attachment.Selection).Add(item => item.OctoberApplication, attachment.Application));
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            page.WaitForAssertion(() =>
+            {
+                Assert.True(attachment.Application.IsBusy);
+                Assert.Equal("正在准备对话…", page.Find("#october-chat-question").GetAttribute("placeholder"));
+                Assert.True(page.Find("#october-chat-question").HasAttribute("disabled"));
+            });
+            release.TrySetResult();
+            page.WaitForAssertion(() =>
+            {
+                Assert.True(attachment.Application.IsReady);
+                Assert.Equal(readyPrompt, page.Find("#october-chat-question").GetAttribute("placeholder"));
+                Assert.False(page.Find("#october-chat-question").HasAttribute("disabled"));
+                Assert.DoesNotContain("准备", page.Find(".question-composer").TextContent, StringComparison.Ordinal);
+            });
+            Assert.Empty(fixture.RequestBodies);
+        }
+        finally
+        {
+            release.TrySetResult();
+            fixture.AfterOpen = null;
+            page.WaitForAssertion(() => Assert.False(attachment.Application.IsBusy), TimeSpan.FromSeconds(10));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ChatPage_UnavailableComposerDoesNotPromisePreparationWhenApplicationOrScopeIsMissingAsync(bool unavailableScope)
+    {
+        await using var fixture = await ApplicationFixture.CreateAsync();
+        var unavailable = new OctoberChatApplication(fixture.Registry,
+            (_, _) => Task.FromResult<OctoberChatTurnScope?>(null),
+            (_, _, _) => Task.FromResult<OctoberChatInputDigests?>(null));
+        using var context = new ChatPageTests();
+        var page = context.Render<ChatPage>(parameters =>
+        {
+            parameters.Add(item => item.OctoberEntry, fixture.Entry).Add(item => item.OctoberSelection, fixture.Selection);
+            if (unavailableScope) parameters.Add(item => item.OctoberApplication, unavailable);
+        });
+        page.WaitForAssertion(() =>
+        {
+            Assert.False(unavailable.IsBusy);
+            Assert.Equal("对话服务暂不可用", page.Find("#october-chat-question").GetAttribute("placeholder"));
+            Assert.True(page.Find("#october-chat-question").HasAttribute("disabled"));
+            Assert.Contains("暂不可用", page.Find(".question-composer").TextContent, StringComparison.Ordinal);
+            Assert.DoesNotContain("准备", page.Find(".question-composer").TextContent, StringComparison.Ordinal);
+        });
+        Assert.Empty(fixture.OpenRequests);
+        Assert.Empty(fixture.RequestBodies);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ChatPage_ComposerDistinguishesProcessingFromSaveUncertaintyAndKeepsCorrectActionsAsync()
+    {
+        await using var fixture = await ApplicationFixture.CreateAsync();
+        fixture.LoseSaveAcknowledgement = true;
+        var body = fixture.Enqueue(Text("实际生成中。"), Stop + Done);
+        using var context = new ChatPageTests();
+        var page = fixture.Render(context);
+        page.WaitForAssertion(() => Assert.True(fixture.Application.IsReady));
+        await page.InvokeAsync(() => page.Find("#october-chat-question").Input("核对真实状态"));
+        var pending = page.InvokeAsync(() => page.Find(".composer-action").ClickAsync(new()));
+        try
+        {
+            await body.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            page.WaitForAssertion(() =>
+            {
+                Assert.Equal("正在处理当前问题…", page.Find("#october-chat-question").GetAttribute("placeholder"));
+                Assert.True(page.Find("#october-chat-question").HasAttribute("disabled"));
+                Assert.Single(page.FindAll("fluent-button").Where(button => button.TextContent.Trim() == "取消生成"));
+                Assert.Empty(page.FindAll("fluent-button").Where(button => button.TextContent.Trim() == "核对保存状态"));
+            });
+            body.Release.TrySetResult();
+            await pending.WaitAsync(TimeSpan.FromSeconds(10));
+            page.WaitForAssertion(() =>
+            {
+                Assert.True(fixture.Application.IsSaveUncertain);
+                Assert.Contains("保存状态待确认", page.Find("#october-chat-question").GetAttribute("placeholder"), StringComparison.Ordinal);
+                Assert.DoesNotContain("准备", page.Find("#october-chat-question").GetAttribute("placeholder"), StringComparison.Ordinal);
+                Assert.True(page.Find("#october-chat-question").HasAttribute("disabled"));
+                Assert.Single(page.FindAll("fluent-button").Where(button => button.TextContent.Trim() == "核对保存状态"));
+                Assert.Empty(page.FindAll("fluent-button").Where(button => button.TextContent.Trim() == "取消生成"));
+            });
+            await page.InvokeAsync(() => page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "核对保存状态").ClickAsync(new()));
+            page.WaitForAssertion(() => Assert.True(fixture.Application.IsReady));
+            Assert.Equal("输入技术问题…", page.Find("#october-chat-question").GetAttribute("placeholder"));
+            Assert.Single(fixture.RequestBodies);
+        }
+        finally
+        {
+            body.Release.TrySetResult();
+            _ = await Record.ExceptionAsync(() => pending.WaitAsync(TimeSpan.FromSeconds(10)));
+            if (fixture.Application.IsSaveUncertain) await fixture.Application.ReconcileAsync().WaitAsync(TimeSpan.FromSeconds(10));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ChatPage_UnknownAdmissionComposerDescribesDialogueUncertaintyWithoutInventingPendingSaveAsync()
+    {
+        await using var fixture = await ApplicationFixture.CreateAsync();
+        fixture.LoseBeginAcknowledgement = true;
+        using var context = new ChatPageTests();
+        var page = fixture.Render(context);
+        page.WaitForAssertion(() => Assert.True(fixture.Application.IsReady));
+        await page.InvokeAsync(() => page.Find("#october-chat-question").Input("准入待核对"));
+        await page.InvokeAsync(() => page.Find(".composer-action").ClickAsync(new())).WaitAsync(TimeSpan.FromSeconds(10));
+        page.WaitForAssertion(() =>
+        {
+            Assert.True(fixture.Application.IsSaveUncertain);
+            Assert.Contains("对话状态待确认", page.Find("#october-chat-question").GetAttribute("placeholder"), StringComparison.Ordinal);
+            Assert.DoesNotContain("保存状态", page.Find("#october-chat-question").GetAttribute("placeholder"), StringComparison.Ordinal);
+            Assert.DoesNotContain("准备", page.Find("#october-chat-question").GetAttribute("placeholder"), StringComparison.Ordinal);
+            Assert.True(page.Find("#october-chat-question").HasAttribute("disabled"));
+            Assert.Empty(page.FindAll("fluent-button").Where(button => button.TextContent.Trim() == "取消生成"));
+        });
+        Assert.Null(fixture.LastSaveRequest);
+        Assert.Empty(fixture.RequestBodies);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task ChatPage_ValidDurableLocatorReloadsExactOwnerTranscriptWithoutCreateOrGenerationAsync()
     {
@@ -101,6 +240,7 @@ public sealed class OctoberChatApplicationTests
         Assert.Empty(fixture.RequestBodies);
         Assert.Empty(page.FindAll("#chat-question"));
         Assert.All(page.FindAll("textarea"), field => Assert.True(field.HasAttribute("disabled")));
+        Assert.Equal("对话链接暂不可用", page.Find(".question-composer textarea").GetAttribute("placeholder"));
         Assert.Equal("http://localhost/" + query, navigation.Uri);
         Assert.Empty(navigation.Navigations);
     }
@@ -429,6 +569,8 @@ public sealed class OctoberChatApplicationTests
         var first = fixture.Enqueue(Text("第一段即时文本。"), Tool(fixture.Document) + Done);
         fixture.EnqueueComplete(Report(fixture.Document) + Done);
         var continuation = fixture.Enqueue(Text("查阅完成。"), Stop + Done);
+        fixture.EnqueueComplete(Tool(fixture.Document) + Done);
+        fixture.EnqueueComplete(Report(fixture.Document) + Done);
         fixture.EnqueueComplete(Text("第二轮回答。") + Stop + Done);
         using var context = new ChatPageTests();
         var page = fixture.Render(context);
@@ -444,11 +586,15 @@ public sealed class OctoberChatApplicationTests
             Assert.False(firstClick.IsCompleted);
             Assert.Equal("provisional", page.Find(".october-chat-turn").GetAttribute("data-answer-state"));
             Assert.True(fixture.Application.IsBusy);
+            Assert.Empty(page.FindAll(".october-chat-reference-footer"));
+            Assert.Empty(page.FindAll(".october-chat-references"));
             first.Release.TrySetResult();
             await continuation.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
             page.WaitForAssertion(() => Assert.Contains("本次知识查阅已结束。", page.Markup));
             Assert.DoesNotContain("read-exact-controlled", page.Markup, StringComparison.Ordinal);
             Assert.False(fixture.Application.Turns.Single().ViewModel.IsTerminal);
+            Assert.Empty(page.FindAll(".october-chat-reference-footer"));
+            Assert.Empty(page.FindAll(".october-chat-references"));
             continuation.Release.TrySetResult();
             await firstClick.WaitAsync(TimeSpan.FromSeconds(10));
             page.WaitForAssertion(() => Assert.True(fixture.Application.Turns.Single().ViewModel.IsTerminal));
@@ -478,8 +624,9 @@ public sealed class OctoberChatApplicationTests
             await page.InvokeAsync(() => page.Find(".composer-action").ClickAsync(new())).WaitAsync(TimeSpan.FromSeconds(10));
             page.WaitForAssertion(() => Assert.Equal(2, fixture.Application.Turns.Count));
             Assert.All(fixture.Application.Turns, turn => Assert.True(turn.ViewModel.IsTerminal));
-            Assert.Equal(4, fixture.RequestBodies.Count);
-            using var payload = JsonDocument.Parse(fixture.RequestBodies.Last());
+            Assert.Equal(6, fixture.RequestBodies.Count);
+            Assert.Equal(2, page.FindAll(".october-chat-reference-footer a").Count);
+            using var payload = JsonDocument.Parse(fixture.RequestBodies.ElementAt(3));
             var messages = payload.RootElement.GetProperty("messages").EnumerateArray().ToArray();
             var dialogue = messages.Where(message => message.GetProperty("role").GetString() is "user" or "assistant")
                 .Select(message => (Role: message.GetProperty("role").GetString(), Text: MessageText(message))).ToArray();
@@ -800,6 +947,7 @@ public sealed class OctoberChatApplicationTests
         Assert.False(application.IsReady);
         Assert.Equal(0, scopes);
         Assert.All(page.FindAll("textarea"), field => Assert.True(field.HasAttribute("disabled")));
+        Assert.Equal("对话服务暂不可用", page.Find(".question-composer textarea").GetAttribute("placeholder"));
         Assert.All(page.FindAll("fluent-button").Where(button => button.TextContent.Trim() == "发送"),
             button => Assert.True(button.HasAttribute("disabled")));
     }

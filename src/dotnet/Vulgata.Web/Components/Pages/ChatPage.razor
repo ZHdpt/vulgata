@@ -80,12 +80,12 @@
         <section class="question-composer" aria-label="问题输入">
             <label class="visually-hidden" for="october-chat-question">问题</label>
             <textarea id="october-chat-question" @bind="october.Question" @bind:event="oninput"
-                      placeholder="@(OctoberComposerDisabled ? "对话服务准备中" : october.ThemeName == "dark" ? "输入技术问题…" : "描述你想了解的业务流程…")"
+                      placeholder="@OctoberComposerPlaceholder"
                       aria-label="问题" rows="3" disabled="@OctoberComposerDisabled"></textarea>
             <div class="composer-context-row">
                 @if (_boundOctoberApplication is null)
                 {
-                    <p role="status">对话服务准备中，暂时无法发送问题。</p>
+                    <p role="status">对话服务暂不可用，暂时无法发送问题。</p>
                 }
                 else if (_boundOctoberApplication.StatusMessage is { } applicationStatus)
                 {
@@ -112,7 +112,7 @@ else if (_octoberApplicationSelected)
             <p class="chat-message chat-message--status" role="status">对话服务暂不可用。</p>
         </section>
         <section class="question-composer" aria-label="问题输入">
-            <textarea aria-label="问题" placeholder="对话服务准备中" rows="3" disabled></textarea>
+            <textarea aria-label="问题" placeholder="对话服务暂不可用" rows="3" disabled></textarea>
             <FluentButton Type="ButtonType.Button" Disabled="true">发送</FluentButton>
         </section>
     </div>
