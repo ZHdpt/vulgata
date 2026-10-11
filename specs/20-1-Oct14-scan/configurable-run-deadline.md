@@ -111,3 +111,22 @@ not successful generation/publication or long-duration qualification.
 
 The single authorized run is active. Do not start another run, adopt old accepted
 state, rebuild its binaries, or reinterpret this launch as a completed result.
+
+### Final real result
+
+The run above has now completed; this supersedes its active launch status.
+Execution Completed, coverage Complete, publication Confirmed, exit0:
+77/77 files accepted and163 Documents published in2765.81 seconds (46m05.81s).
+TimedOut=false; NeedsSettlementCheck=false; sourceMismatches=0.
+Provider usage:122 requests,1198311 input tokens and624861 output tokens,
+hasUnknownUsage=false. This proves this source's full CL-only generation and
+publication, not a separate ordinary-reader/browser qualification.
+
+Exact publication: target `phone-15bfe12615eb`, batch
+`1a327657-6a55-4e65-ba06-6992f423d40e`, selection digest
+`52fde3a3354bb00ce686d6eb4f10feb9279d0f2d9daea9a6b8473f51e48b43bd`,
+publication `fff8ddfc-d8ae-480c-aadd-286f03c8f4d9`.
+Root-relative terminal report:
+`logs/generate-35afbe1fa6744344b312c3673dc7e048.stdout`.
+The terminal ledger is now present at the path recorded above. The authorized
+single run is consumed; no further paid run was started.
