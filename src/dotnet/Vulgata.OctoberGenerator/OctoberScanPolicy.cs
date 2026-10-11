@@ -14,6 +14,8 @@ public sealed record OctoberScanSourceRule(
 public sealed record OctoberScanPolicy
 {
     public string? OutputStage { get; init; }
+    /// <summary>Explicit BL-only execution over an exact, already published CL corpus.</summary>
+    public Guid? ExistingClPublicationId { get; init; }
     public int WorkerCap { get; init; } = 1;
     public int RunDeadlineSeconds { get; init; } = 1800;
     public int FileDeadlineSeconds { get; init; } = 600;
@@ -37,6 +39,8 @@ public sealed class OctoberScanPolicyValidator : AbstractValidator<OctoberScanPo
     public OctoberScanPolicyValidator()
     {
         RuleFor(policy => policy.OutputStage).Must(stage => stage is "cl-only" or "cl-and-bl");
+        RuleFor(policy => policy).Must(policy => policy.ExistingClPublicationId is null ||
+            policy.ExistingClPublicationId != Guid.Empty && policy.OutputStage == "cl-and-bl");
         RuleFor(policy => policy.WorkerCap).InclusiveBetween(1, 64);
         RuleFor(policy => policy.RunDeadlineSeconds).InclusiveBetween(1, ExecutionOwnerLifetime.MaximumSeconds);
         RuleFor(policy => policy.FileDeadlineSeconds).GreaterThan(0)

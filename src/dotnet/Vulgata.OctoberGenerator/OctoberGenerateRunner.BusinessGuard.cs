@@ -129,7 +129,8 @@ internal sealed partial class OctoberGenerateRunner
         {
             if (_closed || !owner.BusinessRunAvailable) return CommitEligibilityStatus.StaleOrFenced;
             if (token.IsCancellationRequested) return CommitEligibilityStatus.Cancelled;
-            var handoff = owner._scope!.CheckHandoffEligibility(owner._beginRequest!.RunId,
+            if (!owner.OriginalAdmissionMatches()) return CommitEligibilityStatus.Denied;
+            var handoff = owner._scope!.CheckHandoffEligibility(owner.OriginalRunId,
                 owner._businessFinalizationOperation!, owner._execution!.Provider.Profile.Name);
             if (handoff != ProviderAdmissionStatus.Granted)
                 return handoff switch

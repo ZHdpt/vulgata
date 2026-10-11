@@ -328,7 +328,11 @@ public static class OctoberGeneratorEntryPoint
             sources.OpenAsync, clients.CreateAsync,
             ports => new OctoberKnowledgeWriter(contexts, ports.CompletionAuthority, ports.SourceVerifier,
                 ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log)
-        { JsonCorrectionLog = new OctoberJsonCorrectionLog(runtime.LogDirectory, clock).AppendAsync };
+        {
+            JsonCorrectionLog = new OctoberJsonCorrectionLog(runtime.LogDirectory, clock).AppendAsync,
+            CreateBusinessFromClStore = (owner, begin, completion, settlement) =>
+                new OctoberBusinessFromClStore(contexts, owner, begin, completion, settlement, log)
+        };
     }
 
     internal static async Task<int> ExecuteConfiguredAsync(OctoberGeneratorCommand command,
@@ -794,6 +798,8 @@ public static class OctoberGeneratorEntryPoint
         "publication_not_started" or "source-authority-or-identity-lost" or "incomplete-directory" or "source-limitation" or
         "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" or
         "business_authority_unavailable" or "business_client_unavailable" or "business_corpus_unavailable" or
+        "business_existing_cl_admission_unavailable" or "business_existing_resolution_unavailable" or
+        "business_attempt_unsettled" or "business_attempt_close_unconfirmed" or
         "business_freeze_unavailable" or "business_initial_read_unavailable" or "business_original_slot_unavailable" or
         "business_planning_inputs_unavailable" or "business_publication_binding_unavailable" or
         "business_publication_read_unavailable" or "business_publication_unavailable" or

@@ -37,6 +37,8 @@ internal sealed record OctoberGenerateRunnerDependencies(
     IOctoberKnowledgeOperationLog OperationLog)
 {
     internal OctoberBusinessRunComposition? Business { get; init; }
+    internal Func<IOctoberBusinessFromClAuthority, IOctoberCommitSubmissionGuard,
+        IOctoberCommitSubmissionGuard, IOctoberBusinessFromClSettlementAuthority, IOctoberBusinessFromClStore>? CreateBusinessFromClStore { get; init; }
     internal OctoberParseFailureCapture? ParseFailureCapture { get; init; }
     internal OctoberWorkerHttpObservation? HttpObservation { get; init; }
     internal int MaximumWorkerOutputTokens { get; init; } = 8192;
@@ -46,7 +48,8 @@ internal sealed record OctoberGenerateRunnerDependencies(
 /// <summary>Owns the original sequential Generate run; a stored receipt is never a restart grant.</summary>
 internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncDisposable,
     IOctoberGenerateAdmissionAuthority, IOctoberCommitSubmissionGuard, IOctoberCorpusFreezeAuthority,
-    IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority
+    IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority,
+    IOctoberBusinessFromClAuthority, IOctoberBusinessFromClSettlementAuthority
 {
     private readonly OctoberGenerateRunnerDependencies _dependencies;
     private readonly TimeProvider _time;
@@ -162,6 +165,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             report = report with { Execution = OctoberExecutionStatus.Indeterminate,
                 Gaps = report.Gaps.Add(new("owned_cleanup_unconfirmed")) };
         }
+        report = await CloseExistingClBusinessAsync(report);
         if (_hardRetryBudget is not null && !report.Inventory.IsEmpty)
             report = report with { HardRetry = _hardRetryBudget.Read() };
         if (HasMetadata(report) && await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
@@ -190,7 +194,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         OctoberGenerateExecution execution = _execution!;
         if (!new OctoberScanPolicyValidator().Validate(execution.Policy).IsValid ||
             (execution.Policy.OutputStage != "cl-only" && !BusinessConfigurationMatches(execution)) || execution.Policy.WorkerCap != 1 ||
-            !_dependencies.ValidateSourceConfiguration(execution) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
+            (execution.Policy.ExistingClPublicationId is null ? !_dependencies.ValidateSourceConfiguration(execution)
+                : _dependencies.CreateBusinessFromClStore is null) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
             return Failure("invalid_run_configuration", disclose: false);
         _binding = new(execution.Authority.CanonicalDatabaseIdentity, execution.Authority.TargetId,
             execution.Authority.BatchId, execution.Authority.SelectionDigest);
@@ -211,6 +216,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             CheckProviderEligibilityAsync, _businessFinalizationOperation, timeProvider: _time, hardStop: token);
         if (await CheckPermissionsAsync([], token) != DisclosureStatus.Allowed)
             return Failure("authority_unavailable", disclose: false);
+        if (execution.Policy.ExistingClPublicationId is not null)
+            return await RunExistingClBusinessAsync(runId, token);
         var begin = new GenerateAdmissionRequest(_binding, execution.Session.SubjectId, runId, Guid.NewGuid(), "");
         _beginRequest = begin with { CanonicalPayloadDigest = OctoberGenerateAdmissionPolicy.ComputePayloadDigest(begin) };
         IOctoberGenerateAdmissionStore admission = _dependencies.CreateAdmissionStore(this, this);
@@ -695,6 +702,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         {
             if (!RunAvailable || _beginClosed) return CommitEligibilityStatus.StaleOrFenced;
             if (token.IsCancellationRequested) return CommitEligibilityStatus.Cancelled;
+            if (_existingClRequest is { } existing)
+                return attempt.Operation == OctoberBusinessFromClPolicy.BeginOperation(existing) &&
+                    attempt.AttemptId == existing.RunId && attempt.PayloadDigest == existing.CanonicalPayloadDigest
+                    ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;
             return _beginRequest is not null && attempt.Operation == OctoberGenerateAdmissionPolicy.OperationFor(_beginRequest.Binding) &&
                 attempt.AttemptId == _beginRequest.RunId && attempt.PayloadDigest == _beginRequest.CanonicalPayloadDigest
                 ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;

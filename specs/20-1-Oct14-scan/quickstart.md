@@ -75,6 +75,39 @@ remaining run. When using `eng/watch-october-batch.ps1`, pass
 60-second startup/cleanup allowance does not extend the application deadline.
 See [review and verification](configurable-run-deadline.md).
 
+### BL from an existing complete CL publication
+
+Use a fresh authenticated Generate invocation with an explicit Business policy:
+
+```json
+{
+  "outputStage": "cl-and-bl",
+  "existingClPublicationId": "fff8ddfc-d8ae-480c-aadd-286f03c8f4d9"
+}
+```
+
+This is a policy fragment: retain the explicit finite budgets and repository
+scope rules in the complete policy file. Bind the exact existing target,
+database, batch and selection, and supply the existing protected provider and
+Identity configuration. `October__Mode=generate` and
+`October__ScanPolicyFile=<absolute new policy file>` select this route.
+`October__BusinessSettingsFile` must contain explicit roots (Repository ID,
+relative path, semantic selector and SelectedCodeUnit kind), planning limits and
+maximum attempt tokens; alternatively use the existing bounded operator root
+selection mechanism. A genuinely verified Identity reader binding is mandatory.
+An old paid-run wrapper's single-use marker is not permission to invoke it again;
+prepare a separately authorized BL invocation/log boundary with the same protected
+bindings. Do not run prepare or create another CL batch for this route.
+
+The selector is valid only with cl-and-bl. It reuses the owner-validated exact CL
+corpus and bypasses CL/source-tool execution and freezing. New BL publications
+have their own identities; the original publication and all CL versions remain
+unchanged. A fresh attempt can start after the previous attempt's owner confirms
+settlement and writes its terminal receipt. Unconfirmed commits/transports or a
+lost original process block; there is no automatic crash takeover or retry.
+Reader selection is not automatically changed. See
+[scope, safety and evidence](business-from-existing-cl.md).
+
 ## Handoff
 
 ### Bounded final-format recovery

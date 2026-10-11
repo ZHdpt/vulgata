@@ -122,6 +122,50 @@ public sealed class OctoberScanGenerateConfigurationTests
     }
 
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ReadCommand_GenerateWithExistingClPublication_ParsesExactNonemptyPublicationId()
+    {
+        Guid publicationId = Guid.Parse("26b1e60b-7a0b-4490-bf7c-dfd7ef9f2788");
+        using var policyFile = new PolicyFile(PolicyJsonWithExistingClPublication("cl-and-bl", publicationId));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        var command = InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values));
+
+        var policy = Assert.IsType<OctoberScanPolicy>(command.ScanPolicy);
+        var property = typeof(OctoberScanPolicy).GetProperty("ExistingClPublicationId");
+        Assert.NotNull(property);
+        Assert.Equal(publicationId, property!.GetValue(policy));
+        Assert.True(new OctoberScanPolicyValidator().Validate(policy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("cl-only")]
+    [InlineData("cl-and-bl")]
+    public void ReadCommand_GenerateExistingClPublication_RejectsMissingOrInvalidId(string stage)
+    {
+        Guid publicationId = Guid.Empty;
+        using var policyFile = new PolicyFile(PolicyJsonWithExistingClPublication(stage, publicationId));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        Assert.Throws<InvalidOperationException>(() => InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ReadCommand_ExistingClPublicationRequiresBusinessStage()
+    {
+        using var policyFile = new PolicyFile(PolicyJsonWithExistingClPublication("cl-only",
+            Guid.Parse("26b1e60b-7a0b-4490-bf7c-dfd7ef9f2788")));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        Assert.Throws<InvalidOperationException>(() => InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values)));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(0, false)]
     [InlineData(1, true)]
@@ -396,6 +440,15 @@ public sealed class OctoberScanGenerateConfigurationTests
 
     private static string PolicyJson(string stage) => JsonSerializer.Serialize(
         ValidPolicy() with { OutputStage = stage }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+    private static string PolicyJsonWithExistingClPublication(string stage, Guid publicationId)
+    {
+        return JsonSerializer.Serialize(ValidPolicy() with
+        {
+            OutputStage = stage,
+            ExistingClPublicationId = publicationId
+        }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    }
 
     private static Task<OctoberSelectedWorkerProvider> BoundProviderAsync() => Task.FromResult(
         new OctoberSelectedWorkerProvider("explicit-provider-document", "only-source",

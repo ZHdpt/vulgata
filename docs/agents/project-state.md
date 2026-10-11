@@ -228,6 +228,19 @@ settlement check. The one-run grant is consumed. Ordinary reader verification
 is separate from this successful generation/publication result. See
 [configurable deadline evidence](../../specs/20-1-Oct14-scan/configurable-run-deadline.md).
 
+The narrow BL-from-existing-CL route now selects an exact complete CL-only
+publication through `existingClPublicationId` in a `cl-and-bl` Generate policy.
+It bypasses CL generation/source tools and appends BL separately, preserving
+the original CL Documents and publication. Owner admission/settlement receipts
+exclude overlapping attempts; a settled failure allows a fresh authorized run
+and reuses committed resolution outcomes. Unknown commits or lost processes
+remain blocked; generic resume/crash recovery is not implemented. No schema
+migration or real retained-database mutation was needed. Current verification
+and the still-required explicit roots, provider/budget and fresh invocation
+authority are recorded in
+[BL-from-existing-CL evidence](../../specs/20-1-Oct14-scan/business-from-existing-cl.md).
+No paid BL run has been started under this implementation authorization.
+
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
 retains the exact real outcomes. Neither proves completion of the remaining slice.
 Retained pilot resource amendment: reuse the existing PostgreSQL 17 container and

@@ -36,19 +36,17 @@ internal sealed partial class OctoberGenerateRunner
             HasOutstandingCalls() || _attempts.Any(attempt => !attempt.IsSettledForFreeze) ||
             _scope is null || _scope.GetSnapshot().OutstandingAttempts != 0 ||
             !ReferenceEquals(request.ExecutionScope, _scope) || request.Selection is not { } selection ||
-            _beginRequest is null || _beginRequest.Binding != _binding || request.Corpus is null || request.Corpus.Binding != _binding ||
-            _beginRequest.SubjectId != _execution.Session.SubjectId ||
+            !OriginalAdmissionMatches() || request.Corpus is null || request.Corpus.Binding != _binding ||
             _binding != new KnowledgeBinding(_execution.Authority.CanonicalDatabaseIdentity,
                 _execution.Authority.TargetId, _execution.Authority.BatchId, _execution.Authority.SelectionDigest) ||
-            _confirmedBusinessCorpus != request.Corpus || selection.RunId != _beginRequest.RunId ||
+            _confirmedBusinessCorpus != request.Corpus || selection.RunId != OriginalRunId ||
             _businessProviderConfiguration is not { } configuration ||
             configuration.ProfileName != selection.ProviderProfileId ||
             _originalBusinessRequest is not { } retained || !SameBusinessRequest(retained, request))
             return false;
         try
         {
-            if (_beginRequest.CanonicalPayloadDigest != OctoberGenerateAdmissionPolicy.ComputePayloadDigest(_beginRequest) ||
-                selection.ProviderConfigurationFingerprint != OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(configuration))
+            if (selection.ProviderConfigurationFingerprint != OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(configuration))
                 return false;
         }
         catch (ArgumentException) { return false; }
