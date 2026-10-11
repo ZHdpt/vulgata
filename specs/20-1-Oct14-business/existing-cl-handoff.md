@@ -35,6 +35,12 @@ publication bounds. See [expanded qualification](expanded-bl-run-2026-10-11.md).
 Do not retry or clear the receipt; publication scaling and canonical recovery need
 resolution before another run. The prior successful BL remains available.
 
+The user-authorized scaling fix now shares owner planning across the publication
+validation batch while preserving per-proposal validation and atomicity. Focused
+111/111 tests and independent review passed; controlled retained-input validation
+fell from 18.286 seconds to 1.223 seconds. Full PostgreSQL publication remains
+unqualified after the fix, and the stranded admission still needs canonical recovery.
+
 ## Accepted integration and superseded assessment
 
 Assigned checkout: `C:/Users/13728/.codex/worktrees/f081/vulgata`, `oct14/business`.

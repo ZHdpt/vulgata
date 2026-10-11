@@ -79,6 +79,12 @@ public static class OctoberBusinessSynthesisPolicy
     {
         var group = SelectGroup(input, groupVersionId, limits) ?? throw new ArgumentException("An exact planned flow is required.");
         var gaps = Gaps(input, group);
+        return CreateModelPacket(input, group, gaps);
+    }
+
+    private static BusinessSynthesisPacket CreateModelPacket(FlowPlanningInput input, FlowGroupVersion group,
+        ImmutableArray<SynthesisGap> gaps)
+    {
         var documents = group.Members.Select(version => input.Corpus.Documents.Single(document => document.Version == version))
             .Select(document => new SynthesisPacketDocument(document.Version, document.Sections)).ToImmutableArray();
         var packet = new BusinessSynthesisPacket(input.Corpus.Handle, group.RootVersion, documents,
@@ -98,18 +104,62 @@ public static class OctoberBusinessSynthesisPolicy
     public static BusinessSynthesisValidationResult Validate(FlowPlanningInput input, Guid groupVersionId,
         BusinessSynthesisProposal proposal, FlowPlanningLimits? limits = null)
     {
+        try
+        {
+            var group = SelectGroup(input, groupVersionId, limits);
+            return group is null ? InvalidInput() : ValidatePrepared(input, group, proposal);
+        }
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
+        { return InvalidInput(BusinessSynthesisFailureReason.InvalidStructure); }
+    }
+
+    /// <summary>Rebuilds one owner plan for a bounded batch; no caller-supplied plan grants validation.</summary>
+    public static ImmutableArray<BusinessSynthesisValidationResult> ValidateAll(FlowPlanningInput input,
+        ImmutableArray<FlowSynthesisSubmission> submissions, FlowPlanningLimits? limits = null)
+    {
+        if (submissions.IsDefault || submissions.Length > OctoberBusinessFinalizationPolicy.MaximumRoots)
+            throw new ArgumentException("A bounded explicit submission batch is required.", nameof(submissions));
+        if (submissions.IsEmpty) return [];
+        ImmutableArray<BusinessSynthesisValidationResult> InvalidBatch(BusinessSynthesisFailureReason reason) =>
+            [.. submissions.Select(_ => InvalidInput(reason))];
+        try
+        {
+            if (input is null || !Bounded(input, MaximumOwnerInputUtf8Bytes) ||
+                submissions.Where(x => x is not null).Select(x => x.Root).Distinct().Count() != submissions.Count(x => x is not null) ||
+                submissions.Where(x => x is not null).Select(x => x.GroupVersionId).Distinct().Count() != submissions.Count(x => x is not null))
+                return InvalidBatch(BusinessSynthesisFailureReason.InvalidInput);
+            var plan = OctoberFlowPlanner.Plan(input, limits);
+            if (plan.Status != FlowPlanningStatus.Succeeded) return InvalidBatch(BusinessSynthesisFailureReason.InvalidInput);
+            var groups = plan.Groups.ToDictionary(x => x.GroupVersionId);
+            return [.. submissions.Select(submission =>
+            {
+                if (submission?.Root is not { } root || !groups.TryGetValue(submission.GroupVersionId, out var group) ||
+                    group.RootVersion != root.Document || group.Flow.RootUnitId != root.UnitId ||
+                    group.Flow.RootKind != root.Kind || group.Flow.RootSelector != root.Selector)
+                    return InvalidInput();
+                return ValidatePrepared(input, group, submission.Proposal);
+            })];
+        }
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
+        { return InvalidBatch(BusinessSynthesisFailureReason.InvalidStructure); }
+    }
+
+    private static BusinessSynthesisValidationResult InvalidInput(
+        BusinessSynthesisFailureReason reason = BusinessSynthesisFailureReason.InvalidInput) =>
+        new(BusinessSynthesisValidationStatus.InvalidInput, null, null, []) { FailureReason = reason };
+
+    private static BusinessSynthesisValidationResult ValidatePrepared(FlowPlanningInput input, FlowGroupVersion group,
+        BusinessSynthesisProposal proposal)
+    {
         BusinessSynthesisValidationResult Invalid(BusinessSynthesisFailureReason reason,
             BusinessSynthesisValidationStatus status = BusinessSynthesisValidationStatus.InvalidProposal) =>
             new(status, null, null, []) { FailureReason = reason };
-        FlowGroupVersion? group;
         ImmutableArray<SynthesisGap> gaps;
         try
         {
-            group = SelectGroup(input, groupVersionId, limits);
-            if (group is null) return Invalid(BusinessSynthesisFailureReason.InvalidInput, BusinessSynthesisValidationStatus.InvalidInput);
             // The store rebuilds the same packet; a model cannot cite an unseen dependency.
-            _ = CreateModelPacket(input, groupVersionId, limits);
             gaps = Gaps(input, group);
+            _ = CreateModelPacket(input, group, gaps);
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
         { return Invalid(BusinessSynthesisFailureReason.InvalidStructure, BusinessSynthesisValidationStatus.InvalidInput); }

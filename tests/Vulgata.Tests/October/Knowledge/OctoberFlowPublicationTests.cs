@@ -18,6 +18,101 @@ namespace Vulgata.Tests.October.Knowledge;
 /// <summary>Actual SQLite B0/B1 acceptance, owner loading and publication; proposals and source/Scan authority remain controlled.</summary>
 public sealed class OctoberFlowPublicationTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PublishAsync_TwentyTwoExactRoots_RevalidatesAtomicallyAndReplaysWithoutChangingClAsync(bool invalidateLastRoot)
+    {
+        const int rootCount = 22;
+        await using var fixture = await OctoberKnowledgeAcceptanceFixture.CreateSqliteAsync();
+        var template = fixture.Proposal.Units[0];
+        var sourceProposal = fixture.Proposal with
+        {
+            Units = Enumerable.Range(0, rootCount).Select(index => OctoberKnowledgeAcceptanceFixture.Unit("batch-root-" + index,
+                null, "Controlled root " + index, template.Anchors, template.Sections)).ToImmutableArray(),
+            Observations = [], Uncertainties = []
+        };
+        Assert.True(OctoberKnowledgePolicy.Validate(sourceProposal, new(fixture.Origin, 100)));
+        var accepted = await fixture.Writer().AcceptCompletedFileAsync(fixture.Seal(sourceProposal));
+        Assert.Equal(KnowledgeWriteStatus.Committed, accepted.Status);
+        var freeze = new CorpusFreezeRequest(new(fixture.Binding.BatchId, OperationKind.FreezeCorpus, Guid.NewGuid()),
+            fixture.Binding, "", [accepted.AcceptedFile!], [sourceProposal.Coverage]);
+        freeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
+        fixture.FreezeAuthority.Approve(freeze);
+        var frozen = await fixture.Writer().FreezeCorpusAsync(freeze);
+        Assert.Equal(KnowledgeWriteStatus.Committed, frozen.Status);
+        await using var context = fixture.Factory.CreateDbContext();
+        var units = await context.CodeUnits.AsNoTracking().ToListAsync();
+        var logicals = await context.LogicalDocuments.AsNoTracking().ToListAsync();
+        var versions = await context.DocumentVersions.AsNoTracking().OrderBy(version => version.VersionId).ToListAsync();
+        string clBefore = OctoberKnowledgePolicy.SerializeCanonical(versions);
+        var roots = units.Select(unit =>
+        {
+            var logical = logicals.Single(value => value.UnitId == unit.UnitId);
+            var version = versions.Single(value => value.LogicalDocumentId == logical.LogicalDocumentId);
+            return new FlowRootSelection(unit.UnitId, new(fixture.Binding.BatchId, logical.LogicalDocumentId, version.VersionId),
+                FlowRootKind.SelectedCodeUnit, unit.SemanticSelector);
+        }).ToImmutableArray();
+        var loaded = await new OctoberFlowPlanningInputLoader(fixture.Factory, fixture.Authorization).LoadAsync(frozen.Corpus!, roots);
+        Assert.Equal(KnowledgeReadStatus.Success, loaded.Status);
+        var input = loaded.Input!;
+        var groups = OctoberFlowPlanner.Plan(input).Groups;
+        Assert.Equal(rootCount, groups.Length);
+        var completed = roots.Select((root, index) => new FlowSynthesisSubmission(root,
+            groups.Single(group => group.RootVersion == root.Document).GroupVersionId,
+            new("受控业务说明 " + index, [new("main", 0, "业务操作", [new("action", "依据已接受的证据说明本地操作。",
+                ClaimQualification.SourceSupported, [new(root.Document, "overview", "action")], [])])]))).ToImmutableArray();
+        if (invalidateLastRoot)
+        {
+            var last = completed[^1];
+            var section = last.Proposal.Sections[0];
+            // Keep a well-shaped proposal but substitute a nonexistent accepted claim in the final root.
+            var claim = section.Claims[0] with { Inputs = [section.Claims[0].Inputs[0] with { ClaimGroupId = "not-accepted" }] };
+            completed = completed.SetItem(rootCount - 1, last with { Proposal = last.Proposal with
+                { Sections = [section with { Claims = [claim] }] } });
+        }
+        var operation = new OperationKey(fixture.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
+        var selection = new BusinessFinalizationSelection(roots, new(), Guid.NewGuid(), "controlled-profile",
+            OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(new("controlled-host", 0, "controlled-profile", "openai",
+                "https://unused.invalid", "controlled-model", "controlled-reference")),
+            OctoberKnowledgePolicy.Hash("Controlled batch synthesis instructions."), 40);
+        string digest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(new(operation, frozen.Corpus!, "", new FinalizationForbiddenScope()) { Selection = selection });
+        var request = new FlowFinalizationPublicationRequest(operation, frozen.Corpus!, digest, selection, completed, [], "");
+        request = request with { CanonicalOutcomeDigest = OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(request) };
+        var store = new OctoberFlowPublicationStore(fixture.Factory, fixture.Authorization, fixture.Guard, fixture.Log);
+        var result = await store.PublishAsync(request);
+        Assert.Equal(invalidateLastRoot ? BusinessFinalizationStatus.Failed : BusinessFinalizationStatus.Published, result.Status);
+        Assert.Equal(invalidateLastRoot ? KnowledgeWriteStatus.InvalidProposal : KnowledgeWriteStatus.Committed, result.PersistenceStatus);
+        Assert.Equal(invalidateLastRoot ? 0 : rootCount, await context.LogicalDocuments.CountAsync(document => document.Kind == DocumentKind.BusinessLogic));
+        Assert.Equal(invalidateLastRoot ? 0 : 1, await context.KnowledgePublications.CountAsync());
+        Assert.Equal(invalidateLastRoot ? 0 : 1, await context.BusinessFinalizations.CountAsync());
+        Assert.Equal(invalidateLastRoot ? 0 : 1, await context.KnowledgeOperations.CountAsync(operation => operation.Kind == OperationKind.FinalizeCorpus));
+        Assert.Equal(invalidateLastRoot ? 0 : rootCount * rootCount, await context.FlowDocumentDependencies.CountAsync());
+        if (invalidateLastRoot)
+        {
+            Assert.Null(result.Publication);
+            foreach (string table in _flowTables)
+                Assert.Equal(0, await context.Database.SqlQueryRaw<long>($"SELECT COUNT(*) AS \"Value\" FROM \"{table}\"").SingleAsync());
+        }
+        else
+        {
+            int submissions = fixture.Guard.Submissions;
+            var replay = await store.LookupAsync(request.Corpus, request.Operation, request.CanonicalPayloadDigest);
+            Assert.Equal(result.Publication, replay.Publication);
+            Assert.True(replay.IsReplay);
+            Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, replay.PersistenceStatus);
+            Assert.Equal(submissions, fixture.Guard.Submissions);
+            var published = await new OctoberKnowledgePublishedSource(fixture.Factory).LoadAsync(result.Publication!);
+            Assert.Equal(rootCount, published!.Documents.Count(document => document.Kind == DocumentKind.BusinessLogic));
+            Assert.All(published.Documents.Where(document => document.Kind == DocumentKind.BusinessLogic),
+                document => Assert.True(input.Contributors.ToHashSet().SetEquals(document.Contributors)));
+        }
+        var retainedCl = await context.DocumentVersions.AsNoTracking().Where(version => versions.Select(original => original.VersionId).Contains(version.VersionId))
+            .OrderBy(version => version.VersionId).ToListAsync();
+        Assert.Equal(clBefore, OctoberKnowledgePolicy.SerializeCanonical(retainedCl));
+    }
+
     private static readonly string[] _flowTables = ["OctoberBusinessFinalizations", "OctoberLogicalFlows", "OctoberFlowGroupVersions",
         "OctoberFlowDocumentDependencies", "OctoberFlowRelationshipDependencies", "OctoberFlowResolutionUncertaintyDependencies", "OctoberFlowFileUncertaintyDependencies"];
     [Trait("Suite", "SelfContained")]

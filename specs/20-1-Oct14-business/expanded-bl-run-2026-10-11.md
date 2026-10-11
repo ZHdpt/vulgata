@@ -151,3 +151,47 @@ Evidence:
 
 **Expanded qualification did not publish.** Earlier one-flow success remains valid;
 multi-root readiness is blocked at publication scaling and admission recovery.
+
+## User-authorized publication scaling correction
+
+User instruction **“DO the fix”** authorizes the focused correction. Starting
+checkpoint `caad8078` was clean. No provider run, retained write, receipt recovery,
+schema change or timeout increase was performed.
+
+`OctoberBusinessSynthesisPolicy.ValidateAll` now builds one owner plan for a bounded
+batch of existing `FlowSynthesisSubmission` values. It validates complete input once,
+matches exact root document/unit/kind/selector/group for each entry, rejects duplicate
+batches, and preserves result order. Each proposal still undergoes the same packet,
+citation, qualification, complete dependency and gap checks. Single-proposal validation
+also stops recomputing the plan a second time merely to rebuild its packet.
+
+`OctoberFlowPublicationStore` reloads owner input and uses this batch validation
+before atomically publishing. It does not trust the generator's prior validation or
+a caller-supplied plan. Existing complete-dependency comparisons, publication/replay
+identities, authorization, cancellation, deadlines and schema remain intact.
+
+Verification:
+
+- **111/111 SelfContained tests passed**, zero failures/skips, through `eng/test.ps1`.
+  `TestResults/isolation-32c7f6fcb3304325afc9f899a5faee1e/results.trx`.
+- New equivalence tests compare batch and single results including full lineage/gaps;
+  exact root/group/qualification checks and batch bounds are exercised.
+- Controlled SQLite store tests publish 22 BL documents with all 484 dependencies
+  in the 22-document fixture, verify exact replay and unchanged CL, and prove that an
+  invalid final proposal leaves no partial publication, BL, flow or operation records.
+- Read-only controlled profiling on the same actual retained 22-root input: batch
+  validation **1222.8622 ms**, compared with the original **18286.1661 ms**. All 22
+  minimal in-memory proposals validated. They were not sent to a model or persisted.
+- Focused independent review accepted, no outstanding findings. Synchronous validation
+  still relies on the committer's cancellation check before writes/submission; no
+  claim is made that arbitrary-size batches fit the fixed deadline.
+- Profiling evidence: `TestResults/business-expanded-readiness/validation-profile-after.json`,
+  SHA-256 `48C28022866B49E9626F1FD4B242F4ADA0434E6E7D577FA83904EB8028EE9D4F`.
+
+This qualifies the CPU correction and controlled atomic behavior, **not a new full
+PostgreSQL publication**. No PostgreSQL write qualification or generation retry was
+run. The stranded Begin receipt remains unchanged. Existing admission explicitly
+forbids recreating its process-local authority from persisted receipts, and completion
+does not accept a report/boolean as proof. Recovery therefore needs an explicit
+canonical owner decision before a new protocol or retained-data action; it is not
+silently included as a timeout workaround. No migration or deletion is proposed.

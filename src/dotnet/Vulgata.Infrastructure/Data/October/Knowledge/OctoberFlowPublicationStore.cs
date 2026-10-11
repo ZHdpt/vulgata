@@ -80,12 +80,14 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
             plan.RootDispositions.Any(x => x.Kind is not (FlowRootDispositionKind.Planned or FlowRootDispositionKind.UnsupportedKind)))
             return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
         var validated = new List<(FlowGroupVersion Group, BusinessLogicContent Content)>();
-        foreach (var completed in request.Completed)
+        var candidates = OctoberBusinessSynthesisPolicy.ValidateAll(input, request.Completed, request.Selection.Limits);
+        for (int index = 0; index < request.Completed.Length; index++)
         {
+            var completed = request.Completed[index];
             var group = plan.Groups.SingleOrDefault(x => x.RootVersion == completed.Root.Document && x.Flow.RootUnitId == completed.Root.UnitId &&
                 x.Flow.RootKind == completed.Root.Kind && x.Flow.RootSelector == completed.Root.Selector && x.GroupVersionId == completed.GroupVersionId);
             if (group is null) return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
-            var candidate = OctoberBusinessSynthesisPolicy.Validate(input, group.GroupVersionId, completed.Proposal, request.Selection.Limits);
+            var candidate = candidates[index];
             if (candidate.Status != BusinessSynthesisValidationStatus.Succeeded || candidate.Content is null || candidate.Dependencies is null ||
                 !Same(candidate.Dependencies, group.Dependencies)) return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
             validated.Add((group, candidate.Content));

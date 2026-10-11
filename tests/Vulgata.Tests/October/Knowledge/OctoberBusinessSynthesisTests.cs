@@ -21,6 +21,98 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ValidateAll_MultipleRoots_MatchesIndividualValidationIncludingCompleteLineageAndGapsInSubmissionOrder()
+    {
+        var f = new SynthesisCase();
+        var otherUnit = f.Input.Units.Single(unit => unit.Document == f.Input.Corpus.Documents[3].Version);
+        var otherRoot = new FlowRootSelection(otherUnit.UnitId, otherUnit.Document, FlowRootKind.SelectedCodeUnit, otherUnit.SemanticSelector);
+        var input = f.Input with { Roots = f.Input.Roots.Add(otherRoot) };
+        var plan = OctoberFlowPlanner.Plan(input, f.Limits);
+        Assert.Equal(FlowPlanningStatus.Succeeded, plan.Status);
+        Assert.Equal(2, plan.Groups.Length);
+        var otherProposal = new BusinessSynthesisProposal("另一项业务操作", [new("other", 0, "处理步骤",
+            [new("other-action", "依据该操作的已接受证据进行处理。", ClaimQualification.SourceSupported,
+                [new(otherRoot.Document, "operation", "provider")], [])])]);
+        ImmutableArray<FlowSynthesisSubmission> submissions =
+        [
+            new(otherRoot, plan.Groups.Single(group => group.RootVersion == otherRoot.Document).GroupVersionId, otherProposal),
+            new(input.Roots[0], plan.Groups.Single(group => group.RootVersion == input.Roots[0].Document).GroupVersionId, f.Proposal())
+        ];
+        string before = OctoberKnowledgePolicy.SerializeCanonical(input);
+        var results = OctoberBusinessSynthesisPolicy.ValidateAll(input, submissions, f.Limits);
+        Assert.Equal(submissions.Length, results.Length);
+        for (int i = 0; i < submissions.Length; i++)
+        {
+            var single = OctoberBusinessSynthesisPolicy.Validate(input, submissions[i].GroupVersionId, submissions[i].Proposal, f.Limits);
+            Assert.Equal(BusinessSynthesisValidationStatus.Succeeded, single.Status);
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(single), OctoberKnowledgePolicy.SerializeCanonical(results[i]));
+            Assert.Contains(f.UncitedContributor, results[i].Dependencies!.Contributors);
+            Assert.Contains(f.CoverageContributor, results[i].Dependencies!.Contributors);
+            Assert.Equal(input.Corpus.Documents.Length, results[i].Dependencies!.Documents.Length);
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(input.Coverage), OctoberKnowledgePolicy.SerializeCanonical(results[i].Coverage));
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(input.PlanDispositions), OctoberKnowledgePolicy.SerializeCanonical(results[i].PlanDispositions));
+            Assert.NotEmpty(results[i].Gaps);
+        }
+        Assert.Equal(before, OctoberKnowledgePolicy.SerializeCanonical(input));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("unit")]
+    [InlineData("selector")]
+    [InlineData("kind")]
+    [InlineData("document")]
+    [InlineData("group")]
+    [InlineData("qualification")]
+    public void ValidateAll_ForeignRootGroupOrQualification_DoesNotTrustCallerSubmission(string mutation)
+    {
+        var f = new SynthesisCase();
+        var root = f.Input.Roots[0];
+        root = mutation switch
+        {
+            "unit" => root with { UnitId = Guid.NewGuid() },
+            "selector" => root with { Selector = "unselected-operation" },
+            "kind" => root with { Kind = FlowRootKind.Handler },
+            "document" => root with { Document = root.Document with { DocumentVersionId = Guid.NewGuid() } },
+            _ => root
+        };
+        var proposal = f.Proposal();
+        if (mutation == "qualification")
+        {
+            var section = proposal.Sections[0];
+            proposal = proposal with { Sections = proposal.Sections.SetItem(0, section with
+                { Claims = section.Claims.SetItem(0, section.Claims[0] with { Qualification = ClaimQualification.Advisory }) }) };
+        }
+        var result = Assert.Single(OctoberBusinessSynthesisPolicy.ValidateAll(f.Input,
+            [new(root, mutation == "group" ? Guid.NewGuid() : f.Group.GroupVersionId, proposal)], f.Limits));
+        Assert.Equal(mutation == "qualification" ? BusinessSynthesisValidationStatus.InvalidProposal : BusinessSynthesisValidationStatus.InvalidInput, result.Status);
+        Assert.Null(result.Content);
+        Assert.Null(result.Dependencies);
+        if (mutation == "qualification") Assert.Equal(BusinessSynthesisFailureReason.QualificationMismatch, result.FailureReason);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ValidateAll_DuplicateOrUnboundedBatch_FailsClosedWithoutAcceptingOneCopy()
+    {
+        var f = new SynthesisCase();
+        var submission = new FlowSynthesisSubmission(f.Input.Roots[0], f.Group.GroupVersionId, f.Proposal());
+        var duplicates = OctoberBusinessSynthesisPolicy.ValidateAll(f.Input, [submission, submission], f.Limits);
+        Assert.Equal(2, duplicates.Length);
+        Assert.All(duplicates, result =>
+        {
+            Assert.Equal(BusinessSynthesisValidationStatus.InvalidInput, result.Status);
+            Assert.Null(result.Content);
+            Assert.Null(result.Dependencies);
+        });
+        Assert.Empty(OctoberBusinessSynthesisPolicy.ValidateAll(f.Input, [], f.Limits));
+        Assert.Throws<ArgumentException>(() => OctoberBusinessSynthesisPolicy.ValidateAll(f.Input, default, f.Limits));
+        Assert.Throws<ArgumentException>(() => OctoberBusinessSynthesisPolicy.ValidateAll(f.Input,
+            Enumerable.Repeat(submission, OctoberBusinessFinalizationPolicy.MaximumRoots + 1).ToImmutableArray(), f.Limits));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(5_000_000, true)]
     [InlineData(3_500_000, false)]
