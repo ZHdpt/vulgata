@@ -10,6 +10,12 @@ publication and selected stored flow roots. See [retained CL readiness](retained
 for the measured payload and observation-role blockers, controlled test evidence,
 and the execution proposal that remains blocked before paid work.
 
+The approved narrow correction is now recorded in the
+[one local-flow BL checkpoint](minimal-bl-publication-checkpoint.md): compact exact
+root evidence, complete owner lineage, corrected provider accounting/settings and
+373 passing controlled tests. That checkpoint supersedes the earlier multi-root
+execution proposal; one real invocation still requires the stated runtime authority.
+
 ## Accepted integration and superseded assessment
 
 Assigned checkout: `C:/Users/13728/.codex/worktrees/f081/vulgata`, `oct14/business`.

@@ -431,7 +431,7 @@ internal sealed class FinalizerCase : IDisposable
     public const string ProfileId = "host-profile-id";
     public const string Instructions = "Controlled synthesis instructions: use only accepted evidence; preserve qualifications.";
     public FlowPlanningInput Input { get; }
-    public ControlledExecutionScope Scope { get; } = new();
+    public ControlledExecutionScope Scope { get; } = new(initialTokens: 1_000_000);
     public FinalizationRequest Request { get; }
     public FinalizerControlledSlot Slot { get; }
     public FinalizerOwnerStore Store { get; }

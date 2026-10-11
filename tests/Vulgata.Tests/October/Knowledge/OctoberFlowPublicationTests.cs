@@ -73,6 +73,20 @@ public sealed class OctoberFlowPublicationTests
         var first = await fixture.Store().PublishAsync(request);
         Assert.Equal(BusinessFinalizationStatus.Published, first.Status);
         int submitted = fixture.Basis.Acceptance.Guard.Submissions;
+        // The prior finalization selection remains pinned to its original prompt and small
+        // output allowance; adopting a new synthesis packet must not rewrite its receipt.
+        Assert.Equal(40, request.Selection.MaximumTokens);
+        string clBefore = await fixture.ClSnapshotAsync();
+        var source = new OctoberKnowledgePublishedSource(fixture.Basis.Acceptance.Factory);
+        string publicationBefore = OctoberKnowledgePolicy.SerializeCanonical(await source.LoadAsync(first.Publication!));
+        string requestJson;
+        string resultJson;
+        await using (var before = fixture.Basis.Acceptance.Factory.CreateDbContext())
+        {
+            var receipt = await before.BusinessFinalizations.AsNoTracking().SingleAsync();
+            requestJson = receipt.RequestJson;
+            resultJson = receipt.ResultJson;
+        }
 
         var replay = await fixture.Store().PublishAsync(request);
         var lookup = await fixture.Store().LookupAsync(request.Corpus, request.Operation, request.CanonicalPayloadDigest);
@@ -90,6 +104,11 @@ public sealed class OctoberFlowPublicationTests
         Assert.Equal(1, await context.LogicalDocuments.CountAsync(document => document.Kind == DocumentKind.BusinessLogic));
         Assert.Equal(2, await context.KnowledgePublications.CountAsync());
         Assert.Equal(1, await context.KnowledgeOperations.CountAsync(operation => operation.Kind == OperationKind.FinalizeCorpus));
+        var after = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
+        Assert.Equal(requestJson, after.RequestJson);
+        Assert.Equal(resultJson, after.ResultJson);
+        Assert.Equal(clBefore, await fixture.ClSnapshotAsync());
+        Assert.Equal(publicationBefore, OctoberKnowledgePolicy.SerializeCanonical(await source.LoadAsync(first.Publication!)));
     }
 
     [Trait("Suite", "SelfContained")]
@@ -790,7 +809,7 @@ public sealed class OctoberFlowPublicationTests
         Assert.Contains(planned.RootDispositions, disposition => disposition.Root == unplanned && disposition.Kind == FlowRootDispositionKind.UnsupportedKind);
         await using var host = new OctoberExecutionScope(selection.RunId, selection.ProviderProfileId, new OctoberScanPolicy
         {
-            OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 100,
+            OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 1_000_000,
             SourceRules = [new(fixture.Input.Corpus.Documents[0].RepositoryId, "src", "selected", "Controlled component qualification")]
         }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted), original.Operation);
         var request = new FinalizationRequest(original.Operation, original.Corpus, "", host) { Selection = selection };

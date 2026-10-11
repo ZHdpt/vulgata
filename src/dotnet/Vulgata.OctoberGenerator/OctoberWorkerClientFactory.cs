@@ -73,13 +73,14 @@ public sealed class OctoberWorkerClientFactory
 
     private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied,
         OctoberWorkerHttpObservation? observation, string? deepSeekWorkerReasoningEffort)
-        : IChatClient, IOctoberWorkerCorrectionClient, IOctoberBusinessAttemptClient
+        : IChatClient, IOctoberWorkerCorrectionClient, IOctoberBusinessSynthesisClient
     {
         private readonly HttpMessageHandler _transport = supplied ?? new SocketsHttpHandler { AllowAutoRedirect = false };
         private readonly bool _useDeepSeekMaxTokens = IsDeepSeekEndpoint(endpoint);
         private bool _disposed;
         public string ProviderProfileId => profileId;
         public bool SupportsFinalizationStrategy => _useDeepSeekMaxTokens;
+        public bool SupportsSynthesisCorrections => _useDeepSeekMaxTokens;
 
         public Task<ChatResponse> GetResponseAsync(IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages,
             ChatOptions? options = null, CancellationToken cancellationToken = default)
@@ -89,10 +90,25 @@ public sealed class OctoberWorkerClientFactory
             ChatOptions? options = null, CancellationToken cancellationToken = default)
             => throw new InvalidOperationException("An explicit Worker attempt lease is required.");
 
-        public async Task<ChatResponse> GetAttemptResponseAsync(
+        public Task<ChatResponse> GetAttemptResponseAsync(
             IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages, ChatOptions? options,
             IOctoberProviderAttemptLease lease, Action<long> onDispatched,
             CancellationToken cancellationToken = default)
+            => BusinessAttemptAsync(messages, options, lease, onDispatched, null, cancellationToken);
+
+        public Task<ChatResponse> GetSynthesisResponseAsync(IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages,
+            ChatOptions options, IOctoberProviderAttemptLease lease, BusinessSynthesisAttemptStrategy strategy,
+            Action<long> onDispatched, CancellationToken cancellationToken = default)
+        {
+            if (!Enum.IsDefined(strategy) || strategy != BusinessSynthesisAttemptStrategy.Configured && !_useDeepSeekMaxTokens ||
+                options.Tools is { Count: > 0 } || !Equals(options.ResponseFormat, Microsoft.Extensions.AI.ChatResponseFormat.Json))
+                throw new InvalidOperationException("The synthesis finalization strategy is invalid.");
+            return BusinessAttemptAsync(messages, options, lease, onDispatched, strategy, cancellationToken);
+        }
+
+        private async Task<ChatResponse> BusinessAttemptAsync(IEnumerable<Microsoft.Extensions.AI.ChatMessage> messages,
+            ChatOptions? options, IOctoberProviderAttemptLease lease, Action<long> onDispatched,
+            BusinessSynthesisAttemptStrategy? strategy, CancellationToken cancellationToken)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             ArgumentNullException.ThrowIfNull(lease);
@@ -100,7 +116,9 @@ public sealed class OctoberWorkerClientFactory
             if (lease is not IOctoberWorkerDispatchObserver)
                 throw new InvalidOperationException("An observable Business attempt lease is required.");
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lease.CancellationToken);
-            var handler = new LeaseHandler(_transport, lease, onDispatched, businessAttempt: true, useDeepSeekMaxTokens: _useDeepSeekMaxTokens);
+            bool disableThinking = strategy is BusinessSynthesisAttemptStrategy.ThinkingDisabled or BusinessSynthesisAttemptStrategy.CompactedThinkingDisabled;
+            var handler = new LeaseHandler(_transport, lease, onDispatched, businessAttempt: true,
+                useDeepSeekMaxTokens: _useDeepSeekMaxTokens, disableThinking: disableThinking);
             using var http = new HttpClient(handler, disposeHandler: true)
             {
                 Timeout = Timeout.InfiniteTimeSpan
@@ -119,7 +137,15 @@ public sealed class OctoberWorkerClientFactory
             using IChatClient client = new ChatClient(model, new ApiKeyCredential(secret), settings).AsIChatClient();
             // Await the actual SDK task through its body read and per-call wrapper cleanup.
             // The Business caller alone completes observation and settles the supplied lease.
-            try { return await client.GetResponseAsync(messages, options, linked.Token); }
+            ChatOptions? requestOptions = options;
+            if (strategy is not null)
+            {
+                requestOptions = options?.Clone() ?? new();
+                requestOptions.Reasoning = disableThinking ? null : deepSeekWorkerReasoningEffort == "low"
+                    ? new ReasoningOptions { Effort = ReasoningEffort.Low } : requestOptions.Reasoning;
+            }
+            var replay = strategy is not null && _useDeepSeekMaxTokens ? WithDeepSeekReasoning(messages, requestOptions) : messages;
+            try { return await client.GetResponseAsync(replay, requestOptions, linked.Token); }
             catch (OctoberBusinessAttemptDeniedException error) when (!ReferenceEquals(error, handler.BusinessRefusal))
             {
                 throw new InvalidOperationException("The selected Business transport failed.");

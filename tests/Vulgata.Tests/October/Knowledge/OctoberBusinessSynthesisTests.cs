@@ -22,6 +22,140 @@ public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(5_000_000, true)]
+    [InlineData(3_500_000, false)]
+    public void Validate_CompleteOwnerLedgersRemainFinite_RejectsWithoutTruncating(int reasonLength, bool gapLimit)
+    {
+        var f = new SynthesisCase();
+        var input = f.Input with { Coverage = f.Input.Coverage.SetItem(f.Input.Coverage.Length - 1,
+            f.Input.Coverage[^1] with { Reason = new string('x', reasonLength) }) };
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input, f.Limits).Groups);
+        if (gapLimit)
+            Assert.Throws<ArgumentException>(() => OctoberBusinessSynthesisPolicy.DescribeGaps(input, group.GroupVersionId, f.Limits));
+        else
+            Assert.NotEmpty(OctoberBusinessSynthesisPolicy.DescribeGaps(input, group.GroupVersionId, f.Limits));
+        var result = OctoberBusinessSynthesisPolicy.Validate(input, group.GroupVersionId, f.Proposal(), f.Limits);
+        Assert.NotEqual(BusinessSynthesisValidationStatus.Succeeded, result.Status);
+        Assert.Null(result.Content);
+        Assert.Null(result.Dependencies);
+        Assert.Equal(reasonLength, input.Coverage[^1].Reason!.Length);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void CreateModelPacket_PreservesEveryMemberClaimExactlyWithoutCompleteOwnerLedger()
+    {
+        var f = new SynthesisCase();
+        var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(f.Input, f.Group.GroupVersionId, f.Limits);
+        Assert.Equal(f.Input.Corpus.Handle, packet.Corpus);
+        Assert.Equal(f.Root, packet.Root);
+        Assert.Equal(f.Group.Members.ToHashSet(), packet.Documents.Select(document => document.Version).ToHashSet());
+        foreach (var document in packet.Documents)
+        {
+            var accepted = f.Input.Corpus.Documents.Single(source => source.Version == document.Version);
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(accepted.Sections), OctoberKnowledgePolicy.SerializeCanonical(document.Sections));
+        }
+        var gaps = OctoberBusinessSynthesisPolicy.DescribeGaps(f.Input, f.Group.GroupVersionId, f.Limits);
+        Assert.Equal(gaps.Length, packet.GapSummary.Sum(count => count.Count));
+        Assert.All(packet.GapSummary, count => Assert.Equal(gaps.Count(gap => gap.Locator.Kind == count.Kind), count.Count));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Group.Relationships), OctoberKnowledgePolicy.SerializeCanonical(packet.Relationships));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Group.Frontiers), OctoberKnowledgePolicy.SerializeCanonical(packet.Frontiers));
+        string json = JsonSerializer.Serialize(packet);
+        Assert.DoesNotContain("same-file-key", json, StringComparison.Ordinal);
+        Assert.DoesNotContain(f.CoverageContributor.RepositoryId!.Value.ToString(), json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void Validate_LargeCompleteGapLedger_RemainsExactBehindBoundedModelSummary()
+    {
+        var f = new SynthesisCase();
+        string reason = "controlled-unprocessed-gap-" + new string('x', 600_000);
+        var input = f.Input with { Coverage = f.Input.Coverage.SetItem(f.Input.Coverage.Length - 1,
+            f.Input.Coverage[^1] with { Reason = reason }) };
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input, f.Limits).Groups);
+        var gaps = OctoberBusinessSynthesisPolicy.DescribeGaps(input, group.GroupVersionId, f.Limits);
+        Assert.True(Encoding.UTF8.GetByteCount(OctoberKnowledgePolicy.SerializeCanonical(gaps)) > 1024 * 1024);
+        var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(input, group.GroupVersionId, f.Limits);
+        Assert.True(Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(packet)) < 1024 * 1024);
+        var result = OctoberBusinessSynthesisPolicy.Validate(input, group.GroupVersionId, f.Proposal(), f.Limits);
+        Assert.Equal(BusinessSynthesisValidationStatus.Succeeded, result.Status);
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(gaps), OctoberKnowledgePolicy.SerializeCanonical(result.Gaps));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(input.Coverage), OctoberKnowledgePolicy.SerializeCanonical(result.Coverage));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(group.Dependencies), OctoberKnowledgePolicy.SerializeCanonical(result.Dependencies));
+        Assert.Contains(reason, result.Content!.Sections.Single(section => section.SectionId == OctoberBusinessSynthesisPolicy.GapSectionId).Claims.Single().Limitations);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteAsync_LargeOwnerCorpus_SendsOnlyExactMemberEvidenceAndRetainsCompleteOwnerRecordsAsync()
+    {
+        var f = new SynthesisCase();
+        var outside = f.Input.Corpus.Documents[3];
+        const string marker = "NONMEMBER_EVIDENCE_MUST_STAY_OWNER_ONLY";
+        var section = outside.Sections[0];
+        outside = outside with { Sections = outside.Sections.SetItem(0, section with
+        {
+            Claims = section.Claims.Add(section.Claims[0] with
+            { ClaimGroupId = "controlled-owner-only", Text = marker + new string('x', OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes + 1) })
+        }) };
+        var input = f.Input with { Corpus = f.Input.Corpus with { Documents = f.Input.Corpus.Documents.SetItem(3, outside).Select(document => document with { Observations = [] }).ToImmutableArray() }, Resolutions = [], PlanDispositions = [] };
+        string before = OctoberKnowledgePolicy.SerializeCanonical(input);
+        Assert.True(Encoding.UTF8.GetByteCount(before) > 1024 * 1024);
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input, f.Limits).Groups);
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var disclosure = new SynthesisDisclosure();
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
+        var result = await new OctoberBusinessSynthesisExecutor(client, "Controlled exact member evidence only.", clock)
+            .ExecuteAsync(input, group.GroupVersionId, f.Operation, f.Run, "selected-profile", 40, scope, disclosure, default, f.Limits);
+
+        Assert.NotNull(result.Content);
+        Assert.Null(result.AdmissionFailure);
+        var sent = Assert.Single(client.Requests);
+        string payload = string.Join("\n", sent.Messages.Where(x => x.Role == ChatRole.User).Select(x => x.Text));
+        Assert.True(Encoding.UTF8.GetByteCount(payload) < 1024 * 1024);
+        Assert.DoesNotContain(marker, payload, StringComparison.Ordinal);
+        Assert.DoesNotContain(outside.Version.DocumentVersionId.ToString(), payload, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(f.Root.DocumentVersionId.ToString(), payload, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("call-1-binding", payload, StringComparison.Ordinal);
+        Assert.Empty(sent.Tools);
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(group.Dependencies), OctoberKnowledgePolicy.SerializeCanonical(result.Dependencies));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(input.Coverage), OctoberKnowledgePolicy.SerializeCanonical(result.Coverage));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(input.PlanDispositions), OctoberKnowledgePolicy.SerializeCanonical(result.PlanDispositions));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(OctoberBusinessSynthesisPolicy.DescribeGaps(input, group.GroupVersionId, f.Limits)),
+            OctoberKnowledgePolicy.SerializeCanonical(result.Gaps));
+        Assert.All(disclosure.Seen, contributors => Assert.True(input.Contributors.ToHashSet().SetEquals(contributors)));
+        Assert.Equal(before, OctoberKnowledgePolicy.SerializeCanonical(input));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteAsync_MemberEvidenceExceedsModelBound_RejectsBeforeDispatchWithoutTruncationAsync()
+    {
+        var f = new SynthesisCase();
+        var root = f.Input.Corpus.Documents[0];
+        var section = root.Sections[0];
+        root = root with { Sections = root.Sections.SetItem(0, section with
+        {
+            Claims = section.Claims.Add(section.Claims[0] with
+            { ClaimGroupId = "controlled-large-member", Text = new string('x', OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes + 1) })
+        }) };
+        var input = f.Input with { Corpus = f.Input.Corpus with { Documents = f.Input.Corpus.Documents.SetItem(0, root).Select(document => document with { Observations = [] }).ToImmutableArray() }, Resolutions = [], PlanDispositions = [] };
+        string before = OctoberKnowledgePolicy.SerializeCanonical(input);
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input, f.Limits).Groups);
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
+        var result = await new OctoberBusinessSynthesisExecutor(client, "Controlled exact member evidence only.", clock)
+            .ExecuteAsync(input, group.GroupVersionId, f.Operation, f.Run, "selected-profile", 40, scope, new SynthesisDisclosure(), default, f.Limits);
+        Assert.Null(result.Content);
+        Assert.Equal(0, client.Calls);
+        Assert.Equal(before, OctoberKnowledgePolicy.SerializeCanonical(input));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task ExecuteAsync_ActualSerializedInputLocators_AreIndependentOfNewOutputLabelsAsync(bool substituteOutputSection)
@@ -66,9 +200,9 @@ public sealed class OctoberBusinessSynthesisTests
         string prompt = reader.ReadToEnd();
         foreach (string path in new[]
         {
-            "input.Corpus.Documents[i].Version", "input.Corpus.Documents[i].Sections[j].SectionId",
-            "input.Corpus.Documents[i].Sections[j].Claims[k].ClaimGroupId",
-            "input.Corpus.Documents[i].Sections[j].Claims[k].Qualification", "group.Dependencies.Documents", "Inputs.Document"
+            "Documents[i].Version", "Documents[i].Sections[j].SectionId",
+            "Documents[i].Sections[j].Claims[k].ClaimGroupId",
+            "Documents[i].Sections[j].Claims[k].Qualification", "Inputs.Document"
         }) Assert.Contains(path, prompt, StringComparison.Ordinal);
         Assert.Matches(@"(?m)^.*输出.*SectionId.*ClaimGroupId.*$", prompt);
         Assert.Contains("同一", prompt, StringComparison.Ordinal);
@@ -197,7 +331,7 @@ public sealed class OctoberBusinessSynthesisTests
     [InlineData("null-proposal", "ProposalMissing")]
     [InlineData("json", "JsonInvalid")]
     [InlineData("policy", "SectionOrder")]
-    public async Task ExecuteAsync_ResponseDiagnostic_IdentifiesFailureWithoutContentOrRetryAsync(string mutation, string expected)
+    public async Task ExecuteAsync_ResponseDiagnostic_IdentifiesFailureWithoutCorrectionCapableClientAsync(string mutation, string expected)
     {
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
@@ -218,7 +352,7 @@ public sealed class OctoberBusinessSynthesisTests
         using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(response!));
         var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
         Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
-        Assert.Equal(mutation == "json" ? ProviderAdmissionStatus.AuthorityUnavailable : null, result.AdmissionFailure);
+        Assert.Null(result.AdmissionFailure);
         Assert.Equal(expected, SynthesisDiagnosticProbe.Read(result));
         Assert.Equal(1, client.Calls);
     }
@@ -233,7 +367,7 @@ public sealed class OctoberBusinessSynthesisTests
         var clock = new SynthesisClock();
         await using var scope = f.Scope(clock);
         var input = oversized ? f.Input with { Coverage = f.Input.Coverage.SetItem(0,
-            f.Input.Coverage[0] with { Reason = new string('x', OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes + 1) }) } : f.Input;
+            f.Input.Coverage[0] with { Reason = new string('x', 16 * 1024 * 1024 + 1) }) } : f.Input;
         using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
         var result = await new OctoberBusinessSynthesisExecutor(client, "Controlled diagnostic instructions.", clock)
             .ExecuteAsync(input, oversized ? f.Group.GroupVersionId : Guid.Empty, f.Operation, f.Run, "selected-profile", 40,
@@ -320,9 +454,9 @@ public sealed class OctoberBusinessSynthesisTests
     {
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
-        await using var scope = f.Scope(clock, runDeadline ? 180 : 1800);
-        // The host run predates this synthesis call: 60 seconds remain from its original 180-second allowance.
-        if (runDeadline) clock.Advance(TimeSpan.FromSeconds(120));
+        await using var scope = f.Scope(clock, runDeadline ? 900 : 1800);
+        // The host run predates this synthesis call: 60 seconds remain from its original 900-second allowance.
+        if (runDeadline) clock.Advance(TimeSpan.FromSeconds(840));
         var authority = new SynthesisHandoffDisclosure(f.Input.Contributors);
         using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
         var active = f.ExecuteAsync(client, scope, authority, clock);
@@ -404,7 +538,7 @@ public sealed class OctoberBusinessSynthesisTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public void Validate_SuppliedClaimOutsideFlowMembers_IsVisiblySupplementalWithoutGraphExpansion()
+    public void Validate_ClaimOutsideModelPacket_RejectsEvenWhenPresentInCompleteOwnerDependencies()
     {
         var f = new SynthesisCase();
         var outside = f.Input.Corpus.Documents[3].Version;
@@ -414,15 +548,13 @@ public sealed class OctoberBusinessSynthesisTests
         var section = proposal.Sections[0];
         var claim = section.Claims[0] with { Inputs = [new(outside, "operation", "provider")] };
         var result = f.Validate(proposal with { Sections = proposal.Sections.SetItem(0, section with { Claims = section.Claims.SetItem(0, claim) }) });
-        Assert.Equal(BusinessSynthesisValidationStatus.Succeeded, result.Status);
-        var supplemental = result.Content!.Sections.SelectMany(x => x.Claims).Single(x => x.ClaimGroupId == "business-action");
-        Assert.StartsWith("补充背景（未确认为本流程成员）：", supplemental.Text, StringComparison.Ordinal);
-        Assert.Equal(ClaimQualification.SourceSupported, supplemental.Qualification);
+        Assert.Contains(outside, f.Group.Dependencies.Documents);
+        Assert.Equal(BusinessSynthesisValidationStatus.InvalidProposal, result.Status);
+        Assert.Equal(BusinessSynthesisFailureReason.DocumentReference, result.FailureReason);
+        Assert.Null(result.Content);
+        Assert.Null(result.Dependencies);
         Assert.DoesNotContain(outside, f.Group.Members);
         Assert.Equal(original, OctoberKnowledgePolicy.SerializeCanonical(f.Input));
-        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Group.Dependencies), OctoberKnowledgePolicy.SerializeCanonical(result.Dependencies));
-        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Input.Coverage), OctoberKnowledgePolicy.SerializeCanonical(result.Coverage));
-        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Input.PlanDispositions), OctoberKnowledgePolicy.SerializeCanonical(result.PlanDispositions));
     }
 
     [Trait("Suite", "SelfContained")]
@@ -536,13 +668,13 @@ public sealed class OctoberBusinessSynthesisTests
         Assert.Equal(mutation switch
         {
             "document" => "DocumentReference", "section" => "SectionReference", "claim" => "ClaimReference",
-            "upgrade" => "QualificationMismatch", "reserved-gap" => "ProposalShape", _ => "ClaimShape"
+            "upgrade" or "mixed" => "QualificationMismatch", "reserved-gap" => "ProposalShape", _ => "ClaimShape"
         }, SynthesisDiagnosticProbe.Read(result));
     }
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task ExecuteAsync_ActualScope_UsesSynthesisLeaseCompleteAcceptedInputAndQualifiedOutputWithoutToolsAsync()
+    public async Task ExecuteAsync_ActualScope_SendsMemberPacketButAuthorizesCompleteOwnerInputWithoutToolsAsync()
     {
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
@@ -555,13 +687,13 @@ public sealed class OctoberBusinessSynthesisTests
         Assert.Null(result.AdmissionFailure);
         Assert.Equal(1, client.Calls);
         Assert.Equal(BusinessWorkKind.Synthesis, Assert.Single(spy.Requests).WorkKind);
-        Assert.InRange(spy.Requests[0].MaximumDuration, TimeSpan.FromTicks(1), TimeSpan.FromSeconds(180));
+        Assert.InRange(spy.Requests[0].MaximumDuration, TimeSpan.FromTicks(1), TimeSpan.FromSeconds(900));
         var sent = Assert.Single(client.Requests);
         Assert.Empty(sent.Tools);
         string input = string.Join("\n", sent.Messages.Where(x => x.Role == ChatRole.User).Select(x => x.Text));
-        Assert.Contains(f.Input.Corpus.Documents[3].Version.DocumentVersionId.ToString(), input, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(f.CoverageContributor.RepositoryId!.Value.ToString(), input, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("same-file-key", input, StringComparison.Ordinal);
+        Assert.DoesNotContain(f.Input.Corpus.Documents[3].Version.DocumentVersionId.ToString(), input, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(f.CoverageContributor.RepositoryId!.Value.ToString(), input, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("same-file-key", input, StringComparison.Ordinal);
         Assert.All(authority.Seen, contributors => Assert.True(f.Input.Contributors.ToHashSet().SetEquals(contributors)));
         Assert.True(authority.Seen.Count >= 2);
         Assert.Equal(10, Assert.Single(result.Attempts).InputTokens);
@@ -604,7 +736,7 @@ public sealed class OctoberBusinessSynthesisTests
     [InlineData("relationships")]
     [InlineData("dependencies")]
     [InlineData("logicalDocumentId")]
-    public async Task ExecuteAsync_ModelAddsAuthoritativeFields_RejectsProposalWithoutPublishingOrRetryAsync(string field)
+    public async Task ExecuteAsync_ModelAddsAuthoritativeFields_RejectsWithoutCorrectionCapableClientAsync(string field)
     {
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
@@ -621,26 +753,24 @@ public sealed class OctoberBusinessSynthesisTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task ExecuteAsync_TransportRetry_UsesTwoFreshAttemptsWithinOriginal180SecondsAndSharedReservationAsync()
+    public async Task ExecuteAsync_TransportFailure_SettlesUnknownUsageWithoutFreshRetryAllowanceAsync()
     {
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
-        var scope = new ResolutionScopeProbe(); // Controlled host retains a conservative unknown reservation and explicitly permits one retry.
+        await using var actualScope = f.Scope(clock);
+        var scope = new SynthesisSettlementScope(actualScope, () => { });
         using var client = new ResolutionClient("selected-profile", (attempt, _) =>
         {
             if (attempt == 1) { clock.Advance(TimeSpan.FromSeconds(130)); throw new IOException("Controlled transient transport failure."); }
             return Task.FromResult(f.Response());
         });
         var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
-        Assert.NotNull(result.Content);
-        Assert.Equal(2, client.Calls);
-        Assert.Equal(2, scope.Requests.Count);
-        Assert.All(scope.Requests, request => Assert.Equal(BusinessWorkKind.Synthesis, request.WorkKind));
-        Assert.NotEqual(scope.Requests[0].AttemptId, scope.Requests[1].AttemptId);
-        Assert.InRange(scope.Requests[1].MaximumDuration, TimeSpan.FromTicks(1), TimeSpan.FromSeconds(50));
+        Assert.Null(result.Content);
+        Assert.Equal(1, client.Calls);
+        Assert.Single(result.Attempts);
         Assert.Null(result.Attempts[0].InputTokens); Assert.Null(result.Attempts[0].OutputTokens);
-        Assert.Equal(45, scope.Inner.RemainingTokens);
-        Assert.Equal(2, scope.SettleCalls); Assert.Equal(2, scope.DisposeCalls);
+        Assert.Equal(1, scope.SettleCalls); Assert.Equal(1, scope.DisposeCalls);
+        Assert.Equal(ProviderAdmissionStatus.BudgetExhausted, (await actualScope.AcquireWorkerAttemptAsync(f.Worker(1))).Status);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -649,12 +779,13 @@ public sealed class OctoberBusinessSynthesisTests
     {
         var f = new SynthesisCase();
         var clock = new SynthesisClock();
-        var scope = new ResolutionScopeProbe();
-        using var client = new ResolutionClient("selected-profile", (_, _) => { clock.Advance(TimeSpan.FromSeconds(181)); throw new IOException("Controlled delayed failure."); });
+        await using var actualScope = f.Scope(clock);
+        var scope = new SynthesisSettlementScope(actualScope, () => { });
+        using var client = new ResolutionClient("selected-profile", (_, _) => { clock.Advance(TimeSpan.FromSeconds(901)); throw new IOException("Controlled delayed failure."); });
         var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock);
         Assert.Equal(ProviderAdmissionStatus.DeadlineExceeded, result.AdmissionFailure);
         Assert.Null(result.Content);
-        Assert.Equal(1, client.Calls); Assert.Single(scope.Requests);
+        Assert.Equal(1, client.Calls); Assert.Single(result.Attempts);
         Assert.Equal(1, scope.SettleCalls); Assert.Equal(1, scope.DisposeCalls);
     }
 
@@ -722,10 +853,7 @@ internal sealed class SynthesisWireProposalHandler(bool substituteOutputSection)
         string payload = content.ValueKind == JsonValueKind.String ? content.GetString()! :
             Assert.Single(content.EnumerateArray().Where(part => part.GetProperty("type").GetString() == "text")).GetProperty("text").GetString()!;
         using var accepted = JsonDocument.Parse(payload);
-        var dependencies = accepted.RootElement.GetProperty("group").GetProperty("Dependencies").GetProperty("Documents").EnumerateArray()
-            .Select(item => JsonSerializer.Deserialize<DocumentVersionReference>(item.GetRawText())!).ToHashSet();
-        var document = accepted.RootElement.GetProperty("input").GetProperty("Corpus").GetProperty("Documents").EnumerateArray()
-            .First(item => dependencies.Contains(JsonSerializer.Deserialize<DocumentVersionReference>(item.GetProperty("Version").GetRawText())!));
+        var document = accepted.RootElement.GetProperty("Documents").EnumerateArray().First();
         var version = JsonSerializer.Deserialize<DocumentVersionReference>(document.GetProperty("Version").GetRawText())!;
         var section = document.GetProperty("Sections").EnumerateArray().First(item => item.GetProperty("Claims").GetArrayLength() > 0);
         var claim = section.GetProperty("Claims").EnumerateArray().First(item => item.GetProperty("Qualification").GetInt32() == (int)ClaimQualification.SourceSupported);
@@ -840,7 +968,7 @@ internal sealed class SynthesisCase
     };
     public OctoberExecutionScope Scope(SynthesisClock clock, int runDeadlineSeconds = 1800) => new(Run, "selected-profile", new OctoberScanPolicy
     {
-        OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 100,
+        OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 10_000_000,
         RunDeadlineSeconds = runDeadlineSeconds, FileDeadlineSeconds = Math.Min(600, runDeadlineSeconds),
         SourceRules = [new(Input.Corpus.Documents[0].RepositoryId, "src", "selected", "Controlled synthesis qualification")]
     }, (_, token) => { token.ThrowIfCancellationRequested(); return Task.FromResult(ProviderAdmissionStatus.Granted); }, Operation, clock);
