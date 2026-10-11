@@ -5,6 +5,11 @@ The user retains management authority. The user explicitly authorized integratio
 and Business synchronization, followed by a separate prompt to start Business work.
 This synchronization grants no provider, database, source, host or retained-data operation.
 
+The subsequent user-authorized readiness check at `f06b85bf` verified the retained
+publication and selected stored flow roots. See [retained CL readiness](retained-cl-readiness-2026-10-11.md)
+for the measured payload and observation-role blockers, controlled test evidence,
+and the execution proposal that remains blocked before paid work.
+
 ## Accepted integration and superseded assessment
 
 Assigned checkout: `C:/Users/13728/.codex/worktrees/f081/vulgata`, `oct14/business`.
