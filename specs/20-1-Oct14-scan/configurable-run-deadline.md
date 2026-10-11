@@ -90,3 +90,24 @@ transient retries0, tools32/48, total requests1000000, rate60/minute and total
 tokens1000000000000. CL-only, DeepSeek flash, low reasoning, max_tokens393216,
 normal retry mode and the same verified77-file source remain selected. New owned
 resources will be used; no old acceptance/session/index is adopted.
+
+### Real scan launched
+
+`deadline240-whole-01` started on implementation
+`36f19c4e9e3247682b7a1bf16b693a014ec3feec`. Generator binary SHA256
+`20E2B6DF1A145D6C809A6C522E4DAF4A86E1713DD8514AAA088CB3A37B6F49B4`
+matched the test-output binary. The fresh policy was verified at14400 seconds,
+with the unchanged settings above; the watcher reported14460 seconds.
+BeginGenerate committed at2026-10-11T06:55:48.3946488Z. This is launch evidence,
+not successful generation/publication or long-duration qualification.
+
+- Root: `C:\Users\13728\AppData\Local\Vulgata\OctoberRuns\phone-15bfe12615eb`
+- Database: `vulgata_oct_pilot_7e073703d96e4368a869ccace9bc827d`
+- Batch: `1a327657-6a55-4e65-ba06-6992f423d40e`
+- Label/terminal ledger: `TestResults/replay-paid/deadline240-whole-01.json`
+  (written when the run ends).
+- Live acceptance log: root-relative `logs/generator/log.md`.
+- Live correction log: root-relative `logs/generator/worker-json-corrections.jsonl`.
+
+The single authorized run is active. Do not start another run, adopt old accepted
+state, rebuild its binaries, or reinterpret this launch as a completed result.

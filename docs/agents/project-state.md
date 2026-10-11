@@ -220,7 +220,9 @@ The user then held resume work and approved configurable run duration plus one
 fresh 240-minute whole scan. The reviewed implementation supports 1..86400 seconds,
 retaining the 1800-second default and other budgets/live authorization checks.
 Final affected tests passed 143/143; the known unrelated report-parser full-suite
-failure remains. Runtime qualification is pending; see
+failure remains. Fresh real run `deadline240-whole-01` is active on implementation
+`36f19c4e`, batch `1a327657-6a55-4e65-ba06-6992f423d40e`, with a 14400-second
+run deadline; launch is not completion evidence. Do not duplicate it. See
 [configurable deadline evidence](../../specs/20-1-Oct14-scan/configurable-run-deadline.md).
 
 earlier [replay evidence](../../specs/20-1-Oct14-scan/reasoning-replay-verification.md)
