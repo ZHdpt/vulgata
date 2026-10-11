@@ -12,6 +12,7 @@ namespace Vulgata.OctoberGenerator;
 /// <summary>Host-owned contained access, opened only after the original run's Begin receipt.</summary>
 internal interface IOctoberScanRunSource : IAsyncDisposable
 {
+    Task<TimeSpan> EnsureFileWindowAsync(TimeSpan requiredLifetime, CancellationToken cancellationToken = default);
     Task<PreparedSourceResult> ListSourceAsync(Guid repositoryId, PreparedSourceListRequest request,
         CancellationToken cancellationToken = default);
     Task<OctoberSourceFrameResult> AcquireFrameAsync(Guid repositoryId, string relativePath,
@@ -36,12 +37,19 @@ internal sealed record OctoberGenerateRunnerDependencies(
     IOctoberKnowledgeOperationLog OperationLog)
 {
     internal OctoberBusinessRunComposition? Business { get; init; }
+    internal Func<IOctoberBusinessFromClAuthority, IOctoberCommitSubmissionGuard,
+        IOctoberCommitSubmissionGuard, IOctoberBusinessFromClSettlementAuthority, IOctoberBusinessFromClStore>? CreateBusinessFromClStore { get; init; }
+    internal OctoberParseFailureCapture? ParseFailureCapture { get; init; }
+    internal OctoberWorkerHttpObservation? HttpObservation { get; init; }
+    internal int MaximumWorkerOutputTokens { get; init; } = 8192;
+    internal Func<OctoberFileWorkerRequest, ImmutableArray<OctoberJsonCorrectionEvent>, CancellationToken, Task<bool>>? JsonCorrectionLog { get; init; }
 }
 
-/// <summary>Owns the original single-file Generate run; a stored receipt is never a restart grant.</summary>
+/// <summary>Owns the original sequential Generate run; a stored receipt is never a restart grant.</summary>
 internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation, IAsyncDisposable,
     IOctoberGenerateAdmissionAuthority, IOctoberCommitSubmissionGuard, IOctoberCorpusFreezeAuthority,
-    IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority
+    IOctoberKnowledgeProducerAuthorization, IOctoberKnowledgeSourceVerifier, IOctoberFileAcceptanceAuthority,
+    IOctoberBusinessFromClAuthority, IOctoberBusinessFromClSettlementAuthority
 {
     private readonly OctoberGenerateRunnerDependencies _dependencies;
     private readonly TimeProvider _time;
@@ -68,18 +76,24 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
     private Task? _analysisCleanup;
     private long _started;
     private long? _fileStarted;
+    private long? _sourceWindowStarted;
+    private TimeSpan _sourceWindow;
     private CancellationToken _caller;
     private CancellationTokenSource? _deadline;
     private CancellationTokenSource? _runToken;
     private OctoberExecutionScope? _scope;
+    private OctoberRunCorrectionBudget? _hardRetryBudget;
     private IOctoberScanRunSource? _source;
     private OctoberWorkerInputLedger? _activeLedger;
+    private Guid? _activeAdmission;
+    private PreparedOrigin? _activeOrigin;
     private OctoberClPublicationPhase? _publication;
     private ImmutableArray<Contributor> _observedContributors = [];
     private ImmutableArray<AcceptedFile> _accepted = [];
     private ImmutableArray<FileCoverage> _coverage = [];
     private ImmutableArray<Uncertainty> _uncertainties = [];
     private ImmutableArray<OctoberScanInventoryEntry> _inventory = [];
+    private ImmutableArray<OctoberScanInventoryEntry> _unstartedFiles = [];
     private ImmutableArray<OctoberScanGap> _gaps = [];
     private CorpusFreezeRequest? _expectedFreeze;
     private TimeSpan _toolWait;
@@ -89,6 +103,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         TimeProvider? timeProvider = null)
     {
         _dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
+        if (dependencies.MaximumWorkerOutputTokens is < 1 or > 393216)
+            throw new ArgumentOutOfRangeException(nameof(dependencies.MaximumWorkerOutputTokens));
         ArgumentNullException.ThrowIfNull(dependencies.Authority);
         ArgumentNullException.ThrowIfNull(dependencies.ValidateSourceConfiguration);
         ArgumentNullException.ThrowIfNull(dependencies.CreateAdmissionStore);
@@ -149,6 +165,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             report = report with { Execution = OctoberExecutionStatus.Indeterminate,
                 Gaps = report.Gaps.Add(new("owned_cleanup_unconfirmed")) };
         }
+        report = await CloseExistingClBusinessAsync(report);
+        if (_hardRetryBudget is not null && !report.Inventory.IsEmpty)
+            report = report with { HardRetry = _hardRetryBudget.Read() };
         if (HasMetadata(report) && await DisclosureAsync(CancellationToken.None) != DisclosureStatus.Allowed)
             report = Hide(report, "authority_unavailable");
         await AwaitBusinessOwnerCallsAsync();
@@ -158,10 +177,25 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
 
     private async Task<OctoberScanReport> RunAsync()
     {
+        OctoberScanReport report = await RunCoreAsync();
+        if (_activeAdmission is not { } admission || _activeOrigin is not { } origin ||
+            _coverage.Any(item => item.AdmissionId == admission) || report.Inventory.IsEmpty) return report;
+        if (report.Execution == OctoberExecutionStatus.Indeterminate || Unresolved())
+        {
+            var gap = new OctoberScanGap("active-file-unsettled", origin.RepositoryId, origin.RelativePath);
+            return report with { Gaps = report.Gaps.Add(gap) };
+        }
+        _coverage = _coverage.Add(new(admission, origin, IsCancelled ? CoverageDisposition.Cancelled : CoverageDisposition.Failed, "worker_not_completed"));
+        return report with { TerminalCoverage = _coverage };
+    }
+
+    private async Task<OctoberScanReport> RunCoreAsync()
+    {
         OctoberGenerateExecution execution = _execution!;
         if (!new OctoberScanPolicyValidator().Validate(execution.Policy).IsValid ||
             (execution.Policy.OutputStage != "cl-only" && !BusinessConfigurationMatches(execution)) || execution.Policy.WorkerCap != 1 ||
-            !_dependencies.ValidateSourceConfiguration(execution) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
+            (execution.Policy.ExistingClPublicationId is null ? !_dependencies.ValidateSourceConfiguration(execution)
+                : _dependencies.CreateBusinessFromClStore is null) || !BindingMatches(execution.Setup.Snapshot.Request, execution.Authority))
             return Failure("invalid_run_configuration", disclose: false);
         _binding = new(execution.Authority.CanonicalDatabaseIdentity, execution.Authority.TargetId,
             execution.Authority.BatchId, execution.Authority.SelectionDigest);
@@ -169,6 +203,11 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _runToken = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, _stop.Token, _caller);
         CancellationToken token = _runToken.Token;
         Guid runId = Guid.NewGuid();
+        if (execution.Policy.HardRetryMode) _hardRetryBudget = new(_binding, runId);
+        bool captureBound = _dependencies.ParseFailureCapture?.TryBind(execution, runId) == true;
+        bool observationBound = _dependencies.HttpObservation?.TryBind(execution, runId) == true;
+        if (_dependencies.HttpObservation is not null && (!observationBound || _dependencies.ParseFailureCapture is not null))
+            return Failure("invalid_run_configuration", disclose: false);
         if (execution.Policy.OutputStage == "cl-and-bl")
             _businessFinalizationOperation = new(_binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
         // Construction precedes Begin and all preparation, so no later phase receives
@@ -177,6 +216,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             CheckProviderEligibilityAsync, _businessFinalizationOperation, timeProvider: _time, hardStop: token);
         if (await CheckPermissionsAsync([], token) != DisclosureStatus.Allowed)
             return Failure("authority_unavailable", disclose: false);
+        if (execution.Policy.ExistingClPublicationId is not null)
+            return await RunExistingClBusinessAsync(runId, token);
         var begin = new GenerateAdmissionRequest(_binding, execution.Session.SubjectId, runId, Guid.NewGuid(), "");
         _beginRequest = begin with { CanonicalPayloadDigest = OctoberGenerateAdmissionPolicy.ComputePayloadDigest(begin) };
         IOctoberGenerateAdmissionStore admission = _dependencies.CreateAdmissionStore(this, this);
@@ -214,109 +255,202 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         }
         var selected = _inventory.Where(entry => entry.Kind == PreparedSourceEntryKind.RegularFile && entry.Disposition == "selected")
             .OrderByDescending(entry => entry.Priority).ThenBy(entry => entry.RepositoryId).ThenBy(entry => entry.RelativePath, StringComparer.Ordinal).ToArray();
-        if (selected.Length > 1) return Failure("single_file_checkpoint_limit");
+        _unstartedFiles = selected.ToImmutableArray();
         if (!RunAvailable) return Failure("run_ineligible", interrupted: IsCancelled);
-        if (selected.Length == 1)
+        try
         {
-            var selectedFile = selected[0];
-            OctoberSourceFrameResult acquired = await ToolAsync(() => _source.AcquireFrameAsync(
-                selectedFile.RepositoryId, selectedFile.RelativePath, token), token);
-            if (acquired.Status != OctoberSourceFrameStatus.Acquired || acquired.Frame is null)
-                return Failure("source_frame_unavailable");
-            IOctoberVerifiedFileFrame frame = acquired.Frame;
-            var repository = execution.Setup.Snapshot.Request.Repositories.Single(item => item.RepositoryId == selectedFile.RepositoryId);
-            if (frame.Origin.RepositoryId != repository.RepositoryId || frame.Origin.RootBindingIdentity != repository.RootBindingIdentity ||
-                frame.Origin.RelativePath != selectedFile.RelativePath || !await BoundedAsync(frame.VerifyCurrentAsync(token), token))
-                return Failure("source_frame_binding_changed", disclose: false);
-            _fileStarted = _time.GetTimestamp();
-            Guid admissionId = Guid.NewGuid();
-            Guid workstreamId = Guid.NewGuid();
-            ImmutableArray<OctoberWorkerAdvisory> advisory = Advisory(repository.RepositoryId);
-            ImmutableArray<Contributor> baseline = [new(ContributorKind.Source, repository.RepositoryId,
-                repository.SystemId, repository.RootBindingIdentity, null, frame.Origin.SourceDigest), .. advisory.Select(item => item.Contributor)];
-            _observedContributors = baseline;
-            for (int retry = 0; ; retry++)
+            foreach (var selectedFile in selected)
             {
-                if (!FileAvailable) return Failure("file_deadline_exceeded", interrupted: IsCancelled);
-                var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
-                    execution.Provider.Profile.Name, frame, baseline, advisory,
-                    new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
-                        RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(32768, execution.Policy.MaximumTotalTokens!.Value),
-                        MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows));
-                var ledger = new OctoberWorkerInputLedger(request,
-                    async (path, callToken) =>
-                    {
-                        var support = await ToolAsync(() => _source.AcquireFrameAsync(repository.RepositoryId, path, callToken), callToken);
-                        return support.Status == OctoberSourceFrameStatus.Acquired ? support.Frame : null;
-                    }, async (contributors, callToken) =>
-                    {
-                        DisclosureStatus status = await CheckPermissionsAsync(contributors, callToken);
-                        if (status == DisclosureStatus.Allowed) _observedContributors = contributors;
-                        return status;
-                    });
-                _activeLedger = ledger;
-                request = request with { Source = ledger };
-                IReadOnlyList<AIFunction> tools = await ToolAsync(() => new OctoberWorkerTools(_source.GetRuntime(repository.RepositoryId), ledger).CreateAsync(token), token);
-                tools = tools.Select(tool => (AIFunction)new MeasuredTool(this, tool)).ToArray();
-                IChatClient client = await AcquireClientAsync(execution.Provider, token);
-                var executor = new OctoberFileWorkerExecutor(client, _scope);
-                var attempt = new OctoberAttemptState(new(_binding.BatchId, OperationKind.AcceptFile, Guid.NewGuid()), request,
-                    callToken => executor.ExecuteAsync(request, tools, callToken),
-                    callToken => CheckPermissionsAsync(_observedContributors, callToken),
-                    RemainingFile, ledger, _time, token);
-                _attempts.Add(attempt);
-                CompletedFileSubmission? submission = await attempt.ExecuteAndSealAsync(token);
-                var accounting = _scope.GetSnapshot();
-                if (accounting.HasUnconfirmedSettlement || accounting.OutstandingAttempts != 0)
-                    return Failure("provider_settlement_unconfirmed", indeterminate: true);
-                if (execution.Policy.OutputStage == "cl-only" || submission is null)
+                if (!RunAvailable) return Failure("run_ineligible", interrupted: IsCancelled);
+                if (Unresolved() || _scope?.GetSnapshot().OutstandingAttempts != 0 || _attempts.Any(attempt => !attempt.IsSettledForFreeze))
+                    return Failure("source_window_unsettled", indeterminate: true);
+                try
                 {
-                    client.Dispose();
-                    _clients.Remove(client);
+                    // Start before renewal so its latency cannot extend the returned authority window.
+                    _sourceWindowStarted = _time.GetTimestamp();
+                    _sourceWindow = await ToolAsync(() => _source.EnsureFileWindowAsync(
+                        Min(TimeSpan.FromSeconds(execution.Policy.FileDeadlineSeconds + 30), RemainingRun), token), token);
                 }
-                else _businessClient = client;
-                if (submission is null)
+                catch (OctoberSourceWindowException error)
                 {
-                    OctoberFileWorkerResult? observed = attempt.WorkerResult;
-                    bool retrySafe = observed is { Status: OctoberFileWorkerStatus.ProviderFailed,
-                        RetryDisposition: OctoberWorkerRetryDisposition.KnownSafeTransient } &&
-                        !accounting.Usage.HasUnknownUsage && attempt.IsSettledForFreeze && !attempt.HasSubmitted &&
-                        retry < execution.Policy.MaximumTransientRetries && FileAvailable;
-                    if (retrySafe)
-                    {
-                        TimeSpan delay = TimeSpan.FromSeconds(retry == 0 ? 1 : 3);
-                        if (observed!.RetryAfter is { } retryAfter && retryAfter > delay) delay = retryAfter;
-                        if (delay < TimeSpan.Zero || delay >= RemainingFile) retrySafe = false;
-                        else
+                    return Failure("source_window_" + error.Reason.ToString().ToLowerInvariant(),
+                        indeterminate: error.Reason == OctoberSourceWindowFailure.CleanupUnconfirmed,
+                        disclose: error.Reason != OctoberSourceWindowFailure.AuthorityUnavailable);
+                }
+                OctoberSourceFrameResult acquired = await ToolAsync(() => _source.AcquireFrameAsync(
+                    selectedFile.RepositoryId, selectedFile.RelativePath, token), token);
+                if (acquired.Status != OctoberSourceFrameStatus.Acquired || acquired.Frame is null)
+                    return Failure("source_frame_unavailable", interrupted: IsCancelled);
+                IOctoberVerifiedFileFrame frame = acquired.Frame;
+                var repository = execution.Setup.Snapshot.Request.Repositories.Single(item => item.RepositoryId == selectedFile.RepositoryId);
+                if (frame.Origin.RepositoryId != repository.RepositoryId || frame.Origin.RootBindingIdentity != repository.RootBindingIdentity ||
+                    frame.Origin.RelativePath != selectedFile.RelativePath || !await BoundedAsync(frame.VerifyCurrentAsync(token), token))
+                    return Failure("source_frame_binding_changed", disclose: false);
+                _unstartedFiles = _unstartedFiles.RemoveAt(0);
+                _fileStarted = _time.GetTimestamp();
+                Guid admissionId = Guid.NewGuid();
+                _activeAdmission = admissionId;
+                _activeOrigin = frame.Origin;
+                Guid workstreamId = Guid.NewGuid();
+                var toolBudget = new OctoberFileToolBudget(runId, workstreamId, admissionId,
+                    execution.Policy.AdvisoryToolCallsPerFile, execution.Policy.MaximumToolCallsPerFile);
+                ImmutableArray<OctoberWorkerAdvisory> advisory = Advisory(repository.RepositoryId);
+                ImmutableArray<Contributor> baseline = [new(ContributorKind.Source, repository.RepositoryId,
+                    repository.SystemId, repository.RootBindingIdentity, null, frame.Origin.SourceDigest), .. advisory.Select(item => item.Contributor)];
+                IncludeObservedContributors(baseline);
+                for (int retry = 0; ; retry++)
+                {
+                    if (!FileAvailable) return Failure("file_deadline_exceeded", interrupted: IsCancelled);
+                    var request = new OctoberFileWorkerRequest(_binding, runId, workstreamId, admissionId, Guid.NewGuid(),
+                        execution.Provider.Profile.Name, frame, baseline, advisory,
+                        new(MaximumProviderRounds: execution.Policy.MaximumModelRequestsPerFile,
+                            MaximumToolCalls: execution.Policy.MaximumToolCallsPerFile,
+                            // Input includes JSON escaping, prompt, tool schemas and replayed history,
+                            // not just the source window. Reserve measured input at each leaf under
+                            // the existing Worker ceiling and the run's cumulative policy.
+                            RequestTimeout: RemainingFile, MaximumTokensPerRequest: Math.Min(1048576L, execution.Policy.MaximumTotalTokens!.Value),
+                            MaximumContinuationWindows: execution.Policy.MaximumContinuationWindows,
+                            MaximumOutputTokensPerRequest: _dependencies.MaximumWorkerOutputTokens,
+                            MaximumJsonCorrectionAttempts: execution.Policy.HardRetryMode ? 1 : 3,
+                            AdvisoryToolCalls: execution.Policy.AdvisoryToolCallsPerFile,
+                            UseTextForJsonCorrection: execution.Policy.UseTextForJsonCorrection,
+                            HardRetryMode: execution.Policy.HardRetryMode))
+                    { ToolBudget = toolBudget, HardRetryBudget = _hardRetryBudget };
+                    var ledger = new OctoberWorkerInputLedger(request,
+                        async (path, callToken) =>
                         {
-                            await Task.Delay(delay, _time, token);
-                            if (!FileAvailable || await CheckProviderEligibilityAsync(OctoberProviderPhase.Worker, token) != ProviderAdmissionStatus.Granted)
-                                retrySafe = false;
-                        }
+                            var support = await ToolAsync(() => _source.AcquireFrameAsync(repository.RepositoryId, path, callToken), callToken);
+                            return support.Status == OctoberSourceFrameStatus.Acquired ? support.Frame : null;
+                        }, async (contributors, callToken) =>
+                        {
+                            var union = IncludeObservedContributors(contributors);
+                            return await CheckPermissionsAsync(union, callToken);
+                        });
+                    _activeLedger = ledger;
+                    request = request with { Source = ledger };
+                    var workerTools = new OctoberWorkerTools(_source.GetRuntime(repository.RepositoryId), ledger);
+                    IReadOnlyList<AIFunction> tools = await ToolAsync(() => workerTools.CreateAsync(token), token);
+                    tools = tools.Select(tool => (AIFunction)new MeasuredTool(this, tool)).ToArray();
+                    IChatClient client = execution.Policy.OutputStage == "cl-and-bl" && _businessClient is not null
+                        ? _businessClient : await AcquireClientAsync(execution.Provider, token);
+                    Func<string, CancellationToken, Task<OctoberWorkerCaptureStatus>>? capture = _dependencies.ParseFailureCapture is { } sink
+                        ? (text, callToken) => captureBound
+                            ? sink.TryCaptureAsync(execution, runId, text, async verificationToken =>
+                            {
+                                if (!FileAvailable || verificationToken.IsCancellationRequested || !ReferenceEquals(_execution, execution) ||
+                                    !ReferenceEquals(_activeLedger, ledger) || execution.Session.ExpiresAtUtc <= _time.GetUtcNow()) return false;
+                                bool current = await ledger.VerifyCurrentAsync(verificationToken);
+                                return current && FileAvailable && !verificationToken.IsCancellationRequested &&
+                                    ReferenceEquals(_activeLedger, ledger) && execution.Session.ExpiresAtUtc > _time.GetUtcNow();
+                            }, callToken)
+                            : Task.FromResult(OctoberWorkerCaptureStatus.Suppressed)
+                        : null;
+                    var executor = new OctoberFileWorkerExecutor(client, _scope, capture);
+                    Task<OctoberFileWorkerResult>? actualWorker = null;
+                    var attempt = new OctoberAttemptState(new(_binding.BatchId, OperationKind.AcceptFile, Guid.NewGuid()), request,
+                        callToken => actualWorker = executor.ExecuteAsync(request, tools, callToken),
+                        callToken => CheckPermissionsAsync(_observedContributors, callToken),
+                        RemainingFile, ledger, _time, token);
+                    _attempts.Add(attempt);
+                    CompletedFileSubmission? submission = await attempt.ExecuteAndSealAsync(token);
+                    // The bounded seal can stop waiting before the actual executor
+                    // has finished transport cleanup. Retain that ownership first.
+                    OctoberFileWorkerResult? diagnosticResult = null;
+                    if (actualWorker is not null)
+                        try { diagnosticResult = await actualWorker; } catch (Exception) { /* Settlement remains the scope's authority. */ }
+                    var accounting = _scope.GetSnapshot();
+                    if (diagnosticResult is { JsonCorrections.IsDefaultOrEmpty: false } && _dependencies.JsonCorrectionLog is { } correctionLog)
+                    {
+                        // The actual Worker is settled. Logging never holds a provider permit
+                        // and cannot change admission, acceptance or the correction allowance.
+                        bool logged;
+                        try { logged = !accounting.HasUnconfirmedSettlement && accounting.OutstandingAttempts == 0 &&
+                            await correctionLog(request, diagnosticResult.JsonCorrections, token); }
+                        catch (Exception) { logged = false; }
+                        if (!logged && !_gaps.Any(gap => gap.Code == "json-correction-log-incomplete"))
+                            _gaps = _gaps.Add(new("json-correction-log-incomplete"));
                     }
-                    if (retrySafe) continue;
-                    _coverage = [new(admissionId, frame.Origin, IsCancelled ? CoverageDisposition.Cancelled : CoverageDisposition.Failed, "worker_not_completed")];
-                    _admissionClosed = true;
-                    return Failure("worker_not_completed", interrupted: IsCancelled);
+                    if (accounting.HasUnconfirmedSettlement || accounting.OutstandingAttempts != 0)
+                        return Failure("provider_settlement_unconfirmed", indeterminate: true);
+                    if (execution.Policy.OutputStage == "cl-only" || submission is null)
+                    {
+                        client.Dispose();
+                        _clients.Remove(client);
+                        if (ReferenceEquals(_businessClient, client)) _businessClient = null;
+                    }
+                    else _businessClient = client;
+                    if (submission is null)
+                    {
+                        OctoberFileWorkerResult? observed = attempt.WorkerResult;
+                        bool retrySafe = observed is { Status: OctoberFileWorkerStatus.ProviderFailed,
+                            RetryDisposition: OctoberWorkerRetryDisposition.KnownSafeTransient, JsonCorrectionAttempts: 0 } &&
+                            !accounting.Usage.HasUnknownUsage && attempt.IsSettledForFreeze && !attempt.HasSubmitted &&
+                            retry < execution.Policy.MaximumTransientRetries && FileAvailable;
+                        if (retrySafe)
+                        {
+                            TimeSpan delay = TimeSpan.FromSeconds(retry == 0 ? 1 : 3);
+                            if (observed!.RetryAfter is { } retryAfter && retryAfter > delay) delay = retryAfter;
+                            if (delay < TimeSpan.Zero || delay >= RemainingFile) retrySafe = false;
+                            else
+                            {
+                                await Task.Delay(delay, _time, token);
+                                if (!FileAvailable || await CheckProviderEligibilityAsync(OctoberProviderPhase.Worker, token) != ProviderAdmissionStatus.Granted)
+                                    retrySafe = false;
+                            }
+                        }
+                        if (retrySafe) continue;
+                        _coverage = _coverage.Add(new(admissionId, frame.Origin, IsCancelled ? CoverageDisposition.Cancelled : CoverageDisposition.Failed, "worker_not_completed"));
+                        _admissionClosed = true;
+                        OctoberWorkerHttpObservationSnapshot? observation = null;
+                        if (observationBound && observed is { HttpObservation: not null, FailureStage: OctoberWorkerFailureStage.ProposalParse } &&
+                            Enum.IsDefined(observed.Status) && observed.Status != OctoberFileWorkerStatus.Completed)
+                        {
+                            try
+                            {
+                                if (FileAvailable && !token.IsCancellationRequested && execution.Session.ExpiresAtUtc > _time.GetUtcNow() &&
+                                    await ledger.VerifyCurrentAsync(token) && FileAvailable && !token.IsCancellationRequested &&
+                                    ReferenceEquals(_activeLedger, ledger) && execution.Session.ExpiresAtUtc > _time.GetUtcNow())
+                                    observation = observed.HttpObservation;
+                            }
+                            catch (Exception) { }
+                        }
+                        return Failure("worker_not_completed", interrupted: IsCancelled) with
+                        { WorkerDiagnostics = CreateWorkerDiagnostics(observed)! with { ToolFailure = workerTools.FirstFailure, HttpObservation = observation } };
+                    }
+                    IOctoberKnowledgeWriter writer = _dependencies.CreateKnowledgeWriter(new(attempt, attempt, this, ledger, this));
+                    KnowledgeWriteResult accepted = await StoreAsync(() => attempt.AcceptAsync(writer, token), token);
+                    if (accepted.Status == KnowledgeWriteStatus.CommitIndeterminate)
+                        accepted = await StoreAsync(() => attempt.ReconcileAsync(writer, token), token);
+                    if (accepted.Status is not (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted) || accepted.AcceptedFile is null)
+                        return Failure("file_acceptance_unavailable", indeterminate: accepted.Status == KnowledgeWriteStatus.CommitIndeterminate || !attempt.IsSettledForFreeze,
+                            disclose: accepted.Status is not (KnowledgeWriteStatus.Denied or KnowledgeWriteStatus.AuthorityUnavailable));
+                    _accepted = _accepted.Add(accepted.AcceptedFile);
+                    _coverage = _coverage.Add(accepted.AcceptedFile.Coverage);
+                    _uncertainties = _uncertainties.AddRange(submission.Proposal.Uncertainties);
+                    _activeAdmission = null;
+                    _activeOrigin = null;
+                    break;
                 }
-                IOctoberKnowledgeWriter writer = _dependencies.CreateKnowledgeWriter(new(attempt, attempt, this, ledger, this));
-                KnowledgeWriteResult accepted = await StoreAsync(() => attempt.AcceptAsync(writer, token), token);
-                if (accepted.Status == KnowledgeWriteStatus.CommitIndeterminate)
-                    accepted = await StoreAsync(() => attempt.ReconcileAsync(writer, token), token);
-                if (accepted.Status is not (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted) || accepted.AcceptedFile is null)
-                    return Failure("file_acceptance_unavailable", indeterminate: accepted.Status == KnowledgeWriteStatus.CommitIndeterminate || !attempt.IsSettledForFreeze,
-                        disclose: accepted.Status is not (KnowledgeWriteStatus.Denied or KnowledgeWriteStatus.AuthorityUnavailable));
-                _accepted = [accepted.AcceptedFile];
-                _coverage = [accepted.AcceptedFile.Coverage];
-                _uncertainties = submission.Proposal.Uncertainties;
-                break;
             }
         }
-        _admissionClosed = true;
+        catch (OperationCanceledException)
+        {
+            return Failure("run_interrupted", interrupted: !Unresolved(), indeterminate: Unresolved());
+        }
+        catch (Exception)
+        {
+            return Failure("run_unavailable", indeterminate: Unresolved());
+        }
+        finally { _admissionClosed = true; }
         if (execution.Policy.OutputStage == "cl-and-bl")
         {
             await CloseSourceResourcesAsync();
-            var business = await RunBusinessCompletionAsync(token);
+            OctoberScanReport business;
+            try { business = await RunBusinessCompletionAsync(token); }
+            catch (OperationCanceledException)
+            { return BusinessFailure("run_interrupted", interrupted: !Unresolved(), indeterminate: Unresolved(), disclose: false); }
+            catch (Exception)
+            { return BusinessFailure("run_unavailable", indeterminate: Unresolved(), disclose: false); }
             if (await DisclosureAsync(token) != DisclosureStatus.Allowed) return Hide(business, "authority_unavailable");
             return business with { Inventory = _inventory, Gaps = business.Gaps.AddRange(_gaps),
                 Coverage = !complete && business.Coverage == OctoberCoverageStatus.Complete ? OctoberCoverageStatus.Partial : business.Coverage };
@@ -330,7 +464,8 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         var freeze = new CorpusFreezeRequest(phaseRequest.FreezeOperation, _binding, "", _accepted, _coverage);
         _expectedFreeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
         _publication = new(phaseRequest, (guard, freezeAuthority) => _dependencies.CreateKnowledgeWriter(new(this, guard, freezeAuthority, this, this)),
-            this, callToken => CheckPermissionsAsync(_observedContributors, callToken), RemainingRun, _time, token);
+            this, callToken => CheckPermissionsAsync(_observedContributors, callToken),
+            Min(RemainingRun, TimeSpan.FromMinutes(30)), _time, token);
         OctoberScanReport published = await _publication.ExecuteAsync(token);
         if (published.ExitCode == 4 && RunAvailable) published = await _publication.ReconcileAsync(token);
         if (await DisclosureAsync(token) != DisclosureStatus.Allowed) return Hide(published, "authority_unavailable");
@@ -354,6 +489,51 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 };
                 return new OctoberWorkerAdvisory(contributor, entry.Value);
             }).Distinct().ToImmutableArray();
+    }
+
+    private static OctoberWorkerDiagnosticSnapshot? CreateWorkerDiagnostics(OctoberFileWorkerResult? result)
+    {
+        if (result is null) return new(null, null, OctoberWorkerFailureStage.HostSealing);
+        return new(Enum.IsDefined(result.Status) ? result.Status : null,
+            Enum.IsDefined(result.RetryDisposition) ? result.RetryDisposition : null,
+            result.Status == OctoberFileWorkerStatus.Completed ? OctoberWorkerFailureStage.HostSealing :
+                result.FailureStage is { } stage && Enum.IsDefined(stage) ? stage : null)
+        {
+            TerminalFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
+                result.TerminalFailure is { } terminal && Enum.IsDefined(terminal) ? terminal : null,
+            TerminalObservation = result.Status == OctoberFileWorkerStatus.InvalidOutput &&
+                result.FailureStage == OctoberWorkerFailureStage.StreamTerminal &&
+                result.TerminalFailure == OctoberWorkerTerminalFailure.UnsupportedFinish && result.TerminalObservation is { } observed
+                ? new(observed.FinishReason is { } finish && Enum.IsDefined(finish) ? finish : null,
+                    observed.MaximumOutputTokens is > 0 and <= 393216 ? observed.MaximumOutputTokens : null,
+                    observed.InputTokens is >= 0 ? observed.InputTokens : null,
+                    observed.OutputTokens is >= 0 ? observed.OutputTokens : null,
+                    observed.ReasoningTokens is >= 0 ? observed.ReasoningTokens : null) : null,
+            BudgetFailure = result.Status == OctoberFileWorkerStatus.BudgetExceeded &&
+                result.BudgetFailure is { } budget && Enum.IsDefined(budget) ? budget : null,
+            ParseFailure = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
+                result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.ParseFailure is { } parse
+                ? new(parse.Category is { } category && Enum.IsDefined(category) ? category : null,
+                    parse.Slot is { } slot && Enum.IsDefined(slot) ? slot : null,
+                    parse.FieldFailure is { } fieldFailure && Enum.IsDefined(fieldFailure) ? fieldFailure : null,
+                    parse.Field is { } field && Enum.IsDefined(field) ? field : null,
+                    parse.UnitIndex is >= 0 and <= 65535 ? parse.UnitIndex : null) : null,
+            CaptureStatus = Enum.IsDefined(result.Status) && result.Status != OctoberFileWorkerStatus.Completed &&
+                result.FailureStage == OctoberWorkerFailureStage.ProposalParse && result.CaptureStatus is { } capture && Enum.IsDefined(capture)
+                ? capture : null
+        };
+    }
+
+    private ImmutableArray<Contributor> IncludeObservedContributors(ImmutableArray<Contributor> contributors)
+    {
+        lock (_sync)
+        {
+            // Each file keeps its own proposal ledger. Run authority is a separate,
+            // monotonic union, including callbacks that finish in a different order.
+            _observedContributors = _observedContributors.AddRange(contributors).Distinct()
+                .OrderBy(OctoberKnowledgePolicy.SerializeCanonical, StringComparer.Ordinal).ToImmutableArray();
+            return _observedContributors;
+        }
     }
 
     private async Task<ProviderAdmissionStatus> CheckProviderEligibilityAsync(OctoberProviderPhase phase, CancellationToken token)
@@ -522,6 +702,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         {
             if (!RunAvailable || _beginClosed) return CommitEligibilityStatus.StaleOrFenced;
             if (token.IsCancellationRequested) return CommitEligibilityStatus.Cancelled;
+            if (_existingClRequest is { } existing)
+                return attempt.Operation == OctoberBusinessFromClPolicy.BeginOperation(existing) &&
+                    attempt.AttemptId == existing.RunId && attempt.PayloadDigest == existing.CanonicalPayloadDigest
+                    ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;
             return _beginRequest is not null && attempt.Operation == OctoberGenerateAdmissionPolicy.OperationFor(_beginRequest.Binding) &&
                 attempt.AttemptId == _beginRequest.RunId && attempt.PayloadDigest == _beginRequest.CanonicalPayloadDigest
                 ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.Denied;
@@ -540,6 +724,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
 
     private async Task SettleResourcesAsync()
     {
+        _dependencies.HttpObservation?.Discard();
         await AwaitOriginalBusinessSettlementAsync();
         await AwaitBusinessOwnerCallsAsync();
         if (_businessGuard is not null) await _businessGuard.ObservePendingAsync();
@@ -551,6 +736,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         if (_publication is not null) await _publication.DisposeAsync();
         if (_businessGuard is not null) await _businessGuard.DisposeAsync();
         await CloseAnalysisResourcesAsync();
+        // The exchange may contain preserved foreign entries or locked owned
+        // metadata. Other settled resources can close, but that failure cannot
+        // become a successful run settlement on this or a repeated disposal.
+        if (_operatorCleanupFailure is not null) throw _operatorCleanupFailure;
         _resourcesSettled = true;
         _cleanupFailure = null;
     }
@@ -617,8 +806,10 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         _beginSettlement == CommitSettlement.Indeterminate || _attempts.Any(attempt =>
             attempt.HasSubmitted && !attempt.IsSettledForFreeze) || _scope?.GetSnapshot().HasUnconfirmedSettlement == true;
     private TimeSpan RemainingRun => TimeSpan.FromSeconds(_execution!.Policy.RunDeadlineSeconds) - _time.GetElapsedTime(_started);
-    private TimeSpan RemainingFile => _fileStarted is { } started
-        ? Min(RemainingRun, TimeSpan.FromSeconds(_execution!.Policy.FileDeadlineSeconds) - _time.GetElapsedTime(started)) : RemainingRun;
+    private TimeSpan RemainingFile => Min(
+        _fileStarted is { } started
+            ? Min(RemainingRun, TimeSpan.FromSeconds(_execution!.Policy.FileDeadlineSeconds) - _time.GetElapsedTime(started)) : RemainingRun,
+        _sourceWindowStarted is { } windowStarted ? _sourceWindow - _time.GetElapsedTime(windowStarted) : RemainingRun);
     private bool RunAvailable => !_fenced && !_disposed && !IsCancelled && RemainingRun > TimeSpan.Zero;
     private bool FileAvailable => RunAvailable && RemainingFile > TimeSpan.Zero;
     private bool IsCancelled => _caller.IsCancellationRequested || _stop.IsCancellationRequested;
@@ -657,19 +848,22 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         finally { lock (_sync) _storeWait += _time.GetElapsedTime(started); }
     }
 
-    private OctoberScanReport Failure(string code, bool interrupted = false, bool indeterminate = false, bool disclose = true, string? stage = null) =>
-        new(stage ?? _execution?.Policy.OutputStage ?? string.Empty, null,
+    private OctoberScanReport Failure(string code, bool interrupted = false, bool indeterminate = false, bool disclose = true, string? stage = null)
+    {
+        return new(stage ?? _execution?.Policy.OutputStage ?? string.Empty, null,
             disclose && !_inventory.IsEmpty ? OctoberCoverageStatus.Partial : OctoberCoverageStatus.None,
             indeterminate ? OctoberExecutionStatus.Indeterminate : interrupted ? OctoberExecutionStatus.Interrupted : OctoberExecutionStatus.Failed,
             indeterminate ? OctoberPublicationStatus.Indeterminate : OctoberPublicationStatus.NotRequested,
             null, [], disclose ? _accepted : [], disclose ? _coverage : [],
             new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
-            new(0, 0, 0, false), disclose ? _gaps.Add(new(code)) : [new(code)])
+            new(0, 0, 0, false), disclose ? _gaps.AddRange(_unstartedFiles.Select(file =>
+                new OctoberScanGap("selected-file-unprocessed", file.RepositoryId, file.RelativePath))).Add(new(code)) : [new(code)])
         {
             Inventory = disclose ? _inventory : [],
             Matching = FailurePhase(_matchingPhase, stage, interrupted, indeterminate, disclose),
             BusinessLogic = FailurePhase(_businessLogicPhase, stage, interrupted, indeterminate, disclose)
         };
+    }
     private OctoberPhaseStatus FailurePhase(OctoberPhaseStatus phase, string? stage, bool interrupted, bool indeterminate, bool disclose) =>
         (stage ?? _execution?.Policy.OutputStage) != "cl-and-bl" ? OctoberPhaseStatus.NotRequested :
         !disclose || _fenced ? OctoberPhaseStatus.Unavailable : phase == OctoberPhaseStatus.Indeterminate && !indeterminate
@@ -679,6 +873,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
         CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
         PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
         TerminalCoverage = [], Inventory = [], Gaps = [new(code)],
+        BusinessDiagnostics = null,
+        WorkerDiagnostics = null,
+        HardRetry = null,
         Matching = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested,
         BusinessLogic = report.RequestedStage == "cl-and-bl" ? OctoberPhaseStatus.Unavailable : OctoberPhaseStatus.NotRequested
     };
@@ -692,7 +889,7 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
                 _toolWait, snapshot?.ModelWait ?? TimeSpan.Zero, _storeWait + report.Timings.StoreWait)
         };
     }
-    private static bool HasMetadata(OctoberScanReport report) => report.Publication is not null ||
+    private static bool HasMetadata(OctoberScanReport report) => report.HardRetry is not null || report.WorkerDiagnostics is not null || report.BusinessDiagnostics is not null || report.Publication is not null ||
         !report.Documents.IsEmpty || !report.AcceptedFiles.IsEmpty || !report.TerminalCoverage.IsEmpty || !report.Inventory.IsEmpty;
     private static OctoberGeneratorExecutionResult Finished(OctoberScanReport report) => new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report);
     private static CommitGuardResult BeginDenied(CommitEligibilityStatus status) => new(status switch

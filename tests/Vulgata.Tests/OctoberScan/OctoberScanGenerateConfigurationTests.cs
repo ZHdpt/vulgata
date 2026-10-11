@@ -94,10 +94,112 @@ public sealed class OctoberScanGenerateConfigurationTests
         Assert.Equal(600, policy.FileDeadlineSeconds);
         Assert.Equal(4, policy.MaximumContinuationWindows);
         Assert.Equal(8, policy.MaximumModelRequestsPerFile);
+        Assert.Equal(32, policy.AdvisoryToolCallsPerFile);
+        Assert.Equal(48, policy.MaximumToolCallsPerFile);
         Assert.Equal(2, policy.MaximumTransientRetries);
+        Assert.False(policy.HardRetryMode);
         Assert.Equal(30, policy.GracefulDrainSeconds);
         Assert.True(policy.MaximumProviderRequests > 0);
         Assert.True(policy.MaximumRequestsPerMinute > 0);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(14400)]
+    [InlineData(86400)]
+    public void ReadCommand_GenerateAcceptsLongRunDeadline(int runDeadlineSeconds)
+    {
+        var policy = ValidPolicy() with { RunDeadlineSeconds = runDeadlineSeconds };
+        using var policyFile = new PolicyFile(JsonSerializer.Serialize(policy,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        var command = InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values));
+
+        Assert.Equal(runDeadlineSeconds, Assert.IsType<OctoberScanPolicy>(command.ScanPolicy).RunDeadlineSeconds);
+        Assert.True(new OctoberScanPolicyValidator().Validate(command.ScanPolicy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ReadCommand_GenerateWithExistingClPublication_ParsesExactNonemptyPublicationId()
+    {
+        Guid publicationId = Guid.Parse("26b1e60b-7a0b-4490-bf7c-dfd7ef9f2788");
+        using var policyFile = new PolicyFile(PolicyJsonWithExistingClPublication("cl-and-bl", publicationId));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        var command = InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values));
+
+        var policy = Assert.IsType<OctoberScanPolicy>(command.ScanPolicy);
+        var property = typeof(OctoberScanPolicy).GetProperty("ExistingClPublicationId");
+        Assert.NotNull(property);
+        Assert.Equal(publicationId, property!.GetValue(policy));
+        Assert.True(new OctoberScanPolicyValidator().Validate(policy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("cl-only")]
+    [InlineData("cl-and-bl")]
+    public void ReadCommand_GenerateExistingClPublication_RejectsMissingOrInvalidId(string stage)
+    {
+        Guid publicationId = Guid.Empty;
+        using var policyFile = new PolicyFile(PolicyJsonWithExistingClPublication(stage, publicationId));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        Assert.Throws<InvalidOperationException>(() => InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ReadCommand_ExistingClPublicationRequiresBusinessStage()
+    {
+        using var policyFile = new PolicyFile(PolicyJsonWithExistingClPublication("cl-only",
+            Guid.Parse("26b1e60b-7a0b-4490-bf7c-dfd7ef9f2788")));
+        var values = CommandValues("generate");
+        values["October:ScanPolicyFile"] = policyFile.Path;
+
+        Assert.Throws<InvalidOperationException>(() => InvokeEntryPoint<OctoberGeneratorCommand>("ReadCommand", Configuration(values)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    [InlineData(86400, true)]
+    [InlineData(86401, false)]
+    public void ValidatePolicy_RunDeadlineUsesFiniteOneDayBounds(int runDeadlineSeconds, bool expectedValid)
+    {
+        var policy = ValidPolicy() with
+        {
+            RunDeadlineSeconds = runDeadlineSeconds,
+            FileDeadlineSeconds = 1,
+            GracefulDrainSeconds = 1
+        };
+
+        Assert.Equal(expectedValid, new OctoberScanPolicyValidator().Validate(policy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(1800, OctoberGeneratorMode.Generate, 3600)]
+    [InlineData(14400, OctoberGeneratorMode.Generate, 14400)]
+    [InlineData(86400, OctoberGeneratorMode.Generate, 86400)]
+    [InlineData(0, OctoberGeneratorMode.Prepare, 3600)]
+    [InlineData(0, OctoberGeneratorMode.Select, 3600)]
+    public void AuthoritySessionLifetime_GenerateIsRunBoundOtherModesKeepOneHour(
+        int runDeadlineSeconds, OctoberGeneratorMode mode, int expectedSeconds)
+    {
+        OctoberScanPolicy? policy = mode == OctoberGeneratorMode.Generate
+            ? ValidPolicy() with { RunDeadlineSeconds = runDeadlineSeconds }
+            : null;
+        var command = new OctoberGeneratorCommand(mode, Target, Batch, null, policy);
+
+        Assert.Equal(TimeSpan.FromSeconds(expectedSeconds),
+            OctoberGeneratorEntryPoint.AuthoritySessionLifetime(command));
     }
 
     [Trait("Suite", "SelfContained")]
@@ -129,10 +231,16 @@ public sealed class OctoberScanGenerateConfigurationTests
     [SuiteTheory("SelfContained")]
     [InlineData("zero-cap")]
     [InlineData("negative-deadline")]
+    [InlineData("run-deadline-above-maximum")]
     [InlineData("file-exceeds-run")]
     [InlineData("zero-requests")]
     [InlineData("negative-retries")]
     [InlineData("zero-token-ceiling")]
+    [InlineData("zero-tool-advisory")]
+    [InlineData("tool-advisory-equals-hard")]
+    [InlineData("tool-advisory-above-hard")]
+    [InlineData("tool-hard-over-ceiling")]
+    [InlineData("hard-retry-with-transient-retries")]
     public void ValidatePolicy_NonFiniteOrInconsistentBounds_Rejects(string fault)
     {
         var policy = ValidPolicy();
@@ -140,13 +248,27 @@ public sealed class OctoberScanGenerateConfigurationTests
         {
             "zero-cap" => policy with { WorkerCap = 0 },
             "negative-deadline" => policy with { RunDeadlineSeconds = -1 },
+            "run-deadline-above-maximum" => policy with { RunDeadlineSeconds = 86401 },
             "file-exceeds-run" => policy with { FileDeadlineSeconds = 1801 },
             "zero-requests" => policy with { MaximumProviderRequests = 0 },
             "negative-retries" => policy with { MaximumTransientRetries = -1 },
             "zero-token-ceiling" => policy with { MaximumTotalTokens = 0 },
+            "zero-tool-advisory" => policy with { AdvisoryToolCallsPerFile = 0 },
+            "tool-advisory-equals-hard" => policy with { AdvisoryToolCallsPerFile = 48, MaximumToolCallsPerFile = 48 },
+            "tool-advisory-above-hard" => policy with { AdvisoryToolCallsPerFile = 49, MaximumToolCallsPerFile = 48 },
+            "tool-hard-over-ceiling" => policy with { AdvisoryToolCallsPerFile = 32, MaximumToolCallsPerFile = 1001 },
+            "hard-retry-with-transient-retries" => policy with { HardRetryMode = true, MaximumTransientRetries = 1 },
             _ => throw new InvalidOperationException(),
         };
         Assert.False(new OctoberScanPolicyValidator().Validate(policy).IsValid);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ValidatePolicy_HardRetryModeRequiresTransientRetriesDisabled()
+    {
+        var policy = ValidPolicy() with { HardRetryMode = true, MaximumTransientRetries = 0 };
+        Assert.True(new OctoberScanPolicyValidator().Validate(policy).IsValid);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -318,6 +440,15 @@ public sealed class OctoberScanGenerateConfigurationTests
 
     private static string PolicyJson(string stage) => JsonSerializer.Serialize(
         ValidPolicy() with { OutputStage = stage }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+    private static string PolicyJsonWithExistingClPublication(string stage, Guid publicationId)
+    {
+        return JsonSerializer.Serialize(ValidPolicy() with
+        {
+            OutputStage = stage,
+            ExistingClPublicationId = publicationId
+        }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    }
 
     private static Task<OctoberSelectedWorkerProvider> BoundProviderAsync() => Task.FromResult(
         new OctoberSelectedWorkerProvider("explicit-provider-document", "only-source",

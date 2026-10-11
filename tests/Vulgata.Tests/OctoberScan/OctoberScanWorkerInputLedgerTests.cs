@@ -387,6 +387,228 @@ public sealed class OctoberScanWorkerInputLedgerTests
         }
         Assert.True(finalVerification);
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("java-empty", true)]
+    [InlineData("java-limited", true)]
+    [InlineData("java-readiness", true)]
+    [InlineData("java-configuration", true)]
+    [InlineData("java-protocol", true)]
+    [InlineData("java-authority", false)]
+    [InlineData("java-missing-repository", false)]
+    [InlineData("java-foreign-repository", false)]
+    [InlineData("graph-no-match", true)]
+    [InlineData("graph-unavailable", true)]
+    [InlineData("graph-failed", true)]
+    [InlineData("graph-timeout", true)]
+    [InlineData("graph-limited", true)]
+    [InlineData("graph-undefined", false)]
+    [InlineData("graph-authority", false)]
+    [InlineData("graph-missing-repository", false)]
+    [InlineData("graph-foreign-repository", false)]
+    public async Task CurrentContract_NonSuccessNavigationEnvelope_RequiresExactRepositoryAsync(string scenario, bool allowed)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        int acquisitions = 0;
+        var ledger = new OctoberWorkerInputLedger(host.Request, (_, _) => { acquisitions++; return Task.FromResult<IOctoberVerifiedFileFrame?>(null); }, (_, _) => Task.FromResult(DisclosureStatus.Allowed));
+        bool graph = scenario.StartsWith("graph-", StringComparison.Ordinal);
+        Guid repository = scenario.EndsWith("missing-repository", StringComparison.Ordinal) ? Guid.Empty : scenario.EndsWith("foreign-repository", StringComparison.Ordinal) ? Guid.NewGuid() : host.Source.Origin.RepositoryId;
+        SourceMetadataOperation operation = graph ? SourceMetadataOperation.CodeGraphExplore : SourceMetadataOperation.JavaDefinition;
+        string path = graph ? "." : host.Source.Origin.RelativePath;
+        string request = graph ? "{\"query\":\"controlled\",\"maxFiles\":4}" : JsonSerializer.Serialize(new { relativePath = path, line = 1, character = 1, maximumLocations = 10 });
+        object result;
+        if (graph)
+        {
+            var status = scenario switch
+            {
+                "graph-no-match" => CodeGraphToolInvocationStatus.NoMatch,
+                "graph-failed" => CodeGraphToolInvocationStatus.Failed,
+                "graph-timeout" => CodeGraphToolInvocationStatus.TimedOut,
+                "graph-limited" => CodeGraphToolInvocationStatus.Limited,
+                "graph-undefined" => (CodeGraphToolInvocationStatus)99999,
+                "graph-authority" => CodeGraphToolInvocationStatus.AuthorityUnavailable,
+                _ => CodeGraphToolInvocationStatus.Unavailable,
+            };
+            result = new CodeGraphToolInvocationResult { RepositoryId = scenario == "graph-missing-repository" ? null : repository, Status = status,
+                IssueCode = status == CodeGraphToolInvocationStatus.NoMatch ? CodeGraphToolIssueCode.None : CodeGraphToolIssueCode.InvocationFailed };
+        }
+        else
+        {
+            var outcome = scenario switch
+            {
+                "java-empty" => PreparedJavaNavigationOutcome.NoResultObserved,
+                "java-limited" => PreparedJavaNavigationOutcome.Limited,
+                "java-configuration" => PreparedJavaNavigationOutcome.ConfigurationUnavailable,
+                "java-protocol" => PreparedJavaNavigationOutcome.ProtocolFailed,
+                "java-authority" => PreparedJavaNavigationOutcome.AuthorityUnavailable,
+                _ => PreparedJavaNavigationOutcome.ReadinessFailed,
+            };
+            result = new PreparedJavaNavigationResult(repository, PreparedJavaNavigationOperation.Definition, outcome, [], [], null);
+        }
+        // Envelope-only characterization: a real runtime may separately invalidate primary currentness.
+        var admitted = await ledger.AdmitToolResultAsync(operation, path, request, result);
+        Assert.Equal(allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied, admitted.Status); Assert.Equal(0, acquisitions);
+        if (!allowed) { Assert.Null(admitted.Result); Assert.Null(await ledger.FreezeForCompletionAsync()); return; }
+        if (graph) Assert.Equal(((CodeGraphToolInvocationResult)result).Status, Assert.IsType<CodeGraphToolInvocationResult>(admitted.Result).Status);
+        else Assert.Equal(((PreparedJavaNavigationResult)result).Outcome, Assert.IsType<PreparedJavaNavigationResult>(admitted.Result).Outcome);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.VerifiedSources);
+        var metadata = Assert.Single(snapshot.Contributors.Where(contributor => contributor.Kind == ContributorKind.SourceMetadata));
+        Assert.Equal(operation, metadata.MetadataOrigin!.Operation); Assert.Equal(host.Source.Origin.RepositoryId, metadata.MetadataOrigin.RepositoryId);
+        Assert.Equal(path, metadata.MetadataOrigin.NormalizedScopePath);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("incomplete", true)]
+    [InlineData("missing", true)]
+    [InlineData("invalid-range", true)]
+    [InlineData("unsupported-text", true)]
+    [InlineData("empty-without-envelope", false)]
+    [InlineData("empty-at-eof", true)]
+    [InlineData("missing-repository", false)]
+    [InlineData("foreign-repository", false)]
+    public async Task CurrentContract_NonSuccessReadEnvelope_DistinguishesAbsentPayloadFromVerifiedEofAsync(string scenario, bool allowed)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        int acquisitions = 0;
+        var ledger = new OctoberWorkerInputLedger(host.Request, (_, _) => { acquisitions++; return Task.FromResult<IOctoberVerifiedFileFrame?>(null); }, (_, _) => Task.FromResult(DisclosureStatus.Allowed));
+        var primary = host.Source;
+        bool eof = scenario == "empty-at-eof";
+        long offset = eof ? primary.ByteLength : 0;
+        Guid repository = scenario == "missing-repository" ? Guid.Empty : scenario == "foreign-repository" ? Guid.NewGuid() : primary.Origin.RepositoryId;
+        var outcome = scenario switch
+        {
+            "missing" => PreparedSourceOutcome.Missing,
+            "invalid-range" => PreparedSourceOutcome.InvalidRange,
+            "unsupported-text" => PreparedSourceOutcome.UnsupportedText,
+            "empty-without-envelope" or "empty-at-eof" => PreparedSourceOutcome.CompleteEmpty,
+            _ => PreparedSourceOutcome.Incomplete,
+        };
+        var result = new PreparedSourceResult { RepositoryId = repository, Operation = PreparedSourceOperation.ReadTextRange, Outcome = outcome,
+            Text = eof ? string.Empty : null, ReadLocation = eof ? new(repository, primary.Origin.RelativePath, offset, offset) : null,
+            ObservedFileByteLength = eof ? primary.ByteLength : null };
+        var admitted = await ledger.AdmitToolResultAsync(SourceMetadataOperation.ReadTextRange, primary.Origin.RelativePath,
+            JsonSerializer.Serialize(new { relativePath = primary.Origin.RelativePath, byteOffset = offset, byteCount = 1 }), result);
+        Assert.Equal(allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied, admitted.Status); Assert.Equal(0, acquisitions);
+        if (!allowed) { Assert.Null(admitted.Result); Assert.Null(await ledger.FreezeForCompletionAsync()); return; }
+        var disclosed = Assert.IsType<PreparedSourceResult>(admitted.Result); Assert.Equal(outcome, disclosed.Outcome);
+        Assert.Equal(result.Text, disclosed.Text); Assert.Equal(result.ReadLocation, disclosed.ReadLocation);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Single(snapshot.VerifiedSources); Assert.Equal(primary.Origin, snapshot.VerifiedSources[0].Origin);
+        Assert.Single(snapshot.Contributors.Where(contributor => contributor.Kind == ContributorKind.SourceMetadata));
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("lf", "first();\nsecond();", "first();\nsecond();", true)]
+    [InlineData("crlf-exact", "first();\r\nsecond();", "first();\r\nsecond();", true)]
+    [InlineData("crlf-normalized", "first();\r\nsecond();", "first();\nsecond();", true)]
+    [InlineData("crlf-single-line", "first();\r\nsecond();", "second();", true)]
+    [InlineData("excerpt-crlf", "first();\nsecond();", "first();\r\nsecond();", true)]
+    [InlineData("mixed", "first();\r\nsecond();\nthird();", "first();\nsecond();\r\nthird();", true)]
+    [InlineData("space", "first();\r\nsecond();", "first(); \nsecond();", false)]
+    [InlineData("bare-cr", "first();\rsecond();", "first();\nsecond();", false)]
+    [InlineData("case", "first();\r\nsecond();", "First();\nsecond();", false)]
+    [InlineData("unicode", "café();\r\nsecond();", "cafe\u0301();\nsecond();", false)]
+    [InlineData("no-trim", "first();\r\nsecond();", " first();\nsecond(); ", false)]
+    public async Task CodeGraphCompleteExcerpt_ComparesOnlyCrLfNormalizedOrdinalTextAsync(
+        string scenario, string retainedText, string excerptText, bool allowed)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        var support = new Frame(host.Source.Origin with
+        {
+            RelativePath = "src/Support.java", SourceDigest = OctoberKnowledgePolicy.Hash(retainedText)
+        }, retainedText) { ObservedLineCount = System.Text.RegularExpressions.Regex.Matches(retainedText, "\\r\\n|\\r|\\n").Count + 1 };
+        var ledger = Ledger(host, support);
+        var location = new PreparedSourceLocation(support.Origin.RepositoryId, support.Origin.RelativePath);
+        // Hand-constructed producer-shaped projection, not native qualification. The actual
+        // ParseContainedResultAsync accepts LF excerpts against CRLF-normalized source;
+        // approved comparison normalizes CRLF on both strings without changing retained bytes.
+        var result = new CodeGraphToolInvocationResult
+        {
+            Status = CodeGraphToolInvocationStatus.Complete, RepositoryId = location.RepositoryId,
+            Locations = [location], Excerpts = [new(location, excerptText)]
+        };
+        Assert.Null(result.Excerpts[0].LineStart);
+        Assert.Null(result.Excerpts[0].LineEnd);
+        var admitted = await ledger.AdmitToolResultAsync(SourceMetadataOperation.CodeGraphExplore,
+            ".", "{\"query\":\"support\"}", result);
+        Assert.True(admitted.Status == (allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied), scenario);
+        Assert.Equal(retainedText, support.Text);
+        Assert.Equal(OctoberKnowledgePolicy.Hash(retainedText), support.Origin.SourceDigest);
+        if (!allowed)
+        {
+            Assert.Null(admitted.Result);
+            Assert.Null(await ledger.FreezeForCompletionAsync());
+            return;
+        }
+        var safe = Assert.IsType<CodeGraphToolInvocationResult>(admitted.Result);
+        Assert.Equal(excerptText, Assert.Single(safe.Excerpts).Text);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Equal(2, snapshot.VerifiedSources.Length);
+        Assert.Contains(snapshot.Contributors, contributor => contributor.SourceOrigin == support.Origin);
+        Assert.True(await ledger.VerifySnapshotAsync(snapshot));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("defaults", true)]
+    [InlineData("null-max-files", false)]
+    [InlineData("missing-repository", false)]
+    [InlineData("foreign-location", false)]
+    [InlineData("unmatched-text", false)]
+    [InlineData("empty-excerpt", false)]
+    [InlineData("line-start-zero", false)]
+    [InlineData("line-end-overflow", false)]
+    [InlineData("stale-frame", false)]
+    [InlineData("foreign-root", false)]
+    [InlineData("foreign-version", false)]
+    [InlineData("duplicate-location", true)]
+    [InlineData("distinct-path-limit", false)]
+    public async Task CurrentContract_CodeGraphCompleteDoesNotBypassEnvelopeOrSourceChecksAsync(string scenario, bool allowed)
+    {
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        var support = new Frame(host.Source.Origin with
+        {
+            RelativePath = "src/Support.java", SourceDigest = OctoberKnowledgePolicy.Hash("support();")
+        }, "support();");
+        var location = new PreparedSourceLocation(support.Origin.RepositoryId, support.Origin.RelativePath);
+        if (scenario == "stale-frame") support.Current = false;
+        if (scenario == "foreign-root") support.Origin = support.Origin with { RootBindingIdentity = "foreign-controlled-root" };
+        if (scenario == "foreign-version") support.Origin = support.Origin with { PreparedVersion = "foreign-controlled-version" };
+        var ledger = Ledger(host, support);
+        var result = new CodeGraphToolInvocationResult
+        {
+            Status = CodeGraphToolInvocationStatus.Complete,
+            RepositoryId = scenario == "missing-repository" ? null : location.RepositoryId,
+            Locations = scenario switch
+            {
+                "duplicate-location" => [location, location],
+                "distinct-path-limit" => [location, new(location.RepositoryId, "src/Other.java")],
+                "foreign-location" => [new(Guid.NewGuid(), location.RelativePath)],
+                _ => [location]
+            },
+            Excerpts = [new(location, scenario == "unmatched-text" ? "absent();" : scenario == "empty-excerpt" ? string.Empty : support.Text, scenario == "line-start-zero" ? 0 : null, scenario == "line-end-overflow" ? 2 : null)]
+        };
+        string request = scenario == "null-max-files" ? "{\"query\":\"support\",\"maxFiles\":null}"
+            : scenario is "duplicate-location" or "distinct-path-limit" ? "{\"query\":\"support\",\"maxFiles\":1}"
+            : "{\"query\":\"support\"}";
+        var admitted = await ledger.AdmitToolResultAsync(SourceMetadataOperation.CodeGraphExplore, ".", request, result);
+        Assert.Equal(allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied, admitted.Status);
+        if (!allowed)
+        {
+            Assert.Null(admitted.Result);
+            Assert.Null(await ledger.FreezeForCompletionAsync());
+            return;
+        }
+        var safe = Assert.IsType<CodeGraphToolInvocationResult>(admitted.Result);
+        Assert.Equal(CodeGraphToolInvocationStatus.Complete, safe.Status);
+        Assert.Equal(result.Excerpts, safe.Excerpts);
+        var snapshot = Assert.IsType<OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Equal(2, snapshot.VerifiedSources.Length);
+        Assert.Single(snapshot.Contributors.Where(item => item.SourceOrigin == support.Origin));
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == ContributorKind.SourceMetadata));
+    }
     private static OctoberWorkerInputLedger Ledger(OctoberScanAcceptanceHarness host, params Frame[] frames) => new(host.Request,
         (path, _) => Task.FromResult<IOctoberVerifiedFileFrame?>(frames.SingleOrDefault(frame => frame.Origin.RelativePath == path)),
         (_, _) => Task.FromResult(DisclosureStatus.Allowed));
@@ -399,7 +621,8 @@ public sealed class OctoberScanWorkerInputLedgerTests
         public PreparedOrigin Origin { get; set; } = origin;
         public string Text => text;
         public long ByteLength => Encoding.UTF8.GetByteCount(text);
-        public int LineCount => 1;
+        public int ObservedLineCount { get; init; } = 1;
+        public int LineCount => ObservedLineCount;
         public string FileIdentity => origin.RelativePath + ":controlled";
         public bool Current { get; set; } = true;
         internal Func<CancellationToken, Task<bool>>? Verify { get; set; }

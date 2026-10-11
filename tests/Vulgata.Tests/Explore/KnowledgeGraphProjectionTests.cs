@@ -61,6 +61,7 @@ public sealed class KnowledgeGraphProjectionTests
         Assert.Contains(edges[0], graph.Edges);
         Assert.Contains(edges[2], graph.Edges);
         Assert.DoesNotContain(edges[4], graph.Edges);
+        Assert.True(graph.Incomplete, "An accepted relationship outside the displayed endpoint set must remain visibly partial.");
         Assert.DoesNotContain(graph.Nodes, node => node.Handle == external.Handle);
         Assert.All(graph.Nodes, node => Assert.Contains($"version={node.Handle.DocumentVersionId:D}", ExactDocumentLinkBuilder.Build(node.Handle), StringComparison.Ordinal));
     }

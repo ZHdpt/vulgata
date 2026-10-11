@@ -7,6 +7,10 @@
 .arrowhead { fill: var(--graph-ink); }
 .graph-node circle { fill: var(--graph-fill); stroke: var(--graph-ink); stroke-width: 2; }
 .graph-node.selected circle { stroke: var(--graph-accent); stroke-width: 5; }
+.graph-node { cursor: pointer; }
+.graph-node:focus-visible circle { stroke: var(--graph-accent); stroke-width: 5; stroke-dasharray: 3 2; }
+.selected-node-detail { margin-block: 1rem; padding: 1rem; border: 1px solid var(--graph-accent); border-radius: .5rem; background: var(--graph-fill); color: var(--graph-text); }
+.selected-node-detail a { color: var(--graph-ink); }
 .graph-node text { fill: var(--graph-text); font-size: 13px; }
 h2 { font-family: "Noto Serif SC", serif; }
 .node-list, .edge-list { padding-inline-start: 1.5rem; }

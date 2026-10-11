@@ -5,6 +5,7 @@ using Vulgata.Tests.PreparedSource;
 using Vulgata.Infrastructure.Source;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
+using Vulgata.OctoberGenerator;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.OctoberScan;
@@ -12,6 +13,36 @@ namespace Vulgata.Tests.OctoberScan;
 /// <summary>Controlled descriptor lifecycle tests. Creating/disposal without discovery never starts a native process.</summary>
 public sealed class OctoberScanCodeGraphLifetimeTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CodeGraphOwner_RetainsOneDescriptorAcrossThirtyMinutesWithinFourHourRunAsync()
+    {
+        Guid repositoryId = Guid.NewGuid();
+        TimeSpan remaining = TimeSpan.FromHours(4);
+        int releases = 0, preparations = 0;
+        var descriptor = new PreparedCodeGraphConnection(repositoryId,
+            Path.Combine(Path.GetTempPath(), "never-executed.ps1"), "controlled", [], Path.GetTempPath(),
+            new Dictionary<string, string>(), () => releases++, _ => new ControlledSession(),
+            remainingLifetime: remaining);
+        await using var owner = new OctoberCodeGraphOwner(repositoryId, "owned-root", () => remaining);
+
+        var first = await owner.GetOrCreateAsync((lifetime, _) =>
+        {
+            preparations++;
+            Assert.Equal(TimeSpan.FromHours(4), lifetime);
+            return Task.FromResult(descriptor);
+        });
+        remaining -= TimeSpan.FromMinutes(31);
+        var afterThirtyMinutes = await owner.GetOrCreateAsync((_, _) =>
+            throw new InvalidOperationException("The original prepared descriptor must be reused."));
+
+        Assert.Same(descriptor, first);
+        Assert.Same(first, afterThirtyMinutes);
+        Assert.Equal(1, preparations);
+        Assert.Equal(0, releases);
+        await owner.DisposeAsync();
+        Assert.Equal(1, releases);
+    }
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task OpenSession_DisposedCurrentSession_AllowsReplacementOnSameDescriptorAsync()
@@ -270,6 +301,78 @@ public sealed class OctoberScanCodeGraphLifetimeTests
         Assert.Equal(0, harness.Connects);
         Assert.Equal(0, harness.Transport.Calls);
     }
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActualContainedAdapterCompleteLfExcerpt_IsAdmittedForLfAndCrLfSourceAsync(bool crlf)
+    {
+        await using var native = await NativeHarness.CreateAsync();
+        await using var host = await OctoberScanAcceptanceHarness.CreateAsync();
+        native.Source.Content = crlf ? "café\r\nsource fixture\r\n" : "café\nsource fixture\n";
+        await using var client = native.CreateClient();
+        Assert.True((await client.DiscoverAsync(CancellationToken.None)).IsReady);
+        var actual = await client.ExploreAsync("source", 4, CancellationToken.None);
+        Assert.Equal(CodeGraphToolInvocationStatus.Complete, actual.Status);
+        Assert.Equal(native.Descriptor.RepositoryId, actual.RepositoryId);
+        var excerpt = Assert.Single(actual.Excerpts);
+        Assert.Equal("café\nsource fixture", excerpt.Text);
+        Assert.Null(actual.Text);
+        Assert.Equal(!crlf, native.Source.Content.Contains(excerpt.Text, StringComparison.Ordinal));
+        Assert.True(native.Source.Content.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Contains(excerpt.Text, StringComparison.Ordinal));
+        Assert.Null(excerpt.LineStart);
+        Assert.Null(excerpt.LineEnd);
+        Assert.Equal(excerpt.Location, Assert.Single(actual.Locations));
+        Assert.Equal(1, native.Transport.Calls);
+        Assert.True(native.Source.Reads >= 2);
+
+        // Actual contained parser with inert transport; controlled frame/authority only.
+        // The request is rebound solely for ledger admission, never accepted or published.
+        var origin = host.Source.Origin with
+        {
+            RepositoryId = native.Descriptor.RepositoryId, RelativePath = excerpt.Location.RelativePath,
+            SourceDigest = Vulgata.Core.DomainServices.OctoberKnowledge.OctoberKnowledgePolicy.Hash(native.Source.Content)
+        };
+        var frame = new ParserLedgerFrame(origin, native.Source.Content);
+        var source = new Vulgata.Core.DomainServices.OctoberKnowledge.Contributor(
+            Vulgata.Core.DomainServices.OctoberKnowledge.ContributorKind.Source, origin.RepositoryId,
+            null, origin.RootBindingIdentity, null, origin.SourceDigest);
+        var request = host.Request with { Source = frame, Contributors = [source], Advisory = [] };
+        int unexpectedAcquisitions = 0;
+        var ledger = new Vulgata.OctoberGenerator.OctoberWorkerInputLedger(request,
+            (_, _) => { unexpectedAcquisitions++; return Task.FromResult<Vulgata.Agents.WorkerExecution.IOctoberVerifiedFileFrame?>(null); },
+            (_, _) => Task.FromResult(Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Allowed));
+        var admission = await ledger.AdmitToolResultAsync(
+            Vulgata.Core.DomainServices.OctoberKnowledge.SourceMetadataOperation.CodeGraphExplore,
+            ".", "{\"query\":\"source\",\"maxFiles\":4}", actual);
+        Assert.Equal(Vulgata.Core.DomainServices.OctoberKnowledge.DisclosureStatus.Allowed, admission.Status);
+        Assert.Equal(0, unexpectedAcquisitions);
+        Assert.Equal(origin.SourceDigest, Vulgata.Core.DomainServices.OctoberKnowledge.OctoberKnowledgePolicy.Hash(frame.Text));
+        Assert.Equal(native.Source.Content, frame.Text);
+        Assert.Equal(excerpt, Assert.Single(Assert.IsType<CodeGraphToolInvocationResult>(admission.Result).Excerpts));
+        var snapshot = Assert.IsType<Vulgata.OctoberGenerator.OctoberWorkerInputSnapshot>(await ledger.FreezeForCompletionAsync());
+        Assert.Equal(origin, Assert.Single(snapshot.VerifiedSources).Origin);
+        Assert.Contains(source, snapshot.Contributors);
+        Assert.Single(snapshot.Contributors.Where(item => item.Kind == Vulgata.Core.DomainServices.OctoberKnowledge.ContributorKind.SourceMetadata));
+        Assert.True(await ledger.VerifySnapshotAsync(snapshot));
+    }
+
+    private sealed class ParserLedgerFrame(
+        Vulgata.Core.DomainServices.OctoberKnowledge.PreparedOrigin origin, string text)
+        : Vulgata.Agents.WorkerExecution.IOctoberVerifiedFileFrame
+    {
+        public Vulgata.Core.DomainServices.OctoberKnowledge.PreparedOrigin Origin => origin;
+        public string Text => text;
+        public long ByteLength => Encoding.UTF8.GetByteCount(Text);
+        public int LineCount => 3;
+        public string FileIdentity => "controlled-parser-ledger-frame";
+        public Task<bool> VerifyCurrentAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(true);
+        }
+    }
     private sealed class NativeHarness : IAsyncDisposable
     {
         private readonly PreparedSourceFixture _fixture;
@@ -437,6 +540,27 @@ public sealed class OctoberScanCodeGraphLifetimeTests
         await using var descriptor = await factory.PrepareAsync(fixture.Approval.RepositoryId, fixture.PreparedRootPath, remaining, CancellationToken.None);
         Assert.Equal(1, runner.Calls);
         Assert.True(runner.LastToken.CanBeCanceled, "Init needs a linked finite deadline even without caller cancellation.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_FourHourRunKeepsInitializationTimeoutAtExistingTwoMinuteCapAsync()
+    {
+        await using var fixture = await PreparedSourceFixture.CreateAsync();
+        var command = Path.Combine(fixture.SandboxPath, "never-executed.ps1");
+        await File.WriteAllTextAsync(command, "# controlled runner only");
+        var runner = new ControlledInitRunner(request =>
+        {
+            Assert.Equal(TimeSpan.FromMinutes(2), request.Timeout);
+            File.WriteAllText(Path.Combine(request.WorkingDirectory, ".codegraph", "codegraph.db"), "controlled index");
+        });
+        var factory = new PreparedCodeGraphConnectionFactory(command, runner, static (_, _) => Task.CompletedTask);
+
+        await using var descriptor = await factory.PrepareAsync(fixture.Approval.RepositoryId,
+            fixture.PreparedRootPath, TimeSpan.FromHours(4), CancellationToken.None);
+
+        Assert.Equal(1, runner.Calls);
+        Assert.True(runner.LastToken.CanBeCanceled);
     }
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]

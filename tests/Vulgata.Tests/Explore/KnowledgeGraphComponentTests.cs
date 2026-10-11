@@ -21,6 +21,32 @@ namespace Vulgata.Tests.Explore;
 public sealed class KnowledgeGraphComponentTests : BunitContext
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void KnowledgeGraph_CanvasAndKeyboardSelection_ShowExactDetailWithoutChangingGraph()
+    {
+        Configure();
+        var graph = Graph();
+        var before = JsonSerializer.Serialize(graph);
+        var cut = Render<KnowledgeGraph>(parameters => parameters.Add(component => component.Graph, graph).Add(component => component.Mode, KnowledgeMode.IT));
+        var first = graph.Nodes[0];
+        var second = graph.Nodes[1];
+        cut.Find($"svg g[data-node-id='{first.Handle.DocumentVersionId:D}']").Click();
+        var detail = cut.Find(".selected-node-detail");
+        Assert.Contains(first.Title, detail.TextContent, StringComparison.Ordinal);
+        Assert.Contains("不得当作源代码证明", detail.TextContent, StringComparison.Ordinal);
+        Assert.Equal(ExactDocumentLinkBuilder.Build(first.Handle), detail.QuerySelector("a")!.GetAttribute("href"));
+        Assert.Empty(detail.QuerySelectorAll("script,img"));
+        var next = cut.Find($"svg g[data-node-id='{second.Handle.DocumentVersionId:D}']");
+        Assert.Equal("0", next.GetAttribute("tabindex"));
+        next.KeyDown("Enter");
+        Assert.Contains(second.Title, cut.Find(".selected-node-detail").TextContent, StringComparison.Ordinal);
+        Assert.Contains("业务逻辑文档", cut.Find(".selected-node-detail").TextContent, StringComparison.Ordinal);
+        Assert.Equal(before, JsonSerializer.Serialize(graph));
+        cut.Render(parameters => parameters.Add(component => component.Graph, graph with { Incomplete = true }));
+        Assert.Empty(cut.FindAll(".selected-node-detail"));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]

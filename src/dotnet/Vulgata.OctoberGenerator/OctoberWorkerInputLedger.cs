@@ -359,7 +359,8 @@ public sealed class OctoberWorkerInputLedger : IOctoberVerifiedFileFrame, IOctob
             {
                 if (string.IsNullOrEmpty(excerpt.Text)) throw InvalidInput();
                 SourceEntry source = await AcquireAsync(excerpt.Location.RelativePath, staged, contributors, token);
-                if (!source.Text.Contains(excerpt.Text, StringComparison.Ordinal) ||
+                if (!source.Text.Replace("\r\n", "\n", StringComparison.Ordinal).Contains(
+                    excerpt.Text.Replace("\r\n", "\n", StringComparison.Ordinal), StringComparison.Ordinal) ||
                     excerpt.LineStart is { } start && (start < 1 || start > source.LineCount) ||
                     excerpt.LineEnd is { } end && (end < 1 || end > source.LineCount) ||
                     excerpt.LineStart is { } first && excerpt.LineEnd is { } last && last < first) throw InvalidInput();

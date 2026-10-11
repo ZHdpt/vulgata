@@ -72,6 +72,25 @@ public sealed class OctoberLocalAuthorityShapeTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void AuthorityConfiguration_FourHourSessionLifetime_IsAccepted()
+    {
+        OctoberAuthorityConfiguration configuration = new(
+            AuthorityId,
+            TargetId,
+            Guid.Parse("862de94c-c28a-4c86-9ac6-4cfca8a69c5c"),
+            "sqlite://owned/october-authentication-target",
+            "Data Source=synthetic-october-data",
+            "Data Source=synthetic-october-identity",
+            "sqlite://owned/october-identity-database",
+            ImmutableDictionary<string, string>.Empty.Add(TargetId, "sqlite://owned/october-authentication-target"),
+            TimeSpan.FromSeconds(30),
+            TimeSpan.FromHours(4));
+
+        Assert.Equal(TimeSpan.FromHours(4), configuration.SessionLifetime);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AuthorityConfiguration_NonExactIdentity_RejectsConstruction()
     {
         ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
@@ -113,7 +132,7 @@ public sealed class OctoberLocalAuthorityShapeTests
     public void AuthorityConfiguration_SessionLifetimeAboveMaximum_RejectsConstruction()
     {
         ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-            CreateAuthorityConfiguration(sessionLifetime: TimeSpan.FromMinutes(61)));
+            CreateAuthorityConfiguration(sessionLifetime: TimeSpan.FromHours(24) + TimeSpan.FromSeconds(1)));
 
         Assert.DoesNotContain("synthetic", failure.ToString(), StringComparison.OrdinalIgnoreCase);
     }

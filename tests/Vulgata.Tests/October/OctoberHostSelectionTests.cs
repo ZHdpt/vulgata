@@ -21,6 +21,8 @@ using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Infrastructure.Configuration;
+using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Infrastructure.Source;
 using Vulgata.OctoberGenerator;
 using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
@@ -32,8 +34,98 @@ using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Tests.October;
 
-public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
+public sealed partial class OctoberHostSelectionTests(ITestOutputHelper output)
 {
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task PreparedSource_RealOwnedAuthorityListsSyntheticFileWithoutGenerateOrToolsAsync()
+    {
+        await using var fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        const string source = """
+            public final class AccountPolicy {
+                private AccountPolicy() { }
+
+                public static boolean canRegister(boolean phoneVerified, boolean accountExists) {
+                    return phoneVerified && !accountExists;
+                }
+
+                public static boolean canLogin(boolean accountActive, boolean passwordMatches, int failedAttempts) {
+                    if (!accountActive || failedAttempts >= 5) {
+                        return false;
+                    }
+                    return passwordMatches;
+                }
+            }
+            """;
+        Assert.Empty(Directory.EnumerateFileSystemEntries(fixture.OwnedSourceRoot));
+        await File.WriteAllTextAsync(Path.Combine(fixture.OwnedSourceRoot, "AccountPolicy.java"), source, new UTF8Encoding(false, true));
+        using (var process = fixture.StartGenerator(JsonSerializer.Serialize(fixture.CreatePrepareRequest())))
+        {
+            var prepared = await fixture.WaitForGeneratorAsync(process);
+            output.WriteLine($"source-diagnostic-prepare-exit={prepared.ExitCode}");
+            Assert.Equal(0, prepared.ExitCode);
+            string? executableExtensions = Environment.GetEnvironmentVariable("PATHEXT");
+            Assert.False(string.IsNullOrWhiteSpace(executableExtensions));
+            Assert.True(process.StartInfo.Environment.TryGetValue("PATHEXT", out string? childExtensions));
+            Assert.Equal(executableExtensions, childExtensions);
+        }
+
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var authority = scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>();
+        var authentication = await authority.AuthenticateAsync(CancellationToken.None);
+        output.WriteLine($"source-diagnostic-authentication={authentication.Status}");
+        Assert.Equal(OctoberAuthenticationStatus.Authenticated, authentication.Status);
+        await using var session = Assert.IsAssignableFrom<IOctoberOperatorSession>(authentication.Session);
+        var authorized = await authority.AuthorizeSelectionAsync(session, new(fixture.TargetId, fixture.BatchId, null), CancellationToken.None);
+        output.WriteLine($"source-diagnostic-selection-authority={authorized.Status}");
+        Assert.Equal(OctoberAuthorityDecisionStatus.Authorized, authorized.Status);
+        await using var database = fixture.CreateOctoberContext();
+        var selected = await new OctoberBatchSelector(database, fixture.TargetId, fixture.CanonicalDatabaseIdentity)
+            .BindAsync(new(fixture.TargetId, fixture.BatchId, Assert.IsType<OctoberAuthorizedSelection>(authorized.Authority)), CancellationToken.None);
+        output.WriteLine($"source-diagnostic-bound-selection={selected.Status}");
+        Assert.Equal(OctoberSelectionStatus.Selected, selected.Status);
+        var setup = Assert.IsAssignableFrom<IOctoberHistoricalBoundSetupData>(selected.BoundSetupData);
+        var issued = await authority.IssueSourceApprovalAsync(session, setup, fixture.RepositoryId, CancellationToken.None);
+        output.WriteLine($"source-diagnostic-approval={issued.Status}");
+        Assert.Equal(OctoberSourceApprovalStatus.Issued, issued.Status);
+        var approval = Assert.IsType<PreparedSourceApproval>(issued.Approval);
+        var verified = await authority.VerifySourceApprovalAsync(session, fixture.TargetId, approval, CancellationToken.None);
+        output.WriteLine($"source-diagnostic-direct-verification={verified.Status}");
+        Assert.Equal(PreparedSourceAuthorityStatus.Current, verified.Status);
+        Assert.Equal(approval, verified.CurrentApproval);
+        int liveChecks = 0;
+        var verifier = new OctoberPreparedSourceAuthorityVerifier(fixture.TargetId, async (target, candidate, token) =>
+        {
+            var current = await authority.VerifySourceApprovalAsync(session, target, candidate, token);
+            Interlocked.Increment(ref liveChecks);
+            output.WriteLine($"source-diagnostic-live-verification={current.Status}");
+            return current;
+        }, candidate => candidate == approval && approval.BatchId == fixture.BatchId && approval.RepositoryId == fixture.RepositoryId
+            && approval.SubjectId == session.SubjectId && approval.RootBindingIdentity == setup.Snapshot.Request.Repositories.Single().RootBindingIdentity
+            && issued.ExpiresAtUtc > DateTimeOffset.UtcNow && session.ExpiresAtUtc > DateTimeOffset.UtcNow);
+        var binding = new PreparedSourceBinding(new PreparedSourceContextIssuer(verifier), fixture.TargetId,
+            [new(fixture.TargetId, fixture.BatchId, fixture.RepositoryId, approval.RootBindingIdentity, fixture.OwnedSourceRoot)]);
+        var scoped = await binding.IssueAsync(approval, PreparedSourceGrantLimits.Default);
+        output.WriteLine($"source-diagnostic-context={scoped.Status}");
+        Assert.Equal(PreparedSourceIssueStatus.Issued, scoped.Status);
+        await using (var context = Assert.IsAssignableFrom<IPreparedSourceReadContext>(scoped.Context))
+        {
+            var listed = await context.ListAsync(new("", 10));
+            output.WriteLine($"source-diagnostic-list={listed.Outcome}; entries={listed.Entries.Count}; limitations={listed.Limitations.Count}; live-checks={liveChecks}");
+            Assert.Equal(PreparedSourceOutcome.Complete, listed.Outcome);
+            Assert.Equal(fixture.RepositoryId, listed.RepositoryId);
+            var entry = Assert.Single(listed.Entries);
+            Assert.Equal(PreparedSourceEntryKind.RegularFile, entry.Kind);
+            Assert.Equal("AccountPolicy.java", entry.Location.RelativePath);
+            Assert.Empty(listed.Limitations);
+            Assert.Null(listed.Continuation);
+            Assert.True(liveChecks >= 2, "Issuance and listing must use actual current authority.");
+        }
+        Assert.Equal(0, await database.KnowledgeOperations.CountAsync(x => x.Kind == OperationKind.BeginGenerate));
+        Assert.Equal(0, await database.AcceptedFileManifests.CountAsync());
+        Assert.Equal(0, await database.KnowledgePublications.CountAsync());
+    }
+
     [Trait("Suite", "E2E")]
     [SuiteFact("E2E")]
     public async Task GeneratorPrepare_WithWebStopped_CommitsOwnedBatch()
@@ -1146,7 +1238,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         output.WriteLine("invalid-operator-password-october-schema=absent");
     }
 
-    internal sealed class GeneratorPrepareFixture : IAsyncDisposable
+    internal sealed partial class GeneratorPrepareFixture : IAsyncDisposable
     {
         private const string DatabasePrefix = "vulgata_story184_generator_";
         private const string DataProtectionApplicationName = "Vulgata.Tests.Story184.GeneratorPrepare";
@@ -1163,6 +1255,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         private ApprovedClInputBundle? _approvedClInputs;
         private (KnowledgeBinding Binding, ApprovedClSource Source)? _preparedClExpectation;
         private int _prepareClStarted;
+        private static int _operationBInstallation;
 
         internal sealed record ApprovedClSource(Guid RepositoryId, string RootBindingIdentity, string RelativePath, string SourceDigest);
 
@@ -1197,6 +1290,9 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             OctoberScanPolicy Policy, OctoberGenerateInputFiles Files)> PrepareApprovedClInputsAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            bool needsInputs;
+            lock (_readerLock) needsInputs = _approvedClInputs is null;
+            if (needsInputs) await TryInstallApprovedOperationBInputsAsync(cancellationToken);
             ApprovedClInputBundle inputs;
             lock (_readerLock)
             {
@@ -1236,6 +1332,95 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             return (binding, source, inputs.Profile, inputs.Policy, files);
         }
 
+        private async Task TryInstallApprovedOperationBInputsAsync(CancellationToken cancellationToken)
+        {
+            // Only this explicitly opted-in qualification path may install a synthetic input.
+            // Ordinary fixture tests and absent configuration retain the original fail-closed path.
+            if (Environment.GetEnvironmentVariable("VULGATA_OCTOBER_OPERATION_B") != "account-policy-cl-v1") return;
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!SuiteAuthorization.IsEnabled("E2E") || Environment.GetEnvironmentVariable("VULGATA_TEST_RESOURCE_RUN") != _runId
+                || !Guid.TryParseExact(_runId, "N", out _))
+                throw new InvalidOperationException("Operation B requires its explicit owned E2E run.");
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            if (Interlocked.CompareExchange(ref _operationBInstallation, 1, 0) != 0)
+                throw new InvalidOperationException("Operation B is limited to one installation per qualification process.");
+
+            // These aliases are installed by the root's approved process wrapper, never loaded from .env here.
+            string endpoint = Environment.GetEnvironmentVariable("VULGATA_OCTOBER_B_LLM_ENDPOINT") ?? string.Empty;
+            string model = Environment.GetEnvironmentVariable("VULGATA_OCTOBER_B_LLM_MODEL") ?? string.Empty;
+            if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) || uri.AbsoluteUri != "https://api.deepseek.com/"
+                || model != "deepseek-flash")
+                throw new InvalidOperationException("Operation B provider configuration does not match its approved profile.");
+            const string graph = @"G:\packages\npm\prefix\codegraph.ps1";
+            const string jdt = @"G:\source\repos\eclipse.jdt.ls\org.eclipse.jdt.ls.product\target\repository";
+            const string javaBin = @"C:\Program Files\Java\jdk-21.0.12\bin";
+            string localBin = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin");
+            string systemDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            string cmd = Path.Combine(systemDirectory, "cmd.exe");
+            if (!File.Exists(graph) || !File.Exists(Path.Combine(javaBin, "java.exe")) || !File.Exists(cmd)
+                || !File.Exists(Path.Combine(localBin, "jdtls.bat")) || !File.Exists(Path.Combine(localBin, "python.exe"))
+                || !File.Exists(Path.Combine(jdt, "bin", "jdtls.py")) || !Directory.Exists(Path.Combine(jdt, "plugins")))
+                throw new InvalidOperationException("Operation B approved local tool prerequisites are unavailable.");
+            if (Directory.EnumerateFileSystemEntries(OwnedSourceRoot).Any())
+                throw new InvalidOperationException("Operation B requires a fresh owned synthetic source directory.");
+
+            const string relativeFile = "AccountPolicy.java";
+            const string syntheticSource = """
+                public final class AccountPolicy {
+                    private AccountPolicy() { }
+
+                    public static boolean canRegister(boolean phoneVerified, boolean accountExists) {
+                        return phoneVerified && !accountExists;
+                    }
+
+                    public static boolean canLogin(boolean accountActive, boolean passwordMatches, int failedAttempts) {
+                        if (!accountActive || failedAttempts >= 5) {
+                            return false;
+                        }
+                        return passwordMatches;
+                    }
+                }
+                """;
+            var policy = new OctoberScanPolicy
+            {
+                OutputStage = "cl-only", WorkerCap = 1, RunDeadlineSeconds = 600, FileDeadlineSeconds = 480,
+                GracefulDrainSeconds = 30, MaximumContinuationWindows = 3, MaximumModelRequestsPerFile = 3,
+                MaximumTransientRetries = 0, MaximumProviderRequests = 3, MaximumRequestsPerMinute = 3,
+                // Combined reservation is stricter than the separate 100k input / 12k output approval.
+                MaximumTotalTokens = 12000,
+                SourceRules = [new(RepositoryId, relativeFile, "selected", "Explicit operation B synthetic account policy")]
+            };
+            string state = Path.Combine(OwnedRoot, "operation-b-jdt-state");
+            string logs = Path.Combine(OwnedRoot, "operation-b-logs");
+            string[] executableDirectories = [localBin, javaBin, systemDirectory];
+            var runtime = new OctoberRuntimeConfiguration(
+                [new(TargetId, BatchId, RepositoryId, CreatePrepareRequest().Repositories.Single().RootBindingIdentity, OwnedSourceRoot)], graph,
+                new PreparedJavaNavigationProfile(state, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
+                new PreparedJdtHostPolicy(executableDirectories, [jdt, Directory.GetParent(javaBin)!.FullName], cmd,
+                    executableDirectories, javaBin), logs);
+            if (!runtime.IsValid()) throw new InvalidOperationException("Operation B runtime binding is invalid.");
+            Directory.CreateDirectory(state);
+            Directory.CreateDirectory(logs);
+            string runtimePath = Path.Combine(OwnedRoot, "operation-b-runtime.json");
+            string policyPath = Path.Combine(OwnedRoot, "operation-b-policy.json");
+            var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+            await File.WriteAllTextAsync(Path.Combine(OwnedSourceRoot, relativeFile), syntheticSource, new UTF8Encoding(false, true), cancellationToken);
+            await File.WriteAllTextAsync(runtimePath, JsonSerializer.Serialize(runtime, json), new UTF8Encoding(false, true), cancellationToken);
+            await File.WriteAllTextAsync(policyPath, JsonSerializer.Serialize(policy, json), new UTF8Encoding(false, true), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            InstallApprovedClInputs(new(new("operation-b-worker", ApiType.ChatCompletions, endpoint, model, "operation-b-worker-key"),
+                policy, runtimePath, policyPath, relativeFile, token =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (!SuiteAuthorization.IsEnabled("E2E") || Environment.GetEnvironmentVariable("VULGATA_TEST_RESOURCE_RUN") != _runId
+                        || Environment.GetEnvironmentVariable("VULGATA_OCTOBER_OPERATION_B") != "account-policy-cl-v1")
+                        throw new InvalidOperationException("Operation B credential access is not authorized.");
+                    TestResourceScope.ValidateOwnedTarget(ConnectionString);
+                    string key = Environment.GetEnvironmentVariable("VULGATA_OCTOBER_B_LLM_KEY") ?? string.Empty;
+                    return Task.FromResult(key);
+                }));
+        }
+
         /// <summary>Fresh-fixture, one-dispatch proof only; not a general replay or latest-approval lookup.</summary>
         internal async Task<PreparedOrigin> ResolveGeneratedOriginAsync(CancellationToken cancellationToken = default)
         {
@@ -1250,7 +1435,10 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             var manifests = await context.AcceptedFileManifests.AsNoTracking().Where(x => x.BatchId == BatchId).Take(2).ToArrayAsync(cancellationToken);
             int begins = await context.KnowledgeOperations.CountAsync(x => x.BatchId == BatchId && x.Kind == OperationKind.BeginGenerate, cancellationToken);
             if (batches.Length != 1 || approvals.Length != 1 || manifests.Length != 1 || begins != 1)
+            {
+                _output.WriteLine($"generate-provenance: batches-capped2={batches.Length}; approvals-capped2={approvals.Length}; manifests-capped2={manifests.Length}; begin-operations={begins}");
                 throw new InvalidOperationException("Generated source provenance is missing or ambiguous.");
+            }
             var batch = batches[0]; var approval = approvals[0]; var manifest = manifests[0]; var source = expected.Source;
             if (batch.TargetId != TargetId || batch.CanonicalDatabaseIdentity != CanonicalDatabaseIdentity
                 || batch.SelectionDigest != expected.Binding.SelectionDigest || batch.SubjectId != SubjectId
@@ -1587,6 +1775,157 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 KnowledgePurpose.Reader, [RepositoryId]), cancellationToken);
             return opened.Selection is null ? new(KnowledgeReadStatus.Unavailable, null, null, [], null, null)
                 : await reader.ReadExactAsync(new(opened.Selection, handle), cancellationToken);
+        }
+
+        internal async Task<OctoberPublishedKnowledge> LoadExactPublicationAsync(PublicationBinding publication,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ValidateReaderPublication(publication, KnowledgeMode.IT);
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            IOctoberPublishedKnowledgeSource source = new OctoberKnowledgePublishedSource(CreateReaderContextFactory());
+            var result = await source.LoadAsync(publication, cancellationToken)
+                ?? throw new InvalidOperationException("The exact owned publication is unavailable.");
+            if (result.Publication != publication)
+                throw new InvalidOperationException("The loaded publication differs from the requested binding.");
+            return result;
+        }
+
+        /// <summary>Owned read-only storage oracle, not a disclosure or authorization API.</summary>
+        internal async Task<ImmutableArray<DocumentVersionReference>> LoadExactBusinessDependenciesAsync(
+            PublicationBinding publication, DocumentHandle document, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ValidateReaderPublication(publication, KnowledgeMode.IT);
+            if (document is null || document.BatchId != BatchId || document.PublicationId != publication.PublicationId
+                || document.LogicalDocumentId == Guid.Empty || document.DocumentVersionId == Guid.Empty || document.SectionId is not null)
+                throw new ArgumentException("An exact owned whole Document handle is required.");
+            // Establish the complete exact publication binding through the owner before examining its dependencies.
+            var published = await LoadExactPublicationAsync(publication, cancellationToken);
+            if (!published.Documents.Any(x => x.Reference == new DocumentVersionReference(BatchId,
+                    document.LogicalDocumentId, document.DocumentVersionId) && x.Kind == DocumentKind.BusinessLogic))
+                throw new InvalidOperationException("The exact Business Document is not published.");
+            await using var context = CreateOctoberContext();
+            var selected = await context.KnowledgePublications.AsNoTracking().SingleAsync(x =>
+                x.BatchId == BatchId && x.PublicationId == publication.PublicationId, cancellationToken);
+            var member = await context.PublicationMembers.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                && x.PublicationId == publication.PublicationId && x.LogicalDocumentId == document.LogicalDocumentId
+                && x.VersionId == document.DocumentVersionId, cancellationToken);
+            var version = await context.DocumentVersions.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                && x.LogicalDocumentId == document.LogicalDocumentId && x.VersionId == document.DocumentVersionId, cancellationToken);
+            if (member.CorpusId != selected.CorpusId || version.Kind != DocumentKind.BusinessLogic
+                || version.ManifestId is not null || version.FlowGroupVersionId is null
+                || selected.OperationKind != OperationKind.FinalizeCorpus
+                || version.FinalizationOperationKind != selected.OperationKind || version.FinalizationOperationId != selected.OperationId)
+                throw new InvalidOperationException("Business publication ownership is inconsistent.");
+            var group = await context.FlowGroupVersions.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                && x.CorpusId == selected.CorpusId && x.GroupVersionId == version.FlowGroupVersionId, cancellationToken);
+            if (group.OperationKind != selected.OperationKind || group.OperationId != selected.OperationId)
+                throw new InvalidOperationException("Business group finalization is inconsistent.");
+            // IsMember=false dependencies are supplemental model-visible evidence and must remain included.
+            var dependencies = await context.FlowDocumentDependencies.AsNoTracking().Where(x => x.BatchId == BatchId
+                && x.CorpusId == selected.CorpusId && x.GroupVersionId == group.GroupVersionId)
+                .OrderBy(x => x.LogicalDocumentId).ThenBy(x => x.VersionId).ToArrayAsync(cancellationToken);
+            if (dependencies.Length == 0)
+                throw new InvalidOperationException("Business source dependencies are missing.");
+            var result = ImmutableArray.CreateBuilder<DocumentVersionReference>(dependencies.Length);
+            foreach (var dependency in dependencies)
+            {
+                var corpusDocument = await context.CorpusDocuments.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                    && x.CorpusId == selected.CorpusId && x.LogicalDocumentId == dependency.LogicalDocumentId
+                    && x.VersionId == dependency.VersionId, cancellationToken);
+                var code = await context.DocumentVersions.AsNoTracking().SingleAsync(x => x.BatchId == BatchId
+                    && x.LogicalDocumentId == dependency.LogicalDocumentId && x.VersionId == dependency.VersionId, cancellationToken);
+                if (code.Kind != DocumentKind.CodeLogic || code.ManifestId is null || code.ManifestId != corpusDocument.ManifestId
+                    || code.FlowGroupVersionId is not null || code.FinalizationOperationKind is not null
+                    || code.FinalizationOperationId is not null)
+                    throw new InvalidOperationException("An exact Business source dependency is inconsistent.");
+                result.Add(new(BatchId, dependency.LogicalDocumentId, dependency.VersionId));
+            }
+            if (result.Distinct().Count() != result.Count)
+                throw new InvalidOperationException("Business source dependencies are ambiguous.");
+            return result.ToImmutable();
+        }
+
+        internal async Task<OrdinaryReaderSession?> OpenReaderSessionAsync(PublicationBinding publication,
+            string subjectId, string capturedStamp, KnowledgeMode mode, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ValidateReaderPublication(publication, mode);
+            ClaimsPrincipal principal;
+            lock (_readerLock)
+            {
+                if (!_authenticatedReaders.TryGetValue(subjectId, out var authenticated) || authenticated.Stamp != capturedStamp)
+                    return null;
+                principal = authenticated.Principal.Clone();
+            }
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            var factory = CreateReaderContextFactory();
+            var live = new OctoberKnowledgeIdentityAdapter(Services.GetRequiredService<IServiceScopeFactory>(),
+                token => { token.ThrowIfCancellationRequested(); return Task.FromResult<ClaimsPrincipal?>(principal); });
+            var policy = new OctoberKnowledgeDisclosurePolicy(live, new OctoberKnowledgeSelectionAuthority(factory));
+            string log = Path.Combine(OwnedRoot, "reader-logs"); Directory.CreateDirectory(log);
+            IOctoberKnowledgeReader reader = new OctoberKnowledgeReader(new OctoberKnowledgePublishedSource(factory), publication, policy,
+                new OctoberKnowledgeCursorProtector(new OctoberKnowledgeDataProtectionTokenProtector(_protection.Provider)),
+                new OctoberKnowledgeOperationLog(log));
+            var opened = await reader.OpenReadSelectionAsync(new(publication, new(subjectId, capturedStamp), mode,
+                KnowledgePurpose.Reader, [RepositoryId]), cancellationToken);
+            return opened.Selection is null ? null : new OrdinaryReaderSession(reader, opened.Selection);
+        }
+
+        private ReaderContextFactory CreateReaderContextFactory() => new(new DbContextOptionsBuilder<OctoberDbContext>()
+            .UseNpgsql(ConnectionString, options => options.MigrationsHistoryTable("__OctoberMigrationsHistory", "october")).Options);
+
+        /// <summary>One original authenticated selection; disposal drains returned reader API tasks, not escaped physical I/O.</summary>
+        internal sealed class OrdinaryReaderSession(IOctoberKnowledgeReader reader, ReadSelection selection) : IAsyncDisposable
+        {
+            private readonly SemaphoreSlim _gate = new(1, 1);
+            private readonly object _lifetime = new();
+            private Task? _disposal;
+            private bool _closed;
+            internal ReadSelection Selection { get; } = selection;
+
+            internal Task<ContentPage> ReadExactAsync(DocumentHandle document, ContinuationToken? continuation = null,
+                CancellationToken cancellationToken = default) => InvokeAsync(
+                    token => reader.ReadExactAsync(new(Selection, document, continuation), token), cancellationToken);
+
+            internal Task<SearchPage> SearchAsync(string query, int pageSize = KnowledgeContract.DefaultPageSize,
+                ContinuationToken? continuation = null, CancellationToken cancellationToken = default) => InvokeAsync(
+                    token => reader.SearchAsync(new(Selection, query, pageSize, continuation), token), cancellationToken);
+
+            internal Task<RelatedPage> GetRelatedAsync(DocumentHandle document, int pageSize = KnowledgeContract.DefaultPageSize,
+                ContinuationToken? continuation = null, CancellationToken cancellationToken = default) => InvokeAsync(
+                    token => reader.GetRelatedAsync(new(Selection, document, pageSize, continuation), token), cancellationToken);
+
+            private async Task<T> InvokeAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken token)
+            {
+                token.ThrowIfCancellationRequested();
+                await _gate.WaitAsync(token);
+                try
+                {
+                    lock (_lifetime) ObjectDisposedException.ThrowIf(_closed, this);
+                    return await operation(token);
+                }
+                finally { _gate.Release(); }
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                lock (_lifetime)
+                {
+                    _closed = true;
+                    return new(_disposal ??= DrainAsync());
+                }
+            }
+
+            private async Task DrainAsync()
+            {
+                await _gate.WaitAsync();
+                _gate.Release();
+            }
         }
 
         private void ValidateReaderPublication(PublicationBinding publication, KnowledgeMode mode)
@@ -2026,8 +2365,22 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             string? targetIdOverride = null,
             string? runtimeFilePath = null,
             string? scanPolicyFilePath = null,
-            string? workerProviderConfigurationFilePath = null)
+            string? workerProviderConfigurationFilePath = null,
+            string? businessSettingsFilePath = null,
+            string? businessRootSelectionDirectory = null,
+            int? businessRootSelectionTimeoutSeconds = null)
         {
+            if (businessSettingsFilePath is not null || businessRootSelectionDirectory is not null || businessRootSelectionTimeoutSeconds is not null)
+            {
+                if (mode != "generate" || businessSettingsFilePath is null || businessRootSelectionDirectory is null
+                    || businessRootSelectionTimeoutSeconds is not (>= 1 and <= 300))
+                    throw new ArgumentException("Explicit complete Generate Business configuration is required.");
+                _ = OctoberGenerateFixtureInputs.ValidateFiles(OwnedRoot, mode, runtimeFilePath, scanPolicyFilePath,
+                    businessSettingsFilePath, false);
+                if (Path.GetDirectoryName(Path.GetFullPath(businessRootSelectionDirectory)) != OwnedRoot
+                    || Directory.Exists(businessRootSelectionDirectory) || File.Exists(businessRootSelectionDirectory))
+                    throw new ArgumentException("The operator exchange must be a fresh owned child.");
+            }
             OctoberGenerateInputFiles? generateInputs = OctoberGenerateFixtureInputs.ValidateFiles(
                 OwnedRoot, mode, runtimeFilePath, scanPolicyFilePath, workerProviderConfigurationFilePath,
                 includeCompetingProviderSource || identityConnectionStringOverride is not null ||
@@ -2049,12 +2402,15 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 CreateNoWindow = true,
             };
             string? path = Environment.GetEnvironmentVariable("PATH");
+            string? pathExtensions = Environment.GetEnvironmentVariable("PATHEXT");
             string? systemRoot = Environment.GetEnvironmentVariable("SystemRoot");
             string? temp = Environment.GetEnvironmentVariable("TEMP");
             string? tmp = Environment.GetEnvironmentVariable("TMP");
             string? dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
             startInfo.Environment.Clear();
             if (!string.IsNullOrWhiteSpace(path)) startInfo.Environment["PATH"] = path;
+            // The pinned PowerShell shim needs native executable detection to await its Node child.
+            if (!string.IsNullOrWhiteSpace(pathExtensions)) startInfo.Environment["PATHEXT"] = pathExtensions;
             if (!string.IsNullOrWhiteSpace(systemRoot)) startInfo.Environment["SystemRoot"] = systemRoot;
             if (!string.IsNullOrWhiteSpace(temp)) startInfo.Environment["TEMP"] = temp;
             if (!string.IsNullOrWhiteSpace(tmp)) startInfo.Environment["TMP"] = tmp;
@@ -2095,6 +2451,14 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 startInfo.Environment["October__ScanPolicyFile"] = generateInputs.ScanPolicyFilePath;
                 startInfo.Environment["October__Providers__ConfigurationFile"] =
                     generateInputs.WorkerProviderConfigurationFilePath;
+            }
+            if (businessSettingsFilePath is not null)
+            {
+                startInfo.Environment["October__BusinessSettingsFile"] = businessSettingsFilePath;
+                startInfo.Environment["October__BusinessRootSelectionMode"] = "operator";
+                startInfo.Environment["October__BusinessRootSelectionDirectory"] = businessRootSelectionDirectory;
+                startInfo.Environment["October__BusinessRootSelectionTimeoutSeconds"] =
+                    businessRootSelectionTimeoutSeconds!.Value.ToString(CultureInfo.InvariantCulture);
             }
             if (includeCompetingProviderSource)
                 startInfo.Environment["October__Providers__SourceIdentity"] = "competing-flattened-source";
@@ -2217,9 +2581,14 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         internal Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGeneratorAsync(
             Process process) => WaitForGeneratorCoreAsync(process, TimeSpan.FromMinutes(3));
 
-        internal Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGenerateAsync(
+        internal async Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGenerateAsync(
             Process process, int runDeadlineSeconds)
-            => WaitForGeneratorCoreAsync(process, OctoberGenerateFixtureInputs.GenerateWait(runDeadlineSeconds));
+        {
+            var result = await WaitForGeneratorCoreAsync(process, OctoberGenerateFixtureInputs.GenerateWait(runDeadlineSeconds));
+            foreach (string line in OctoberGenerateFixtureInputs.GenerateDiagnostics(result.ExitCode, result.StandardOutput, result.StandardError))
+                _output.WriteLine(line);
+            return result;
+        }
 
         private async Task<(int ExitCode, string StandardOutput, string StandardError)> WaitForGeneratorCoreAsync(
             Process process, TimeSpan maximumWait)

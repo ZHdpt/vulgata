@@ -143,6 +143,194 @@ public sealed class OctoberScanToolRuntimeTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_ExpiredSessionReplacesOnceAndReusesReadyReplacementAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        var first = Assert.Single(harness.CodeGraphSessions);
+        first.Expired = true;
+
+        var replacementReadiness = await runtime.PrepareAsync();
+
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, replacementReadiness.Status);
+        Assert.True(first.Disposed);
+        var replacement = Assert.Single(harness.CodeGraphSessions.Skip(1));
+        Assert.False(replacement.Disposed);
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        Assert.Equal(2, harness.CodeGraphSessions.Count);
+        Assert.Equal(1, harness.Preparations);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_ExpiredReplacementIsReturnedWithoutOpeningThirdSessionAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        var first = Assert.Single(harness.CodeGraphSessions);
+        first.Expired = true;
+        harness.NewCodeGraphExpired = true;
+
+        var result = await runtime.PrepareAsync();
+
+        Assert.Equal(CodeGraphToolReadinessStatus.Expired, result.Status);
+        Assert.True(first.Disposed);
+        Assert.Equal(2, harness.CodeGraphSessions.Count);
+        Assert.False(harness.CodeGraphSessions[1].Disposed);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_UnconfirmedExpiredSessionCleanupDoesNotOpenReplacementAsync()
+    {
+        var harness = await RuntimeHarness.CreateAsync();
+        var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        var first = Assert.Single(harness.CodeGraphSessions);
+        first.Expired = true;
+        first.FailCleanup = true;
+
+        var result = await runtime.PrepareAsync();
+
+        Assert.Equal(CodeGraphToolReadinessStatus.Unavailable, result.Status);
+        Assert.False(first.Disposed);
+        Assert.Single(harness.CodeGraphSessions);
+        Assert.Equal(CodeGraphToolReadinessStatus.Unavailable, (await runtime.PrepareAsync()).Status);
+        Assert.Single(harness.CodeGraphSessions);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => runtime.DisposeAsync().AsTask());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => harness.DisposeAsync().AsTask());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PrepareAsync_RepeatedExpiredReplacementsRetainTwentyOneSessionCapAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var runtime = harness.CreateRuntime();
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await runtime.PrepareAsync()).Status);
+        harness.CodeGraphSessions[0].Expired = true;
+        harness.NewCodeGraphExpired = true;
+
+        for (int replacement = 0; replacement < 20; replacement++)
+            Assert.Equal(CodeGraphToolReadinessStatus.Expired, (await runtime.PrepareAsync()).Status);
+
+        Assert.Equal(21, harness.CodeGraphSessions.Count);
+        Assert.Equal(CodeGraphToolReadinessStatus.Unavailable, (await runtime.PrepareAsync()).Status);
+        Assert.Equal(21, harness.CodeGraphSessions.Count);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RuntimeReplacement_BorrowsOneRunOwnedDescriptorUntilOwnerDisposalAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var owner = new OctoberCodeGraphOwner(harness.RepositoryId, harness.Approval.RootBindingIdentity,
+            () => TimeSpan.FromMinutes(5));
+        await using var first = harness.CreateRuntime(harness.Approval, owner, TimeSpan.FromMinutes(1));
+
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await first.PrepareAsync()).Status);
+        TimeSpan preparationWindow = Assert.Single(harness.PreparationWindows);
+        Assert.True(preparationWindow > TimeSpan.FromMinutes(1) && preparationWindow <= TimeSpan.FromMinutes(5));
+        var descriptor = Assert.IsType<PreparedCodeGraphConnection>(first.PreparedConnection);
+        Assert.Same(harness.Descriptor, descriptor);
+        Assert.Equal(1, harness.Preparations);
+        var firstSession = Assert.Single(harness.CodeGraphSessions);
+        await first.DisposeAsync();
+        Assert.True(firstSession.Disposed);
+        Assert.Equal(0, harness.DescriptorReleases);
+
+        var renewedApproval = harness.Approval with { ApprovalIdentity = "controlled-renewed-approval" };
+        await using var replacement = harness.CreateRuntime(renewedApproval, owner);
+        Assert.Equal(CodeGraphToolReadinessStatus.Ready, (await replacement.PrepareAsync()).Status);
+        Assert.Same(descriptor, replacement.PreparedConnection);
+        Assert.Equal(1, harness.Preparations);
+        Assert.Equal(2, harness.CodeGraphSessions.Count);
+        Assert.False(harness.CodeGraphSessions[1].Disposed);
+        Assert.True(replacement.HasPreparedBinding(harness.RepositoryId, renewedApproval.RootBindingIdentity,
+            renewedApproval.ApprovalIdentity));
+
+        await replacement.DisposeAsync();
+        Assert.True(harness.CodeGraphSessions[1].Disposed);
+        Assert.Equal(0, harness.DescriptorReleases);
+        await owner.DisposeAsync();
+        Assert.Equal(1, harness.DescriptorReleases);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RuntimeReplacement_ContainedFramesUseEachRenewedApprovalOnOneOwnedDescriptorAsync()
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        await using var owner = new OctoberCodeGraphOwner(harness.RepositoryId, harness.Approval.RootBindingIdentity,
+            () => TimeSpan.FromMinutes(5));
+        await using var first = harness.CreateContainedRuntime(harness.Approval, owner);
+
+        var firstResult = await first.AcquireFileFrameAsync("notes.oddlangx");
+        Assert.Equal(OctoberSourceFrameStatus.Acquired, firstResult.Status);
+        var firstFrame = Assert.IsType<OctoberPreparedSourceFrame>(firstResult.Frame);
+        Assert.Equal(harness.Approval.ApprovalIdentity, firstFrame.Origin.PreparedVersion);
+        Assert.Equal(harness.Approval, harness.Fixture.Authority.LastRequestedApproval);
+        var descriptor = first.PreparedConnection;
+        Assert.Same(harness.Descriptor, descriptor);
+        Assert.Equal(1, harness.Preparations);
+        Assert.Equal(new[] { harness.Approval }, harness.IssuedApprovals);
+
+        await first.DisposeAsync();
+        Assert.Equal(0, harness.DescriptorReleases);
+
+        var renewedApproval = harness.Approval with { ApprovalIdentity = "controlled-contained-renewal" };
+        await using var replacement = harness.CreateContainedRuntime(renewedApproval, owner);
+        var renewedResult = await replacement.AcquireFileFrameAsync("notes.oddlangx");
+        Assert.Equal(OctoberSourceFrameStatus.Acquired, renewedResult.Status);
+        var renewedFrame = Assert.IsType<OctoberPreparedSourceFrame>(renewedResult.Frame);
+        Assert.Equal(renewedApproval.ApprovalIdentity, renewedFrame.Origin.PreparedVersion);
+        Assert.Equal(renewedApproval, harness.Fixture.Authority.LastRequestedApproval);
+        Assert.Same(descriptor, replacement.PreparedConnection);
+        Assert.Equal(1, harness.Preparations);
+        Assert.Equal(new[] { harness.Approval, renewedApproval }, harness.IssuedApprovals);
+        Assert.Empty(harness.CodeGraphSessions); // No native CodeGraph session or provider is used to read the frame.
+
+        await replacement.DisposeAsync();
+        Assert.Equal(0, harness.DescriptorReleases);
+        await owner.DisposeAsync();
+        Assert.Equal(1, harness.DescriptorReleases);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("expired")]
+    [InlineData("disposed")]
+    [InlineData("prepare-failed")]
+    public async Task CodeGraphOwner_FailedCreationOrExpiredOrDisposedOwnerNeverPreparesAgainAsync(string condition)
+    {
+        await using var harness = await RuntimeHarness.CreateAsync();
+        TimeSpan runRemaining = condition == "expired" ? TimeSpan.Zero : TimeSpan.FromMinutes(5);
+        await using var owner = new OctoberCodeGraphOwner(harness.RepositoryId, harness.Approval.RootBindingIdentity,
+            () => runRemaining);
+        int calls = 0;
+        Func<TimeSpan, CancellationToken, Task<PreparedCodeGraphConnection>> prepare = (_, token) =>
+        {
+            token.ThrowIfCancellationRequested();
+            calls++;
+            if (condition == "prepare-failed") throw new InvalidOperationException("Controlled descriptor setup failure");
+            return Task.FromResult(harness.Descriptor);
+        };
+
+        if (condition == "disposed") await owner.DisposeAsync();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => owner.GetOrCreateAsync(prepare));
+
+        if (condition == "prepare-failed")
+            await Assert.ThrowsAsync<InvalidOperationException>(() => owner.GetOrCreateAsync(prepare));
+        Assert.Equal(condition == "prepare-failed" ? 1 : 0, calls);
+        Assert.Equal(0, harness.DescriptorReleases);
+        await owner.DisposeAsync();
+        Assert.Equal(0, harness.DescriptorReleases);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExploreAsync_JavaPhaseInFlight_WaitsForVerifiedJavaDisposalAsync()
     {
         await using var harness = await RuntimeHarness.CreateAsync();
@@ -302,6 +490,78 @@ public sealed class OctoberScanToolRuntimeTests
         }
     }
 
+    // The public adapter must preserve positively settled ordinary JDT limitations.
+    // A second explicit caller invocation proves usability, not an automatic retry.
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable)]
+    [InlineData(PreparedJavaNavigationOpenStatus.ReadinessFailed)]
+    public async Task ConfirmedOrdinaryJavaOpenFailure_PreservesLimitationAndRuntimeUsabilityAsync(PreparedJavaNavigationOpenStatus failure)
+    {
+        await using var fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var issuer = new PreparedSourceContextIssuer(fixture.Authority);
+        var binding = new PreparedSourceBinding(issuer, "owned-target",
+            [new("owned-target", fixture.Approval.BatchId, fixture.Approval.RepositoryId,
+                fixture.Approval.RootBindingIdentity, fixture.PreparedRootPath)]);
+        var workspace = new PreparedToolWorkspaceIssuer(fixture.Authority, new ControlledToolAuthorizer(fixture.Approval));
+        string stateRoot = Path.Combine(fixture.SiblingPath, "unused-confirmed-state");
+        Directory.CreateDirectory(stateRoot);
+        var profile = new PreparedJavaNavigationProfile(stateRoot, TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2), 1024);
+        var inert = new ConfirmedFailureJavaRuntime(failure);
+        var java = new PreparedJavaNavigationContextFactory(profile, inert);
+        var codeGraph = new PreparedCodeGraphConnectionFactory(Path.Combine(fixture.SandboxPath, "never-executed.ps1"));
+        await using var runtime = new OctoberToolRuntime(fixture.Approval, binding, workspace, java, codeGraph, TimeSpan.FromMinutes(1));
+
+        PreparedJavaNavigationResult navigation = await runtime.NavigateAsync(
+            PreparedJavaNavigationOperation.Definition, new("a.java", 1, 1, 10));
+        var expected = failure == PreparedJavaNavigationOpenStatus.ConfigurationUnavailable
+            ? PreparedJavaNavigationOutcome.ConfigurationUnavailable : PreparedJavaNavigationOutcome.ReadinessFailed;
+        Assert.Equal(expected, navigation.Outcome);
+        Assert.Empty(navigation.Locations);
+        PreparedJavaLimitation limitation = Assert.Single(navigation.Limitations);
+        Assert.Equal(failure == PreparedJavaNavigationOpenStatus.ConfigurationUnavailable
+            ? "jdt_configuration_unavailable" : "jdt_readiness_failed", limitation.Code);
+        Assert.Null(limitation.Source);
+        Assert.Equal(1, inert.OpenCalls);
+        var lease = Assert.Single(runtime.JdtLeases);
+        Assert.True(lease.OwnedResourcesSettled);
+        Assert.Equal(PreparedToolWorkspaceLifetime.Disposed, lease.Lifetime);
+
+        var second = await runtime.NavigateAsync(PreparedJavaNavigationOperation.Definition, new("a.java", 1, 1, 10));
+        Assert.Equal(expected, second.Outcome);
+        Assert.Empty(second.Locations);
+        Assert.Equal(2, inert.OpenCalls);
+        Assert.Equal(2, runtime.JdtLeases.Count);
+        Assert.All(runtime.JdtLeases, owned =>
+        {
+            Assert.True(owned.OwnedResourcesSettled);
+            Assert.Equal(PreparedToolWorkspaceLifetime.Disposed, owned.Lifetime);
+        });
+        Assert.Null(runtime.PreparedConnection); // Neither explicit navigation attempt launches CodeGraph.
+
+        PreparedSourceIssueResult independent = await issuer.IssueAsync(new(fixture.Approval,
+            fixture.PreparedRootPath, PreparedSourceGrantLimits.Default));
+        Assert.Equal(PreparedSourceIssueStatus.Issued, independent.Status);
+        await using IPreparedSourceReadContext context = Assert.IsAssignableFrom<IPreparedSourceReadContext>(independent.Context);
+        Assert.Equal(PreparedSourceContextLifetime.Open, context.Lifetime);
+        Assert.Equal(fixture.Approval.RepositoryId, context.RepositoryId);
+        await runtime.DisposeAsync();
+        Assert.Equal(2, inert.OpenCalls);
+    }
+
+    private sealed class ConfirmedFailureJavaRuntime(PreparedJavaNavigationOpenStatus status) : IPreparedJdtLsRuntime
+    {
+        internal int OpenCalls;
+        public Task<IPreparedJdtLsSession> OpenAsync(PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile, CancellationToken cancellationToken = default)
+        {
+            OpenCalls++;
+            return Task.FromException<IPreparedJdtLsSession>(new PreparedJdtLsOpenFailureException(status, cleanupConfirmed: true));
+        }
+    }
+
     private sealed class UnconfirmedJavaRuntime : IPreparedJdtLsRuntime
     {
         internal int OpenCalls { get; private set; }
@@ -334,15 +594,21 @@ public sealed class OctoberScanToolRuntimeTests
         {
             _fixture = fixture;
             Java = new(fixture.Approval.RepositoryId);
-            _descriptor = new(fixture.Approval.RepositoryId, Path.Combine(fixture.SandboxPath, "never-executed.ps1"), "never-executed", [], fixture.PreparedRootPath, new Dictionary<string, string>(), static () => { }, _ => NewCodeGraph());
+            _descriptor = new(fixture.Approval.RepositoryId, Path.Combine(fixture.SandboxPath, "never-executed.ps1"), "never-executed", [], fixture.PreparedRootPath, new Dictionary<string, string>(), () => DescriptorReleases++, _ => NewCodeGraph());
         }
         internal PreparedSourceApproval Approval => _fixture.Approval;
+        internal PreparedSourceFixture Fixture => _fixture;
         internal Guid RepositoryId => _fixture.Approval.RepositoryId;
+        internal PreparedCodeGraphConnection Descriptor => _descriptor;
+        internal int DescriptorReleases { get; private set; }
         internal Queue<ScriptedSourceContext> Sources { get; } = new();
         internal int SourceIssues { get; private set; }
         internal int Preparations { get; private set; }
+        internal List<TimeSpan> PreparationWindows { get; } = [];
+        internal List<PreparedSourceApproval> IssuedApprovals { get; } = [];
         internal int IdentityObservations { get; private set; }
         internal List<ControlledCodeGraph> CodeGraphSessions { get; } = [];
+        internal bool NewCodeGraphExpired { get; set; }
         internal ControlledJava Java { get; }
         internal bool JavaWasDisposedBeforeCodeGraph { get; private set; }
         internal static async Task<RuntimeHarness> CreateAsync()
@@ -352,8 +618,12 @@ public sealed class OctoberScanToolRuntimeTests
             return new(fixture);
         }
         internal ScriptedSourceContext Context(Func<PreparedSourceListRequest, PreparedSourceResult> list) => new(RepositoryId, list);
-        internal OctoberToolRuntime CreateRuntime() => new(_fixture.Approval, TimeSpan.FromMinutes(5), new OctoberToolRuntimeDependencies(
-            (_, token) => { token.ThrowIfCancellationRequested(); Preparations++; return Task.FromResult(_descriptor); },
+        internal OctoberToolRuntime CreateRuntime() => CreateRuntime(_fixture.Approval);
+        internal OctoberToolRuntime CreateRuntime(PreparedSourceApproval approval, OctoberCodeGraphOwner? owner = null,
+            TimeSpan? remainingLifetime = null)
+        {
+            var runtime = new OctoberToolRuntime(approval, remainingLifetime ?? TimeSpan.FromMinutes(5), new OctoberToolRuntimeDependencies(
+            (remaining, token) => { token.ThrowIfCancellationRequested(); Preparations++; PreparationWindows.Add(remaining); return Task.FromResult(_descriptor); },
             (_, _, token) =>
             {
                 token.ThrowIfCancellationRequested();
@@ -364,17 +634,45 @@ public sealed class OctoberScanToolRuntimeTests
             (context, path, token) => { token.ThrowIfCancellationRequested(); IdentityObservations++; return Task.FromResult<string?>(((ScriptedSourceContext)context).IdentityAvailable ? path + ":" + ((ScriptedSourceContext)context).IdentitySuffix : null); },
             (_, token) => { token.ThrowIfCancellationRequested(); return Task.FromResult<IPreparedJavaNavigationContext>(Java); },
             (descriptor, _) => { Assert.Same(_descriptor, descriptor); return descriptor.OpenSession(); }));
+            if (owner is not null) runtime.UseGraphOwner(owner);
+            return runtime;
+        }
+        internal OctoberToolRuntime CreateContainedRuntime(PreparedSourceApproval approval, OctoberCodeGraphOwner owner)
+        {
+            _fixture.Authority.Approve(approval);
+            var issuer = new PreparedSourceContextIssuer(_fixture.Authority);
+            var runtime = new OctoberToolRuntime(approval, TimeSpan.FromMinutes(5), new OctoberToolRuntimeDependencies(
+                (remaining, token) =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    Preparations++;
+                    PreparationWindows.Add(remaining);
+                    return Task.FromResult(_descriptor);
+                },
+                (_, _, token) =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    IssuedApprovals.Add(approval);
+                    SourceIssues++;
+                    return issuer.IssueAsync(new(approval, _fixture.PreparedRootPath, PreparedSourceGrantLimits.Default), _descriptor, token);
+                },
+                issuer.ObserveFileIdentityAsync,
+                (_, token) => { token.ThrowIfCancellationRequested(); return Task.FromResult<IPreparedJavaNavigationContext>(Java); },
+                (descriptor, _) => { Assert.Same(_descriptor, descriptor); return descriptor.OpenSession(); }));
+            runtime.UseGraphOwner(owner);
+            return runtime;
+        }
         private ControlledCodeGraph NewCodeGraph()
         {
             JavaWasDisposedBeforeCodeGraph = Java.Disposed;
-            var session = new ControlledCodeGraph(RepositoryId);
+            var session = new ControlledCodeGraph(RepositoryId) { Expired = NewCodeGraphExpired };
             CodeGraphSessions.Add(session);
             return session;
         }
         public async ValueTask DisposeAsync()
         {
-            await _descriptor.DisposeAsync();
-            await _fixture.DisposeAsync();
+            try { await _descriptor.DisposeAsync(); }
+            finally { await _fixture.DisposeAsync(); }
         }
     }
 
@@ -400,9 +698,15 @@ public sealed class OctoberScanToolRuntimeTests
     {
         internal bool Disposed { get; private set; }
         internal bool Expired { get; set; }
+        internal bool FailCleanup { get; set; }
         public Task<CodeGraphToolReadiness> DiscoverAsync(CancellationToken cancellationToken) => Task.FromResult(new CodeGraphToolReadiness(Expired ? CodeGraphToolReadinessStatus.Expired : CodeGraphToolReadinessStatus.Ready, repository, IssueCode: Expired ? CodeGraphToolIssueCode.SessionExpired : CodeGraphToolIssueCode.None));
         public Task<CodeGraphToolInvocationResult> ExploreAsync(string query, int maxFiles, CancellationToken cancellationToken) => Task.FromResult(new CodeGraphToolInvocationResult { RepositoryId = repository, Status = CodeGraphToolInvocationStatus.Complete });
-        public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
+        public ValueTask DisposeAsync()
+        {
+            if (FailCleanup) return ValueTask.FromException(new InvalidOperationException("Controlled unconfirmed CodeGraph disposal"));
+            Disposed = true;
+            return ValueTask.CompletedTask;
+        }
     }
 
     internal sealed class ControlledJava(Guid repository) : IPreparedJavaNavigationContext

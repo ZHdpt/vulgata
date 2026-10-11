@@ -5,6 +5,7 @@ using ModelContextProtocol.Client;
 using System.Diagnostics;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Infrastructure.Source;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
@@ -54,7 +55,7 @@ public sealed class PreparedCodeGraphConnectionFactory
         TimeSpan remainingLifetime,
         CancellationToken cancellationToken)
     {
-        if (remainingLifetime <= TimeSpan.Zero || remainingLifetime > TimeSpan.FromMinutes(30))
+        if (remainingLifetime <= TimeSpan.Zero || remainingLifetime > ExecutionOwnerLifetime.Maximum)
         {
             throw new ArgumentOutOfRangeException(nameof(remainingLifetime));
         }

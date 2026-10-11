@@ -19,6 +19,153 @@ namespace Vulgata.OctoberGenerator;
 
 public static class OctoberGeneratorEntryPoint
 {
+    internal static int ReadWorkerMaxOutputTokens(IConfiguration configuration)
+    {
+        const string key = "October:WorkerMaxOutputTokens";
+        string? value = configuration[key];
+        if (configuration.GetSection(key).GetChildren().Any())
+            throw new InvalidOperationException("October Worker token configuration is invalid.");
+        if (value is null) return 8192;
+        if (!int.TryParse(value, System.Globalization.NumberStyles.None,
+            System.Globalization.CultureInfo.InvariantCulture, out int maximum) || maximum is < 1 or > 393216)
+            throw new InvalidOperationException("October Worker token configuration is invalid.");
+        return maximum;
+    }
+
+    internal static string? ReadDeepSeekWorkerReasoningEffort(IConfiguration configuration)
+    {
+        const string key = "October:DeepSeekWorkerReasoningEffort";
+        string? value = configuration[key];
+        if (configuration.GetSection(key).GetChildren().Any() || value is not (null or "low"))
+            throw new InvalidOperationException("October Worker reasoning configuration is invalid.");
+        return value;
+    }
+
+    internal static OctoberWorkerHttpObservationOptions? ReadWorkerHttpObservationOptions(IConfiguration configuration,
+        OctoberGeneratorCommand command, OctoberParseFailureCaptureOptions? captureOptions)
+    {
+        const string prefix = "October:WorkerHttpObservation";
+        var children = configuration.GetSection(prefix).GetChildren().ToArray();
+        if (children.Length == 0 && configuration[prefix] is null) return null;
+        try
+        {
+            static string BooleanText(string? value) => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ? "true" :
+                string.Equals(value, "false", StringComparison.OrdinalIgnoreCase) ? "false" : throw new InvalidOperationException();
+            string[] names = ["Enabled", "TargetId", "BatchId", "SubjectId", "ManagementAuthorityId"];
+            if (configuration[prefix] is not null || children.Any(item => !names.Contains(item.Key, StringComparer.Ordinal) || item.GetChildren().Any()))
+                throw new InvalidOperationException();
+            if (configuration is IConfigurationRoot root)
+                foreach (string name in names)
+                    if (root.Providers.Select(provider => provider.TryGet(prefix + ":" + name, out string? value) ? value : null)
+                        .Select(value => name == "Enabled" && value is not null ? BooleanText(value) : value)
+                        .Where(value => value is not null).Distinct(StringComparer.Ordinal).Skip(1).Any()) throw new InvalidOperationException();
+            string enabled = BooleanText(configuration[prefix + ":Enabled"]);
+            if (enabled == "false" && children.Length == 1) return null;
+            if (enabled != "true" || children.Length != names.Length || captureOptions is not null || command.Mode != OctoberGeneratorMode.Generate)
+                throw new InvalidOperationException();
+            string Exact(string name)
+            {
+                string value = configuration[prefix + ":" + name] ?? throw new InvalidOperationException();
+                if (string.IsNullOrWhiteSpace(value) || value.Length > 4096 || value.Trim() != value || value.Any(char.IsControl)) throw new InvalidOperationException();
+                return value;
+            }
+            string target = Exact("TargetId");
+            if (target != command.TargetId || !Guid.TryParseExact(Exact("BatchId"), "D", out Guid batch) || batch == Guid.Empty || batch != command.BatchId)
+                throw new InvalidOperationException();
+            return new(target, batch, Exact("SubjectId"), Exact("ManagementAuthorityId"));
+        }
+        catch (Exception error) when (error is InvalidOperationException or ArgumentException)
+        { throw new InvalidOperationException("October Worker HTTP observation configuration is invalid."); }
+    }
+
+    internal static OctoberParseFailureCaptureOptions? ReadParseFailureCaptureOptions(IConfiguration configuration,
+        OctoberGeneratorCommand command, OctoberRuntimeConfiguration? runtime, string keyRingPath)
+    {
+        const string prefix = "October:ParseFailureCapture";
+        var children = configuration.GetSection(prefix).GetChildren().ToArray();
+        if (children.Length == 0 && configuration[prefix] is null) return null;
+        try
+        {
+            static string BooleanText(string? value) =>
+                string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ? "true" :
+                string.Equals(value, "false", StringComparison.OrdinalIgnoreCase) ? "false" : throw new InvalidOperationException();
+            string[] names = ["Enabled", "TargetId", "BatchId", "SubjectId", "ManagementAuthorityId", "Directory"];
+            if (configuration[prefix] is not null || children.Any(item => !names.Contains(item.Key, StringComparer.Ordinal) || item.GetChildren().Any()))
+                throw new InvalidOperationException();
+            if (configuration is IConfigurationRoot root)
+                foreach (string name in names)
+                    if (root.Providers.Select(provider => provider.TryGet(prefix + ":" + name, out string? value) ? value : null)
+                        .Select(value => name == "Enabled" && value is not null ? BooleanText(value) : value)
+                        .Where(value => value is not null).Distinct(StringComparer.Ordinal).Skip(1).Any()) throw new InvalidOperationException();
+            string enabled = BooleanText(configuration[prefix + ":Enabled"]);
+            if (enabled == "false" && children.Length == 1) return null;
+            if (enabled != "true" || children.Length != names.Length || command.Mode != OctoberGeneratorMode.Generate || runtime is null)
+                throw new InvalidOperationException();
+            string Exact(string name)
+            {
+                string value = configuration[prefix + ":" + name] ?? throw new InvalidOperationException();
+                if (string.IsNullOrWhiteSpace(value) || value.Length > 4096 || value.Trim() != value || value.Any(char.IsControl))
+                    throw new InvalidOperationException();
+                return value;
+            }
+            string target = Exact("TargetId");
+            if (target != command.TargetId || !Guid.TryParseExact(Exact("BatchId"), "D", out Guid batch) || batch != command.BatchId)
+                throw new InvalidOperationException();
+            string directory = Exact("Directory");
+            string[] exclusions = CaptureExcludedPaths(configuration, runtime, keyRingPath);
+            if (!OctoberParseFailureCapture.SafePath(directory) || exclusions.Any(path => !OctoberParseFailureCapture.SafePath(path, allowRoot: true)) ||
+                exclusions.Any(path => OctoberParseFailureCapture.Overlaps(directory, path))) throw new InvalidOperationException();
+            return new(target, batch, Exact("SubjectId"), Exact("ManagementAuthorityId"), directory);
+        }
+        catch (Exception error) when (error is InvalidOperationException or ArgumentException or NotSupportedException or IOException)
+        { throw new InvalidOperationException("October parse capture configuration is invalid."); }
+    }
+
+    private static string[] CaptureExcludedPaths(IConfiguration configuration, OctoberRuntimeConfiguration runtime, string keyRingPath)
+        => runtime.PreparedRoots.Select(root => root.PhysicalRootPath)
+            .Concat([runtime.JavaNavigation.DisposableStateRoot, runtime.LogDirectory, keyRingPath,
+                runtime.JavaHostPolicy.JavaBinDirectory, Path.GetDirectoryName(runtime.CodeGraphCommandPath)!,
+                Path.GetDirectoryName(runtime.JavaHostPolicy.FixedCmdAbsolutePath)!])
+            .Concat(runtime.JavaHostPolicy.DeclaredRuntimeReadRoots)
+            .Concat(runtime.JavaHostPolicy.ApprovedExecutableDirectories)
+            .Concat(runtime.JavaHostPolicy.FixedChildPathEntries)
+            .Concat(new[] { "October:Operator:CredentialFile", "October:Providers:ConfigurationFile", "October:RuntimeFile",
+                "October:ScanPolicyFile", "October:BusinessSettingsFile", "October:BusinessRootSelectionDirectory" }
+                .Select(key => configuration[key]).OfType<string>())
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+    internal static OctoberOperatorRootSelectionOptions? ReadOperatorRootSelectionOptions(IConfiguration configuration,
+        OctoberScanPolicy policy, OctoberBusinessSettings? settings, OctoberRuntimeConfiguration runtime)
+    {
+        if (policy.OutputStage == "cl-only") return null;
+        string mode = configuration["October:BusinessRootSelectionMode"] ?? "exact-settings";
+        if (policy.OutputStage != "cl-and-bl" || settings is null || !settings.IsValid())
+            throw new InvalidOperationException("October operator root configuration is invalid.");
+        if (mode == "exact-settings") return new();
+        string? directory = configuration["October:BusinessRootSelectionDirectory"];
+        if (mode != "operator" || !settings.Roots.IsEmpty || string.IsNullOrWhiteSpace(directory) ||
+            directory.Trim() != directory || !Path.IsPathFullyQualified(directory) || directory.Any(char.IsControl) ||
+            !int.TryParse(configuration["October:BusinessRootSelectionTimeoutSeconds"],
+                System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int timeout) || timeout is < 1 or > 300)
+            throw new InvalidOperationException("October operator root configuration is invalid.");
+        directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+        string? parent = Path.GetDirectoryName(directory);
+        if (parent is null || !Directory.Exists(parent) || Path.Exists(directory) ||
+            runtime.PreparedRoots.Any(root => OperatorPathsOverlap(root.PhysicalRootPath, directory)) ||
+            OperatorPathsOverlap(runtime.LogDirectory, directory) || OperatorPathsOverlap(runtime.JavaNavigation.DisposableStateRoot, directory))
+            throw new InvalidOperationException("October operator directory is unavailable.");
+        return new(mode, directory, timeout);
+    }
+
+    private static bool OperatorPathsOverlap(string left, string right)
+    {
+        left = Path.TrimEndingDirectorySeparator(Path.GetFullPath(left));
+        right = Path.TrimEndingDirectorySeparator(Path.GetFullPath(right));
+        return string.Equals(left, right, StringComparison.OrdinalIgnoreCase) ||
+            left.StartsWith(Path.EndsInDirectorySeparator(right) ? right : right + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+            right.StartsWith(Path.EndsInDirectorySeparator(left) ? left : left + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    }
+
     internal static void AddBusinessReaderDependencies(IServiceCollection services, string ownedLogDirectory,
         TimeProvider? timeProvider = null)
     {
@@ -32,7 +179,8 @@ public static class OctoberGeneratorEntryPoint
     internal static OctoberBusinessRunComposition? ComposeBusiness(OctoberScanPolicy policy,
         OctoberSelectedWorkerProvider provider, OctoberBusinessSettings? settings,
         IDbContextFactory<OctoberDbContext> contexts, IOctoberKnowledgeOperationLog log,
-        Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader)
+        Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
+        OctoberOperatorRootSelectionOptions? operatorSelection = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(policy);
         if (policy.OutputStage == "cl-only") return null;
@@ -41,6 +189,9 @@ public static class OctoberGeneratorEntryPoint
             provider is null || provider.Precedence != "only-source" || provider.Profile.ApiType != ApiType.ChatCompletions ||
             contexts is null || log is null || bindReader is null)
             throw new InvalidOperationException("October Business composition is invalid.");
+        if (operatorSelection is not null && operatorSelection.Mode != "exact-settings" &&
+            (operatorSelection.Mode != "operator" || !settings.Roots.IsEmpty || operatorSelection.TimeoutSeconds is not (>= 1 and <= 300)))
+            throw new InvalidOperationException("October Business operator selection is invalid.");
         var profile = provider.Profile;
         var projection = new BusinessProviderConfigurationProjection(provider.SourceIdentity, 0, profile.Name,
             "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference);
@@ -50,7 +201,12 @@ public static class OctoberGeneratorEntryPoint
             authorization => new OctoberFlowPlanningInputLoader(contexts, authorization),
             (authorization, guard) => new OctoberFlowPublicationStore(contexts, authorization, guard, log),
             settings.SelectRoots, projection, LoadBusinessInstructions("Resolution"), LoadBusinessInstructions("Synthesis"),
-            settings.Limits, settings.MaximumAttemptTokens) { BindReader = bindReader };
+            settings.Limits, settings.MaximumAttemptTokens)
+        {
+            BindReader = bindReader, OperatorSelection = operatorSelection,
+            InteractAsync = operatorSelection?.Mode == "operator"
+                ? new OctoberOperatorRootSelection(operatorSelection, timeProvider).InteractAsync : null
+        };
     }
 
     private static string LoadBusinessInstructions(string name)
@@ -68,13 +224,19 @@ public static class OctoberGeneratorEntryPoint
         ISecretEncryptionService encryption, OctoberScanPolicy policy, OctoberSelectedWorkerProvider provider,
         OctoberBusinessSettings? settings,
         Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? bindReader,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null, OctoberOperatorRootSelectionOptions? operatorSelection = null,
+        OctoberParseFailureCapture? parseFailureCapture = null, OctoberWorkerHttpObservation? httpObservation = null,
+        string? deepSeekWorkerReasoningEffort = null, int workerMaxOutputTokens = 8192)
     {
         TimeProvider clock = timeProvider ?? TimeProvider.System;
-        var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock);
+        if (parseFailureCapture is not null && httpObservation is not null) throw new InvalidOperationException("October diagnostic configuration is invalid.");
+        var dependencies = ComposeGenerateDependencies(runtime, authority, contexts, encryption, clock, httpObservation, deepSeekWorkerReasoningEffort);
         return new OctoberGenerateRunner(dependencies with
         {
-            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader)
+            MaximumWorkerOutputTokens = workerMaxOutputTokens,
+            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock),
+            ParseFailureCapture = parseFailureCapture,
+            HttpObservation = httpObservation
         }, clock);
     }
 
@@ -148,7 +310,8 @@ public static class OctoberGeneratorEntryPoint
 
     private static OctoberGenerateRunnerDependencies ComposeGenerateDependencies(OctoberRuntimeConfiguration runtime,
         IOctoberLocalAuthority authority, IDbContextFactory<OctoberDbContext> contexts,
-        ISecretEncryptionService encryption, TimeProvider clock)
+        ISecretEncryptionService encryption, TimeProvider clock, OctoberWorkerHttpObservation? httpObservation = null,
+        string? deepSeekWorkerReasoningEffort = null)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(authority);
@@ -157,12 +320,19 @@ public static class OctoberGeneratorEntryPoint
         if (!runtime.IsValid()) throw new InvalidOperationException("October runtime configuration is invalid.");
         var log = new OctoberKnowledgeOperationLog(runtime.LogDirectory, clock);
         var sources = new OctoberScanRunSourceFactory(runtime, authority, clock);
-        var clients = new OctoberWorkerClientFactory(encryption);
+        var clients = httpObservation is null
+            ? new OctoberWorkerClientFactory(encryption, deepSeekWorkerReasoningEffort: deepSeekWorkerReasoningEffort)
+            : new OctoberWorkerClientFactory(encryption, null, httpObservation, deepSeekWorkerReasoningEffort);
         return new(authority, sources.ValidateSelection,
             (admissionAuthority, guard) => new OctoberGenerateAdmissionStore(contexts, admissionAuthority, guard, log),
             sources.OpenAsync, clients.CreateAsync,
             ports => new OctoberKnowledgeWriter(contexts, ports.CompletionAuthority, ports.SourceVerifier,
-                ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log);
+                ports.ProducerAuthorization, ports.CommitGuard, log, ports.FreezeAuthority), log)
+        {
+            JsonCorrectionLog = new OctoberJsonCorrectionLog(runtime.LogDirectory, clock).AppendAsync,
+            CreateBusinessFromClStore = (owner, begin, completion, settlement) =>
+                new OctoberBusinessFromClStore(contexts, owner, begin, completion, settlement, log)
+        };
     }
 
     internal static async Task<int> ExecuteConfiguredAsync(OctoberGeneratorCommand command,
@@ -183,6 +353,9 @@ public static class OctoberGeneratorEntryPoint
                     CompletedStage = null, Coverage = OctoberCoverageStatus.None, Execution = OctoberExecutionStatus.Failed,
                     PublicationStatus = OctoberPublicationStatus.Failed, Publication = null, Documents = [], AcceptedFiles = [],
                     TerminalCoverage = [], Inventory = [], Gaps = [new("output_binding_invalid")],
+                    BusinessDiagnostics = null,
+                    WorkerDiagnostics = null,
+                    HardRetry = null,
                     Matching = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable,
                     BusinessLogic = report.RequestedStage == "cl-only" ? OctoberPhaseStatus.NotRequested : OctoberPhaseStatus.Unavailable
                 };
@@ -218,6 +391,11 @@ public static class OctoberGeneratorEntryPoint
             OctoberAuthorityConfiguration authorityConfiguration;
             OctoberRuntimeConfiguration? runtime = null;
             OctoberBusinessSettings? businessSettings = null;
+            OctoberOperatorRootSelectionOptions? operatorSelection = null;
+            OctoberParseFailureCaptureOptions? captureOptions = null;
+            OctoberWorkerHttpObservationOptions? observationOptions = null;
+            string? deepSeekWorkerReasoningEffort = null;
+            int workerMaxOutputTokens = 8192;
             string keyRingPath;
             string applicationName;
             try
@@ -225,12 +403,17 @@ public static class OctoberGeneratorEntryPoint
                 command = ReadCommand(configuration);
                 if (command.Mode == OctoberGeneratorMode.Generate)
                 {
+                    deepSeekWorkerReasoningEffort = ReadDeepSeekWorkerReasoningEffort(configuration);
+                    workerMaxOutputTokens = ReadWorkerMaxOutputTokens(configuration);
                     runtime = await ReadRuntimeConfigurationAsync(configuration);
                     businessSettings = await ReadBusinessSettingsForPolicyAsync(configuration, command.ScanPolicy!);
+                    operatorSelection = ReadOperatorRootSelectionOptions(configuration, command.ScanPolicy!, businessSettings, runtime);
                 }
                 authorityConfiguration = ReadAuthorityConfiguration(configuration, command);
                 keyRingPath = Required(configuration, "DataProtection:KeyRingPath");
                 applicationName = Required(configuration, "DataProtection:ApplicationName");
+                captureOptions = ReadParseFailureCaptureOptions(configuration, command, runtime, keyRingPath);
+                observationOptions = ReadWorkerHttpObservationOptions(configuration, command, captureOptions);
             }
             catch (Exception exception) when (exception is InvalidOperationException or JsonException or
                 ArgumentException)
@@ -342,7 +525,12 @@ public static class OctoberGeneratorEntryPoint
                 ? ComposeGenerate(runtime!, localAuthority,
                     new ConfiguredContextFactory(scope.ServiceProvider.GetRequiredService<DbContextOptions<OctoberDbContext>>()),
                     protection.GetRequiredService<ISecretEncryptionService>(), command.ScanPolicy!, workerProvider!,
-                    businessSettings, bindReader) : null;
+                    businessSettings, bindReader, operatorSelection: operatorSelection,
+                    parseFailureCapture: captureOptions is null ? null : new OctoberParseFailureCapture(captureOptions,
+                        CaptureExcludedPaths(configuration, runtime!, keyRingPath)),
+                    httpObservation: observationOptions is null ? null : new OctoberWorkerHttpObservation(observationOptions),
+                    deepSeekWorkerReasoningEffort: deepSeekWorkerReasoningEffort,
+                    workerMaxOutputTokens: workerMaxOutputTokens) : null;
             OctoberGeneratorModule module = new(localAuthority, target, authorityConfiguration.AuthorityId, generate, workerProvider);
             return await ExecuteConfiguredAsync(command, module, Console.Out, Console.Error,
                 settle: generate is null ? null : () => generate.DisposeAsync());
@@ -430,6 +618,39 @@ public static class OctoberGeneratorEntryPoint
             report.PublicationStatus,
             Matching = PhaseStatus(report.Matching),
             BusinessLogic = PhaseStatus(report.BusinessLogic),
+            BusinessDiagnostics = ProjectBusinessDiagnostics(report),
+            HardRetry = report.HardRetry is { ReservedAttempts: >= 0 and <= 16, ProviderCallsStarted: >= 0 and <= 16 } correction &&
+                correction.ProviderCallsStarted <= correction.ReservedAttempts
+                ? new { correction.ReservedAttempts, correction.ProviderCallsStarted } : null,
+            WorkerDiagnostics = report.WorkerDiagnostics is { } worker ? new
+            {
+                Status = DefinedStatus(worker.Status),
+                RetryDisposition = DefinedStatus(worker.RetryDisposition),
+                FailureStage = DefinedStatus(worker.FailureStage),
+                TerminalFailure = worker.Status is { } workerStatus && Enum.IsDefined(workerStatus) &&
+                    workerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed
+                    ? DefinedStatus(worker.TerminalFailure) : null,
+                TerminalObservation = ProjectTerminalObservation(worker),
+                BudgetFailure = worker.Status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.BudgetExceeded
+                    ? DefinedStatus(worker.BudgetFailure) : null,
+                ParseFailure = worker.Status is { } parseStatus && Enum.IsDefined(parseStatus) &&
+                    parseStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed &&
+                    worker.FailureStage == Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.ProposalParse &&
+                    worker.ParseFailure is { } parse ? new
+                    {
+                        Category = DefinedStatus(parse.Category),
+                        Slot = DefinedStatus(parse.Slot),
+                        FieldFailure = DefinedStatus(parse.FieldFailure),
+                        Field = DefinedStatus(parse.Field),
+                        UnitIndex = parse.UnitIndex is >= 0 and <= 65535 ? parse.UnitIndex : null
+                    } : null,
+                CaptureStatus = worker.Status is { } captureWorkerStatus && Enum.IsDefined(captureWorkerStatus) &&
+                    captureWorkerStatus != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed &&
+                    worker.FailureStage == Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.ProposalParse
+                    ? DefinedStatus(worker.CaptureStatus) : null,
+                HttpObservation = ProjectHttpObservation(worker),
+                ToolFailure = ProjectToolFailure(worker)
+            } : null,
             Publication = publication,
             report.Documents,
             AcceptedFiles = report.AcceptedFiles.Select(file => new
@@ -469,9 +690,92 @@ public static class OctoberGeneratorEntryPoint
         });
     }
 
+    private static object? ProjectTerminalObservation(OctoberWorkerDiagnosticSnapshot worker)
+    {
+        if (worker.Status != Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.InvalidOutput ||
+            worker.FailureStage != Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.StreamTerminal ||
+            worker.TerminalFailure != Vulgata.Agents.WorkerExecution.OctoberWorkerTerminalFailure.UnsupportedFinish ||
+            worker.TerminalObservation is not { } observed) return null;
+        return new
+        {
+            FinishReason = DefinedStatus(observed.FinishReason),
+            MaximumOutputTokens = observed.MaximumOutputTokens is > 0 and <= 393216 ? observed.MaximumOutputTokens : null,
+            InputTokens = observed.InputTokens is >= 0 ? observed.InputTokens : null,
+            OutputTokens = observed.OutputTokens is >= 0 ? observed.OutputTokens : null,
+            ReasoningTokens = observed.ReasoningTokens is >= 0 ? observed.ReasoningTokens : null
+        };
+    }
+
+    private static object? ProjectHttpObservation(OctoberWorkerDiagnosticSnapshot worker)
+    {
+        if (worker.Status is not { } status || !Enum.IsDefined(status) ||
+            status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed ||
+            worker.FailureStage != Vulgata.Agents.WorkerExecution.OctoberWorkerFailureStage.ProposalParse ||
+            worker.HttpObservation is not { } observed) return null;
+        static long? Bound(long? value, long maximum) => value is >= 0 && value <= maximum ? value : null;
+        static object? Json(Vulgata.Agents.WorkerExecution.OctoberWorkerJsonObservation? value) => value is null ? null : new
+        {
+            Kind = DefinedStatus(value.Kind), OpenObjects = Bound(value.OpenObjects, 32),
+            OpenArrays = Bound(value.OpenArrays, 32), value.AtEof
+        };
+        return new
+        {
+            Status = DefinedStatus(observed.Status), CapKey = DefinedStatus(observed.CapKey),
+            CapValue = observed.CapValue is > 0 ? Bound(observed.CapValue, int.MaxValue) : null,
+            HttpFinish = DefinedStatus(observed.HttpFinish), SdkFinish = DefinedStatus(observed.SdkFinish),
+            observed.DoneSeen, observed.EofSeen, observed.ContentAfterFinish, observed.ContentAfterDone,
+            WireBytes = Bound(observed.WireBytes, 4194304), HttpTextUtf8Bytes = Bound(observed.HttpTextUtf8Bytes, 262144),
+            SdkTextUtf8Bytes = Bound(observed.SdkTextUtf8Bytes, 262144), ParseInputUtf8Bytes = Bound(observed.ParseInputUtf8Bytes, 262144),
+            observed.HttpEqualsSdk, observed.SdkEqualsParse,
+            HttpJson = Json(observed.HttpJson), SdkJson = Json(observed.SdkJson), ParseJson = Json(observed.ParseJson),
+            HttpReasoningTokens = Bound(observed.HttpReasoningTokens, int.MaxValue), SdkReasoningTokens = Bound(observed.SdkReasoningTokens, int.MaxValue)
+        };
+    }
+
+    private static object? ProjectToolFailure(OctoberWorkerDiagnosticSnapshot worker)
+    {
+        if (worker.Status is not { } status || !Enum.IsDefined(status) ||
+            status == Vulgata.Agents.WorkerExecution.OctoberFileWorkerStatus.Completed ||
+            worker.ToolFailure is not { } observed || !Enum.IsDefined(observed.Operation) ||
+            !Enum.IsDefined(observed.Boundary)) return null;
+        bool java = observed.Operation is SourceMetadataOperation.JavaDefinition or SourceMetadataOperation.JavaReferences;
+        bool source = observed.Operation is SourceMetadataOperation.List or SourceMetadataOperation.ReadTextRange or SourceMetadataOperation.SearchText;
+        return new
+        {
+            observed.Operation,
+            observed.Boundary,
+            JavaOpenStatus = java ? DefinedStatus(observed.JavaOpenStatus) : null,
+            JavaOutcome = java ? DefinedStatus(observed.JavaOutcome) : null,
+            SourceOutcome = source || (java && observed.Boundary == OctoberToolFailureBoundary.SourceCurrentness)
+                ? DefinedStatus(observed.SourceOutcome) : null,
+            CodeGraphStatus = observed.Operation == SourceMetadataOperation.CodeGraphExplore ? DefinedStatus(observed.CodeGraphStatus) : null,
+            observed.CleanupConfirmed
+        };
+    }
+
     private static string? SafeRelativePath(string? path) => path is not null && path.Length <= 2048 &&
         !path.StartsWith('/') && !path.Contains('\\') && !path.Contains(':') && !path.Any(char.IsControl) &&
         (path.Length == 0 || path.Split('/').All(part => part is not ("" or "." or ".."))) ? path : null;
+
+    private static object? ProjectBusinessDiagnostics(OctoberScanReport report)
+    {
+        if (report.RequestedStage != "cl-and-bl" || report.BusinessDiagnostics is not { } observed ||
+            !Enum.IsDefined(observed.Boundary)) return null;
+        return new
+        {
+            FinalizerStatus = DefinedStatus(observed.FinalizerStatus),
+            FinalizerPersistenceStatus = DefinedStatus(observed.FinalizerPersistenceStatus),
+            LookupStatus = DefinedStatus(observed.LookupStatus),
+            LookupPersistenceStatus = DefinedStatus(observed.LookupPersistenceStatus),
+            OriginalSynthesisFailureReason = observed.OriginalSynthesisFailureReason == BusinessSynthesisFailureReason.None
+                ? null : DefinedStatus(observed.OriginalSynthesisFailureReason),
+            observed.Boundary,
+            observed.OperationMismatch
+        };
+    }
+
+    private static T? DefinedStatus<T>(T? value) where T : struct, Enum =>
+        value is { } defined && Enum.IsDefined(defined) ? defined : null;
 
     private static string PhaseStatus(OctoberPhaseStatus status) => status switch
     {
@@ -484,7 +788,7 @@ public static class OctoberGeneratorEntryPoint
 
     private static string SafeGapCode(string code) => code switch
     {
-        "owned_cleanup_unconfirmed" or "coverage_incomplete" or "invalid_run_configuration" or "authority_unavailable" or
+        "json-correction-log-incomplete" or "owned_cleanup_unconfirmed" or "coverage_incomplete" or "invalid_run_configuration" or "authority_unavailable" or
         "begin_indeterminate" or "begin_settlement_pending" or "fresh_run_required" or "run_ineligible" or "run_interrupted" or
         "run_unavailable" or "single_file_checkpoint_limit" or "source_frame_unavailable" or "source_frame_binding_changed" or
         "file_deadline_exceeded" or "provider_settlement_unconfirmed" or "worker_not_completed" or "file_acceptance_unavailable" or
@@ -492,7 +796,15 @@ public static class OctoberGeneratorEntryPoint
         "publication_failed" or "publication_interrupted" or "publication_unavailable" or "no_cl_content" or
         "freeze_settlement_pending" or "publication_settlement_pending" or "phase_closed" or "unsupported_stage" or
         "publication_not_started" or "source-authority-or-identity-lost" or "incomplete-directory" or "source-limitation" or
-        "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" => code,
+        "directory-limit" or "metadata-limit" or "listing-unavailable" or "cancelled" or
+        "business_authority_unavailable" or "business_client_unavailable" or "business_corpus_unavailable" or
+        "business_existing_cl_admission_unavailable" or "business_existing_resolution_unavailable" or
+        "business_attempt_unsettled" or "business_attempt_close_unconfirmed" or
+        "business_freeze_unavailable" or "business_initial_read_unavailable" or "business_original_slot_unavailable" or
+        "business_planning_inputs_unavailable" or "business_publication_binding_unavailable" or
+        "business_publication_read_unavailable" or "business_publication_unavailable" or
+        "business_resolution_failed" or "business_resolution_ineligible" or "business_resolution_limit" or
+        "business_resolution_unavailable" or "business_roots_unavailable" or "business_run_ineligible" => code,
         _ => "source-or-execution-gap"
     };
 
@@ -728,7 +1040,15 @@ public static class OctoberGeneratorEntryPoint
             Required(configuration, "October:Authority:Id"),
             command.TargetId, command.BatchId, canonicalIdentity,
             dataConnection, identityConnection, identityCanonical,
-            targets.ToImmutable(), TimeSpan.FromSeconds(30), TimeSpan.FromHours(1));
+            targets.ToImmutable(), TimeSpan.FromSeconds(30), AuthoritySessionLifetime(command));
+    }
+
+    internal static TimeSpan AuthoritySessionLifetime(OctoberGeneratorCommand command)
+    {
+        if (command.Mode != OctoberGeneratorMode.Generate) return TimeSpan.FromHours(1);
+        if (command.ScanPolicy is not { } policy || !new OctoberScanPolicyValidator().Validate(policy).IsValid)
+            throw new InvalidOperationException("A validated Generate policy is required for the session lifetime.");
+        return TimeSpan.FromSeconds(Math.Max(3600, policy.RunDeadlineSeconds));
     }
 
     private static string Required(IConfiguration configuration, string key)

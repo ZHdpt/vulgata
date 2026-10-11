@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.Source;
@@ -33,12 +34,24 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     private ICodeGraphWorkerToolSession? _session;
     private IPreparedJavaNavigationContext? _java;
     private int _sessionCalls;
-    private int _sessions;
+    private OctoberCodeGraphSessionBudget _sessionBudget;
+    private bool _sessionBudgetBound;
     private bool _faulted;
     private bool _cleanupFailed;
     private bool _closed;
     private Task? _disposal;
     private PreparedSourceOutcome? _sourceFailure;
+    private OctoberCodeGraphOwner? _graphOwner;
+
+    internal void UseGraphOwner(OctoberCodeGraphOwner owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        if (_closed || _graphOwner is not null || _connection is not null || _session is not null || _java is not null ||
+            owner.RepositoryId != RepositoryId || owner.RootBindingIdentity != _approval.RootBindingIdentity)
+            throw new InvalidOperationException("The original CodeGraph owner cannot be attached.");
+        _graphOwner = owner;
+    }
+    private readonly AsyncLocal<ToolObservationScope?> _observation = new();
 
     public OctoberToolRuntime(PreparedSourceApproval approval, PreparedSourceBinding sourceBinding,
         PreparedToolWorkspaceIssuer workspaceIssuer, PreparedJavaNavigationContextFactory javaFactory,
@@ -106,9 +119,53 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
                 PreparedJavaNavigationOpenResult opened = await javaFactory.OpenDedicatedAsync(lease, token);
                 if (opened.Status != PreparedJavaNavigationOpenStatus.Opened || opened.Context is null)
                 {
-                    if (opened.Status != PreparedJavaNavigationOpenStatus.CleanupUnconfirmed)
+                    bool candidate = opened.Status is PreparedJavaNavigationOpenStatus.ConfigurationUnavailable or PreparedJavaNavigationOpenStatus.ReadinessFailed;
+                    bool current = !candidate;
+                    Exception? currentnessFailure = null;
+                    if (candidate)
+                    {
+                        try { current = await lease.CheckCurrentAsync(token) == PreparedToolWorkspaceCheckStatus.Current; }
+                        catch (Exception error) { currentnessFailure = error; }
+                    }
+                    if (opened.Status == PreparedJavaNavigationOpenStatus.CleanupUnconfirmed)
+                    {
+                        // An inconsistent returned context still owns its disposal,
+                        // but cannot turn unconfirmed producer cleanup into a grant.
+                        if (opened.Context is not null)
+                            try { await opened.Context.DisposeAsync(); }
+                            catch
+                            {
+                                _cleanupFailed = true;
+                                ObserveFailure(OctoberToolFailureBoundary.RuntimeSettlement, javaOpen: opened.Status, cleanup: false);
+                                throw;
+                            }
+                        throw new PreparedJdtLsOpenFailureException(opened.Status, cleanupConfirmed: false);
+                    }
+                    try
+                    {
+                        if (opened.Context is not null) await opened.Context.DisposeAsync();
                         await lease.DisposeAsync();
-                    throw new InvalidOperationException("Dedicated JDT readiness or cleanup failed.");
+                    }
+                    catch
+                    {
+                        _cleanupFailed = true;
+                        ObserveFailure(OctoberToolFailureBoundary.RuntimeSettlement, javaOpen: opened.Status, cleanup: false);
+                        throw;
+                    }
+                    bool settled = lease.Lifetime == PreparedToolWorkspaceLifetime.Disposed;
+                    if (!current)
+                    {
+                        ObserveFailure(OctoberToolFailureBoundary.SourceCurrentness, cleanup: settled);
+                        if (currentnessFailure is not null)
+                            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(currentnessFailure).Throw();
+                        throw new InvalidOperationException("Current JDT authority is unavailable.");
+                    }
+                    if (opened.Context is not null)
+                    {
+                        ObserveFailure(OctoberToolFailureBoundary.RuntimeOpen, javaOpen: opened.Status, cleanup: settled);
+                        throw new InvalidOperationException("Dedicated JDT result is inconsistent.");
+                    }
+                    throw new PreparedJdtLsOpenFailureException(opened.Status, settled);
                 }
                 return new OwnedJavaContext(opened.Context, lease);
             },
@@ -127,6 +184,7 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             remainingRunLifetime > TimeSpan.FromMinutes(30))
             throw new ArgumentOutOfRangeException(nameof(remainingRunLifetime));
         RepositoryId = approval.RepositoryId;
+        _sessionBudget = new(RepositoryId);
         _approval = approval;
         _clock = clock;
         _started = clock.GetTimestamp();
@@ -136,12 +194,54 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     }
 
     public Guid RepositoryId { get; }
+    internal void UseSessionBudget(OctoberCodeGraphSessionBudget budget)
+    {
+        if (_closed || _sessionBudgetBound || _connection is not null || _session is not null ||
+            _java is not null || _sessionBudget.Used != 0 || budget.RepositoryId != RepositoryId)
+            throw new InvalidOperationException("Native session accounting must be bound before runtime use.");
+        _sessionBudget = budget;
+        _sessionBudgetBound = true;
+    }
     internal bool HasPreparedBinding(Guid repositoryId, string rootBindingIdentity, string preparedVersion)
         => repositoryId == _approval.RepositoryId &&
             string.Equals(rootBindingIdentity, _approval.RootBindingIdentity, StringComparison.Ordinal) &&
             string.Equals(preparedVersion, _approval.ApprovalIdentity, StringComparison.Ordinal);
     internal PreparedCodeGraphConnection? PreparedConnection => _connection;
     internal IReadOnlyList<PreparedToolWorkspaceLease> JdtLeases => _jdtLeases;
+    internal IDisposable ObserveInvocation(SourceMetadataOperation operation, Action<OctoberToolDiagnosticSnapshot> observe)
+    {
+        var scope = new ToolObservationScope(this, _observation.Value, operation, observe);
+        _observation.Value = scope;
+        return scope;
+    }
+
+    private void ObserveFailure(OctoberToolFailureBoundary boundary, PreparedJavaNavigationOpenStatus? javaOpen = null,
+        PreparedJavaNavigationOutcome? javaOutcome = null, PreparedSourceOutcome? sourceOutcome = null,
+        CodeGraphToolInvocationStatus? graphStatus = null, bool? cleanup = null) =>
+        _observation.Value?.Record(boundary, javaOpen, javaOutcome, sourceOutcome, graphStatus, cleanup);
+
+    private sealed class ToolObservationScope(OctoberToolRuntime owner, ToolObservationScope? previous,
+        SourceMetadataOperation operation, Action<OctoberToolDiagnosticSnapshot> observe) : IDisposable
+    {
+        private readonly object _sync = new();
+        private bool _closed;
+        internal void Record(OctoberToolFailureBoundary boundary, PreparedJavaNavigationOpenStatus? javaOpen,
+            PreparedJavaNavigationOutcome? javaOutcome, PreparedSourceOutcome? sourceOutcome,
+            CodeGraphToolInvocationStatus? graphStatus, bool? cleanup)
+        {
+            lock (_sync)
+                if (!_closed) observe(new(operation, boundary,
+                    javaOpen is { } opened && Enum.IsDefined(opened) ? opened : null,
+                    javaOutcome is { } java && Enum.IsDefined(java) ? java : null,
+                    sourceOutcome is { } source && Enum.IsDefined(source) ? source : null,
+                    graphStatus is { } graph && Enum.IsDefined(graph) ? graph : null, cleanup));
+        }
+        public void Dispose()
+        {
+            lock (_sync) { if (_closed) return; _closed = true; }
+            owner._observation.Value = previous;
+        }
+    }
     private TimeSpan Remaining => _lifetime - _clock.GetElapsedTime(_started);
     private bool Available => !_closed && !_faulted && Remaining > TimeSpan.Zero && !_lifetimeCancellation.IsCancellationRequested;
 
@@ -149,7 +249,17 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
         => RunAsync(async token =>
         {
             await EnsurePreparedAsync(token);
-            return await EnsureSessionAsync(token);
+            CodeGraphToolReadiness readiness = await EnsureSessionAsync(token);
+            // New-file tool registration also discovers the cached native session.
+            // Renew its bounded lifetime just as ExploreAsync does, never before
+            // old-session settlement or outside the original runtime lifetime.
+            if (readiness.Status == CodeGraphToolReadinessStatus.Expired && Available)
+            {
+                await CloseSessionAsync();
+                token.ThrowIfCancellationRequested();
+                if (Available) readiness = await EnsureSessionAsync(token);
+            }
+            return readiness;
         }, cancelled => new CodeGraphToolReadiness(cancelled ? CodeGraphToolReadinessStatus.Cancelled : CodeGraphToolReadinessStatus.Unavailable,
             RepositoryId, CodeGraphToolStage.Preparation, cancelled ? CodeGraphToolIssueCode.Cancelled : CodeGraphToolIssueCode.SourceUnprepared), cancellationToken);
 
@@ -167,17 +277,31 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
                     await CloseSessionAsync();
                     continue;
                 }
-                if (!readiness.IsReady) return GraphFailure(false);
+                if (!readiness.IsReady)
+                {
+                    ObserveFailure(OctoberToolFailureBoundary.RuntimeOpen);
+                    _faulted = true;
+                    return GraphFailure(false);
+                }
                 _sessionCalls++;
-                CodeGraphToolInvocationResult result = await _session!.ExploreAsync(query, maxFiles, token);
+                CodeGraphToolInvocationResult result;
+                try { result = await _session!.ExploreAsync(query, maxFiles, token); }
+                catch { ObserveFailure(OctoberToolFailureBoundary.RuntimeInvoke); throw; }
                 if (result.Status == CodeGraphToolInvocationStatus.Expired && renewal == 0 && Available)
                 {
                     await CloseSessionAsync();
                     continue;
                 }
-                if (result.RepositoryId != RepositoryId || !Available || token.IsCancellationRequested)
+                if (result.RepositoryId != RepositoryId)
+                {
+                    ObserveFailure(OctoberToolFailureBoundary.SourceCurrentness, graphStatus: result.Status);
+                    _faulted = true;
                     return GraphFailure(token.IsCancellationRequested);
-                if (result.Status is CodeGraphToolInvocationStatus.Denied or CodeGraphToolInvocationStatus.AuthorityUnavailable)
+                }
+                if (!Available || token.IsCancellationRequested)
+                    return GraphFailure(token.IsCancellationRequested);
+                if (result.Status is not (CodeGraphToolInvocationStatus.Complete or
+                    CodeGraphToolInvocationStatus.NoMatch or CodeGraphToolInvocationStatus.Limited))
                     _faulted = true;
                 return result;
             }
@@ -189,7 +313,52 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
         => RunAsync(async token =>
         {
             await CloseSessionAsync();
-            _java = await _dependencies.OpenDedicatedJava(Window(Remaining), token);
+            try { _java = await _dependencies.OpenDedicatedJava(Window(Remaining), token); }
+            catch (PreparedJdtLsOpenFailureException failure)
+            {
+                bool candidate = failure.CleanupConfirmed && failure.Status is
+                    PreparedJavaNavigationOpenStatus.ConfigurationUnavailable or PreparedJavaNavigationOpenStatus.ReadinessFailed;
+                if (candidate && Available && !token.IsCancellationRequested)
+                {
+                    PreparedSourceIssueResult current;
+                    try { current = await OpenSourceAsync(token); }
+                    catch
+                    {
+                        ObserveFailure(OctoberToolFailureBoundary.SourceCurrentness, cleanup: true);
+                        _faulted = true;
+                        throw;
+                    }
+                    bool verified = current.Status == PreparedSourceIssueStatus.Issued && current.Context?.RepositoryId == RepositoryId &&
+                        current.Context.Lifetime == PreparedSourceContextLifetime.Open && Available && !token.IsCancellationRequested;
+                    if (!verified) ObserveFailure(OctoberToolFailureBoundary.SourceCurrentness, cleanup: true);
+                    try { if (current.Context is not null) await current.Context.DisposeAsync(); }
+                    catch
+                    {
+                        ObserveFailure(OctoberToolFailureBoundary.RuntimeSettlement, cleanup: false);
+                        _cleanupFailed = true; _faulted = true;
+                        throw;
+                    }
+                    if (verified && Available && !token.IsCancellationRequested)
+                    {
+                        bool configuration = failure.Status == PreparedJavaNavigationOpenStatus.ConfigurationUnavailable;
+                        return new PreparedJavaNavigationResult(RepositoryId, operation,
+                            configuration ? PreparedJavaNavigationOutcome.ConfigurationUnavailable : PreparedJavaNavigationOutcome.ReadinessFailed,
+                            [], [new(configuration ? "jdt_configuration_unavailable" : "jdt_readiness_failed", null)], null);
+                    }
+                    _faulted = true;
+                    return JavaFailure(operation, token.IsCancellationRequested);
+                }
+                ObserveFailure(OctoberToolFailureBoundary.RuntimeOpen, javaOpen: failure.Status, cleanup: failure.CleanupConfirmed);
+                if (!failure.CleanupConfirmed) _cleanupFailed = true;
+                _faulted = true;
+                throw;
+            }
+            catch
+            {
+                ObserveFailure(OctoberToolFailureBoundary.RuntimeOpen);
+                _faulted = true;
+                throw;
+            }
             PreparedJavaNavigationResult result;
             try
             {
@@ -201,10 +370,16 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
                     _ => throw new ArgumentOutOfRangeException(nameof(operation)),
                 };
             }
+            catch { ObserveFailure(OctoberToolFailureBoundary.RuntimeInvoke); throw; }
             finally
             {
                 try { await _java.DisposeAsync(); _java = null; }
-                catch { _cleanupFailed = true; _faulted = true; throw; }
+                catch { ObserveFailure(OctoberToolFailureBoundary.RuntimeSettlement, cleanup: false); _cleanupFailed = true; _faulted = true; throw; }
+            }
+            if (result.RepositoryId != RepositoryId)
+            {
+                ObserveFailure(OctoberToolFailureBoundary.SourceCurrentness, javaOutcome: result.Outcome, cleanup: true);
+                _faulted = true;
             }
             return Available && !token.IsCancellationRequested && result.RepositoryId == RepositoryId
                 ? result : JavaFailure(operation, token.IsCancellationRequested);
@@ -398,7 +573,9 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     private async Task EnsurePreparedAsync(CancellationToken token)
     {
         if (_connection is not null) return;
-        _connection = await _dependencies.PrepareCodeGraph(Remaining, token);
+        _connection = _graphOwner is null
+            ? await _dependencies.PrepareCodeGraph(Remaining, token)
+            : await _graphOwner.GetOrCreateAsync(_dependencies.PrepareCodeGraph, token);
         if (_connection.RepositoryId != RepositoryId || !Available)
             throw new InvalidOperationException("Prepared CodeGraph binding is unavailable.");
     }
@@ -410,9 +587,8 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     {
         if (_session is null)
         {
-            if (_sessions >= 21) throw new InvalidOperationException("CodeGraph session replacements are exhausted.");
+            if (!_sessionBudget.TryReserve()) throw new InvalidOperationException("CodeGraph session replacements are exhausted.");
             _session = _dependencies.OpenCodeGraph(_connection!, OpenSourceAsync);
-            _sessions++;
             _sessionCalls = 0;
         }
         return await _session.DiscoverAsync(token);
@@ -422,7 +598,7 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
     {
         if (_session is null) return;
         try { await _session.DisposeAsync(); _session = null; }
-        catch { _cleanupFailed = true; _faulted = true; throw; }
+        catch { ObserveFailure(OctoberToolFailureBoundary.RuntimeSettlement, cleanup: false); _cleanupFailed = true; _faulted = true; throw; }
     }
 
     private async Task<T> RunAsync<T>(Func<CancellationToken, Task<T>> operation,
@@ -437,7 +613,7 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             return await operation(linked.Token);
         }
         catch (OperationCanceledException) when (linked.IsCancellationRequested) { return failure(true); }
-        catch (Exception) { _faulted = true; return failure(false); }
+        catch (Exception) { ObserveFailure(OctoberToolFailureBoundary.RuntimeInvoke); _faulted = true; return failure(false); }
         finally { _gate.Release(); }
     }
 
@@ -463,7 +639,9 @@ public sealed class OctoberToolRuntime : IAsyncDisposable
             if (_jdtLeases.Any(lease => lease.Lifetime != PreparedToolWorkspaceLifetime.Disposed))
                 _cleanupFailed = true;
             if (_cleanupFailed) throw new InvalidOperationException("Tool cleanup remains unconfirmed.");
-            if (_connection is not null) await _connection.DisposeAsync();
+            // Borrowed state survives approval replacement; this runtime has
+            // already settled its native session and JDT resources above.
+            if (_connection is not null && _graphOwner is null) await _connection.DisposeAsync();
         }
         finally { _gate.Release(); }
     }
