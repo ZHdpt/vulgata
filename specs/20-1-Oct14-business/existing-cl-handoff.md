@@ -1,5 +1,17 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest runtime checkpoint (2026-10-12): the explicitly approved recovery and fresh
+22-root run **completed with exit 0**, publishing
+`e572a7d6-1730-4788-961d-3793a1728744`. All 22 BL documents passed ordinary
+User-only reader verification; original CL and both prior BL publications remain
+unchanged. The recovery implementation is `07ae0573`; older continuation hosts must
+include it before using the recovered batch. No migration, merge or push occurred.
+Independent content review identified semantic overstatements in four documents
+and additional wording cautions; publication/reader success is not a clean semantic
+pass. See [exact result and findings](recovered-22-root-run-2026-10-12.md).
+This single provider-run grant is consumed. Stop; do not silently edit immutable
+content or regenerate. The following material records earlier boundaries.
+
 Reconciled: 2026-10-11. Scope: October first deliverable, login/registration presentation.
 The user retains management authority. The user explicitly authorized integration
 and Business synchronization, followed by a separate prompt to start Business work.
