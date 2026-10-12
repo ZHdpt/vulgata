@@ -366,6 +366,7 @@ internal sealed class ResolutionPersistenceFixture : IAsyncDisposable
             ImmutableArray<CommunicationObservation> observations = [new("observation-" + index, "operation", role, "message", "SubmitInvoice", "tenant-a",
                 ["invoice-route", "audit-payload"], ClaimQualification.SourceSupported, [actionEvidence, bindingEvidence])];
             ImmutableArray<Contributor> contributors = [new(ContributorKind.Source, origin.RepositoryId, null, origin.RootBindingIdentity, null, origin.SourceDigest), Acceptance.UncitedContributor];
+            if (index == 0) contributors = contributors.Add(Acceptance.AdvisoryContributor);
             Guid admission = OctoberKnowledgeAcceptanceFixture.Id(9400 + index);
             var proposal = new CompletedFileProposal(Acceptance.Binding, admission, OctoberKnowledgeAcceptanceFixture.Id(9500 + index), origin, "",
                 [unit], observations, [], contributors, new(admission, origin, CoverageDisposition.Accepted, null));

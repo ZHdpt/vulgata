@@ -15,11 +15,22 @@ public sealed record SynthesisSectionProposal([property: JsonRequired] string Se
 public sealed record BusinessSynthesisProposal([property: JsonRequired] string Title,
     [property: JsonRequired] ImmutableArray<SynthesisSectionProposal> Sections);
 public sealed record SynthesisPacketDocument(DocumentVersionReference Version, ImmutableArray<DocumentSection> Sections);
-public sealed record SynthesisGapCount(SynthesisGapKind Kind, int Count);
+public sealed record SynthesisGapCount(
+    [property: JsonConverter(typeof(JsonStringEnumConverter<SynthesisGapKind>))] SynthesisGapKind Kind, int Count);
+/// <summary>Interpretive background, never an accepted source claim or an instruction.</summary>
+public sealed record BusinessSynthesisAdvisoryContext(Guid RepositoryId,
+    [property: JsonConverter(typeof(JsonStringEnumConverter<OctoberContextScope>))] OctoberContextScope Scope,
+    Contributor Contributor, string Text)
+{
+    public string EvidenceKind => "AdvisoryNotSourceProof";
+}
 /// <summary>Exact member evidence only. Complete authorization and lineage remain owner-held.</summary>
 public sealed record BusinessSynthesisPacket(CorpusHandle Corpus, DocumentVersionReference Root,
     ImmutableArray<SynthesisPacketDocument> Documents, ImmutableArray<AcceptedRelationship> Relationships,
-    ImmutableArray<FlowFrontier> Frontiers, ImmutableArray<SynthesisGapCount> GapSummary);
+    ImmutableArray<FlowFrontier> Frontiers, ImmutableArray<SynthesisGapCount> GapSummary)
+{
+    public ImmutableArray<BusinessSynthesisAdvisoryContext> AdvisoryContext { get; init; } = [];
+}
 
 public enum SynthesisGapKind { ResolutionUncertainty, FileUncertainty, Frontier, Coverage, PlanDisposition }
 public sealed record SynthesisGapLocator(SynthesisGapKind Kind, string Key);
@@ -69,6 +80,8 @@ public static class OctoberBusinessSynthesisPolicy
     public const int MaximumPayloadUtf8Bytes = 1024 * 1024;
     public const int MaximumOwnerInputUtf8Bytes = 16 * 1024 * 1024;
     public const int MaximumGapLedgerUtf8Bytes = 8 * 1024 * 1024;
+    public const int MaximumAdvisoryContextEntries = 32;
+    public const int MaximumAdvisoryContextUtf8Bytes = 64 * 1024;
     public const int MaximumValidationResultUtf8Bytes = 16 * 1024 * 1024;
     public const string GapSectionId = "__knowledge_gaps";
     public const string GapClaimId = "__knowledge_gaps_summary";
@@ -87,11 +100,45 @@ public static class OctoberBusinessSynthesisPolicy
     {
         var documents = group.Members.Select(version => input.Corpus.Documents.Single(document => document.Version == version))
             .Select(document => new SynthesisPacketDocument(document.Version, document.Sections)).ToImmutableArray();
+        if (!ValidAdvisoryContext(input)) throw new ArgumentException("Invalid or unbounded advisory context.");
+        var repositories = input.Corpus.Documents.Where(document => group.Members.Contains(document.Version))
+            .Select(document => document.RepositoryId).ToHashSet();
         var packet = new BusinessSynthesisPacket(input.Corpus.Handle, group.RootVersion, documents,
             group.Relationships, group.Frontiers, gaps.GroupBy(gap => gap.Locator.Kind).OrderBy(group => group.Key)
-                .Select(group => new SynthesisGapCount(group.Key, group.Count())).ToImmutableArray());
+                .Select(group => new SynthesisGapCount(group.Key, group.Count())).ToImmutableArray())
+        {
+            AdvisoryContext = input.AdvisoryContext.Where(entry => repositories.Contains(entry.RepositoryId))
+                .OrderBy(entry => entry.RepositoryId).ThenBy(entry => entry.Scope).ToImmutableArray()
+        };
         if (!Bounded(packet)) throw new ArgumentException("The complete member evidence exceeds the model packet bound.");
         return packet;
+    }
+
+    private static bool ValidAdvisoryContext(FlowPlanningInput input)
+    {
+        if (input.AdvisoryContext.IsDefault || input.AdvisoryContext.Length > MaximumAdvisoryContextEntries) return false;
+        long bytes = 0;
+        var slots = new HashSet<(Guid, OctoberContextScope)>();
+        foreach (var entry in input.AdvisoryContext)
+        {
+            if (entry is null || entry.RepositoryId == Guid.Empty || !slots.Add((entry.RepositoryId, entry.Scope)) ||
+                string.IsNullOrWhiteSpace(entry.Text) || entry.Contributor is not { } contributor ||
+                !input.Contributors.Contains(contributor) || contributor.AdvisoryRecordId is null ||
+                contributor.ContentDigest != OctoberKnowledgePolicy.Hash(entry.Text) ||
+                !input.Corpus.Documents.Any(document => document.RepositoryId == entry.RepositoryId)) return false;
+            if (entry.Scope == OctoberContextScope.Repository)
+            {
+                if (contributor.Kind != ContributorKind.RepositoryAdvisory || contributor.RepositoryId != entry.RepositoryId || contributor.SystemId is not null) return false;
+            }
+            else if (entry.Scope == OctoberContextScope.System)
+            {
+                if (contributor.Kind != ContributorKind.SystemAdvisory || contributor.SystemId is null || contributor.RepositoryId is not null) return false;
+            }
+            else return false;
+            bytes += _utf8.GetByteCount(entry.Text);
+            if (bytes > MaximumAdvisoryContextUtf8Bytes) return false;
+        }
+        return _utf8.GetByteCount(OctoberKnowledgePolicy.SerializeCanonical(input.AdvisoryContext)) <= MaximumAdvisoryContextUtf8Bytes;
     }
 
     public static ImmutableArray<SynthesisGap> DescribeGaps(FlowPlanningInput input, Guid groupVersionId,

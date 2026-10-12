@@ -30,6 +30,9 @@ public sealed record FlowPlanningInput(ResolutionCorpus Corpus, ImmutableArray<F
 
     /// <summary>Accepted file unknowns retain their original composite identity, including zero-unit files.</summary>
     public ImmutableArray<FlowFileUncertainty> FileUncertainties { get; init; } = [];
+
+    /// <summary>Fixed batch advisory context already covered by the complete contributor ledger.</summary>
+    public ImmutableArray<BusinessSynthesisAdvisoryContext> AdvisoryContext { get; init; } = [];
 }
 
 /// <summary>Configured limits may only reduce the hard ceilings.</summary>

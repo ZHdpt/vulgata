@@ -1,5 +1,12 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest implementation (2026-10-12): the user-authorized
+[prompt and scoped-context correction](advisory-context-correction.md) adds generic
+evidence-strength instructions, named gap counts, and bounded immutable System
+(project)/Repository advisory context. It preserves canonical publication and
+complete contributor authorization. Stop before actual scanning; this correction
+does not change any existing published document or establish improved real output.
+
 Latest runtime checkpoint (2026-10-12): the explicitly approved recovery and fresh
 22-root run **completed with exit 0**, publishing
 `e572a7d6-1730-4788-961d-3793a1728744`. All 22 BL documents passed ordinary

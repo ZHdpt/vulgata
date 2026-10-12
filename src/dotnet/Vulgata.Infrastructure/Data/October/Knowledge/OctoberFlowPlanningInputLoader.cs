@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Core.Entities.OctoberKnowledge;
 
@@ -220,7 +222,8 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
         var input = new FlowPlanningInput(corpus, projectedUnits.ToImmutable(), resolutions.ToImmutable(), roots, plan.Dispositions, coverage)
         {
             Contributors = ledger,
-            FileUncertainties = fileUnknowns.OrderBy(x => x.ManifestId).ThenBy(x => x.Key, StringComparer.Ordinal).ToImmutableArray()
+            FileUncertainties = fileUnknowns.OrderBy(x => x.ManifestId).ThenBy(x => x.Key, StringComparer.Ordinal).ToImmutableArray(),
+            AdvisoryContext = await LoadAdvisoryContextAsync(context, corpus, ledger, budget, ct)
         };
         // Check exact source-backed unit identity even for a deferred root kind. This probe
         // discards its groups and never changes the requested kind or authorizes synthesis.
@@ -238,6 +241,101 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
         if (!await AuthorizedAsync(handle.Binding, ledger, ct)) return Unavailable();
         ct.ThrowIfCancellationRequested();
         return new(KnowledgeReadStatus.Success, input);
+    }
+
+    private static async Task<ImmutableArray<BusinessSynthesisAdvisoryContext>> LoadAdvisoryContextAsync(
+        OctoberDbContext context, ResolutionCorpus corpus, ImmutableArray<Contributor> ledger,
+        OctoberKnowledgeStoredReadBudget budget, CancellationToken ct)
+    {
+        Guid batch = corpus.Handle.Binding.BatchId;
+        var repositoryIds = corpus.Documents.Select(document => document.RepositoryId).Distinct().ToArray();
+        if (repositoryIds.Length == 0) return [];
+        var repositories = await context.RepositorySelections.AsNoTracking()
+            .Where(selection => selection.BatchId == batch && repositoryIds.Contains(selection.RepositoryId))
+            .Select(selection => new { selection.RepositoryId, selection.SystemId }).ToListAsync(ct);
+        if (repositories.Count != repositoryIds.Length)
+            throw new InvalidOperationException("Missing corpus repository scope for selected advisory context.");
+        const int maximumEntries = OctoberBusinessSynthesisPolicy.MaximumAdvisoryContextEntries;
+        const int maximumBytes = OctoberBusinessSynthesisPolicy.MaximumAdvisoryContextUtf8Bytes;
+        var query = context.AdvisoryEntries.AsNoTracking().Where(entry => entry.BatchId == batch &&
+            repositoryIds.Contains(entry.RepositoryId) && entry.Applicability == (int)OctoberContextApplicability.Selected &&
+            (entry.Scope == (int)OctoberContextScope.System || entry.Scope == (int)OctoberContextScope.Repository));
+
+        // Measure selected text before materializing it. SQLite's character count bounds the
+        // local read; the strict UTF-8 and complete serialized-envelope checks follow below.
+        List<long> sizes;
+        bool measuredBytes = context.Database.IsNpgsql();
+        if (measuredBytes)
+            sizes = await context.Database.SqlQuery<long>($"""
+                SELECT COALESCE(octet_length("Value"), 0)::bigint AS "Value"
+                FROM october."OctoberAdvisoryEntries"
+                WHERE "BatchId"={batch} AND "RepositoryId"=ANY({repositoryIds})
+                    AND "Applicability"=0 AND "Scope" IN (1, 2)
+                LIMIT 33
+                """).ToListAsync(ct);
+        else
+            sizes = await query.Select(entry => entry.Value == null ? 0L : (long)entry.Value.Length)
+                .Take(maximumEntries + 1).ToListAsync(ct);
+        if (sizes.Count > maximumEntries || sizes.Any(size => size < 0) || sizes.Sum() > maximumBytes)
+            throw new OctoberKnowledgeReadBudgetException();
+        budget.Add(sizes, maximumEntries, bytes: measuredBytes);
+        ct.ThrowIfCancellationRequested();
+        var rows = await query.OrderBy(entry => entry.RepositoryId).ThenBy(entry => entry.Scope)
+            .Take(maximumEntries + 1).ToListAsync(ct);
+        if (rows.Count != sizes.Count) throw new InvalidOperationException("Selected advisory context changed during its read.");
+
+        var result = ImmutableArray.CreateBuilder<BusinessSynthesisAdvisoryContext>();
+        var utf8 = new UTF8Encoding(false, true);
+        long textBytes = 0;
+        foreach (var row in rows)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (row.EvidenceKind != (int)OctoberContextEvidenceKind.AdvisoryNotSourceProof ||
+                row.OriginRecordId is not { } recordId || recordId == Guid.Empty || string.IsNullOrWhiteSpace(row.Value) ||
+                !await context.ContextReferences.AsNoTracking().AnyAsync(reference => reference.BatchId == batch &&
+                    reference.Scope == row.Scope && reference.RecordId == recordId, ct))
+                throw new InvalidOperationException("Invalid selected advisory context provenance.");
+            var repository = repositories.SingleOrDefault(selection => selection.RepositoryId == row.RepositoryId);
+            if (repository is null || row.Scope == (int)OctoberContextScope.System &&
+                (repository.SystemId is null || repository.SystemId == Guid.Empty))
+                throw new InvalidOperationException("Missing selected advisory context scope.");
+
+            // Match the exact existing ledger entry; selected setup text is not permission to
+            // add a new input to an immutable corpus. Hash exact UTF-8 without normalization,
+            // as the accepted-file writer does when authenticating selected advisory snapshots.
+            var expected = new Contributor((ContributorKind)(row.Scope + 1),
+                row.Scope == (int)OctoberContextScope.Repository ? row.RepositoryId : null,
+                row.Scope == (int)OctoberContextScope.System ? repository.SystemId : null,
+                null, recordId, OctoberKnowledgePolicy.Hash(row.Value));
+            if (!ledger.Contains(expected))
+                throw new InvalidOperationException("Selected advisory context is absent from the immutable corpus ledger.");
+            textBytes = checked(textBytes + utf8.GetByteCount(row.Value));
+            if (textBytes > maximumBytes) throw new OctoberKnowledgeReadBudgetException();
+            result.Add(new(row.RepositoryId, (OctoberContextScope)row.Scope, expected, row.Value));
+        }
+        var projected = result.ToImmutable();
+        // The immutable input ledger also constrains completeness: deleting or deselecting a
+        // setup row must not silently remove background that the accepted corpus depended on.
+        // System context applies separately to every selected repository bound to that System.
+        foreach (var repository in repositories)
+        {
+            ct.ThrowIfCancellationRequested();
+            foreach (var contributor in ledger.Where(contributor =>
+                contributor.Kind == ContributorKind.RepositoryAdvisory && contributor.RepositoryId == repository.RepositoryId ||
+                contributor.Kind == ContributorKind.SystemAdvisory && contributor.SystemId is not null &&
+                    contributor.SystemId == repository.SystemId))
+            {
+                var scope = contributor.Kind == ContributorKind.RepositoryAdvisory
+                    ? OctoberContextScope.Repository : OctoberContextScope.System;
+                if (!projected.Any(entry => entry.RepositoryId == repository.RepositoryId &&
+                    entry.Scope == scope && entry.Contributor == contributor))
+                    throw new InvalidOperationException("Selected advisory context is incomplete for the immutable corpus ledger.");
+            }
+        }
+        int projectedBytes = utf8.GetByteCount(OctoberKnowledgePolicy.SerializeCanonical(projected));
+        if (projectedBytes > maximumBytes) throw new OctoberKnowledgeReadBudgetException();
+        budget.Add([projectedBytes], 1, bytes: true);
+        return projected;
     }
 
     private async Task<bool> AuthorizedAsync(KnowledgeBinding binding, ImmutableArray<Contributor> contributors, CancellationToken ct)
