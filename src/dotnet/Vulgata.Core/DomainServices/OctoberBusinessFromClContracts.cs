@@ -44,12 +44,47 @@ public interface IOctoberBusinessFromClSettlementAuthority
 
 public interface IOctoberBusinessFromClStore
 {
+    /// <summary>Call again under the semantic transaction's batch lock before physical submission.</summary>
+    Task<CommitEligibilityStatus> CheckActiveAsync(BusinessFromClRequest request, BusinessFromClAdmission admission,
+        CancellationToken cancellationToken = default);
     Task<BusinessFromClResult> BeginAsync(BusinessFromClRequest request, CancellationToken cancellationToken = default);
     Task<BusinessFromClResult> LookupAsync(BusinessFromClRequest request, CancellationToken cancellationToken = default);
     Task<KnowledgeWriteResult> CompleteAsync(BusinessFromClCompletionRequest request, BusinessFromClAdmission admission,
         CancellationToken cancellationToken = default);
     Task<KnowledgeWriteResult> LookupCompletionAsync(BusinessFromClCompletionRequest request, BusinessFromClAdmission admission,
         CancellationToken cancellationToken = default);
+}
+
+/// <summary>Administrative abandonment, never evidence of successful generation or absent prior effects.</summary>
+public sealed record BusinessFromClAbandonment(PublicationBinding Publication, string BeginPayloadDigest,
+    string RecoverySubjectId, string EvidenceDigest)
+{
+    public string BeginSubjectId { get; init; } = "";
+}
+
+public sealed record BusinessFromClRecoveryRequest(BusinessFromClRequest Begin, string RecoverySubjectId,
+    string EvidenceDigest, string CanonicalPayloadDigest);
+
+/// <summary>
+/// Trusted maintenance host verifies explicit operator authority, permanent original host/descendant
+/// exclusion and settled actual provider/database work. Receipt absence or a caller boolean is not proof.
+/// Verification must remain valid through submission; no capability for generation is issued.
+/// </summary>
+public interface IOctoberBusinessFromClRecoveryAuthority
+{
+    Task<BusinessFromClSettlement> VerifyAsync(BusinessFromClRecoveryRequest request,
+        CancellationToken cancellationToken = default);
+}
+
+public static class OctoberBusinessFromClRecoveryPolicy
+{
+    public static OperationKey Operation(BusinessFromClRecoveryRequest request) =>
+        new(request.Begin.Publication.Knowledge.BatchId, OperationKind.AbandonBusinessFromCl, request.Begin.RunId);
+    public static string ComputeDigest(BusinessFromClRecoveryRequest request) => OctoberKnowledgePolicy.Hash(
+        OctoberKnowledgePolicy.SerializeCanonical(new
+        {
+            domain = "october/business-from-cl/abandon/1", request.Begin, request.RecoverySubjectId, request.EvidenceDigest
+        }));
 }
 
 public static class OctoberBusinessFromClPolicy

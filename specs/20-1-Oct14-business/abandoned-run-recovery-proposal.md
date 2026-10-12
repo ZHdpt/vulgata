@@ -1,6 +1,8 @@
 # Bounded recovery of the failed 22-root Business run
 
-Status: proposed; no recovery mutation or new provider execution performed.
+Status: independently reviewed and explicitly approved for implementation and
+one owned disposable PostgreSQL qualification resource. Runtime execution evidence
+will be recorded separately; approval is not a claim of successful recovery.
 
 ## Verified boundary (2026-10-12)
 
@@ -102,6 +104,35 @@ and an owned disposable PostgreSQL test grant. Continue read-only writer attribu
 request a maintenance window only if exclusion cannot otherwise be established. The new
 provider run itself is already authorized; do not ask for that authorization again.
 
+Decision received on 2026-10-12: **“Approve recovery change and disposable test
+resources.”** The question explicitly covered the append-only abandonment/fence,
+one newly owned PostgreSQL 17 test instance cleaned afterward, exact retained-run
+recovery and the already authorized 22-root rerun. No unrelated process termination,
+schema migration, additional paid retry, merge or push is included.
+
 Independent read-only review accepted this bounded proposal with the exact-budget
 record and writer-exclusion clarifications above. Implementation and locking
 qualification remain outstanding; no retained mutation or provider call occurred.
+
+## Implemented checkpoint
+
+The approved boundary is implemented: optional canonical abandonment metadata,
+distinct operation kind, exact maintenance recovery/lookup, validated terminal
+admission, and repeated run-bound semantic fencing under the existing transaction
+lock. Normal completion remains original-owner-only and refuses abandonment.
+No table migration or automatic host command was added. The trusted maintenance
+authority must prove settlement; the API does not infer it from row absence.
+
+Focused verification passed with zero failures/skips:
+
+- 195/195 affected SelfContained cases, `isolation-00c26b09fdda42d09bcb0548b203686e`.
+- 2/2 final changed regression cases, `isolation-a37b711fcaf34e66b3120e11747c6977`.
+- 3/3 PostgreSQL locking/concurrent replay cases, `isolation-34e52d82140748c09fac679fcda23926`.
+  Runner exit zero; owned test container and volume absence independently verified.
+
+Independent review accepted production and the exact-run maintenance helper after
+fixing malformed replay and cross-batch metadata checks. The helper binds hash-pinned
+original launcher/process/usage evidence, live operator authority, original process
+exclusion and absence of old database backends/prepared transactions. Current unrelated
+Web readers are not terminated. This checkpoint does not yet claim retained recovery
+or new generation; those require actual exact result evidence.

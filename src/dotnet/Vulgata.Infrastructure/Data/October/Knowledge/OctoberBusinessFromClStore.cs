@@ -69,11 +69,17 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
                 request.CanonicalPayloadDigest, () => OctoberBusinessFromClPolicy.ComputeBeginDigest(request),
                 _ => Task.FromResult<KnowledgeWriteStatus?>(null), async (context, ct) =>
                 {
-                    bool active = await context.KnowledgeOperations.AsNoTracking().AnyAsync(begin =>
+                    var unmatched = await context.KnowledgeOperations.AsNoTracking().Where(begin =>
                         begin.BatchId == operation.BatchId && begin.Kind == OperationKind.BeginBusinessFromCl &&
                         !context.KnowledgeOperations.Any(end => end.BatchId == begin.BatchId &&
-                            end.Kind == OperationKind.CompleteBusinessFromCl && end.OperationId == begin.OperationId), ct);
-                    if (active) return new(new(KnowledgeWriteStatus.Conflict, operation), []);
+                            end.Kind == OperationKind.CompleteBusinessFromCl && end.OperationId == begin.OperationId)).Take(257).ToListAsync(ct);
+                    if (unmatched.Count > 256) return new(new(KnowledgeWriteStatus.StorageUnavailable, operation), []);
+                    foreach (var begin in unmatched)
+                    {
+                        var abandoned = await FindAsync(context, new(begin.BatchId, OperationKind.AbandonBusinessFromCl, begin.OperationId), ct);
+                        if (!OctoberBusinessFromClRecoveryStore.ValidTerminal(begin, abandoned))
+                            return new(new(KnowledgeWriteStatus.Conflict, operation), []);
+                    }
                     try
                     {
                         prepared = await LoadAsync(context, request, ct);
@@ -124,7 +130,9 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
                 stored.Publication != request.Publication || stored.AcceptedFile is not null ||
                 !SameSet(OctoberKnowledgeOperationStore.Contributors(row), snapshot.Contributors)) return new(KnowledgeWriteStatus.CommitIndeterminate, operation);
             await AuthorizeAsync(request, snapshot.Contributors, deadline.Token);
-            return new(KnowledgeWriteStatus.AlreadyCommitted, operation, snapshot, Capability(owner));
+            var terminal = await context.KnowledgeOperations.AsNoTracking().AnyAsync(x => x.BatchId == operation.BatchId &&
+                x.OperationId == operation.OperationId && (x.Kind == OperationKind.AbandonBusinessFromCl || x.Kind == OperationKind.CompleteBusinessFromCl), deadline.Token);
+            return new(KnowledgeWriteStatus.AlreadyCommitted, operation, snapshot, terminal ? null : Capability(owner));
         }
         catch (AuthorityFailure failure) { return new(failure.Status, operation, Admission: Capability(owner)); }
         catch (Exception) { return new(KnowledgeWriteStatus.CommitIndeterminate, operation, Admission: Capability(owner)); }
@@ -383,6 +391,10 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
         if (!Owns(request, owner, out _)) return KnowledgeWriteStatus.Denied;
         try
         {
+            await using var context = await OpenAsync(token);
+            if (await context.KnowledgeOperations.AsNoTracking().AnyAsync(x => x.BatchId == request.Begin.Publication.Knowledge.BatchId &&
+                x.OperationId == request.Begin.RunId && x.Kind == OperationKind.AbandonBusinessFromCl, token))
+                return KnowledgeWriteStatus.StaleOrFenced;
             return await _settlement.VerifyAsync(request, owner, token).WaitAsync(token) switch
             {
                 BusinessFromClSettlement.Settled => null,
@@ -391,6 +403,24 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
             };
         }
         catch (Exception) { return KnowledgeWriteStatus.AuthorityUnavailable; }
+    }
+
+    public async Task<CommitEligibilityStatus> CheckActiveAsync(BusinessFromClRequest request, BusinessFromClAdmission admission,
+        CancellationToken cancellationToken = default)
+    {
+        var completion = new BusinessFromClCompletionRequest(request, "");
+        completion = completion with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeCompletionDigest(completion) };
+        if (!Owns(completion, admission, out _)) return CommitEligibilityStatus.Denied;
+        try
+        {
+            await using var context = await OpenAsync(cancellationToken);
+            bool terminal = await context.KnowledgeOperations.AsNoTracking().AnyAsync(x =>
+                x.BatchId == request.Publication.Knowledge.BatchId && x.OperationId == request.RunId &&
+                (x.Kind == OperationKind.AbandonBusinessFromCl || x.Kind == OperationKind.CompleteBusinessFromCl), cancellationToken);
+            return terminal ? CommitEligibilityStatus.StaleOrFenced : CommitEligibilityStatus.Eligible;
+        }
+        catch (OperationCanceledException) { return CommitEligibilityStatus.Cancelled; }
+        catch (Exception) { return CommitEligibilityStatus.AuthorityUnavailable; }
     }
     private async Task AuthorizeAsync(BusinessFromClRequest request, ImmutableArray<Contributor> contributors, CancellationToken token)
     {

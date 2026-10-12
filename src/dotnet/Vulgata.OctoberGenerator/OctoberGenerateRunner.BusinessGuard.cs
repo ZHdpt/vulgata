@@ -54,6 +54,15 @@ internal sealed partial class OctoberGenerateRunner
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, owner._runToken!.Token);
             try
             {
+                // SubmitAsync repeats this check while the committer still holds its batch lock.
+                // Recovery's exclusive lock orders abandonment after earlier writes and before later writes.
+                if (owner._existingClRequest is { } existing)
+                {
+                    if (owner._existingClStore is null || owner._existingClAdmission is null)
+                        return CommitEligibilityStatus.Denied;
+                    var active = await owner._existingClStore.CheckActiveAsync(existing, owner._existingClAdmission, linked.Token);
+                    if (active != CommitEligibilityStatus.Eligible) return active;
+                }
                 var allowed = await owner.CheckPermissionsAsync(owner._observedContributors, linked.Token);
                 if (allowed != DisclosureStatus.Allowed)
                     return allowed == DisclosureStatus.Denied ? CommitEligibilityStatus.Denied : CommitEligibilityStatus.AuthorityUnavailable;
