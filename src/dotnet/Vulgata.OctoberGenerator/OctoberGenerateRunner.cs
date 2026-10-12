@@ -566,6 +566,9 @@ internal sealed partial class OctoberGenerateRunner : IOctoberGenerateOperation,
             if (current.Status != OctoberAuthorityDecisionStatus.Authorized || current.Request is null || current.Authority is null ||
                 !BindingMatches(current.Request, current.Authority)) return Deny(current.Status == OctoberAuthorityDecisionStatus.Unavailable);
             var allowedAdvisory = _execution.Authority.RepositoryIds.SelectMany(repository => Advisory(repository)).Select(item => item.Contributor).ToHashSet();
+            var businessAdditional = CurrentBusinessAdditionalAdvisory();
+            if (businessAdditional.IsDefault) return Deny();
+            allowedAdvisory.UnionWith(businessAdditional);
             foreach (Contributor contributor in contributors)
             {
                 if (contributor.Kind is ContributorKind.Source or ContributorKind.SourceMetadata)

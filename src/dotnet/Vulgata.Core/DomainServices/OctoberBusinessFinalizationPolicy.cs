@@ -93,6 +93,8 @@ public static class OctoberBusinessFinalizationPolicy
         Text(selection.ProviderProfileId);
         Digest(selection.ProviderConfigurationFingerprint);
         Digest(selection.PromptDigest);
+        if (selection.ContextOverride is not null && !OctoberBusinessContextOverridePolicy.ValidateShape(selection.ContextOverride))
+            throw new ArgumentException("Invalid advisory context override.");
         var identities = new HashSet<string>(StringComparer.Ordinal);
         var unitVersions = new Dictionary<Guid, DocumentVersionReference>();
         foreach (var root in selection.Roots)

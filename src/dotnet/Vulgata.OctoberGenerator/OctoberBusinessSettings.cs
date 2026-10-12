@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 
 namespace Vulgata.OctoberGenerator;
@@ -9,6 +10,9 @@ internal sealed record OctoberBusinessRootSetting(Guid RepositoryId, string Rela
 internal sealed record OctoberBusinessSettings(ImmutableArray<OctoberBusinessRootSetting> Roots,
     FlowPlanningLimits Limits, long MaximumAttemptTokens)
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public BusinessAdvisoryContextOverride? ContextOverride { get; init; }
+
     internal bool IsValid() => !Roots.IsDefault && Roots.Length <= OctoberBusinessFinalizationPolicy.MaximumRoots &&
         Limits is { MaxNodes: >= 1, MaxEdges: >= 0, MaxDepth: >= 0 } &&
         Limits.MaxNodes <= OctoberFlowPlanner.MaximumNodes && Limits.MaxEdges <= OctoberFlowPlanner.MaximumEdges &&
@@ -17,7 +21,8 @@ internal sealed record OctoberBusinessSettings(ImmutableArray<OctoberBusinessRoo
             root.Kind == FlowRootKind.SelectedCodeUnit && ValidPath(root.RelativePath) &&
             !string.IsNullOrWhiteSpace(root.SemanticSelector) && root.SemanticSelector.Length <= 1024 &&
             root.SemanticSelector.Trim() == root.SemanticSelector && !root.SemanticSelector.Any(char.IsControl)) &&
-        Roots.Distinct().Count() == Roots.Length;
+        Roots.Distinct().Count() == Roots.Length &&
+        (ContextOverride is null || OctoberBusinessContextOverridePolicy.ValidateShape(ContextOverride));
 
     internal ImmutableArray<FlowRootSelection> SelectRoots(FlowPlanningInput input)
     {

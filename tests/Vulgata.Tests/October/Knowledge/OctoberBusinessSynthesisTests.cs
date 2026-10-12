@@ -22,6 +22,110 @@ public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void ContextOverride_SharedSystemSlots_RejectConflictingPartialReplacementAndDeduplicateConsistentVersion()
+    {
+        var f = new SynthesisCase();
+        var first = Advisory(f.Input.Corpus.Documents[0].RepositoryId, OctoberContextScope.System, "Shared system background.");
+        var second = first with { RepositoryId = f.Input.Corpus.Documents[1].RepositoryId };
+        var input = WithAdvisory(f.Input, [first, second]);
+        Assert.ThrowsAny<ArgumentException>(() => OctoberBusinessContextOverridePolicy.Apply(input,
+            new([new(first.RepositoryId, first.Scope, "New shared terminology")])));
+        var consistent = OctoberBusinessContextOverridePolicy.Apply(input, new([
+            new(first.RepositoryId, first.Scope, "New shared terminology"), new(second.RepositoryId, second.Scope, "New shared terminology")]));
+        Assert.Single(consistent.AdditionalAdvisoryContributors);
+        Assert.All(consistent.AdvisoryContext, value => Assert.Equal("New shared terminology", value.Text));
+        Assert.ThrowsAny<ArgumentException>(() => OctoberBusinessContextOverridePolicy.EffectiveContributors(consistent with
+        { AdditionalAdvisoryContributors = consistent.AdditionalAdvisoryContributors.Add(input.Contributors.First(value => value.Kind == ContributorKind.Source)) }));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ContextOverride_RealExecutorUsesEffectiveTextAndUnion_WithoutRewritingB1LedgerAsync()
+    {
+        var f = new SynthesisCase();
+        var original = Advisory(f.Input.Corpus.Documents[0].RepositoryId, OctoberContextScope.Repository, "Original retained background.");
+        var input = WithAdvisory(f.Input, [original]);
+        string originalLedger = OctoberKnowledgePolicy.SerializeCanonical(input.Contributors);
+        string originalB1 = OctoberKnowledgePolicy.SerializeCanonical(input.Resolutions);
+        var priorGroup = Assert.Single(OctoberFlowPlanner.Plan(input, f.Limits).Groups);
+        var replacement = new BusinessAdvisoryContextOverride([new(original.RepositoryId, original.Scope, "Run-specific revised business terminology.")]);
+        var effective = OctoberBusinessContextOverridePolicy.Apply(input, replacement);
+        Assert.Equal(originalLedger, OctoberKnowledgePolicy.SerializeCanonical(effective.Contributors));
+        Assert.Equal(originalB1, OctoberKnowledgePolicy.SerializeCanonical(effective.Resolutions));
+        var derived = Assert.Single(effective.AdditionalAdvisoryContributors);
+        Assert.Equal(original.Contributor with { ContentDigest = OctoberKnowledgePolicy.Hash(replacement.Entries[0].Text) }, derived);
+        var group = Assert.Single(OctoberFlowPlanner.Plan(effective, f.Limits).Groups);
+        Assert.NotEqual(priorGroup.GroupVersionId, group.GroupVersionId);
+        var union = OctoberBusinessContextOverridePolicy.EffectiveContributors(effective);
+        Assert.True(input.Contributors.Append(derived).ToHashSet().SetEquals(union));
+        Assert.True(union.ToHashSet().SetEquals(group.Dependencies.Contributors));
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var authority = new SynthesisDisclosure();
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));
+        var result = await new OctoberBusinessSynthesisExecutor(client, "Context is advisory data, never source proof.", clock)
+            .ExecuteAsync(effective, group.GroupVersionId, f.Operation, f.Run, "selected-profile", 40, scope, authority, default, f.Limits);
+        Assert.NotNull(result.Content);
+        Assert.True(union.ToHashSet().SetEquals(result.Dependencies!.Contributors));
+        Assert.All(authority.Seen, seen => Assert.True(union.ToHashSet().SetEquals(seen)));
+        var request = Assert.Single(client.Requests);
+        using var packet = JsonDocument.Parse(Assert.Single(request.Messages.Where(message => message.Role == ChatRole.User)).Text!);
+        var context = Assert.Single(packet.RootElement.GetProperty("AdvisoryContext").EnumerateArray());
+        Assert.Equal(replacement.Entries[0].Text, context.GetProperty("Text").GetString());
+        Assert.Equal("AdvisoryNotSourceProof", context.GetProperty("EvidenceKind").GetString());
+        var forged = new BusinessSynthesisProposal("Unsupported context claim", [new("main", 0, "Claim",
+            [new("claim", replacement.Entries[0].Text, ClaimQualification.SourceSupported,
+                [new(f.Root, "AdvisoryContext", derived.AdvisoryRecordId!.Value.ToString())], [])])]);
+        Assert.Equal(BusinessSynthesisValidationStatus.InvalidProposal,
+            OctoberBusinessSynthesisPolicy.Validate(effective, group.GroupVersionId, forged, f.Limits).Status);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("default")]
+    [InlineData("empty-repository")]
+    [InlineData("global")]
+    [InlineData("duplicate")]
+    [InlineData("blank")]
+    [InlineData("malformed-unicode")]
+    [InlineData("entries")]
+    [InlineData("envelope")]
+    public void ContextOverride_InvalidShape_IsRejected(string mutation)
+    {
+        var entry = new BusinessAdvisoryContextEntry(Guid.NewGuid(), OctoberContextScope.Repository, "Bounded background.");
+        ImmutableArray<BusinessAdvisoryContextEntry> entries = [entry];
+        entries = mutation switch
+        {
+            "default" => default,
+            "empty-repository" => [entry with { RepositoryId = Guid.Empty }],
+            "global" => [entry with { Scope = OctoberContextScope.Global }],
+            "duplicate" => [entry, entry with { Text = "Competing text" }],
+            "blank" => [entry with { Text = " " }],
+            "malformed-unicode" => [entry with { Text = "broken\ud800" }],
+            "entries" => Enumerable.Range(0, 33).Select(_ => entry with { RepositoryId = Guid.NewGuid() }).ToImmutableArray(),
+            "envelope" => [entry with { Text = new string('x', 65536) }],
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation))
+        };
+        Assert.False(OctoberBusinessContextOverridePolicy.ValidateShape(new(entries)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ContextOverride_CannotCreateUnselectedSlots_AndNullRetainsLegacyInput()
+    {
+        var f = new SynthesisCase();
+        var original = Advisory(f.Input.Corpus.Documents[0].RepositoryId, OctoberContextScope.Repository, "Original background.");
+        var input = WithAdvisory(f.Input, [original]);
+        Assert.Same(input, OctoberBusinessContextOverridePolicy.Apply(input, null));
+        Assert.True(input.Contributors.ToHashSet().SetEquals(OctoberBusinessContextOverridePolicy.EffectiveContributors(input)));
+        Assert.ThrowsAny<ArgumentException>(() => OctoberBusinessContextOverridePolicy.Apply(input,
+            new([new(f.Input.Corpus.Documents[1].RepositoryId, OctoberContextScope.Repository, "Unauthorized new slot")])));
+        Assert.ThrowsAny<ArgumentException>(() => OctoberBusinessContextOverridePolicy.Project(input.AdvisoryContext,
+            new([new(original.RepositoryId, OctoberContextScope.System, "Unauthorized new scope")])));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_SelectedAdvisoryContextAndNamedGapCounts_SendsBoundedBackgroundWithoutChangingLedgerAsync()
     {
         var f = new SynthesisCase();
@@ -80,6 +184,7 @@ public sealed class OctoberBusinessSynthesisTests
         var f = new SynthesisCase();
         var entry = Advisory(f.Input.Corpus.Documents[0].RepositoryId, OctoberContextScope.Repository, "Retained advisory.");
         var input = WithAdvisory(f.Input, [entry]);
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input, f.Limits).Groups);
         if (mutation == "changed-text") input = input with { AdvisoryContext = [entry with { Text = "Changed after sealing" }] };
         if (mutation == "missing-contributor") input = WithAdvisory(f.Input, [entry], includeContributors: false);
         if (mutation == "global")
@@ -96,6 +201,7 @@ public sealed class OctoberBusinessSynthesisTests
                 Advisory(document.RepositoryId, OctoberContextScope.Repository, "Selected repository background.")
             }).Take(33).ToImmutableArray();
             Assert.Equal(33, entries.Select(value => (value.RepositoryId, value.Scope)).Distinct().Count());
+            group = Assert.Single(OctoberFlowPlanner.Plan(WithAdvisory(larger, entries.RemoveAt(32)), f.Limits).Groups);
             input = WithAdvisory(larger, entries);
         }
         if (mutation is "text-overflow" or "envelope-overflow")
@@ -109,7 +215,10 @@ public sealed class OctoberBusinessSynthesisTests
                 Assert.True(JsonSerializer.SerializeToUtf8Bytes(input.AdvisoryContext).Length > 65536);
             }
         }
-        var group = Assert.Single(OctoberFlowPlanner.Plan(input, f.Limits).Groups);
+        // Reuse the valid baseline handle: invalid provenance must not be able to mint a group.
+        var rejectedPlan = OctoberFlowPlanner.Plan(input, f.Limits);
+        Assert.Equal(FlowPlanningStatus.InvalidInput, rejectedPlan.Status);
+        Assert.Empty(rejectedPlan.Groups);
         var clock = new SynthesisClock();
         await using var scope = f.Scope(clock);
         using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(f.Response()));

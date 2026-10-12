@@ -75,6 +75,12 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
         var loaded = await new OctoberFlowPlanningInputLoader(_contexts, _authorization).LoadAsync(request.Corpus, request.Selection.Roots, ct);
         if (loaded.Status != KnowledgeReadStatus.Success || loaded.Input is not { } input)
             return Rejected(request, KnowledgeWriteStatus.Denied);
+        try { input = OctoberBusinessContextOverridePolicy.Apply(input, request.Selection.ContextOverride); }
+        catch (ArgumentException) { return Rejected(request, KnowledgeWriteStatus.InvalidProposal); }
+        var effectiveContributors = OctoberBusinessContextOverridePolicy.EffectiveContributors(input);
+        var effectiveAuthority = await AuthorizeAsync(request.Corpus.Binding, effectiveContributors, ct);
+        if (effectiveAuthority != DisclosureStatus.Allowed)
+            return Rejected(request, OctoberKnowledgePublicationCommitter.AuthorityStatus(effectiveAuthority));
         var plan = OctoberFlowPlanner.Plan(input, request.Selection.Limits);
         if (plan.Status != FlowPlanningStatus.Succeeded ||
             plan.RootDispositions.Any(x => x.Kind is not (FlowRootDispositionKind.Planned or FlowRootDispositionKind.UnsupportedKind)))
@@ -115,7 +121,7 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
         var result = new BusinessFinalizationResult(status, request.Operation, publication, coverage);
         string requestJson = OctoberKnowledgePolicy.SerializeCanonical(request);
         string resultJson = OctoberKnowledgePolicy.SerializeCanonical(result);
-        string contributorsJson = OctoberKnowledgePolicy.SerializeCanonical(input.Contributors);
+        string contributorsJson = OctoberKnowledgePolicy.SerializeCanonical(effectiveContributors);
         // A committed result must fit the exact lookup envelope, including both copies of the
         // full corpus ledger. Use the conservative four-byte string bound for every provider;
         // PostgreSQL's UTF-8/jsonb projection is no larger than this accepted envelope allowance.
@@ -137,7 +143,7 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
             {
                 BatchId = batch, PublicationId = publication.PublicationId, CorpusId = corpusId, CorpusDigest = request.Corpus.CorpusDigest,
                 OperationKind = OperationKind.FinalizeCorpus, OperationId = request.Operation.OperationId,
-                ContributorsJson = OctoberKnowledgePolicy.SerializeCanonical(input.Contributors), CreatedAtUtc = DateTimeOffset.UtcNow
+                ContributorsJson = contributorsJson, CreatedAtUtc = DateTimeOffset.UtcNow
             });
             var members = input.Corpus.Documents.Select(x => x.Version).ToList();
             foreach (var (group, content) in validated)
@@ -158,7 +164,7 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
             foreach (var unknown in input.FileUncertainties)
                 context.PublicationUncertainties.Add(new() { BatchId = batch, PublicationId = publication.PublicationId, CorpusId = corpusId, ManifestId = unknown.ManifestId, Key = unknown.Key });
         }
-        return new(new(KnowledgeWriteStatus.Committed, request.Operation, Corpus: request.Corpus, Publication: publication), input.Contributors);
+        return new(new(KnowledgeWriteStatus.Committed, request.Operation, Corpus: request.Corpus, Publication: publication), effectiveContributors);
     }
 
     private static async Task<DocumentVersionReference> AddFlowAsync(OctoberDbContext context, FlowFinalizationPublicationRequest request,

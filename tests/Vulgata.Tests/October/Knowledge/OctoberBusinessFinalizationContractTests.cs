@@ -11,6 +11,31 @@ public sealed class OctoberBusinessFinalizationContractTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void RequestDigest_AbsentContextOverride_PreservesExplicitPreOverrideSelectionBytes()
+    {
+        var request = new FinalizationContractCase().Request();
+        var selected = request.Selection!;
+        var legacySelection = new { selected.Roots, selected.Limits, selected.RunId, selected.ProviderProfileId,
+            selected.ProviderConfigurationFingerprint, selected.PromptDigest, selected.MaximumTokens };
+        string legacyBytes = OctoberKnowledgePolicy.SerializeCanonical(legacySelection);
+        Assert.Equal(legacyBytes, OctoberKnowledgePolicy.SerializeCanonical(selected));
+        Assert.Equal(legacyBytes, OctoberKnowledgePolicy.SerializeCanonical(selected with { ContextOverride = null }));
+        string legacyRequest = OctoberKnowledgePolicy.SerializeCanonical(new
+        {
+            domain = "october/business-finalization-request/1", schemaVersion = 1,
+            request.Operation, request.Corpus, selection = legacySelection
+        });
+        string expected = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(legacyRequest)));
+        Assert.Equal(expected, OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request));
+        var changed = request with { Selection = selected with { ContextOverride = new([
+            new(FinalizationContractCase.Id(800), Vulgata.Core.DomainServices.OctoberContextScope.Repository, "Exact run context")]) } };
+        Assert.NotEqual(expected, OctoberBusinessFinalizationPolicy.ComputeRequestDigest(changed));
+        var explicitEmpty = request with { Selection = selected with { ContextOverride = new([]) } };
+        Assert.NotEqual(expected, OctoberBusinessFinalizationPolicy.ComputeRequestDigest(explicitEmpty));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderFingerprint_VersionedNonsecretProjection_MatchesIndependentGoldenSha()
     {
         Assert.Equal(1, OctoberBusinessFinalizationPolicy.SchemaVersion);

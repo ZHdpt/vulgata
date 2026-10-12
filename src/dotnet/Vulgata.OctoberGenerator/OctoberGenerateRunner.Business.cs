@@ -19,6 +19,7 @@ internal sealed record OctoberBusinessRunComposition(
     FlowPlanningLimits Limits,
     long MaximumAttemptTokens)
 {
+    internal BusinessAdvisoryContextOverride? ContextOverride { get; init; }
     internal Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? BindReader { get; init; }
     internal OctoberOperatorRootSelectionOptions? OperatorSelection { get; init; }
     internal Func<OctoberOperatorRootSelectionRequest, CancellationToken, Task<OctoberOperatorRootSelectionResponse?>>? InteractAsync { get; init; }
@@ -40,6 +41,11 @@ internal sealed partial class OctoberGenerateRunner
     private Task? _businessReaderCleanup;
     private OctoberOperatorCleanupUnconfirmedException? _operatorCleanupFailure;
     private OctoberBusinessDiagnosticSnapshot? _businessDiagnostics;
+    private OctoberBusinessRunComposition? _businessContextComposition;
+    private BusinessAdvisoryContextOverride? _businessContextOverride;
+    private CorpusHandle? _businessContextCorpus;
+    private string? _businessContextOverrideDigest;
+    private ImmutableArray<Contributor> _businessAdditionalAdvisory = [];
 
     private async Task<ImmutableArray<FlowRootSelection>> SelectBusinessRootsAsync(FlowPlanningInput input,
         CancellationToken cancellationToken)
@@ -124,6 +130,8 @@ internal sealed partial class OctoberGenerateRunner
             business.ResolutionInstructions.Length > KnowledgeContract.MaximumContentBytes ||
             business.SynthesisInstructions.Length > KnowledgeContract.MaximumContentBytes ||
             business.MaximumAttemptTokens <= 0 || business.MaximumAttemptTokens > execution.Policy.MaximumTotalTokens ||
+            business.ContextOverride is not null && (execution.Policy.ExistingClPublicationId is null ||
+                !OctoberBusinessContextOverridePolicy.ValidateShape(business.ContextOverride)) ||
             limits.MaxNodes is < 1 or > OctoberFlowPlanner.MaximumNodes || limits.MaxEdges is < 0 or > OctoberFlowPlanner.MaximumEdges ||
             limits.MaxDepth is < 0 or > OctoberFlowPlanner.MaximumDepth)
             return false;
@@ -136,6 +144,26 @@ internal sealed partial class OctoberGenerateRunner
             profile.ApiType.ToString() == "ChatCompletions" && configuration.ApiType == "chat-completions" &&
             configuration.Endpoint == profile.Endpoint && configuration.Model == profile.Model &&
             configuration.CredentialReferenceId == profile.CredentialReference;
+    }
+
+    private ImmutableArray<Contributor> CurrentBusinessAdditionalAdvisory()
+    {
+        if (_businessContextOverride is null) return [];
+        // This is retained disclosure authority, not a new dispatch grant. Original scope/guard
+        // eligibility still gates semantic work; completed-result checks may follow resource settlement.
+        if (_execution is null || _businessGuard is null || _existingClSnapshot is not { } existing ||
+            _execution!.Policy.ExistingClPublicationId != existing.Publication.PublicationId ||
+            _businessContextCorpus != _confirmedBusinessCorpus || _businessContextCorpus != existing.Corpus ||
+            !ReferenceEquals(_dependencies.Business, _businessContextComposition) ||
+            !ReferenceEquals(_businessContextComposition?.ContextOverride, _businessContextOverride) ||
+            OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(_businessContextOverride)) != _businessContextOverrideDigest ||
+            _businessAdditionalAdvisory.IsDefault || _businessAdditionalAdvisory.Any(contributor =>
+                contributor.Kind is not (ContributorKind.SystemAdvisory or ContributorKind.RepositoryAdvisory)))
+            return default;
+        if (_originalBusinessRequest is { } original && (original.Selection?.ContextOverride is not { } selected ||
+            OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(selected)) != _businessContextOverrideDigest))
+            return default;
+        return _businessAdditionalAdvisory;
     }
 
     private Task CloseSourceResourcesAsync() => _sourceCleanup ??= _source is null
@@ -250,14 +278,38 @@ internal sealed partial class OctoberGenerateRunner
         if (planning.Status != KnowledgeReadStatus.Success || planning.Input is not { } input || input.Corpus.Handle != corpus || input.Contributors.IsDefault)
             return BusinessFailure("business_planning_inputs_unavailable", disclose: false);
         if (!_businessResolutionFailed && !_businessResolutionLimited) _matchingPhase = OctoberPhaseStatus.Completed;
-        var allObserved = IncludeObservedContributors(input.Contributors);
+        // The retained corpus/B1 ledger stays untouched. Only the owner projection supplies
+        // new advisory versions, and only this existing-CL Business composition can authorize them.
+        var effectiveInput = input;
+        var effectiveContributors = input.Contributors;
+        if (business.ContextOverride is { } contextOverride)
+        {
+            if (_existingClSnapshot is null || execution.Policy.ExistingClPublicationId is null)
+                return BusinessFailure("business_context_override_unavailable", disclose: false);
+            try
+            {
+                effectiveInput = OctoberBusinessContextOverridePolicy.Apply(input, contextOverride);
+                effectiveContributors = OctoberBusinessContextOverridePolicy.EffectiveContributors(effectiveInput);
+                _businessContextComposition = business;
+                _businessContextOverride = contextOverride;
+                _businessContextCorpus = corpus;
+                _businessContextOverrideDigest = OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(contextOverride));
+                _businessAdditionalAdvisory = effectiveInput.AdditionalAdvisoryContributors;
+            }
+            catch (ArgumentException)
+            {
+                return BusinessFailure("business_context_override_unavailable", disclose: false);
+            }
+        }
+        var allObserved = IncludeObservedContributors(effectiveContributors);
         if (!BusinessRunAvailable || await CheckPermissionsAsync(allObserved, cancellationToken) != DisclosureStatus.Allowed)
             return BusinessFailure("business_authority_unavailable", interrupted: IsCancelled, disclose: false);
-        var roots = await SelectBusinessRootsAsync(input, cancellationToken);
+        var roots = await SelectBusinessRootsAsync(effectiveInput, cancellationToken);
         if (roots.IsDefault) return BusinessFailure("business_roots_unavailable");
         var selection = new BusinessFinalizationSelection(roots, business.Limits, OriginalRunId,
             execution.Provider.Profile.Name, OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(business.ProviderConfiguration),
-            OctoberKnowledgePolicy.Hash(business.SynthesisInstructions), business.MaximumAttemptTokens);
+            OctoberKnowledgePolicy.Hash(business.SynthesisInstructions), business.MaximumAttemptTokens)
+        { ContextOverride = _businessContextOverride };
         var request = new FinalizationRequest(_businessFinalizationOperation!, corpus, "", _scope!) { Selection = selection };
         request = request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
         _originalBusinessRequest = request;

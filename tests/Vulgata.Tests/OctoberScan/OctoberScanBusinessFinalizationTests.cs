@@ -20,6 +20,66 @@ public sealed class OctoberScanBusinessFinalizationTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ContextOverride_ExistingClRoute_CapturesEffectivePacketAndRetainsCanonicalSelectionAsync(bool useOverride)
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var cl = await host.Runner.ExecuteAsync(host.Execution);
+        var original = Assert.IsType<PublicationBinding>(cl.Report!.Publication);
+        var execution = ExistingClExecution(host.Execution, original);
+        using var transport = new NaturalTransport();
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        const string text = "Run-specific vocabulary supplied by the authorized host.";
+        BusinessAdvisoryContextOverride? supplied = useOverride
+            ? new([new(host.Database.Origin.RepositoryId, OctoberContextScope.Repository, text)]) : null;
+        dependencies = dependencies with { Business = dependencies.Business! with { ContextOverride = supplied } };
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(0, report.ExitCode);
+        Assert.Equal(0, transport.WorkerRequests);
+        Assert.Equal(1, transport.BusinessRequests);
+        using var packet = JsonDocument.Parse(Assert.Single(transport.SynthesisPackets));
+        var advisory = Assert.Single(packet.RootElement.GetProperty("AdvisoryContext").EnumerateArray());
+        Assert.Equal(useOverride ? text : OctoberKnowledgeAcceptanceFixture.AdvisorySnapshot, advisory.GetProperty("Text").GetString());
+        await using var context = host.Database.Factory.CreateDbContext();
+        var retained = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
+        var request = JsonSerializer.Deserialize<FlowFinalizationPublicationRequest>(retained.RequestJson,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(supplied), OctoberKnowledgePolicy.SerializeCanonical(request.Selection.ContextOverride));
+        if (!useOverride) Assert.DoesNotContain("ContextOverride", retained.RequestJson, StringComparison.OrdinalIgnoreCase);
+        Assert.True(await context.KnowledgePublications.AnyAsync(value => value.PublicationId == original.PublicationId));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ContextOverride_FreshScanRoute_RejectsBeforeAdmissionOrClientCreationAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        using var transport = new NaturalTransport();
+        var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        dependencies = dependencies with { Business = dependencies.Business! with
+        { ContextOverride = new([new(host.Database.Origin.RepositoryId, OctoberContextScope.Repository, "Existing CL route only")]) } };
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        Assert.NotEqual(0, Assert.IsType<OctoberScanReport>(result.Report).ExitCode);
+        Assert.Equal(0, host.BeginCalls);
+        Assert.Empty(transport.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ContextOverride_GeneratorSettings_RejectMalformedOverride()
+    {
+        var settings = new OctoberBusinessSettings([], new(), 40);
+        Assert.True(settings.IsValid());
+        Assert.False((settings with { ContextOverride = new([new(Guid.NewGuid(), OctoberContextScope.Global, "Forbidden global scope")]) }).IsValid());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("initial-overflow")]
     [InlineData("later-overflow")]
     [InlineData("minimum-overflow")]
@@ -1429,6 +1489,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         internal int? ExpectedBusinessRequests;
         internal bool IncludeCallerObservation, ReturnUnresolved, InvalidSynthesisProposal;
         internal List<(string Endpoint, string? Authorization, string Model)> Requests { get; } = [];
+        internal List<string> SynthesisPackets { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
@@ -1462,6 +1523,8 @@ public sealed class OctoberScanBusinessFinalizationTests
             }
             Assert.Equal(ExpectedBusinessRequests ?? (IncludeCallerObservation ? 2 : 1), BusinessRequests);
             var root = Assert.IsType<DocumentVersionReference>(Root);
+            SynthesisPackets.Add(body.RootElement.GetProperty("messages").EnumerateArray()
+                .Single(value => value.GetProperty("role").GetString() == "user").GetProperty("content").GetString()!);
             var proposal = new BusinessSynthesisProposal("条件处理", [new("business", 0, "处理规则", [new("rule", "满足条件时执行处理。", ClaimQualification.SourceSupported, [new(root, "logic", "rule")], [])])]);
             string json = JsonSerializer.Serialize(new { id = "controlled-business", @object = "chat.completion", created = 1, model,
                 choices = new[] { new { index = 0, message = new { role = "assistant", content = JsonSerializer.Serialize(InvalidSynthesisProposal ? new BusinessSynthesisProposal("", []) : proposal) }, finish_reason = "stop" } }, usage = new { prompt_tokens = 80, completion_tokens = 25, total_tokens = 105 } });

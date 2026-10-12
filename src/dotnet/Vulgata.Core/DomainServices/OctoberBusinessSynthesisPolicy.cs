@@ -116,6 +116,9 @@ public static class OctoberBusinessSynthesisPolicy
 
     private static bool ValidAdvisoryContext(FlowPlanningInput input)
     {
+        ImmutableArray<Contributor> effectiveContributors;
+        try { effectiveContributors = OctoberBusinessContextOverridePolicy.EffectiveContributors(input); }
+        catch (ArgumentException) { return false; }
         if (input.AdvisoryContext.IsDefault || input.AdvisoryContext.Length > MaximumAdvisoryContextEntries) return false;
         long bytes = 0;
         var slots = new HashSet<(Guid, OctoberContextScope)>();
@@ -123,7 +126,7 @@ public static class OctoberBusinessSynthesisPolicy
         {
             if (entry is null || entry.RepositoryId == Guid.Empty || !slots.Add((entry.RepositoryId, entry.Scope)) ||
                 string.IsNullOrWhiteSpace(entry.Text) || entry.Contributor is not { } contributor ||
-                !input.Contributors.Contains(contributor) || contributor.AdvisoryRecordId is null ||
+                !effectiveContributors.Contains(contributor) || contributor.AdvisoryRecordId is null ||
                 contributor.ContentDigest != OctoberKnowledgePolicy.Hash(entry.Text) ||
                 !input.Corpus.Documents.Any(document => document.RepositoryId == entry.RepositoryId)) return false;
             if (entry.Scope == OctoberContextScope.Repository)

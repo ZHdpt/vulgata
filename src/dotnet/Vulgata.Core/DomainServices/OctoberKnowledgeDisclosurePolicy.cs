@@ -107,6 +107,8 @@ public sealed class OctoberKnowledgeDisclosurePolicy(
             (contributor.Kind != ContributorKind.RepositoryAdvisory || x.RepositoryId == contributor.RepositoryId) &&
             (contributor.Kind != ContributorKind.SystemAdvisory ||
                 repositories.TryGetValue(x.RepositoryId, out var bound) && bound.SystemId == contributor.SystemId)).ToArray();
-        return selected.Length > 0 && selected.All(x => x.ContentDigest == contributor.ContentDigest);
+        // A publication may explicitly retain the original and a run-specific advisory
+        // revision. Every contributor still needs an exact authorized identity and digest.
+        return selected.Any(x => x.ContentDigest == contributor.ContentDigest);
     }
 }

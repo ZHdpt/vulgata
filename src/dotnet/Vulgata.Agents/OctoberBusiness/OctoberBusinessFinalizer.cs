@@ -117,6 +117,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             if (loaded.Status != KnowledgeReadStatus.Success || loaded.Input is not { } input || input.Corpus.Handle != request.Corpus ||
                 input.Roots.IsDefault || !input.Roots.ToHashSet().SetEquals(selection.Roots))
                 return Empty(request, BusinessFinalizationStatus.AuthorityUnavailable);
+            input = OctoberBusinessContextOverridePolicy.Apply(input, selection.ContextOverride);
             var plan = OctoberFlowPlanner.Plan(input, selection.Limits);
             if (plan.Status != FlowPlanningStatus.Succeeded) return Empty(request, BusinessFinalizationStatus.Failed);
             var completed = ImmutableArray.CreateBuilder<FlowSynthesisSubmission>();
@@ -153,7 +154,8 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             if (Eligibility(request, lifetime) is { } fenced) return Empty(request, fenced);
             using (var bounded = Bound(token))
             {
-                var authority = await AwaitAsync(_disclosure.CheckAsync(request.Corpus, input.Contributors, bounded.Token), bounded.Token);
+                var authority = await AwaitAsync(_disclosure.CheckAsync(request.Corpus,
+                    OctoberBusinessContextOverridePolicy.EffectiveContributors(input), bounded.Token), bounded.Token);
                 if (authority != DisclosureStatus.Allowed) return Empty(request, authority == DisclosureStatus.Denied
                     ? BusinessFinalizationStatus.Denied : BusinessFinalizationStatus.AuthorityUnavailable);
             }

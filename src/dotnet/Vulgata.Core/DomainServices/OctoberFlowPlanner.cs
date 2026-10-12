@@ -33,6 +33,9 @@ public sealed record FlowPlanningInput(ResolutionCorpus Corpus, ImmutableArray<F
 
     /// <summary>Fixed batch advisory context already covered by the complete contributor ledger.</summary>
     public ImmutableArray<BusinessSynthesisAdvisoryContext> AdvisoryContext { get; init; } = [];
+
+    /// <summary>Owner-derived advisory versions added by this run; the frozen corpus ledger stays unchanged.</summary>
+    public ImmutableArray<Contributor> AdditionalAdvisoryContributors { get; init; } = [];
 }
 
 /// <summary>Configured limits may only reduce the hard ceilings.</summary>
@@ -135,10 +138,13 @@ public static class OctoberFlowPlanner
             OctoberKnowledgePolicy.SerializeCanonical(suppliedDispositions))
             return Invalid(FlowPlanningStatus.IncompleteResolution);
 
+        ImmutableArray<Contributor> effectiveContributors;
+        try { effectiveContributors = OctoberBusinessContextOverridePolicy.EffectiveContributors(input); }
+        catch (ArgumentException) { return Invalid(); }
         var dependencies = new BLDependency(Canonical(documents.Select(x => x.Version)),
             Canonical(input.Resolutions.Where(x => x.Outcome.Relationship is not null).Select(x => x.Outcome.Relationship!)),
             Canonical(input.Resolutions.Where(x => x.Outcome.Uncertainty is not null)
-                .Select(x => new FlowUncertainty(x.UncertaintyVersionId!.Value, x.Outcome.Uncertainty!))), allContributors)
+                .Select(x => new FlowUncertainty(x.UncertaintyVersionId!.Value, x.Outcome.Uncertainty!))), effectiveContributors)
         {
             FileUncertainties = Canonical(input.FileUncertainties)
         };
