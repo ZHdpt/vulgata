@@ -1,5 +1,19 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest local checkpoint (2026-10-12): run-local advisory context is implemented and
+reviewed at `81b135c1`, with 298/298 focused tests plus owned PostgreSQL qualification.
+The first run under the subsequent five-run grant published
+`bf66f41d-f8ec-4a8d-bc26-927ee69bbab9`: 22 new BL documents, all ordinary User-only
+reads passed, exact new context captured, original CL and four prior BL publications
+unchanged. Usage: 22 requests / 373,836 known tokens. Earlier five semantic findings
+improved; two new localized overstatements remain. A generic prompt follow-up is
+independently accepted with 105/105 focused tests. Full163 preflight found two ineligible roots and a
+32-MiB aggregate reader limit; the larger invocation has not started. See
+[exact result, findings and full-scope blockers](run-context-qualification-2026-10-12.md)
+and [bounded context amendment](run-context-override.md). Historical one-run stops
+below describe their own consumed grants; current authority is recorded in that amendment.
+
+
 Latest runtime checkpoint (2026-10-12): the explicitly authorized context-aware
 22-root BL-only run on `1674979c` completed with exit 0 and settled normally.
 New publication `d2f63e4d-107a-41c8-b213-e18fccf857cb` contains 22 new BL versions;
@@ -238,3 +252,5 @@ hash to accepted main, then source-checked the documentation against compiled co
 and runner/store behavior. No production edits, new tests, migrations, provider calls,
 database access, production-source access or host startup occurred. No other chat was messaged.
 Stop here for the user's next Business prompt.
+
+
