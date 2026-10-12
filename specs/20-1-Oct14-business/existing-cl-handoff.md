@@ -1,5 +1,15 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest runtime checkpoint (2026-10-12): the explicitly authorized context-aware
+22-root BL-only run on `1674979c` completed with exit 0 and settled normally.
+New publication `d2f63e4d-107a-41c8-b213-e18fccf857cb` contains 22 new BL versions;
+all passed ordinary User-only reading. Original CL and all three prior BL
+publications are unchanged. Usage: 22 requests / 356,502 known tokens.
+The prior four targeted wording issues improved, but independent review found
+five other unsupported statements; this is not a clean semantic pass. See
+[exact result and findings](context-bl-run-2026-10-12.md). The one-run grant is
+consumed; stop before further generation or scope expansion.
+
 Latest implementation (2026-10-12): the user-authorized
 [prompt and scoped-context correction](advisory-context-correction.md) adds generic
 evidence-strength instructions, named gap counts, and bounded immutable System
