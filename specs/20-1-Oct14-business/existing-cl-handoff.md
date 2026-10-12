@@ -1,19 +1,22 @@
 # Existing accepted CL → Business Logic: owner handoff
 
-Latest local checkpoint (2026-10-12): run-local advisory context is implemented and
-reviewed at `81b135c1`, with 298/298 focused tests plus owned PostgreSQL qualification.
-The first run under the subsequent five-run grant published
-`bf66f41d-f8ec-4a8d-bc26-927ee69bbab9`: 22 new BL documents, all ordinary User-only
-reads passed, exact new context captured, original CL and four prior BL publications
-unchanged. Usage: 22 requests / 373,836 known tokens. Earlier five semantic findings
-improved; two new localized overstatements remain. A generic prompt follow-up is
-independently accepted with 105/105 focused tests. Full163 preflight found two ineligible roots and a
-32-MiB aggregate reader limit; the larger invocation has not started. See
-[exact result, findings and full-scope blockers](run-context-qualification-2026-10-12.md)
-and [bounded context amendment](run-context-override.md). Historical one-run stops
-below describe their own consumed grants; current authority is recorded in that amendment.
+Latest local checkpoint (2026-10-13 Asia/Shanghai): run-local context is implemented
+at `81b135c1` (298/298 focused tests plus owned PostgreSQL qualification). The generic
+wording follow-up is `cca9d8cb` (105/105 focused synthesis tests); both passed
+independent review. Two paid 22-root runs completed and settled under the five-run
+grant. Latest publication `5c54c693-0575-4171-86f5-a0f6048c8adc` contains 22 new BL
+documents / 204 claims, all ordinary User-only reads passed. Exact new context is
+retained; original CL and all five prior BL publications are unchanged. Combined
+usage: 44 requests / 767,225 known tokens. Three paid runs remain unused.
 
-
+Independent review found three wording errors across two latest documents; this is
+useful generated output, not a clean semantic pass. Stop paid attempts here rather
+than repeatedly seeking a cleaner sample. Full-scope preflight also found two
+ineligible roots and a measured 32-MiB reader-cap failure for the other 161 roots.
+The management scope decision for exclusions and bounded reader correction remains
+pending. See [exact results, findings and blockers](run-context-qualification-2026-10-12.md)
+and [context amendment](run-context-override.md). No CL rescan, migration, Web restart,
+merge or push occurred. Historical stops below describe their own earlier grants.
 Latest runtime checkpoint (2026-10-12): the explicitly authorized context-aware
 22-root BL-only run on `1674979c` completed with exit 0 and settled normally.
 New publication `d2f63e4d-107a-41c8-b213-e18fccf857cb` contains 22 new BL versions;
@@ -252,5 +255,3 @@ hash to accepted main, then source-checked the documentation against compiled co
 and runner/store behavior. No production edits, new tests, migrations, provider calls,
 database access, production-source access or host startup occurred. No other chat was messaged.
 Stop here for the user's next Business prompt.
-
-

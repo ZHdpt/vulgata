@@ -92,7 +92,7 @@ Evidence: ignored `TestResults/business-override-postrun-1/verification.json`,
 `context-verification.json`, `dependency-verification.json`, and the readable
 `business-logic-documents.md`. This is real provider, PostgreSQL and ordinary-user
 owner API qualification. It is not browser/Web deployment qualification. The running
-Web app was not restarted or modified. Independent semantic review is pending below.
+Web app was not restarted or modified. Independent semantic findings are recorded below.
 
 
 ## Independent semantic assessment
@@ -128,3 +128,105 @@ prove natural-language semantic correctness. A second fresh 22-root run is cover
 by the existing five-run grant and must retain a separate publication and ordinary
 reader verification. The first run's two findings remain attached to its immutable
 publication; prompt changes do not retroactively fix it.
+
+## Reader correction proposal — awaiting management scope decision
+
+Read-only assessment recommends bounded per-document loading rather than increasing
+the publication-wide cap. Preserve public reader contracts, page/encoder limits,
+exact immutable selection, search matching/order/cursors, complete dependencies and
+live pre/post-log authorization. Open selection would use compact membership;
+exact reads would verify one bounded canonical document; search would scan bodies
+one at a time while retaining bounded match metadata; related reads would load the
+exact target, incident relationships, endpoint provenance and owned uncertainties.
+Coverage and complete gaps remain independently loaded and authorized.
+
+Likely owned files: OctoberKnowledgeReader, OctoberKnowledgePublishedSource,
+OctoberKnowledgeSelectionAuthority, the narrowly affected disclosure operation seam
+and Business-owned tests. No schema, migration, provider setting, Scan strategy,
+consumer implementation or shared Web composition change is proposed. Reuse only
+validated immutable authority within one read operation; live Identity, scope and
+contributor checks remain fresh. No cross-request authorization cache is proposed.
+
+The 32-MiB size failure is measured. Repeated whole-request authority validation is
+visible in code, but its contribution to latency is not yet measured. Search would
+still have bounded total work and deadlines; streaming reduces resident memory,
+not necessarily total work. Qualification must prove parity, cursor integrity,
+revocation handling, complete lineage, large-publication behavior and actual database
+query/latency/memory bounds. A new persisted index, changed search semantics,
+larger single-record limits, relaxed checks, deadline expansion or other-lane edits
+would require another concrete scope decision. No implementation has begun.
+
+## Second authorized 22-root invocation
+
+After 105/105 focused tests and independent acceptance, checkpoint
+`cca9d8cb11cdaaff92af6210e665c8086ff2cc94` was pinned for the next invocation.
+Read-only preflight reconfirmed the same corpus, 22 roots, context packets and 12
+prior settlement/abandonment receipts. Protected provider/model bindings remain
+DeepSeek/deepseek-flash. The new process started at 15:40:35 UTC, PID 25504;
+RunId `a143d9fb-316e-4092-8ebc-5083ed6c77d2` was admitted at 15:40:38 UTC.
+This is run 2 of the existing five-run allowance, not a retry of an indeterminate
+operation. It uses the same approved 22-root limits and a separate launch marker.
+The second invocation completed and settled as recorded below. Logs: ignored `TestResults/business-override-run-2/`.
+
+## Second confirmed publication and ordinary reading
+
+Run 2 exited zero without watchdog expiry after 1,304.39 seconds. New publication:
+`5c54c693-0575-4171-86f5-a0f6048c8adc`; finalization operation:
+`26fc872c-80e7-4d35-9111-bc25835b5d2e`. CompleteBusinessFromCl committed for
+RunId `a143d9fb-316e-4092-8ebc-5083ed6c77d2` at 16:02:19 UTC (00:02:19 on
+October 13 in Asia/Shanghai). Execution Completed; Business completed; publication
+Confirmed; exact lookup Published / AlreadyCommitted. No indeterminate retry occurred.
+
+Usage: 22 requests, 184,851 input plus 208,538 output = 393,389 known tokens.
+No structural correction requests were needed. Model wait was 16:45.878 and
+store/read wait 4:21.899. Across this five-run grant, two runs have consumed 44
+requests and 767,225 known tokens; three runs remain unused. No full-scope paid
+invocation has occurred.
+
+Owner and ordinary User-only checks passed for all 22 new BL documents / 204
+claims / 185 publication members. The reader returned one page per document,
+21,391 characters total; Business-mode CL reading was denied. The temporary user
+was removed and absence checked. The exact four run-context entries were retained.
+All 163 original CL versions and all five previous BL publications remained
+unchanged. Every generated group retained exact CL membership/dependencies and
+complete stored file uncertainty dependencies, with zero invented relationships.
+
+Evidence is under ignored `TestResults/business-override-postrun-2/`:
+`verification.json`, `context-verification.json`, `dependency-verification.json`,
+`semantic-review.json` and `business-logic-documents.md`. This remains owner API
+qualification, not a Web deployment/browser claim. No Web app was restarted.
+Independent semantic assessment of this second output follows.
+
+## Second independent semantic assessment and stop disposition
+
+All 22 titles and 204 generated claims were reviewed against exact cited accepted CL.
+All references resolve. The immediately preceding successor and combo-precondition
+findings were corrected. Three material wording findings remain across two documents:
+
+| BL version / claim | Exact finding |
+| --- | --- |
+| `fccd0c76-f1ee-8769-09d8-53c653ade53e` / `biz-pwd-2` | Adds a successful-validation prerequisite (“登录密码验证通过时”). CL `217b7ece-ef71-4209-959f-419229bd0cd7`, `pwdbranch/am-5`, uses “通过 flowEmbedOp” to describe the invocation mechanism, not a success predicate. |
+| `4984d903-f702-914c-6011-1f307efca284` / `error-count-c1` | Adds missing-value fallback (“若无则为0”). CL `0250cf38-cfe7-45cf-9e01-8431f30e7bb9`, `errCount/c1`, ties the daily error count or zero to a last-error-date comparison. |
+| Same BL / `verify-result-c1` | Reverses assignment direction in prose. Cited `verify/c1` assigns `${GUEST_INFO}` to `_PWD_INFO`; the generated wording describes password information mapping into customer information. |
+
+No new unsupported cross-repository-completeness or advisory-context-as-source-proof
+claim was found. Required-field specificity, debug activation, customer-status naming
+and IS_OFTEN wording remain corrected. Gesture-password pre-update counter wording
+is inherited from CL; uncertain termination stays qualified; contradictory identity
+branches remain visible. Several documents remain technical, particularly the long
+self-registration node inventory. This is useful generated output with remaining
+findings, not an unconditional semantic pass or physical-source requalification.
+
+Stop after two settled paid runs. A third prompt-only rerun is not justified merely
+to seek a cleaner sample: the immediate fixes worked, but other error categories
+recurred. Do not silently edit either immutable publication. The two affected second-run
+documents need caution before presentation; the exact findings above must accompany
+any use. A stronger semantic qualification/correction approach would be a separate
+bounded decision, not an automatic activation of the held reasoning/JSON redesign.
+
+Full-scope paid execution remains held: two roots fail existing eligibility, the
+161 eligible roots exceed the current whole-publication read cap even with minimal
+controlled content, and the latest model output is not a clean semantic pass.
+The management scope question for explicit root exclusions and bounded reader work
+remains unanswered. Three paid runs remain unused. No migration, Web restart,
+container creation, merge, push, global-setting change or other-lane edit occurred.
