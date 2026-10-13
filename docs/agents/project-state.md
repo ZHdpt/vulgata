@@ -1,11 +1,13 @@
 # Project state for agent resumption
 
-October 13 Business retrieval: the original database now has the purpose-only
-migration, applied after a fresh restore-verified backup with application data unchanged.
-The first authorized retrieval-enabled BL trial settled without publication: ten
-source reads returned Unavailable and review failed with JsonInvalid. All ten prior
-publications and the original 163 CL documents are preserved. No retry or recording-app
-change occurred. See [trial evidence and remaining diagnosis](../../specs/20-1-Oct14-business/retrieval-trial-2026-10-13.md).
+October 14 Business retrieval: the original database has the purpose-only migration,
+applied after a restore-verified backup. The BL-only recovery loop fixed contained
+source identity observation and review-stage schema repair; actual provider retrieval
+now succeeds. Three additional bounded attempts settled without publication, with
+semantic findings retained for correction. All ten prior publications and163 CL
+documents remain unchanged. No additional migration or recording-app change occurred.
+See [current recovery evidence](../../specs/20-1-Oct14-business/bl-recovery-loop.md)
+and [backup/migration evidence](../../specs/20-1-Oct14-business/retrieval-trial-2026-10-13.md).
 
 October 13 Explorer UI: document and graph pages use light styling independently
 of Knowledge mode. Reader continuation controls appear only when more content is

@@ -72,3 +72,14 @@ The fixture now asserts $.sections, the first unknown property after production
 canonicalization, rather than the raw-response probe's $.title. Independent Astra
 medium review found no blocking issue, pending the focused GREEN gate.
 Focused synthesis/source GREEN: 136/136, zero failures/skips (TestResults/isolation-e0e84c8bb4b447bd847fcc6832d8235d/results.trx).
+
+Attempt 3 (`c4bb3dcf-5ba4-4699-8046-80253d3832a5`,28cf5cdc) settled without
+publication after288.9 seconds:10 requests,276067 input+66227 output=342294 tokens.
+Two exact source reads completed. Review stage now produced review JSON and structural
+repair succeeded. Final semantic rejection identified three remaining citation/meaning
+errors; all ten prior publications and163 CL documents were verified unchanged.
+Prompt now requires each combined fact to be covered by the claim's own Inputs and
+checks all claims during semantic correction, not only initially negative findings.
+References/qualifications/IDs remain fixed. Independent Astra review accepted this
+prompt-only correction; no source-specific answers or acceptance relaxation added.
+Focused stage/review correction tests:3/3 passed,zero skips (TestResults/isolation-c64f7d6945ae4aae84aedf8486d4886c/results.trx).

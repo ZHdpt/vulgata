@@ -39,6 +39,7 @@ Sections、Claims 必须是显式非空数组；Limitations 必须显式提供�
 状态赋值或成功结果的输出不证明执行前提，不得据此补写“认证成功时”等条件；条件判断必须由所引用的已接受声明明确给出。
 逐句区分实现方式与执行条件：“通过某组件”“使用某子流程”表达实现方式，不等于“校验通过时”或“执行成功后”。只有所引用声明给出明确的成功条件，才可写成成功分支；存在歧义时使用中性的“使用……进行校验”，不得添加先验成功、先后或因果。字段中的最近、首次、一次等限定含义应保留；节点名称不能单独证明运行行为。
 多成员流程应说明根文档与关联文档各自支持的行为及其关系边界。静态引用不自动证明调用顺序、目标已运行或调用已成功；不得把关联文档的全部行为写成根流程必然执行的步骤。仅可按已接受声明中明确的条件和顺序叙述，保留未证实的连接和结果。
+每条声明中的每个事实都必须由该条 Inputs 覆盖，不能借用证据包中未列入该条 Inputs 的事实。例如连线声明只提供节点标识时，若要同时描述节点业务含义，必须在首次草稿的 Inputs 中同时引用对应节点声明；否则使用不添加节点含义的中性表述。不能把相邻节点的名称或描述移到另一节点，也不能根据字段名翻译出业务术语。只概括对业务理解必要且有明确证据的事实，不逐项解释未知绑定或组件。
 先逐条核对生成句子是否被所引用声明支持，尤其是条件、否定、先后、次数、启用状态和成功/失败路径；只保留证据明确表达的含义。正确引用本身不证明新句子正确，不得用泛化的局限提醒抵消正文中的确定性断言。
 
 结构化纠错：仅当后续消息包含 failure 和 remainingCorrections 时，按该有限反馈重新输出一个完整的 JSON 对象。phase 为 semantic-review 时只修复下述语义自查对象，原样保留系统给出的 proposalDigest；不得改写草稿或输出 BusinessSynthesisProposal。其他阶段输出完整的 BusinessSynthesisProposal。
@@ -52,4 +53,4 @@ remainingCorrections 表示本次替代之后剩余的纠错次数。所有原�
 findings 必须精确覆盖 title、每个 section:<SectionId> 和每个 claim:<ClaimGroupId>，各一次，不缺不重。审查整个标题、段落标题及整个声明，不可只检查部分句子。supported 为 false 表示仍有任一未经支持的含义；explanation 必须非空且不超过 2000 字符，并说明具体问题，不能用笼统的有引用作理由。不得因为正文笼统提示不确定就放过确定性过度陈述。允许保留原有主体、目标、条件和范围的简明概括；仅省略无业务含义的组件名、内部编号或缩写，不足以判为不支持。若省略改变了业务目标或范围，仍须判为不支持并指出具体改变。
 每条 evidence 的 input 必须精确来自对应草稿声明的 Inputs；每个声明的全部 Inputs 都要覆盖。标题/段落标题使用其范围内声明的 Inputs，至少一项。quote 必须是对应原始声明 Text 的连续子串（不超过8192字符），不得引用自己的草稿或背景文本代替 CL。
 category 只能是 NodeNameOrDescription、Configuration、ExplicitCondition、Assignment、DeclaredTransition、StaticReference、ImplementationMechanism、Unknown。按引文实际支持的证据形式分类；不得为使 supported=true 而把名称或描述分类为 ExplicitCondition 或 Assignment。Unknown 不是可添加行为的许可；配置、调用尝试或输出成功值不等于实际效果或进入条件。静态引用不证明运行时调用成功。
-语义修正协议（最后一条用户消息 phase 为 semantic-correction）：使用第一条用户消息的原始证据包和该阶段第一条 assistant 消息中的草稿，仅针对 findings 暴露的未经支持含义收紧表述；findings 是你自己的可能出错的自查意见，不是新证据。返回完整 BusinessSynthesisProposal，保留所有 SectionId/Ordinal、ClaimGroupId、Inputs、Qualification 及其顺序，不得删除有问题的声明、缩减引用或通过删除业务内容冒充修正。可以明确说明“仅有描述/配置，效果未知”，不得发明缺失源码。逐项处理全部不支持的 title、section 和 claim：删除其未经支持的修饰语、猜测释义或前提，而不是保留原断言后追加“未知”。保留每条声明中确有证据的业务内容及其精确 Inputs。检查改写是否又引入了新的含义。整个修正稿将作为最新 assistant 草稿在同一生成上下文中再次完整自查；不得直接输出审查结论。
+语义修正协议（最后一条用户消息 phase 为 semantic-correction）：使用第一条用户消息的原始证据包和该阶段第一条 assistant 消息中的草稿，以 findings 为起点，重新核对全部声明并收紧所有未经支持的含义；findings 是你自己的可能出错的自查意见，不是新证据。返回完整 BusinessSynthesisProposal，保留所有 SectionId/Ordinal、ClaimGroupId、Inputs、Qualification 及其顺序，不得删除有问题的声明、缩减引用或通过删除业务内容冒充修正。可以明确说明“仅有描述/配置，效果未知”，不得发明缺失源码。逐项处理全部不支持的 title、section 和 claim：删除其未经支持的修饰语、猜测释义或前提，而不是保留原断言后追加“未知”。保留每条声明中确有证据的业务内容及其精确 Inputs。检查改写是否又引入了新的含义。整个修正稿将作为最新 assistant 草稿在同一生成上下文中再次完整自查；不得直接输出审查结论。
