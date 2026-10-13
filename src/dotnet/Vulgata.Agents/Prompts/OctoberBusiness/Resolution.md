@@ -62,3 +62,10 @@ Advisory statements, missing runtime implementations and absence of deployment p
 Limitations, not fabricated source assertions. Set HasUnresolvedDecisiveOpposition according to whether
 there is decisive opposition to this static reference itself; runtime execution remains unproved even
 when the static reference is supported. Never discard actual source opposition or infer missing facts.
+
+OpposingAssertions has exactly the same per-item object structure as SupportingAssertions.
+Its Kind is the JSON number 4, never "Opposing" or another string. Each item must contain the full
+Document object, SectionId string, ClaimGroupId string, Evidence object, ExactAcceptedText string
+and Interpretation string. Do not put a limitation string, a list of citations, a summary object,
+or a single assertion object directly in place of this array. With no source-qualified opposition,
+return OpposingAssertions: [] and keep all relevant caveats as strings in Limitations.

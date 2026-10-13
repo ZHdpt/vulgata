@@ -133,3 +133,17 @@ case-insensitive matching of known JSON property names, to diagnose the unproces
 response shape without exposing raw values or paths. No schema/policy change.
 
 Field-category RED: 13 selected, 9 passed/4 failed (isolation-3a19adc7d1c64d4e996795257a92345b). GREEN: 26/26 (isolation-35513d71a77e4906b4d0e36df898c1f5). Independent review PASS. Third window attempt is bounded to20minutes plus60secondwatchdog; preserves/reuses5existingUnresolved outcomes,6inquiriesremain.
+
+### Third run in the one-hour window
+
+Checkpoint `dc1def6fdfe6cee8f2d913d677984aecb7282f45`; RunId
+`6f6c4893-6807-421f-9415-419b57dbf996`, started05:25:16UTC, exited after158.08seconds.
+Three requests:56,096input+29,794output=85,890known tokens. Two source-backed
+static References were accepted by the owner store; five prior Unresolved outcomes
+were reused. The next response failed WitnessShape in OpposingAssertions. No BL
+publication; completion confirmed, all seven original publications unchanged, all
+seven outcomes independently replay-validated. Clarify the opposing assertion array
+and numeric Kind without changing policy. A subsequent run reuses these seven
+outcomes and processes four remaining inquiries. Evidence: business-links-run-5.
+
+Opposition-shape prompt clarification: independent review PASS; focused executor GREEN28/28 (isolation-bbd731ccd842445094ad720edffb6ee6). Next continuation deadline14minutes plus60secondwatchdog, within the one-hour grant.
