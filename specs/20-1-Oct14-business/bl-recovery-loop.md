@@ -83,3 +83,13 @@ checks all claims during semantic correction, not only initially negative findin
 References/qualifications/IDs remain fixed. Independent Astra review accepted this
 prompt-only correction; no source-specific answers or acceptance relaxation added.
 Focused stage/review correction tests:3/3 passed,zero skips (TestResults/isolation-c64f7d6945ae4aae84aedf8486d4886c/results.trx).
+
+Attempt4 (`fc198a09-86dd-41b2-88ca-37517f410691`,1fda3a0c) settled without
+publication after233.96seconds:9requests,257113input+51685output=308798tokens.
+Four exact source reads completed. Correction resolved most findings; final review
+still rejected inferred field meaning and unsupported configuration classification.
+All ten previous publications/163CL documents remain unchanged. Draft guidance now
+prioritizes useful core behavior/conditions/unknowns with a soft concise structure,
+omitting irrelevant binding paraphrase while preserving material conditions and limits.
+Independent Astra review passed; dependency completeness is not narrative completeness.
+Focused stage/review tests3/3passed,zero skips:TestResults/isolation-ca19140b9b2f48398f728630b7a716fb/results.trx.
