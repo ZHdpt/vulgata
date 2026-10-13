@@ -41,3 +41,19 @@ verification; temporary approvals closed. It made no provider call and changed n
 CL/BL data. Build-only diagnostic variable-name failures were corrected and are not
 counted as behavioral RED. Review diagnostics now distinguish invalid review evidence
 from malformed JSON and retain the last rejected response only in protected capture.
+
+Attempt 1 (`1b2a280b-a4f5-4a66-a475-bef29b98fba1`, e6027ce0) settled without
+publication after 364.35 seconds: 11 requests, 327219 input + 81442 output = 408661
+known tokens. No retrieval calls were made by the model. Review structural repair
+worked; the final valid verdict still rejected four unsupported statements. All ten
+prior publications and 163 CL documents were verified unchanged.
+
+Prompt correction now requests 1–3 relevant source reads before drafting when
+available, concise Business prose, and explicit removal of unsupported assertions
+across titles/sections/claims. Review permits omission of meaningless technical
+labels only if actor/target/conditions/scope stay intact; no weaker factual standard.
+Independent Astra medium review accepted. Focused prompt/source/review GREEN:6/6,
+zero skips/failures (`TestResults/isolation-3f75a7132f314caaad50c72717b2a49b/results.trx`).
+Whole-corpus planner preview assessed all163 roots:161 eligible groups,4 connected,
+2 roots fail existing source-backed-primary qualification. Largest model packet55453
+UTF8 bytes. Those two must remain explicit evidence gaps, not fabricated BL.
