@@ -71,6 +71,20 @@ public sealed class OctoberWorkerClientFactory
         endpoint.Host.Equals("api.deepseek.com", StringComparison.OrdinalIgnoreCase) && endpoint.AbsolutePath == "/" &&
         endpoint.Query.Length == 0 && endpoint.UserInfo.Length == 0 && endpoint.Fragment.Length == 0;
 
+    internal static OpenAIClientOptions CreateBusinessClientOptions(Uri endpoint, HttpClient http) => new()
+    {
+        Endpoint = endpoint,
+        // The linked Business owner/lease token supplies the operation deadline.
+        NetworkTimeout = Timeout.InfiniteTimeSpan,
+        RetryPolicy = new ClientRetryPolicy(0),
+        Transport = new HttpClientPipelineTransport(http, false, null),
+        EnableDistributedTracing = false,
+        ClientLoggingOptions = new ClientLoggingOptions
+        {
+            EnableLogging = false, EnableMessageLogging = false, EnableMessageContentLogging = false
+        }
+    };
+
     private sealed class SelectedClient(Uri endpoint, string profileId, string model, string secret, HttpMessageHandler? supplied,
         OctoberWorkerHttpObservation? observation, string? deepSeekWorkerReasoningEffort)
         : IChatClient, IOctoberWorkerCorrectionClient, IOctoberBusinessSynthesisClient
@@ -123,22 +137,12 @@ public sealed class OctoberWorkerClientFactory
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
-            var settings = new OpenAIClientOptions
-            {
-                Endpoint = endpoint,
-                RetryPolicy = new ClientRetryPolicy(0),
-                Transport = new HttpClientPipelineTransport(http, false, null),
-                EnableDistributedTracing = false,
-                ClientLoggingOptions = new ClientLoggingOptions
-                {
-                    EnableLogging = false, EnableMessageLogging = false, EnableMessageContentLogging = false
-                }
-            };
+            var settings = CreateBusinessClientOptions(endpoint, http);
             using IChatClient client = new ChatClient(model, new ApiKeyCredential(secret), settings).AsIChatClient();
             // Await the actual SDK task through its body read and per-call wrapper cleanup.
             // The Business caller alone completes observation and settles the supplied lease.
             ChatOptions? requestOptions = options;
-            if (strategy is not null)
+            if (strategy is not null || deepSeekWorkerReasoningEffort == "low")
             {
                 requestOptions = options?.Clone() ?? new();
                 requestOptions.Reasoning = disableThinking ? null : deepSeekWorkerReasoningEffort == "low"

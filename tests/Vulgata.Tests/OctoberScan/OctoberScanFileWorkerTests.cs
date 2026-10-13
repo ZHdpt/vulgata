@@ -4275,14 +4275,14 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task DeepSeekLowReasoning_ClonesCallerOptionsAndLeavesBusinessNonstreamingUnchangedAsync()
+    public async Task BusinessSdk_LowReasoningClonesCallerOptionsAndPreservesStreamingAndDisabledSynthesisAsync()
     {
         var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
             "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
         using var transport = new ControlledHttp();
         using var client = await new OctoberWorkerClientFactory(new Secrets(), transport, deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
         var originalReasoning = new ReasoningOptions { Effort = ReasoningEffort.High };
-        var options = new ChatOptions { MaxOutputTokens = 8192, Reasoning = originalReasoning };
+        var options = new ChatOptions { MaxOutputTokens = 8192, Reasoning = originalReasoning, ResponseFormat = ChatResponseFormat.Json };
         ChatMessage[] history = [new(ChatRole.User, "controlled input")];
         string before = JsonSerializer.Serialize(history);
         var port = Assert.IsAssignableFrom<IOctoberWorkerAttemptClient>(client);
@@ -4298,11 +4298,73 @@ public sealed class OctoberScanFileWorkerTests(ITestOutputHelper output)
         using var business = await new OctoberWorkerClientFactory(new Secrets(), businessTransport, deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
         var businessPort = Assert.IsAssignableFrom<Vulgata.Agents.OctoberBusiness.IOctoberBusinessAttemptClient>(business);
         await using var businessLease = new CapDispatchLease(new Lease(Guid.NewGuid()));
-        await businessPort.GetAttemptResponseAsync(history, new ChatOptions { MaxOutputTokens = 8192 }, businessLease, _ => { });
+        await businessPort.GetAttemptResponseAsync(history, options, businessLease, _ => { });
         using var businessBody = JsonDocument.Parse(Assert.Single(businessTransport.Requests).Body);
-        Assert.False(businessBody.RootElement.TryGetProperty("reasoning_effort", out _));
+        Assert.Equal("low", businessBody.RootElement.GetProperty("reasoning_effort").GetString());
         Assert.False(businessBody.RootElement.TryGetProperty("thinking", out _));
         Assert.Equal(8192, businessBody.RootElement.GetProperty("max_tokens").GetInt32());
+        Assert.Same(originalReasoning, options.Reasoning);
+        Assert.Equal(ReasoningEffort.High, options.Reasoning.Effort);
+        Assert.Equal(8192, options.MaxOutputTokens);
+        Assert.Equal(before, JsonSerializer.Serialize(history));
+        var synthesis = Assert.IsAssignableFrom<Vulgata.Agents.OctoberBusiness.IOctoberBusinessSynthesisClient>(business);
+        await using var synthesisLease = new CapDispatchLease(new Lease(Guid.NewGuid()));
+        await synthesis.GetSynthesisResponseAsync(history, options, synthesisLease,
+            Vulgata.Agents.OctoberBusiness.BusinessSynthesisAttemptStrategy.ThinkingDisabled, _ => { });
+        using var disabled = JsonDocument.Parse(businessTransport.Requests[1].Body);
+        Assert.Equal("disabled", disabled.RootElement.GetProperty("thinking").GetProperty("type").GetString());
+        Assert.False(disabled.RootElement.TryGetProperty("reasoning_effort", out _));
+        Assert.Same(originalReasoning, options.Reasoning);
+        Assert.Equal(ReasoningEffort.High, options.Reasoning.Effort);
+        Assert.Equal(before, JsonSerializer.Serialize(history));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void BusinessSdk_ActualPipelineMessage_HasNoIndependentNetworkDeadline()
+    {
+        using var transport = new ControlledHttp { NonStreaming = true };
+        using var http = new HttpClient(transport) { Timeout = Timeout.InfiniteTimeSpan };
+        var options = OctoberWorkerClientFactory.CreateBusinessClientOptions(new Uri("https://api.deepseek.com"), http);
+        var pipeline = System.ClientModel.Primitives.ClientPipeline.Create(options);
+        using var message = pipeline.CreateMessage();
+        Assert.Equal(Timeout.InfiniteTimeSpan, message.NetworkTimeout);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BusinessSdk_OwnerCancellation_ReachesActualPendingTransportWithoutRetryAsync()
+    {
+        using var transport = new BusinessCancellationHttp();
+        var selected = new OctoberSelectedWorkerProvider("explicit-source", "only-source", new("selected", ApiType.ChatCompletions,
+            "https://api.deepseek.com", "deepseek-flash", "credential://selected"), "synthetic-selected-cipher");
+        using var client = await new OctoberWorkerClientFactory(new Secrets(), transport, deepSeekWorkerReasoningEffort: "low").CreateAsync(selected);
+        var port = Assert.IsAssignableFrom<Vulgata.Agents.OctoberBusiness.IOctoberBusinessAttemptClient>(client);
+        await using var lease = new CapDispatchLease(new Lease(Guid.NewGuid()));
+        using var owner = new CancellationTokenSource();
+        var pending = port.GetAttemptResponseAsync([new(ChatRole.User, "Controlled accepted evidence")],
+            new ChatOptions { MaxOutputTokens = 40, ResponseFormat = ChatResponseFormat.Json }, lease, _ => { }, owner.Token);
+        await transport.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.False(pending.IsCompleted);
+        owner.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.True(transport.ObservedCancellation);
+        Assert.Equal(1, transport.Calls);
+    }
+
+    private sealed class BusinessCancellationHttp : HttpMessageHandler
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public int Calls { get; private set; }
+        public bool ObservedCancellation { get; private set; }
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Calls++;
+            Entered.TrySetResult();
+            try { await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken); }
+            catch (OperationCanceledException) { ObservedCancellation = cancellationToken.IsCancellationRequested; throw; }
+            throw new InvalidOperationException("The controlled transport ends only through owner cancellation.");
+        }
     }
 
     [Trait("Suite", "SelfContained")]
