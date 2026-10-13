@@ -1,5 +1,15 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest correction and rerun (2026-10-13): Business-only SDK deadline and resolution
+low-reasoning fixes are committed at `348f90e5`, with 423/423 focused tests and
+independent review passing. The one authorized rerun
+`64a9cb86-d08d-4758-862a-4d193fbb501f` received a response in 68 seconds
+(29,336 known tokens), then failed with `business_resolution_ineligible` before
+accepting an edge or publishing BL. It is settled; all seven prior publications
+are unchanged. Exact underlying response/authorization failure is not exposed by
+the current diagnostics. See [transport correction and rerun evidence](business-transport-correction.md).
+Four of five invocations are consumed; one remains unused. No automatic rerun.
+
 Latest real link qualification (2026-10-13): the explicitly authorized one-root
 paid run stopped on its first resolution request after approximately 100 seconds.
 Run `86b950d4-20ea-4125-8fa4-67a12e634082` is locally settled; one request has unknown

@@ -36,3 +36,39 @@ retained-evidence v2 profile with its 11 corpus candidate inquiries. Limits rema
 launch marker. Reconfirm prior settlement and all seven immutable publications;
 never delete receipts or retry an indeterminate provider operation. No migration,
 CL regeneration, other-lane changes, Web restart, merge or push is authorized here.
+
+## Authorized rerun outcome
+
+Implementation checkpoint: `348f90e5a55252e54e65bba74190c62dfa33f194`.
+Run `64a9cb86-d08d-4758-862a-4d193fbb501f`, PID 54132, started at
+2026-10-13 04:40:49 UTC. BeginBusinessFromCl committed at 04:40:53 UTC and
+CompleteBusinessFromCl at 04:42:02 UTC. Process exit 1 after 73.47 seconds;
+no watchdog expiry and no automatic retry. This is invocation four of the five-run
+grant; one remains unused.
+
+One provider response returned with known usage: 15,472 input plus 13,864 output
+= 29,336 tokens; model wait 68.0154458 seconds. Resolution then returned
+`business_resolution_ineligible`; matching and Business are Unavailable,
+publication NotRequested. **Zero accepted v2 outcomes/edges; zero new BL.**
+The requested transport/configuration corrections are implemented and controlled-
+tested, but successful real link generation is still unqualified.
+
+This differs from the earlier 100-second no-response failure: a response and usage
+were obtained. The current executor maps several post-response failures (including
+parsing/validation exceptions and authorization failures) into a coarse admission
+status, and the host does not preserve a specific resolution diagnostic or raw
+witness on that exit. Therefore malformed JSON, invalid field shape, or a particular
+authorization cause cannot be established from this run's retained evidence.
+Do not weaken acceptance or guess an accepted edge from a failed response.
+
+Post-run authenticated read-only verification confirmed the matching completion
+receipt and unchanged exact membership/content projections of all seven previous
+publications. The 163 original CL versions remain readable. No new ordinary-user
+BL reading was possible and no temporary reader was created. No retained outcome,
+receipt, launch marker or publication was deleted or replaced.
+
+Evidence: ignored `TestResults/business-links-run-2/` contains authorization,
+preflight, process/terminal report, operation log and `after-run-verification.json`.
+The next bounded correction should expose safe resolution failure categories and
+controlled response-validation diagnostics before spending on another attempt.
+No additional paid run or diagnostic-code expansion was performed here.
