@@ -250,8 +250,7 @@ The user's conditional next experiment is implemented and independently reviewed
 default-false UseTextForJsonCorrection changes only the existing
 eligible correction's response format, preserving strict parsing and every budget.
 All31correction cases pass; full SelfContained4843/4844, sole existing report-parser
-failure. Isolated POM passed with1accepted file/6published Documents on one request
-(no correction exercised). All ten second-series whole trials failed final JSON
+failure. Isolated POM passed with1accepted file/6published Documents on one request (no correction exercised). All ten second-series whole trials failed final JSON
 validation with the flag enabled; none published. The user's conditional bounded
 hard-retry implementation is now independently reviewed: default off, two extra
 eligible corrections per file and sixteen per original run, same Worker/history,
@@ -358,15 +357,13 @@ Fresh run `phone-43e354514b75` stopped after 21.02 seconds and proves terminal g
 publications0. Source-free bootstrap/prepare passed; runtime stopped. Scan is now
 tracing the SDK event sequence; do not assume malformed model output or loosen
 validation without a controlled reproduction. Root owns any next paid retry.
-Newer SDK correction `88790331` passed main affected **186/186** controlled tests
-(isolation `98bc7f4a235445d88bb9bde9be257fba`). Real pilot `phone-56378a6c60d7`
+Newer SDK correction `88790331` passed main affected **186/186** controlled tests (isolation `98bc7f4a235445d88bb9bde9be257fba`). Real pilot `phone-56378a6c60d7`
 accepted **one CL Document**, then stopped after31.49s on second-file
 `BudgetExceeded/StreamTerminal`. Two requests, token totals unknown; **zero
 publications**, so ordinary-user read/BL/Chat/graph are not yet qualified. Retain
 partial database `vulgata_oct_pilot_beca4c15e7414fc7b4732d527f480f18` and keys.
 Scan owns bounded budget diagnosis; no unchanged retry or limit bypass.
-Budget diagnostics integrated as `31b00465`, main affected **192/192** passed
-(isolation `da32e16289cd4c8dbe1b33a0ac00a7a2`). New diagnostic run
+Budget diagnostics integrated as `31b00465`, main affected **192/192** passed (isolation `da32e16289cd4c8dbe1b33a0ac00a7a2`). New diagnostic run
 `phone-38a2b10a166c` diverged: `ProviderFailed` with all stage/reason fields null,
 19.83s, one request (2,438 input/648 output), accepted0/publications0. This is not
 proof of a remote outage and did not identify the earlier budget bound. Root has
@@ -384,8 +381,7 @@ exposure, and sanitized malformed-input refusal within existing budgets. Shared
 facades, Knowledge schemas, authorization/provenance fail-closed checks and primary
 evidence boundaries stay unchanged. Reviewed controlled GREEN is required before
 root decides live qualification. Prior accepted CL remains preserved and unpublished.
-Consolidated correction now integrated as `500e2f07`; main affected328/328 passed
-(isolation `ac98f025e95d44ea8a683ae81dc8a4ed`). Real `phone-1f2243ae6f6e` failed
+Consolidated correction now integrated as `500e2f07`; main affected328/328 passed (isolation `ac98f025e95d44ea8a683ae81dc8a4ed`). Real `phone-1f2243ae6f6e` failed
 after37.17s at **ProviderFailed/ToolInvocation**:2requests6,727input/676output,
 inventory77accepted0. This identifies local tool execution, not exact tool or cause.
 Paid runs held. Tool-outcome characterization integrated as `cbcfd139` (lane
@@ -398,8 +394,7 @@ authority/provenance/identity/expiry/unknown/cleanup failures remain fatal. No e
 retries, lifetime, budget or shared contracts. Scan owns reviewed controlled
 implementation; root owns any live qualification. The latest real failure is NOT
 proven JDT. Preserve prior partial CL; no presentation-ready publication yet.
-That correction is now integrated as `449e00bf`; main affected466/466GREEN
-(isolation `7899441b665e4e06b3543e8b8485160f`). Fresh real run `phone-5dabccf9027c`
+That correction is now integrated as `449e00bf`; main affected466/466GREEN (isolation `7899441b665e4e06b3543e8b8485160f`). Fresh real run `phone-5dabccf9027c`
 stopped51.13s with **BudgetExceeded/StreamTerminal/OutputBytes**,3requests,
 token totals unknown,accepted0. Accounting characterization is integrated as
 `723f6fce` (lane164/164 controlled GREEN): identical reasoning can exceed the cap
@@ -425,15 +420,13 @@ nonempty/path/range/size/distinctfile/currentness/authorization guards. No broad
 whitespace normalization, blanketComplete acceptance, newdiagnostics or nativeprobe.
 Scan owns separateRED/GREEN/review; paidrunsheld. Lastlivecause notprovenattributed.
 Prior partialCL retained.
-CRLFfix nowintegrated `cb5008c3`; mainaffected202/202GREEN
-(isolation `82e6065d6b2540bd8650f71dac5d0ef0`). Fresh `phone-7743a9fb013b`
+CRLFfix nowintegrated `cb5008c3`; mainaffected202/202GREEN (isolation `82e6065d6b2540bd8650f71dac5d0ef0`). Fresh `phone-7743a9fb013b`
 ended56.30s at InvalidOutput/ProposalParse,2requests7,883input/4,037output,accepted0;
 no tool/terminal/budgetfailure. Paidrunsheld. Integrator nowauthorized the previously
 proposed minimal fixed parser-category/schema-slot observation, original acceptance
 and status unchanged, no rawresponse/dynamicfieldnames. Diagnostics nowintegrated
 as `52fa489b`, main221/221GREEN (isolation `4a2bb3b23dec470a9a58a810180290fb`).
-Real `phone-64d5fbe0a2b9`54.94s,3requests15,195input/3,696output,accepted0 nowproves
-**parseFailure Syntax/Root**. Exact content/depth/empty/fence cause stillunknown.
+Real `phone-64d5fbe0a2b9`54.94s,3requests15,195input/3,696output,accepted0 nowproves **parseFailure Syntax/Root**. Exact content/depth/empty/fence cause stillunknown.
 Wire assessment `3a17cd1a` accepted: lane199/199 controls prove JSONmode remains
 initial/posttool and only finalleaf is parsed; no wire/assembly defect reproduced.
 User explicitly approved ONE diagnosticrun and protected local capture of only the
@@ -469,8 +462,7 @@ source, tools or DB involved. This establishes minimal provider behavior, not a
 Worker fix. SDK emitted `max_completion_tokens:8192`; DeepSeek documents `max_tokens`.
 The original two-probe grant is complete. A later verified direct user instruction
 in OCT-SCAN authorized the narrow adapter and testing. Characterization integrated
-as `833a05c1`, adapter as `299227de`; main affected342/342 passed, zero failures/skips
-(isolation `43279885958c4d50865985b9523ea096`). Two new synthetic streaming requests
+as `833a05c1`, adapter as `299227de`; main affected342/342 passed, zero failures/skips (isolation `43279885958c4d50865985b9523ea096`). Two new synthetic streaming requests
 with cap32 proved the old field did not enforce it (502 completion/378 reasoning,
 Stop), whereas `max_tokens` enforced32 (32 completion, all reasoning, Length).
 Both had DONE and matching HTTP/SDK text, no timeout. This establishes cap handling
@@ -515,16 +507,13 @@ or automatic root discovery. See the activation record for the exact scope;
 implementation approval does not supply missing live-spend/retained-host limits.
 
 Sequential/operator Scan is now integrated at `b270bfba` (owner 103/103 affected
-tests). Main combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` is
-**4,185/4,186, not GREEN**: a Chat seed failed before provider dispatch with
+tests). Main combined SelfContained run `7b467b17aee64b0fb730cc1d3e0d99c2` is **4,185/4,186, not GREEN**: a Chat seed failed before provider dispatch with
 ExecutionFailure and zero requests. A deterministic registration-order race was
 subsequently reproduced and the reviewed fix integrated at `3feca6fb`. The next
-combined run `19591731af10405197165d4a0e56e7ef` passed all Chat cases but remains
-**4,188/4,189**, with one Scan concurrent-execution test wait timeout under diagnosis.
+combined run `19591731af10405197165d4a0e56e7ef` passed all Chat cases but remains **4,188/4,189**, with one Scan concurrent-execution test wait timeout under diagnosis.
 The reviewed BL fixture/scenario compiled at `cafedace`
 (83/83 affected checks). Its approved live run `3bde4a7267ca4d7d9ecb5c38d50f6a7b`
-failed Interrupted without successful operator selection/publication after one provider request
-(2,095 input/2,889 output tokens); all owned resources were removed. The one-run
+failed Interrupted without successful operator selection/publication after one provider request (2,095 input/2,889 output tokens); all owned resources were removed. The one-run
 grant is consumed, with no automatic retry. Scan owns interruption diagnosis;
 hidden zero report counts do not establish absence of accepted CL. Safe fixture
 stage diagnostics and a controlled no-response reproducer are now integrated and
@@ -543,8 +532,7 @@ source/corpus validation and requiring exactly one eligible offered candidate.
 Independent source review accepted this test-only correction; its focused source-free
 checks pass 11/11 (`06acf5e8b4aa45e893b1c8940e7cdde6`). A newly approved corrected
 run on `028534d2`, `ca1f324058864d41b9d8d6684b28b0ef`, confirmed successful unique
-root selection and operator-response publication, then failed later in Generate
-(exit 1, source-or-execution-gap). It used two requests, 14,393 input/6,274 output
+root selection and operator-response publication, then failed later in Generate (exit 1, source-or-execution-gap). It used two requests, 14,393 input/6,274 output
 tokens; all owned resources were cleaned. Scan and Business own source-free
 diagnosis of the later failure. BL publication/reading remains unqualified;
 the latest one-run grant is consumed with no automatic retry.
@@ -571,8 +559,7 @@ parsing. The exact rejected type remains unknown. Worker diagnostic integration
 passed main 144/144 beforehand. Series totals are five requests/58,108 tokens;
 two attempts remain, cleanup verified. Business owns bounded envelope diagnosis.
 The installed-SDK ancillary reasoning compatibility defect was reproduced/fixed
-at `4b555cc7` (owner 403/403, main 80/80). Attempt 4
-(`d38660c31adc4a49b1dd7ea0b9000233`, source `1bb6b0ba`) passed the envelope guard
+at `4b555cc7` (owner 403/403, main 80/80). Attempt 4 (`d38660c31adc4a49b1dd7ea0b9000233`, source `1bb6b0ba`) passed the envelope guard
 but failed exact SectionReference validation. Business is diagnosing reference
 supply/prompt semantics, without weakening validation. Series totals seven
 requests/90,944 tokens; one live attempt remains. All disposable cleanup verified.
@@ -668,8 +655,7 @@ remain open. See the wave handoff for exact evidence and resource boundaries.
 
 Business attempt consumers `9950c8b` now implement the accepted lease-aware
 interface, exact profile checks, observed dispatch and terminal accounting. Root
-combined October/Explore/PreparedSource tests pass 2,008/2,008, zero skips
-(`1ce61f77cba84bf493b6890a5e13d5f6`). This does not replace the non-green full-suite
+combined October/Explore/PreparedSource tests pass 2,008/2,008, zero skips (`1ce61f77cba84bf493b6890a5e13d5f6`). This does not replace the non-green full-suite
 result above. Consumer correction `b3edb9e0` subsequently removed premature rate
 reservation and preserved typed final denial. Scan `95864e55` now supplies internal
 natural-completion and actual selected-client controlled conformance; root selection
@@ -901,16 +887,16 @@ Outside the completed retained-source work, these remain earlier static observat
 Use the feature evidence for current controlled source tests; no row proves a full
 runtime workflow:
 
-| Area | Existing value and limit |
-| --- | --- |
-| Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
-| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
-| CodeGraph/LSP | Integrated narrow adapters: 18.2 records 121 controlled JDT checks, real pinned JDT 1.58 navigation under application-supplied JDK 21, and 2,063 SelfContained passes. 18.3 records actual returned-descriptor native MCP use, process-exit corrections and 2,019 SelfContained passes. These are separate branch/owned-fixture results, not combined-root or customer-Repository qualification. General source-authority/reader integration remains unfinished; no preventive OS filesystem/network isolation is claimed. |
-| Knowledge | OCT-BUSINESS B0a implements atomic semantic file acceptance, immutable CL history, exact replay/lookup and sanitized logging in October persistence; focused controlled, owned PostgreSQL and two-process logger evidence is recorded in its quickstart. Real Scan authority/source adapters and B0b publication/live reads remain unqualified; legacy stores are not substitutes. |
-| Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |
-| Chat | Provider SSE is ingested but the current answer path buffers strict candidates and reveals accepted text in the UI. Pair-bound scope and process-local dialogue/publication are not genuine generic streaming/durable reattachment or Business BL-only behavior. |
-| Reader/graph | Current pages are placeholders; existing Knowledge/citation code is not a working exact-version reader or graph. The planned diagram package is not installed at this baseline. |
-| Runtime/operations | The current Compose profile is a baseline, not bundled-tool/source/key persistence or coherent backup/restore proof. Startup applies migrations/seeding. |
+| Area                       | Existing value and limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Source preparation         | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
+| CodeGraph/LSP              | Integrated narrow adapters: 18.2 records 121 controlled JDT checks, real pinned JDT 1.58 navigation under application-supplied JDK 21, and 2,063 SelfContained passes. 18.3 records actual returned-descriptor native MCP use, process-exit corrections and 2,019 SelfContained passes. These are separate branch/owned-fixture results, not combined-root or customer-Repository qualification. General source-authority/reader integration remains unfinished; no preventive OS filesystem/network isolation is claimed.                       |
+| Knowledge                  | OCT-BUSINESS B0a implements atomic semantic file acceptance, immutable CL history, exact replay/lookup and sanitized logging in October persistence; focused controlled, owned PostgreSQL and two-process logger evidence is recorded in its quickstart. Real Scan authority/source adapters and B0b publication/live reads remain unqualified; legacy stores are not substitutes.                                                                                                                                                               |
+| Resolution                 | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json.                                                                                                                                      |
+| Chat                       | Provider SSE is ingested but the current answer path buffers strict candidates and reveals accepted text in the UI. Pair-bound scope and process-local dialogue/publication are not genuine generic streaming/durable reattachment or Business BL-only behavior.                                                                                                                                                                                                                                                                                 |
+| Reader/graph               | Current pages are placeholders; existing Knowledge/citation code is not a working exact-version reader or graph. The planned diagram package is not installed at this baseline.                                                                                                                                                                                                                                                                                                                                                                  |
+| Runtime/operations         | The current Compose profile is a baseline, not bundled-tool/source/key persistence or coherent backup/restore proof. Startup applies migrations/seeding.                                                                                                                                                                                                                                                                                                                                                                                         |
 
 Consult actual `src/dotnet/`, `tests/Vulgata.Tests`, Docker/package files and the owning
 story before reuse. Earlier external assessment notes may help locate code, but the
