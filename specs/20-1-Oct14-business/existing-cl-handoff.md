@@ -1,5 +1,21 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest real run (October 13, 14:42–14:45 Asia/Shanghai): the newly authorized
+20-minute continuation completed and settled, using one synthesis request and
+19,738 known tokens. Publication `76616690-ea70-4ac0-93d0-bff60b457cad` contains
+one new BL, with ordinary User-only reading and CL denial verified. All earlier
+publications remain unchanged; all eleven resolution outcomes were reused and
+four supported static links are included. The selected authMethods group itself
+still has one member and zero member edges.
+
+Presentation hold: independent review found an unsupported success condition in
+`out-pwd-2` (a mechanism described as “through/using” became “after validation
+succeeds”). The immutable publication is preserved; no further paid attempt or
+manual content correction occurred. See [bounded publication and review evidence](bounded-bl-publication-2026-10-13.md).
+
+The recovery boundary below remains valid history; its no-new-publication statement
+applies to the recovery action, not this subsequent successful run.
+
 Current October 13 boundary: run `73f1e438-8f9f-4015-bfdf-9eedc36dbbac` is now
 administratively abandoned and fenced through the supported owner store. Recovery
 committed at 14:34:37 Asia/Shanghai and a separate lookup returned AlreadyCommitted.
