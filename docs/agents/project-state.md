@@ -1,12 +1,11 @@
 # Project state for agent resumption
 
-October 13 Business retrieval: the approved BL-only `read_referenced_source` tool
-reuses contained reads with explicit Business-purpose grants and exposes only
-exact source spans cited by member CL claims. It is opt-in and has not run against
-retained source or a provider. The additive approval-purpose migration was qualified
-in one isolated database on the existing PostgreSQL container; that database was
-removed, and the retained application database was untouched. See the
-[Business retrieval boundary and verification](../../specs/20-1-Oct14-business/referenced-source-retrieval.md).
+October 13 Business retrieval: the original database now has the purpose-only
+migration, applied after a fresh restore-verified backup with application data unchanged.
+The first authorized retrieval-enabled BL trial settled without publication: ten
+source reads returned Unavailable and review failed with JsonInvalid. All ten prior
+publications and the original 163 CL documents are preserved. No retry or recording-app
+change occurred. See [trial evidence and remaining diagnosis](../../specs/20-1-Oct14-business/retrieval-trial-2026-10-13.md).
 
 October 13 Explorer UI: document and graph pages use light styling independently
 of Knowledge mode. Reader continuation controls appear only when more content is

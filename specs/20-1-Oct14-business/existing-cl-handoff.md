@@ -1,5 +1,11 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest runtime boundary: the original database received the purpose-only migration
+after a verified backup. The first retrieval-enabled paid trial settled without BL
+publication: all ten reads returned Unavailable and review failed with JsonInvalid.
+All prior publications remain unchanged; [exact evidence and next diagnosis](retrieval-trial-2026-10-13.md).
+Earlier no-migration/no-paid-qualification statements below describe their historical checkpoints.
+
 Current implementation correction: runtime semantic checking now self-reviews the
 latest draft in reconstructed synthesis context, with explicit no-guess/no-invented-
 field-meaning instructions. 339 focused tests and independent code review passed;
