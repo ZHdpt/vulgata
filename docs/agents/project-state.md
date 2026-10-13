@@ -68,8 +68,13 @@ failure. The latter passed its unchanged focused replay 1/1 after process-local
 PATH correction; full-suite GREEN is not claimed. Scan reports 77 files/163 CL
 Documents retained; no new BL/provider/database/browser qualification occurred
 here. Business synchronized and reconciled its handoff at `158e8bb9`; that
-documentation-only checkpoint is integrated. Runtime readiness remains pending. The user
-retains management ownership. See the
+documentation-only checkpoint is integrated. Runtime readiness was pending at that
+integration checkpoint. Business branch qualification has since advanced to a
+published connected-flow trial with protected diagnostics and ordinary-reader proof;
+independent semantics still require a narrow revision. See the
+[current Business handoff](../../specs/20-1-Oct14-business/existing-cl-handoff.md).
+This is branch-local evidence, not a claim that its changes are integrated into main.
+The user retains management ownership. See the
 [Scan-to-Business checkpoint](../bmad/planning-artifacts/october-scan-business-integration-2026-10-11.md).
 
 Earlier same-day integration: user-authorized step 1 selectively imported

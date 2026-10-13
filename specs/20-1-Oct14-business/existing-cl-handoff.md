@@ -1,15 +1,19 @@
 # Existing accepted CL → Business Logic: owner handoff
 
-Latest October 13 boundary: `fa60c7a4` adds conservative evidence-text categories
-and mandatory pre-publication semantic review, with one correction/re-review and
-shared budgets. Independent implementation review and 324 focused tests passed.
-One real trial (`daa9da8f-b2c8-4f3d-bc54-8b603824ea07`) used four requests and
-151,933 known tokens; both model reviews rejected, so no new BL was published.
-The failed finalization and run are durably settled; all nine previous publications
-remain unchanged. Detailed model findings/drafts were not retained, limiting
-independent diagnosis. Retain bounded protected rejection diagnostics before a
-further paid trial; do not expand based on this result. See
-[semantic gate implementation and trial evidence](semantic-gate-2026-10-13.md).
+Latest October 13 Business boundary: `f617e405` adds opt-in encrypted stage
+capture; 339 focused tests and independent implementation review passed. The one
+bounded trial `d836d3f4-d832-48f9-9f05-fb23086ced6c` published
+`49082889-3049-4408-ae65-1b1c3a2ddf55` after one semantic correction. Four requests
+used 160,136 known tokens. Ordinary User-only API reading, settlement and preservation
+of all nine old publications passed. Independent semantic assessment still requires
+revision: one unsupported business field label and implementation identifiers in
+Business prose. Do not treat the model's approval as semantic qualification or expand
+without correction. All four draft/review stages are protected and retained.
+See [semantic gate and diagnostic trial evidence](semantic-gate-2026-10-13.md).
+
+Earlier gate trial at `fa60c7a4` (`daa9da8f-b2c8-4f3d-bc54-8b603824ea07`) was
+safely rejected/settled without publication; its detailed drafts were not retained.
+The new trial diagnoses its own captured content, not that unavailable earlier text.
 
 Previous connected qualification (October 13, 15:34–15:35 Asia/Shanghai): reviewed
 prompt correction `e969c428` passed 129 focused tests. One authorized paid run

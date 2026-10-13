@@ -171,3 +171,61 @@ Focused GREEN: 339/339 passed, zero failed/skipped, including 15 capture cases;
 The selection covers synthesis, finalizer, planner, publication and Scan Business
 composition. It qualifies controlled SelfContained behavior, not PostgreSQL/provider
 or browser behavior. Final independent scoped review accepted this boundary.
+
+
+## Captured bounded trial and independent diagnosis
+
+Implementation `f617e40524e35d1f93b01723d61c5f41e3d2e9ff` ran once as
+`d836d3f4-d832-48f9-9f05-fb23086ced6c`, October 13 17:50–17:55 Asia/Shanghai.
+Owned PID 63692 exited 0 after 339.34 seconds without watchdog expiry. Four requests
+used 90,261 input + 69,875 output = **160,136 known tokens**; no resolution request,
+structural retry or CL regeneration occurred. All four typed stage records are
+retained encrypted in the owned `business-semantic` log subdirectory.
+
+The first model review rejected four of 18 findings:
+
+- `syn-node-del` inferred deletion/SQL behavior from bean and statement names.
+- `syn-node-ins` and `syn-node-upd` invented a business meaning for a configured
+  field and inferred operation categories without accepted implementation evidence.
+- `syn-line-uncond` added a deletion-node identification absent from its sole
+  cited transition claim.
+
+The existing single correction removed those assertions. The fresh review marked
+all 18 targets supported; strict validation and independent owner-store checks
+published `49082889-3049-4408-ae65-1b1c3a2ddf55`, finalization
+`bc4124a1-4c0e-4e13-8ef1-1bc1746e9551`. New BL version:
+`182cde19-da6a-4cf4-a839-83926b926343`. It contains 12 generated claims in one
+connected flow, with two member CL versions and one existing supported static edge.
+The complete owner ledger retains 163 document dependencies, one uncertainty and
+two frontiers. Four accepted relationships in the complete publication are reused;
+this is not four newly generated flow links or cross-repository qualification.
+
+Postrun verification confirmed exact prior membership/content for all nine old
+publications, unchanged original 163 CL documents, matching Begin/Complete receipts
+and confirmed finalization lookup. An authenticated temporary User-only reader
+read the new BL through the canonical Business API in one page (1,578 characters),
+was denied CL in Business mode, and was removed with cleanup verified. No Web host
+was started or restarted; API qualification is not browser qualification.
+
+Independent semantic inspection **REVISE**, despite runtime publication success:
+all four original rejections were justified, and their corrections now match the
+retained CL. One other claim still turns `LOGIN_SUBJOIN` into “登录子渠道” without
+supporting that field meaning. Also, the corrected device-node claims expose bean,
+SQL and field identifiers in Business prose instead of providing readable bounded
+explanations. Other inspected claims retained declared assignments, conditions and
+static-link limits; no further material semantic mismatch was found. The model's
+zero-negative rereview is not an independent semantic PASS.
+
+Small next correction: prohibit business-label invention from abbreviations,
+express unknown field meaning plainly, and preserve uncertainty without dumping
+implementation identifiers into Business text. Preserve this immutable publication;
+do not weaken acceptance or automatically expand/retry. This turn stops after the
+single authorized trial and diagnosis. No additional paid attempt is authorized
+by its completion.
+
+Ignored evidence: `TestResults/business-capture-run/` (authority, preflight, selected
+input/settings, process, terminal report, encrypted four-stage diagnostics);
+`TestResults/business-capture-postrun/verification.json`, `owner-verification.json`,
+`content-review-pairs.json`, `context-verification.json` and `links.json` (owner,
+ordinary-reader, context, lineage and preservation checks). Detailed protected
+records are operator diagnostics, not a public Knowledge retrieval route.
