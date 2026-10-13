@@ -117,3 +117,19 @@ No successful link or BL claim is made for this run. Evidence: ignored
 `TestResults/business-links-run-3/`.
 
 CLI projection GREEN: 148/148, isolation-0a08b92c2a3044c4a7a7e2c2978fb604; independent static review PASS. Next run limited to 25 minutes plus 60-second owned watchdog, within the same one-hour authority.
+
+### Second run in the one-hour window
+
+Checkpoint `ed8e90ec4873f0d6e80fa5e2cf41034874928201`; RunId
+`0e5d5aeb-dcfb-449a-996c-7f13861f2e1d`, 05:17:31–05:19:19 UTC.
+Two requests: 56,454 input + 19,814 output = 76,268 known tokens. One more
+Unresolved outcome committed; the next response failed typed deserialization
+(`WitnessShape`). Exit 1; no timeout, no new publication. All five stored outcomes
+independently revalidate and all seven original publications remain unchanged.
+The witness on the newly unresolved password reference used a wrong SectionId,
+so exact claim lookup properly failed. These records are preserved, not repaired
+by hand. Add safe fixed diagnostic labels for remaining witness fields, including
+case-insensitive matching of known JSON property names, to diagnose the unprocessed
+response shape without exposing raw values or paths. No schema/policy change.
+
+Field-category RED: 13 selected, 9 passed/4 failed (isolation-3a19adc7d1c64d4e996795257a92345b). GREEN: 26/26 (isolation-35513d71a77e4906b4d0e36df898c1f5). Independent review PASS. Third window attempt is bounded to20minutes plus60secondwatchdog; preserves/reuses5existingUnresolved outcomes,6inquiriesremain.

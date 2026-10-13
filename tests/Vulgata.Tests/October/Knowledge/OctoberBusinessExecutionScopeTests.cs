@@ -46,6 +46,7 @@ public sealed class OctoberBusinessExecutionScopeTests
     [InlineData("invalid-json", ResolutionFailureReason.InvalidJson)]
     [InlineData("invalid-guid", ResolutionFailureReason.WitnessShape)]
     [InlineData("string-enum", ResolutionFailureReason.WitnessShape)]
+    [InlineData("alias-object", ResolutionFailureReason.WitnessShape)]
     [InlineData("incomplete", ResolutionFailureReason.IncompleteResponse)]
     [InlineData("output-limit", ResolutionFailureReason.OutputLimit)]
     public async Task ResolutionDiagnostics_ModelFailuresRemainTypedSafeAndRetainSettledUsageAsync(string shape, ResolutionFailureReason expected)
@@ -56,6 +57,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         body["ConnectionExplanation"] = secret;
         if (shape == "invalid-guid") body["Caller"]!["Document"]!["BatchId"] = secret;
         if (shape == "string-enum") body["SupportingAssertions"]![0]!["Kind"] = secret;
+        if (shape == "alias-object") body["AliasOrConfigurationMapping"] = new JsonObject { [secret] = "Untrusted object content" };
         string payload = shape == "invalid-json" ? "{" + secret : body.ToJsonString();
         using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, payload))
         {
@@ -65,6 +67,8 @@ public sealed class OctoberBusinessExecutionScopeTests
         var scope = new ResolutionScopeProbe();
         var result = await ExecuteAsync(fixture, client, scope);
         Assert.Equal(expected, result.FailureReason);
+        if (shape == "string-enum") Assert.Equal("SupportingAssertions.Kind", result.FailureField);
+        if (shape == "alias-object") Assert.Equal("AliasOrConfigurationMapping", result.FailureField);
         Assert.NotEqual(ProviderAdmissionStatus.AuthorityUnavailable, result.AdmissionFailure);
         Assert.Null(result.Outcome);
         Assert.Null(result.Witness);
@@ -77,7 +81,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         Assert.DoesNotContain(secret, JsonSerializer.Serialize(result), StringComparison.Ordinal);
         if (result.FailureField is { } field)
             Assert.Contains(field, new[] { "Caller", "Provider", "SupportingAssertions", "OpposingAssertions", "BindingToken", "BatchId", "Kind", "LogicalDocumentId", "DocumentVersionId",
-                "Caller.Document.BatchId", "SupportingAssertions.Kind" });
+                "Caller.Document.BatchId", "SupportingAssertions.Kind", "AliasOrConfigurationMapping" });
     }
 
     [Trait("Suite", "SelfContained")]

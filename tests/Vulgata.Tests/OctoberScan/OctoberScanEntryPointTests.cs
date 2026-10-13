@@ -24,6 +24,8 @@ public sealed class OctoberScanEntryPointTests
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("observed")]
+    [InlineData("alias-field")]
+    [InlineData("assertion-kind-field")]
     [InlineData("arbitrary-field")]
     [InlineData("undefined-reason")]
     [InlineData("missing-reason")]
@@ -35,7 +37,13 @@ public sealed class OctoberScanEntryPointTests
         {
             ResolutionFailureReason = condition == "undefined-reason" ? (ResolutionFailureReason)99999
                 : condition == "missing-reason" ? null : ResolutionFailureReason.WitnessShape,
-            ResolutionFailureField = condition == "arbitrary-field" ? "RAW_PRIVATE_MODEL_FIELD.Path[99999]" : "Caller.Document.BatchId"
+            ResolutionFailureField = condition switch
+            {
+                "arbitrary-field" => "RAW_PRIVATE_MODEL_FIELD.Path[99999]",
+                "alias-field" => "AliasOrConfigurationMapping",
+                "assertion-kind-field" => "SupportingAssertions.Kind",
+                _ => "Caller.Document.BatchId"
+            }
         };
         Guid batch = Guid.NewGuid();
         var report = new OctoberScanReport("cl-and-bl", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
@@ -60,7 +68,12 @@ public sealed class OctoberScanEntryPointTests
         {
             Assert.Equal("WitnessShape", reason.GetString());
             if (condition == "arbitrary-field") Assert.Equal(JsonValueKind.Null, field.ValueKind);
-            else Assert.Equal("Caller.Document.BatchId", field.GetString());
+            else Assert.Equal(condition switch
+            {
+                "alias-field" => "AliasOrConfigurationMapping",
+                "assertion-kind-field" => "SupportingAssertions.Kind",
+                _ => "Caller.Document.BatchId"
+            }, field.GetString());
         }
         Assert.DoesNotContain("RAW_PRIVATE", output.ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain("99999", output.ToString(), StringComparison.Ordinal);

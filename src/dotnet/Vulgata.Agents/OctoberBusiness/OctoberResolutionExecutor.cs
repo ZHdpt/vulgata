@@ -303,13 +303,28 @@ public sealed class OctoberResolutionExecutor
 
     private static long? Nonnegative(long? value) => value is >= 0 ? value : null;
     // Emit only fixed DTO labels, never arbitrary provider-controlled paths or values.
-    private static string? SafeWitnessField(string? path) => path switch
+    private static string? SafeWitnessField(string? path)
     {
-        "$.Caller.Document.BatchId" => "Caller.Document.BatchId",
-        "$.Caller" => "Caller",
-        "$.Provider" => "Provider",
-        _ => null
-    };
+        if (path is null || !path.StartsWith("$.", StringComparison.Ordinal)) return null;
+        string normalized = path.ToLowerInvariant();
+        if (normalized == "$.caller.document.batchid") return "Caller.Document.BatchId";
+        if (System.Text.RegularExpressions.Regex.IsMatch(normalized, @"^\$\.supportingassertions\[[0-9]+\]\.kind$"))
+            return "SupportingAssertions.Kind";
+        string root = normalized[2..].Split('.', '[')[0];
+        return root switch
+        {
+            "caller" => "Caller", "provider" => "Provider",
+            "calleraction" => "CallerAction", "providerrole" => "ProviderRole",
+            "provideroperation" => "ProviderOperation", "mechanism" => "Mechanism",
+            "namespaceinterpretation" => "NamespaceInterpretation", "bindinginterpretation" => "BindingInterpretation",
+            "aliasorconfigurationmapping" => "AliasOrConfigurationMapping",
+            "supportingassertions" => "SupportingAssertions", "opposingassertions" => "OpposingAssertions",
+            "connectionexplanation" => "ConnectionExplanation", "limitations" => "Limitations",
+            "hasunresolveddecisiveopposition" => "HasUnresolvedDecisiveOpposition",
+            "claimsdeploymentcertainty" => "ClaimsDeploymentCertainty", "bindingtoken" => "BindingToken",
+            _ => null
+        };
+    }
     private static TimeSpan Max(TimeSpan left, TimeSpan right) => left >= right ? left : right;
     private static async Task<DisclosureStatus> CheckAuthorityAsync(IOctoberResolutionDisclosureAuthority authority,
         CorpusHandle corpus, ImmutableArray<Contributor> contributors, CancellationToken token)

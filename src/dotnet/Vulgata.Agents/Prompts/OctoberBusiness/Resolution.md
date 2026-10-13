@@ -18,6 +18,12 @@ Kind must be a JSON integer 0, 1, 2, 3 or 4, never the enum name as a string. Su
 OpposingAssertions and Limitations must be JSON arrays; use [] when empty. Use real JSON booleans
 for HasUnresolvedDecisiveOpposition and ClaimsDeploymentCertainty. Copy supplied identifier values;
 do not use placeholder identifiers, shorten UUIDs or invent missing values.
+CallerAction, ProviderRole, ProviderOperation, Mechanism, NamespaceInterpretation,
+BindingInterpretation and ConnectionExplanation are single JSON strings, not objects or arrays.
+AliasOrConfigurationMapping is a single string or null. Limitations is an array of strings,
+never an array of objects. Each assertion's SectionId, ClaimGroupId, ExactAcceptedText and
+Interpretation are strings. Copy SectionId from the actual containing section of the cited
+claim; never infer it from a title, another document or an observation.
 
 Each assertion has Kind (CallerAction=0, ProviderRoleAndOperation=1, ConnectingBinding=2,
 AliasOrConfigurationMapping=3, Opposing=4), exact Document/SectionId/ClaimGroupId locator,
