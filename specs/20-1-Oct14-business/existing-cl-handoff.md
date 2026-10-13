@@ -1,5 +1,14 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest real link qualification (2026-10-13): the explicitly authorized one-root
+paid run stopped on its first resolution request after approximately 100 seconds.
+Run `86b950d4-20ea-4125-8fa4-67a12e634082` is locally settled; one request has unknown
+token usage. Zero edges were accepted and no new BL was published. All seven
+existing publications remain unchanged. Installed SDK timeout and missing
+resolution reasoning override are recorded in the
+[bounded link-run evidence](connected-links-run-2026-10-13.md). No automatic retry;
+the five-run grant has three consumed invocations and two unused.
+
 Current development scope (2026-10-13): the user authorized evidence-backed
 references and connected rooted Business groups, with a hard stop before another
 paid scan. The opt-in `october-retained-evidence-v2` continuation is documented in
