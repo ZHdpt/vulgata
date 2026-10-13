@@ -1,5 +1,16 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Current development scope (2026-10-13): the user authorized evidence-backed
+references and connected rooted Business groups, with a hard stop before another
+paid scan. The opt-in `october-retained-evidence-v2` continuation is documented in
+[connected retained flows](connected-retained-flows.md). It preserves existing CL,
+BL publications and legacy replay, with no migration or runtime configuration
+change. Offline inspection of the authenticated 163-CL export finds 11 candidate
+reference pairs (nine from seven of the prior 22 selected roots); these are not
+accepted edges or a new generated publication. Cross-repository SOFA linkage and
+the separate large-publication reader issue remain unqualified. This scoped
+development direction supersedes automatic escalation to a whole-corpus paid run.
+
 Latest local checkpoint (2026-10-13 Asia/Shanghai): run-local context is implemented
 at `81b135c1` (298/298 focused tests plus owned PostgreSQL qualification). The generic
 wording follow-up is `cca9d8cb` (105/105 focused synthesis tests); both passed

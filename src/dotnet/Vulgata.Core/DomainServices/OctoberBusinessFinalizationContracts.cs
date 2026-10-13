@@ -12,6 +12,9 @@ public sealed record BusinessFinalizationSelection(ImmutableArray<FlowRootSelect
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public BusinessAdvisoryContextOverride? ContextOverride { get; init; }
+
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
 }
 
 /// <summary>

@@ -78,6 +78,7 @@ public static class OctoberBusinessFinalizationPolicy
         ArgumentNullException.ThrowIfNull(corpus.Binding);
         ArgumentNullException.ThrowIfNull(selection);
         ArgumentNullException.ThrowIfNull(selection.Limits);
+        _ = OctoberResolutionPolicy.SelectedPolicyVersion(selection.ResolutionPolicyVersion);
         if (operation.Kind != OperationKind.FinalizeCorpus || operation.OperationId == Guid.Empty ||
             operation.BatchId == Guid.Empty || corpus.Binding.BatchId != operation.BatchId || corpus.CorpusId == Guid.Empty)
             throw new ArgumentException("Finalization requires exact operation and corpus identities.");

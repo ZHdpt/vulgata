@@ -72,8 +72,13 @@ public sealed class OctoberFlowPublicationStore : IOctoberFlowPublicationStore, 
 
     private async Task<PreparedPublicationMutation> PrepareAsync(OctoberDbContext context, FlowFinalizationPublicationRequest request, CancellationToken ct)
     {
-        var loaded = await new OctoberFlowPlanningInputLoader(_contexts, _authorization).LoadAsync(request.Corpus, request.Selection.Roots, ct);
-        if (loaded.Status != KnowledgeReadStatus.Success || loaded.Input is not { } input)
+        if (!OctoberResolutionPolicy.IsSupportedSelection(request.Selection.ResolutionPolicyVersion))
+            return Rejected(request, KnowledgeWriteStatus.InvalidProposal);
+        var loaded = await new OctoberFlowPlanningInputLoader(_contexts, _authorization, request.Selection.ResolutionPolicyVersion)
+            .LoadAsync(request.Corpus, request.Selection.Roots, ct);
+        if (loaded.Status != KnowledgeReadStatus.Success || loaded.Input is not { } input ||
+            input.ResolutionPolicyVersion != request.Selection.ResolutionPolicyVersion ||
+            input.Corpus.ResolutionPolicyVersion != request.Selection.ResolutionPolicyVersion)
             return Rejected(request, KnowledgeWriteStatus.Denied);
         try { input = OctoberBusinessContextOverridePolicy.Apply(input, request.Selection.ContextOverride); }
         catch (ArgumentException) { return Rejected(request, KnowledgeWriteStatus.InvalidProposal); }

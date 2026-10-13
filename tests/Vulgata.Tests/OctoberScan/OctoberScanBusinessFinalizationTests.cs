@@ -20,6 +20,55 @@ public sealed class OctoberScanBusinessFinalizationTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData("configured")]
+    [InlineData("mismatched-loader")]
+    [InlineData("unknown")]
+    [InlineData("fresh")]
+    public async Task RetainedV2_GeneratorBindsExactProfile_AndRejectsMismatchedOrUnsupportedRoutesAsync(string scenario)
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        PublicationBinding? original = null;
+        if (scenario != "fresh") original = (await host.Runner.ExecuteAsync(host.Execution)).Report!.Publication;
+        var execution = original is not null ? ExistingClExecution(host.Execution, original)
+            : host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
+        string profile = scenario == "unknown" ? "unknown-retained-policy" : OctoberResolutionPolicy.RetainedPolicyVersion;
+        using var transport = new NaturalTransport();
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        dependencies = dependencies with { Business = dependencies.Business! with
+        {
+            ResolutionPolicyVersion = profile,
+            CreateResolutionStore = (authority, guard) => new OctoberResolutionStore(host.Database.Factory, authority, guard, host.Database.Log,
+                scenario == "unknown" ? null : profile),
+            CreatePlanningInputLoader = authority => new OctoberFlowPlanningInputLoader(host.Database.Factory, authority,
+                scenario is "mismatched-loader" or "unknown" ? null : profile)
+        } };
+        int begins = host.BeginCalls;
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(begins, host.BeginCalls);
+        Assert.Equal(0, transport.WorkerRequests);
+        if (scenario != "configured")
+        {
+            Assert.NotEqual(0, report.ExitCode);
+            Assert.Equal(0, transport.BusinessRequests);
+            return;
+        }
+        Assert.Equal(0, report.ExitCode);
+        Assert.Equal(1, transport.BusinessRequests);
+        await using var context = host.Database.Factory.CreateDbContext();
+        var finalization = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
+        var retained = JsonSerializer.Deserialize<FlowFinalizationPublicationRequest>(finalization.RequestJson,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        Assert.Equal(profile, retained.Selection.ResolutionPolicyVersion);
+        var begin = await context.KnowledgeOperations.AsNoTracking().SingleAsync(value => value.Kind == OperationKind.BeginBusinessFromCl);
+        var expectedBegin = new BusinessFromClRequest(original!, execution.Session.SubjectId, begin.OperationId, "") { ResolutionPolicyVersion = profile };
+        Assert.Equal(OctoberBusinessFromClPolicy.ComputeBeginDigest(expectedBegin), begin.PayloadDigest);
+        Assert.True(await context.KnowledgePublications.AnyAsync(value => value.PublicationId == original!.PublicationId));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task ContextOverride_ExistingClRoute_CapturesEffectivePacketAndRetainsCanonicalSelectionAsync(bool useOverride)

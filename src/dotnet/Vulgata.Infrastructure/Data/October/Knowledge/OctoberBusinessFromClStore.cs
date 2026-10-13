@@ -241,8 +241,9 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
         if (contributors.IsDefault || contributors.Length > OctoberKnowledgeStoredReadBudget.MaximumContributors || contributors.Any(x => x is null) ||
             !SameSet(contributors, Required<ImmutableArray<Contributor>>(publication.ContributorsJson))) throw new JsonException();
         await AuthorizeAsync(request, contributors, ct);
-        await OctoberFlowPlanningInputLoader.PreflightAsync(context, corpus, budget, ct);
-        var resolutionCorpus = await OctoberResolutionStore.LoadExactCorpusAsync(context, corpus, ct, budget);
+        await OctoberFlowPlanningInputLoader.PreflightAsync(context, corpus, budget, ct, request.ResolutionPolicyVersion);
+        var resolutionCorpus = (await OctoberResolutionStore.LoadExactCorpusAsync(context, corpus, ct, budget)) with
+        { ResolutionPolicyVersion = request.ResolutionPolicyVersion };
         var members = await context.CorpusDocuments.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).Take(10001).ToListAsync(ct);
         var published = await context.PublicationMembers.AsNoTracking().Where(x => x.BatchId == batch && x.PublicationId == publicationId).Take(10001).ToListAsync(ct);
         var exactDocuments = members.Select(x => new DocumentVersionReference(batch, x.LogicalDocumentId, x.VersionId)).ToImmutableArray();
@@ -307,7 +308,8 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
             !SameSet(OctoberKnowledgeOperationStore.Contributors(publicationReceipt), contributors)) throw new JsonException();
         var outcomes = await LoadPartialOutcomesAsync(context, resolutionCorpus, contributors, ct);
         await AuthorizeAsync(request, contributors, ct);
-        return new(request.Publication, corpus, acceptedFiles, OctoberKnowledgePublicationPolicy.OrderedCoverage(coverage).ToImmutableArray(), contributors, outcomes);
+        return new(request.Publication, corpus, acceptedFiles, OctoberKnowledgePublicationPolicy.OrderedCoverage(coverage).ToImmutableArray(), contributors, outcomes)
+        { ResolutionPolicyVersion = request.ResolutionPolicyVersion };
     }
 
     private static async Task<ImmutableArray<ResolutionOutcome>> LoadPartialOutcomesAsync(OctoberDbContext context,
@@ -315,10 +317,13 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
     {
         Guid batch = corpus.Handle.Binding.BatchId, corpusId = corpus.Handle.CorpusId;
         var plan = OctoberResolutionPolicy.Plan(corpus);
-        var items = await context.ResolutionItems.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
-        var dependencies = await context.ResolutionDocumentDependencies.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
-        var edges = await context.RelationshipVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
-        var unknowns = await context.UncertaintyVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
+        string policyVersion = OctoberResolutionPolicy.SelectedPolicyVersion(corpus.ResolutionPolicyVersion);
+        var selectedItems = context.ResolutionItems.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && x.PolicyVersion == policyVersion);
+        var items = await selectedItems.ToListAsync(ct);
+        var selectedIds = selectedItems.Select(x => x.ItemId);
+        var dependencies = await context.ResolutionDocumentDependencies.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).ToListAsync(ct);
+        var edges = await context.RelationshipVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).ToListAsync(ct);
+        var unknowns = await context.UncertaintyVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).ToListAsync(ct);
         if (items.Count > plan.Inquiries.Length || items.Select(x => x.InquiryFingerprint).Distinct(StringComparer.Ordinal).Count() != items.Count ||
             items.Any(x => plan.Inquiries.All(i => i.Fingerprint != x.InquiryFingerprint)) ||
             dependencies.Any(x => items.All(i => i.ItemId != x.ItemId)) || edges.Any(x => items.All(i => i.ItemId != x.ItemId)) ||
@@ -329,7 +334,7 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
             var inquiry = plan.Inquiries.Single(x => x.Fingerprint == item.InquiryFingerprint);
             var outcome = Required<ResolutionOutcome>(item.OutcomeJson);
             if (item.ItemId != new Guid(Convert.FromHexString(inquiry.Fingerprint).AsSpan(0, 16)) || item.OperationKind != OperationKind.AcceptResolution ||
-                item.PolicyVersion != OctoberResolutionPolicy.PolicyVersion || !SameSet(Required<ImmutableArray<Contributor>>(item.ContributorsJson), ledger) ||
+                item.PolicyVersion != policyVersion || !SameSet(Required<ImmutableArray<Contributor>>(item.ContributorsJson), ledger) ||
                 !SameSet(Required<ImmutableArray<ResolutionItemDisposition>>(item.PlanDispositionsJson), plan.Dispositions)) throw new JsonException();
             ResolutionOutcome expected;
             if (item.WitnessJson is not null)
@@ -432,7 +437,8 @@ public sealed class OctoberBusinessFromClStore : IOctoberBusinessFromClStore
     }
     private static bool Valid(BusinessFromClRequest request)
     {
-        try { return request.RunId != Guid.Empty && request.Publication.PublicationId != Guid.Empty && request.Publication.Knowledge.BatchId != Guid.Empty &&
+        try { return OctoberResolutionPolicy.IsSupportedSelection(request.ResolutionPolicyVersion) &&
+            request.RunId != Guid.Empty && request.Publication.PublicationId != Guid.Empty && request.Publication.Knowledge.BatchId != Guid.Empty &&
             !string.IsNullOrWhiteSpace(request.SubjectId) && request.CanonicalPayloadDigest == OctoberBusinessFromClPolicy.ComputeBeginDigest(request); }
         catch (Exception) { return false; }
     }

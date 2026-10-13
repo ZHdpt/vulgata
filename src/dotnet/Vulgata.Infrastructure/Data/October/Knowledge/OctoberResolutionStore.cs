@@ -13,20 +13,28 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
     private readonly IDbContextFactory<OctoberDbContext> _contexts;
     private readonly OctoberKnowledgePublicationCommitter _committer;
     private readonly IOctoberKnowledgeOperationLog _log;
+    private readonly string? _resolutionPolicyVersion;
 
     public OctoberResolutionStore(IDbContextFactory<OctoberDbContext> contexts, IOctoberKnowledgeProducerAuthorization authorization,
-        IOctoberCommitSubmissionGuard guard, IOctoberKnowledgeOperationLog log)
+        IOctoberCommitSubmissionGuard guard, IOctoberKnowledgeOperationLog log, string? resolutionPolicyVersion = null)
     {
         _contexts = contexts ?? throw new ArgumentNullException(nameof(contexts));
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _committer = new(contexts, authorization, guard, log);
+        _ = OctoberResolutionPolicy.SelectedPolicyVersion(resolutionPolicyVersion);
+        _resolutionPolicyVersion = resolutionPolicyVersion;
     }
 
-    public static string ComputeAcceptanceDigest(ResolutionAcceptanceRequest request) =>
-        OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(new
+    public static string ComputeAcceptanceDigest(ResolutionAcceptanceRequest request) => request.ResolutionPolicyVersion is null
+        ? OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(new
         {
             domain = "october/resolution-accept/1", schemaVersion = 1, request.Operation, request.Corpus, request.AttemptId,
             request.InquiryFingerprint, request.Witness, request.ExecutionDisposition
+        }))
+        : OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(new
+        {
+            domain = "october/resolution-accept/2", schemaVersion = 2, request.Operation, request.Corpus, request.AttemptId,
+            request.InquiryFingerprint, request.Witness, request.ExecutionDisposition, request.ResolutionPolicyVersion
         }));
 
     public async Task<ResolutionCorpusResult> LoadCorpusAsync(CorpusHandle corpus, CancellationToken cancellationToken = default)
@@ -42,7 +50,7 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
             if (await _committer.AuthorizeAsync(corpus.Binding, contributors, deadline.Token) != DisclosureStatus.Allowed)
                 return new(KnowledgeReadStatus.Unavailable, null);
             if (retained.CorpusDigest != corpus.CorpusDigest) return new(KnowledgeReadStatus.Unavailable, null);
-            var result = await LoadExactCorpusAsync(context, corpus, deadline.Token);
+            var result = (await LoadExactCorpusAsync(context, corpus, deadline.Token)) with { ResolutionPolicyVersion = _resolutionPolicyVersion };
             if (await _committer.AuthorizeAsync(corpus.Binding, contributors, deadline.Token) != DisclosureStatus.Allowed)
                 return new(KnowledgeReadStatus.Unavailable, null);
             return new(KnowledgeReadStatus.Success, result);
@@ -52,7 +60,8 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
 
     public async Task<ResolutionAcceptanceResult> AcceptOutcomeAsync(ResolutionAcceptanceRequest request, CancellationToken cancellationToken = default)
     {
-        if (request.AttemptId == Guid.Empty || request.Operation.Kind != OperationKind.AcceptResolution)
+        if (request.AttemptId == Guid.Empty || request.Operation.Kind != OperationKind.AcceptResolution ||
+            request.ResolutionPolicyVersion != _resolutionPolicyVersion)
             return new(KnowledgeWriteStatus.InvalidProposal, request.Operation, null);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(10));
@@ -110,7 +119,8 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
             if (authority != DisclosureStatus.Allowed) return new(OctoberKnowledgePublicationCommitter.AuthorityStatus(authority), operation, null);
             var item = await context.ResolutionItems.AsNoTracking().SingleOrDefaultAsync(x => x.BatchId == operation.BatchId && x.OperationKind == operation.Kind && x.OperationId == operation.OperationId, ct);
             if (item is null) return new(KnowledgeWriteStatus.CommitIndeterminate, operation, null);
-            if (item.CorpusId != corpus.CorpusId || retained.CorpusDigest != corpus.CorpusDigest || recorded.PayloadDigest != digest)
+            if (item.CorpusId != corpus.CorpusId || retained.CorpusDigest != corpus.CorpusDigest || recorded.PayloadDigest != digest ||
+                item.PolicyVersion != OctoberResolutionPolicy.SelectedPolicyVersion(_resolutionPolicyVersion))
                 return new(KnowledgeWriteStatus.Conflict, operation, null);
             var outcome = Required<ResolutionOutcome>(item.OutcomeJson);
             bool logged = true;
@@ -141,7 +151,7 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
             authority = await _committer.AuthorizeAsync(request.Corpus.Binding, OctoberCorpusSelectionStore.DeserializeContributors(existing.ContributorsJson), ct);
             return Failure(request, authority == DisclosureStatus.Allowed ? KnowledgeWriteStatus.Conflict : OctoberKnowledgePublicationCommitter.AuthorityStatus(authority));
         }
-        var corpus = await LoadExactCorpusAsync(context, request.Corpus, ct);
+        var corpus = (await LoadExactCorpusAsync(context, request.Corpus, ct)) with { ResolutionPolicyVersion = request.ResolutionPolicyVersion };
         var plan = OctoberResolutionPolicy.Plan(corpus);
         var inquiry = plan.Inquiries.SingleOrDefault(x => x.Fingerprint == request.InquiryFingerprint);
         if (inquiry is null || request.Witness is not null && request.ExecutionDisposition is not null ||
@@ -162,7 +172,8 @@ public sealed class OctoberResolutionStore : IOctoberResolutionStore
         context.ResolutionItems.Add(new()
         {
             BatchId = request.Corpus.Binding.BatchId, CorpusId = request.Corpus.CorpusId, ItemId = itemId,
-            OperationId = request.Operation.OperationId, InquiryFingerprint = inquiry.Fingerprint, PolicyVersion = OctoberResolutionPolicy.PolicyVersion,
+            OperationId = request.Operation.OperationId, InquiryFingerprint = inquiry.Fingerprint,
+            PolicyVersion = OctoberResolutionPolicy.SelectedPolicyVersion(request.ResolutionPolicyVersion),
             WitnessJson = request.Witness is null ? null : OctoberKnowledgePolicy.SerializeCanonical(request.Witness),
             OutcomeJson = OctoberKnowledgePolicy.SerializeCanonical(outcome), ContributorsJson = OctoberKnowledgePolicy.SerializeCanonical(contributors),
             PlanDispositionsJson = OctoberKnowledgePolicy.SerializeCanonical(plan.Dispositions), CreatedAtUtc = DateTimeOffset.UtcNow

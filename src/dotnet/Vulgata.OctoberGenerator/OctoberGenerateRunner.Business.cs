@@ -20,6 +20,7 @@ internal sealed record OctoberBusinessRunComposition(
     long MaximumAttemptTokens)
 {
     internal BusinessAdvisoryContextOverride? ContextOverride { get; init; }
+    internal string? ResolutionPolicyVersion { get; init; }
     internal Func<IOctoberOperatorSession, PublicationBinding, CancellationToken, Task<OctoberVerifiedReaderBinding?>>? BindReader { get; init; }
     internal OctoberOperatorRootSelectionOptions? OperatorSelection { get; init; }
     internal Func<OctoberOperatorRootSelectionRequest, CancellationToken, Task<OctoberOperatorRootSelectionResponse?>>? InteractAsync { get; init; }
@@ -130,6 +131,8 @@ internal sealed partial class OctoberGenerateRunner
             business.ResolutionInstructions.Length > KnowledgeContract.MaximumContentBytes ||
             business.SynthesisInstructions.Length > KnowledgeContract.MaximumContentBytes ||
             business.MaximumAttemptTokens <= 0 || business.MaximumAttemptTokens > execution.Policy.MaximumTotalTokens ||
+            !OctoberResolutionPolicy.IsSupportedSelection(business.ResolutionPolicyVersion) ||
+            business.ResolutionPolicyVersion is not null && execution.Policy.ExistingClPublicationId is null ||
             business.ContextOverride is not null && (execution.Policy.ExistingClPublicationId is null ||
                 !OctoberBusinessContextOverridePolicy.ValidateShape(business.ContextOverride)) ||
             limits.MaxNodes is < 1 or > OctoberFlowPlanner.MaximumNodes || limits.MaxEdges is < 0 or > OctoberFlowPlanner.MaximumEdges ||
@@ -214,7 +217,8 @@ internal sealed partial class OctoberGenerateRunner
         var disclosure = new BusinessDisclosure(this);
         _matchingPhase = OctoberPhaseStatus.Indeterminate;
         var loaded = await StoreAsync(() => resolutionStore.LoadCorpusAsync(corpus, cancellationToken), cancellationToken);
-        if (loaded.Status != KnowledgeReadStatus.Success || loaded.Corpus is not { } acceptedCorpus || acceptedCorpus.Handle != corpus)
+        if (loaded.Status != KnowledgeReadStatus.Success || loaded.Corpus is not { } acceptedCorpus || acceptedCorpus.Handle != corpus ||
+            acceptedCorpus.ResolutionPolicyVersion != business.ResolutionPolicyVersion)
             return BusinessFailure("business_corpus_unavailable", disclose: false);
         var resolutionPlan = OctoberResolutionPolicy.Plan(acceptedCorpus);
         var resolver = new OctoberResolutionExecutor(_businessClient, business.ResolutionInstructions, _time);
@@ -245,7 +249,8 @@ internal sealed partial class OctoberGenerateRunner
                 resolved.AdmissionFailure == ProviderAdmissionStatus.BudgetExhausted && resolved.Attempts.Length == 0;
             var acceptance = new ResolutionAcceptanceRequest(new(binding.BatchId, OperationKind.AcceptResolution, Guid.NewGuid()),
                 corpus, Guid.NewGuid(), "", inquiry.Fingerprint, resolved.Witness,
-                resolved.Witness is null ? notEvaluatedForLimit ? ResolutionOutcomeKind.NotEvaluated : ResolutionOutcomeKind.Failed : null);
+                resolved.Witness is null ? notEvaluatedForLimit ? ResolutionOutcomeKind.NotEvaluated : ResolutionOutcomeKind.Failed : null)
+            { ResolutionPolicyVersion = business.ResolutionPolicyVersion };
             acceptance = acceptance with { CanonicalPayloadDigest = OctoberResolutionStore.ComputeAcceptanceDigest(acceptance) };
             _businessGuard.Register(new(acceptance.Operation, acceptance.AttemptId, acceptance.CanonicalPayloadDigest));
             ResolutionAcceptanceResult saved;
@@ -273,7 +278,7 @@ internal sealed partial class OctoberGenerateRunner
             }
             if (saved.Status == KnowledgeWriteStatus.LogUnavailable) return BusinessFailure("operation_log_unavailable");
         }
-        var loader = new ObservedBusinessPlanningLoader(this, business.CreatePlanningInputLoader(this));
+        var loader = new ObservedBusinessPlanningLoader(this, business.CreatePlanningInputLoader(this), business.ResolutionPolicyVersion);
         var planning = await StoreAsync(() => loader.LoadAsync(corpus, [], cancellationToken), cancellationToken);
         if (planning.Status != KnowledgeReadStatus.Success || planning.Input is not { } input || input.Corpus.Handle != corpus || input.Contributors.IsDefault)
             return BusinessFailure("business_planning_inputs_unavailable", disclose: false);
@@ -309,7 +314,7 @@ internal sealed partial class OctoberGenerateRunner
         var selection = new BusinessFinalizationSelection(roots, business.Limits, OriginalRunId,
             execution.Provider.Profile.Name, OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(business.ProviderConfiguration),
             OctoberKnowledgePolicy.Hash(business.SynthesisInstructions), business.MaximumAttemptTokens)
-        { ContextOverride = _businessContextOverride };
+        { ContextOverride = _businessContextOverride, ResolutionPolicyVersion = business.ResolutionPolicyVersion };
         var request = new FinalizationRequest(_businessFinalizationOperation!, corpus, "", _scope!) { Selection = selection };
         request = request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
         _originalBusinessRequest = request;
@@ -556,11 +561,19 @@ internal sealed partial class OctoberGenerateRunner
             owner.RetainBusinessOwnerCall(() => store.LookupAsync(corpus, operation, canonicalPayloadDigest, cancellationToken));
     }
 
-    private sealed class ObservedBusinessPlanningLoader(OctoberGenerateRunner owner, IOctoberFlowPlanningInputLoader loader)
+    private sealed class ObservedBusinessPlanningLoader(OctoberGenerateRunner owner, IOctoberFlowPlanningInputLoader loader,
+        string? resolutionPolicyVersion)
         : IOctoberFlowPlanningInputLoader
     {
         public Task<FlowPlanningInputResult> LoadAsync(CorpusHandle corpus, ImmutableArray<FlowRootSelection> roots,
-            CancellationToken cancellationToken = default) => owner.RetainBusinessOwnerCall(() => loader.LoadAsync(corpus, roots, cancellationToken));
+            CancellationToken cancellationToken = default) => owner.RetainBusinessOwnerCall(async () =>
+            {
+                var result = await loader.LoadAsync(corpus, roots, cancellationToken);
+                if (result.Input is { } input && (input.ResolutionPolicyVersion != resolutionPolicyVersion ||
+                    input.Corpus is null || input.Corpus.Handle != corpus || input.Corpus.ResolutionPolicyVersion != resolutionPolicyVersion))
+                    return new FlowPlanningInputResult(KnowledgeReadStatus.Unavailable, null);
+                return result;
+            });
     }
 
     private sealed class ObservedBusinessResolutionStore(OctoberGenerateRunner owner, IOctoberResolutionStore store)

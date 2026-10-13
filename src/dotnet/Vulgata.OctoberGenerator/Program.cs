@@ -187,6 +187,7 @@ public static class OctoberGeneratorEntryPoint
         if (policy.OutputStage != "cl-and-bl" || !new OctoberScanPolicyValidator().Validate(policy).IsValid ||
             settings is null || !settings.IsValid() || settings.MaximumAttemptTokens > policy.MaximumTotalTokens ||
             settings.ContextOverride is not null && policy.ExistingClPublicationId is null ||
+            settings.ResolutionPolicyVersion is not null && policy.ExistingClPublicationId is null ||
             provider is null || provider.Precedence != "only-source" || provider.Profile.ApiType != ApiType.ChatCompletions ||
             contexts is null || log is null || bindReader is null)
             throw new InvalidOperationException("October Business composition is invalid.");
@@ -198,13 +199,14 @@ public static class OctoberGeneratorEntryPoint
             "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference);
         _ = OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(projection);
         return new(
-            (authorization, guard) => new OctoberResolutionStore(contexts, authorization, guard, log),
-            authorization => new OctoberFlowPlanningInputLoader(contexts, authorization),
+            (authorization, guard) => new OctoberResolutionStore(contexts, authorization, guard, log, settings.ResolutionPolicyVersion),
+            authorization => new OctoberFlowPlanningInputLoader(contexts, authorization, settings.ResolutionPolicyVersion),
             (authorization, guard) => new OctoberFlowPublicationStore(contexts, authorization, guard, log),
             settings.SelectRoots, projection, LoadBusinessInstructions("Resolution"), LoadBusinessInstructions("Synthesis"),
             settings.Limits, settings.MaximumAttemptTokens)
         {
             BindReader = bindReader, OperatorSelection = operatorSelection, ContextOverride = settings.ContextOverride,
+            ResolutionPolicyVersion = settings.ResolutionPolicyVersion,
             InteractAsync = operatorSelection?.Mode == "operator"
                 ? new OctoberOperatorRootSelection(operatorSelection, timeProvider).InteractAsync : null
         };
@@ -250,7 +252,8 @@ public static class OctoberGeneratorEntryPoint
             throw new InvalidOperationException("October Business activation is invalid.");
         var settings = await ReadBusinessSettingsAsync(configuration, cancellationToken);
         if (settings.MaximumAttemptTokens > policy.MaximumTotalTokens ||
-            settings.ContextOverride is not null && policy.ExistingClPublicationId is null)
+            settings.ContextOverride is not null && policy.ExistingClPublicationId is null ||
+            settings.ResolutionPolicyVersion is not null && policy.ExistingClPublicationId is null)
             throw new InvalidOperationException("October Business attempt exceeds the original Scan policy.");
         return settings;
     }

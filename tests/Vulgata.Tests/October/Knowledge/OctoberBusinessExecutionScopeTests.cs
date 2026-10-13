@@ -467,6 +467,7 @@ internal sealed class ResolutionClient(string providerProfileId, Func<int, Cance
     public int Calls => Volatile.Read(ref _calls);
     public int PeakActive { get; private set; }
     public CancellationToken LastCancellation { get; private set; }
+    public int? LastMaximumOutputTokens { get; private set; }
     public List<(ChatMessage[] Messages, string[] Tools)> Requests { get; } = [];
     public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
@@ -479,6 +480,7 @@ internal sealed class ResolutionClient(string providerProfileId, Func<int, Cance
             Requests.Add((messages.ToArray(), options?.Tools?.Select(x => x.Name).ToArray() ?? []));
         }
         LastCancellation = cancellationToken;
+        LastMaximumOutputTokens = options?.MaxOutputTokens;
         Entered.TrySetResult();
         try { return await response(call, cancellationToken); }
         finally { Interlocked.Decrement(ref _active); }

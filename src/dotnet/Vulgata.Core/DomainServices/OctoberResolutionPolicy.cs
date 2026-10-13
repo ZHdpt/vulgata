@@ -6,7 +6,11 @@ public sealed record ResolutionObservationRef(DocumentVersionReference Document,
 public sealed record ResolutionDocument(DocumentVersionReference Version, Guid RepositoryId,
     ImmutableArray<DocumentSection> Sections, ImmutableArray<CommunicationObservation> Observations,
     ImmutableArray<Contributor> Contributors);
-public sealed record ResolutionCorpus(CorpusHandle Handle, ImmutableArray<ResolutionDocument> Documents);
+public sealed record ResolutionCorpus(CorpusHandle Handle, ImmutableArray<ResolutionDocument> Documents)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
+}
 public enum ResolutionOutcomeKind { Supported, Unresolved, Failed, NotEvaluated }
 public sealed record ResolutionItemDisposition(ResolutionObservationRef Observation, ResolutionOutcomeKind Kind, string Reason);
 public sealed record ResolutionInquiry(string Fingerprint, ResolutionObservationRef Caller,
@@ -25,7 +29,11 @@ public sealed record ResolutionWitness(ResolutionObservationRef Caller, Resoluti
     string NamespaceInterpretation, string BindingInterpretation, string? AliasOrConfigurationMapping,
     ImmutableArray<ResolutionEvidenceAssertion> SupportingAssertions,
     ImmutableArray<ResolutionEvidenceAssertion> OpposingAssertions, string ConnectionExplanation,
-    ImmutableArray<string> Limitations, bool HasUnresolvedDecisiveOpposition, bool ClaimsDeploymentCertainty);
+    ImmutableArray<string> Limitations, bool HasUnresolvedDecisiveOpposition, bool ClaimsDeploymentCertainty)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? BindingToken { get; init; }
+}
 public sealed record ResolutionOutcome(string Fingerprint, ResolutionOutcomeKind Kind,
     AcceptedRelationship? Relationship, Uncertainty? Uncertainty, ImmutableArray<Contributor> Contributors);
 
@@ -39,11 +47,26 @@ public interface IOctoberResolutionDisclosureAuthority
 public static class OctoberResolutionPolicy
 {
     public const string PolicyVersion = "october-resolution-v1";
+    public const string RetainedPolicyVersion = "october-retained-evidence-v2";
 
-    public static ResolutionPlan Plan(ResolutionCorpus corpus, string policyVersion = PolicyVersion)
+    public static bool IsSupportedSelection(string? policyVersion) =>
+        policyVersion is null or PolicyVersion or RetainedPolicyVersion;
+
+    public static string SelectedPolicyVersion(string? policyVersion) => IsSupportedSelection(policyVersion)
+        ? policyVersion ?? PolicyVersion : throw new ArgumentException("Unsupported resolution policy.", nameof(policyVersion));
+
+    public static CommunicationObservation? ResolveObservation(ResolutionCorpus corpus, ResolutionObservationRef reference) =>
+        SelectedPolicyVersion(corpus.ResolutionPolicyVersion) == RetainedPolicyVersion
+            ? OctoberRetainedResolutionPolicy.ResolveObservation(corpus, reference) : Observation(corpus, reference);
+
+    public static ResolutionPlan Plan(ResolutionCorpus corpus, string? policyVersion = null)
     {
         ArgumentNullException.ThrowIfNull(corpus);
-        ArgumentException.ThrowIfNullOrWhiteSpace(policyVersion);
+        string selectedPolicy = SelectedPolicyVersion(corpus.ResolutionPolicyVersion);
+        if (policyVersion is not null && SelectedPolicyVersion(policyVersion) != selectedPolicy)
+            throw new ArgumentException("Conflicting resolution policy selections.", nameof(policyVersion));
+        policyVersion = selectedPolicy;
+        if (selectedPolicy == RetainedPolicyVersion) return OctoberRetainedResolutionPolicy.Plan(corpus);
         if (corpus.Documents.IsDefault || corpus.Documents.Any(x => x.Observations.IsDefault || x.Sections.IsDefault || x.Contributors.IsDefault) ||
             corpus.Documents.Select(x => x.Version).Distinct().Count() != corpus.Documents.Length ||
             corpus.Documents.Any(x => x.Version.BatchId != corpus.Handle.Binding.BatchId ||
@@ -95,6 +118,8 @@ public static class OctoberResolutionPolicy
         ArgumentNullException.ThrowIfNull(corpus);
         ArgumentNullException.ThrowIfNull(inquiry);
         ArgumentNullException.ThrowIfNull(witness);
+        if (SelectedPolicyVersion(corpus.ResolutionPolicyVersion) == RetainedPolicyVersion)
+            return OctoberRetainedResolutionPolicy.Validate(corpus, inquiry, witness);
         var plan = Plan(corpus);
         var actual = plan.Inquiries.SingleOrDefault(x => x.Fingerprint == inquiry.Fingerprint && x.Caller == inquiry.Caller);
         var contributors = actual?.Contributors ?? corpus.Documents.SelectMany(x => x.Contributors).Distinct().ToImmutableArray();

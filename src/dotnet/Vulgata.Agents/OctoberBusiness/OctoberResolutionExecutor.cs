@@ -61,18 +61,41 @@ public sealed class OctoberResolutionExecutor
         if (runId == Guid.Empty || finalizationOperation.BatchId != corpus.Handle.Binding.BatchId ||
             finalizationOperation.OperationId == Guid.Empty || string.IsNullOrWhiteSpace(providerProfileId) || maximumTokens <= 0)
             return Result(ProviderAdmissionStatus.Denied);
-        var actual = OctoberResolutionPolicy.Plan(corpus).Inquiries.SingleOrDefault(x =>
-            x.Fingerprint == inquiry.Fingerprint && x.Caller == inquiry.Caller);
+        ResolutionInquiry? actual;
+        try
+        {
+            actual = OctoberResolutionPolicy.Plan(corpus).Inquiries.SingleOrDefault(x =>
+                x.Fingerprint == inquiry.Fingerprint && x.Caller == inquiry.Caller);
+        }
+        catch (ArgumentException) { return Result(ProviderAdmissionStatus.Denied); }
         if (actual is null) return Result(ProviderAdmissionStatus.Denied);
 
         long started = _time.GetTimestamp();
         DateTimeOffset startedUtc = _time.GetUtcNow();
         TimeSpan Elapsed() => Max(_time.GetElapsedTime(started), _time.GetUtcNow() - startedUtc);
-        // Send the accepted corpus that the fingerprint/contributor union covers, not caller-supplied replacement facts.
-        string input = JsonSerializer.Serialize(new { corpus, inquiry = actual });
+        // V2 sends exact endpoint evidence. The inquiry fingerprint and every live disclosure
+        // check still cover the complete owner-held corpus ledger, including uncited inputs.
+        string input;
+        try
+        {
+            input = corpus.ResolutionPolicyVersion == OctoberResolutionPolicy.RetainedPolicyVersion
+                ? JsonSerializer.Serialize(OctoberRetainedResolutionPolicy.CreateEvidencePacket(corpus, actual))
+                : JsonSerializer.Serialize(new { corpus, inquiry = actual });
+        }
+        catch (ArgumentException) { return Result(ProviderAdmissionStatus.BudgetExhausted); }
         if (Encoding.UTF8.GetByteCount(input) > 1024 * 1024) return Result(ProviderAdmissionStatus.BudgetExhausted);
+        bool retainedEvidence = corpus.ResolutionPolicyVersion == OctoberResolutionPolicy.RetainedPolicyVersion;
+        int outputCeiling = (int)Math.Min(maximumTokens, int.MaxValue);
         for (int attemptNumber = 0; attemptNumber < 2; attemptNumber++)
         {
+            ChatMessage[] messages = [new(ChatRole.System, _instructions), new(ChatRole.User, input)];
+            long reservation = maximumTokens;
+            if (retainedEvidence)
+            {
+                try { reservation = checked(OctoberBusinessSynthesisRequests.EstimateInputTokens(messages) + outputCeiling); }
+                catch (Exception error) when (error is ArgumentException or OverflowException)
+                { return Result(ProviderAdmissionStatus.BudgetExhausted); }
+            }
             TimeSpan remaining = TimeSpan.FromSeconds(120) - Elapsed();
             if (remaining <= TimeSpan.Zero) return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (cancellationToken.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
@@ -83,7 +106,7 @@ public sealed class OctoberResolutionExecutor
             try
             {
                 admission = await executionScope.AcquireProviderAttemptAsync(new(runId, finalizationOperation,
-                    Guid.NewGuid(), BusinessWorkKind.Resolution, providerProfileId, remaining, maximumTokens), admissionCancellation.Token);
+                    Guid.NewGuid(), BusinessWorkKind.Resolution, providerProfileId, remaining, reservation), admissionCancellation.Token);
             }
             catch (OperationCanceledException) { return Result(HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted
                 ? stopped : deadline.IsCancellationRequested ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped); }
@@ -121,8 +144,8 @@ public sealed class OctoberResolutionExecutor
                         // Await actual transport settlement even when it ignores cancellation. Never release its lease early.
                         try
                         {
-                            response = await attemptClient.GetAttemptResponseAsync([new(ChatRole.System, _instructions), new(ChatRole.User, input)],
-                                new ChatOptions { ResponseFormat = ChatResponseFormat.Json, MaxOutputTokens = (int)Math.Min(maximumTokens, int.MaxValue), Tools = [] },
+                            response = await attemptClient.GetAttemptResponseAsync(messages,
+                                new ChatOptions { ResponseFormat = ChatResponseFormat.Json, MaxOutputTokens = outputCeiling, Tools = [] },
                                 lease, timestamp => Interlocked.CompareExchange(ref dispatchedAt, timestamp, 0),
                                 transportCancellation.Token);
                         }

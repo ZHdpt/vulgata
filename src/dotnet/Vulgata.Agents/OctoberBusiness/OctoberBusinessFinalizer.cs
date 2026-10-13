@@ -115,6 +115,8 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             using (var bounded = Bound(token))
                 loaded = await AwaitAsync(_loader.LoadAsync(request.Corpus, selection.Roots, bounded.Token), bounded.Token);
             if (loaded.Status != KnowledgeReadStatus.Success || loaded.Input is not { } input || input.Corpus.Handle != request.Corpus ||
+                input.ResolutionPolicyVersion != selection.ResolutionPolicyVersion ||
+                input.Corpus.ResolutionPolicyVersion != selection.ResolutionPolicyVersion ||
                 input.Roots.IsDefault || !input.Roots.ToHashSet().SetEquals(selection.Roots))
                 return Empty(request, BusinessFinalizationStatus.AuthorityUnavailable);
             input = OctoberBusinessContextOverridePolicy.Apply(input, selection.ContextOverride);

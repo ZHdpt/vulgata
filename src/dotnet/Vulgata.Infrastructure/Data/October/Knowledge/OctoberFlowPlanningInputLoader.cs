@@ -14,12 +14,15 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
     private static readonly JsonSerializerOptions _json = new() { PropertyNameCaseInsensitive = true };
     private readonly IDbContextFactory<OctoberDbContext> _contexts;
     private readonly IOctoberKnowledgeProducerAuthorization _authorization;
+    private readonly string? _resolutionPolicyVersion;
 
     public OctoberFlowPlanningInputLoader(IDbContextFactory<OctoberDbContext> contexts,
-        IOctoberKnowledgeProducerAuthorization authorization)
+        IOctoberKnowledgeProducerAuthorization authorization, string? resolutionPolicyVersion = null)
     {
         _contexts = contexts ?? throw new ArgumentNullException(nameof(contexts));
         _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
+        _ = OctoberResolutionPolicy.SelectedPolicyVersion(resolutionPolicyVersion);
+        _resolutionPolicyVersion = resolutionPolicyVersion;
     }
 
     public async Task<FlowPlanningInputResult> LoadAsync(CorpusHandle corpus, ImmutableArray<FlowRootSelection> roots,
@@ -81,9 +84,10 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
         if (ledger.IsDefault || ledger.Length > OctoberKnowledgeStoredReadBudget.MaximumContributors || ledger.Any(x => x is null) ||
             !await AuthorizedAsync(handle.Binding, ledger, ct)) return Unavailable();
         if (retained.CorpusDigest != handle.CorpusDigest) return Unavailable();
-        await PreflightAsync(context, handle, budget, ct);
+        await PreflightAsync(context, handle, budget, ct, _resolutionPolicyVersion);
         ct.ThrowIfCancellationRequested();
-        var corpus = await OctoberResolutionStore.LoadExactCorpusAsync(context, handle, ct, budget);
+        var corpus = (await OctoberResolutionStore.LoadExactCorpusAsync(context, handle, ct, budget)) with
+        { ResolutionPolicyVersion = _resolutionPolicyVersion };
         var plan = OctoberResolutionPolicy.Plan(corpus);
         var memberRows = await context.CorpusDocuments.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
         var manifestIds = await context.CorpusManifests.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => x.ManifestId).ToArrayAsync(ct);
@@ -161,10 +165,13 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
             projectedUnits.Add(new(unit.UnitId, new(batch, logical.LogicalDocumentId, version.VersionId), unit.SemanticSelector, origin, anchors));
         }
 
-        var items = await context.ResolutionItems.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
-        var dependencies = await context.ResolutionDocumentDependencies.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
-        var edges = await context.RelationshipVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
-        var unknowns = await context.UncertaintyVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId).ToListAsync(ct);
+        string policyVersion = OctoberResolutionPolicy.SelectedPolicyVersion(_resolutionPolicyVersion);
+        var selectedItems = context.ResolutionItems.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && x.PolicyVersion == policyVersion);
+        var items = await selectedItems.ToListAsync(ct);
+        var selectedIds = selectedItems.Select(x => x.ItemId);
+        var dependencies = await context.ResolutionDocumentDependencies.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).ToListAsync(ct);
+        var edges = await context.RelationshipVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).ToListAsync(ct);
+        var unknowns = await context.UncertaintyVersions.AsNoTracking().Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).ToListAsync(ct);
         if (items.Count != plan.Inquiries.Length || !items.Select(x => x.InquiryFingerprint).ToHashSet().SetEquals(plan.Inquiries.Select(x => x.Fingerprint)) ||
             dependencies.Any(x => items.All(i => i.ItemId != x.ItemId)) || edges.Any(x => items.All(i => i.ItemId != x.ItemId)) || unknowns.Any(x => items.All(i => i.ItemId != x.ItemId)))
             return Unavailable();
@@ -175,7 +182,7 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
             var inquiry = plan.Inquiries.Single(x => x.Fingerprint == item.InquiryFingerprint);
             var outcome = Required<ResolutionOutcome>(item.OutcomeJson);
             if (item.ItemId != new Guid(Convert.FromHexString(inquiry.Fingerprint).AsSpan(0, 16)) ||
-                item.OperationKind != OperationKind.AcceptResolution || item.PolicyVersion != OctoberResolutionPolicy.PolicyVersion ||
+                item.OperationKind != OperationKind.AcceptResolution || item.PolicyVersion != policyVersion ||
                 !SameSet(Required<ImmutableArray<Contributor>>(item.ContributorsJson), ledger) ||
                 !SameSet(Required<ImmutableArray<ResolutionItemDisposition>>(item.PlanDispositionsJson), plan.Dispositions)) return Unavailable();
             ResolutionOutcome expected;
@@ -221,6 +228,7 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
         }
         var input = new FlowPlanningInput(corpus, projectedUnits.ToImmutable(), resolutions.ToImmutable(), roots, plan.Dispositions, coverage)
         {
+            ResolutionPolicyVersion = _resolutionPolicyVersion,
             Contributors = ledger,
             FileUncertainties = fileUnknowns.OrderBy(x => x.ManifestId).ThenBy(x => x.Key, StringComparer.Ordinal).ToImmutableArray(),
             AdvisoryContext = await LoadAdvisoryContextAsync(context, corpus, ledger, budget, ct)
@@ -351,11 +359,14 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
         catch { _ = ObserveAsync(checking); throw; }
     }
 
-    internal static async Task PreflightAsync(OctoberDbContext context, CorpusHandle handle, OctoberKnowledgeStoredReadBudget budget, CancellationToken ct)
+    internal static async Task PreflightAsync(OctoberDbContext context, CorpusHandle handle, OctoberKnowledgeStoredReadBudget budget,
+        CancellationToken ct, string? resolutionPolicyVersion = null)
     {
         Guid batch = handle.Binding.BatchId;
         Guid corpusId = handle.CorpusId;
-        var items = context.ResolutionItems.Where(x => x.BatchId == batch && x.CorpusId == corpusId);
+        string policyVersion = OctoberResolutionPolicy.SelectedPolicyVersion(resolutionPolicyVersion);
+        var items = context.ResolutionItems.Where(x => x.BatchId == batch && x.CorpusId == corpusId && x.PolicyVersion == policyVersion);
+        var selectedIds = items.Select(x => x.ItemId);
         if (context.Database.IsNpgsql())
         {
             // jsonb is measured as its actual UTF-8 representation, not SQL length(jsonb) or
@@ -363,19 +374,23 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
             budget.Add(await context.Database.SqlQuery<long>($"""
                 SELECT coalesce(octet_length("WitnessJson"::text),0)::bigint + octet_length("OutcomeJson"::text)
                     + octet_length("ContributorsJson"::text) + octet_length("PlanDispositionsJson"::text) AS "Value"
-                FROM october."OctoberResolutionItems" WHERE "BatchId"={batch} AND "CorpusId"={corpusId} LIMIT 65
+                FROM october."OctoberResolutionItems" WHERE "BatchId"={batch} AND "CorpusId"={corpusId} AND "PolicyVersion"={policyVersion} LIMIT 65
                 """).ToListAsync(ct), 64, bytes: true);
             budget.Add(await context.Database.SqlQuery<long>($"""
                 SELECT octet_length("CoverageJson"::text)::bigint + octet_length("ContributorsJson"::text) AS "Value"
                 FROM october."OctoberCorpusCoverage" WHERE "BatchId"={batch} AND "CorpusId"={corpusId} LIMIT 10001
                 """).ToListAsync(ct), bytes: true);
             budget.Add(await context.Database.SqlQuery<long>($"""
-                SELECT octet_length("ContentJson"::text)::bigint AS "Value"
-                FROM october."OctoberRelationshipVersions" WHERE "BatchId"={batch} AND "CorpusId"={corpusId} LIMIT 65
+                SELECT octet_length(r."ContentJson"::text)::bigint AS "Value"
+                FROM october."OctoberRelationshipVersions" r JOIN october."OctoberResolutionItems" i
+                    ON i."BatchId"=r."BatchId" AND i."CorpusId"=r."CorpusId" AND i."ItemId"=r."ItemId"
+                WHERE i."BatchId"={batch} AND i."CorpusId"={corpusId} AND i."PolicyVersion"={policyVersion} LIMIT 65
                 """).ToListAsync(ct), 64, bytes: true);
             budget.Add(await context.Database.SqlQuery<long>($"""
-                SELECT octet_length("ContentJson"::text)::bigint AS "Value"
-                FROM october."OctoberUncertaintyVersions" WHERE "BatchId"={batch} AND "CorpusId"={corpusId} LIMIT 65
+                SELECT octet_length(u."ContentJson"::text)::bigint AS "Value"
+                FROM october."OctoberUncertaintyVersions" u JOIN october."OctoberResolutionItems" i
+                    ON i."BatchId"=u."BatchId" AND i."CorpusId"=u."CorpusId" AND i."ItemId"=u."ItemId"
+                WHERE i."BatchId"={batch} AND i."CorpusId"={corpusId} AND i."PolicyVersion"={policyVersion} LIMIT 65
                 """).ToListAsync(ct), 64, bytes: true);
             budget.Add(await context.Database.SqlQuery<long>($"""
                 SELECT octet_length(v."AnchorsJson"::text)::bigint AS "Value"
@@ -387,7 +402,7 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
                 SELECT octet_length(o."ContributorsJson"::text)::bigint + octet_length(o."CommittedResultJson"::text) AS "Value"
                 FROM october."KnowledgeOperations" o JOIN october."OctoberResolutionItems" i
                     ON i."BatchId"=o."BatchId" AND i."OperationKind"=o."Kind" AND i."OperationId"=o."OperationId"
-                WHERE i."BatchId"={batch} AND i."CorpusId"={corpusId} LIMIT 65
+                WHERE i."BatchId"={batch} AND i."CorpusId"={corpusId} AND i."PolicyVersion"={policyVersion} LIMIT 65
                 """).ToListAsync(ct), 64, bytes: true);
             budget.Add(await context.Database.SqlQuery<long>($"""
                 SELECT octet_length(u."ContentJson"::text)::bigint AS "Value"
@@ -401,8 +416,8 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
             budget.Add(await items.Select(x => (long)(x.WitnessJson == null ? 0 : x.WitnessJson.Length) + x.OutcomeJson.Length + x.ContributorsJson.Length + x.PlanDispositionsJson.Length).Take(65).ToListAsync(ct), 64);
             budget.Add(await context.CorpusCoverage.Where(x => x.BatchId == batch && x.CorpusId == corpusId)
                 .Select(x => (long)x.CoverageJson.Length + x.ContributorsJson.Length).Take(10001).ToListAsync(ct));
-            budget.Add(await context.RelationshipVersions.Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => (long)x.ContentJson.Length).Take(65).ToListAsync(ct), 64);
-            budget.Add(await context.UncertaintyVersions.Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => (long)x.ContentJson.Length).Take(65).ToListAsync(ct), 64);
+            budget.Add(await context.RelationshipVersions.Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).Select(x => (long)x.ContentJson.Length).Take(65).ToListAsync(ct), 64);
+            budget.Add(await context.UncertaintyVersions.Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).Select(x => (long)x.ContentJson.Length).Take(65).ToListAsync(ct), 64);
             var versionIds = context.CorpusDocuments.Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => x.VersionId);
             budget.Add(await context.DocumentVersions.Where(x => x.BatchId == batch && versionIds.Contains(x.VersionId)).Select(x => (long)x.AnchorsJson.Length).Take(10001).ToListAsync(ct));
             var operationIds = items.Select(x => x.OperationId);
@@ -413,7 +428,7 @@ public sealed class OctoberFlowPlanningInputLoader : IOctoberFlowPlanningInputLo
                 .Select(x => (long)x.ContentJson.Length).Take(10001).ToListAsync(ct));
         }
         budget.Add(await context.CorpusManifests.Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => 0L).Take(10001).ToListAsync(ct));
-        budget.Add(await context.ResolutionDocumentDependencies.Where(x => x.BatchId == batch && x.CorpusId == corpusId).Select(x => 0L).Take(640001).ToListAsync(ct), 640000);
+        budget.Add(await context.ResolutionDocumentDependencies.Where(x => x.BatchId == batch && x.CorpusId == corpusId && selectedIds.Contains(x.ItemId)).Select(x => 0L).Take(640001).ToListAsync(ct), 640000);
     }
 
     private static FileCoverage Coverage(AcceptedFileManifest manifest) => new(manifest.AdmissionId,

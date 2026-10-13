@@ -5,11 +5,19 @@ namespace Vulgata.Core.DomainServices.OctoberKnowledge;
 
 /// <summary>Exact original live request to use an immutable, fully published CL corpus.</summary>
 public sealed record BusinessFromClRequest(PublicationBinding Publication, string SubjectId, Guid RunId,
-    string CanonicalPayloadDigest);
+    string CanonicalPayloadDigest)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
+}
 
 public sealed record BusinessFromClSnapshot(PublicationBinding Publication, CorpusHandle Corpus,
     ImmutableArray<AcceptedFile> AcceptedFiles, ImmutableArray<FileCoverage> Coverage,
-    ImmutableArray<Contributor> Contributors, ImmutableArray<ResolutionOutcome> ExistingResolutions);
+    ImmutableArray<Contributor> Contributors, ImmutableArray<ResolutionOutcome> ExistingResolutions)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
+}
 
 /// <summary>Issuer-verified process-local ownership, never recreated from a stored receipt.</summary>
 public abstract class BusinessFromClAdmission
@@ -93,11 +101,19 @@ public static class OctoberBusinessFromClPolicy
         new(request.Publication.Knowledge.BatchId, OperationKind.BeginBusinessFromCl, request.RunId);
     public static OperationKey CompleteOperation(BusinessFromClRequest request) =>
         new(request.Publication.Knowledge.BatchId, OperationKind.CompleteBusinessFromCl, request.RunId);
-    public static string ComputeBeginDigest(BusinessFromClRequest request) => OctoberKnowledgePolicy.Hash(
-        OctoberKnowledgePolicy.SerializeCanonical(new
+    public static string ComputeBeginDigest(BusinessFromClRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        _ = OctoberResolutionPolicy.SelectedPolicyVersion(request.ResolutionPolicyVersion);
+        return request.ResolutionPolicyVersion is null ? OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(new
         {
             domain = "october/business-from-cl/begin/1", request.Publication, request.SubjectId, request.RunId
+        })) : OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(new
+        {
+            domain = "october/business-from-cl/begin/2", request.Publication, request.SubjectId, request.RunId,
+            request.ResolutionPolicyVersion
         }));
+    }
     public static string ComputeCompletionDigest(BusinessFromClCompletionRequest request) => OctoberKnowledgePolicy.Hash(
         OctoberKnowledgePolicy.SerializeCanonical(new
         {
