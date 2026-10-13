@@ -21,6 +21,246 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("节点描述为「检查余额」；配置未声明任何余额判断。", true)]
+    [InlineData("检查余额；随后调用处理节点。", false)]
+    [InlineData("节点描述为「缺少结束引号", false)]
+    public void SemanticEvidenceReadings_PreserveExactOriginalTextAndOnlyIsolateExplicitDescription(string text, bool named)
+    {
+        var basis = new FlowPlannerCase(1, [], [0]);
+        var document = basis.Input.Corpus.Documents[0]; var section = document.Sections[0];
+        var claim = section.Claims[0] with { Text = text };
+        document = document with { Sections = document.Sections.SetItem(0, section with { Claims = section.Claims.SetItem(0, claim) }) };
+        var input = basis.Input with { Corpus = basis.Input.Corpus with { Documents = [document] } };
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input).Groups);
+        var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(input, group.GroupVersionId);
+        var reading = Assert.Single(packet.EvidenceReadings.Where(value => value.Input == new SynthesisClaimInput(document.Version, section.SectionId, claim.ClaimGroupId)));
+        Assert.Equal(text, string.Concat(reading.Parts.Select(part => part.Text)));
+        Assert.Equal(text, packet.Documents[0].Sections[0].Claims[0].Text);
+        Assert.All(reading.Parts, part => Assert.Contains(part.Category, new[] { "Unknown", "NodeNameOrDescription" }));
+        if (named) Assert.Equal("描述为「检查余额」", Assert.Single(reading.Parts.Where(part => part.Category == "NodeNameOrDescription")).Text);
+        else Assert.All(reading.Parts, part => Assert.Equal("Unknown", part.Category));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteReviewedAsync_InitialUnknownUsage_DoesNotSendReviewOrExposeDraftAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var client = new SemanticReviewClient(clock, (_, _) => f.Response(false));
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(1, client.Calls); Assert.Single(result.Attempts);
+        Assert.Null(result.Attempts[0].InputTokens);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteReviewedAsync_CorrectionCannotReverseOriginalInputOrderAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var proposal = f.Proposal(); var section = proposal.Sections[0];
+        var claim = section.Claims[0] with { Inputs = [section.Claims[0].Inputs[0], new(f.Root, "operation", "provider")] };
+        proposal = proposal with { Sections = [section with { Claims = section.Claims.SetItem(0, claim) }] };
+        using var client = new SemanticReviewClient(clock, (call, messages) => call switch
+        {
+            1 => SynthesisCase.JsonResponse(JsonSerializer.Serialize(proposal)),
+            2 => SemanticReview(f, messages, rejected: true),
+            _ => SynthesisCase.JsonResponse(JsonSerializer.Serialize(proposal with { Sections = [proposal.Sections[0] with
+                { Claims = proposal.Sections[0].Claims.SetItem(0, claim with { Inputs = claim.Inputs.Reverse().ToImmutableArray() }) }] }))
+        });
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(3, client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ExecuteReviewedAsync_AcceptedReview_UsesFreshBoundEnvelopeAndRetainsBothSettlementsAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var client = new SemanticReviewClient(clock, (call, messages) => call == 1 ? f.Response() : SemanticReview(f, messages));
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.NotNull(result.Content); Assert.NotNull(result.Proposal); Assert.NotNull(result.Dependencies);
+        Assert.Equal(2, client.Calls); Assert.Equal(2, result.Attempts.Length);
+        Assert.All(result.Attempts, attempt => { Assert.Equal(10, attempt.InputTokens); Assert.Equal(5, attempt.OutputTokens); });
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteReviewedAsync_RejectedReview_AllowsOneCorrectionAndOneFinalReviewAsync(bool rejectAgain)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var corrected = f.Proposal() with { Title = "更谨慎的业务流程说明" };
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            if (call == 3)
+            {
+                var envelope = SemanticEnvelope(messages, "semantic-correction");
+                Assert.NotNull(envelope["packet"]); Assert.NotNull(envelope["candidate"]);
+                Assert.NotEmpty(envelope["findings"]!.AsArray());
+                return SynthesisCase.JsonResponse(JsonSerializer.Serialize(corrected));
+            }
+            return SemanticReview(f, messages, rejected: call == 2 || rejectAgain);
+        });
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.Equal(4, client.Calls); Assert.Equal(4, result.Attempts.Length);
+        if (rejectAgain) { Assert.Null(result.Content); Assert.Null(result.Dependencies); Assert.Null(result.Proposal); }
+        else { Assert.NotNull(result.Content); Assert.Equal(corrected.Title, result.Proposal!.Title); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("wrong-digest")]
+    [InlineData("missing-finding")]
+    [InlineData("duplicate-finding")]
+    [InlineData("fabricated-quote")]
+    [InlineData("foreign-input")]
+    [InlineData("missing-claim-evidence")]
+    [InlineData("unknown-category")]
+    [InlineData("invalid-json")]
+    [InlineData("unknown-usage")]
+    public async Task ExecuteReviewedAsync_UntrustworthyReview_FailsClosedWithoutSemanticCorrectionAsync(string mutation)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            var response = SemanticReview(f, messages);
+            if (mutation == "unknown-usage") { response.Usage = null; return response; }
+            if (mutation == "invalid-json") return SynthesisCase.JsonResponse("{untrusted-review");
+            var body = JsonNode.Parse(response.Text)!.AsObject();
+            var findings = body["findings"]!.AsArray();
+            var evidence = findings[^1]!["evidence"]!.AsArray();
+            switch (mutation)
+            {
+                case "wrong-digest": body["proposalDigest"] = new string('0', 64); break;
+                case "missing-finding": findings.RemoveAt(0); break;
+                case "duplicate-finding": findings.Add(findings[0]!.DeepClone()); break;
+                case "fabricated-quote": evidence[0]!["quote"] = "A fabricated source sentence absent from every accepted claim."; break;
+                case "foreign-input": evidence[0]!["input"] = JsonSerializer.SerializeToNode(new SynthesisClaimInput(f.Root, "foreign-section", "foreign-claim")); break;
+                case "missing-claim-evidence": evidence.Clear(); break;
+                case "unknown-category": evidence[0]!["category"] = "RuntimeProof"; break;
+            }
+            return SynthesisCase.JsonResponse(body.ToJsonString());
+        });
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.Null(result.Content); Assert.Null(result.Dependencies); Assert.Null(result.Proposal);
+        Assert.Equal(2, client.Calls); Assert.Equal(2, result.Attempts.Length);
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("drop-claim")]
+    [InlineData("replace-input")]
+    [InlineData("rename-section")]
+    public async Task ExecuteReviewedAsync_CorrectionCannotEraseOrRebindTheRejectedClaimAsync(string mutation)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            if (call == 2) return SemanticReview(f, messages, rejected: true);
+            var proposal = f.Proposal(); var section = proposal.Sections[0];
+            section = mutation switch
+            {
+                "drop-claim" => section with { Claims = section.Claims.RemoveAt(0) },
+                "replace-input" => section with { Claims = section.Claims.SetItem(0, section.Claims[0] with { Inputs = [new(f.Root, "operation", "provider")] }) },
+                _ => section with { SectionId = "renamed-section" }
+            };
+            return SynthesisCase.JsonResponse(JsonSerializer.Serialize(proposal with { Sections = [section] }));
+        });
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.Null(result.Content); Assert.Null(result.Dependencies); Assert.Null(result.Proposal);
+        Assert.InRange(client.Calls, 3, 6); // At most four structural attempts for the one permitted correction.
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteReviewedAsync_AuthorityLossOrOriginalDeadlineDuringReview_SuppressesApprovedContentAsync(bool expire)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        bool revoked = false;
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            var response = SemanticReview(f, messages);
+            if (expire) clock.Advance(TimeSpan.FromSeconds(901)); else revoked = true;
+            return response;
+        });
+        var authority = new SynthesisDisclosure { Decide = _ => revoked ? DisclosureStatus.Denied : DisclosureStatus.Allowed };
+        var result = await ExecuteReviewed(f, client, scope, authority, clock);
+        Assert.Null(result.Content); Assert.Null(result.Dependencies);
+        Assert.Equal(expire ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.Denied, result.AdmissionFailure);
+        Assert.Equal(2, client.Calls);
+        Assert.All(authority.Seen, contributors => Assert.Contains(f.UncitedContributor, contributors));
+    }
+
+    private static Task<BusinessSynthesisResult> ExecuteReviewed(SynthesisCase f, IChatClient client,
+        IOctoberExecutionScope scope, IOctoberResolutionDisclosureAuthority authority, SynthesisClock clock) =>
+        new OctoberBusinessSynthesisExecutor(client, "Controlled synthesis: retain source qualifications and uncertainty.", clock)
+            .ExecuteReviewedAsync(f.Input, f.Group.GroupVersionId, f.Operation, f.Run, "selected-profile", 40, scope, authority, default, f.Limits);
+
+    private static JsonObject SemanticEnvelope(ChatMessage[] messages, string phase)
+    {
+        Assert.Equal(2, messages.Length); Assert.Equal(ChatRole.System, messages[0].Role);
+        Assert.Equal(ChatRole.User, messages[1].Role);
+        var envelope = JsonNode.Parse(messages[1].Text)!.AsObject();
+        Assert.Equal(phase, envelope["phase"]!.GetValue<string>());
+        return envelope;
+    }
+
+    private static ChatResponse SemanticReview(SynthesisCase f, ChatMessage[] messages, bool rejected = false)
+    {
+        var envelope = SemanticEnvelope(messages, "semantic-review");
+        var candidate = envelope["candidate"]!.Deserialize<BusinessSynthesisProposal>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        string digest = envelope["proposalDigest"]!.GetValue<string>();
+        Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), digest);
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(OctoberBusinessSynthesisPolicy.CreateModelPacket(f.Input, f.Group.GroupVersionId, f.Limits)),
+            OctoberKnowledgePolicy.SerializeCanonical(envelope["packet"]!.Deserialize<BusinessSynthesisPacket>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!));
+        return SemanticReviewForCandidate(f.Input, candidate, rejected);
+    }
+
+    internal static ChatResponse SemanticReviewForCandidate(FlowPlanningInput input, BusinessSynthesisProposal candidate, bool rejected = false)
+        => SemanticReviewForDocuments(input.Corpus.Documents.Select(document => new SynthesisPacketDocument(document.Version, document.Sections)), candidate, rejected);
+
+    internal static ChatResponse SemanticReviewForDocuments(IEnumerable<SynthesisPacketDocument> documents, BusinessSynthesisProposal candidate, bool rejected = false)
+    {
+        string digest = OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate));
+        object Evidence(SynthesisClaimInput reference) => new
+        {
+            input = reference, category = "NodeNameOrDescription",
+            quote = documents.Single(document => document.Version == reference.Document).Sections
+                .Single(section => section.SectionId == reference.SectionId).Claims.Single(claim => claim.ClaimGroupId == reference.ClaimGroupId).Text
+        };
+        var findings = new List<object>();
+        var allInputs = candidate.Sections.SelectMany(section => section.Claims).SelectMany(claim => claim.Inputs).Distinct().ToArray();
+        findings.Add(new { target = "title", supported = true, explanation = "Bound title evidence.", evidence = new[] { Evidence(allInputs[0]) } });
+        foreach (var section in candidate.Sections)
+        {
+            findings.Add(new { target = "section:" + section.SectionId, supported = true, explanation = "Bound section evidence.", evidence = new[] { Evidence(section.Claims[0].Inputs[0]) } });
+            foreach (var claim in section.Claims)
+                findings.Add(new { target = "claim:" + claim.ClaimGroupId, supported = !rejected,
+                    explanation = rejected ? "The phrasing implies more than the cited declaration." : "The phrasing remains within cited evidence.", evidence = claim.Inputs.Select(Evidence).ToArray() });
+        }
+        return SynthesisCase.JsonResponse(JsonSerializer.Serialize(new { proposalDigest = digest, findings }));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public void ContextOverride_SharedSystemSlots_RejectConflictingPartialReplacementAndDeduplicateConsistentVersion()
     {
@@ -730,7 +970,7 @@ public sealed class OctoberBusinessSynthesisTests
         Type type = property.PropertyType;
         string[] expected = ["None", "InvalidInput", "ProposalShape", "SectionOrder", "ClaimShape", "DocumentReference", "SectionReference", "ClaimReference",
             "QualificationMismatch", "InputClaimShape", "OutputLimit", "InvalidStructure", "ResponseMissing", "FinishReasonNotStop", "ResponseLengthLimit",
-            "ResponseShape", "ResponsePayloadLimit", "ProposalMissing", "JsonInvalid", "TransportFailure", "ExecutionUnavailable", "UnsupportedRoot", "NotEvaluated"];
+            "ResponseShape", "ResponsePayloadLimit", "ProposalMissing", "JsonInvalid", "TransportFailure", "ExecutionUnavailable", "UnsupportedRoot", "NotEvaluated", "SemanticReviewRejected", "SemanticReviewInvalid"];
         Assert.Equal(expected, Enum.GetNames(type));
         Assert.Equal(Enumerable.Range(0, expected.Length), Enum.GetValues(type).Cast<object>().Select(Convert.ToInt32));
         SynthesisDiagnosticProbe.Set(result, "None");
@@ -1263,6 +1503,31 @@ internal sealed class SynthesisSdkSecret : ISecretEncryptionService
 internal sealed class SynthesisUnknownContent : AIContent { }
 
 /// <summary>Controlled accepted-input fixture; real pure planner and real host scope, without source/provider runtime qualification.</summary>
+/// <summary>Controlled typed responses; real execution-scope leases still own dispatch and settlement.</summary>
+internal sealed class SemanticReviewClient : IChatClient, IOctoberBusinessSynthesisClient
+{
+    private readonly ResolutionClient _inner;
+    private ChatMessage[] _current = [];
+    public SemanticReviewClient(SynthesisClock clock, Func<int, ChatMessage[], ChatResponse> response) =>
+        _inner = new("selected-profile", (call, _) => { clock.Advance(TimeSpan.FromSeconds(2)); return Task.FromResult(response(call, _current)); });
+    public int Calls => _inner.Calls;
+    public string ProviderProfileId => "selected-profile";
+    public bool SupportsSynthesisCorrections => true;
+    public Task<ChatResponse> GetSynthesisResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options,
+        IOctoberProviderAttemptLease lease, BusinessSynthesisAttemptStrategy strategy, Action<long> onDispatched, CancellationToken cancellationToken = default) =>
+        GetAttemptResponseAsync(messages, options, lease, onDispatched, cancellationToken);
+    public Task<ChatResponse> GetAttemptResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options,
+        IOctoberProviderAttemptLease lease, Action<long> onDispatched, CancellationToken cancellationToken = default)
+    {
+        _current = messages.Select(message => message.Clone()).ToArray();
+        return _inner.GetAttemptResponseAsync(_current, options, lease, onDispatched, cancellationToken);
+    }
+    public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+    public void Dispose() => _inner.Dispose();
+}
+
 internal sealed class SynthesisCase
 {
     public const string PrivatePath = "private/sentinel-payments-secret.cs";

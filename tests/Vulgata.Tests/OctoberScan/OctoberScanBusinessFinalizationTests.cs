@@ -95,7 +95,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             return;
         }
         Assert.Equal(0, report.ExitCode);
-        Assert.Equal(1, transport.BusinessRequests);
+        Assert.Equal(2, transport.BusinessRequests);
         await using var context = host.Database.Factory.CreateDbContext();
         var finalization = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
         var retained = JsonSerializer.Deserialize<FlowFinalizationPublicationRequest>(finalization.RequestJson,
@@ -128,7 +128,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         var report = Assert.IsType<OctoberScanReport>(result.Report);
         Assert.Equal(0, report.ExitCode);
         Assert.Equal(0, transport.WorkerRequests);
-        Assert.Equal(1, transport.BusinessRequests);
+        Assert.Equal(2, transport.BusinessRequests);
         using var packet = JsonDocument.Parse(Assert.Single(transport.SynthesisPackets));
         var advisory = Assert.Single(packet.RootElement.GetProperty("AdvisoryContext").EnumerateArray());
         Assert.Equal(useOverride ? text : OctoberKnowledgeAcceptanceFixture.AdvisorySnapshot, advisory.GetProperty("Text").GetString());
@@ -196,7 +196,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         var result = await runner.ExecuteAsync(execution);
         var report = Assert.IsType<OctoberScanReport>(result.Report);
         Assert.NotNull(observed);
-        Assert.Equal(1, transport.BusinessRequests);
+        Assert.Equal(2, transport.BusinessRequests);
         Assert.Equal(0, transport.WorkerRequests);
         Assert.Equal(100, observed.Requests[0].PageSize);
         if (scenario is "initial-overflow" or "later-overflow")
@@ -459,7 +459,7 @@ public sealed class OctoberScanBusinessFinalizationTests
                 handle.LogicalDocumentId == originalHandle.LogicalDocumentId &&
                 handle.DocumentVersionId == originalHandle.DocumentVersionId));
             Assert.Equal(0, successfulTransport.WorkerRequests);
-            Assert.Equal(1, successfulTransport.BusinessRequests);
+            Assert.Equal(2, successfulTransport.BusinessRequests);
         }
 
         Assert.Equal(originalSourceOpens, host.SourceOpens);
@@ -482,7 +482,7 @@ public sealed class OctoberScanBusinessFinalizationTests
                 handle.LogicalDocumentId == originalHandle.LogicalDocumentId &&
                 handle.DocumentVersionId == originalHandle.DocumentVersionId));
             Assert.Equal(0, repeatedTransport.WorkerRequests);
-            Assert.Equal(1, repeatedTransport.BusinessRequests);
+            Assert.Equal(2, repeatedTransport.BusinessRequests);
         }
 
         Assert.Equal(originalSourceOpens, host.SourceOpens);
@@ -559,7 +559,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             var recovered = await runner.ExecuteAsync(execution);
             Assert.Equal(0, recovered.Report!.ExitCode);
             Assert.Equal(0, retryTransport.ResolutionRequests);
-            Assert.Equal(1, retryTransport.BusinessRequests);
+            Assert.Equal(2, retryTransport.BusinessRequests);
             Assert.IsType<PublicationBinding>(recovered.Report.Publication);
         }
 
@@ -640,8 +640,8 @@ public sealed class OctoberScanBusinessFinalizationTests
         Assert.Equal(1, clientCreations);
         Assert.Equal(1, rootSelections);
         Assert.Equal(twoRepositories ? 2 : 1, transport.WorkerRequests);
-        Assert.Equal(1, transport.BusinessRequests);
-        Assert.Equal(twoRepositories ? 3 : 2, report.Usage.Requests);
+        Assert.Equal(2, transport.BusinessRequests);
+        Assert.Equal(twoRepositories ? 4 : 3, report.Usage.Requests);
         Assert.False(report.Usage.HasUnknownUsage);
         Assert.Equal(1, host.BeginCalls);
         Assert.Equal(1, host.FreezeCalls);
@@ -728,6 +728,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         var state = new BoundaryState { Boundary = boundary };
         if (boundary == "freeze-log") state.BeforeFreeze = () => host.Database.Log.Succeeds = false;
         var clock = boundary is "session-expired" or "replay-authority-held" ? new OctoberScanAcceptanceHarness.ManualClock() : null;
+        if (boundary == "replay-authority-held") transport.OnBusinessDispatch = () => clock!.Advance(TimeSpan.FromSeconds(1));
         var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
         if (boundary is "operator-broker-no-response" or "operator-broker-valid") execution = execution with { Policy = execution.Policy with { RunDeadlineSeconds = 900, FileDeadlineSeconds = 480 } };
         if (boundary == "session-expired") execution = execution with { Session = new FixedSession(execution.Session.SubjectId, execution.Session.ManagementAuthorityId, clock!.GetUtcNow().AddSeconds(5)) };
@@ -936,7 +937,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         if (boundary.StartsWith("operator-", StringComparison.Ordinal))
         {
             Assert.Equal(boundary == "operator-scope-before" ? 0 : 1, state.Interactions); Assert.Equal(0, state.RootSelections);
-            if (boundary is "operator-valid" or "operator-broker-valid") { Assert.Equal(0, report.ExitCode); Assert.NotNull(report.Publication); Assert.Equal(1, transport.BusinessRequests); }
+            if (boundary is "operator-valid" or "operator-broker-valid") { Assert.Equal(0, report.ExitCode); Assert.NotNull(report.Publication); Assert.Equal(2, transport.BusinessRequests); }
             else if (boundary == "operator-empty") { Assert.Equal(5, report.ExitCode); Assert.Equal(0, transport.BusinessRequests); }
             else { Assert.NotEqual(0, report.ExitCode); Assert.NotEqual(5, report.ExitCode); Assert.Null(report.Publication); Assert.Equal(0, transport.BusinessRequests); }
             var replay = await runner.ExecuteAsync(execution);
@@ -1022,7 +1023,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Empty(hidden.AcceptedFiles); Assert.Empty(hidden.TerminalCoverage);
             Assert.Null(hidden.BusinessDiagnostics);
             Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.Matching); Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.BusinessLogic);
-            Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(1, state.Publications); Assert.Equal(2, transport.BusinessRequests);
             await using var context = host.Database.Factory.CreateDbContext();
             Assert.Equal(1, await context.KnowledgePublications.CountAsync());
         }
@@ -1062,11 +1063,11 @@ public sealed class OctoberScanBusinessFinalizationTests
                 Assert.Empty(report.TerminalCoverage);
             }
             Assert.Equal(1, state.Publications);
-            Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(2, transport.BusinessRequests);
             var replay = await runner.ExecuteAsync(execution);
             Assert.Null(replay.Report!.Publication);
             Assert.Equal(1, state.Publications);
-            Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(2, transport.BusinessRequests);
             await using var context = host.Database.Factory.CreateDbContext();
             Assert.Equal(1, await context.KnowledgePublications.CountAsync());
         }
@@ -1118,16 +1119,16 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Equal(OctoberPublicationStatus.Confirmed, report.PublicationStatus); Assert.Equal("cl-and-bl", report.CompletedStage);
             Assert.NotNull(report.Publication); Assert.Equal(2, report.Documents.Length);
             Assert.Contains(report.Gaps, gap => gap.Code == "operation_log_unavailable");
-            Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(1, state.Publications); Assert.Equal(2, transport.BusinessRequests);
             var repeated = await runner.ExecuteAsync(execution);
             Assert.Equal(report.Publication, repeated.Report!.Publication); Assert.Equal(1, state.Publications);
         }        else if (boundary is "publication-ack" or "publication-first-lookup-unknown" or "reason-observer")
         {
             Assert.Equal(0, report.ExitCode); Assert.Equal("cl-and-bl", report.CompletedStage);
             Assert.NotNull(report.Publication); Assert.Equal(1, state.Publications); Assert.True(state.PublicationLookups > 0);
-            Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(2, transport.BusinessRequests);
             var replay = await runner.ExecuteAsync(execution);
-            Assert.Equal(report.Publication, replay.Report!.Publication); Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(report.Publication, replay.Report!.Publication); Assert.Equal(1, state.Publications); Assert.Equal(2, transport.BusinessRequests);
         }
         else if (boundary == "reason-invalid-proposal")
         {
@@ -1573,11 +1574,12 @@ public sealed class OctoberScanBusinessFinalizationTests
     private sealed class NaturalTransport : HttpMessageHandler
     {
         internal DocumentVersionReference? Root;
-        internal int WorkerRequests, BusinessRequests, ResolutionRequests;
+        internal int WorkerRequests, BusinessRequests, ResolutionRequests, ReviewRequests;
         internal int ExpectedWorkers = 1;
         internal int? ExpectedBusinessRequests;
         internal bool IncludeCallerObservation, ReturnUnresolved, InvalidSynthesisProposal;
         internal string? ResolutionTextOverride;
+        internal Action? OnBusinessDispatch;
         internal List<(string Endpoint, string? Authorization, string Model)> Requests { get; } = [];
         internal List<string> SynthesisPackets { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -1597,6 +1599,27 @@ public sealed class OctoberScanBusinessFinalizationTests
                 return new(HttpStatusCode.OK) { Content = new StringContent("data: " + chunk + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
             }
             BusinessRequests++;
+            OnBusinessDispatch?.Invoke(); // Advance only the test-owned clock across successive physical requests.
+            string userText = body.RootElement.GetProperty("messages").EnumerateArray()
+                .Single(value => value.GetProperty("role").GetString() == "user").GetProperty("content").GetString()!;
+            using var user = JsonDocument.Parse(userText);
+            if (user.RootElement.TryGetProperty("phase", out var phase) && phase.GetString() == "semantic-review")
+            {
+                ReviewRequests++;
+                Assert.Equal(1, ReviewRequests);
+                Assert.Equal((ExpectedBusinessRequests ?? (IncludeCallerObservation ? 2 : 1)) + 1, BusinessRequests);
+                Assert.Equal(2, body.RootElement.GetProperty("messages").GetArrayLength());
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var candidate = user.RootElement.GetProperty("candidate").Deserialize<BusinessSynthesisProposal>(options)!;
+                var packet = user.RootElement.GetProperty("packet").Deserialize<BusinessSynthesisPacket>(options)!;
+                Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), user.RootElement.GetProperty("proposalDigest").GetString());
+                Assert.All(candidate.Sections.SelectMany(section => section.Claims).SelectMany(claim => claim.Inputs), input => Assert.Equal(Root, input.Document));
+                var review = OctoberBusinessSynthesisTests.SemanticReviewForDocuments(packet.Documents, candidate);
+                string reviewed = JsonSerializer.Serialize(new { id = "controlled-business-review", @object = "chat.completion", created = 1, model,
+                    choices = new[] { new { index = 0, message = new { role = "assistant", content = review.Text }, finish_reason = "stop" } },
+                    usage = new { prompt_tokens = 80, completion_tokens = 25, total_tokens = 105 } });
+                return new(HttpStatusCode.OK) { Content = new StringContent(reviewed, Encoding.UTF8, "application/json") };
+            }
             if (IncludeCallerObservation && Root is null)
             {
                 ResolutionRequests++; Assert.Equal(1, ResolutionRequests);

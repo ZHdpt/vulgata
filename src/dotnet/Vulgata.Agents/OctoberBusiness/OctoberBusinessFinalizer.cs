@@ -139,7 +139,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
                         group is null ? "Selected root was not supported by the bounded planner." : "Original synthesis allowance did not permit further work."));
                     continue;
                 }
-                var synthesized = await _synthesis.ExecuteAsync(input, group.GroupVersionId, request.Operation, selection.RunId,
+                var synthesized = await _synthesis.ExecuteReviewedAsync(input, group.GroupVersionId, request.Operation, selection.RunId,
                     selection.ProviderProfileId, selection.MaximumTokens, request.ExecutionScope, _disclosure, token, selection.Limits);
                 if (synthesized.AdmissionFailure is ProviderAdmissionStatus.Denied or ProviderAdmissionStatus.AuthorityUnavailable or ProviderAdmissionStatus.HardStopped)
                     return Empty(request, Map(synthesized.AdmissionFailure.Value));

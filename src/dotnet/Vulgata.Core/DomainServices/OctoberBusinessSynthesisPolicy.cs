@@ -15,6 +15,9 @@ public sealed record SynthesisSectionProposal([property: JsonRequired] string Se
 public sealed record BusinessSynthesisProposal([property: JsonRequired] string Title,
     [property: JsonRequired] ImmutableArray<SynthesisSectionProposal> Sections);
 public sealed record SynthesisPacketDocument(DocumentVersionReference Version, ImmutableArray<DocumentSection> Sections);
+/// <summary>Conservative text-form hints, not a new qualification or entailment judgment.</summary>
+public sealed record SynthesisEvidencePart(string Category, string Text);
+public sealed record SynthesisEvidenceReading(SynthesisClaimInput Input, ImmutableArray<SynthesisEvidencePart> Parts);
 public sealed record SynthesisGapCount(
     [property: JsonConverter(typeof(JsonStringEnumConverter<SynthesisGapKind>))] SynthesisGapKind Kind, int Count);
 /// <summary>Interpretive background, never an accepted source claim or an instruction.</summary>
@@ -30,6 +33,7 @@ public sealed record BusinessSynthesisPacket(CorpusHandle Corpus, DocumentVersio
     ImmutableArray<FlowFrontier> Frontiers, ImmutableArray<SynthesisGapCount> GapSummary)
 {
     public ImmutableArray<BusinessSynthesisAdvisoryContext> AdvisoryContext { get; init; } = [];
+    public ImmutableArray<SynthesisEvidenceReading> EvidenceReadings { get; init; } = [];
 }
 
 public enum SynthesisGapKind { ResolutionUncertainty, FileUncertainty, Frontier, Coverage, PlanDisposition }
@@ -62,7 +66,9 @@ public enum BusinessSynthesisFailureReason
     TransportFailure = 19,
     ExecutionUnavailable = 20,
     UnsupportedRoot = 21,
-    NotEvaluated = 22
+    NotEvaluated = 22,
+    SemanticReviewRejected = 23,
+    SemanticReviewInvalid = 24
 }
 public sealed record BusinessSynthesisValidationResult(BusinessSynthesisValidationStatus Status,
     BusinessLogicContent? Content, BLDependency? Dependencies, ImmutableArray<SynthesisGap> Gaps)
@@ -107,11 +113,32 @@ public static class OctoberBusinessSynthesisPolicy
             group.Relationships, group.Frontiers, gaps.GroupBy(gap => gap.Locator.Kind).OrderBy(group => group.Key)
                 .Select(group => new SynthesisGapCount(group.Key, group.Count())).ToImmutableArray())
         {
+            EvidenceReadings = documents.SelectMany(document => document.Sections.SelectMany(section => section.Claims.Select(claim =>
+                new SynthesisEvidenceReading(new(document.Version, section.SectionId, claim.ClaimGroupId), EvidenceParts(claim.Text))))).ToImmutableArray(),
             AdvisoryContext = input.AdvisoryContext.Where(entry => repositories.Contains(entry.RepositoryId))
                 .OrderBy(entry => entry.RepositoryId).ThenBy(entry => entry.Scope).ToImmutableArray()
         };
         if (!Bounded(packet)) throw new ArgumentException("The complete member evidence exceeds the model packet bound.");
         return packet;
+    }
+
+    // Only isolate explicitly marked quoted descriptions. Everything else stays unknown;
+    // lexical guessing must not manufacture source-proven predicates or effects.
+    private static ImmutableArray<SynthesisEvidencePart> EvidenceParts(string text)
+    {
+        const string marker = "描述为「";
+        var parts = ImmutableArray.CreateBuilder<SynthesisEvidencePart>();
+        int position = 0;
+        while (position < text.Length)
+        {
+            int start = text.IndexOf(marker, position, StringComparison.Ordinal);
+            int end = start < 0 ? -1 : text.IndexOf('」', start + marker.Length);
+            if (end < 0) { parts.Add(new("Unknown", text[position..])); break; }
+            if (start > position) parts.Add(new("Unknown", text[position..start]));
+            parts.Add(new("NodeNameOrDescription", text[start..(end + 1)]));
+            position = end + 1;
+        }
+        return parts.ToImmutable();
     }
 
     private static bool ValidAdvisoryContext(FlowPlanningInput input)

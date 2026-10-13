@@ -1076,12 +1076,19 @@ public sealed class OctoberFlowPublicationTests
         request = request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
         // The slot models original-run single flight; it does not claim actual Scan slot issuance.
         using var slot = new FinalizerControlledSlot(request);
-        using var client = new ResolutionClient(selection.ProviderProfileId, (_, _) => Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant,
-            JsonSerializer.Serialize(original.Completed[0].Proposal)))
+        ResolutionClient? retainedClient = null;
+        using var client = retainedClient = new ResolutionClient(selection.ProviderProfileId, (call, _) =>
         {
-            FinishReason = ChatFinishReason.Stop,
-            Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 }
-        }));
+            if (call == 1) return Task.FromResult(SynthesisCase.JsonResponse(JsonSerializer.Serialize(original.Completed[0].Proposal)));
+            Assert.Equal(2, call);
+            var messages = retainedClient!.Requests[^1].Messages;
+            Assert.Equal(2, messages.Length);
+            using var review = JsonDocument.Parse(messages[1].Text);
+            Assert.Equal("semantic-review", review.RootElement.GetProperty("phase").GetString());
+            var candidate = review.RootElement.GetProperty("candidate").Deserialize<BusinessSynthesisProposal>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), review.RootElement.GetProperty("proposalDigest").GetString());
+            return Task.FromResult(OctoberBusinessSynthesisTests.SemanticReviewForCandidate(fixture.Input, candidate));
+        });
         var store = fixture.Store();
         var finalizer = new OctoberBusinessFinalizer(slot, store,
             new OctoberFlowPlanningInputLoader(fixture.Basis.Acceptance.Factory, fixture.Basis.Authorization),
@@ -1093,7 +1100,7 @@ public sealed class OctoberFlowPublicationTests
 
         Assert.Equal(BusinessFinalizationStatus.PublishedPartial, result.Status);
         Assert.NotNull(result.Publication);
-        Assert.Equal(1, client.Calls);
+        Assert.Equal(2, client.Calls);
         Assert.Equal(1, slot.Invocations);
         await using var context = fixture.Basis.Acceptance.Factory.CreateDbContext();
         var receipt = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
@@ -1123,7 +1130,7 @@ public sealed class OctoberFlowPublicationTests
         var replay = await finalizer.FinalizeAsync(request);
         Assert.Equal(result.Publication, replay.Publication);
         Assert.Equal(result.Status, replay.Status);
-        Assert.Equal(1, client.Calls);
+        Assert.Equal(2, client.Calls);
         Assert.Equal(1, slot.Invocations);
     }
 

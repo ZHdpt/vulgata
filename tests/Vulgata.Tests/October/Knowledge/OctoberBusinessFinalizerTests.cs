@@ -39,7 +39,7 @@ public sealed class OctoberBusinessFinalizerTests
         Assert.Equal(original.Publication, importedSlot.Publication);
         Assert.Null(SynthesisDiagnosticProbe.Read(cached, "OriginalSynthesisFailureReason"));
         Assert.Null(SynthesisDiagnosticProbe.Read(importedSlot, "OriginalSynthesisFailureReason"));
-        Assert.Equal(2, f.Client.Calls); Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes);
+        Assert.Equal(bothRootsFail ? 2 : 3, f.Client.Calls); Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -85,7 +85,7 @@ public sealed class OctoberBusinessFinalizerTests
         }, result.Status);
         if (boundary is "revoked" or "foreign" or "indeterminate") { Assert.Null(result.Publication); Assert.Empty(result.Coverage.PermittedGaps); }
         if (boundary == "durable-replay") { Assert.Equal(0, f.Client.Calls); Assert.Equal(0, f.Store.Publishes); }
-        else Assert.Equal(2, f.Client.Calls);
+        else Assert.Equal(boundary == "injected" ? 4 : 3, f.Client.Calls);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -127,7 +127,7 @@ public sealed class OctoberBusinessFinalizerTests
         Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, result.Status);
         Assert.Null(result.Publication);
         Assert.Empty(result.Coverage.PermittedGaps);
-        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(4, f.Client.Calls);
         Assert.True(f.Store.Lookups >= 1);
     }
 
@@ -155,7 +155,7 @@ public sealed class OctoberBusinessFinalizerTests
         Assert.Null(replay.Publication);
         Assert.Empty(replay.Coverage.PermittedGaps);
         Assert.True(f.Store.Lookups > lookups);
-        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(4, f.Client.Calls);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -171,7 +171,7 @@ public sealed class OctoberBusinessFinalizerTests
 
         Assert.Equal(BusinessFinalizationStatus.PublishedPartial, result.Status);
         Assert.Equal(result.Publication, replay.Publication);
-        Assert.Equal(2, f.Client.Calls); Assert.Equal(1, f.Store.Publishes); Assert.Equal(1, f.Slot.Invocations);
+        Assert.Equal(3, f.Client.Calls); Assert.Equal(1, f.Store.Publishes); Assert.Equal(1, f.Slot.Invocations);
         var submitted = Assert.IsType<FlowFinalizationPublicationRequest>(f.Store.Submitted);
         var completed = Assert.Single(submitted.Completed);
         var failed = Assert.Single(submitted.Dispositions);
@@ -327,7 +327,7 @@ public sealed class OctoberBusinessFinalizerTests
         var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(BusinessFinalizationStatus.Published, result.Status);
         Assert.Equal(f.Publication, result.Publication);
-        Assert.Equal(2, f.Client.Calls); Assert.Equal(1, f.Client.PeakActive);
+        Assert.Equal(4, f.Client.Calls); Assert.Equal(1, f.Client.PeakActive);
         Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.InitialReads); Assert.Equal(1, f.Store.Publishes);
         Assert.Equal(1, f.Loader.Calls); Assert.True(f.Store.Lookups >= 1);
         var submitted = Assert.IsType<FlowFinalizationPublicationRequest>(f.Store.Submitted);
@@ -369,7 +369,7 @@ public sealed class OctoberBusinessFinalizerTests
         Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, first.Status);
         Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, second.Status);
         Assert.Null(first.Publication); Assert.Null(second.Publication);
-        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(4, f.Client.Calls);
         Assert.True(f.Store.Lookups > lookups);
     }
 
@@ -389,7 +389,7 @@ public sealed class OctoberBusinessFinalizerTests
         var replay = await f.Finalizer().FinalizeAsync(f.Request);
         Assert.Equal(BusinessFinalizationStatus.Denied, replay.Status); Assert.Null(replay.Publication);
         Assert.True(f.Store.Lookups > lookups);
-        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(4, f.Client.Calls);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -422,7 +422,7 @@ public sealed class OctoberBusinessFinalizerTests
         Assert.NotNull(duplicate);
         var result = await duplicate.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(BusinessFinalizationStatus.Published, result.Status);
-        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(2, f.Client.Calls);
+        Assert.Equal(1, f.Slot.Invocations); Assert.Equal(1, f.Store.Publishes); Assert.Equal(4, f.Client.Calls);
     }
 }
 
@@ -440,6 +440,7 @@ internal sealed class FinalizerCase : IDisposable
     public SynthesisDisclosure Disclosure { get; } = new();
     public PublicationBinding Publication { get; }
     public Func<int, CancellationToken, Task<ChatResponse>>? Provider { get; set; }
+    private int _draftCalls;
     public FinalizerCase(bool emptyRoots = false)
     {
         var basis = new FlowPlannerCase(2, [], [0, 1]);
@@ -453,7 +454,21 @@ internal sealed class FinalizerCase : IDisposable
         Slot = new(Request);
         Store = new(this);
         Loader = new(Input);
-        Client = new(ProfileId, (call, cancellation) => Provider?.Invoke(call, cancellation) ?? Task.FromResult(Response(call - 1)));
+        Client = new(ProfileId, (_, cancellation) => ControlledResponseAsync(cancellation));
+    }
+    private Task<ChatResponse> ControlledResponseAsync(CancellationToken cancellation)
+    {
+        var messages = Client.Requests[^1].Messages;
+        using var request = JsonDocument.Parse(messages.Last(message => message.Role == ChatRole.User).Text);
+        if (request.RootElement.TryGetProperty("phase", out var phase) && phase.GetString() == "semantic-review")
+        {
+            Assert.Equal(2, messages.Length); // Fresh review never inherits the generation conversation.
+            var candidate = request.RootElement.GetProperty("candidate").Deserialize<BusinessSynthesisProposal>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), request.RootElement.GetProperty("proposalDigest").GetString());
+            return Task.FromResult(OctoberBusinessSynthesisTests.SemanticReviewForCandidate(Input, candidate));
+        }
+        int draft = ++_draftCalls;
+        return Provider?.Invoke(draft, cancellation) ?? Task.FromResult(Response(draft - 1));
     }
     public static FinalizationRequest Seal(FinalizationRequest request) => request with { CanonicalPayloadDigest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(request) };
     public BusinessSynthesisProposal Proposal(int index) => new("业务环节" + index,

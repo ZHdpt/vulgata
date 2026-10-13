@@ -19,10 +19,12 @@ public sealed record BusinessSynthesisResult(BusinessLogicContent? Content, BLDe
     public ImmutableArray<ResolutionItemDisposition> PlanDispositions { get; init; } = [];
     [JsonIgnore]
     public BusinessSynthesisFailureReason FailureReason { get; init; }
+    [JsonIgnore]
+    public BusinessSemanticReview? SemanticReview { get; init; }
 }
 
 /// <summary>Bounded document-first synthesis; the host retains admission and storage authority.</summary>
-public sealed class OctoberBusinessSynthesisExecutor
+public sealed partial class OctoberBusinessSynthesisExecutor
 {
     public const int MaximumOutputTokens = 393216;
     public const int MaximumAttempts = 4;
@@ -45,10 +47,18 @@ public sealed class OctoberBusinessSynthesisExecutor
         _time = timeProvider ?? TimeProvider.System;
     }
 
-    public async Task<BusinessSynthesisResult> ExecuteAsync(FlowPlanningInput input, Guid groupVersionId,
+    public Task<BusinessSynthesisResult> ExecuteAsync(FlowPlanningInput input, Guid groupVersionId,
         OperationKey operation, Guid runId, string providerProfileId, long maximumTokens,
         IOctoberExecutionScope executionScope, IOctoberResolutionDisclosureAuthority disclosure,
-        CancellationToken cancellationToken = default, FlowPlanningLimits? limits = null)
+        CancellationToken cancellationToken = default, FlowPlanningLimits? limits = null) =>
+        ExecuteStageAsync(input, groupVersionId, operation, runId, providerProfileId, maximumTokens,
+            executionScope, disclosure, cancellationToken, limits, null, null, TimeSpan.FromSeconds(DeadlineSeconds));
+
+    private async Task<BusinessSynthesisResult> ExecuteStageAsync(FlowPlanningInput input, Guid groupVersionId,
+        OperationKey operation, Guid runId, string providerProfileId, long maximumTokens,
+        IOctoberExecutionScope executionScope, IOctoberResolutionDisclosureAuthority disclosure,
+        CancellationToken cancellationToken, FlowPlanningLimits? limits,
+        BusinessSynthesisProposal? candidate, BusinessSemanticReview? correction, TimeSpan stageBudget)
     {
         ArgumentNullException.ThrowIfNull(executionScope);
         ArgumentNullException.ThrowIfNull(disclosure);
@@ -86,7 +96,13 @@ public sealed class OctoberBusinessSynthesisExecutor
             var plan = OctoberFlowPlanner.Plan(input, limits);
             group = plan.Status == FlowPlanningStatus.Succeeded ? plan.Groups.SingleOrDefault(x => x.GroupVersionId == groupVersionId) : null;
             if (group is null) return Result(ProviderAdmissionStatus.Denied, BusinessSynthesisFailureReason.InvalidInput);
-            payload = JsonSerializer.Serialize(OctoberBusinessSynthesisPolicy.CreateModelPacket(input, groupVersionId, limits));
+            var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(input, groupVersionId, limits);
+            payload = candidate is null ? JsonSerializer.Serialize(packet) : JsonSerializer.Serialize(new
+            {
+                phase = correction is null ? "semantic-review" : "semantic-correction",
+                proposalDigest = OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)),
+                packet, candidate, findings = correction?.Findings
+            });
             if (_utf8.GetByteCount(payload) > OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes)
                 return Result(ProviderAdmissionStatus.BudgetExhausted, BusinessSynthesisFailureReason.OutputLimit);
         }
@@ -100,9 +116,10 @@ public sealed class OctoberBusinessSynthesisExecutor
         var history = originalMessages.ToList();
         var synthesisClient = _client as IOctoberBusinessSynthesisClient;
         var lastFailureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;
-        for (int index = 0; index < MaximumAttempts; index++)
+        int allowedAttempts = candidate is not null && correction is null ? 1 : MaximumAttempts;
+        for (int index = 0; index < allowedAttempts; index++)
         {
-            var remaining = TimeSpan.FromSeconds(DeadlineSeconds) - Elapsed();
+            var remaining = stageBudget - Elapsed();
             if (remaining <= TimeSpan.Zero) return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (cancellationToken.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
             using var deadline = new CancellationTokenSource(remaining, _time);
@@ -140,6 +157,7 @@ public sealed class OctoberBusinessSynthesisExecutor
             ChatResponse? response = null;
             BusinessSynthesisProposal? proposal = null;
             BusinessSynthesisValidationResult? validated = null;
+            BusinessSemanticReview? review = null;
             ProviderAdmissionStatus? failure = null;
             ProviderAttemptOutcome outcome = ProviderAttemptOutcome.Failed;
             var failureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;
@@ -153,7 +171,7 @@ public sealed class OctoberBusinessSynthesisExecutor
                 {
                     // The selected transport alone reserves the final send rate at its physical boundary.
                     if (HandoffStatus() is var stopped && stopped != ProviderAdmissionStatus.Granted) failure = stopped;
-                    else if (Elapsed() >= TimeSpan.FromSeconds(DeadlineSeconds)) failure = ProviderAdmissionStatus.DeadlineExceeded;
+                    else if (Elapsed() >= stageBudget) failure = ProviderAdmissionStatus.DeadlineExceeded;
                     else
                     {
                         transportCancellation.Token.ThrowIfCancellationRequested();
@@ -176,7 +194,7 @@ public sealed class OctoberBusinessSynthesisExecutor
                             failureReason = BusinessSynthesisFailureReason.TransportFailure;
                         }
                         finally { terminalAt = Stopwatch.GetTimestamp(); }
-                        if (transportCancellation.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(DeadlineSeconds))
+                        if (transportCancellation.IsCancellationRequested || Elapsed() >= stageBudget)
                             failure = leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested
                                 ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
                         else if (response is null)
@@ -199,7 +217,15 @@ public sealed class OctoberBusinessSynthesisExecutor
                                 transportCancellation.Token.ThrowIfCancellationRequested();
                                 parsingProposal = true;
                                 OctoberBusinessSynthesisRequests.RequireUniqueProperties(response.Text);
-                                proposal = JsonSerializer.Deserialize<BusinessSynthesisProposal>(OctoberKnowledgePolicy.CanonicalizeJson(response.Text), _json);
+                                if (candidate is not null && correction is null)
+                                {
+                                    review = JsonSerializer.Deserialize<BusinessSemanticReview>(OctoberKnowledgePolicy.CanonicalizeJson(response.Text), _json);
+                                    if (!OctoberBusinessSemanticReview.Valid(review, candidate, input, groupVersionId, limits))
+                                        throw new JsonException("Incomplete or ungrounded semantic review.");
+                                    // A valid negative verdict is an observed review, not accepted content.
+                                    proposal = candidate;
+                                }
+                                else proposal = JsonSerializer.Deserialize<BusinessSynthesisProposal>(OctoberKnowledgePolicy.CanonicalizeJson(response.Text), _json);
                                 parsingProposal = false;
                                 if (proposal is not null)
                                     validated = OctoberBusinessSynthesisPolicy.Validate(input, groupVersionId, proposal, limits);
@@ -258,7 +284,7 @@ public sealed class OctoberBusinessSynthesisExecutor
             var handoffStatus = HandoffStatus();
             if (handoffStatus != ProviderAdmissionStatus.Granted) return Result(handoffStatus);
             if (leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
-            if (deadline.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(DeadlineSeconds)) return Result(ProviderAdmissionStatus.DeadlineExceeded);
+            if (deadline.IsCancellationRequested || Elapsed() >= stageBudget) return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (failure is not null) return Result(failure, failureReason);
             if (validated?.Status == BusinessSynthesisValidationStatus.Succeeded)
             {
@@ -283,15 +309,15 @@ public sealed class OctoberBusinessSynthesisExecutor
                 if (handoffCancellation.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
                 if (leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested)
                     return Result(ProviderAdmissionStatus.HardStopped);
-                if (deadline.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(DeadlineSeconds))
+                if (deadline.IsCancellationRequested || Elapsed() >= stageBudget)
                     return Result(ProviderAdmissionStatus.DeadlineExceeded);
                 return new(validated.Content, validated.Dependencies, null, attempts.ToImmutable())
                 {
-                    Proposal = proposal, Gaps = validated.Gaps,
+                    Proposal = proposal, SemanticReview = review, Gaps = validated.Gaps,
                     Coverage = validated.Coverage, PlanDispositions = validated.PlanDispositions
                 };
             }
-            if (index == MaximumAttempts - 1 || synthesisClient?.SupportsSynthesisCorrections != true ||
+            if (index == allowedAttempts - 1 || synthesisClient?.SupportsSynthesisCorrections != true ||
                 response?.FinishReason != ChatFinishReason.Stop || response.Usage?.InputTokenCount is not >= 0 ||
                 response.Usage.OutputTokenCount is not >= 0 ||
                 !OctoberBusinessSynthesisRequests.Correctable(failureReason)) return Result(null, failureReason);
