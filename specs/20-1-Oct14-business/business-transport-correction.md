@@ -94,3 +94,26 @@ from isolation-1b8a83689f0a4d20a1a5b674efd20ca8. GREEN: 157/157 passed (isolatio
 Read-only preflight reconfirmed 163 CL versions, 11 eligible v2 inquiries,
 18 settled receipts and all seven existing publications before the next attempt.
 
+
+### First run in the one-hour window
+
+Checkpoint `bb1152f18aedd66d50b585c1338d45909bdbcbfb`; RunId
+`e62bf7b3-1c9c-46e1-8081-524a0bd31744`, 05:05:42–05:10:37 UTC.
+Five requests, 109,113 input + 58,527 output = 167,640 known tokens; exit 1,
+no watchdog timeout. Four outcomes were durably Unresolved; the fifth produced
+no witness, preventing synthesis/publication. All seven prior publications remain
+unchanged, completion is confirmed, and all four stored outcomes independently
+revalidate (complete contributor sets compared in canonical order).
+
+Actual CLI output exposed a projection omission: internal resolution diagnostics
+were created, but Program's manual JSON projection dropped the two new fields.
+Correct the projection with defined enums and literal field allowlisting. The real
+CLI regression RED selected 15: 3 passed/12 failed, isolation-996293fdf9f34976bdbdde5325c94182.
+Prompt wording additionally clarifies exact copied observation fields, required
+v2 BindingToken, and source-qualified opposition versus advisory/runtime caveats.
+No accepted result is changed. A subsequent canonical continuation must reuse the
+four retained Unresolved results and evaluate only the seven remaining inquiries.
+No successful link or BL claim is made for this run. Evidence: ignored
+`TestResults/business-links-run-3/`.
+
+CLI projection GREEN: 148/148, isolation-0a08b92c2a3044c4a7a7e2c2978fb604; independent static review PASS. Next run limited to 25 minutes plus 60-second owned watchdog, within the same one-hour authority.

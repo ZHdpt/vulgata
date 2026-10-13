@@ -766,6 +766,8 @@ public static class OctoberGeneratorEntryPoint
     {
         if (report.RequestedStage != "cl-and-bl" || report.BusinessDiagnostics is not { } observed ||
             !Enum.IsDefined(observed.Boundary)) return null;
+        var resolutionReason = observed.Boundary == OctoberBusinessDiagnosticBoundary.Resolution
+            ? DefinedStatus(observed.ResolutionFailureReason) : null;
         return new
         {
             FinalizerStatus = DefinedStatus(observed.FinalizerStatus),
@@ -774,6 +776,15 @@ public static class OctoberGeneratorEntryPoint
             LookupPersistenceStatus = DefinedStatus(observed.LookupPersistenceStatus),
             OriginalSynthesisFailureReason = observed.OriginalSynthesisFailureReason == BusinessSynthesisFailureReason.None
                 ? null : DefinedStatus(observed.OriginalSynthesisFailureReason),
+            ResolutionFailureReason = resolutionReason,
+            ResolutionFailureField = resolutionReason == ResolutionFailureReason.WitnessShape
+                ? observed.ResolutionFailureField switch
+                {
+                    "Caller.Document.BatchId" => "Caller.Document.BatchId",
+                    "Caller" => "Caller",
+                    "Provider" => "Provider",
+                    _ => null
+                } : null,
             observed.Boundary,
             observed.OperationMismatch
         };

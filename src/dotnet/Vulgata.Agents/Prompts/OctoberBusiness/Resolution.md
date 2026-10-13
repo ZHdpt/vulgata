@@ -43,3 +43,16 @@ ProviderRoleAndOperation in an actual target claim with that artifact's exact so
 role/operation and caller action/mechanism exactly. Do not fabricate a provider declaration from its path.
 Even when accepted, describe only a static declared resource reference. Keep runtime mapping and entrypoint
 dispatch explicitly unproved; retain contrary evidence and limitations. Unsupported routing stays unresolved.
+
+Before returning JSON, check the literal contract fields against the packet:
+locate Caller.Document in Documents and Caller.ObservationKey in that document's Observations.
+CallerAction must equal that observation's Operation byte-for-byte, and Mechanism must equal its
+Mechanism byte-for-byte. Locate the selected candidate the same way; ProviderRole and
+ProviderOperation must equal its Role and Operation exactly. Put interpretation in the interpretation
+fields, never in these copied fields. BindingToken is a required top-level property for v2; mentioning
+its value only inside BindingInterpretation does not supply the property.
+Both SupportingAssertions and OpposingAssertions require SourceSupported claims with source evidence.
+Advisory statements, missing runtime implementations and absence of deployment proof belong in
+Limitations, not fabricated source assertions. Set HasUnresolvedDecisiveOpposition according to whether
+there is decisive opposition to this static reference itself; runtime execution remains unproved even
+when the static reference is supported. Never discard actual source opposition or infer missing facts.
