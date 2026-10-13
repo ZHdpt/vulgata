@@ -19,6 +19,7 @@ internal sealed record OctoberBusinessRunComposition(
     FlowPlanningLimits Limits,
     long MaximumAttemptTokens)
 {
+    internal Func<OctoberGenerateExecution, IOctoberBusinessSourceReader>? CreateSourceReader { get; init; }
     internal Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? DiagnosticCapture { get; init; }
     internal BusinessAdvisoryContextOverride? ContextOverride { get; init; }
     internal string? ResolutionPolicyVersion { get; init; }
@@ -334,7 +335,7 @@ internal sealed partial class OctoberGenerateRunner
         var publications = new ObservedBusinessPublicationStore(this, ownerPublications, initialRead);
         _businessGuard.Register(new(request.Operation, request.Operation.OperationId, request.CanonicalPayloadDigest));
         var finalizer = new OctoberBusinessFinalizer(slot, publications, loader, _businessClient,
-            execution.Provider.Profile.Name, business.ProviderConfiguration, business.SynthesisInstructions, disclosure, _time, business.DiagnosticCapture);
+            execution.Provider.Profile.Name, business.ProviderConfiguration, business.SynthesisInstructions, disclosure, _time, business.DiagnosticCapture, business.CreateSourceReader?.Invoke(execution));
         _businessLogicPhase = OctoberPhaseStatus.Indeterminate;
         _businessDiagnostics = _businessDiagnostics with { Boundary = OctoberBusinessDiagnosticBoundary.Finalizer };
         try

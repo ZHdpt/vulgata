@@ -11,16 +11,24 @@ internal static class OctoberBusinessSynthesisRequests
 
     // Conservative UTF-8/escaped-message byte proxy, not a tokenizer measurement.
     // Includes instructions, packet, prior text/reasoning and a bounded protocol envelope.
-    internal static long EstimateInputTokens(IReadOnlyCollection<ChatMessage> messages)
+    internal static long EstimateInputTokens(IReadOnlyCollection<ChatMessage> messages, IList<AITool>? tools = null)
     {
-        if (messages.Count > 10) throw new ArgumentException("Synthesis history exceeds its message bound.");
+        if (messages.Count > 40) throw new ArgumentException("Synthesis history exceeds its message bound.");
         string envelope = JsonSerializer.Serialize(messages.Select(message => new
         {
             role = message.Role.Value,
             content = string.Concat(message.Contents.OfType<TextContent>().Select(content => content.Text)),
             reasoning_content = string.Concat(message.Contents.OfType<TextReasoningContent>().Select(content => content.Text))
         }));
-        long bytes = checked(_utf8.GetByteCount(envelope) + 4096L + 256L * messages.Count);
+        string calls = messages.Any(m => m.Contents.Any(c => c is FunctionCallContent or FunctionResultContent))
+            ? JsonSerializer.Serialize(messages.Select(m => new
+            {
+                calls = m.Contents.OfType<FunctionCallContent>().Select(c => new { c.CallId, c.Name, c.Arguments }),
+                results = m.Contents.OfType<FunctionResultContent>().Select(c => new { c.CallId, c.Result })
+            })) : "";
+        string schemas = tools is { Count: > 0 }
+            ? JsonSerializer.Serialize(tools.OfType<AIFunction>().Select(t => new { t.Name, t.Description, t.JsonSchema })) : "";
+        long bytes = checked(_utf8.GetByteCount(envelope) + _utf8.GetByteCount(calls) + _utf8.GetByteCount(schemas) + 4096L + 256L * messages.Count);
         if (bytes > OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes)
             throw new ArgumentException("Synthesis messages exceed the model input bound.");
         return bytes;

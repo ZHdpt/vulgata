@@ -15,7 +15,10 @@ public sealed record BusinessSemanticReview([property: JsonRequired] string Prop
 
 public sealed record BusinessSynthesisDiagnostic(Guid RunId, OperationKey Operation, Guid GroupVersionId,
     string Stage, BusinessSynthesisProposal? Proposal, BusinessSemanticReview? Review,
-    BusinessSynthesisFailureReason FailureReason, ImmutableArray<ProviderAttemptUsage> Attempts);
+    BusinessSynthesisFailureReason FailureReason, ImmutableArray<ProviderAttemptUsage> Attempts)
+{
+    public ImmutableArray<BusinessSourceDiagnostic> SourceReads { get; init; } = [];
+}
 
 internal static class OctoberBusinessSemanticReview
 {
@@ -82,6 +85,9 @@ public sealed partial class OctoberBusinessSynthesisExecutor
     {
         var allAttempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
         int stageIndex = 0;
+        OctoberBusinessSourceRetrieval? retrieval;
+        try { retrieval = _sourceReader is null ? null : new(_sourceReader, input, groupVersionId, limits); }
+        catch (Exception) { return new(null, null, ProviderAdmissionStatus.Denied, []) { FailureReason = BusinessSynthesisFailureReason.InvalidInput }; }
         long start = _time.GetTimestamp();
         var startUtc = _time.GetUtcNow();
         using var lifetime = new CancellationTokenSource(TimeSpan.FromSeconds(DeadlineSeconds), _time);
@@ -94,9 +100,9 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             if (remaining <= TimeSpan.Zero || lifetime.IsCancellationRequested)
                 return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, ProviderAdmissionStatus.DeadlineExceeded);
             var result = await ExecuteStageAsync(input, groupVersionId, operation, runId, providerProfileId, maximumTokens,
-                executionScope, disclosure, linked.Token, limits, candidate, feedback, remaining);
+                executionScope, disclosure, linked.Token, limits, candidate, feedback, remaining, retrieval);
             allAttempts.AddRange(result.Attempts);
-            if (allAttempts.Count > 10 || result.Attempts.Any(x => x.InputTokens is null || x.OutputTokens is null))
+            if (allAttempts.Count > (retrieval is null ? 10 : OctoberBusinessSourceRetrieval.MaximumRequests) || result.Attempts.Any(x => x.InputTokens is null || x.OutputTokens is null))
                 return Stop(BusinessSynthesisFailureReason.SemanticReviewInvalid, ProviderAdmissionStatus.AuthorityUnavailable);
             if (_diagnosticCapture is not null && result.AdmissionFailure is null)
             {
@@ -122,7 +128,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                     if (before != ProviderAdmissionStatus.Granted) return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, before);
                     var stage = stageIndex switch { 0 => "draft", 1 => "review", 2 => "correction", _ => "re-review" };
                     await _diagnosticCapture(new(runId, operation, groupVersionId, stage,
-                        result.Proposal ?? candidate, result.SemanticReview, result.FailureReason, result.Attempts), captureToken.Token);
+                        result.Proposal ?? candidate, result.SemanticReview, result.FailureReason, result.Attempts) { SourceReads = retrieval?.Pages ?? [] }, captureToken.Token);
                     var after = await CaptureEligibilityAsync();
                     if (after != ProviderAdmissionStatus.Granted) return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, after);
                 }

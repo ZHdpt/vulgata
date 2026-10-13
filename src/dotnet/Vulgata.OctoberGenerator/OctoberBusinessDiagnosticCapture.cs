@@ -19,7 +19,8 @@ internal sealed class OctoberBusinessDiagnosticCapture(string logDirectory, ISec
     {
         ArgumentNullException.ThrowIfNull(diagnostic);
         if (diagnostic.RunId == Guid.Empty || diagnostic.GroupVersionId == Guid.Empty ||
-            diagnostic.Stage is not ("draft" or "review" or "correction" or "re-review"))
+            diagnostic.Stage is not ("draft" or "review" or "correction" or "re-review") &&
+            !Enumerable.Range(1, 12).Any(n => diagnostic.Stage == "source-" + n))
             throw new InvalidOperationException("Invalid Business diagnostic identity.");
         string plain = JsonSerializer.Serialize(diagnostic);
         int bytes = Encoding.UTF8.GetByteCount(plain);

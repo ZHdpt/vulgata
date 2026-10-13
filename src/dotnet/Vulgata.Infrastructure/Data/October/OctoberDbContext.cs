@@ -311,7 +311,7 @@ public sealed class OctoberDbContext : DbContext
         modelBuilder.Entity<OctoberPreparedSourceApprovalRecord>(approval =>
         {
             approval.ToTable("OctoberPreparedSourceApprovals", table =>
-                table.HasCheckConstraint("CK_OctoberPreparedSourceApprovals_Purpose", "\"Purpose\" = 0"));
+                table.HasCheckConstraint("CK_OctoberPreparedSourceApprovals_Purpose", "\"Purpose\" IN (0, 1)"));
             approval.HasKey(value => value.ApprovalIdentity);
             approval.Property(value => value.ApprovalIdentity).IsRequired();
             approval.Property(value => value.SubjectId).IsRequired();

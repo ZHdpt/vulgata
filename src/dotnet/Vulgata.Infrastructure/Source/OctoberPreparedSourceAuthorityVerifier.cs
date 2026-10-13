@@ -82,7 +82,7 @@ public sealed class OctoberPreparedSourceAuthorityVerifier : IPreparedSourceCurr
         approval is not null && approval.BatchId != Guid.Empty &&
         approval.RepositoryId != Guid.Empty &&
         !string.IsNullOrWhiteSpace(approval.SubjectId) &&
-        approval.Purpose == PreparedSourcePurpose.WorkerSourceRead &&
+        approval.Purpose is (PreparedSourcePurpose.WorkerSourceRead or PreparedSourcePurpose.BusinessSynthesisRead) &&
         !string.IsNullOrWhiteSpace(approval.ApprovalIdentity) &&
         !string.IsNullOrWhiteSpace(approval.RootBindingIdentity) &&
         !string.IsNullOrWhiteSpace(approval.OperatorLabel);

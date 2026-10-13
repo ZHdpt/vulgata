@@ -17,6 +17,57 @@ public sealed class OctoberBusinessSynthesisWireTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task ReferencedSourceWire_OnlyAllowedToolAndExactReasoningReplayThenToolsDisabledJsonAsync()
+    {
+        using var transport = new ControlledHttp { ToolFirst = true };
+        using var client = await Client(transport);
+        var synthesis = Assert.IsAssignableFrom<IOctoberBusinessSynthesisClient>(client);
+        var tool = AIFunctionFactory.Create((string sourceReference, int byteOffset) => "Host execution only", "read_referenced_source");
+        var options = new ChatOptions { MaxOutputTokens = 40, Tools = [tool], ToolMode = ChatToolMode.Auto, ResponseFormat = null };
+        ChatMessage[] original = [new(ChatRole.System, "Only exact cited source; do not invent facts."), new(ChatRole.User, "Controlled opaque source handle packet")];
+        var investigation = await Send(synthesis, original, options, BusinessSynthesisAttemptStrategy.Configured);
+        var call = Assert.Single(investigation.Messages.SelectMany(message => message.Contents).OfType<FunctionCallContent>());
+        Assert.Equal("controlled-source", call.CallId); Assert.Equal("read_referenced_source", call.Name);
+        Assert.Equal("controlled-推理\nexact", Assert.Single(investigation.Messages.SelectMany(message => message.Contents).OfType<TextReasoningContent>()).Text);
+        var history = original.Concat(investigation.Messages).Append(new(ChatRole.Tool,
+            [new FunctionResultContent(call.CallId, "{\"status\":\"Complete\",\"text\":\"controlled cited source\"}")]))
+            .Append(new(ChatRole.User, "Return only final JSON using the accepted CL claims.")).ToArray();
+        string unchanged = JsonSerializer.Serialize(history);
+        _ = await Send(synthesis, history, new() { MaxOutputTokens = 40, Tools = [], ToolMode = ChatToolMode.None,
+            ResponseFormat = ChatResponseFormat.Json }, BusinessSynthesisAttemptStrategy.Configured);
+        Assert.Equal(2, transport.Requests.Count);
+        var initial = transport.Requests[0]; var final = transport.Requests[1];
+        Assert.Equal("read_referenced_source", Assert.Single(initial.GetProperty("tools").EnumerateArray()).GetProperty("function").GetProperty("name").GetString());
+        Assert.False(initial.TryGetProperty("response_format", out _));
+        Assert.False(final.TryGetProperty("tools", out var tools) && tools.GetArrayLength() > 0);
+        Assert.Equal("json_object", final.GetProperty("response_format").GetProperty("type").GetString());
+        var assistant = Assert.Single(final.GetProperty("messages").EnumerateArray().Where(message => message.GetProperty("role").GetString() == "assistant"));
+        Assert.Equal("controlled-推理\nexact", assistant.GetProperty("reasoning_content").GetString());
+        Assert.Equal("controlled-source", Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray()).GetProperty("id").GetString());
+        Assert.Equal(unchanged, JsonSerializer.Serialize(history));
+        Assert.Same(tool, Assert.Single(options.Tools!)); Assert.Null(options.ResponseFormat); Assert.Equal(ChatToolMode.Auto, options.ToolMode);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("read_prepared_source")]
+    [InlineData("search_source")]
+    [InlineData("write_database")]
+    public async Task ReferencedSourceWire_ForeignToolIsRefusedBeforePhysicalSendAsync(string toolName)
+    {
+        using var transport = new ControlledHttp();
+        using var client = await Client(transport);
+        var synthesis = Assert.IsAssignableFrom<IOctoberBusinessSynthesisClient>(client);
+        var tool = AIFunctionFactory.Create((string sourceReference, int byteOffset) => "must not run", toolName);
+        await using var lease = new Lease();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => synthesis.GetSynthesisResponseAsync([new(ChatRole.User, "packet")],
+            new() { MaxOutputTokens = 40, Tools = [tool], ToolMode = ChatToolMode.Auto, ResponseFormat = null }, lease,
+            BusinessSynthesisAttemptStrategy.Configured, _ => Assert.Fail("No dispatch permitted")));
+        Assert.Empty(transport.Requests); Assert.Equal(0, lease.Dispatches);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SynthesisStrategies_ActualWirePreservesCapAndReasoningReplayWithoutMutatingCallerAsync()
     {
         using var transport = new ControlledHttp();
@@ -155,7 +206,7 @@ public sealed class OctoberBusinessSynthesisWireTests
 
     private sealed class ControlledHttp : HttpMessageHandler
     {
-        internal bool Fail, ThrowTransport;
+        internal bool Fail, ThrowTransport, ToolFirst;
         internal List<JsonElement> Requests { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -163,6 +214,14 @@ public sealed class OctoberBusinessSynthesisWireTests
             Requests.Add(body.RootElement.Clone());
             if (ThrowTransport) throw new HttpRequestException("Controlled physical failure");
             if (Fail) return new(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("{\"error\":{\"message\":\"controlled\"}}", Encoding.UTF8, "application/json") };
+            if (ToolFirst && Requests.Count == 1)
+            {
+                string tool = JsonSerializer.Serialize(new { id = "controlled-source-tool", @object = "chat.completion", created = 1, model = "deepseek-flash",
+                    choices = new[] { new { index = 0, message = new { role = "assistant", content = "", reasoning_content = "controlled-推理\nexact",
+                        tool_calls = new[] { new { id = "controlled-source", type = "function", function = new { name = "read_referenced_source", arguments = "{\"sourceReference\":\"controlled-handle\",\"byteOffset\":0}" } } } }, finish_reason = "tool_calls" } },
+                    usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } });
+                return new(HttpStatusCode.OK) { Content = new StringContent(tool, Encoding.UTF8, "application/json") };
+            }
             string json = JsonSerializer.Serialize(new { id = "controlled-synthesis", @object = "chat.completion", created = 1, model = "deepseek-flash",
                 choices = new[] { new { index = 0, message = new { role = "assistant", content = "{\"controlled\":true}", reasoning_content = "controlled-推理\nexact" }, finish_reason = "stop" } },
                 usage = new { prompt_tokens = 20, completion_tokens = 10, total_tokens = 30 } });

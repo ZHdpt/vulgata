@@ -77,6 +77,14 @@ public interface IOctoberLocalAuthority
         Guid repositoryId,
         CancellationToken cancellationToken);
 
+    /// <summary>Explicit Business source-read approval; implementations without this capability deny it.</summary>
+    Task<OctoberSourceApprovalResult> IssueBusinessSourceApprovalAsync(
+        IOctoberOperatorSession session,
+        IOctoberHistoricalBoundSetupData boundSetup,
+        Guid repositoryId,
+        CancellationToken cancellationToken) =>
+        Task.FromResult(new OctoberSourceApprovalResult(OctoberSourceApprovalStatus.Denied, null, null));
+
     Task<PreparedSourceAuthorityResult> VerifySourceApprovalAsync(
         IOctoberOperatorSession session,
         string targetId,

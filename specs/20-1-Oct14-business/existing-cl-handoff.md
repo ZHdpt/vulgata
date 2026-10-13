@@ -3,9 +3,12 @@
 Current implementation correction: runtime semantic checking now self-reviews the
 latest draft in reconstructed synthesis context, with explicit no-guess/no-invented-
 field-meaning instructions. 339 focused tests and independent code review passed;
-no paid qualification of this change occurred. The proposed from-start source tool
-is not implemented or approved; the user requested comparison with existing source
-authorization before deciding. See [scope, comparison and evidence](referenced-source-retrieval.md).
+no paid qualification of this change occurred. The user subsequently approved the
+from-start CL-referenced source tool and its isolated migration qualification. The
+tool is implemented behind `EnableReferencedSourceRetrieval` (default false), reusing
+contained source reads and explicit Business-purpose grants. Retained-database
+migration and live source/provider qualification remain unperformed. See
+[scope, comparison and evidence](referenced-source-retrieval.md).
 
 Latest October 13 Business boundary: `f617e405` adds opt-in encrypted stage
 capture; 339 focused tests and independent implementation review passed. The one

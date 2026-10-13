@@ -11,6 +11,7 @@ internal sealed record OctoberBusinessSettings(ImmutableArray<OctoberBusinessRoo
     FlowPlanningLimits Limits, long MaximumAttemptTokens)
 {
     public bool CaptureSemanticDiagnostics { get; init; }
+    public bool EnableReferencedSourceRetrieval { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public BusinessAdvisoryContextOverride? ContextOverride { get; init; }

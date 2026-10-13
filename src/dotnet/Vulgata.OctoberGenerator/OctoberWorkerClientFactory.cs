@@ -114,8 +114,11 @@ public sealed class OctoberWorkerClientFactory
             ChatOptions options, IOctoberProviderAttemptLease lease, BusinessSynthesisAttemptStrategy strategy,
             Action<long> onDispatched, CancellationToken cancellationToken = default)
         {
+            bool retrieval = options.Tools is { Count: 1 } && options.Tools[0] is AIFunction { Name: "read_referenced_source" } &&
+                strategy == BusinessSynthesisAttemptStrategy.Configured && options.ResponseFormat is null && Equals(options.ToolMode, ChatToolMode.Auto);
+            bool finalJson = options.Tools is not { Count: > 0 } && Equals(options.ResponseFormat, Microsoft.Extensions.AI.ChatResponseFormat.Json);
             if (!Enum.IsDefined(strategy) || strategy != BusinessSynthesisAttemptStrategy.Configured && !_useDeepSeekMaxTokens ||
-                options.Tools is { Count: > 0 } || !Equals(options.ResponseFormat, Microsoft.Extensions.AI.ChatResponseFormat.Json))
+                !retrieval && !finalJson)
                 throw new InvalidOperationException("The synthesis finalization strategy is invalid.");
             return BusinessAttemptAsync(messages, options, lease, onDispatched, strategy, cancellationToken);
         }

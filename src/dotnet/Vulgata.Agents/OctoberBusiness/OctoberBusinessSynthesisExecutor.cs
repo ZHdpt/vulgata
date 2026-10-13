@@ -32,6 +32,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
     private readonly IChatClient _client;
     private readonly string _instructions;
     private readonly TimeProvider _time;
+    private readonly IOctoberBusinessSourceReader? _sourceReader;
     private readonly Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? _diagnosticCapture;
     private static readonly UTF8Encoding _utf8 = new(false, true);
     private static readonly JsonSerializerOptions _json = new()
@@ -41,13 +42,15 @@ public sealed partial class OctoberBusinessSynthesisExecutor
     };
 
     public OctoberBusinessSynthesisExecutor(IChatClient client, string synthesisInstructions, TimeProvider? timeProvider = null,
-        Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? diagnosticCapture = null)
+        Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? diagnosticCapture = null,
+        IOctoberBusinessSourceReader? sourceReader = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         ArgumentException.ThrowIfNullOrWhiteSpace(synthesisInstructions);
         _instructions = synthesisInstructions;
         _time = timeProvider ?? TimeProvider.System;
         _diagnosticCapture = diagnosticCapture;
+        _sourceReader = sourceReader;
     }
 
     public Task<BusinessSynthesisResult> ExecuteAsync(FlowPlanningInput input, Guid groupVersionId,
@@ -55,13 +58,14 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         IOctoberExecutionScope executionScope, IOctoberResolutionDisclosureAuthority disclosure,
         CancellationToken cancellationToken = default, FlowPlanningLimits? limits = null) =>
         ExecuteStageAsync(input, groupVersionId, operation, runId, providerProfileId, maximumTokens,
-            executionScope, disclosure, cancellationToken, limits, null, null, TimeSpan.FromSeconds(DeadlineSeconds));
+            executionScope, disclosure, cancellationToken, limits, null, null, TimeSpan.FromSeconds(DeadlineSeconds), null);
 
     private async Task<BusinessSynthesisResult> ExecuteStageAsync(FlowPlanningInput input, Guid groupVersionId,
         OperationKey operation, Guid runId, string providerProfileId, long maximumTokens,
         IOctoberExecutionScope executionScope, IOctoberResolutionDisclosureAuthority disclosure,
         CancellationToken cancellationToken, FlowPlanningLimits? limits,
-        BusinessSynthesisProposal? candidate, BusinessSemanticReview? correction, TimeSpan stageBudget)
+        BusinessSynthesisProposal? candidate, BusinessSemanticReview? correction, TimeSpan stageBudget,
+        OctoberBusinessSourceRetrieval? retrieval)
     {
         ArgumentNullException.ThrowIfNull(executionScope);
         ArgumentNullException.ThrowIfNull(disclosure);
@@ -102,6 +106,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             if (group is null) return Result(ProviderAdmissionStatus.Denied, BusinessSynthesisFailureReason.InvalidInput);
             var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(input, groupVersionId, limits);
             synthesisPacket = JsonSerializer.Serialize(packet);
+            if (retrieval is not null) synthesisPacket = retrieval.AddEvidence(synthesisPacket);
             payload = candidate is null ? synthesisPacket : JsonSerializer.Serialize(new
             {
                 phase = correction is null ? "semantic-review" : "semantic-correction",
@@ -126,6 +131,8 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         var history = originalMessages.ToList();
         var synthesisClient = _client as IOctoberBusinessSynthesisClient;
         var lastFailureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;
+        var sourceCallIds = new HashSet<string>(StringComparer.Ordinal);
+        bool toolsEnabled = retrieval is not null && retrieval.Rounds < OctoberBusinessSourceRetrieval.MaximumRounds;
         int allowedAttempts = candidate is not null && correction is null ? 1 : MaximumAttempts;
         for (int index = 0; index < allowedAttempts; index++)
         {
@@ -135,8 +142,12 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             using var deadline = new CancellationTokenSource(remaining, _time);
             using var admissionCancellation = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token, cancellationToken, handoffCancellation);
             long requested = _time.GetTimestamp();
+            IList<AITool> tools = toolsEnabled ? [retrieval!.Tool] : [];
+            if (retrieval is not null && ++retrieval.Requests > OctoberBusinessSourceRetrieval.MaximumRequests)
+                return Result(ProviderAdmissionStatus.BudgetExhausted);
+            if (toolsEnabled) retrieval!.Rounds++;
             long reservedTokens;
-            try { reservedTokens = checked(OctoberBusinessSynthesisRequests.EstimateInputTokens(history) + maximumTokens); }
+            try { reservedTokens = checked(OctoberBusinessSynthesisRequests.EstimateInputTokens(history, tools) + maximumTokens); }
             catch (ArgumentException) { return Result(ProviderAdmissionStatus.BudgetExhausted, BusinessSynthesisFailureReason.OutputLimit); }
             var strategy = index switch
             {
@@ -172,6 +183,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             ProviderAttemptOutcome outcome = ProviderAttemptOutcome.Failed;
             var failureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;
             bool parsingProposal = false;
+            bool toolResponse = false;
             try
             {
                 if (observer is null) throw new InvalidOperationException("Business dispatch observation is unavailable.");
@@ -188,7 +200,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                         try
                         {
                             // Keep physical transport owned until it settles, including ignored cancellation.
-                            var options = new ChatOptions { Tools = [], ResponseFormat = ChatResponseFormat.Json, MaxOutputTokens = (int)maximumTokens };
+                            var options = new ChatOptions { Tools = tools, ToolMode = toolsEnabled ? ChatToolMode.Auto : ChatToolMode.None, ResponseFormat = toolsEnabled ? null : ChatResponseFormat.Json, MaxOutputTokens = (int)maximumTokens };
                             response = synthesisClient is not null
                                 ? await synthesisClient.GetSynthesisResponseAsync(history, options, lease, strategy,
                                     timestamp => Interlocked.CompareExchange(ref dispatchedAt, timestamp, 0), transportCancellation.Token)
@@ -210,6 +222,13 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                         else if (response is null)
                         {
                             if (failure is null && failureReason != BusinessSynthesisFailureReason.TransportFailure) failureReason = BusinessSynthesisFailureReason.ResponseMissing;
+                        }
+                        else if (toolsEnabled && response.FinishReason is { } finish && (finish == ChatFinishReason.ToolCalls || finish == ChatFinishReason.Stop))
+                        {
+                            toolResponse = response.Messages.All(m => m.Role == ChatRole.Assistant &&
+                                m.Contents.All(c => c is TextContent or UsageContent or TextReasoningContent or FunctionCallContent));
+                            if (toolResponse) outcome = ProviderAttemptOutcome.Completed;
+                            else failureReason = BusinessSynthesisFailureReason.ResponseShape;
                         }
                         else if (response.FinishReason != ChatFinishReason.Stop)
                             failureReason = response.FinishReason == ChatFinishReason.Length
@@ -296,6 +315,53 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             if (leaseCancellation.IsCancellationRequested || cancellationToken.IsCancellationRequested) return Result(ProviderAdmissionStatus.HardStopped);
             if (deadline.IsCancellationRequested || Elapsed() >= stageBudget) return Result(ProviderAdmissionStatus.DeadlineExceeded);
             if (failure is not null) return Result(failure, failureReason);
+            if (toolResponse)
+            {
+                if (response!.Usage?.InputTokenCount is not >= 0 || response.Usage.OutputTokenCount is not >= 0)
+                    return Result(ProviderAdmissionStatus.AuthorityUnavailable);
+                try
+                {
+                    var calls = response.Messages.SelectMany(m => m.Contents.OfType<FunctionCallContent>()).ToArray();
+                    if (calls.Length > 12 || calls.Any(c => c.InformationalOnly || c.Exception is not null || string.IsNullOrEmpty(c.CallId)) ||
+                        calls.Select(c => c.CallId).Distinct(StringComparer.Ordinal).Count() != calls.Length ||
+                        calls.Any(c => !sourceCallIds.Add(c.CallId)) ||
+                        response.FinishReason == ChatFinishReason.ToolCalls && calls.Length == 0 ||
+                        response.FinishReason == ChatFinishReason.Stop && calls.Length != 0)
+                        return Result(ProviderAdmissionStatus.Denied, BusinessSynthesisFailureReason.ResponseShape);
+                    _ = OctoberBusinessSynthesisRequests.EstimateInputTokens(response.Messages.ToArray(), tools);
+                    async Task<bool> AuthorizedAsync()
+                    {
+                        admissionCancellation.Token.ThrowIfCancellationRequested();
+                        var decision = await CheckAuthorityAsync(disclosure, input.Corpus.Handle, group.Dependencies.Contributors, admissionCancellation.Token);
+                        admissionCancellation.Token.ThrowIfCancellationRequested();
+                        return decision == DisclosureStatus.Allowed && HandoffStatus() == ProviderAdmissionStatus.Granted && Elapsed() < stageBudget;
+                    }
+                    if (!await AuthorizedAsync()) return Result(ProviderAdmissionStatus.Denied);
+                    history.AddRange(response.Messages.Select(m => m.Clone()));
+                    foreach (var call in calls)
+                    {
+                        if (!await AuthorizedAsync()) return Result(ProviderAdmissionStatus.Denied);
+                        var read = await retrieval!.ReadAsync(call, admissionCancellation.Token);
+                        if (!await AuthorizedAsync()) return Result(ProviderAdmissionStatus.Denied);
+                        if (_diagnosticCapture is not null)
+                        {
+                            await _diagnosticCapture(new(runId, operation, groupVersionId, "source-" + retrieval.Pages.Length,
+                                null, null, BusinessSynthesisFailureReason.None, attempts.ToImmutable()) { SourceReads = [read] }, admissionCancellation.Token);
+                            if (!await AuthorizedAsync()) return Result(ProviderAdmissionStatus.Denied);
+                        }
+                        history.Add(new(ChatRole.Tool, [new FunctionResultContent(call.CallId, JsonSerializer.Serialize(read))]));
+                    }
+                    toolsEnabled = calls.Length > 0 && retrieval!.Rounds < OctoberBusinessSourceRetrieval.MaximumRounds;
+                    if (!toolsEnabled)
+                        history.Add(new(ChatRole.User, JsonSerializer.Serialize(new { phase = candidate is null ? "synthesis-final" : correction is null ? "semantic-review" : "semantic-correction", finalize = true,
+                            proposalDigest = candidate is null ? null : OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)) })));
+                    originalMessages = history.Select(m => m.Clone()).ToArray();
+                    index--; // Source investigation consumes its own shared allowance, not structural corrections.
+                    continue;
+                }
+                catch (OperationCanceledException) { return Result(ProviderAdmissionStatus.HardStopped); }
+                catch (Exception) { return Result(ProviderAdmissionStatus.AuthorityUnavailable); }
+            }
             if (validated?.Status == BusinessSynthesisValidationStatus.Succeeded)
             {
                 // Settlement/disposal may await. Reauthorize the entire supplied ledger at handoff,

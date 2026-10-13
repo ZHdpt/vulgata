@@ -21,6 +21,182 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("legacy-primary")]
+    [InlineData("foreign-origin")]
+    [InlineData("metadata-origin")]
+    public async Task ReferencedSource_LegacyCompatibilityRequiresExactPrimarySourceAndCannotWidenToMetadataAsync(string boundary)
+    {
+        var f = new BusinessRetrievalCase(legacy: true, untrustedSupporting: boundary == "legacy-primary" ? null : boundary);
+        var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var reader = new BusinessRetrievalReader((source, offset, _, _) => new(BusinessSourceStatus.Complete, source, offset, null, "exact primary", 100));
+        SemanticReviewClient? active = null;
+        using var client = active = new SemanticReviewClient(clock, (call, messages) => call == 1 ? f.ToolResponse(messages) : f.Response(messages, active!.Options[^1]));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock, reader);
+        if (boundary == "legacy-primary") { Assert.NotNull(result.Content); Assert.Equal(1, reader.Calls); Assert.Equal(5, client.Calls); }
+        else { Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Equal(0, reader.Calls); Assert.Equal(0, client.Calls); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ReferencedSource_ProtectedPageCapturePrecedesDisclosureAndFailureStopsTheNextSendAsync(bool failCapture)
+    {
+        var f = new BusinessRetrievalCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var reader = new BusinessRetrievalReader((source, offset, _, _) => new(BusinessSourceStatus.Complete, source, offset, null, "protected-source-page", 100));
+        var captured = new List<BusinessSourceDiagnostic>();
+        SemanticReviewClient? active = null;
+        using var client = active = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.ToolResponse(messages);
+            Assert.Single(captured);
+            return f.Response(messages, active!.Options[^1]);
+        });
+        Task Capture(BusinessSynthesisDiagnostic diagnostic, CancellationToken token)
+        {
+            if (diagnostic.Stage.StartsWith("source-", StringComparison.Ordinal))
+            {
+                Assert.Equal("source-1", diagnostic.Stage); Assert.Equal(1, client.Calls);
+                var page = Assert.Single(diagnostic.SourceReads);
+                Assert.Equal(f.Anchor, page.Page.Source); Assert.Equal("protected-source-page", page.Page.Text);
+                Assert.False(string.IsNullOrWhiteSpace(page.SourceReference));
+                Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+                if (failCapture) throw new IOException("Controlled protected page capture failure.");
+                captured.Add(page);
+            }
+            return Task.CompletedTask;
+        }
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock, reader, Capture);
+        Assert.Equal(1, reader.Calls);
+        if (failCapture) { Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Equal(1, client.Calls); Assert.Empty(captured); }
+        else { Assert.NotNull(result.Content); Assert.Single(captured); Assert.Equal(5, client.Calls); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ReferencedSource_FirstRequestRoutesOnlyOpaqueCitedHandleAndFinalJsonDisablesToolsAsync()
+    {
+        var f = new BusinessRetrievalCase(); var clock = new SynthesisClock();
+        await using var actualScope = f.Scope(clock);
+        var scope = new SynthesisScopeSpy(actualScope);
+        var reader = new BusinessRetrievalReader((source, offset, maximum, examined) =>
+        {
+            Assert.Equal(f.Anchor, source); Assert.Equal(0, offset);
+            Assert.Equal(32 * 1024, maximum); Assert.Equal(16 * 1024 * 1024, examined);
+            return new(BusinessSourceStatus.Complete, source, offset, null, "controlled exact cited source", 300);
+        });
+        SemanticReviewClient? active = null;
+        using var client = active = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            var options = active!.Options[^1];
+            if (call == 1)
+            {
+                Assert.Equal("read_referenced_source", Assert.Single(options.Tools!).Name);
+                Assert.Null(options.ResponseFormat);
+                return f.ToolResponse(messages);
+            }
+            if (call == 2)
+            {
+                var result = Assert.Single(messages.SelectMany(message => message.Contents).OfType<FunctionResultContent>());
+                Assert.Equal("source-call-0", result.CallId);
+                Assert.Contains("controlled exact cited source", JsonSerializer.Serialize(result.Result), StringComparison.Ordinal);
+            }
+            return f.Response(messages, options);
+        });
+        var authority = new SynthesisDisclosure();
+        var result = await f.ExecuteAsync(client, scope, authority, clock, reader);
+        Assert.NotNull(result.Content); Assert.NotNull(result.Dependencies);
+        Assert.Equal(1, reader.Calls); Assert.Equal(5, client.Calls); Assert.Equal(5, result.Attempts.Length);
+        Assert.Equal(50, result.Attempts.Sum(value => value.InputTokens)); Assert.Equal(25, result.Attempts.Sum(value => value.OutputTokens));
+        Assert.Equal(5, scope.Requests.Count);
+        Assert.All(scope.Requests, request => Assert.True(request.MaximumTokens > 40));
+        foreach (int index in new[] { 2, 4 })
+        {
+            Assert.Empty(client.Options[index].Tools!); Assert.Equal(ChatToolMode.None, client.Options[index].ToolMode);
+            Assert.Equal(ChatResponseFormat.Json, client.Options[index].ResponseFormat);
+        }
+        Assert.All(authority.Seen, ledger => Assert.True(f.Input.Contributors.ToHashSet().SetEquals(ledger)));
+        Assert.Equal(0, actualScope.GetSnapshot().OutstandingAttempts);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("foreign-handle")]
+    [InlineData("unknown-usage")]
+    [InlineData("revoked-after-read")]
+    [InlineData("foreign-page")]
+    public async Task ReferencedSource_UntrustedOrRevokedRead_NeverDisclosesToAnotherModelRequestAsync(string boundary)
+    {
+        var f = new BusinessRetrievalCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        bool revoked = false;
+        var reader = new BusinessRetrievalReader((source, offset, _, _) =>
+        {
+            revoked = boundary == "revoked-after-read";
+            return new(BusinessSourceStatus.Complete, boundary == "foreign-page" ? source with { EndLine = source.EndLine + 1 } : source,
+                offset, null, "private read must not escape", 100);
+        });
+        using var client = new SemanticReviewClient(clock, (_, messages) =>
+        {
+            var response = f.ToolResponse(messages, foreign: boundary == "foreign-handle");
+            if (boundary == "unknown-usage") response.Usage = null;
+            return response;
+        });
+        var authority = new SynthesisDisclosure { Decide = _ => revoked ? DisclosureStatus.Denied : DisclosureStatus.Allowed };
+        var result = await f.ExecuteAsync(client, scope, authority, clock, reader);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(1, client.Calls);
+        Assert.Equal(boundary is "foreign-handle" or "unknown-usage" ? 0 : 1, reader.Calls);
+        Assert.Single(result.Attempts);
+        if (boundary == "revoked-after-read") Assert.Equal(ProviderAdmissionStatus.Denied, result.AdmissionFailure);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("calls", 12)]
+    [InlineData("returned", 6)]
+    [InlineData("examined", 2)]
+    public async Task ReferencedSource_SharedBudgets_StopBeforeTheNextHostReadAsync(string budget, int expectedReads)
+    {
+        var f = new BusinessRetrievalCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var reader = new BusinessRetrievalReader((source, offset, maximum, maximumExamined) =>
+        {
+            Assert.InRange(maximum, 1, 32 * 1024); Assert.InRange(maximumExamined, 1, 16 * 1024 * 1024);
+            return new(BusinessSourceStatus.Complete, source, offset, null,
+                budget == "returned" ? new string('x', 32 * 1024) : "x", budget == "examined" ? 8 * 1024 * 1024 : 1);
+        });
+        using var client = new SemanticReviewClient(clock, (call, messages) => f.ToolResponse(messages,
+            count: budget switch { "calls" => call == 1 ? 12 : 1, "returned" => 7, _ => 3 }));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock, reader);
+        Assert.Null(result.Content); Assert.Null(result.Dependencies);
+        Assert.Equal(expectedReads, reader.Calls);
+        Assert.Equal(budget == "calls" ? 2 : 1, client.Calls);
+        Assert.Equal(client.Calls, result.Attempts.Length);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ReferencedSource_SixToolRoundsRemainConsumedDuringSelfReviewAsync()
+    {
+        var f = new BusinessRetrievalCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var reader = new BusinessRetrievalReader((source, offset, _, _) => new(BusinessSourceStatus.Complete, source, offset, null, "x", 1));
+        SemanticReviewClient? active = null;
+        using var client = active = new SemanticReviewClient(clock, (_, messages) =>
+            active!.Options[^1].Tools!.Count > 0 ? f.ToolResponse(messages) : f.Response(messages, active.Options[^1]));
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock, reader);
+        Assert.NotNull(result.Content);
+        Assert.Equal(6, reader.Calls); Assert.Equal(8, client.Calls);
+        Assert.Equal(6, client.Options.Count(options => options.Tools!.Count > 0));
+        Assert.All(client.Options.Skip(6), options => { Assert.Empty(options.Tools!); Assert.Equal(ChatResponseFormat.Json, options.ResponseFormat); });
+        Assert.Equal(8, result.Attempts.Length);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task DiagnosticCapture_FinalAuthorityCrossesCumulativeDeadline_SuppressesApprovedContentAsync()
     {
@@ -1712,6 +1888,7 @@ internal sealed class SemanticReviewClient : IChatClient, IOctoberBusinessSynthe
     public SemanticReviewClient(SynthesisClock clock, Func<int, ChatMessage[], ChatResponse> response) =>
         _inner = new("selected-profile", (call, _) => { clock.Advance(TimeSpan.FromSeconds(2)); return Task.FromResult(response(call, _current)); });
     public int Calls => _inner.Calls;
+    public List<ChatOptions> Options { get; } = [];
     public string ProviderProfileId => "selected-profile";
     public bool SupportsSynthesisCorrections => true;
     public Task<ChatResponse> GetSynthesisResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options,
@@ -1721,12 +1898,100 @@ internal sealed class SemanticReviewClient : IChatClient, IOctoberBusinessSynthe
         IOctoberProviderAttemptLease lease, Action<long> onDispatched, CancellationToken cancellationToken = default)
     {
         _current = messages.Select(message => message.Clone()).ToArray();
+        Options.Add(options?.Clone() ?? new ChatOptions());
         return _inner.GetAttemptResponseAsync(_current, options, lease, onDispatched, cancellationToken);
     }
     public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public object? GetService(Type serviceType, object? serviceKey = null) => serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
     public void Dispose() => _inner.Dispose();
+}
+
+/// <summary>Source-free accepted-shaped CL data and a controlled host reader, never a physical-source qualification.</summary>
+internal sealed class BusinessRetrievalCase
+{
+    public FlowPlanningInput Input { get; }
+    public FlowGroupVersion Group { get; }
+    public SourceAnchor Anchor { get; }
+    public Guid Run { get; } = ResolutionCase.Id(98001);
+    public OperationKey Operation => new(Input.Corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, ResolutionCase.Id(98002));
+    private int _toolSerial;
+    public BusinessRetrievalCase(bool legacy = false, string? untrustedSupporting = null)
+    {
+        var basis = new FlowPlannerCase(2, [], [0]);
+        var documents = basis.Input.Corpus.Documents.Select(document =>
+        {
+            var origin = document.Sections.SelectMany(section => section.Claims).SelectMany(claim => claim.Evidence)
+                .First(evidence => evidence.Source is not null).Source!.Origin;
+            return document with { Contributors = document.Contributors.Select(contributor => contributor.Kind == ContributorKind.Source
+                ? contributor with { SourceOrigin = legacy ? null : origin } : contributor).ToImmutableArray() };
+        }).ToImmutableArray();
+        if (untrustedSupporting is not null)
+        {
+            var document = documents[0]; var section = document.Sections[0]; var claim = section.Claims[0];
+            var original = claim.Evidence[0].Source!;
+            var foreign = original with { Origin = original.Origin with { RelativePath = "src/not-the-original-file.cs" } };
+            document = document with { Sections = document.Sections.SetItem(0, section with
+                { Claims = section.Claims.SetItem(0, claim with { Evidence = claim.Evidence.Add(new(null, null, foreign, null, foreign.Origin.SourceDigest)) }) }) };
+            if (untrustedSupporting == "metadata-origin") document = document with { Contributors = document.Contributors.Add(
+                new Contributor(ContributorKind.SourceMetadata, foreign.Origin.RepositoryId, null, foreign.Origin.RootBindingIdentity, null, foreign.Origin.SourceDigest)
+                { SourceOrigin = foreign.Origin }) };
+            documents = documents.SetItem(0, document);
+        }
+        Input = basis.Input with { Corpus = basis.Input.Corpus with { Documents = documents },
+            Contributors = documents.SelectMany(document => document.Contributors).Distinct().ToImmutableArray() };
+        Group = Assert.Single(OctoberFlowPlanner.Plan(Input).Groups);
+        Assert.Single(Group.Members);
+        Anchor = documents[0].Sections[0].Claims[0].Evidence[0].Source!;
+    }
+    public BusinessSynthesisProposal Proposal => new("受控业务处理", [new("business", 0, "处理说明",
+        [new("business-rule", "接收处理请求。", ClaimQualification.SourceSupported, [new(Group.RootVersion, "operation", "provider")], [])])]);
+    public OctoberExecutionScope Scope(SynthesisClock clock) => new(Run, "selected-profile", new OctoberScanPolicy
+    {
+        OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 10_000_000,
+        RunDeadlineSeconds = 1800, FileDeadlineSeconds = 600,
+        SourceRules = [new(Anchor.Origin.RepositoryId, "src", "selected", "Controlled source-free retrieval")]
+    }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted), Operation, clock);
+    public Task<BusinessSynthesisResult> ExecuteAsync(IChatClient client, IOctoberExecutionScope scope,
+        IOctoberResolutionDisclosureAuthority authority, SynthesisClock clock, IOctoberBusinessSourceReader reader,
+        Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? capture = null) =>
+        new OctoberBusinessSynthesisExecutor(client, "Do not invent business facts or meanings. Retrieve only exact allowed source evidence.", clock, capture, reader)
+            .ExecuteReviewedAsync(Input, Group.GroupVersionId, Operation, Run, "selected-profile", 40, scope, authority);
+    public ChatResponse ToolResponse(ChatMessage[] messages, int count = 1, bool foreign = false)
+    {
+        using var packet = JsonDocument.Parse(messages[1].Text);
+        var reference = Assert.Single(packet.RootElement.GetProperty("SourceReferences").EnumerateArray());
+        var source = reference.GetProperty("Source").Deserialize<SourceAnchor>()!;
+        Assert.Equal(Anchor, source); // The other fully authorized corpus document is not a flow member.
+        string handle = reference.GetProperty("SourceReference").GetString()!;
+        Assert.DoesNotContain(Anchor.Origin.RelativePath, handle, StringComparison.Ordinal);
+        Assert.NotEqual(Anchor.Origin.SourceDigest, handle);
+        var calls = Enumerable.Range(0, count).Select(_ => (AIContent)new FunctionCallContent("source-call-" + _toolSerial++,
+            "read_referenced_source", new Dictionary<string, object?> { ["sourceReference"] = foreign ? "foreign-opaque-handle" : handle, ["byteOffset"] = 0 })).ToList();
+        return new(new ChatMessage(ChatRole.Assistant, calls)) { FinishReason = ChatFinishReason.ToolCalls,
+            Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 } };
+    }
+    public ChatResponse Response(ChatMessage[] messages, ChatOptions options)
+    {
+        if (options.Tools?.Count > 0) return SynthesisCase.JsonResponse("Investigation complete; prepare the requested final JSON.");
+        bool review = messages.Where(message => message.Role == ChatRole.User).Any(message =>
+        {
+            try { using var json = JsonDocument.Parse(message.Text); return json.RootElement.TryGetProperty("phase", out var phase) && phase.GetString() == "semantic-review"; }
+            catch (JsonException) { return false; }
+        });
+        return review ? OctoberBusinessSynthesisTests.SemanticReviewForCandidate(Input, Proposal)
+            : SynthesisCase.JsonResponse(JsonSerializer.Serialize(Proposal));
+    }
+}
+
+internal sealed class BusinessRetrievalReader(Func<SourceAnchor, int, int, long, BusinessSourcePage> read) : IOctoberBusinessSourceReader
+{
+    public int Calls { get; private set; }
+    public Task<BusinessSourcePage> ReadAsync(SourceAnchor source, int byteOffset, int maximumBytes, long maximumExaminedBytes, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested(); Calls++;
+        return Task.FromResult(read(source, byteOffset, maximumBytes, maximumExaminedBytes));
+    }
 }
 
 internal sealed class SynthesisCase

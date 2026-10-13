@@ -116,8 +116,7 @@ checkout. The distinct Business purpose above is proposed, not existing. Reuse t
 existing contained byte-read implementation and contributor checks; add only the
 missing purpose-bound issuance and restrictive model-facing wrapper. Do not infer
 source-read permission from corpus disclosure or from the generic Synthesis enum.
-The user's response to the approval question requested this comparison, so it is
-**not approval** to implement retrieval/shared authorization changes.
+The comparison preceded the subsequent explicit user approval to implement retrieval and shared authorization changes.
 
 ## First correction verification
 
@@ -136,6 +135,67 @@ Focused GREEN: 339/339, zero failures/skips, including synthesis/capture/finaliz
 planner/publication/controlled transport tests
 (`TestResults/isolation-c95e437cbae042c4986c5ead23c1fb08/results.trx`).
 Independent final implementation review accepted. Retrieval plan review also accepted
-its clarified design, but implementation approval is pending the comparison above.
+its clarified design; subsequent explicit user approval covers implementation.
 No provider call, raw retained-source read, database write or publication change was
 performed for this correction; live semantic reliability remains unqualified.
+
+## Approved retrieval implementation and qualification (October 13)
+
+The user approved retrieval/shared authorization implementation, then explicitly
+approved migration `20261013000000_BusinessSourceReadApprovalPurpose` and one
+isolated database test on the existing PostgreSQL container. This supersedes the
+migration stop condition above only for that exact scope. No retained-database
+migration or paid operation is included.
+
+The opt-in `EnableReferencedSourceRetrieval` setting defaults to false. When enabled,
+the Business host issues and closes a purpose-specific grant per tool read, reusing
+`PreparedSourceBinding` and the contained reader. Opaque handles cover only source
+anchors in member CL claims. Two complete file passes, original digest and identity
+checks precede exact-span output; authorization and run eligibility are rechecked.
+Tool results and reasoning are replayed, and tools are disabled for final JSON.
+Protected source-read capture completes before model disclosure; capture or grant
+closure failure stops execution. Existing publication revalidation remains mandatory.
+
+Business grant ceilings are 512 operations, one metadata entry, 16 MiB examined,
+8 MiB returned and 30 seconds. These allow two passes of a 4 MiB file; Worker grant
+ceilings are unchanged. The separate model-visible per-flow limits above still apply.
+Examined-byte accounting conservatively charges boundary probes and failed attempts;
+it is an upper-bound charge, not measured I/O. Source unavailability, exhaustion or
+changed bytes cannot become accepted facts. Raw source does not expand accepted CL
+claims, contributor lineage or publication eligibility.
+
+Schema deployment order: deploy/apply the additive October migration before enabling
+Business retrieval against an approved target. It changes only the existing CHECK
+from Purpose=0 to Purpose IN (0,1), preserving rows. Downgrade refuses while any
+Business approval history exists, including revoked/expired rows. Do not delete
+history to force downgrade. The retained application database has not been migrated;
+its retrieval activation remains pending explicit runtime authority.
+
+Controlled PostgreSQL 17.10 qualification succeeded in owned database
+`vulgata_bl_retrieval_test_afc8d4e2ff474e5795226f11c155b5e7`, subsequently removed with
+absence verified. Actual owner APIs verified old-constraint denial, preexisting
+Worker approval preservation, Business issuance, both exact grants, rejection of
+purpose substitution and unknown purpose, isolated Business revocation, and guarded
+downgrade rollback preserving both rows and migration history. Evidence is in
+`TestResults/business-retrieval-pg/evidence.json`; the source-free qualification
+helper and build log are alongside it. This was a dedicated controlled database
+qualification, not execution of the PostgreSql xUnit suite: its three new authority
+cases remain authored/unexecuted because the standard suite provisions a new
+container, which the user did not authorize. No fixture guards were bypassed.
+
+Independent final static code review accepted the implementation, including
+purpose-specific caps and tool/no-tool accounting. No live source read, provider
+call, retained-database write or publication mutation occurred. Pause before paid
+qualification; semantic improvement is not yet proven on real generation.
+
+Final controlled verification: `eng/test.ps1` selected **415/415 passed**, zero
+failures/skips, including synthesis/review/correction, tool transport replay,
+finalizer, flow planning/publication, authority lifecycle and referenced reader.
+TRX: `TestResults/isolation-283e356cc59746e79fd3113f313bd466/results.trx`.
+The earlier 396/397 run exposed a 50-byte no-tool reservation regression; preserving
+the existing no-tool envelope fixed it, and the final run includes that regression.
+Initial RED selected 16 cases: 10 passed and six failed on the then-unimplemented
+purpose/reader boundary (`isolation-81e42fcb333f4438bfc234e035366de8`). Build completed
+with zero errors; existing analyzer warnings remain. Full suite, LocalTools,
+External and E2E were not claimed or run for this change. Independent review PASS
+plus the final controlled results complete this implementation boundary.

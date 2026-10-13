@@ -238,8 +238,13 @@ public static class OctoberGeneratorEntryPoint
         {
             MaximumWorkerOutputTokens = workerMaxOutputTokens,
             Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock) is { } business
-                ? business with { DiagnosticCapture = settings!.CaptureSemanticDiagnostics
-                    ? new OctoberBusinessDiagnosticCapture(runtime.LogDirectory, encryption).CaptureAsync : null } : null,
+                ? business with
+                {
+                    DiagnosticCapture = settings!.CaptureSemanticDiagnostics || settings.EnableReferencedSourceRetrieval
+                        ? new OctoberBusinessDiagnosticCapture(runtime.LogDirectory, encryption).CaptureAsync : null,
+                    CreateSourceReader = settings.EnableReferencedSourceRetrieval
+                        ? execution => OctoberBusinessSourceReaderFactory.Create(runtime, authority, execution, clock) : null
+                } : null,
             ParseFailureCapture = parseFailureCapture,
             HttpObservation = httpObservation
         }, clock);
