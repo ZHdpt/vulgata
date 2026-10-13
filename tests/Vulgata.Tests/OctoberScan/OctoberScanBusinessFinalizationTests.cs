@@ -1690,17 +1690,21 @@ public sealed class OctoberScanBusinessFinalizationTests
             BusinessRequests++;
             OnBusinessDispatch?.Invoke(); // Advance only the test-owned clock across successive physical requests.
             string userText = body.RootElement.GetProperty("messages").EnumerateArray()
-                .Single(value => value.GetProperty("role").GetString() == "user").GetProperty("content").GetString()!;
+                .Last(value => value.GetProperty("role").GetString() == "user").GetProperty("content").GetString()!;
             using var user = JsonDocument.Parse(userText);
             if (user.RootElement.TryGetProperty("phase", out var phase) && phase.GetString() == "semantic-review")
             {
                 ReviewRequests++;
                 Assert.Equal(1, ReviewRequests);
                 Assert.Equal((ExpectedBusinessRequests ?? (IncludeCallerObservation ? 2 : 1)) + 1, BusinessRequests);
-                Assert.Equal(2, body.RootElement.GetProperty("messages").GetArrayLength());
+                var messages = body.RootElement.GetProperty("messages").EnumerateArray().ToArray();
+                Assert.Equal(new[] { "system", "user", "assistant", "user" }, messages.Select(message => message.GetProperty("role").GetString()));
+                Assert.False(user.RootElement.TryGetProperty("candidate", out _));
+                Assert.False(user.RootElement.TryGetProperty("packet", out _));
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var candidate = user.RootElement.GetProperty("candidate").Deserialize<BusinessSynthesisProposal>(options)!;
-                var packet = user.RootElement.GetProperty("packet").Deserialize<BusinessSynthesisPacket>(options)!;
+                var candidate = JsonSerializer.Deserialize<BusinessSynthesisProposal>(messages[^2].GetProperty("content").GetString()!, options)!;
+                var packet = JsonSerializer.Deserialize<BusinessSynthesisPacket>(messages[1].GetProperty("content").GetString()!, options)!;
+                Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(candidate), messages[^2].GetProperty("content").GetString());
                 Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), user.RootElement.GetProperty("proposalDigest").GetString());
                 Assert.All(candidate.Sections.SelectMany(section => section.Claims).SelectMany(claim => claim.Inputs), input => Assert.Equal(Root, input.Document));
                 var review = OctoberBusinessSynthesisTests.SemanticReviewForDocuments(packet.Documents, candidate);

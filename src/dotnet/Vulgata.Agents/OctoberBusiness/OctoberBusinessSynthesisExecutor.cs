@@ -88,6 +88,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         if (initialHandoff != ProviderAdmissionStatus.Granted) return Result(initialHandoff);
         FlowGroupVersion? group;
         string payload;
+        string synthesisPacket;
         try
         {
             if (input is null || runId == Guid.Empty || operation.OperationId == Guid.Empty ||
@@ -100,11 +101,12 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             group = plan.Status == FlowPlanningStatus.Succeeded ? plan.Groups.SingleOrDefault(x => x.GroupVersionId == groupVersionId) : null;
             if (group is null) return Result(ProviderAdmissionStatus.Denied, BusinessSynthesisFailureReason.InvalidInput);
             var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(input, groupVersionId, limits);
-            payload = candidate is null ? JsonSerializer.Serialize(packet) : JsonSerializer.Serialize(new
+            synthesisPacket = JsonSerializer.Serialize(packet);
+            payload = candidate is null ? synthesisPacket : JsonSerializer.Serialize(new
             {
                 phase = correction is null ? "semantic-review" : "semantic-correction",
                 proposalDigest = OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)),
-                packet, candidate, findings = correction?.Findings
+                findings = correction?.Findings
             });
             if (_utf8.GetByteCount(payload) > OctoberBusinessSynthesisPolicy.MaximumPayloadUtf8Bytes)
                 return Result(ProviderAdmissionStatus.BudgetExhausted, BusinessSynthesisFailureReason.OutputLimit);
@@ -115,7 +117,12 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         long started = _time.GetTimestamp();
         DateTimeOffset startedUtc = _time.GetUtcNow();
         TimeSpan Elapsed() => Max(_time.GetElapsedTime(started), _time.GetUtcNow() - startedUtc);
-        var originalMessages = new ChatMessage[] { new(ChatRole.System, _instructions), new(ChatRole.User, payload) };
+        // Reconstruct the synthesis conversation with its exact latest draft for self-review.
+        // Draft text is not evidence; raw private reasoning is neither required nor replayed here.
+        ChatMessage[] originalMessages = candidate is null
+            ? [new(ChatRole.System, _instructions), new(ChatRole.User, payload)]
+            : [new(ChatRole.System, _instructions), new(ChatRole.User, synthesisPacket),
+                new(ChatRole.Assistant, OctoberKnowledgePolicy.SerializeCanonical(candidate)), new(ChatRole.User, payload)];
         var history = originalMessages.ToList();
         var synthesisClient = _client as IOctoberBusinessSynthesisClient;
         var lastFailureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;

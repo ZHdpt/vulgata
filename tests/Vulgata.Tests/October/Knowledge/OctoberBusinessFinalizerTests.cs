@@ -462,8 +462,11 @@ internal sealed class FinalizerCase : IDisposable
         using var request = JsonDocument.Parse(messages.Last(message => message.Role == ChatRole.User).Text);
         if (request.RootElement.TryGetProperty("phase", out var phase) && phase.GetString() == "semantic-review")
         {
-            Assert.Equal(2, messages.Length); // Fresh review never inherits the generation conversation.
-            var candidate = request.RootElement.GetProperty("candidate").Deserialize<BusinessSynthesisProposal>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.Equal(new[] { ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User }, messages.Select(message => message.Role));
+            Assert.False(request.RootElement.TryGetProperty("candidate", out _));
+            Assert.False(request.RootElement.TryGetProperty("packet", out _));
+            var candidate = JsonSerializer.Deserialize<BusinessSynthesisProposal>(messages[^2].Text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(candidate), messages[^2].Text);
             Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), request.RootElement.GetProperty("proposalDigest").GetString());
             return Task.FromResult(OctoberBusinessSynthesisTests.SemanticReviewForCandidate(Input, candidate));
         }

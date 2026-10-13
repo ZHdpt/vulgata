@@ -1,5 +1,12 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Current implementation correction: runtime semantic checking now self-reviews the
+latest draft in reconstructed synthesis context, with explicit no-guess/no-invented-
+field-meaning instructions. 339 focused tests and independent code review passed;
+no paid qualification of this change occurred. The proposed from-start source tool
+is not implemented or approved; the user requested comparison with existing source
+authorization before deciding. See [scope, comparison and evidence](referenced-source-retrieval.md).
+
 Latest October 13 Business boundary: `f617e405` adds opt-in encrypted stage
 capture; 339 focused tests and independent implementation review passed. The one
 bounded trial `d836d3f4-d832-48f9-9f05-fb23086ced6c` published

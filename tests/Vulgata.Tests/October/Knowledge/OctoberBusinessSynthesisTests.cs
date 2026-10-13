@@ -127,6 +127,11 @@ public sealed class OctoberBusinessSynthesisTests
         var reviews = new List<BusinessSemanticReview>();
         using var client = new SemanticReviewClient(clock, (call, messages) =>
         {
+            Assert.All(messages, message =>
+            {
+                Assert.DoesNotContain(reasoning, message.Text, StringComparison.Ordinal);
+                Assert.DoesNotContain(message.Contents, content => content is TextReasoningContent);
+            });
             ChatResponse response;
             if (call == 1) response = f.Response();
             else if (call == 3)
@@ -267,7 +272,7 @@ public sealed class OctoberBusinessSynthesisTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task ExecuteReviewedAsync_AcceptedReview_UsesFreshBoundEnvelopeAndRetainsBothSettlementsAsync()
+    public async Task ExecuteReviewedAsync_AcceptedSelfReview_UsesOriginalPacketAndOwnDraftAndRetainsBothSettlementsAsync()
     {
         var f = new SynthesisCase(); var clock = new SynthesisClock();
         await using var scope = f.Scope(clock);
@@ -294,7 +299,7 @@ public sealed class OctoberBusinessSynthesisTests
             if (call == 3)
             {
                 var envelope = SemanticEnvelope(messages, "semantic-correction");
-                Assert.NotNull(envelope["packet"]); Assert.NotNull(envelope["candidate"]);
+                Assert.Null(envelope["packet"]); Assert.Null(envelope["candidate"]);
                 Assert.NotEmpty(envelope["findings"]!.AsArray());
                 return SynthesisCase.JsonResponse(JsonSerializer.Serialize(corrected));
             }
@@ -407,21 +412,27 @@ public sealed class OctoberBusinessSynthesisTests
 
     private static JsonObject SemanticEnvelope(ChatMessage[] messages, string phase)
     {
-        Assert.Equal(2, messages.Length); Assert.Equal(ChatRole.System, messages[0].Role);
+        Assert.Equal(4, messages.Length); Assert.Equal(ChatRole.System, messages[0].Role);
         Assert.Equal(ChatRole.User, messages[1].Role);
-        var envelope = JsonNode.Parse(messages[1].Text)!.AsObject();
+        Assert.Equal(ChatRole.Assistant, messages[2].Role);
+        Assert.Equal(ChatRole.User, messages[3].Role);
+        var envelope = JsonNode.Parse(messages[3].Text)!.AsObject();
         Assert.Equal(phase, envelope["phase"]!.GetValue<string>());
+        Assert.Null(envelope["packet"]); Assert.Null(envelope["candidate"]);
+        var candidate = JsonSerializer.Deserialize<BusinessSynthesisProposal>(messages[2].Text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(candidate), messages[2].Text);
+        Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), envelope["proposalDigest"]!.GetValue<string>());
         return envelope;
     }
 
     private static ChatResponse SemanticReview(SynthesisCase f, ChatMessage[] messages, bool rejected = false)
     {
         var envelope = SemanticEnvelope(messages, "semantic-review");
-        var candidate = envelope["candidate"]!.Deserialize<BusinessSynthesisProposal>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        var candidate = JsonSerializer.Deserialize<BusinessSynthesisProposal>(messages[2].Text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         string digest = envelope["proposalDigest"]!.GetValue<string>();
         Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), digest);
         Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(OctoberBusinessSynthesisPolicy.CreateModelPacket(f.Input, f.Group.GroupVersionId, f.Limits)),
-            OctoberKnowledgePolicy.SerializeCanonical(envelope["packet"]!.Deserialize<BusinessSynthesisPacket>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!));
+            OctoberKnowledgePolicy.SerializeCanonical(JsonSerializer.Deserialize<BusinessSynthesisPacket>(messages[1].Text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!));
         return SemanticReviewForCandidate(f.Input, candidate, rejected);
     }
 

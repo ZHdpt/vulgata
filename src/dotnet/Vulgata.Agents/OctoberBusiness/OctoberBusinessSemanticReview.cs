@@ -74,7 +74,7 @@ internal static class OctoberBusinessSemanticReview
 
 public sealed partial class OctoberBusinessSynthesisExecutor
 {
-    /// <summary>Publication-facing path: fresh semantic review, one correction, then a full re-review.</summary>
+    /// <summary>Publication-facing path: synthesis-context self-review, one correction, then full self-review of the latest draft.</summary>
     public async Task<BusinessSynthesisResult> ExecuteReviewedAsync(FlowPlanningInput input, Guid groupVersionId,
         OperationKey operation, Guid runId, string providerProfileId, long maximumTokens,
         IOctoberExecutionScope executionScope, IOctoberResolutionDisclosureAuthority disclosure,

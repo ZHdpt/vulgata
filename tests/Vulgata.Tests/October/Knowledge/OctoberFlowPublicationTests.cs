@@ -1077,15 +1077,18 @@ public sealed class OctoberFlowPublicationTests
         // The slot models original-run single flight; it does not claim actual Scan slot issuance.
         using var slot = new FinalizerControlledSlot(request);
         ResolutionClient? retainedClient = null;
-        using var client = retainedClient = new ResolutionClient(selection.ProviderProfileId, (call, _) =>
+        using var client = retainedClient = new ResolutionClient(selection.ProviderProfileId, (call, cancellation) =>
         {
             if (call == 1) return Task.FromResult(SynthesisCase.JsonResponse(JsonSerializer.Serialize(original.Completed[0].Proposal)));
             Assert.Equal(2, call);
             var messages = retainedClient!.Requests[^1].Messages;
-            Assert.Equal(2, messages.Length);
-            using var review = JsonDocument.Parse(messages[1].Text);
+            Assert.Equal(new[] { ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User }, messages.Select(message => message.Role));
+            using var review = JsonDocument.Parse(messages.Last(message => message.Role == ChatRole.User).Text);
             Assert.Equal("semantic-review", review.RootElement.GetProperty("phase").GetString());
-            var candidate = review.RootElement.GetProperty("candidate").Deserialize<BusinessSynthesisProposal>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.False(review.RootElement.TryGetProperty("candidate", out _));
+            Assert.False(review.RootElement.TryGetProperty("packet", out _));
+            var candidate = JsonSerializer.Deserialize<BusinessSynthesisProposal>(messages[^2].Text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(candidate), messages[^2].Text);
             Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), review.RootElement.GetProperty("proposalDigest").GetString());
             return Task.FromResult(OctoberBusinessSynthesisTests.SemanticReviewForCandidate(fixture.Input, candidate));
         });
