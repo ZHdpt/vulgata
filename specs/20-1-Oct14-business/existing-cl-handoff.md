@@ -1,15 +1,26 @@
 # Existing accepted CL → Business Logic: owner handoff
 
-Current October 13 retry boundary: reviewed corrections through `7fec365e` produced
-four independently revalidated static links and seven explicit unresolved outcomes.
-The final run `73f1e438-8f9f-4015-bfdf-9eedc36dbbac` stopped before synthesis with
-CommitIndeterminate; its Begin receipt is unmatched. No new BL publication was
-observed. All seven existing publications remain unchanged. Do not retry, clear
-receipts or reuse a launch marker. Diagnose the original finalizer result and settle
-or fence that exact run through the supported owner route first. The user's retry
-extension was limited to 04:50:39–05:50:39 UTC; it is not continuing spend authority.
-See [exact correction, tests and run evidence](business-transport-correction.md).
+Current October 13 boundary: run `73f1e438-8f9f-4015-bfdf-9eedc36dbbac` is now
+administratively abandoned and fenced through the supported owner store. Recovery
+committed at 14:34:37 Asia/Shanghai and a separate lookup returned AlreadyCommitted.
+The original Begin remains intact; no normal completion or new BL was fabricated.
+All seven publications, eleven resolution outcomes and six finalizations are unchanged.
 
+A reproduced pre-synthesis blocker is the run configuration: its 840-second
+lifetime was shorter than synthesis's 900-second requested attempt. Actual scope
+reproduction denied 840/900 and granted 1200/900 without sending. Source inspection
+explains the indeterminate-report path; the original internal finalizer result was
+not retained for direct confirmation. Use a fresh RunId
+and launch marker, the corrected v2 recovery binary (`76022350` or later), and a
+run lifetime of at least 900 seconds with adequate total headroom. Never reuse the
+abandoned RunId. The four supported links and seven unresolved outcomes are retained
+and reused; they are not regenerated or manually repaired.
+
+The narrow recovery receipt compatibility fix preserves the exact optional resolution
+profile and leaves legacy receipt bytes unchanged. Focused tests passed 56/56 and
+independent review passed. This recovery made no provider calls. The earlier one-hour
+spend extension ended at 13:50:39 Asia/Shanghai; no further paid execution is included
+in this recovery action. See [diagnosis and recovery evidence](business-transport-correction.md).
 Historical checkpoints below retain their original grants and outcomes; their
 remaining-run counts and earlier zero-link statements are superseded by this boundary.
 

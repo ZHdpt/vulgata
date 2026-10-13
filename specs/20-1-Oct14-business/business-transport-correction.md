@@ -200,9 +200,10 @@ requested duration not exceed the configured total run lifetime, so it rejects
 that synthesis admission before transport. A source-free reproduction using the
 actual scope returned Denied for 840/900 and Granted for 1200/900; neither sent a
 provider request. Exact-root loader, context projection and flow planning passed;
-the resulting model packet is 24,147 UTF-8 bytes. This is a run-configuration error,
-not a malformed synthesis response. The finalizer's denied original result is
-followed by exact lookup with no durable result, reported as CommitIndeterminate.
+the resulting model packet is 24,147 UTF-8 bytes. This confirms a run-configuration
+admission defect, not a malformed synthesis response. Source inspection explains
+how that denial can lead to CommitIndeterminate through subsequent exact lookup;
+the original finalizer result was not retained for direct confirmation of that path.
 Future run configuration must allow at least 900 seconds total, with enough time
 for resolution, synthesis and verification. No deadline or authorization check
 was weakened and no speculative performance fix was applied.
@@ -228,4 +229,36 @@ responses. The original process exited. PID 20648 was later reused by unrelated
 not stopped or modified. No pre-exit database backends or prepared transactions
 remained. The recovery helper uses the existing owner store and exclusive batch
 transaction fence, with an exclusive one-use marker; indeterminate recovery
-allows lookup only. Actual recovery result will be recorded after execution.
+allows lookup only. The executed recovery result is recorded below.
+
+### Exact recovery executed and verified
+
+Implementation checkpoint: `760223508be7b30644d3301afbf859526c5a9bf8`.
+The user-authorized owner call appended AbandonBusinessFromCl for exact RunId
+`73f1e438-8f9f-4015-bfdf-9eedc36dbbac`, committed at
+2026-10-13 14:34:37.525963 Asia/Shanghai. It returned Committed; a separate fresh
+process performed lookup only and received AlreadyCommitted with the exact v2
+profile, Begin digest, subject and evidence digest. The original Begin and consumed
+launch marker remain intact. No normal Complete receipt was fabricated.
+
+Before/after authenticated verification confirmed all seven prior publications,
+six finalizations, ninety BL versions and eleven resolution outcomes unchanged.
+All thirty-one captured lifecycle/finalization receipts are unchanged; exactly one
+new captured row is the expected abandonment receipt. No provider calls, new
+publication, source scan, migration, Web restart or unrelated-process change occurred.
+The original PID's later reuse was distinguished by process start time. Physical
+settlement checks remained valid through recovery submission.
+
+Ignored evidence: `TestResults/business-recovery-links-6/evidence.json`, request,
+result and lookup JSON, plus `verification/before.json`, `after.json` and
+`preservation-result.json`. A local helper build initially included the nested
+verification project's sources; that build failed before recovery execution. The
+compile-only exclusion was corrected before the single successful recovery call.
+No indeterminate write was retried.
+
+This is a verified administrative fence, not successful BL generation. A later
+separately authorized paid run must use a fresh RunId/marker and a compatible total
+run deadline (for example 1,200 seconds). It can reuse all eleven durable resolution
+outcomes. Use the corrected recovery-aware binaries; older binaries cannot validate
+v2 abandonment receipts. Ordinary-reader verification of a new BL remains pending
+until a new publication exists.
