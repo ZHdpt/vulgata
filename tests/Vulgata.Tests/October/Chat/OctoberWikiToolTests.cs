@@ -63,7 +63,7 @@ public sealed class OctoberWikiToolTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness harness = await fixture.OpenWikiAsync();
-        for (int index = 0; index < 16; index++)
+        for (int index = 0; index < harness.Budget.Limits.ToolCalls; index++)
         {
             Assert.Equal(OctoberChatToolStatus.InvalidArguments, (await harness.Tools.InvokeAsync("invented", "{}")).Status);
         }

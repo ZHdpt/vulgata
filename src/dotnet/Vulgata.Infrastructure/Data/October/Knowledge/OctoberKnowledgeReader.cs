@@ -157,7 +157,8 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
         KnowledgeReadOutputBudget? budget, CancellationToken token)
     {
         var context = await ContextAsync(request.Selection, token);
-        var visible = await VisibleAsync(context, token);
+        var candidate = Exact(context, context.Source.Documents, request.Document);
+        var visible = await VisibleAsync(context, token, [candidate]);
         var document = Exact(context, visible, request.Document);
         var projection = Project(document, context.Ticket.Selection.Mode, request.Document.SectionId);
         string order = OctoberKnowledgeDisclosureCodec.Hash(projection.Text);
@@ -186,7 +187,11 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
     {
         var context = await ContextAsync(request.Selection, token);
         ValidatePageSize(request.PageSize);
-        var visible = await VisibleAsync(context, token);
+        var candidate = Exact(context, context.Source.Documents, request.Document);
+        var endpoints = context.Source.Relationships.Select(item => item.Relationship)
+            .Where(edge => edge.From == candidate.Reference || edge.To == candidate.Reference)
+            .SelectMany(edge => new[] { edge.From, edge.To }).Append(candidate.Reference).ToHashSet();
+        var visible = await VisibleAsync(context, token, context.Source.Documents.Where(item => endpoints.Contains(item.Reference)));
         var document = Exact(context, visible, request.Document);
         var references = visible.Select(item => item.Reference).ToHashSet();
         var items = new List<RelatedItem>();
@@ -288,18 +293,35 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
         return source;
     }
 
-    private async Task<List<OctoberPublishedDocument>> VisibleAsync(ReadContext context, CancellationToken cancellationToken)
+    private async Task<List<OctoberPublishedDocument>> VisibleAsync(ReadContext context, CancellationToken cancellationToken,
+        IEnumerable<OctoberPublishedDocument>? candidates = null)
     {
         var result = new List<OctoberPublishedDocument>();
         if (context.Ticket.Selection.RepositoryScope.IsEmpty) return result;
-        foreach (var document in context.Source.Documents.OrderBy(document => document.Reference.LogicalDocumentId.ToString("D"), StringComparer.Ordinal)
-            .ThenBy(document => document.Reference.DocumentVersionId.ToString("D"), StringComparer.Ordinal))
+        var groups = (candidates ?? context.Source.Documents)
+            .Where(document => context.Ticket.Selection.Mode != KnowledgeMode.Business || document.Kind == DocumentKind.BusinessLogic)
+            .GroupBy(document => document.Kind);
+        foreach (var group in groups)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (context.Ticket.Selection.Mode == KnowledgeMode.Business && document.Kind != DocumentKind.BusinessLogic) continue;
-            if (await PermitAsync(context, document.Contributors, document.Kind, cancellationToken)) result.Add(document);
+            // The policy requires every contributor. Check their union once for this kind,
+            // as the owner dependency capsules already do; never retain an access decision.
+            var contributors = group.SelectMany(document => document.Contributors).Distinct().ToImmutableArray();
+            if (await PermitAsync(context, contributors, group.Key, cancellationToken))
+            {
+                result.AddRange(group);
+            }
+            else if (group.Count() > 1)
+            {
+                // A denied union must not hide its individually permitted members.
+                foreach (var document in group)
+                {
+                    if (await PermitAsync(context, document.Contributors, document.Kind, cancellationToken)) result.Add(document);
+                }
+            }
         }
-        return result;
+        return result.OrderBy(document => document.Reference.LogicalDocumentId.ToString("D"), StringComparer.Ordinal)
+            .ThenBy(document => document.Reference.DocumentVersionId.ToString("D"), StringComparer.Ordinal).ToList();
     }
 
     private async Task<bool> PermitAsync(ReadContext context, ImmutableArray<Contributor> contributors, DocumentKind? kind, CancellationToken cancellationToken)
@@ -338,7 +360,8 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
     {
         if (context.Ticket.ExpiresAt <= _cursors.Now) throw new OctoberInvalidContinuationException();
         await RequireAsync(new(context.Ticket.Selection, [], null), cancellationToken);
-        foreach (var disclosure in context.Disclosures) await RequireAsync(disclosure, cancellationToken);
+        foreach (var group in OctoberKnowledgeDisclosureCodec.Groups(context.Disclosures))
+            await RequireAsync(new(context.Ticket.Selection, group.Contributors, group.Kind), cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
     }
 
@@ -360,7 +383,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
         return new(gaps.Count != 0, context.Ticket.Selection.Mode == KnowledgeMode.Business && gaps.Count != 0 ? ["部分内容尚未完成。"] : gaps.ToImmutable());
     }
 
-    private static OctoberPublishedDocument Exact(ReadContext context, List<OctoberPublishedDocument> visible, DocumentHandle handle)
+    private static OctoberPublishedDocument Exact(ReadContext context, IEnumerable<OctoberPublishedDocument> visible, DocumentHandle handle)
     {
         if (handle is null || handle.BatchId != context.Ticket.Selection.Publication.Knowledge.BatchId ||
             handle.PublicationId != context.Ticket.Selection.Publication.PublicationId) throw new ReadFailure(KnowledgeReadStatus.Unavailable);

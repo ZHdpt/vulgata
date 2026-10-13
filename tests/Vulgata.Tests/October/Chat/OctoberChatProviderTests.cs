@@ -18,6 +18,132 @@ namespace Vulgata.Tests.October.Chat;
 public sealed class OctoberChatProviderTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RunAsync_BufferedTinyProviderDeltas_AreBoundedBatchesFlushedBeforeProviderWaitAsync()
+    {
+        var fixture = new ControlledChatFixture();
+        var wiki = await fixture.OpenWikiAsync();
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var visible = new StringBuilder();
+        int callbacks = 0;
+        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var client = new ScriptedChatClient([token => StreamAsync(
+            Enumerable.Range(0, 200).Select(_ => Update("text", new TextContent("界"))).ToArray(),
+            token, release.Task, Finish("text", ChatFinishReason.Stop))]);
+        Task<OctoberChatProviderResult> pending = new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", delta =>
+            {
+                callbacks++;
+                visible.Append(delta);
+                if (visible.Length == 200) ready.TrySetResult();
+            });
+        try
+        {
+            await ready.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.False(pending.IsCompleted);
+            Assert.InRange(callbacks, 2, 5);
+            release.TrySetResult();
+            var result = await pending;
+            Assert.Equal(new string('界', 200), result.AnswerText);
+            Assert.Equal(OctoberChatProviderStatus.Completed, result.Status);
+            Assert.Equal(600, wiki.Budget.OutputBytes);
+        }
+        finally { release.TrySetResult(); await pending; }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(3)]
+    [InlineData(20)]
+    [InlineData(1000)]
+    public async Task RunAsync_ToolSchemasAdvertiseEffectivePageSizeLimitAsync(int pageSize)
+    {
+        var fixture = new ControlledChatFixture();
+        var budget = new OctoberChatBudget(new OctoberChatLimits { PageSize = pageSize });
+        var wiki = await fixture.OpenWikiAsync(budget: budget);
+        using var client = new ScriptedChatClient([token => StreamAsync([Finish("done", ChatFinishReason.Stop)], token)]);
+        await new OctoberChatAgent(client, wiki.Tools, budget).RunAsync("问题", "controlled instructions", _ => { });
+        foreach (string name in new[] { "SearchWiki", "BrowseWiki", "GetRelatedDocuments" })
+        {
+            var schema = client.ToolSchemas[0][name].GetProperty("properties").GetProperty("pageSize");
+            Assert.Equal(1, schema.GetProperty("minimum").GetInt32());
+            Assert.Equal(Math.Min(pageSize, Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeContract.MaximumPageSize),
+                schema.GetProperty("maximum").GetInt32());
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RunAsync_CitationRegistrationAfterAnswer_DoesNotDiscardAnswerAsRetrievalNarrationAsync()
+    {
+        var fixture = new ControlledChatFixture();
+        var wiki = await fixture.OpenWikiAsync();
+        var progress = new List<OctoberChatToolProgress>();
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Update("answer", new TextContent("完整回答。")),
+                Call("answer", "report", "ReportAnswerDocuments", new() { ["documents"] = Array.Empty<object>() }),
+                Finish("answer", ChatFinishReason.ToolCalls)
+            ], token),
+            token => StreamAsync([Finish("done", ChatFinishReason.Stop)], token)
+        ]);
+        var result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", _ => { }, onToolProgress: progress.Add);
+        Assert.Equal(OctoberChatProviderStatus.Completed, result.Status);
+        Assert.Equal("完整回答。", result.AnswerText);
+        Assert.Empty(progress); // Reference bookkeeping is not a retrieval boundary.
+        Assert.Equal(1, wiki.Budget.ToolCalls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RunAsync_ProviderStreamDisconnect_PreservesPartialTextAsInterruptedWithoutRetryAsync()
+    {
+        var fixture = new ControlledChatFixture();
+        var wiki = await fixture.OpenWikiAsync();
+        using var client = new ScriptedChatClient([token => DisconnectedAsync(token)]);
+        var result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", _ => { });
+        Assert.Equal(OctoberChatProviderStatus.Interrupted, result.Status);
+        Assert.Equal(DialogueProviderFinish.Truncated, result.ProviderFinish);
+        Assert.Equal("已收到的部分回答", result.AnswerText);
+        Assert.Single(client.Requests);
+
+        static async IAsyncEnumerable<ChatResponseUpdate> DisconnectedAsync([EnumeratorCancellation] CancellationToken token)
+        {
+            await Task.Yield();
+            token.ThrowIfCancellationRequested();
+            yield return Update("disconnected", new TextContent("已收到的部分回答"));
+            throw new IOException("Controlled stream disconnect.");
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RunAsync_EachRoundReceivesActualRemainingBudgetWithoutStaleCopiesAsync()
+    {
+        var fixture = new ControlledChatFixture();
+        var wiki = await fixture.OpenWikiAsync();
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([Call("first", "budget-call", "BrowseWiki", new() { ["query"] = "" }), Finish("first", ChatFinishReason.ToolCalls)], token),
+            token => StreamAsync([Update("second", new TextContent("有边界的回答。")), Finish("second", ChatFinishReason.Stop)], token)
+        ]);
+        var result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
+            .RunAsync("问题", "controlled instructions", _ => { });
+        Assert.Equal(OctoberChatProviderStatus.Completed, result.Status);
+        for (int index = 0; index < 2; index++)
+        {
+            var message = Assert.Single(client.Requests[index].Where(m => m.Role == ChatRole.System && m.Text.Contains("october_chat_budget", StringComparison.Ordinal)));
+            using var json = JsonDocument.Parse(message.Text);
+            Assert.Equal(wiki.Budget.Limits.ProviderRounds, json.RootElement.GetProperty("providerRoundsLimit").GetInt32());
+            Assert.Equal(wiki.Budget.Limits.ToolCalls, json.RootElement.GetProperty("toolCallsLimit").GetInt32());
+            Assert.Equal(index + 1, json.RootElement.GetProperty("currentProviderRound").GetInt32());
+            Assert.Equal(wiki.Budget.Limits.ProviderRounds - index - 1, json.RootElement.GetProperty("providerRoundsRemainingAfterCurrent").GetInt32());
+            Assert.Equal(wiki.Budget.Limits.ToolCalls - index, json.RootElement.GetProperty("toolCallsRemaining").GetInt32());
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(true)]
     [InlineData(false)]
@@ -58,6 +184,7 @@ public sealed class OctoberChatProviderTests
                 Assert.True(original.IsCancellationRequested);
                 Assert.False(observedLinked.IsCancellationRequested);
             }
+
             failStream.TrySetResult();
             var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Equal(cancellationFirst, originalAtFailure);
@@ -73,6 +200,7 @@ public sealed class OctoberChatProviderTests
                 Assert.Equal(OctoberChatProviderStatus.Failed, result.Status);
                 Assert.Equal(DialogueProviderFinish.Unknown, result.ProviderFinish);
             }
+
             Assert.Single(client.Requests);
             Assert.Equal(0, client.DisposeCalls);
         }
@@ -98,6 +226,7 @@ public sealed class OctoberChatProviderTests
                 exceptionToken = original.Token;
                 throw new OperationCanceledException("Controlled original-lifetime cancellation before linked propagation.", original.Token);
             }
+
             throw new InvalidOperationException("Controlled failure before any cancellation signal.");
         }
     }
@@ -196,7 +325,9 @@ public sealed class OctoberChatProviderTests
 
         async Task ConsumeAsync()
         {
-            await foreach (AgentResponseUpdate _ in agent.RunStreamingAsync("受控取消测试", cancellationToken: cancellation.Token)) { }
+            await foreach (AgentResponseUpdate _ in agent.RunStreamingAsync("受控取消测试", cancellationToken: cancellation.Token))
+            {
+            }
         }
 
         async IAsyncEnumerable<ChatResponseUpdate> WaitingAsync([EnumeratorCancellation] CancellationToken token)
@@ -266,8 +397,8 @@ public sealed class OctoberChatProviderTests
 
         OctoberChatProviderResult result = await run;
         Assert.Equal(OctoberChatProviderStatus.Completed, result.Status);
-        Assert.Equal("已有证据。查阅完成，等待结束。", result.AnswerText);
-        Assert.Equal(result.AnswerText, visible.ToString());
+        Assert.Equal("查阅完成，等待结束。", result.AnswerText);
+        Assert.Equal("已有证据。查阅完成，等待结束。", visible.ToString());
         Assert.Equal(0, client.NonStreamingCalls);
         Assert.Equal(2, client.Requests.Count);
         // Completed is this controlled generation result, never a durable TurnSaved projection.
@@ -282,11 +413,13 @@ public sealed class OctoberChatProviderTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Call("first", refusal == "missing-call-id" ? "" : "call-1", refusal == "unknown-tool" ? "ReadSource" : "BrowseWiki",
-                refusal == "authority-override" ? new() { ["query"] = "", ["subject"] = "administrator" } : new() { ["query"] = "" }),
-            Finish("first", ChatFinishReason.ToolCalls),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("first", refusal == "missing-call-id" ? "" : "call-1", refusal == "unknown-tool" ? "ReadSource" : "BrowseWiki",
+                    refusal == "authority-override" ? new() { ["query"] = "", ["subject"] = "administrator" } : new() { ["query"] = "" }),
+                Finish("first", ChatFinishReason.ToolCalls),
+            ], token)
+        ]);
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
             .RunAsync("问题", "controlled instructions", _ => { });
@@ -310,7 +443,8 @@ public sealed class OctoberChatProviderTests
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
         using var client = new ScriptedChatClient([
             token => StreamAsync([Call("first", "same-id", "BrowseWiki", new() { ["query"] = "" }), Finish("first", ChatFinishReason.ToolCalls)], token),
-            token => StreamAsync([Call("second", "same-id", differentName ? "SearchWiki" : "BrowseWiki", new() { ["query"] = "" }), Finish("second", ChatFinishReason.ToolCalls)], token),
+            token => StreamAsync([Call("second", "same-id", differentName ? "SearchWiki" : "BrowseWiki", new() { ["query"] = "" }), Finish("second", ChatFinishReason.ToolCalls)],
+                token),
         ]);
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
@@ -329,11 +463,13 @@ public sealed class OctoberChatProviderTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Call("first", "duplicate", "BrowseWiki", new() { ["query"] = "" }),
-            Call("first", "duplicate", "SearchWiki", new() { ["query"] = "" }),
-            Finish("first", ChatFinishReason.ToolCalls),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("first", "duplicate", "BrowseWiki", new() { ["query"] = "" }),
+                Call("first", "duplicate", "SearchWiki", new() { ["query"] = "" }),
+                Finish("first", ChatFinishReason.ToolCalls),
+            ], token)
+        ]);
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
             .RunAsync("问题", "controlled instructions", _ => { });
@@ -376,9 +512,11 @@ public sealed class OctoberChatProviderTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Call("first", "unfinished", "BrowseWiki", new() { ["query"] = "" }), Finish("first", ChatFinishReason.Stop),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("first", "unfinished", "BrowseWiki", new() { ["query"] = "" }), Finish("first", ChatFinishReason.Stop),
+            ], token)
+        ]);
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
             .RunAsync("问题", "controlled instructions", _ => { });
@@ -396,11 +534,13 @@ public sealed class OctoberChatProviderTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Update("first", new TextContent("合法的前缀")),
-            Finish("first", ChatFinishReason.Stop),
-            trailingTool ? Call("first", "late", "BrowseWiki", new() { ["query"] = "" }) : Update("first", new TextContent("结束后的非法片段")),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Update("first", new TextContent("合法的前缀")),
+                Finish("first", ChatFinishReason.Stop),
+                trailingTool ? Call("first", "late", "BrowseWiki", new() { ["query"] = "" }) : Update("first", new TextContent("结束后的非法片段")),
+            ], token)
+        ]);
         var visible = new StringBuilder();
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
@@ -420,9 +560,11 @@ public sealed class OctoberChatProviderTests
         var fixture = new ControlledChatFixture();
         var budget = new OctoberChatBudget(new OctoberChatLimits { ProviderRounds = 1 });
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync(budget: budget);
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Call("first", "call-1", "BrowseWiki", new() { ["query"] = "" }), Finish("first", ChatFinishReason.ToolCalls),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("first", "call-1", "BrowseWiki", new() { ["query"] = "" }), Finish("first", ChatFinishReason.ToolCalls),
+            ], token)
+        ]);
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, budget)
             .RunAsync("问题", "controlled instructions", _ => { });
@@ -442,9 +584,11 @@ public sealed class OctoberChatProviderTests
         var fixture = new ControlledChatFixture();
         var budget = new OctoberChatBudget(new OctoberChatLimits { OutputBytes = 3 });
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync(budget: budget);
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Update("first", new TextContent("中")), Update("first", new TextContent("😀")), Finish("first", ChatFinishReason.Stop),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Update("first", new TextContent("中")), Update("first", new TextContent("😀")), Finish("first", ChatFinishReason.Stop),
+            ], token)
+        ]);
         var visible = new StringBuilder();
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, budget)
@@ -463,9 +607,11 @@ public sealed class OctoberChatProviderTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Call("first", "large-call", "BrowseWiki", new() { ["query"] = new string('x', 16385) }), Finish("first", ChatFinishReason.ToolCalls),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("first", "large-call", "BrowseWiki", new() { ["query"] = new string('x', 16385) }), Finish("first", ChatFinishReason.ToolCalls),
+            ], token)
+        ]);
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
             .RunAsync("问题", "controlled instructions", _ => { });
@@ -500,7 +646,7 @@ public sealed class OctoberChatProviderTests
             Assert.Same(entered.Task, await Task.WhenAny(entered.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
             if (cause == "call") call.Cancel();
             else if (cause == "original") original.Cancel();
-            else clock.Advance(TimeSpan.FromSeconds(180));
+            else clock.Advance(new OctoberChatLimits().Duration);
             OctoberChatProviderResult result = await run.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Equal(cause == "deadline" ? OctoberChatProviderStatus.BudgetExceeded : OctoberChatProviderStatus.Cancelled, result.Status);
             Assert.Single(client.Requests);
@@ -587,9 +733,11 @@ public sealed class OctoberChatProviderTests
         {
             Exception = new JsonException("PRIVATE raw provider argument parsing failure"),
         };
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Update("first", malformed), Finish("first", ChatFinishReason.ToolCalls),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Update("first", malformed), Finish("first", ChatFinishReason.ToolCalls),
+            ], token)
+        ]);
         var text = new StringBuilder();
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
@@ -613,9 +761,11 @@ public sealed class OctoberChatProviderTests
         {
             InformationalOnly = true,
         };
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Update("first", informational), Update("first", new TextContent("正常文本")), Finish("first", ChatFinishReason.Stop),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Update("first", informational), Update("first", new TextContent("正常文本")), Finish("first", ChatFinishReason.Stop),
+            ], token)
+        ]);
         var text = new StringBuilder();
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
@@ -636,10 +786,12 @@ public sealed class OctoberChatProviderTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Update("first", new TextContent("完整文本")), Finish("first", ChatFinishReason.Stop),
-            Update("first", new UsageContent(new UsageDetails { InputTokenCount = 3, OutputTokenCount = 2, TotalTokenCount = 5 })),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Update("first", new TextContent("完整文本")), Finish("first", ChatFinishReason.Stop),
+                Update("first", new UsageContent(new UsageDetails { InputTokenCount = 3, OutputTokenCount = 2, TotalTokenCount = 5 })),
+            ], token)
+        ]);
         var text = new StringBuilder();
 
         OctoberChatProviderResult result = await new OctoberChatAgent(client, wiki.Tools, wiki.Budget)
@@ -663,8 +815,10 @@ public sealed class OctoberChatProviderTests
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
         var observed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var client = new ScriptedChatClient([token => StreamAsync(
-            [Update("first", new TextContent("原始生成"))], token, finish.Task, Finish("first", ChatFinishReason.Stop))]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync(
+                [Update("first", new TextContent("原始生成"))], token, finish.Task, Finish("first", ChatFinishReason.Stop))
+        ]);
         var agent = new OctoberChatAgent(client, wiki.Tools, wiki.Budget);
         Task<OctoberChatProviderResult> first = agent.RunAsync("原问题", "controlled instructions", _ => observed.TrySetResult());
         try
@@ -716,7 +870,7 @@ public sealed class OctoberChatProviderTests
         try
         {
             Assert.Same(entered.Task, await Task.WhenAny(entered.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
-            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            if (deadline) clock.Advance(new OctoberChatLimits().Duration);
             else lifetime.Cancel();
 
             OctoberChatProviderResult result = await run.WaitAsync(TimeSpan.FromSeconds(5));
@@ -779,7 +933,7 @@ public sealed class OctoberChatProviderTests
             Assert.Empty(fixture.Reader.SearchRequests);
             Assert.Single(client.Requests);
             Assert.True(wiki.Budget.IsStopped);
-            Assert.Equal(oversizedArguments ? 1 : 16, wiki.Budget.ToolCalls);
+            Assert.Equal(oversizedArguments ? 1 : wiki.Budget.Limits.ToolCalls, wiki.Budget.ToolCalls);
             Assert.Equal(0, wiki.Budget.ActiveTools);
         }
         finally
@@ -790,7 +944,7 @@ public sealed class OctoberChatProviderTests
 
         async IAsyncEnumerable<ChatResponseUpdate> PendingFinishAsync([EnumeratorCancellation] CancellationToken token)
         {
-            int count = oversizedArguments ? 1 : 17;
+            int count = oversizedArguments ? 1 : wiki.Budget.Limits.ToolCalls + 1;
             for (int index = 0; index < count; index++)
             {
                 if (index == count - 1) limitInputProduced.TrySetResult();
@@ -826,7 +980,7 @@ public sealed class OctoberChatProviderTests
         try
         {
             Assert.Same(sequence.DisposeEntered.Task, await Task.WhenAny(sequence.DisposeEntered.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
-            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            if (deadline) clock.Advance(new OctoberChatLimits().Duration);
             else lifetime.Cancel();
 
             OctoberChatProviderResult result = await run.WaitAsync(TimeSpan.FromSeconds(5));
@@ -904,8 +1058,11 @@ public sealed class OctoberChatProviderTests
             readGate.TrySetResult();
             Assert.Same(answer.Task, await Task.WhenAny(answer.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
             Assert.False(run.IsCompleted);
-            Assert.Equal(new[] { OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Completed,
-                OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Completed }, progress.Select(item => item.Kind));
+            Assert.Equal(new[]
+            {
+                OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Completed,
+                OctoberChatToolProgressKind.Started, OctoberChatToolProgressKind.Completed
+            }, progress.Select(item => item.Kind));
             Assert.Equal(progress[0].OperationId, progress[1].OperationId);
             Assert.Equal(progress[2].OperationId, progress[3].OperationId);
             Assert.NotEqual(progress[0].OperationId, progress[2].OperationId);
@@ -926,7 +1083,7 @@ public sealed class OctoberChatProviderTests
 
         Assert.Equal(OctoberChatProviderStatus.Completed, (await run).Status);
         Assert.Equal("先到达的文本。工具完成后的文本。", visible.ToString());
-        Assert.Equal(visible.ToString(), (await run).AnswerText);
+        Assert.Equal("工具完成后的文本。", (await run).AnswerText);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1003,10 +1160,12 @@ public sealed class OctoberChatProviderTests
         var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         fixture.Reader.ExactGate = gate;
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Call("first", "private-read-id", "ReadWiki", new() { ["document"] = fixture.Knowledge.Handle(fixture.Knowledge.ClA) }),
-            Finish("first", ChatFinishReason.ToolCalls),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("first", "private-read-id", "ReadWiki", new() { ["document"] = fixture.Knowledge.Handle(fixture.Knowledge.ClA) }),
+                Finish("first", ChatFinishReason.ToolCalls),
+            ], token)
+        ]);
         var progress = new List<OctoberChatToolProgress>();
         Task<OctoberChatProviderResult> run = new OctoberChatAgent(client, wiki.Tools, budget)
             .RunAsync("问题", "controlled instructions", _ => { }, onToolProgress: item =>
@@ -1018,7 +1177,7 @@ public sealed class OctoberChatProviderTests
         {
             Assert.Same(started.Task, await Task.WhenAny(started.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
             Assert.Single(fixture.Reader.ExactRequests);
-            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            if (deadline) clock.Advance(new OctoberChatLimits().Duration);
             else cancellation.Cancel();
             OctoberChatProviderResult result = await run.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Equal(deadline ? OctoberChatProviderStatus.BudgetExceeded : OctoberChatProviderStatus.Cancelled, result.Status);
@@ -1048,10 +1207,12 @@ public sealed class OctoberChatProviderTests
     {
         var fixture = new ControlledChatFixture();
         ControlledChatFixture.WikiHarness wiki = await fixture.OpenWikiAsync();
-        using var client = new ScriptedChatClient([token => StreamAsync([
-            Call("first", "private-id", "BrowseWiki", new() { ["query"] = "" }),
-            Finish("first", ChatFinishReason.ToolCalls),
-        ], token)]);
+        using var client = new ScriptedChatClient([
+            token => StreamAsync([
+                Call("first", "private-id", "BrowseWiki", new() { ["query"] = "" }),
+                Finish("first", ChatFinishReason.ToolCalls),
+            ], token)
+        ]);
         var progress = new List<OctoberChatToolProgress>();
         var visible = new StringBuilder();
 
@@ -1101,6 +1262,7 @@ public sealed class OctoberChatProviderTests
             token.ThrowIfCancellationRequested();
             yield return update;
         }
+
         if (gate is not null) await gate.WaitAsync(token);
         if (final is not null) yield return final;
     }
@@ -1109,6 +1271,7 @@ public sealed class OctoberChatProviderTests
     {
         public List<ChatMessage[]> Requests { get; } = [];
         public List<string[]> ToolNames { get; } = [];
+        public List<Dictionary<string, JsonElement>> ToolSchemas { get; } = [];
         public int NonStreamingCalls { get; private set; }
         public int DisposeCalls { get; private set; }
 
@@ -1118,11 +1281,13 @@ public sealed class OctoberChatProviderTests
             throw new InvalidOperationException("The controlled capability probe only supplies typed streaming updates.");
         }
 
-        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default)
         {
             int index = Requests.Count;
             Requests.Add(messages.ToArray());
             ToolNames.Add(options?.Tools?.Select(tool => tool.Name).ToArray() ?? []);
+            ToolSchemas.Add(options?.Tools?.OfType<AIFunction>().ToDictionary(tool => tool.Name, tool => tool.JsonSchema) ?? []);
             if (index >= scripts.Count) throw new InvalidOperationException("Unexpected extra controlled SDK request.");
             return scripts[index](cancellationToken);
         }

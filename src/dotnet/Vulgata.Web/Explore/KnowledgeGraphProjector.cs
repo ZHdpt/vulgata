@@ -7,8 +7,6 @@ namespace Vulgata.Web.Explore;
 
 public static class KnowledgeGraphProjector
 {
-    public const int MaximumNodes = 40;
-    public const int MaximumEdges = 80;
     public static ExploreGraph Project(ImmutableArray<SearchPage> seedPages,
         ImmutableArray<RelatedPage> relatedPages, bool acquisitionIncomplete)
     {
@@ -27,7 +25,7 @@ public static class KnowledgeGraphProjector
             }
         }
 
-        var visibleNodes = nodes.Values.Take(MaximumNodes).ToImmutableArray();
+        var visibleNodes = nodes.Values.ToImmutableArray();
         var visibleHandles = visibleNodes.Select(node => node.Handle).ToHashSet();
         var edges = new Dictionary<Guid, RelatedDocument>();
         var uncertainties = new Dictionary<string, Uncertainty>(StringComparer.Ordinal);
@@ -61,8 +59,8 @@ public static class KnowledgeGraphProjector
         var knownCoverage = coverages.OfType<CoverageProjection>().ToArray();
         var coverage = knownCoverage.Length == 0 ? null : new CoverageProjection(knownCoverage.Any(item => item.IsPartial),
             knownCoverage.SelectMany(item => item.PermittedGaps).Distinct(StringComparer.Ordinal).ToImmutableArray());
-        return new(visibleNodes, visibleEdges.Take(MaximumEdges).ToImmutableArray(), uncertainties.Values.ToImmutableArray(),
-            acquisitionIncomplete || nodes.Count > MaximumNodes || visibleEdges.Length > MaximumEdges || edges.Count > visibleEdges.Length ||
+        return new(visibleNodes, visibleEdges.ToImmutableArray(), uncertainties.Values.ToImmutableArray(),
+            acquisitionIncomplete || edges.Count > visibleEdges.Length ||
                 seedPages.Any(page => page.Next is not null) || relatedPages.Any(page => page.Next is not null),
             coverage, coverages.Any(item => item is null));
     }

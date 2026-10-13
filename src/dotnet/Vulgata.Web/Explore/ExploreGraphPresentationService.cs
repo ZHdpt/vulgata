@@ -8,15 +8,10 @@ namespace Vulgata.Web.Explore;
 
 public sealed partial class ExplorePresentationService
 {
-    private const int MaximumGraphAcquisitions = 6;
-    private static readonly TimeSpan _graphDeadline = TimeSpan.FromSeconds(10);
-
     public async Task<ExploreGraphResult> LoadGraphAsync(CancellationToken cancellationToken = default)
     {
-        // This deadline includes trusted-context observations as well as all eight graph protocol calls.
-        using var timeout = new CancellationTokenSource(_graphDeadline, _timeProvider);
-        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
-        var token = lifetime.Token;
+        // Traverse the publication in bounded requests; the caller owns the overall lifetime.
+        var token = cancellationToken;
         var generation = Volatile.Read(ref _contextGeneration);
         try
         {
@@ -42,58 +37,66 @@ public sealed partial class ExplorePresentationService
             }
 
             var encoder = new ExploreGraphOutputEncoder();
-            long remainingBytes = MaximumGraphAcquisitions * KnowledgeContract.MaximumContentBytes;
+            const long remainingBytes = KnowledgeContract.MaximumContentBytes;
             var capsules = ImmutableArray.CreateBuilder<KnowledgeDependencyHandle>();
+            var seedPages = ImmutableArray.CreateBuilder<SearchPage>();
             var relatedPages = ImmutableArray.CreateBuilder<RelatedPage>();
-            var seedLimit = Math.Min(KnowledgeContract.MaximumPageSize, KnowledgeGraphProjector.MaximumNodes + 1);
-            var relatedLimit = Math.Min(KnowledgeContract.MaximumPageSize, KnowledgeGraphProjector.MaximumEdges + 1);
-            var seedsResult = await _disclosedReader.SearchAsync(new(opened.Selection, "", seedLimit),
-                new(KnowledgeContract.MaximumContentBytes, remainingBytes, encoder), token).WaitAsync(token);
-            if (seedsResult.Status != KnowledgeReadStatus.Success || seedsResult.Disclosure is not { } seedDisclosure ||
-                !ValidGraphSearch(seedDisclosure.Page, graphSelection, seedLimit) ||
-                !ValidGraphEnvelope(seedDisclosure, encoder.EncodeSearch(seedDisclosure.Page), encoder.ProfileId, remainingBytes))
-            {
-                return GraphFailure(KnowledgeReadStatus.Unavailable);
-            }
-
-            // Retain the whole page's dependency even when the sentinel item is not displayed.
-            capsules.Add(seedDisclosure.Dependencies);
-            remainingBytes -= seedDisclosure.OutputUtf8.Length;
-            var seeds = seedDisclosure.Page;
-            var displayedSeeds = seeds.Documents.DistinctBy(document => document.Handle).Take(KnowledgeGraphProjector.MaximumNodes).ToArray();
-            foreach (var seed in displayedSeeds.Take(MaximumGraphAcquisitions - 1))
+            const int pageLimit = KnowledgeContract.MaximumPageSize;
+            ContinuationToken? cursor = null;
+            var cursors = new HashSet<string>(StringComparer.Ordinal);
+            do
             {
                 if (!await IsCurrentAsync(context, generation, token).WaitAsync(token))
-                {
                     return GraphFailure(KnowledgeReadStatus.Unavailable);
-                }
-
-                var result = await _disclosedReader.GetRelatedAsync(new(opened.Selection, seed.Handle, relatedLimit),
+                var result = await _disclosedReader.SearchAsync(new(opened.Selection, "", pageLimit, cursor),
                     new(KnowledgeContract.MaximumContentBytes, remainingBytes, encoder), token).WaitAsync(token);
                 if (result.Status != KnowledgeReadStatus.Success || result.Disclosure is not { } disclosure ||
-                    !ValidGraphRelated(disclosure.Page, graphSelection, relatedLimit) ||
-                    !ValidGraphEnvelope(disclosure, encoder.EncodeRelated(disclosure.Page), encoder.ProfileId, remainingBytes))
-                {
+                    !ValidGraphSearch(disclosure.Page, graphSelection, pageLimit) ||
+                    !ValidGraphEnvelope(disclosure, encoder.EncodeSearch(disclosure.Page), encoder.ProfileId, remainingBytes))
                     return GraphFailure(KnowledgeReadStatus.Unavailable);
-                }
-
                 capsules.Add(disclosure.Dependencies);
-                remainingBytes -= disclosure.OutputUtf8.Length;
-                relatedPages.Add(disclosure.Page);
+                seedPages.Add(disclosure.Page with { Next = null });
+                cursor = disclosure.Page.Next;
+                if (cursor is not null && !cursors.Add(cursor.Value))
+                    return GraphFailure(KnowledgeReadStatus.Unavailable);
+            } while (cursor is not null);
+
+            foreach (var seed in seedPages.SelectMany(page => page.Documents).DistinctBy(document => document.Handle))
+            {
+                cursor = null;
+                cursors.Clear();
+                do
+                {
+                    if (!await IsCurrentAsync(context, generation, token).WaitAsync(token))
+                        return GraphFailure(KnowledgeReadStatus.Unavailable);
+                    var result = await _disclosedReader.GetRelatedAsync(new(opened.Selection, seed.Handle, pageLimit, cursor),
+                        new(KnowledgeContract.MaximumContentBytes, remainingBytes, encoder), token).WaitAsync(token);
+                    if (result.Status != KnowledgeReadStatus.Success || result.Disclosure is not { } disclosure ||
+                        !ValidGraphRelated(disclosure.Page, graphSelection, pageLimit) ||
+                        !ValidGraphEnvelope(disclosure, encoder.EncodeRelated(disclosure.Page), encoder.ProfileId, remainingBytes))
+                        return GraphFailure(KnowledgeReadStatus.Unavailable);
+                    capsules.Add(disclosure.Dependencies);
+                    relatedPages.Add(disclosure.Page with { Next = null });
+                    cursor = disclosure.Page.Next;
+                    if (cursor is not null && !cursors.Add(cursor.Value))
+                        return GraphFailure(KnowledgeReadStatus.Unavailable);
+                } while (cursor is not null);
             }
 
-            var graph = KnowledgeGraphProjector.Project([seeds], relatedPages.ToImmutable(), displayedSeeds.Length > relatedPages.Count);
+            var graph = KnowledgeGraphProjector.Project(seedPages.ToImmutable(), relatedPages.ToImmutable(), false);
             if (!await IsCurrentAsync(context, generation, token).WaitAsync(token))
             {
                 return GraphFailure(KnowledgeReadStatus.Unavailable);
             }
 
-            // This is the final Knowledge operation. No guessed contributor subset, root or merge call.
-            var authorized = await _dependencyAuthority.ReauthorizeAsync(graphSelection, capsules.ToImmutable(), token).WaitAsync(token);
-            token.ThrowIfCancellationRequested();
-            if (authorized != KnowledgeDependencyStatus.Succeeded || _disposed || generation != Volatile.Read(ref _contextGeneration))
+            // Recheck every acquired proof without imposing an aggregate graph-size limit.
+            foreach (var batch in capsules.Chunk(OctoberKnowledgeDisclosureLimits.MaximumOriginGroups))
             {
-                return GraphFailure(KnowledgeReadStatus.Unavailable);
+                var authorized = await ReauthorizeGraphBatchAsync(graphSelection, batch.ToImmutableArray(), token);
+                token.ThrowIfCancellationRequested();
+                if (authorized != KnowledgeDependencyStatus.Succeeded ||
+                    !await IsCurrentAsync(context, generation, token).WaitAsync(token))
+                    return GraphFailure(KnowledgeReadStatus.Unavailable);
             }
 
             return new(KnowledgeReadStatus.Success, graph, context.Selection.Mode, context.IsControlledFixture);
@@ -102,10 +105,26 @@ public sealed partial class ExplorePresentationService
         {
             return GraphFailure(cancellationToken.IsCancellationRequested ? KnowledgeReadStatus.Cancelled : KnowledgeReadStatus.ReadBudgetExceeded);
         }
-        catch (Exception) { return GraphFailure(KnowledgeReadStatus.UnavailableService); }
+        catch (Exception)
+        {
+            return GraphFailure(KnowledgeReadStatus.UnavailableService);
+        }
     }
 
     private static ExploreGraphResult GraphFailure(KnowledgeReadStatus status) => new(status, null);
+
+    private async Task<KnowledgeDependencyStatus> ReauthorizeGraphBatchAsync(ReadSelectionRequest selection,
+        ImmutableArray<KnowledgeDependencyHandle> batch, CancellationToken token)
+    {
+        var status = await _dependencyAuthority!.ReauthorizeAsync(selection, batch, token).WaitAsync(token);
+        if (status != KnowledgeDependencyStatus.BudgetExceeded || batch.Length <= 1) return status;
+        // Proofs may reach the owner's byte limit before its count limit. Split rather than drop any proof.
+        var middle = batch.Length / 2;
+        var left = await ReauthorizeGraphBatchAsync(selection, batch[..middle], token);
+        return left == KnowledgeDependencyStatus.Succeeded
+            ? await ReauthorizeGraphBatchAsync(selection, batch[middle..], token)
+            : left;
+    }
 
     private static bool ValidGraphEnvelope<T>(KnowledgeDisclosedPage<T> disclosure, ImmutableArray<byte> expectedBytes,
         string profile, long remainingBytes) where T : class =>
@@ -122,21 +141,21 @@ public sealed partial class ExplorePresentationService
     private static bool ValidGraphSearch(SearchPage page, ReadSelectionRequest selection, int pageLimit) =>
         page is not null && page.Status == KnowledgeReadStatus.Success && !page.Documents.IsDefault && page.Documents.Length <= pageLimit &&
         page.Documents.All(document => ValidSummary(document, selection) &&
-            (selection.Mode != KnowledgeMode.Business || document.QualifiedExcerpt.All(claim => claim.Evidence.IsEmpty))) &&
+                                       (selection.Mode != KnowledgeMode.Business || document.QualifiedExcerpt.All(claim => claim.Evidence.IsEmpty))) &&
         ValidNext(page.Next, null) && ValidCoverage(page.Coverage);
 
     private static bool ValidGraphRelated(RelatedPage page, ReadSelectionRequest selection, int pageLimit) =>
         page is not null && page.Status == KnowledgeReadStatus.Success && !page.Relationships.IsDefault && !page.PermittedUncertainties.IsDefault &&
         page.Relationships.Length + page.PermittedUncertainties.Length <= pageLimit &&
         page.Relationships.All(edge => edge is not null && edge.RelationshipVersionId is { } id && id != Guid.Empty &&
-            Enum.IsDefined(edge.Kind) && new ExploreDocumentHandleValidator().Validate(edge.From).IsValid &&
-            new ExploreDocumentHandleValidator().Validate(edge.To).IsValid && Matches(edge.From, selection) && Matches(edge.To, selection) &&
-            ExplorePresentationText.IsWellFormed(edge.Meaning)) &&
+                                       Enum.IsDefined(edge.Kind) && new ExploreDocumentHandleValidator().Validate(edge.From).IsValid &&
+                                       new ExploreDocumentHandleValidator().Validate(edge.To).IsValid && Matches(edge.From, selection) && Matches(edge.To, selection) &&
+                                       ExplorePresentationText.IsWellFormed(edge.Meaning)) &&
         page.PermittedUncertainties.All(uncertainty => uncertainty is not null && !string.IsNullOrWhiteSpace(uncertainty.Key) &&
-            ExplorePresentationText.IsWellFormed(uncertainty.Key) && ExplorePresentationText.IsWellFormed(uncertainty.Explanation) &&
-            !uncertainty.Limitations.IsDefault && uncertainty.Limitations.All(ExplorePresentationText.IsWellFormed) &&
-            !uncertainty.Evidence.IsDefault && uncertainty.Evidence.All(evidence => evidence is not null &&
-                (evidence.Source is null || ValidSource(evidence.Source))) &&
-            (selection.Mode != KnowledgeMode.Business || uncertainty.Evidence.IsEmpty)) &&
+                                                       ExplorePresentationText.IsWellFormed(uncertainty.Key) && ExplorePresentationText.IsWellFormed(uncertainty.Explanation) &&
+                                                       !uncertainty.Limitations.IsDefault && uncertainty.Limitations.All(ExplorePresentationText.IsWellFormed) &&
+                                                       !uncertainty.Evidence.IsDefault && uncertainty.Evidence.All(evidence => evidence is not null &&
+                                                           (evidence.Source is null || ValidSource(evidence.Source))) &&
+                                                       (selection.Mode != KnowledgeMode.Business || uncertainty.Evidence.IsEmpty)) &&
         ValidNext(page.Next, null) && ValidCoverage(page.Coverage);
 }

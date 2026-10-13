@@ -46,7 +46,14 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
     private bool _suppressionPending;
     private int _disposed;
 
-    private sealed record PendingEvent(OctoberChatEvent Item, KnowledgeDependencyHandle? Dependencies, long ReservedBytes);
+    private PendingEvent? _textTail;
+
+    private sealed class PendingEvent(OctoberChatEvent item, KnowledgeDependencyHandle? dependencies, long reservedBytes)
+    {
+        public OctoberChatEvent Item { get; set; } = item;
+        public KnowledgeDependencyHandle? Dependencies { get; } = dependencies;
+        public long ReservedBytes { get; set; } = reservedBytes;
+    }
 
     public OctoberChatTurnPresentation(OctoberChatTurnBinding binding, DialogueAdmission admission,
         Guid saveOperationId, IOctoberChatContextProvider context, IOctoberKnowledgeDependencyAuthority dependencies,
@@ -90,21 +97,45 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
         Completion = Task.Run(DeliverAsync);
     }
 
-    public bool IsDetached { get { lock (_gate) return _detached; } }
-    public bool Overflowed { get { lock (_gate) return _overflowed; } }
+    public bool IsDetached
+    {
+        get
+        {
+            lock (_gate) return _detached;
+        }
+    }
+
+    public bool Overflowed
+    {
+        get
+        {
+            lock (_gate) return _overflowed;
+        }
+    }
+
     /// <summary>Actual delivery lifetime, not proof that all events were displayed.</summary>
     public Task Completion { get; }
+
     /// <summary>Conservative managed-memory reservation, including the active callback; not serialized byte accounting.</summary>
-    internal long RetainedBytes { get { lock (_gate) return _retainedBytes; } }
+    internal long RetainedBytes
+    {
+        get
+        {
+            lock (_gate) return _retainedBytes;
+        }
+    }
 
     public bool TryPublishText(string text, KnowledgeDependencyHandle dependencies)
     {
         try
         {
             return text is not null && _utf8.GetByteCount(text) <= OctoberDialogueLimits.MaximumAnswerUtf8Bytes &&
-                ValidCapsule(dependencies) && Enqueue(OctoberChatEventKind.AnswerDelta, dependencies, text);
+                   ValidCapsule(dependencies) && Enqueue(OctoberChatEventKind.AnswerDelta, dependencies, text);
         }
-        catch (Exception) { return false; }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     public bool TryPublishProgress(OctoberChatToolProgress progress, KnowledgeDependencyHandle dependencies)
@@ -120,7 +151,10 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
             };
             return Enqueue(kind, dependencies, toolId: progress.OperationId.ToString("N"));
         }
-        catch (Exception) { return false; }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     /// <summary>Accepts trusted coordinator results only, never browser-supplied receipt claims.</summary>
@@ -154,13 +188,17 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
                 return Enqueue(OctoberChatEventKind.TurnSaved, projection.InferenceDependencies, projection.AnswerText,
                     references: projection.References, outcome: outcome);
             }
+
             // The owner intentionally returns no dependent content for these
             // confirmed closures. Missing ordinary projection never means success.
             if (receipt.TerminalState is not (DialogueTerminalState.Failed or DialogueTerminalState.Interrupted) ||
                 receipt.Reason is not (DialogueTerminalReason.AuthorizationDenied or DialogueTerminalReason.AuthorityUnavailable)) return false;
             return Enqueue(OctoberChatEventKind.TurnSaved, null, string.Empty, references: [], outcome: outcome);
         }
-        catch (Exception) { return false; }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private bool Enqueue(OctoberChatEventKind kind, KnowledgeDependencyHandle? dependencies, string? text = null,
@@ -171,32 +209,57 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
         long reserved = 256 + 2L * ((text?.Length ?? 0) + (toolId?.Length ?? 0));
         if (dependencies is not null) reserved += 512 + 2L * (dependencies.BindingDigest.Length + dependencies.ProtectedPayload.Length);
         if (!references.IsDefault)
-            foreach (OctoberChatReference reference in references) reserved += 256 + 2L * (reference.Document.SectionId?.Length ?? 0);
+            foreach (OctoberChatReference reference in references)
+                reserved += 256 + 2L * (reference.Document.SectionId?.Length ?? 0);
         lock (_gate)
         {
             if (_detached || _suppressionPending || _terminalQueued || _uncertainQueued && kind != OctoberChatEventKind.TurnSaved) return false;
+            // Coalesce only adjacent, still-queued text with the exact same proof.
+            // The consumer still reauthorizes at handoff; no permission is cached.
+            if (kind == OctoberChatEventKind.AnswerDelta && _textTail is { } tail && tail.Dependencies == dependencies &&
+                _utf8.GetByteCount(tail.Item.Text + text) <= OctoberDialogueLimits.MaximumAnswerUtf8Bytes)
+            {
+                long added = 2L * (text?.Length ?? 0);
+                if (added > _maximumRetainedBytes - _retainedBytes)
+                {
+                    _overflowed = true;
+                    DetachLocked();
+                    return false;
+                }
+
+                tail.Item = tail.Item with { Text = tail.Item.Text + text };
+                tail.ReservedBytes += added;
+                _retainedBytes += added;
+                return true;
+            }
+
             if (reserved > _maximumRetainedBytes - _retainedBytes)
             {
                 _overflowed = true;
                 DetachLocked();
                 return false;
             }
+
             var item = new OctoberChatEvent(_binding.ConversationId, _binding.ContextId, _binding.TurnId,
                 ++_sequence, _clock.GetUtcNow(), kind, text, toolId, references, outcome);
             _retainedBytes += reserved;
-            if (!_events.Writer.TryWrite(new(item, dependencies, reserved)))
+            var pending = new PendingEvent(item, dependencies, reserved);
+            if (!_events.Writer.TryWrite(pending))
             {
                 _retainedBytes -= reserved;
                 _overflowed = true;
                 DetachLocked();
                 return false;
             }
+
+            _textTail = kind == OctoberChatEventKind.AnswerDelta ? pending : null;
             _uncertainQueued |= kind == OctoberChatEventKind.TurnSaveUncertain;
             if (kind == OctoberChatEventKind.TurnSaved)
             {
                 _terminalQueued = true;
                 _events.Writer.TryComplete();
             }
+
             return true;
         }
     }
@@ -209,15 +272,32 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
         {
             await foreach (PendingEvent pending in _events.Reader.ReadAllAsync(token))
             {
+                // Claim before inspecting the event so a publisher cannot mutate
+                // an item being authorized or delivered.
+                lock (_gate)
+                {
+                    if (ReferenceEquals(_textTail, pending)) _textTail = null;
+                }
+
                 try
                 {
                     if (IsDetached) break;
                     ReadSelectionRequest? before = await _context.GetCurrentAsync(token);
-                    if (!MatchesContext(before)) { Detach(); break; }
+                    if (!MatchesContext(before))
+                    {
+                        Detach();
+                        break;
+                    }
+
                     KnowledgeDependencyStatus authorization = pending.Dependencies is { } complete
                         ? await _dependencies.ReauthorizeAsync(before!, [complete], token) : KnowledgeDependencyStatus.Succeeded;
                     bool suppress = authorization is KnowledgeDependencyStatus.Denied or KnowledgeDependencyStatus.AuthorityUnavailable;
-                    if (authorization != KnowledgeDependencyStatus.Succeeded && !suppress) { Detach(); break; }
+                    if (authorization != KnowledgeDependencyStatus.Succeeded && !suppress)
+                    {
+                        Detach();
+                        break;
+                    }
+
                     if (suppress)
                     {
                         lock (_gate)
@@ -228,9 +308,14 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
                             _events.Writer.TryComplete();
                         }
                     }
+
                     ReadSelectionRequest? after = await _context.GetCurrentAsync(token);
                     if (!MatchesContext(after) || after!.Subject.AuthenticationBinding != before!.Subject.AuthenticationBinding || IsDetached)
-                    { Detach(); break; }
+                    {
+                        Detach();
+                        break;
+                    }
+
                     token.ThrowIfCancellationRequested();
                     if (suppress)
                     {
@@ -244,18 +329,26 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
                                 ToolCallId = null, References = default, SavedOutcome = null
                             }, token);
                         }
+
                         break; // Finally detaches only after the actual callback settles.
                     }
+
                     // Await the actual callback. Cancellation cannot pretend a
                     // delayed UI handoff has already returned or been recalled.
                     await _deliver(pending.Item, token);
                     startedDelivered |= pending.Item.Kind == OctoberChatEventKind.TurnStarted;
                     if (pending.Item.Kind == OctoberChatEventKind.TurnSaved) break;
                 }
-                finally { Release(pending); }
+                finally
+                {
+                    Release(pending);
+                }
             }
         }
-        catch (Exception) { Detach(); }
+        catch (Exception)
+        {
+            Detach();
+        }
         finally
         {
             Detach();
@@ -263,19 +356,31 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
             while (_events.Reader.TryRead(out PendingEvent? pending)) Release(pending);
             Task cancellation;
             lock (_gate) cancellation = _cancellationTask;
-            try { await cancellation; }
-            catch (Exception) { } // Throwing token callbacks never escape into generation.
+            try
+            {
+                await cancellation;
+            }
+            catch (Exception)
+            {
+            } // Throwing token callbacks never escape into generation.
         }
     }
 
-    private void Release(PendingEvent pending) { lock (_gate) _retainedBytes -= pending.ReservedBytes; }
+    private void Release(PendingEvent pending)
+    {
+        lock (_gate) _retainedBytes -= pending.ReservedBytes;
+    }
 
-    public void Detach() { lock (_gate) DetachLocked(); }
+    public void Detach()
+    {
+        lock (_gate) DetachLocked();
+    }
 
     private void DetachLocked()
     {
         if (_detached) return;
         _detached = true;
+        _textTail = null;
         _events.Writer.TryComplete();
         // Never execute arbitrary cancellation registrations on the publisher.
         _cancellationTask = Task.Run(() => _deliveryCancellation.CancelAsync());
@@ -289,10 +394,13 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
     }
 
     private bool MatchesAdmission(DialogueAdmission admission) => MatchesConversation(admission.Conversation) &&
-        admission.TurnId == _binding.TurnId && admission.Sequence == _admission.Sequence && admission.Fence == _admission.Fence &&
-        admission.Request.ConversationId == _binding.ConversationId && admission.Request.ContextId == _binding.ContextId &&
-        admission.Request.ClientRequestKey == _admission.Request.ClientRequestKey && admission.Request.RequestDigest == _admission.Request.RequestDigest &&
-        admission.Request.Execution == _admission.Request.Execution && admission.Sequence > 0 && admission.Fence > 0;
+                                                                  admission.TurnId == _binding.TurnId && admission.Sequence == _admission.Sequence &&
+                                                                  admission.Fence == _admission.Fence &&
+                                                                  admission.Request.ConversationId == _binding.ConversationId &&
+                                                                  admission.Request.ContextId == _binding.ContextId &&
+                                                                  admission.Request.ClientRequestKey == _admission.Request.ClientRequestKey &&
+                                                                  admission.Request.RequestDigest == _admission.Request.RequestDigest &&
+                                                                  admission.Request.Execution == _admission.Request.Execution && admission.Sequence > 0 && admission.Fence > 0;
 
     private bool MatchesConversation(DialogueConversationIdentity identity) =>
         identity.ConversationId == _binding.ConversationId && identity.ContextId == _binding.ContextId &&
@@ -301,20 +409,28 @@ public sealed class OctoberChatTurnPresentation : IAsyncDisposable
         identity.RepositoryScope.Order().SequenceEqual(_binding.Request.RepositoryScope.Order());
 
     private bool MatchesContext(ReadSelectionRequest? current) => current is not null && current.Subject is not null &&
-        !string.IsNullOrWhiteSpace(current.Subject.AuthenticationBinding) && current.Subject.SubjectId == _binding.Request.Subject.SubjectId &&
-        current.Purpose == KnowledgePurpose.Chat && current.Publication == _binding.Request.Publication && current.Mode == _binding.Request.Mode &&
-        !current.RepositoryScope.IsDefaultOrEmpty && current.RepositoryScope.Order().SequenceEqual(_binding.Request.RepositoryScope.Order());
+                                                                  !string.IsNullOrWhiteSpace(current.Subject.AuthenticationBinding) &&
+                                                                  current.Subject.SubjectId == _binding.Request.Subject.SubjectId &&
+                                                                  current.Purpose == KnowledgePurpose.Chat && current.Publication == _binding.Request.Publication &&
+                                                                  current.Mode == _binding.Request.Mode &&
+                                                                  !current.RepositoryScope.IsDefaultOrEmpty && current.RepositoryScope.Order()
+                                                                      .SequenceEqual(_binding.Request.RepositoryScope.Order());
 
     private static bool ValidDigest(string? digest) => digest is { Length: 64 } && digest.All(Uri.IsHexDigit);
 
     private static bool ValidCapsule(KnowledgeDependencyHandle? dependencies) => dependencies is not null && dependencies.SetId != Guid.Empty &&
-        ValidDigest(dependencies.BindingDigest) && !string.IsNullOrWhiteSpace(dependencies.ProtectedPayload) &&
-        _utf8.GetByteCount(dependencies.ProtectedPayload) <= OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes;
+                                                                                 ValidDigest(dependencies.BindingDigest) &&
+                                                                                 !string.IsNullOrWhiteSpace(dependencies.ProtectedPayload) &&
+                                                                                 _utf8.GetByteCount(dependencies.ProtectedPayload) <=
+                                                                                 OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes;
 
     private bool ValidReferences(ImmutableArray<OctoberChatReference> references) => !references.IsDefault &&
-        references.Length <= OctoberDialogueLimits.MaximumReferences && references.All(reference => reference is not null && reference.Document is { } document &&
-            document.BatchId == _binding.Request.Publication.Knowledge.BatchId && document.PublicationId == _binding.Request.Publication.PublicationId &&
-            document.LogicalDocumentId != Guid.Empty && document.DocumentVersionId != Guid.Empty &&
-            (document.SectionId is null || _utf8.GetByteCount(document.SectionId) <= OctoberDialogueLimits.MaximumSectionIdUtf8Bytes) &&
-            reference.SuccessfulChunks > 0 && reference.ContentBytes >= 0);
+                                                                                     references.Length <= OctoberDialogueLimits.MaximumReferences && references.All(reference =>
+                                                                                         reference is not null && reference.Document is { } document &&
+                                                                                         document.BatchId == _binding.Request.Publication.Knowledge.BatchId &&
+                                                                                         document.PublicationId == _binding.Request.Publication.PublicationId &&
+                                                                                         document.LogicalDocumentId != Guid.Empty && document.DocumentVersionId != Guid.Empty &&
+                                                                                         (document.SectionId is null || _utf8.GetByteCount(document.SectionId) <=
+                                                                                             OctoberDialogueLimits.MaximumSectionIdUtf8Bytes) &&
+                                                                                         reference.SuccessfulChunks > 0 && reference.ContentBytes >= 0);
 }

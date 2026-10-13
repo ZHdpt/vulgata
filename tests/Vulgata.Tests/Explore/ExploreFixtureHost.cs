@@ -63,6 +63,7 @@ internal sealed class ExploreReaderProbe(IOctoberKnowledgeReader inner) : IOctob
     public List<ReadSelectionRequest> Selections { get; } = [];
     public List<ExactReadRequest> Reads { get; } = [];
     public List<KnowledgeSearchRequest> Searches { get; } = [];
+    public Func<KnowledgeSearchRequest, SearchPage>? SearchResponse { get; set; }
     public List<CancellationToken> ReadTokens { get; } = [];
     public Func<ExactReadRequest, CancellationToken, Task<ContentPage>>? ReadResponse { get; set; }
 
@@ -82,7 +83,7 @@ internal sealed class ExploreReaderProbe(IOctoberKnowledgeReader inner) : IOctob
     public Task<SearchPage> SearchAsync(KnowledgeSearchRequest request, CancellationToken cancellationToken = default)
     {
         Searches.Add(request);
-        return inner.SearchAsync(request, cancellationToken);
+        return SearchResponse is null ? inner.SearchAsync(request, cancellationToken) : Task.FromResult(SearchResponse(request));
     }
 
     public Task<RelatedPage> GetRelatedAsync(RelatedReadRequest request, CancellationToken cancellationToken = default) =>

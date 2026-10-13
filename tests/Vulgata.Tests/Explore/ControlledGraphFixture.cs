@@ -21,7 +21,9 @@ internal sealed class ControlledGraphFixture : IOctoberKnowledgeReader, IOctober
     public ReadSelectionRequest? Opened { get; private set; }
     public ReadSelectionRequest? FinalSelection { get; private set; }
     public KnowledgeSearchRequest? SearchRequest { get; private set; }
+    public Func<ImmutableArray<KnowledgeDependencyHandle>, KnowledgeDependencyStatus>? FinalCheck { get; set; }
     public KnowledgeDependencyStatus FinalStatus { get; set; } = KnowledgeDependencyStatus.Succeeded;
+    public Func<KnowledgeSearchRequest, SearchPage>? Search { get; set; }
     public SearchPage Seeds { get; set; } = new(KnowledgeReadStatus.Success, [], null, new(false, []));
     public Func<RelatedReadRequest, RelatedPage> Related { get; set; } = _ => new(KnowledgeReadStatus.Success, [], [], null, new(false, []));
     public Func<KnowledgeDisclosedPage<SearchPage>, KnowledgeDisclosedPage<SearchPage>>? CorruptSearch { get; set; }
@@ -52,8 +54,9 @@ internal sealed class ControlledGraphFixture : IOctoberKnowledgeReader, IOctober
         Calls.Add("search");
         SearchRequest = request;
         Budgets.Add(budget);
-        var disclosure = Envelope(Seeds, budget.Encoder.EncodeSearch(Seeds), budget.Encoder.ProfileId);
-        return Task.FromResult(new KnowledgeDisclosureReadResult<SearchPage>(Seeds.Status, CorruptSearch?.Invoke(disclosure) ?? disclosure));
+        var page = Search?.Invoke(request) ?? Seeds;
+        var disclosure = Envelope(page, budget.Encoder.EncodeSearch(page), budget.Encoder.ProfileId);
+        return Task.FromResult(new KnowledgeDisclosureReadResult<SearchPage>(page.Status, CorruptSearch?.Invoke(disclosure) ?? disclosure));
     }
 
     public Task<KnowledgeDisclosureReadResult<RelatedPage>> GetRelatedAsync(RelatedReadRequest request, KnowledgeReadOutputBudget budget, CancellationToken cancellationToken = default)
@@ -82,7 +85,7 @@ internal sealed class ControlledGraphFixture : IOctoberKnowledgeReader, IOctober
         Reauthorized = dependencies;
         FinalToken = cancellationToken;
         BeforeFinal?.Invoke();
-        return PendingFinal?.Task ?? Task.FromResult(FinalStatus);
+        return PendingFinal?.Task ?? Task.FromResult(FinalCheck?.Invoke(dependencies) ?? FinalStatus);
     }
 
     // A graph must not fall back to the legacy surface, materialize exact content, mint a root or merge guessed lineage.

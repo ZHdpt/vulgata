@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -101,10 +102,11 @@ public sealed partial class ExplorePresentationService : IExplorePresentationSer
         catch (Exception) { return ReadFailure(KnowledgeReadStatus.UnavailableService); }
     }
 
-    public async Task<ExploreBrowseResult> BrowseAsync(ExploreBrowseSession? continuation = null, CancellationToken cancellationToken = default)
+    public async Task<ExploreBrowseResult> BrowseAsync(ExploreBrowseSession? continuation = null, CancellationToken cancellationToken = default, string titleQuery = "")
     {
         try
         {
+            titleQuery = titleQuery.Trim();
             ExploreContext context;
             ReadSelection selection;
             ContinuationToken? cursor;
@@ -137,32 +139,44 @@ public sealed partial class ExplorePresentationService : IExplorePresentationSer
                 generation = captured.Generation;
                 selection = captured.Selection;
                 cursor = captured.Next;
+                titleQuery = captured.TitleQuery;
             }
             else
             {
                 return BrowseFailure(KnowledgeReadStatus.InvalidContinuation);
             }
 
-            var page = await _reader!.SearchAsync(new(selection, "", KnowledgeContract.DefaultPageSize, cursor), cancellationToken);
-            if (!await IsCurrentAsync(context, generation, cancellationToken))
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            while (true)
             {
-                return BrowseFailure(KnowledgeReadStatus.Unavailable);
-            }
+                var page = await _reader!.SearchAsync(new(selection, "", KnowledgeContract.DefaultPageSize, cursor), cancellationToken);
+                if (!await IsCurrentAsync(context, generation, cancellationToken))
+                {
+                    return BrowseFailure(KnowledgeReadStatus.Unavailable);
+                }
 
-            if (page.Status != KnowledgeReadStatus.Success)
-            {
-                return BrowseFailure(page.Status);
-            }
+                if (page.Status != KnowledgeReadStatus.Success)
+                {
+                    return BrowseFailure(page.Status);
+                }
 
-            if (page.Documents.IsDefault || page.Documents.Length > KnowledgeContract.DefaultPageSize ||
-                page.Documents.Any(document => !ValidSummary(document, context.Selection)) ||
-                !ValidNext(page.Next, cursor) || !ValidCoverage(page.Coverage))
-            {
-                return BrowseFailure(KnowledgeReadStatus.UnavailableService);
-            }
+                if (page.Documents.IsDefault || page.Documents.Length > KnowledgeContract.DefaultPageSize ||
+                    page.Documents.Any(document => !ValidSummary(document, context.Selection)) ||
+                    !ValidNext(page.Next, cursor) || !ValidCoverage(page.Coverage))
+                {
+                    return BrowseFailure(KnowledgeReadStatus.UnavailableService);
+                }
 
-            return new(page, page.Next is null ? null : new BrowseSession(this, context, generation, selection, page.Next),
-                context.Selection.Mode, context.IsControlledFixture);
+                page = page with { Documents = page.Documents.Where(document => document.Title.Contains(titleQuery, StringComparison.OrdinalIgnoreCase)).ToImmutableArray() };
+                if (page.Documents.IsEmpty && page.Next is not null && titleQuery.Length != 0)
+                {
+                    if (!seen.Add(page.Next.Value)) return BrowseFailure(KnowledgeReadStatus.InvalidContinuation);
+                    cursor = page.Next;
+                    continue;
+                }
+                return new(page, page.Next is null ? null : new BrowseSession(this, context, generation, selection, page.Next, titleQuery),
+                    context.Selection.Mode, context.IsControlledFixture);
+            }
         }
         catch (OperationCanceledException) { return BrowseFailure(KnowledgeReadStatus.Cancelled); }
         catch (Exception) { return BrowseFailure(KnowledgeReadStatus.UnavailableService); }
@@ -297,13 +311,14 @@ public sealed partial class ExplorePresentationService : IExplorePresentationSer
     }
 
     private sealed class BrowseSession(ExplorePresentationService issuer, ExploreContext context, long generation,
-        ReadSelection selection, ContinuationToken next) : ExploreBrowseSession
+        ReadSelection selection, ContinuationToken next, string titleQuery) : ExploreBrowseSession
     {
         internal ExplorePresentationService Issuer { get; } = issuer;
         internal ExploreContext Context { get; } = context;
         internal long Generation { get; } = generation;
         internal ReadSelection Selection { get; } = selection;
         internal ContinuationToken Next { get; } = next;
+        internal string TitleQuery { get; } = titleQuery;
         internal int Consumed;
     }
 }

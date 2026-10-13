@@ -151,7 +151,11 @@ public sealed class OctoberChatTurnTests
         Assert.Equal(h.Visible.ToString(), Assert.Single(history.Turns).AnswerText);
         Assert.Equal(1, h.Physical.Sends);
         using JsonDocument sent = JsonDocument.Parse(h.Physical.RequestBody!);
-        JsonElement system = Assert.Single(sent.RootElement.GetProperty("messages").EnumerateArray().Where(item => item.GetProperty("role").GetString() == "system"));
+        JsonElement[] systems = sent.RootElement.GetProperty("messages").EnumerateArray().Where(item => item.GetProperty("role").GetString() == "system").ToArray();
+        Assert.Equal(2, systems.Length);
+        JsonElement system = systems[0];
+        using var budgetInfo = JsonDocument.Parse(systems[1].GetProperty("content").GetString()!);
+        Assert.Equal("october_chat_budget", budgetInfo.RootElement.GetProperty("type").GetString());
         Assert.Equal(await new OctoberChatPromptCatalog().LoadAsync(KnowledgeMode.IT), system.GetProperty("content").GetString());
     }
 

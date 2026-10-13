@@ -10,11 +10,67 @@ namespace Vulgata.Tests.Explore;
 public sealed class KnowledgeGraphProjectionTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task LoadGraphAsync_ProofBatchTooLarge_SplitsWithoutOmittingProofsAsync()
+    {
+        var fixture = new ControlledGraphFixture();
+        fixture.Seeds = fixture.Seeds with { Documents = [fixture.Node(1), fixture.Node(2)] };
+        var checkedProofs = new List<KnowledgeDependencyHandle>();
+        fixture.FinalCheck = batch =>
+        {
+            if (batch.Length > 1) return KnowledgeDependencyStatus.BudgetExceeded;
+            checkedProofs.AddRange(batch);
+            return KnowledgeDependencyStatus.Succeeded;
+        };
+        using var service = fixture.Service();
+        var result = await ((IExploreGraphService)service).LoadGraphAsync();
+        Assert.Equal(KnowledgeReadStatus.Success, result.Status);
+        Assert.Equal(fixture.Issued.ToArray(), checkedProofs.ToArray());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task LoadGraphAsync_FollowsSearchAndRelationshipContinuationsAsync()
+    {
+        var fixture = new ControlledGraphFixture();
+        var left = fixture.Node(1);
+        var right = fixture.Node(2);
+        fixture.Search = request => request.Continuation is null
+            ? new(KnowledgeReadStatus.Success, [left], new("search-next"), null)
+            : new(KnowledgeReadStatus.Success, [right], null, null);
+        fixture.Related = request => request.Document != left.Handle
+            ? new(KnowledgeReadStatus.Success, [], [], null, null)
+            : new(KnowledgeReadStatus.Success, [fixture.Edge(request.Continuation is null ? 1 : 2, left, right)], [],
+                request.Continuation is null ? new("related-next") : null, null);
+        using var service = fixture.Service();
+        var result = await ((IExploreGraphService)service).LoadGraphAsync();
+        Assert.Equal(KnowledgeReadStatus.Success, result.Status);
+        Assert.Equal(2, result.Graph!.Nodes.Length);
+        Assert.Equal(2, result.Graph.Edges.Length);
+        Assert.False(result.Graph.Incomplete);
+        Assert.Equal(3, fixture.RelatedRequests.Count);
+        Assert.Equal(fixture.Issued.ToArray(), fixture.Reauthorized.ToArray());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task LoadGraphAsync_RepeatedCursorFailsClosedInsteadOfLoopingAsync()
+    {
+        var fixture = new ControlledGraphFixture();
+        fixture.Seeds = fixture.Seeds with { Documents = [fixture.Node(1)], Next = new("repeated") };
+        using var service = fixture.Service();
+        var result = await ((IExploreGraphService)service).LoadGraphAsync();
+        Assert.NotEqual(KnowledgeReadStatus.Success, result.Status);
+        Assert.Null(result.Graph);
+        Assert.Equal(2, fixture.Calls.Count(call => call == "search"));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(39, 39, false)]
     [InlineData(40, 40, false)]
-    [InlineData(41, 40, true)]
-    public void Project_NodeBoundary_TrimsWithoutInventingNodes(int supplied, int expected, bool incomplete)
+    [InlineData(41, 41, false)]
+    public void Project_NodeBoundary_PreservesAllNodes(int supplied, int expected, bool incomplete)
     {
         var fixture = new ControlledGraphFixture();
         var seeds = new SearchPage(KnowledgeReadStatus.Success, Enumerable.Range(0, supplied).Select(id => fixture.Node(id)).ToImmutableArray(), null, new(false, []));
@@ -29,7 +85,7 @@ public sealed class KnowledgeGraphProjectionTests
     [SuiteTheory("SelfContained")]
     [InlineData(79, 79, false)]
     [InlineData(80, 80, false)]
-    [InlineData(81, 80, true)]
+    [InlineData(81, 81, false)]
     public void Project_EdgeBoundary_PreservesAcceptedParallelEdgeIds(int supplied, int expected, bool incomplete)
     {
         var fixture = new ControlledGraphFixture();
@@ -68,23 +124,23 @@ public sealed class KnowledgeGraphProjectionTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task LoadGraphAsync_FortyOneSeeds_UsesFixedOneHopBudgetAndFinalWholeCapsulesAsync()
+    public async Task LoadGraphAsync_FortyOneSeeds_ReadsEveryNodeAndFinalWholeCapsulesAsync()
     {
         var fixture = new ControlledGraphFixture();
         fixture.Seeds = new(KnowledgeReadStatus.Success, Enumerable.Range(0, 41).Select(id => fixture.Node(id)).ToImmutableArray(), null, new(false, []));
         using var service = fixture.Service();
         var result = await ((IExploreGraphService)service).LoadGraphAsync();
         Assert.Equal(KnowledgeReadStatus.Success, result.Status);
-        Assert.Equal(40, result.Graph!.Nodes.Length);
-        Assert.True(result.Graph.Incomplete);
-        Assert.Equal(8, fixture.Calls.Count);
+        Assert.Equal(41, result.Graph!.Nodes.Length);
+        Assert.False(result.Graph.Incomplete);
+        Assert.Equal(44, fixture.Calls.Count);
         Assert.Equal("open", fixture.Calls[0]);
         Assert.Equal("final", fixture.Calls[^1]);
-        Assert.Equal(5, fixture.RelatedRequests.Count);
-        Assert.Equal(41, fixture.SearchRequest!.PageSize);
+        Assert.Equal(41, fixture.RelatedRequests.Count);
+        Assert.Equal(KnowledgeContract.MaximumPageSize, fixture.SearchRequest!.PageSize);
         Assert.All(fixture.RelatedRequests, request =>
         {
-            Assert.Equal(81, request.PageSize);
+            Assert.Equal(KnowledgeContract.MaximumPageSize, request.PageSize);
             Assert.Null(request.Continuation);
             Assert.Contains(result.Graph.Nodes, node => node.Handle == request.Document);
         });
@@ -96,7 +152,7 @@ public sealed class KnowledgeGraphProjectionTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task LoadGraphAsync_TruncatedEdges_RetainsCapsuleForWholeRelatedPageAsync()
+    public async Task LoadGraphAsync_AllEdges_RetainsCapsuleForWholeRelatedPageAsync()
     {
         var fixture = new ControlledGraphFixture();
         var left = fixture.Node(1);
@@ -107,8 +163,8 @@ public sealed class KnowledgeGraphProjectionTests
         using var service = fixture.Service();
         var result = await ((IExploreGraphService)service).LoadGraphAsync();
         Assert.Equal(KnowledgeReadStatus.Success, result.Status);
-        Assert.Equal(80, result.Graph!.Edges.Length);
-        Assert.True(result.Graph.Incomplete);
+        Assert.Equal(81, result.Graph!.Edges.Length);
+        Assert.False(result.Graph.Incomplete);
         Assert.Equal(fixture.Issued.ToArray(), fixture.Reauthorized.ToArray());
         Assert.Contains(fixture.Issued[1], fixture.Reauthorized);
     }

@@ -17,11 +17,40 @@ public sealed class ReaderComponentTests : BunitContext
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task Browse_TitleSearchCrossesPages_PreviousRereads_EmptySearchRestoresAsync()
+    {
+        var host = new ExploreFixtureHost();
+        var first = new DocumentSummary(host.Fixture.Handle(host.Fixture.ClA), DocumentKind.CodeLogic, "登录入口", []);
+        var second = first with { Title = "账户查询" };
+        host.Reader.SearchResponse = request => new(KnowledgeReadStatus.Success,
+            request.Continuation is null ? [first] : [second], request.Continuation is null ? new("next") : null, null);
+        using var model = host.CreateBrowse();
+        await model.LoadAsync();
+        Assert.Equal(1, model.PageNumber);
+        await model.NextAsync();
+        Assert.Equal(2, model.PageNumber);
+        Assert.Equal("账户查询", Assert.Single(model.Page!.Documents).Title);
+        await model.PreviousAsync();
+        Assert.Equal(1, model.PageNumber);
+        Assert.Equal("登录入口", Assert.Single(model.Page!.Documents).Title);
+        await model.SearchAsync("账户");
+        Assert.Equal("账户查询", Assert.Single(model.Page!.Documents).Title);
+        Assert.False(model.CanContinue);
+        await model.SearchAsync("不存在");
+        Assert.Empty(model.Page!.Documents);
+        await model.SearchAsync("");
+        Assert.Equal("登录入口", Assert.Single(model.Page!.Documents).Title);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DocumentSections_UntrustedText_RendersEncodedContentAndAdjacentQualifications()
     {
         var host = new ExploreFixtureHost();
         var page = host.Content(host.Fixture.Handle(host.Fixture.ClA, section: "overview"), "<script>alert('x')</script><img src=x onerror=alert(1)>");
         var cut = Render<DocumentSections>(parameters => parameters.Add(component => component.Page, page));
+        Assert.Empty(cut.FindAll(".document-body .body-heading"));
+        Assert.Single(cut.FindAll(".document-sections > .body-heading"));
         Assert.Empty(cut.FindAll("script,img"));
         Assert.Contains("<script>alert('x')</script>", cut.Find("section").TextContent, StringComparison.Ordinal);
         Assert.Contains("参考上下文", cut.Markup, StringComparison.Ordinal);
@@ -32,7 +61,7 @@ public sealed class ReaderComponentTests : BunitContext
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(KnowledgeMode.Business, "light")]
-    [InlineData(KnowledgeMode.IT, "dark")]
+    [InlineData(KnowledgeMode.IT, "light")]
     public async Task ReaderPage_ExactSection_ShowsPartialNextTerminalAndModeThemeAsync(KnowledgeMode mode, string theme)
     {
         var host = new ExploreFixtureHost(mode);
@@ -60,6 +89,7 @@ public sealed class ReaderComponentTests : BunitContext
         next.Click();
         cut.WaitForAssertion(() => Assert.Equal(2, host.Reader.Reads.Count));
         cut.WaitForAssertion(() => Assert.DoesNotContain(cut.FindAll("button,fluent-button"), button => button.TextContent.Contains("下一部分", StringComparison.Ordinal) && !button.HasAttribute("disabled")));
+        Assert.Empty(cut.FindAll("#next-chunk"));
         Assert.Contains("已读完", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(handle, host.Reader.Reads[1].Document);
         await Task.CompletedTask;

@@ -18,6 +18,8 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
     private bool _suppressed;
 
     public OctoberChatTurnBinding Binding { get; } = binding;
+    public string ProgressText { get; private set; } = string.Empty;
+    public bool IsCompleted { get; private set; }
     public string AnswerText { get; private set; } = string.Empty;
     public string? StatusMessage { get; private set; }
     public string? ActivityMessage { get; private set; }
@@ -59,6 +61,7 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
             model.AnswerText = saved.AnswerText;
             model.References = saved.References;
             model.IsTerminal = true;
+            model.IsCompleted = saved.TerminalState == DialogueTerminalState.Completed;
             model.StatusMessage = SavedStatus(saved.TerminalState switch
             {
                 DialogueTerminalState.Completed => OctoberChatDisplayOutcome.Completed,
@@ -110,18 +113,23 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
             {
                 case OctoberChatEventKind.TurnStarted:
                     _started = true;
-                    StatusMessage = "正在生成回答…";
+                    StatusMessage = "正在处理问题…";
                     break;
                 case OctoberChatEventKind.AnswerDelta:
                     AnswerText += item.Text;
                     break;
                 case OctoberChatEventKind.ToolStarted:
+                    if (!string.IsNullOrEmpty(AnswerText))
+                    {
+                        ProgressText += (ProgressText.Length == 0 ? string.Empty : "\n\n") + AnswerText;
+                        AnswerText = string.Empty;
+                    }
                     _activeTools.Add(item.ToolCallId!);
                     ActivityMessage = "正在查阅知识…";
                     break;
                 case OctoberChatEventKind.ToolCompleted:
                     _activeTools.Remove(item.ToolCallId!);
-                    ActivityMessage = _activeTools.Count == 0 ? "本次知识查阅已结束。" : "正在查阅知识…";
+                    ActivityMessage = _activeTools.Count == 0 ? "本轮查阅完成，正在继续处理…" : "正在查阅知识…";
                     break;
                 case OctoberChatEventKind.ToolFailed:
                     _activeTools.Remove(item.ToolCallId!);
@@ -148,6 +156,8 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
                         References = item.References;
                     }
                     IsTerminal = true;
+                    IsCompleted = item.SavedOutcome == OctoberChatDisplayOutcome.Completed;
+                    if (item.Text == string.Empty) ProgressText = string.Empty;
                     IsSaveUncertain = false;
                     ActivityMessage = null;
                     _activeTools.Clear();
@@ -172,6 +182,7 @@ public sealed class OctoberChatTurnViewModel(OctoberChatTurnBinding binding)
     private void SuppressDisclosure()
     {
         _suppressed = true;
+        ProgressText = string.Empty;
         AnswerText = string.Empty;
         References = [];
         ActivityMessage = null;

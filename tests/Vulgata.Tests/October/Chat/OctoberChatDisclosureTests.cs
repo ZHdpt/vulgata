@@ -401,7 +401,7 @@ public sealed class OctoberChatDisclosureTests
         try
         {
             Assert.Same(harness.Authority.CheckEntered.Task, await Task.WhenAny(harness.Authority.CheckEntered.Task, check).WaitAsync(TimeSpan.FromSeconds(5)));
-            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            if (deadline) clock.Advance(new OctoberChatLimits().Duration);
             else cancel.Cancel();
             await Assert.ThrowsAnyAsync<Exception>(async () => await check.WaitAsync(TimeSpan.FromSeconds(5)));
             Assert.True(check.IsCompleted);
@@ -487,7 +487,7 @@ public sealed class OctoberChatDisclosureTests
             Assert.Same(entered, await Task.WhenAny(entered, run).WaitAsync(TimeSpan.FromSeconds(5)));
             beforeCancellation = harness.Session.InferenceDependencies;
             Assert.Empty(harness.Session.ConsumedReads);
-            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            if (deadline) clock.Advance(new OctoberChatLimits().Duration);
             else cancel.Cancel();
             try { invocation = await run.WaitAsync(TimeSpan.FromSeconds(5)); }
             catch (Exception) { }

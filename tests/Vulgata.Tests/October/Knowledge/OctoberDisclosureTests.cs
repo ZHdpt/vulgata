@@ -15,6 +15,29 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberDisclosureTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ReauthorizeAsync_OverlappingOrigins_ChecksCompleteUnionOncePerKindAndNeverCachesPermissionAsync()
+    {
+        var fixture = new DisclosureFixture();
+        var selection = await fixture.OpenAsync();
+        var search = Successful(await fixture.Disclosed.SearchAsync(new(selection, ""), fixture.Budget()));
+        var related = Successful(await fixture.Disclosed.GetRelatedAsync(new(selection, fixture.Handle), fixture.Budget()));
+        var content = Successful(await fixture.Disclosed.ReadExactAsync(new(selection, fixture.Handle), fixture.Budget()));
+        fixture.Policy.Requests.Clear();
+        Assert.Equal(KnowledgeDependencyStatus.Succeeded, await fixture.Authority.ReauthorizeAsync(
+            fixture.Request, [search.Dependencies, related.Dependencies, content.Dependencies]));
+        var checks = fixture.Policy.Requests.Where(request => request.AllContributors.Length != 0).ToArray();
+        Assert.All(checks.GroupBy(request => request.Kind), group => Assert.Single(group));
+        Assert.Contains(checks, request => request.AllContributors.Contains(fixture.Uncited));
+        Assert.Contains(checks, request => request.AllContributors.Contains(fixture.RelationOnly));
+        Assert.Empty(fixture.Policy.Requests[0].AllContributors);
+        Assert.Empty(fixture.Policy.Requests[^1].AllContributors);
+        fixture.Policy.DeniedContributor = fixture.RelationOnly;
+        Assert.Equal(KnowledgeDependencyStatus.Denied, await fixture.Authority.ReauthorizeAsync(
+            fixture.Request, [search.Dependencies, related.Dependencies, content.Dependencies]));
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("a")]
     [InlineData("中文")]
@@ -23,7 +46,8 @@ public sealed class OctoberDisclosureTests
     public async Task ReadExactAsync_ActualChatSerializer_FitsWholeWrapperAndPreservesEveryCharacterAsync(string atom)
     {
         var fixture = new DisclosureFixture();
-        int repetitions = atom == "a" ? 40000 : atom == "😀" ? 9000 : 6000;
+        int repetitions = atom == "a" ? 40000 :
+            atom == "😀" ? 9000 : 6000;
         string text = "BEGIN" + string.Concat(Enumerable.Repeat(atom, repetitions)) + "END";
         fixture.SetText(text);
         var selection = await fixture.OpenAsync();
@@ -52,6 +76,7 @@ public sealed class OctoberDisclosureTests
             next = disclosure.Page.Next;
             Assert.InRange(++count, 1, 100);
         } while (next is not null);
+
         Assert.Contains(text, accumulated.ToString(), StringComparison.Ordinal);
         Assert.Equal(1, accumulated.ToString().Split("BEGIN", StringSplitOptions.None).Length - 1);
         Assert.Equal(1, accumulated.ToString().Split("END", StringSplitOptions.None).Length - 1);
@@ -74,7 +99,11 @@ public sealed class OctoberDisclosureTests
         string outward = JsonSerializer.Serialize(result);
         Assert.DoesNotContain("Disclosure", outward, StringComparison.OrdinalIgnoreCase);
         string model = Encoding.UTF8.GetString(disclosure.OutputUtf8.AsSpan());
-        foreach (string secret in new[] { disclosure.Dependencies.ProtectedPayload, disclosure.Dependencies.SetId.ToString(), disclosure.Dependencies.BindingDigest, fixture.Request.Subject.AuthenticationBinding })
+        foreach (string secret in new[]
+                 {
+                     disclosure.Dependencies.ProtectedPayload, disclosure.Dependencies.SetId.ToString(), disclosure.Dependencies.BindingDigest,
+                     fixture.Request.Subject.AuthenticationBinding
+                 })
             Assert.DoesNotContain(secret, model, StringComparison.Ordinal);
         Assert.Equal(ActualChatDisclosureEncoder.Bytes(new(OctoberChatToolStatus.Succeeded, Search: disclosure.Page, References: [])), disclosure.OutputUtf8.ToArray());
     }
@@ -91,6 +120,7 @@ public sealed class OctoberDisclosureTests
             Assert.Equal(KnowledgeReadStatus.ReadBudgetExceeded, result.Status);
             Assert.Null(result.Disclosure);
         }
+
         var proof = await fixture.Authority.BuildConsumedContentAsync(fixture.Request, fixture.Handle, []);
         Assert.NotEqual(KnowledgeDependencyStatus.Succeeded, proof.Status);
         Assert.Null(proof.Receipt);
@@ -167,6 +197,7 @@ public sealed class OctoberDisclosureTests
             Assert.Equal(KnowledgeDependencyStatus.UnknownLineage, merged.Status);
             Assert.Null(merged.Dependencies);
         }
+
         var first = await fixture.Authority.CreateNoKnowledgeRootAsync(fixture.Request, DisclosureFixture.Hash("question"));
         var replay = await fixture.Authority.CreateNoKnowledgeRootAsync(fixture.Request, DisclosureFixture.Hash("question"));
         Assert.Equal(KnowledgeDependencyStatus.Succeeded, first.Status);
@@ -182,9 +213,19 @@ public sealed class OctoberDisclosureTests
         var selection = await fixture.OpenAsync();
         var page = Successful(await fixture.Disclosed.ReadExactAsync(new(selection, fixture.Handle), fixture.Budget()));
         var handle = page.Dependencies;
-        foreach (var forged in new[] { handle with { SetId = Guid.NewGuid() }, handle with { BindingDigest = new string('0', 64) }, handle with { ProtectedPayload = handle.ProtectedPayload + "tamper" }, handle with { ProtectedPayload = fixture.Protector.ProtectConsumedContent("foreign-kind") } })
+        foreach (var forged in new[]
+                 {
+                     handle with { SetId = Guid.NewGuid() }, handle with { BindingDigest = new string('0', 64) },
+                     handle with { ProtectedPayload = handle.ProtectedPayload + "tamper" },
+                     handle with { ProtectedPayload = fixture.Protector.ProtectConsumedContent("foreign-kind") }
+                 })
             Assert.Equal(KnowledgeDependencyStatus.InvalidProof, await fixture.Authority.ReauthorizeAsync(fixture.Request, [forged]));
-        foreach (var foreign in new[] { fixture.Request with { Subject = fixture.Request.Subject with { SubjectId = "foreign-owner" } }, fixture.Request with { Mode = KnowledgeMode.Business }, fixture.Request with { Purpose = KnowledgePurpose.Graph }, fixture.Request with { RepositoryScope = [] }, fixture.Request with { Publication = fixture.Request.Publication with { PublicationId = Guid.NewGuid() } } })
+        foreach (var foreign in new[]
+                 {
+                     fixture.Request with { Subject = fixture.Request.Subject with { SubjectId = "foreign-owner" } }, fixture.Request with { Mode = KnowledgeMode.Business },
+                     fixture.Request with { Purpose = KnowledgePurpose.Graph }, fixture.Request with { RepositoryScope = [] },
+                     fixture.Request with { Publication = fixture.Request.Publication with { PublicationId = Guid.NewGuid() } }
+                 })
             Assert.NotEqual(KnowledgeDependencyStatus.Succeeded, await fixture.Authority.ReauthorizeAsync(foreign, [handle]));
         var lostKeys = new OctoberKnowledgeDependencyAuthority(fixture.Policy, new OctoberKnowledgeDisclosureDataProtectionProtector(new EphemeralDataProtectionProvider()));
         Assert.Equal(KnowledgeDependencyStatus.InvalidProof, await lostKeys.ReauthorizeAsync(fixture.Request, [handle]));
@@ -215,7 +256,13 @@ public sealed class OctoberDisclosureTests
         var fixture = new DisclosureFixture();
         fixture.SetText(string.Concat(Enumerable.Repeat("中文😀", 10000)));
         var covered = fixture.Data.Source.Value.Coverage[0];
-        fixture.Data.Source.Value = fixture.Data.Source.Value with { Coverage = fixture.Data.Source.Value.Coverage.Add(covered with { Coverage = covered.Coverage with { AdmissionId = Guid.NewGuid(), Disposition = CoverageDisposition.Unprocessed, Reason = "Permitted source analysis gap" } }) };
+        fixture.Data.Source.Value = fixture.Data.Source.Value with
+        {
+            Coverage = fixture.Data.Source.Value.Coverage.Add(covered with
+            {
+                Coverage = covered.Coverage with { AdmissionId = Guid.NewGuid(), Disposition = CoverageDisposition.Unprocessed, Reason = "Permitted source analysis gap" }
+            })
+        };
         var selection = await fixture.OpenAsync();
         var pages = await fixture.ReadAllAsync(selection, 18000);
         Assert.True(pages.Count >= 3);
@@ -232,6 +279,7 @@ public sealed class OctoberDisclosureTests
             Assert.Equal(KnowledgeDependencyStatus.Succeeded, receipt.Status);
             Assert.True(receipt.Receipt!.IsPartial);
         }
+
         var replay = Successful(await fixture.Disclosed.ReadExactAsync(new(selection, fixture.Handle), fixture.Budget(18000)));
         Assert.NotEqual(pages[0].Page.Next!.Value, replay.Page.Next!.Value);
         var duplicate = await fixture.Authority.BuildConsumedContentAsync(fixture.Request, fixture.Handle, all.Add(replay.Dependencies));
@@ -282,6 +330,7 @@ public sealed class OctoberDisclosureTests
             Assert.Equal(KnowledgeDependencyStatus.Succeeded, root.Status);
             roots.Add(root.Dependencies!);
         }
+
         var allowed = await fixture.Authority.MergeAsync(fixture.Request, roots.Take(OctoberKnowledgeDisclosureLimits.MaximumOriginGroups).ToImmutableArray());
         Assert.Equal(KnowledgeDependencyStatus.Succeeded, allowed.Status);
         var overflow = await fixture.Authority.MergeAsync(fixture.Request, roots.ToImmutable());
@@ -320,6 +369,7 @@ public sealed class OctoberDisclosureTests
         Assert.Equal(KnowledgeReadStatus.UnavailableService, result.Status);
         Assert.Null(result.Disclosure);
     }
+
     private static KnowledgeDisclosedPage<T> Successful<T>(KnowledgeDisclosureReadResult<T> result) where T : class
     {
         Assert.Equal(KnowledgeReadStatus.Success, result.Status);
@@ -341,6 +391,7 @@ internal sealed class DisclosureFixture
     public DocumentHandle Handle => Data.Handle(Data.Cl);
     public Contributor Uncited { get; } = new(ContributorKind.GlobalAdvisory, null, null, null, Guid.Parse("00000000-0000-0000-0000-000000009001"), new string('d', 64));
     public Contributor RelationOnly { get; } = new(ContributorKind.GlobalAdvisory, null, null, null, Guid.Parse("00000000-0000-0000-0000-000000009002"), new string('e', 64));
+
     public DisclosureFixture(KnowledgePurpose purpose = KnowledgePurpose.Chat)
     {
         var keys = new EphemeralDataProtectionProvider();
@@ -356,13 +407,16 @@ internal sealed class DisclosureFixture
         Reader = new(Data.Source, Data.Publication, Policy,
             new OctoberKnowledgeCursorProtector(new OctoberKnowledgeDataProtectionTokenProtector(keys), Data.Clock), Data.Log, Authority);
     }
+
     public KnowledgeReadOutputBudget Budget(int perResult = 65536, long aggregate = 262144) => new(perResult, aggregate, Encoder);
+
     public async Task<ReadSelection> OpenAsync()
     {
         var opened = await Reader.OpenReadSelectionAsync(Request);
         Assert.Equal(KnowledgeReadStatus.Success, opened.Status);
         return Assert.IsType<ReadSelection>(opened.Selection);
     }
+
     public void SetText(string text)
     {
         var documents = Data.Source.Value.Documents;
@@ -372,6 +426,7 @@ internal sealed class DisclosureFixture
         var content = OctoberKnowledgeAcceptanceFixture.Unit("controlled", null, original.Title, [], sections).ContentJson;
         Data.Source.Value = Data.Source.Value with { Documents = documents.SetItem(0, original with { Sections = sections, ContentJson = content }) };
     }
+
     public async Task<List<KnowledgeDisclosedPage<ContentPage>>> ReadAllAsync(ReadSelection selection, int limit)
     {
         var pages = new List<KnowledgeDisclosedPage<ContentPage>>();
@@ -385,8 +440,10 @@ internal sealed class DisclosureFixture
             next = result.Disclosure.Page.Next;
             Assert.InRange(pages.Count, 1, 100);
         } while (next is not null);
+
         return pages;
     }
+
     public static string Hash(string value) => Hash(Encoding.UTF8.GetBytes(value));
     public static string Hash(byte[] value) => Convert.ToHexString(SHA256.HashData(value));
 }
@@ -408,14 +465,16 @@ internal sealed class DisclosureTestPolicy : IOctoberKnowledgeDisclosurePolicy
     public string CurrentStamp { get; set; } = "controlled-stamp";
     public Contributor? DeniedContributor { get; set; }
     public List<DisclosureRequest> Requests { get; } = [];
+
     public Task<DisclosureStatus> CheckAsync(DisclosureRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         Requests.Add(request);
         if (Status != DisclosureStatus.Allowed) return Task.FromResult(Status);
         bool allowed = request.Selection.Subject.SubjectId == "ordinary-user" && request.Selection.Subject.AuthenticationBinding == CurrentStamp &&
-            (request.Selection.Mode != KnowledgeMode.Business || request.Kind != DocumentKind.CodeLogic) &&
-            request.AllContributors.All(item => item != DeniedContributor && (item.RepositoryId is null || request.Selection.RepositoryScope.Contains(item.RepositoryId.Value)));
+                       (request.Selection.Mode != KnowledgeMode.Business || request.Kind != DocumentKind.CodeLogic) &&
+                       request.AllContributors.All(item =>
+                           item != DeniedContributor && (item.RepositoryId is null || request.Selection.RepositoryScope.Contains(item.RepositoryId.Value)));
         return Task.FromResult(allowed ? DisclosureStatus.Allowed : DisclosureStatus.Denied);
     }
 }
@@ -425,6 +484,7 @@ internal sealed class CancelAfterDecryptProtector(IOctoberKnowledgeDisclosurePro
 {
     public int DependencyDecryptions { get; private set; }
     public string ProtectDependency(string plaintext) => inner.ProtectDependency(plaintext);
+
     public string UnprotectDependency(string protectedPayload)
     {
         string plaintext = inner.UnprotectDependency(protectedPayload);
@@ -432,6 +492,7 @@ internal sealed class CancelAfterDecryptProtector(IOctoberKnowledgeDisclosurePro
         cancellation.Cancel();
         return plaintext;
     }
+
     public string ProtectConsumedContent(string plaintext) => inner.ProtectConsumedContent(plaintext);
     public string UnprotectConsumedContent(string protectedPayload) => inner.UnprotectConsumedContent(protectedPayload);
 }
@@ -441,7 +502,25 @@ internal sealed class ChangingProfileEncoder(ActualChatDisclosureEncoder inner) 
 {
     public bool Encoded { get; private set; }
     public string ProfileId => Encoded ? "changed-profile" : inner.ProfileId;
-    public ImmutableArray<byte> EncodeSearch(SearchPage page) { var bytes = inner.EncodeSearch(page); Encoded = true; return bytes; }
-    public ImmutableArray<byte> EncodeContent(ContentPage page) { var bytes = inner.EncodeContent(page); Encoded = true; return bytes; }
-    public ImmutableArray<byte> EncodeRelated(RelatedPage page) { var bytes = inner.EncodeRelated(page); Encoded = true; return bytes; }
+
+    public ImmutableArray<byte> EncodeSearch(SearchPage page)
+    {
+        var bytes = inner.EncodeSearch(page);
+        Encoded = true;
+        return bytes;
+    }
+
+    public ImmutableArray<byte> EncodeContent(ContentPage page)
+    {
+        var bytes = inner.EncodeContent(page);
+        Encoded = true;
+        return bytes;
+    }
+
+    public ImmutableArray<byte> EncodeRelated(RelatedPage page)
+    {
+        var bytes = inner.EncodeRelated(page);
+        Encoded = true;
+        return bytes;
+    }
 }

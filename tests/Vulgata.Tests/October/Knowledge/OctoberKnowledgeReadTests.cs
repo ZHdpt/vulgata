@@ -12,6 +12,57 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberKnowledgeReadTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("search")]
+    [InlineData("exact")]
+    [InlineData("related")]
+    public async Task ReadAsync_LargePublication_DoesNotRepeatLiveChecksPerUnrelatedDocumentAsync(string operation)
+    {
+        var fixture = new B0bReadFixture();
+        var original = fixture.Source.Value.Documents.Single(x => x.Reference == fixture.Cl);
+        var documents = Enumerable.Range(0, 163).Select(index => original with
+        {
+            Reference = index == 0 ? original.Reference : new(original.Reference.BatchId, Guid.NewGuid(), Guid.NewGuid()),
+            Contributors = original.Contributors.Select(contributor => contributor with
+            {
+                ContentDigest = index.ToString("x64")
+            }).ToImmutableArray()
+        }).ToImmutableArray();
+        fixture.Source.Value = fixture.Source.Value with { Documents = documents, Coverage = [], Relationships = [], Uncertainties = [] };
+        var selection = await fixture.OpenAsync();
+        fixture.Policy.Requests.Clear();
+        var status = operation switch
+        {
+            "search" => (await fixture.Reader.SearchAsync(new(selection, ""))).Status,
+            "exact" => (await fixture.Reader.ReadExactAsync(new(selection, fixture.Handle(fixture.Cl)))).Status,
+            _ => (await fixture.Reader.GetRelatedAsync(new(selection, fixture.Handle(fixture.Cl)))).Status
+        };
+        Assert.Equal(KnowledgeReadStatus.Success, status);
+        Assert.InRange(fixture.Policy.Requests.Count, 3, 10);
+        var disclosed = fixture.Policy.Requests.Where(x => x.Kind is not null).ToArray();
+        Assert.NotEmpty(disclosed);
+        var expected = (operation == "search" ? documents : [documents[0]])
+            .SelectMany(x => x.Contributors).ToHashSet();
+        Assert.All(disclosed, request => Assert.True(expected.SetEquals(request.AllContributors)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SearchAsync_DeniedContributorGroup_StillReturnsPermittedDocumentsAndRechecksAfterLogAsync()
+    {
+        var fixture = new B0bReadFixture();
+        var selection = await fixture.OpenAsync();
+        var page = await fixture.Reader.SearchAsync(new(selection, ""));
+        Assert.Equal(KnowledgeReadStatus.Success, page.Status);
+        Assert.Equal(3, page.Documents.Length);
+        Assert.DoesNotContain(page.Documents, item => item.Handle == fixture.Handle(fixture.HiddenBl));
+        fixture.Log.AfterAppend = () => fixture.Policy.Status = DisclosureStatus.Denied;
+        var revoked = await fixture.Reader.SearchAsync(new(selection, ""));
+        Assert.Equal(KnowledgeReadStatus.Unavailable, revoked.Status);
+        Assert.Empty(revoked.Documents);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task SearchAndReadAsync_ExactOrdinaryItSelection_PreservesPublicationQualificationsAndDirectionAsync()
     {
@@ -353,11 +404,13 @@ internal sealed class B0bPublishedSource(OctoberPublishedKnowledge value) : IOct
 }
 internal sealed class B0bReaderDisclosure : IOctoberKnowledgeDisclosurePolicy
 {
+    public List<DisclosureRequest> Requests { get; } = [];
     public DisclosureStatus Status { get; set; } = DisclosureStatus.Allowed;
     public string CurrentSubject { get; set; } = "ordinary-user";
     public Task<DisclosureStatus> CheckAsync(DisclosureRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        Requests.Add(request);
         if (Status != DisclosureStatus.Allowed) return Task.FromResult(Status);
         bool permitted = request.Selection.Subject.SubjectId == CurrentSubject && (request.Selection.Mode != KnowledgeMode.Business || request.Kind != DocumentKind.CodeLogic) && request.AllContributors.All(contributor => contributor.RepositoryId is null || request.Selection.RepositoryScope.Contains(contributor.RepositoryId.Value));
         return Task.FromResult(permitted ? DisclosureStatus.Allowed : DisclosureStatus.Denied);

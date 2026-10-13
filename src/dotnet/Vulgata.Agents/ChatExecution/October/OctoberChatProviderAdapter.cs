@@ -12,8 +12,10 @@ namespace Vulgata.Agents.ChatExecution.October;
 internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
 {
     private static readonly UTF8Encoding _strictUtf8 = new(false, true);
+
     internal static readonly ImmutableArray<string> ToolNames =
         ["SearchWiki", "BrowseWiki", "ReadWiki", "GetRelatedDocuments", "ReportAnswerDocuments"];
+
     private readonly OctoberWikiTools _tools;
     private readonly OctoberChatBudget _budget;
     private readonly Action<OctoberChatToolProgress>? _onToolProgress;
@@ -48,7 +50,7 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         if (_beforeRequest is not null) await _beforeRequest(cancellationToken).WaitAsync(cancellationToken);
         if (_tools.DisclosureSession is { } disclosure) await disclosure.ReauthorizeAsync(cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
-        if (!_budget.TryStartProviderRound(out _)) throw Fail(OctoberChatProviderStatus.BudgetExceeded);
+        if (!_budget.TryStartProviderRound(out int currentRound)) throw Fail(OctoberChatProviderStatus.BudgetExceeded);
         if (HasPendingCalls) throw Fail(OctoberChatProviderStatus.Failed);
         LastFinishReason = null;
         ChatFinishReason? finish = null;
@@ -56,8 +58,20 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         string? messageId = null;
         var calls = new List<PendingCall>();
 
+        // Host-owned metadata comes from the admitted turn's limits and counters.
+        // Append only to this physical request, so old snapshots never enter history.
+        var budgetMessage = new ChatMessage(ChatRole.System, JsonSerializer.Serialize(new
+        {
+            type = "october_chat_budget",
+            providerRoundsLimit = _budget.Limits.ProviderRounds,
+            currentProviderRound = currentRound,
+            providerRoundsRemainingAfterCurrent = _budget.Limits.ProviderRounds - currentRound,
+            toolCallsLimit = _budget.Limits.ToolCalls,
+            toolCallsUsed = _budget.ToolCalls,
+            toolCallsRemaining = Math.Max(0, _budget.Limits.ToolCalls - _budget.ToolCalls),
+        }));
         await foreach (ChatResponseUpdate update in BoundedUpdatesAsync(
-            InnerClient.GetStreamingResponseAsync(messages, options, cancellationToken), cancellationToken))
+                           InnerClient.GetStreamingResponseAsync(messages.Append(budgetMessage), options, cancellationToken), cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
             responseId ??= update.ResponseId;
@@ -71,8 +85,8 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
                 // same finish reason. Accept that exact shape, still withholding all
                 // dispatch until the complete iterator has settled below.
                 bool finalNativeAggregate = finish == ChatFinishReason.ToolCalls && update.FinishReason == finish &&
-                    calls.Count == 0 && update.Contents.Any(content => content is FunctionCallContent { InformationalOnly: false }) &&
-                    update.Contents.All(content => content is FunctionCallContent or UsageContent);
+                                            calls.Count == 0 && update.Contents.Any(content => content is FunctionCallContent { InformationalOnly: false }) &&
+                                            update.Contents.All(content => content is FunctionCallContent or UsageContent);
                 if (!finalNativeAggregate)
                 {
                     foreach (FunctionCallContent late in update.Contents.OfType<FunctionCallContent>().Where(call => !call.InformationalOnly))
@@ -156,7 +170,10 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         // call ID, arguments or result. A throwing sink stops execution without a
         // recursive attempt to notify that same sink about its own failure.
         Guid operationId = Guid.NewGuid();
-        _onToolProgress?.Invoke(new(operationId, OctoberChatToolProgressKind.Started));
+        // Registering already-read citations adds no retrieval evidence and must
+        // not move an existing answer into the retrieval narration panel.
+        Action<OctoberChatToolProgress>? retrievalProgress = call.Name == "ReportAnswerDocuments" ? null : _onToolProgress;
+        retrievalProgress?.Invoke(new(operationId, OctoberChatToolProgressKind.Started));
         OctoberChatToolResult result;
         OctoberChatToolInvocation? invocation = null;
         try
@@ -170,12 +187,12 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         }
         catch (Exception)
         {
-            _onToolProgress?.Invoke(new(operationId, OctoberChatToolProgressKind.Failed));
+            retrievalProgress?.Invoke(new(operationId, OctoberChatToolProgressKind.Failed));
             throw;
         }
 
         _pendingCalls.Remove(call.CallId);
-        _onToolProgress?.Invoke(new(operationId, result.Status == OctoberChatToolStatus.Succeeded
+        retrievalProgress?.Invoke(new(operationId, result.Status == OctoberChatToolStatus.Succeeded
             ? OctoberChatToolProgressKind.Completed : OctoberChatToolProgressKind.Failed));
         if (result.Status is OctoberChatToolStatus.BudgetExceeded or OctoberChatToolStatus.Cancelled or
             OctoberChatToolStatus.InvalidArguments or OctoberChatToolStatus.InvalidReport)
@@ -198,6 +215,7 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
             // object JSON payload, with no second quoted-JSON representation.
             return _strictUtf8.GetString(invocation.OutputUtf8.AsSpan());
         }
+
         // Historical controlled typed-client mechanics retain their representation;
         // this path is never a canonical disclosed-reader fallback.
         return OctoberWikiTools.SerializeResult(result);
@@ -236,21 +254,39 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         }
     }
 
-    private static async IAsyncEnumerable<ChatResponseUpdate> BoundedUpdatesAsync(
+    private async IAsyncEnumerable<ChatResponseUpdate> BoundedUpdatesAsync(
         IAsyncEnumerable<ChatResponseUpdate> updates, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         IAsyncEnumerator<ChatResponseUpdate> iterator = updates.GetAsyncEnumerator(cancellationToken);
         bool cleanupDeferred = false;
+        Task<bool>? pending = null;
+        ChatResponseUpdate? buffered = null;
+        bool firstText = true;
         try
         {
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                Task<bool> pending = iterator.MoveNextAsync().AsTask();
+                pending = iterator.MoveNextAsync().AsTask();
+                // Drain only already-buffered deltas. Flush before waiting on the
+                // provider, including before a fault, so useful text is not held.
+                if (buffered is not null && !pending.IsCompletedSuccessfully)
+                {
+                    yield return buffered;
+                    buffered = null;
+                }
                 bool hasNext;
                 try
                 {
                     hasNext = await pending.WaitAsync(cancellationToken);
+                }
+                catch (IOException)
+                {
+                    // A broken provider stream is an interruption, not a completed
+                    // answer or an application failure. Never restart generation.
+                    FailureStatus ??= OctoberChatProviderStatus.Interrupted;
+                    FailureFinish = DialogueProviderFinish.Truncated;
+                    throw;
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested && !pending.IsCompleted)
                 {
@@ -260,12 +296,49 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
-                if (!hasNext) yield break;
-                yield return iterator.Current;
+                pending = null;
+                if (!hasNext)
+                {
+                    if (buffered is not null) yield return buffered;
+                    yield break;
+                }
+                ChatResponseUpdate current = iterator.Current;
+                string? text = BatchableText(current);
+                bool sameMessage = buffered is null || buffered.Role == current.Role &&
+                    buffered.ResponseId == current.ResponseId && buffered.MessageId == current.MessageId;
+                if (buffered is not null && (text is null || !sameMessage))
+                {
+                    yield return buffered;
+                    buffered = null;
+                }
+                if (text is null)
+                {
+                    yield return current;
+                    continue;
+                }
+                string combined = (buffered?.Text ?? string.Empty) + text;
+                buffered = new ChatResponseUpdate
+                {
+                    Role = current.Role, ResponseId = current.ResponseId, MessageId = current.MessageId,
+                    Contents = [new TextContent(combined)]
+                };
+                if (firstText || combined.Length >= 128)
+                {
+                    firstText = false;
+                    yield return buffered;
+                    buffered = null;
+                }
             }
         }
         finally
         {
+            if (!cleanupDeferred && pending is not null)
+            {
+                // A downstream consumer can stop while a flush has one read in
+                // flight. Never dispose concurrently with that MoveNextAsync.
+                cleanupDeferred = true;
+                _ = ObserveAndDisposeAsync(iterator, pending);
+            }
             if (!cleanupDeferred)
             {
                 // Start disposal exactly once. A borrowed implementation may ignore
@@ -284,22 +357,53 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
         }
     }
 
+    private static string? BatchableText(ChatResponseUpdate update)
+    {
+        if (update.FinishReason is not null || update.Contents.Count == 0 ||
+            update.Contents.Any(content => content is not TextContent)) return null;
+        var text = new StringBuilder();
+        foreach (TextContent content in update.Contents.Cast<TextContent>())
+        {
+            // Do not repair an invalid provider chunk by joining surrogate halves.
+            try { _ = _strictUtf8.GetByteCount(content.Text); }
+            catch (ArgumentException) { return null; }
+            text.Append(content.Text);
+        }
+        return text.ToString();
+    }
+
     private static async Task ObserveAndDisposeAsync(IAsyncEnumerator<ChatResponseUpdate> iterator, Task<bool> pending)
     {
         // This bounds the consumer wait, not opaque underlying I/O. Never race
         // DisposeAsync against MoveNextAsync, and never process a late Current value.
         // Future W1 admission must retain its request permit through this cleanup.
-        try { await pending; }
-        catch (Exception) { }
-        try { await iterator.DisposeAsync(); }
-        catch (Exception) { }
+        try
+        {
+            await pending;
+        }
+        catch (Exception)
+        {
+        }
+
+        try
+        {
+            await iterator.DisposeAsync();
+        }
+        catch (Exception)
+        {
+        }
     }
 
     private static async Task ObserveDisposalAsync(Task disposal)
     {
         // Observe only the already-started cleanup; never call DisposeAsync twice.
-        try { await disposal; }
-        catch (Exception) { }
+        try
+        {
+            await disposal;
+        }
+        catch (Exception)
+        {
+        }
     }
 
     private sealed record PendingCall(FunctionCallContent Snapshot, string ArgumentsJson);
@@ -317,10 +421,15 @@ internal sealed class OctoberChatProviderAdapter : DelegatingChatClient
     {
         public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
             CancellationToken cancellationToken = default) => client.GetResponseAsync(messages, options, cancellationToken);
+
         public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
             ChatOptions? options = null, CancellationToken cancellationToken = default) =>
             client.GetStreamingResponseAsync(messages, options, cancellationToken);
+
         public object? GetService(Type serviceType, object? serviceKey = null) => client.GetService(serviceType, serviceKey);
-        public void Dispose() { } // The injecting caller owns the underlying client.
+
+        public void Dispose()
+        {
+        } // The injecting caller owns the underlying client.
     }
 }

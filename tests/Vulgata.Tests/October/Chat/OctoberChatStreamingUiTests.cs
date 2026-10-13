@@ -16,6 +16,26 @@ public sealed class OctoberChatStreamingUiTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void ToolRoundNarration_IsSeparateFromFinalAnswer_AndSuppressedWithIt()
+    {
+        using var context = new BunitContext();
+        var model = CreateModel();
+        var component = context.Render<TurnComponent>(p => p.Add(x => x.ViewModel, model));
+        Assert.True(model.Apply(Event(model, 1, OctoberChatEventKind.TurnStarted)));
+        Assert.True(model.Apply(Event(model, 2, OctoberChatEventKind.AnswerDelta, "先检索登录文档。")));
+        Assert.True(model.Apply(Event(model, 3, OctoberChatEventKind.ToolStarted, callId: "read-1")));
+        Assert.True(model.Apply(Event(model, 4, OctoberChatEventKind.ToolCompleted, callId: "read-1")));
+        component.WaitForAssertion(() => Assert.Contains("先检索登录文档。", component.Find(".october-chat-progress").TextContent));
+        Assert.Empty(model.AnswerText);
+        Assert.True(model.Apply(Event(model, 5, OctoberChatEventKind.AnswerDelta, "登录先校验身份。")));
+        Assert.True(model.Apply(Event(model, 6, OctoberChatEventKind.TurnSaved) with { SavedOutcome = OctoberChatDisplayOutcome.Completed }));
+        component.WaitForAssertion(() => Assert.Equal("登录先校验身份。", component.Find(".october-chat-answer").TextContent));
+        Assert.DoesNotContain("先检索", component.Find(".october-chat-answer").TextContent);
+        Assert.True(model.TrySuppressDisclosure(model.Binding));
+        component.WaitForAssertion(() => Assert.DoesNotContain("先检索", component.Markup));
+    }
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Apply_TextBeforeControlledFinish_RendersWhileReferencesAndSaveAreStillPendingAsync()
     {
         using var context = new BunitContext();
@@ -25,7 +45,7 @@ public sealed class OctoberChatStreamingUiTests
         Task projection = EmitControlledEventsAsync();
         try
         {
-            component.WaitForAssertion(() => Assert.Equal("先说明已有证据。\n后续工具仍在处理。", component.Find(".october-chat-answer").TextContent));
+            component.WaitForAssertion(() => Assert.Equal("后续工具仍在处理。", component.Find(".october-chat-answer").TextContent));
             Assert.False(projection.IsCompleted);
             Assert.False(model.IsTerminal);
             Assert.Empty(model.References);

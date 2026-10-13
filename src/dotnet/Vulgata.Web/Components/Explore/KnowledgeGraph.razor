@@ -4,12 +4,11 @@
 
 @if (Graph is not null)
 {
-    <section class="knowledge-graph" aria-label="已接受知识的有限图谱" data-theme="@(Mode == KnowledgeMode.IT ? "dark" : "light")">
-        <p class="graph-scope">当前只显示一个文档页及其中部分文档的一跳已接受关系；不自动扩展。</p>
-        <p>已显示 @Graph.Nodes.Length 个文档、@Graph.Edges.Length 条关系。显示上限为 40 个文档、80 条关系。</p>
+    <section class="knowledge-graph" aria-label="已接受知识的图谱" data-theme="light">
+        <div class="graph-summary"><span>@Graph.Nodes.Length 个文档 · @Graph.Edges.Length 条关系</span><span>选择节点查看文档与关联</span></div>
         @if (Graph.Incomplete)
         {
-            <p class="graph-limit">本次图谱不完整：已达到读取或显示范围限制。</p>
+            <p class="graph-limit">图谱不完整：部分关联端点不在当前可读取范围内。</p>
         }
         @if (Graph.HasUnknownCoverage || Graph.Coverage is null)
         {
@@ -21,25 +20,30 @@
             {
                 <p class="graph-coverage">已披露的知识覆盖仍为部分覆盖。</p>
             }
-            <ul aria-label="已披露的覆盖限制">
+            @if (!coverage.PermittedGaps.IsDefaultOrEmpty)
+            {
+            <details class="coverage-details"><summary>覆盖说明</summary><ul aria-label="已披露的覆盖限制">
                 @foreach (var gap in coverage.PermittedGaps)
                 {
                     <li>@gap</li>
                 }
-            </ul>
+            </ul></details>
+            }
         }
         @if (!Graph.Nodes.IsEmpty)
         {
+            <div class="graph-viewport">
             <div class="viewport-actions" aria-label="图谱视图操作">
-                <FluentButton aria-label="向左平移" OnClick="() => Pan(-40, 0)">向左</FluentButton>
-                <FluentButton aria-label="向右平移" OnClick="() => Pan(40, 0)">向右</FluentButton>
-                <FluentButton aria-label="向上平移" OnClick="() => Pan(0, -40)">向上</FluentButton>
-                <FluentButton aria-label="向下平移" OnClick="() => Pan(0, 40)">向下</FluentButton>
-                <FluentButton aria-label="放大" OnClick="ZoomIn" Disabled="@(_zoom >= 4)">放大</FluentButton>
-                <FluentButton aria-label="缩小" OnClick="ZoomOut" Disabled="@(_zoom <= .25)">缩小</FluentButton>
-                <FluentButton aria-label="适应视图" OnClick="Fit">适应视图</FluentButton>
+                @Actions
+                <FluentButton title="向左平移" aria-label="向左平移" OnClick="() => Pan(-40, 0)">←</FluentButton>
+                <FluentButton title="向右平移" aria-label="向右平移" OnClick="() => Pan(40, 0)">→</FluentButton>
+                <FluentButton title="向上平移" aria-label="向上平移" OnClick="() => Pan(0, -40)">↑</FluentButton>
+                <FluentButton title="向下平移" aria-label="向下平移" OnClick="() => Pan(0, 40)">↓</FluentButton>
+                <FluentButton title="放大" aria-label="放大" OnClick="ZoomIn" Disabled="@(_zoom >= 4)">＋</FluentButton>
+                <FluentButton title="缩小" aria-label="缩小" OnClick="ZoomOut" Disabled="@(_zoom <= .25)">−</FluentButton>
+                <FluentButton title="适应视图" aria-label="适应视图" OnClick="Fit">⛶</FluentButton>
             </div>
-            <svg class="graph-canvas" viewBox="@ViewBox" role="group" aria-label="带方向的知识图谱；选择节点查看详情，完整文字见下方列表">
+            <svg @onwheel="OnWheel" @onwheel:preventDefault class="graph-canvas" viewBox="@ViewBox" role="group" aria-label="带方向的知识图谱；选择节点查看详情，完整文字见所选文档详情">
                 <defs>
                     <marker id="graph-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                         <path d="M0 0 L8 4 L0 8 Z" class="arrowhead" />
@@ -61,17 +65,23 @@
                         <g data-node-id="@node.Handle.DocumentVersionId" class="@(_selected == node.Handle ? "graph-node selected" : "graph-node")"
                            role="button" tabindex="0" aria-label="选择 @node.Title" aria-pressed="@(_selected == node.Handle ? "true" : "false")"
                            @onclick="() => SelectNode(node.Handle)" @onkeydown="args => SelectWithKeyboard(args, node.Handle)">
-                            <circle cx="@Number(position.X)" cy="@Number(position.Y)" r="25" />
-                            <text x="@Number(position.X)" y="@Number(position.Y + 45)" text-anchor="middle">@CanvasLabel(node.Title)</text>
+                            <ellipse cx="@Number(position.X)" cy="@Number(position.Y)" rx="105" ry="44" style="fill: @NodeColor(node.Handle)" />
+                            <text x="@Number(position.X)" y="@Number(position.Y - 7)" text-anchor="middle">
+                                @foreach (var line in LabelLines(node.Title).Select((text, index) => (text, index)))
+                                {
+                                    <tspan x="@Number(position.X)" dy="@(line.index == 0 ? 0 : 20)">@line.text</tspan>
+                                }
+                            </text>
                             <title>@node.Title</title>
                         </g>
                     }
                 </g>
             </svg>
+            </div>
             @if (Graph.Nodes.FirstOrDefault(node => node.Handle == _selected) is { } selected)
             {
                 <section class="selected-node-detail" aria-label="所选文档详情" aria-live="polite">
-                    <h2>@selected.Title</h2>
+                    <span class="detail-eyebrow">文档</span><h2>@selected.Title</h2>
                     <p>@(selected.Kind == DocumentKind.BusinessLogic ? "业务逻辑文档" : "代码逻辑文档")</p>
                     <a href="@ExactDocumentLinkBuilder.Build(selected.Handle)">打开此精确版本的文档</a>
                     @foreach (var claim in selected.QualifiedExcerpt)
@@ -79,6 +89,16 @@
                         <div class="qualified-claim">
                             <p class="qualification">@QualificationLabel(claim.Qualification)</p>
                             <p>@claim.Text</p>
+                            @if (Mode == KnowledgeMode.IT)
+                            {
+                                @foreach (var evidence in claim.Evidence)
+                                {
+                                    @if (evidence.Source is { } source)
+                                    {
+                                        <p class="source-reference">来源：@source.Origin.RelativePath，第 @source.StartLine–@source.EndLine 行</p>
+                                    }
+                                }
+                            }
                             <ul aria-label="所选文档说明限制">
                                 @foreach (var limitation in claim.Limitations) { <li>@limitation</li> }
                             </ul>
@@ -96,44 +116,10 @@
             }
             else
             {
-                <p class="selection-hint">选择图中节点或下方“定位”按钮，查看文档说明与已披露关联。</p>
+                <p class="selection-hint">选择图中节点，查看文档说明与已披露关联。</p>
             }
         }
-        <h2>文档</h2>
-        <ul class="node-list" aria-label="可访问的文档及说明">
-            @foreach (var node in Graph.Nodes)
-            {
-                <li class="@(_selected == node.Handle ? "selected" : null)">
-                    <FluentButton data-node-id="@node.Handle.DocumentVersionId" aria-pressed="@(_selected == node.Handle ? "true" : "false")"
-                                  OnClick="() => SelectNode(node.Handle)">定位 @node.Title</FluentButton>
-                    <a href="@ExactDocumentLinkBuilder.Build(node.Handle)">打开 @node.Title</a>
-                    <span>@(node.Kind == DocumentKind.BusinessLogic ? "业务逻辑文档" : "代码逻辑文档")</span>
-                    @foreach (var claim in node.QualifiedExcerpt)
-                    {
-                        <div class="qualified-claim">
-                            <p class="qualification">@QualificationLabel(claim.Qualification)</p>
-                            <p>@claim.Text</p>
-                            @if (Mode == KnowledgeMode.IT)
-                            {
-                                @foreach (var evidence in claim.Evidence)
-                                {
-                                    @if (evidence.Source is { } source)
-                                    {
-                                        <p>来源：@(source.Origin.RelativePath)，第 @(source.StartLine)–@(source.EndLine) 行</p>
-                                    }
-                                }
-                            }
-                            <ul aria-label="说明限制">
-                                @foreach (var limitation in claim.Limitations)
-                                {
-                                    <li>@limitation</li>
-                                }
-                            </ul>
-                        </div>
-                    }
-                </li>
-            }
-        </ul>
+        <details class="graph-metadata"><summary>关系与覆盖说明</summary>
         <h2>已接受的关系</h2>
         @if (Graph.Edges.IsEmpty)
         {
@@ -164,10 +150,12 @@
                 </li>
             }
         </ul>
+        </details>
     </section>
 }
 
 @code {
+    [Parameter] public RenderFragment? Actions { get; set; }
     [Parameter] public ExploreGraph? Graph { get; set; }
     [Parameter] public KnowledgeMode? Mode { get; set; }
 
@@ -193,11 +181,11 @@
         Fit();
         if (Graph is null) { return; }
         var columns = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(Graph.Nodes.Length)));
-        _width = Math.Max(600, columns * 180 + 40);
-        _height = Math.Max(300, Math.Ceiling(Graph.Nodes.Length / (double)columns) * 150 + 60);
+        _width = Math.Max(600, columns * 260 + 40);
+        _height = Math.Max(300, Math.Ceiling(Graph.Nodes.Length / (double)columns) * 160 + 60);
         for (var index = 0; index < Graph.Nodes.Length; index++)
         {
-            _positions.Add(Graph.Nodes[index].Handle, (110 + index % columns * 180, 100 + index / columns * 150));
+            _positions.Add(Graph.Nodes[index].Handle, (140 + index % columns * 260, 100 + index / columns * 160));
         }
 
         SetCanvasBounds();
@@ -210,8 +198,8 @@
         var bounds = new List<(double X, double Y)> { (0, 0), (_width, _height) };
         foreach (var point in _positions.Values)
         {
-            bounds.Add((point.X - 85, point.Y - 30));
-            bounds.Add((point.X + 85, point.Y + 60));
+            bounds.Add((point.X - 110, point.Y - 50));
+            bounds.Add((point.X + 110, point.Y + 50));
         }
 
         for (var index = 0; index < Graph!.Edges.Length; index++)
@@ -232,6 +220,12 @@
         _panY = Math.Clamp(_panY + y, -4000, 4000);
     }
 
+    private void OnWheel(WheelEventArgs args)
+    {
+        if (args.DeltaY < 0) ZoomIn();
+        else if (args.DeltaY > 0) ZoomOut();
+    }
+
     private void ZoomIn() => ChangeZoom(Math.Min(4, _zoom * 1.25));
     private void ZoomOut() => ChangeZoom(Math.Max(.25, _zoom / 1.25));
     private void ChangeZoom(double zoom)
@@ -248,10 +242,9 @@
 
     private void SelectNode(DocumentHandle handle)
     {
-        if (!_positions.TryGetValue(handle, out var point)) { return; }
+        if (!_positions.ContainsKey(handle)) { return; }
         _selected = handle;
-        _panX = _originX + _width / 2 - point.X * _zoom;
-        _panY = _originY + _height / 2 - point.Y * _zoom;
+
     }
 
     private void SelectWithKeyboard(KeyboardEventArgs args, DocumentHandle handle)
@@ -274,31 +267,32 @@
         var parallelIndex = Graph!.Edges.Take(index).Count(previous => previous.From == edge.From && previous.To == edge.To);
         if (edge.From == edge.To)
         {
-            var offset = 65 + parallelIndex * 18;
-            return [(from.X - 18, from.Y - 18), (from.X - offset, from.Y - offset),
-                (from.X + offset, from.Y - offset), (from.X + 18, from.Y - 18)];
+            var offset = 110 + parallelIndex * 18;
+            return [(from.X - 65, from.Y - 35), (from.X - offset, from.Y - offset),
+                (from.X + offset, from.Y - offset), (from.X + 65, from.Y - 35)];
         }
 
         var dx = to.X - from.X;
         var dy = to.Y - from.Y;
         var length = Math.Sqrt(dx * dx + dy * dy);
         var bend = (parallelIndex + 1) * 18;
-        return [(from.X + dx / length * 25, from.Y + dy / length * 25),
+        var radius = 1 / Math.Sqrt(dx * dx / (length * length * 105 * 105) + dy * dy / (length * length * 44 * 44));
+        return [(from.X + dx / length * radius, from.Y + dy / length * radius),
             ((from.X + to.X) / 2 - dy / length * bend, (from.Y + to.Y) / 2 + dx / length * bend),
-            (to.X - dx / length * 30, to.Y - dy / length * 30)];
+            (to.X - dx / length * (radius + 6), to.Y - dy / length * (radius + 6))];
     }
 
-    private static string CanvasLabel(string title)
+    private static IEnumerable<string> LabelLines(string title)
     {
-        var label = new System.Text.StringBuilder();
-        var count = 0;
-        foreach (var rune in title.EnumerateRunes())
-        {
-            if (++count > 11) { return label.Append('…').ToString(); }
-            label.Append(rune.ToString());
-        }
+        var runes = title.EnumerateRunes().Select(rune => rune.ToString()).ToArray();
+        yield return string.Concat(runes.Take(12));
+        if (runes.Length > 12) yield return string.Concat(runes.Skip(12).Take(12)) + (runes.Length > 24 ? "…" : "");
+    }
 
-        return label.ToString();
+    private static string NodeColor(DocumentHandle handle)
+    {
+        string[] palette = ["#dbeafe", "#d1fae5", "#fef3c7", "#ede9fe", "#ffe4e6", "#cffafe"];
+        return palette[handle.DocumentVersionId.ToByteArray().Sum(value => value) % palette.Length];
     }
 
     private string EdgeDescription(RelatedDocument edge) =>

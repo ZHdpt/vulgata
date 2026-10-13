@@ -34,6 +34,60 @@ public sealed class OctoberChatApplicationTests
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task ChatPage_ComposerActionTransitionsFromPreparationToCancelToSendAsync(bool cancel)
+    {
+        await using var fixture = await ApplicationFixture.CreateAsync();
+        using var context = new ChatPageTests();
+        var page = fixture.Render(context);
+        page.WaitForAssertion(() => Assert.True(fixture.Application.IsReady));
+        var preparing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.AfterOpen = async (_, _) => { preparing.TrySetResult(); await release.Task; };
+        var body = fixture.Enqueue(Text("正文"), Stop + Done);
+        await page.InvokeAsync(() => page.Find("#october-chat-question").Input("问题"));
+        var submit = page.InvokeAsync(() => page.Find(".composer-action").ClickAsync(new()));
+        try
+        {
+            await preparing.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            page.WaitForAssertion(() =>
+            {
+                var button = Assert.Single(page.FindAll(".question-composer fluent-button"));
+                Assert.Equal("正在准备对话", button.TextContent.Trim());
+                Assert.True(button.HasAttribute("disabled"));
+                Assert.Empty(page.FindAll(".composer-context-row p"));
+                Assert.True(page.Find(".question-composer").ClassList.Contains("question-composer--working"));
+            });
+            release.TrySetResult();
+            await body.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            page.WaitForAssertion(() =>
+            {
+                var button = Assert.Single(page.FindAll(".question-composer fluent-button"));
+                Assert.Equal("取消生成", button.TextContent.Trim());
+                Assert.False(button.HasAttribute("disabled"));
+            });
+            if (cancel) await page.InvokeAsync(() => page.Find(".composer-action").ClickAsync(new()));
+            body.Release.TrySetResult();
+            await submit.WaitAsync(TimeSpan.FromSeconds(10));
+            page.WaitForAssertion(() =>
+            {
+                Assert.Equal("发送", page.Find(".composer-action").TextContent.Trim());
+                Assert.False(page.Find(".composer-action").HasAttribute("disabled"));
+                Assert.False(page.Find(".question-composer").ClassList.Contains("question-composer--working"));
+            });
+            Assert.Equal(cancel ? DialogueTerminalState.Interrupted : DialogueTerminalState.Completed,
+                Assert.Single(fixture.Application.Transcript).TerminalState);
+        }
+        finally
+        {
+            release.TrySetResult(); body.Release.TrySetResult(); fixture.AfterOpen = null;
+            await submit.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task ChatPage_AsyncHostContextResolution_RendersWithoutLegacyFallbackAsync(bool unavailable)
     {
         await using var fixture = await ApplicationFixture.CreateAsync();
@@ -431,10 +485,10 @@ public sealed class OctoberChatApplicationTests
         string oldUri = navigation.Uri;
         Assert.Contains(oldConversation.ToString("D"), oldUri, StringComparison.Ordinal);
         await page.InvokeAsync(() => page.Find(".new-conversation-button").ClickAsync(new()));
-        Assert.True(fixture.Entry.RequiresConfirmation);
+        Assert.Single(page.FindAll("fluent-dialog"));
         Assert.Equal(oldUri, navigation.Uri);
         Assert.Equal(oldConversation, fixture.Application.Conversation!.ConversationId);
-        await page.InvokeAsync(() => page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "确认开始新对话").ClickAsync(new()));
+        await page.InvokeAsync(() => page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "确定").ClickAsync(new()));
         page.WaitForAssertion(() => Assert.True(fixture.Application.IsReady));
         Assert.NotEqual(oldConversation, fixture.Application.Conversation!.ConversationId);
         Assert.NotEqual(oldContext, fixture.Application.Conversation.ContextId);
@@ -638,7 +692,7 @@ public sealed class OctoberChatApplicationTests
             Assert.Empty(page.FindAll(".october-chat-references"));
             first.Release.TrySetResult();
             await continuation.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
-            page.WaitForAssertion(() => Assert.Contains("本次知识查阅已结束。", page.Markup));
+            page.WaitForAssertion(() => Assert.Contains("本轮查阅完成，正在继续处理…", page.Markup));
             Assert.DoesNotContain("read-exact-controlled", page.Markup, StringComparison.Ordinal);
             Assert.False(fixture.Application.Turns.Single().ViewModel.IsTerminal);
             Assert.Empty(page.FindAll(".october-chat-reference-footer"));
@@ -649,7 +703,7 @@ public sealed class OctoberChatApplicationTests
             DialogueHistoryResult history = await fixture.ReadHistoryAsync();
             var prior = Assert.Single(history.Turns);
             Assert.Equal("第一轮精确问题？", prior.Question);
-            Assert.Equal("第一段即时文本。查阅完成。", prior.AnswerText);
+            Assert.Equal("查阅完成。", prior.AnswerText);
             Assert.NotNull(prior.InferenceDependencies);
             var savedReference = Assert.Single(prior.References);
             Assert.Equal(fixture.Document, savedReference.Document);
@@ -664,6 +718,13 @@ public sealed class OctoberChatApplicationTests
                 var link = Assert.Single(page.FindAll(".october-chat-reference-footer a"));
                 Assert.Equal(ExactDocumentLinkBuilder.Build(fixture.Document), link.GetAttribute("href"));
                 Assert.Equal(expectedTitle, link.TextContent);
+                var shortcut = Assert.Single(page.FindAll(".chat-reference-shortcut"));
+                Assert.Contains("参考文档（1）", shortcut.TextContent, StringComparison.Ordinal);
+                var sourceUri = new Uri(shortcut.GetAttribute("href")!);
+                Assert.Contains($"conversationId={fixture.Application.Conversation!.ConversationId:D}", sourceUri.Query, StringComparison.Ordinal);
+                Assert.Contains($"contextId={fixture.Application.Conversation.ContextId:D}", sourceUri.Query, StringComparison.Ordinal);
+                var destination = page.Find(sourceUri.Fragment);
+                Assert.Single(destination.QuerySelectorAll(".october-chat-reference-footer a"));
             });
             Assert.Equal(DialogueTerminalState.Completed, Assert.Single(fixture.Application.Transcript).TerminalState);
             Assert.Equal(0, fixture.Registry.ActiveRegistrations);
@@ -674,6 +735,7 @@ public sealed class OctoberChatApplicationTests
             Assert.All(fixture.Application.Turns, turn => Assert.True(turn.ViewModel.IsTerminal));
             Assert.Equal(6, fixture.RequestBodies.Count);
             Assert.Equal(2, page.FindAll(".october-chat-reference-footer a").Count);
+            Assert.Equal(2, page.FindAll(".chat-reference-shortcut").Select(item => item.GetAttribute("href")).Distinct().Count());
             using var payload = JsonDocument.Parse(fixture.RequestBodies.ElementAt(3));
             var messages = payload.RootElement.GetProperty("messages").EnumerateArray().ToArray();
             var dialogue = messages.Where(message => message.GetProperty("role").GetString() is "user" or "assistant")

@@ -1,4 +1,12 @@
-.document-content, .claim-text { white-space: pre-wrap; overflow-wrap: anywhere; }
-.qualified-claim { border-inline-start: 3px solid #b98b6b; padding: .25rem 1rem; margin-block: 1rem; }
-.qualification { font-weight: 600; }
-h2:focus { outline: 2px solid #b98b6b; outline-offset: .3rem; }
+.document-sections { max-width: 76rem; }
+.document-body { background: #fff; border: 1px solid #e3e7eb; border-radius: .75rem; padding: 1.25rem 1.5rem; margin-top: 1rem; }
+h3 { font-size: .85rem; color: #64748b; letter-spacing: .05em; margin: 0 0 .75rem; }
+.evidence-heading { margin: 1.5rem 0 .5rem; }
+.document-content, .claim-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; margin: .5rem 0; }
+.qualified-claim { border: 1px solid #e2e6eb; border-left: 3px solid #8ba6c2; border-radius: .5rem; background: #f3f6fa; padding: 1rem 1.25rem; margin-block: .75rem; }
+.qualification { display: inline-block; font-size: .75rem; font-weight: 600; color: #365575; background: #e2ebf6; border-radius: 1rem; padding: .2rem .6rem; margin: 0; }
+.source-reference { font-size: .8rem; color: #58697d; overflow-wrap: anywhere; border-top: 1px solid #dce3eb; padding-top: .75rem; }
+h2:focus { outline: 2px solid #8ba6c2; outline-offset: .3rem; }
+
+.body-heading { font-size: 1.15rem; font-weight: 600; color: #344b63; margin: 1.5rem 0 .75rem; }
+.document-body { margin-top: 0; }

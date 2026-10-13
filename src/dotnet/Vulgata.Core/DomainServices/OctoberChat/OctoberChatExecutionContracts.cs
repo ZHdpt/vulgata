@@ -10,8 +10,8 @@ public sealed record OctoberChatTurnBinding(Guid ConversationId, Guid ContextId,
 public sealed record OctoberChatLimits
 {
     public int QuestionCharacters { get; init; } = 8_000;
-    public int ProviderRounds { get; init; } = 6;
-    public int ToolCalls { get; init; } = 16;
+    public int ProviderRounds { get; init; } = 30;
+    public int ToolCalls { get; init; } = 64;
     public int ConcurrentTools { get; init; } = 2;
     public int ToolArgumentBytes { get; init; } = 16 * 1024;
     public int PageSize { get; init; } = 20;
@@ -20,7 +20,7 @@ public sealed record OctoberChatLimits
     public int OutputBytes { get; init; } = 64 * 1024;
     public int HistoryTurns { get; init; } = 12;
     public int HistoryBytes { get; init; } = 48 * 1024;
-    public TimeSpan Duration { get; init; } = TimeSpan.FromSeconds(180);
+    public TimeSpan Duration { get; init; } = TimeSpan.FromSeconds(540);
     public int SseRoundBytes { get; init; } = 2 * 1024 * 1024;
     public int SseTurnBytes { get; init; } = 8 * 1024 * 1024;
 }

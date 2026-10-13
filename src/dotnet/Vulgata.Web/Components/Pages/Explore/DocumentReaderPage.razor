@@ -8,7 +8,7 @@
 @inject IServiceProvider Services
 
 <PageTitle>文档阅读</PageTitle>
-<div class="explore-reader" data-theme="@(_viewModel?.Mode == KnowledgeMode.IT ? "dark" : "light")">
+<div class="explore-reader" data-theme="light">
     <a href="/knowledge/documents">返回文档列表</a>
     <h1>文档阅读</h1>
     @if (_viewModel?.IsControlledFixture == true)
@@ -29,11 +29,14 @@
         @if (_viewModel.Page?.Document is { } document)
         {
             <h2>@document.Title</h2>
-            <p>@(document.Kind == DocumentKind.BusinessLogic ? "业务逻辑文档" : "代码逻辑文档")</p>
+            <p class="document-kind">@(document.Kind == DocumentKind.BusinessLogic ? "业务逻辑文档" : "代码逻辑文档")</p>
             <DocumentSections Page="@_viewModel.Page" Mode="@_viewModel.Mode" />
         }
         <div class="reader-actions" aria-label="阅读操作">
-            <FluentButton id="next-chunk" OnClick="NextAsync" Disabled="@(!_viewModel.CanContinue)">下一部分</FluentButton>
+            @if (_viewModel.CanContinue)
+            {
+                <FluentButton id="next-chunk" OnClick="NextAsync">下一部分</FluentButton>
+            }
             <FluentButton OnClick="RestartAsync" Disabled="@(_requestedHandle is null || _viewModel.LoadState == LoadState.Loading)">重新打开</FluentButton>
             @if (_viewModel.LoadState == LoadState.Loading)
             {

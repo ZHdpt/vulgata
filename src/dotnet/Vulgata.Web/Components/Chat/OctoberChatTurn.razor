@@ -3,11 +3,25 @@
 
 <article class="chat-message chat-message--assistant october-chat-turn"
          data-answer-state="@(ViewModel.IsTerminal ? "saved" : ViewModel.IsSaveUncertain ? "save-uncertain" : "provisional")">
-    <div class="october-chat-answer"><OctoberChatMarkdown Text="@ViewModel.AnswerText" /></div>
-    @if (ViewModel.ActivityMessage is not null)
+    @if (!string.IsNullOrEmpty(ViewModel.ProgressText) || ViewModel.ActivityMessage is not null)
     {
-        <p class="october-chat-activity" role="status">@ViewModel.ActivityMessage</p>
+        <details class="october-chat-progress" open="@(!ViewModel.IsTerminal && string.IsNullOrEmpty(ViewModel.AnswerText))">
+            <summary>检索过程</summary>
+            @if (!string.IsNullOrEmpty(ViewModel.ProgressText))
+            {
+                <div class="october-chat-progress__text">@ViewModel.ProgressText</div>
+            }
+            @if (ViewModel.ActivityMessage is not null)
+            {
+                <p class="october-chat-activity" role="status">@ViewModel.ActivityMessage</p>
+            }
+        </details>
     }
+    @if (!string.IsNullOrEmpty(ViewModel.AnswerText))
+    {
+        <h3 class="october-chat-answer-heading">@(ViewModel.IsCompleted ? "回答" : ViewModel.IsTerminal ? "未完成的内容" : "回复草稿 · 尚未完成")</h3>
+    }
+    <div class="october-chat-answer"><OctoberChatMarkdown Text="@ViewModel.AnswerText" /></div>
     @if (ViewModel.StatusMessage is not null)
     {
         <p class="october-chat-status" role="status">@ViewModel.StatusMessage</p>

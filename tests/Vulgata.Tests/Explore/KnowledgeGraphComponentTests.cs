@@ -22,12 +22,31 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void Graph_EmptyCoverageHidden_SelectionPreservesViewport_WheelZooms()
+    {
+        Configure();
+        var graph = Graph() with { Coverage = new(false, []) };
+        var cut = Render<KnowledgeGraph>(p => p.Add(c => c.Graph, graph));
+        Assert.Empty(cut.FindAll(".coverage-details"));
+        var before = cut.Find("g[data-viewport]").GetAttribute("transform");
+        cut.Find("svg g[data-node-id]").Click();
+        Assert.Equal(before, cut.Find("g[data-viewport]").GetAttribute("transform"));
+        cut.Find("svg").TriggerEvent("onwheel", new Microsoft.AspNetCore.Components.Web.WheelEventArgs { DeltaY = -100 });
+        Assert.NotEqual(before, cut.Find("g[data-viewport]").GetAttribute("transform"));
+        cut.Find("svg").TriggerEvent("onwheel", new Microsoft.AspNetCore.Components.Web.WheelEventArgs { DeltaY = 100 });
+        Assert.Equal(before, cut.Find("g[data-viewport]").GetAttribute("transform"));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void KnowledgeGraph_CanvasAndKeyboardSelection_ShowExactDetailWithoutChangingGraph()
     {
         Configure();
         var graph = Graph();
         var before = JsonSerializer.Serialize(graph);
         var cut = Render<KnowledgeGraph>(parameters => parameters.Add(component => component.Graph, graph).Add(component => component.Mode, KnowledgeMode.IT));
+        Assert.Empty(cut.FindAll(".selected-node-detail, .node-list"));
+        Assert.Equal(graph.Nodes.Length, cut.FindAll("svg ellipse").Count);
         var first = graph.Nodes[0];
         var second = graph.Nodes[1];
         cut.Find($"svg g[data-node-id='{first.Handle.DocumentVersionId:D}']").Click();
@@ -96,13 +115,14 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
                 }
             }
         }
-        foreach (var circle in cut.FindAll("svg circle"))
+        foreach (var circle in cut.FindAll("svg ellipse"))
         {
             var x = double.Parse(circle.GetAttribute("cx")!, CultureInfo.InvariantCulture);
             var y = double.Parse(circle.GetAttribute("cy")!, CultureInfo.InvariantCulture);
-            var radius = double.Parse(circle.GetAttribute("r")!, CultureInfo.InvariantCulture);
-            Visible(x - radius, y - radius);
-            Visible(x + radius, y + radius);
+            var rx = double.Parse(circle.GetAttribute("rx")!, CultureInfo.InvariantCulture);
+            var ry = double.Parse(circle.GetAttribute("ry")!, CultureInfo.InvariantCulture);
+            Visible(x - rx, y - ry);
+            Visible(x + rx, y + ry);
         }
     }
 
@@ -119,7 +139,8 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
         Assert.InRange(label.EnumerateRunes().Count(), 1, 40);
         var strictUtf8 = new UTF8Encoding(false, true);
         Assert.Equal(label, strictUtf8.GetString(strictUtf8.GetBytes(label)));
-        Assert.Contains(title, cut.Find("ul.node-list").TextContent, StringComparison.Ordinal);
+        cut.Find("svg g[data-node-id]").Click();
+        Assert.Contains(title, cut.Find(".selected-node-detail").TextContent, StringComparison.Ordinal);
     }
 
     private static double[] Numbers(string value) => Regex.Matches(value, @"-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?")
@@ -134,6 +155,7 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
         var cut = Render<KnowledgeGraph>(parameters => parameters.Add(component => component.Graph, graph).Add(component => component.Mode, KnowledgeMode.IT));
         Assert.Empty(cut.FindAll("script,img"));
         Assert.Contains("<script>节点</script>", cut.Markup.Replace("&lt;", "<", StringComparison.Ordinal).Replace("&gt;", ">", StringComparison.Ordinal), StringComparison.Ordinal);
+        cut.Find("svg g[data-node-id]").Click();
         Assert.Contains("参考上下文", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("不得当作源代码证明", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("许可的不确定解释", cut.Markup, StringComparison.Ordinal);
@@ -142,9 +164,8 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
         Assert.Contains("GENERATED_FROM", cut.Markup, StringComparison.Ordinal);
         foreach (var node in graph.Nodes)
         {
+            cut.Find($"svg g[data-node-id='{node.Handle.DocumentVersionId:D}']").Click();
             Assert.Contains(cut.FindAll("a"), link => link.GetAttribute("href") == ExactDocumentLinkBuilder.Build(node.Handle));
-            var button = cut.Find($"button[data-node-id='{node.Handle.DocumentVersionId:D}'],fluent-button[data-node-id='{node.Handle.DocumentVersionId:D}']");
-            Assert.Equal("false", button.GetAttribute("aria-pressed"));
         }
         foreach (var edge in graph.Edges)
         {
@@ -158,7 +179,7 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(KnowledgeMode.Business, "light")]
-    [InlineData(KnowledgeMode.IT, "dark")]
+    [InlineData(KnowledgeMode.IT, "light")]
     public void GraphPage_ModeThemeAndOrdinaryRoute_UsesManualRefreshOnly(KnowledgeMode mode, string theme)
     {
         var service = new GraphViewModelServiceProbe();
@@ -198,8 +219,8 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
         cut.Find("[aria-label='缩小']").Click();
         cut.Find("[aria-label='适应视图']").Click();
         var nodeId = graph.Nodes[0].Handle.DocumentVersionId;
-        cut.Find($"button[data-node-id='{nodeId:D}'],fluent-button[data-node-id='{nodeId:D}']").Click();
-        Assert.Equal("true", cut.Find($"button[data-node-id='{nodeId:D}'],fluent-button[data-node-id='{nodeId:D}']").GetAttribute("aria-pressed"));
+        cut.Find($"svg g[data-node-id='{nodeId:D}']").Click();
+        Assert.Equal("true", cut.Find($"svg g[data-node-id='{nodeId:D}']").GetAttribute("aria-pressed"));
         Assert.Equal(1, service.Calls);
         Assert.Equal(before, JsonSerializer.Serialize(graph));
     }
@@ -214,10 +235,10 @@ public sealed class KnowledgeGraphComponentTests : BunitContext
         var initial = cut.Find("g[data-viewport]").GetAttribute("transform");
         cut.Find("[aria-label='放大']").Click();
         var nodeId = graph.Nodes[0].Handle.DocumentVersionId;
-        cut.Find($"button[data-node-id='{nodeId:D}'],fluent-button[data-node-id='{nodeId:D}']").Click();
+        cut.Find($"svg g[data-node-id='{nodeId:D}']").Click();
         cut.Render(parameters => parameters.Add(component => component.Graph, graph with { Incomplete = true }).Add(component => component.Mode, KnowledgeMode.IT));
         Assert.Equal(initial, cut.Find("g[data-viewport]").GetAttribute("transform"));
-        Assert.Equal("false", cut.Find($"button[data-node-id='{nodeId:D}'],fluent-button[data-node-id='{nodeId:D}']").GetAttribute("aria-pressed"));
+        Assert.Equal("false", cut.Find($"svg g[data-node-id='{nodeId:D}']").GetAttribute("aria-pressed"));
     }
 
     [Trait("Suite", "SelfContained")]

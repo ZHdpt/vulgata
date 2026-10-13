@@ -158,7 +158,7 @@ public sealed class OctoberContentContinuationTests
         try
         {
             Assert.Single(fixture.Reader.ExactRequests);
-            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            if (deadline) clock.Advance(new OctoberChatLimits().Duration);
             else lifetime.Cancel();
             OctoberChatToolResult stopped = await read.WaitAsync(TimeSpan.FromSeconds(5));
 

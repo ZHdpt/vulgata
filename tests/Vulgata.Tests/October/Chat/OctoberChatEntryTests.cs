@@ -366,17 +366,38 @@ public sealed class OctoberChatEntryTests
         OctoberChatConversation original = model.Conversation!;
         model.Question = "原业务模式草稿";
 
+
         await page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "技术模式")
             .ClickAsync(new MouseEventArgs());
-
-        Assert.True(model.RequiresConfirmation);
+        Assert.Single(page.FindAll("fluent-dialog"));
+        Assert.DoesNotContain("更改模式或仓库范围", page.Find(".chat-surface").TextContent);
+        await page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "取消")
+            .ClickAsync(new MouseEventArgs());
+        Assert.Empty(page.FindAll("fluent-dialog"));
+        Assert.False(model.RequiresConfirmation);
         Assert.Same(original, model.Conversation);
+        Assert.Equal("原业务模式草稿", model.Question);
         Assert.Equal("light", page.Find(".chat-page").GetAttribute("data-theme"));
         Assert.Single(fixture.Reader.OpenRequests);
 
-        await page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "确认开始新对话")
-            .ClickAsync(new MouseEventArgs());
 
+        await page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "技术模式")
+            .ClickAsync(new MouseEventArgs());
+        Assert.Single(page.FindAll("fluent-dialog"));
+        fixture.Reader.OpenGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task confirming = page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "确定")
+            .ClickAsync(new MouseEventArgs());
+        try
+        {
+            page.WaitForAssertion(() => Assert.Empty(page.FindAll("fluent-dialog")));
+            Assert.DoesNotContain("请确认", page.Find(".chat-surface").TextContent);
+            Assert.DoesNotContain("确认开始新对话", page.Find(".chat-surface").TextContent);
+        }
+        finally
+        {
+            fixture.Reader.OpenGate.SetResult();
+            await confirming;
+        }
         Assert.False(model.RequiresConfirmation);
         Assert.Equal(KnowledgeMode.IT, model.Conversation!.Request.Mode);
         Assert.NotEqual(original.ConversationId, model.Conversation.ConversationId);
@@ -384,6 +405,8 @@ public sealed class OctoberChatEntryTests
         Assert.Equal(original.Request.Publication, model.Conversation.Request.Publication);
         Assert.Empty(model.Question);
         Assert.Equal("dark", page.Find(".chat-page").GetAttribute("data-theme"));
+        Assert.Equal("true", page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "技术模式").GetAttribute("aria-pressed"));
+        Assert.Equal("false", page.FindAll("fluent-button").Single(button => button.TextContent.Trim() == "业务模式").GetAttribute("aria-pressed"));
         Assert.Equal(2, fixture.Reader.OpenRequests.Count);
     }
 

@@ -92,7 +92,11 @@ public sealed class OctoberChatTurnRunnerTests
             Assert.False(run.IsCompleted);
             Assert.Equal("即时真实片段。", text.ToString());
             ChatMessage[] sent = Assert.Single(h.Client.Requests);
-            Assert.Equal(h.Prompt, Assert.Single(sent.Where(message => message.Role == ChatRole.System)).Text);
+            ChatMessage[] systems = sent.Where(message => message.Role == ChatRole.System).ToArray();
+            Assert.Equal(2, systems.Length);
+            Assert.Equal(h.Prompt, systems[0].Text);
+            using var budgetInfo = System.Text.Json.JsonDocument.Parse(systems[1].Text);
+            Assert.Equal("october_chat_budget", budgetInfo.RootElement.GetProperty("type").GetString());
             ChatMessage[] users = sent.Where(message => message.Role == ChatRole.User).ToArray();
             Assert.Equal(2, users.Length);
             Assert.Equal(h.Codec.HistoryBytes.ToArray(), Encoding.UTF8.GetBytes(users[0].Text));
@@ -196,7 +200,7 @@ public sealed class OctoberChatTurnRunnerTests
     {
         Harness h = await Harness.OpenAsync();
         h.Client.Script = token => StreamAsync("已有片段", "stop", token, h.ProviderGate.Task);
-        h.Clock.Advance(TimeSpan.FromSeconds(170));
+        h.Clock.Advance(new OctoberChatLimits().Duration - TimeSpan.FromSeconds(10));
         if (durableDeadline) h.Admission = h.Admission with { DeadlineUtc = h.Clock.GetUtcNow().AddSeconds(5) };
         OctoberChatTurnRunner? runner = await h.CreateAsync();
         Assert.NotNull(runner);
@@ -227,7 +231,7 @@ public sealed class OctoberChatTurnRunnerTests
     public async Task CreateAsync_AlreadyExpiredAdmissionRefusesBeforeClientOrAuthorityDispatchAsync()
     {
         Harness h = await Harness.OpenAsync();
-        h.Clock.Advance(TimeSpan.FromSeconds(180));
+        h.Clock.Advance(new OctoberChatLimits().Duration);
 
         Assert.Null(await h.CreateAsync());
         Assert.Empty(h.Client.Requests);

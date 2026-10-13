@@ -19,21 +19,41 @@ else if (_boundOctoberEntry is { } october)
 {
     <div class="chat-page @(october.ThemeName == "dark" ? "chat-page--it" : "chat-page--business")"
          data-theme="@october.ThemeName" data-load-state="@october.LoadState">
+        @if (_showOctoberConfirmation)
+        {
+            <FluentDialog Hidden="false" HiddenChanged="OctoberConfirmationHiddenChanged"
+                          Modal="true" TrapFocus="true" PreventScroll="true"
+                          AriaLabel="确认开始新对话">
+                <FluentDialogHeader><h2>确认开始新对话</h2></FluentDialogHeader>
+                <FluentDialogBody>
+                    <p>@(_newOctoberConversationRequested ? "开始新对话将清空当前草稿。确定继续吗？" : "切换模式将开始新对话，当前草稿不会保留。确定切换吗？")</p>
+                </FluentDialogBody>
+                <FluentDialogFooter>
+                    <FluentButton Type="ButtonType.Button" @onclick="CancelOctoberConfirmation">取消</FluentButton>
+                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" @onclick="ConfirmOctoberContextAsync">确定</FluentButton>
+                </FluentDialogFooter>
+            </FluentDialog>
+        }
         <section class="chat-controls" aria-label="准备提问">
             <div class="chat-controls__topbar">
                 <fieldset class="mode-selector">
                     <legend class="visually-hidden">选择对话模式</legend>
                     <FluentButton Type="ButtonType.Button"
                                   Appearance="@(october.ThemeName == "light" ? Appearance.Accent : Appearance.Neutral)"
+                                  aria-pressed="@(october.ThemeName == "light" ? "true" : "false")"
                                   Disabled="@OctoberTransitionDisabled"
-                                  @onclick="() => RequestOctoberModeAsync(Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeMode.Business)">业务模式</FluentButton>
+                                  @onclick="() => RequestOctoberModeAsync(Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeMode.Business)">业务模式
+                    </FluentButton>
                     <FluentButton Type="ButtonType.Button"
                                   Appearance="@(october.ThemeName == "dark" ? Appearance.Accent : Appearance.Neutral)"
+                                  aria-pressed="@(october.ThemeName == "dark" ? "true" : "false")"
                                   Disabled="@OctoberTransitionDisabled"
-                                  @onclick="() => RequestOctoberModeAsync(Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeMode.IT)">技术模式</FluentButton>
+                                  @onclick="() => RequestOctoberModeAsync(Vulgata.Core.DomainServices.OctoberKnowledge.KnowledgeMode.IT)">技术模式
+                    </FluentButton>
                 </fieldset>
                 <FluentButton Class="new-conversation-button" Appearance="Appearance.Stealth" Type="ButtonType.Button"
-                              Disabled="@OctoberTransitionDisabled" @onclick="RequestNewOctoberConversationAsync">＋ 新对话</FluentButton>
+                              Disabled="@OctoberTransitionDisabled" @onclick="RequestNewOctoberConversationAsync">＋ 新对话
+                </FluentButton>
             </div>
         </section>
         <section class="chat-surface" aria-label="对话记录" aria-live="polite"
@@ -48,42 +68,47 @@ else if (_boundOctoberEntry is { } october)
                 {
                     <div class="chat-turn" @key="item.ViewModel.Binding.TurnId">
                         <div class="chat-message chat-message--user">@item.Question</div>
-                        <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="item.ViewModel" />
+                        @if (item.Footer is { IsUnavailable: false, Dependencies: not null } sources && !sources.Rows.IsDefaultOrEmpty)
+                        {
+                            <a class="chat-reference-shortcut"
+                               href="@($"{OctoberNavigation.BaseUri}?conversationId={item.ViewModel.Binding.ConversationId:D}&contextId={item.ViewModel.Binding.ContextId:D}#chat-references-{item.ViewModel.Binding.TurnId:N}")">
+                                参考文档（@sources.Rows.Length）<span aria-hidden="true"> ↓</span>
+                            </a>
+                        }
+                        <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="item.ViewModel"/>
                         @if (item.Footer is { } footer)
                         {
-                            <Vulgata.Web.Components.Chat.OctoberChatReferenceFooter State="footer" />
+                            <div id="@($"chat-references-{item.ViewModel.Binding.TurnId:N}")" class="chat-reference-target" tabindex="-1">
+                                <Vulgata.Web.Components.Chat.OctoberChatReferenceFooter State="footer"/>
+                            </div>
                         }
                     </div>
                 }
             }
             else if (OctoberTurn is { } turn && october.Conversation is { } conversation &&
-                turn.Binding.ConversationId == conversation.ConversationId &&
-                turn.Binding.ContextId == conversation.ContextId &&
-                turn.Binding.Request == conversation.Request && turn.Binding.Selection == conversation.Selection)
+                     turn.Binding.ConversationId == conversation.ConversationId &&
+                     turn.Binding.ContextId == conversation.ContextId &&
+                     turn.Binding.Request == conversation.Request && turn.Binding.Selection == conversation.Selection)
             {
-                <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="turn" />
+                <Vulgata.Web.Components.Chat.OctoberChatTurn ViewModel="turn"/>
             }
             @if (_boundOctoberApplication?.Turns.Count is null or 0)
             {
-            <div class="chat-welcome">
-                <h1 class="display-serif display-serif-lg">@(october.ThemeName == "dark" ? "你好，需要追踪哪段逻辑？" : "你好，想了解什么业务流程？")</h1>
-                @if (october.Conversation is not null)
-                {
-                    <p>已选择 @october.Conversation.Request.RepositoryScope.Length 个仓库，@october.ModeLabel。</p>
-                }
-            </div>
+                <div class="chat-welcome">
+                    <h1 class="display-serif display-serif-lg">@(october.ThemeName == "dark" ? "你好，需要追踪哪段逻辑？" : "你好，想了解什么业务流程？")</h1>
+                    @if (october.Conversation is not null)
+                    {
+                        <p>已选择 @october.Conversation.Request.RepositoryScope.Length 个仓库，@october.ModeLabel。</p>
+                    }
+                </div>
             }
-            @if (october.StatusMessage is not null)
+            @if (october.StatusMessage is not null && !october.RequiresConfirmation)
             {
                 <p class="chat-message chat-message--status" role="status">@october.StatusMessage</p>
             }
-            @if (october.RequiresConfirmation)
-            {
-                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent"
-                              @onclick="ConfirmOctoberContextAsync">确认开始新对话</FluentButton>
-            }
         </section>
-        <section class="question-composer" aria-label="问题输入">
+        <section class="question-composer @(_boundOctoberApplication is { IsBusy: true, IsSaveUncertain: false } ? "question-composer--working" : null)" aria-label="问题输入"
+                 aria-busy="@(_boundOctoberApplication is { IsBusy: true, IsSaveUncertain: false } ? "true" : "false")">
             <label class="visually-hidden" for="october-chat-question">问题</label>
             <textarea id="october-chat-question" @bind="october.Question" @bind:event="oninput"
                       placeholder="@OctoberComposerPlaceholder"
@@ -93,7 +118,7 @@ else if (_boundOctoberEntry is { } october)
                 {
                     <p role="status">对话服务暂不可用，暂时无法发送问题。</p>
                 }
-                else if (_boundOctoberApplication.StatusMessage is { } applicationStatus)
+                else if (!_boundOctoberApplication.IsPreparing && _boundOctoberApplication.StatusMessage is { } applicationStatus)
                 {
                     <p role="status">@applicationStatus</p>
                 }
@@ -101,12 +126,24 @@ else if (_boundOctoberEntry is { } october)
                 {
                     <FluentButton Type="ButtonType.Button" @onclick="ReconcileOctoberAsync">核对保存状态</FluentButton>
                 }
-                else if (_boundOctoberApplication?.IsBusy == true)
+                @if (_boundOctoberApplication?.IsPreparing == true)
                 {
-                    <FluentButton Type="ButtonType.Button" @onclick="CancelOctober">取消生成</FluentButton>
+                    <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent"
+                                  Type="ButtonType.Button" Disabled="true">正在准备对话
+                    </FluentButton>
                 }
-                <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent"
-                              Type="ButtonType.Button" Disabled="@OctoberComposerDisabled" @onclick="SendOctoberAsync">发送</FluentButton>
+                else if (_boundOctoberApplication is { IsBusy: true, IsSaveUncertain: false })
+                {
+                    <FluentButton Class="primary-button composer-action composer-action--cancel" Appearance="Appearance.Accent"
+                                  Type="ButtonType.Button" @onclick="CancelOctober">取消生成
+                    </FluentButton>
+                }
+                else
+                {
+                    <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent"
+                                  Type="ButtonType.Button" Disabled="@OctoberComposerDisabled" @onclick="SendOctoberAsync">发送
+                    </FluentButton>
+                }
             </div>
         </section>
     </div>
@@ -125,54 +162,57 @@ else if (_octoberApplicationSelected)
 }
 else
 {
-<div class="chat-page @PageModeClass @ConversationStateClass" data-theme="@ThemeName" data-load-state="@_loadState">
-    <EditForm class="chat-page__form" EditContext="_editContext" OnValidSubmit="SendAsync" OnInvalidSubmit="HandleInvalidSubmit">
-        <FluentValidationValidator />
-    <section class="chat-controls" aria-label="准备提问">
-        <div class="chat-controls__topbar">
-            <fieldset class="mode-selector">
-                <legend class="visually-hidden">选择对话模式</legend>
-                <FluentButton Appearance="@ModeAppearance(ChatMode.Business)"
-                              Type="ButtonType.Button"
-                              Disabled="@_isBusy"
-                              aria-pressed="@ModeAriaPressed(ChatMode.Business)"
-                              @onclick="() => SelectMode(ChatMode.Business)">业务模式</FluentButton>
-                <FluentButton Appearance="@ModeAppearance(ChatMode.It)"
-                              Type="ButtonType.Button"
-                              Disabled="@_isBusy"
-                              aria-pressed="@ModeAriaPressed(ChatMode.It)"
-                              @onclick="() => SelectMode(ChatMode.It)">技术模式</FluentButton>
-            </fieldset>
+    <div class="chat-page @PageModeClass @ConversationStateClass" data-theme="@ThemeName" data-load-state="@_loadState">
+        <EditForm class="chat-page__form" EditContext="_editContext" OnValidSubmit="SendAsync" OnInvalidSubmit="HandleInvalidSubmit">
+            <FluentValidationValidator/>
+            <section class="chat-controls" aria-label="准备提问">
+                <div class="chat-controls__topbar">
+                    <fieldset class="mode-selector">
+                        <legend class="visually-hidden">选择对话模式</legend>
+                        <FluentButton Appearance="@ModeAppearance(ChatMode.Business)"
+                                      Type="ButtonType.Button"
+                                      Disabled="@_isBusy"
+                                      aria-pressed="@ModeAriaPressed(ChatMode.Business)"
+                                      @onclick="() => SelectMode(ChatMode.Business)">业务模式
+                        </FluentButton>
+                        <FluentButton Appearance="@ModeAppearance(ChatMode.It)"
+                                      Type="ButtonType.Button"
+                                      Disabled="@_isBusy"
+                                      aria-pressed="@ModeAriaPressed(ChatMode.It)"
+                                      @onclick="() => SelectMode(ChatMode.It)">技术模式
+                        </FluentButton>
+                    </fieldset>
 
-            <FluentButton Class="new-conversation-button"
-                          Appearance="Appearance.Stealth"
-                          Type="ButtonType.Button"
-                          aria-label="开始新对话"
-                          @onclick="StartNewConversationAsync"><span aria-hidden="true">＋</span> 新对话</FluentButton>
-        </div>
+                    <FluentButton Class="new-conversation-button"
+                                  Appearance="Appearance.Stealth"
+                                  Type="ButtonType.Button"
+                                  aria-label="开始新对话"
+                                  @onclick="StartNewConversationAsync"><span aria-hidden="true">＋</span> 新对话
+                    </FluentButton>
+                </div>
 
-    </section>
+            </section>
 
-    <section class="chat-surface"
-             @ref="_conversationElement"
-             aria-label="对话记录"
-             aria-live="polite"
-             aria-busy="@(_isBusy ? "true" : "false")"
-             tabindex="0">
-        @foreach (ChatTurn turn in _turns)
-        {
-            <div class="chat-turn" data-chat-turn="@turn.Id">
-                <div class="chat-message chat-message--user">@turn.Question</div>
-
-                @if (turn.State is ChatTurnState.Revealing or ChatTurnState.Complete && turn.Answer is not null)
+            <section class="chat-surface"
+                     @ref="_conversationElement"
+                     aria-label="对话记录"
+                     aria-live="polite"
+                     aria-busy="@(_isBusy ? "true" : "false")"
+                     tabindex="0">
+                @foreach (ChatTurn turn in _turns)
                 {
-                    <article class="chat-message chat-message--assistant complete-answer"
-                             data-answer-state="@(turn.State == ChatTurnState.Complete ? "complete" : "revealing")"
-                             aria-live="@(turn.State == ChatTurnState.Revealing ? "off" : null)">
-                        @foreach (ChatClaimReveal claim in turn.Claims)
+                    <div class="chat-turn" data-chat-turn="@turn.Id">
+                        <div class="chat-message chat-message--user">@turn.Question</div>
+
+                        @if (turn.State is ChatTurnState.Revealing or ChatTurnState.Complete && turn.Answer is not null)
                         {
-                            <section class="answer-claim" data-claim-complete="@claim.IsComplete.ToString().ToLowerInvariant()">
-                                <p class="material-claim" aria-label="@claim.Claim.Text">
+                            <article class="chat-message chat-message--assistant complete-answer"
+                                     data-answer-state="@(turn.State == ChatTurnState.Complete ? "complete" : "revealing")"
+                                     aria-live="@(turn.State == ChatTurnState.Revealing ? "off" : null)">
+                                @foreach (ChatClaimReveal claim in turn.Claims)
+                                {
+                                    <section class="answer-claim" data-claim-complete="@claim.IsComplete.ToString().ToLowerInvariant()">
+                                        <p class="material-claim" aria-label="@claim.Claim.Text">
                                     <span class="material-claim__revealed" aria-hidden="true">
                                         @for (int elementIndex = 0; elementIndex < claim.VisibleTextElements.Count; elementIndex++)
                                         {
@@ -180,110 +220,114 @@ else
                                             <span class="material-claim__element" @key="elementIndex">@textElement</span>
                                         }
                                     </span>
-                                </p>
-                                @if (claim.IsComplete)
-                                {
-                                    @foreach (DocumentCitation citation in turn.Answer.DocumentCitations.Where(
-                                        citation => claim.Claim.CitationIds.Contains(citation.CitationId, StringComparer.Ordinal)))
-                                    {
-                                        <div class="document-citation"
-                                             data-repository-relative-path="@citation.RepositoryRelativePath"
-                                             data-line-start="@citation.LineStart"
-                                             data-line-end="@citation.LineEnd">
-                                            <span class="document-citation__title">文档引用：@citation.DocumentTitle</span>
-                                            @if (turn.Answer.Mode == ChatMode.It)
+                                        </p>
+                                        @if (claim.IsComplete)
+                                        {
+                                            @foreach (DocumentCitation citation in turn.Answer.DocumentCitations.Where(citation => claim.Claim.CitationIds.Contains(citation.CitationId, StringComparer.Ordinal)))
                                             {
-                                                <span class="citation-locator citation-locator--inline">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                                <div class="document-citation"
+                                                     data-repository-relative-path="@citation.RepositoryRelativePath"
+                                                     data-line-start="@citation.LineStart"
+                                                     data-line-end="@citation.LineEnd">
+                                                    <span class="document-citation__title">文档引用：@citation.DocumentTitle</span>
+                                                    @if (turn.Answer.Mode == ChatMode.It)
+                                                    {
+                                                        <span class="citation-locator citation-locator--inline">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <details class="document-citation__details">
+                                                            <summary><span>查看来源</span><span class="citation-chevron" aria-hidden="true"></span></summary>
+                                                            <span
+                                                                class="citation-locator">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                                        </details>
+                                                    }
+                                                </div>
                                             }
-                                            else
-                                            {
-                                                <details class="document-citation__details">
-                                        <summary><span>查看来源</span><span class="citation-chevron" aria-hidden="true"></span></summary>
-                                                    <span class="citation-locator">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
-                                                </details>
-                                            }
-                                        </div>
-                                    }
+                                        }
+                                    </section>
                                 }
-                            </section>
+                            </article>
                         }
-                    </article>
-                }
-                else if (turn.State == ChatTurnState.Pending)
-                {
-                    <div class="chat-thinking" role="status">
-                        <span class="chat-thinking__spark" aria-hidden="true">✦</span>
-                        <span class="chat-thinking__copy">
+                        else if (turn.State == ChatTurnState.Pending)
+                        {
+                            <div class="chat-thinking" role="status">
+                                <span class="chat-thinking__spark" aria-hidden="true">✦</span>
+                                <span class="chat-thinking__copy">
                             <span>@ActiveStatusMessage</span>
                             <small>AI 正在分析跨仓库上下文</small>
                         </span>
-                        <span class="chat-thinking__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                                <span class="chat-thinking__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                            </div>
+                        }
+                        else if (turn.Message is not null)
+                        {
+                            <p class="chat-message chat-message--assistant" data-answer-state="unsupported">@turn.Message</p>
+                        }
                     </div>
                 }
-                else if (turn.Message is not null)
+
+                @if (_turns.Count == 0)
                 {
-                    <p class="chat-message chat-message--assistant" data-answer-state="unsupported">@turn.Message</p>
+                    <div class="chat-welcome">
+                        <h1 class="display-serif display-serif-lg">@WelcomeMessage</h1>
+                        <p>选择相关仓库，然后输入你想了解的问题。</p>
+                    </div>
                 }
-            </div>
-        }
 
-        @if (_turns.Count == 0)
-        {
-            <div class="chat-welcome">
-                <h1 class="display-serif display-serif-lg">@WelcomeMessage</h1>
-                <p>选择相关仓库，然后输入你想了解的问题。</p>
-            </div>
-        }
-
-        @if (_message is not null)
-        {
-            @if (_loadState == LoadState.Empty)
-            {
-                <p class="chat-message chat-message--assistant" data-answer-state="unsupported">@_message</p>
-            }
-            else
-            {
-                <p class="chat-message chat-message--status" role="alert">@_message</p>
-            }
-        }
-
-        @if (_conversationNotice is not null)
-        {
-            <p class="conversation-notice" role="status">@_conversationNotice</p>
-        }
-    </section>
-
-    <section class="question-composer" aria-label="问题输入">
-        <label class="visually-hidden" for="chat-question">问题</label>
-        <textarea id="chat-question"
-                  @ref="_questionElement"
-                  @bind="_question"
-                  @bind:event="oninput"
-                  @bind:after="OnQuestionChanged"
-                  placeholder="@QuestionPlaceholder"
-                  aria-label="@QuestionPlaceholder"
-                  autocomplete="off"
-                  rows="3"
-                  readonly="@_isBusy"
-                  @onkeydown="HandleQuestionKeyDownAsync"></textarea>
-        <div class="composer-context-row">
-            <div class="repository-picker" @onkeydown="HandleRepositoryPickerKeyDown">
-                <button class="@RepositoryPickerTriggerClass"
-                        type="button"
-                        aria-label="选择仓库"
-                        aria-haspopup="menu"
-                        aria-expanded="@(_isRepositoryPickerOpen ? "true" : "false")"
-                        @onclick="ToggleRepositoryPicker">
-                    <svg class="repository-picker__icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                        <path d="M512 958.016611c-119.648434 0-232.1288-46.367961-316.736783-130.559656-84.640667-84.255342-131.263217-196.255772-131.263217-315.455235 0-119.168499 46.624271-231.199892 131.232254-315.424271 84.607983-84.191695 197.088348-130.559656 316.736783-130.559656s232.1288 46.367961 316.704099 130.559656c84.67163 84.224378 131.263217 196.255772 131.263217 315.391587 0.032684 119.199462-46.591587 231.232576-131.263217 315.455235C744.1288 911.615966 631.648434 958.016611 512 958.016611zM512 129.983389c-102.623626 0-199.071738 39.743475-271.583282 111.936783-72.480581 72.12794-112.416718 168.063432-112.416718 270.079828s39.903454 197.951888 112.384034 270.047144c72.511544 72.191587 168.959656 111.936783 271.583282 111.936783 102.592662 0 199.071738-39.743475 271.583282-111.936783 72.480581-72.160624 112.416718-168.063432 112.384034-270.079828 0-102.016396-39.903454-197.919204-112.384034-270.016181C711.071738 169.759548 614.592662 129.983389 512 129.983389z" fill="currentColor"></path>
-                        <path d="M736.00086 480.00086 544.00086 480.00086 544.00086 288.00086c0-17.664722-14.336138-32.00086-32.00086-32.00086s-32.00086 14.336138-32.00086 32.00086l0 192L288.00086 480.00086c-17.664722 0-32.00086 14.336138-32.00086 32.00086s14.336138 32.00086 32.00086 32.00086l192 0 0 192c0 17.695686 14.336138 32.00086 32.00086 32.00086s32.00086-14.303454 32.00086-32.00086L544.00258 544.00086l192 0c17.695686 0 32.00086-14.336138 32.00086-32.00086S753.696546 480.00086 736.00086 480.00086z" fill="currentColor"></path>
-                    </svg>
-                </button>
-
-                <div class="repository-chips" aria-label="已选择的仓库">
-                    @foreach (string repositoryName in _selectedUiRepositories)
+                @if (_message is not null)
+                {
+                    @if (_loadState == LoadState.Empty)
                     {
-                        <span class="repository-chip" data-repository-name="@repositoryName" @key="repositoryName">
+                        <p class="chat-message chat-message--assistant" data-answer-state="unsupported">@_message</p>
+                    }
+                    else
+                    {
+                        <p class="chat-message chat-message--status" role="alert">@_message</p>
+                    }
+                }
+
+                @if (_conversationNotice is not null)
+                {
+                    <p class="conversation-notice" role="status">@_conversationNotice</p>
+                }
+            </section>
+
+            <section class="question-composer" aria-label="问题输入">
+                <label class="visually-hidden" for="chat-question">问题</label>
+                <textarea id="chat-question"
+                          @ref="_questionElement"
+                          @bind="_question"
+                          @bind:event="oninput"
+                          @bind:after="OnQuestionChanged"
+                          placeholder="@QuestionPlaceholder"
+                          aria-label="@QuestionPlaceholder"
+                          autocomplete="off"
+                          rows="3"
+                          readonly="@_isBusy"
+                          @onkeydown="HandleQuestionKeyDownAsync"></textarea>
+                <div class="composer-context-row">
+                    <div class="repository-picker" @onkeydown="HandleRepositoryPickerKeyDown">
+                        <button class="@RepositoryPickerTriggerClass"
+                                type="button"
+                                aria-label="选择仓库"
+                                aria-haspopup="menu"
+                                aria-expanded="@(_isRepositoryPickerOpen ? "true" : "false")"
+                                @onclick="ToggleRepositoryPicker">
+                            <svg class="repository-picker__icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                                <path
+                                    d="M512 958.016611c-119.648434 0-232.1288-46.367961-316.736783-130.559656-84.640667-84.255342-131.263217-196.255772-131.263217-315.455235 0-119.168499 46.624271-231.199892 131.232254-315.424271 84.607983-84.191695 197.088348-130.559656 316.736783-130.559656s232.1288 46.367961 316.704099 130.559656c84.67163 84.224378 131.263217 196.255772 131.263217 315.391587 0.032684 119.199462-46.591587 231.232576-131.263217 315.455235C744.1288 911.615966 631.648434 958.016611 512 958.016611zM512 129.983389c-102.623626 0-199.071738 39.743475-271.583282 111.936783-72.480581 72.12794-112.416718 168.063432-112.416718 270.079828s39.903454 197.951888 112.384034 270.047144c72.511544 72.191587 168.959656 111.936783 271.583282 111.936783 102.592662 0 199.071738-39.743475 271.583282-111.936783 72.480581-72.160624 112.416718-168.063432 112.384034-270.079828 0-102.016396-39.903454-197.919204-112.384034-270.016181C711.071738 169.759548 614.592662 129.983389 512 129.983389z"
+                                    fill="currentColor"></path>
+                                <path
+                                    d="M736.00086 480.00086 544.00086 480.00086 544.00086 288.00086c0-17.664722-14.336138-32.00086-32.00086-32.00086s-32.00086 14.336138-32.00086 32.00086l0 192L288.00086 480.00086c-17.664722 0-32.00086 14.336138-32.00086 32.00086s14.336138 32.00086 32.00086 32.00086l192 0 0 192c0 17.695686 14.336138 32.00086 32.00086 32.00086s32.00086-14.303454 32.00086-32.00086L544.00258 544.00086l192 0c17.695686 0 32.00086-14.336138 32.00086-32.00086S753.696546 480.00086 736.00086 480.00086z"
+                                    fill="currentColor"></path>
+                            </svg>
+                        </button>
+
+                        <div class="repository-chips" aria-label="已选择的仓库">
+                            @foreach (string repositoryName in _selectedUiRepositories)
+                            {
+                                <span class="repository-chip" data-repository-name="@repositoryName" @key="repositoryName">
                             <span class="repository-chip__status" aria-hidden="true"></span>
                             <span class="repository-chip__name">@repositoryName</span>
                             <button class="repository-chip__remove"
@@ -291,61 +335,61 @@ else
                                     aria-label="移除 @repositoryName"
                                     @onclick="() => RemoveUiRepository(repositoryName)">×</button>
                         </span>
-                    }
-                </div>
-
-                @if (_isRepositoryPickerOpen)
-                {
-                    <button class="repository-picker__dismiss" type="button" aria-label="关闭仓库选择器" @onclick="CloseRepositoryPicker"></button>
-                    <div class="repository-menu" role="menu" aria-label="选择仓库">
-                        <div class="repository-menu__systems">
-                            @foreach (DemoRepositorySystem system in DemoRepositoryCatalog)
-                            {
-                                <button class="repository-menu__system"
-                                        type="button"
-                                        role="menuitem"
-                                        data-system-id="@system.Id"
-                                        aria-expanded="@(system.Id == _activeRepositorySystemId ? "true" : "false")"
-                                        @onmouseenter="() => ActivateRepositorySystem(system.Id)"
-                                        @onfocus="() => ActivateRepositorySystem(system.Id)"
-                                        @onclick="() => ActivateRepositorySystem(system.Id)">
-                                    <span>@system.Name</span><span class="repository-menu__chevron" aria-hidden="true">›</span>
-                                </button>
                             }
                         </div>
 
-                        @if (ActiveRepositorySystem is not null)
+                        @if (_isRepositoryPickerOpen)
                         {
-                            <div class="repository-menu__repositories" role="group" aria-label="@($"{ActiveRepositorySystem.Name} 仓库")">
-                                @foreach (string repositoryName in ActiveRepositorySystem.Repositories)
+                            <button class="repository-picker__dismiss" type="button" aria-label="关闭仓库选择器" @onclick="CloseRepositoryPicker"></button>
+                            <div class="repository-menu" role="menu" aria-label="选择仓库">
+                                <div class="repository-menu__systems">
+                                    @foreach (DemoRepositorySystem system in DemoRepositoryCatalog)
+                                    {
+                                        <button class="repository-menu__system"
+                                                type="button"
+                                                role="menuitem"
+                                                data-system-id="@system.Id"
+                                                aria-expanded="@(system.Id == _activeRepositorySystemId ? "true" : "false")"
+                                                @onmouseenter="() => ActivateRepositorySystem(system.Id)"
+                                                @onfocus="() => ActivateRepositorySystem(system.Id)"
+                                                @onclick="() => ActivateRepositorySystem(system.Id)">
+                                            <span>@system.Name</span><span class="repository-menu__chevron" aria-hidden="true">›</span>
+                                        </button>
+                                    }
+                                </div>
+
+                                @if (ActiveRepositorySystem is not null)
                                 {
-                                    bool isSelected = _selectedUiRepositories.Contains(repositoryName);
-                                    <button class="repository-menu__repository"
-                                            type="button"
-                                            data-repository-name="@repositoryName"
-                                            role="menuitemcheckbox"
-                                            aria-checked="@(isSelected ? "true" : "false")"
-                                            @onclick="() => ToggleUiRepository(repositoryName)">
-                                        <span class="repository-menu__check" aria-hidden="true">✓</span>
-                                        <span>@repositoryName</span>
-                                    </button>
+                                    <div class="repository-menu__repositories" role="group" aria-label="@($"{ActiveRepositorySystem.Name} 仓库")">
+                                        @foreach (string repositoryName in ActiveRepositorySystem.Repositories)
+                                        {
+                                            bool isSelected = _selectedUiRepositories.Contains(repositoryName);
+                                            <button class="repository-menu__repository"
+                                                    type="button"
+                                                    data-repository-name="@repositoryName"
+                                                    role="menuitemcheckbox"
+                                                    aria-checked="@(isSelected ? "true" : "false")"
+                                                    @onclick="() => ToggleUiRepository(repositoryName)">
+                                                <span class="repository-menu__check" aria-hidden="true">✓</span>
+                                                <span>@repositoryName</span>
+                                            </button>
+                                        }
+                                    </div>
                                 }
                             </div>
                         }
                     </div>
-                }
-            </div>
 
-            @if (_isBusy)
-            {
-                <FluentButton Class="composer-action composer-action--cancel" Appearance="Appearance.Neutral" @onclick="CancelRequest">取消</FluentButton>
-            }
-            else
-            {
-                <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent" Type="ButtonType.Submit">发送</FluentButton>
-            }
-        </div>
-    </section>
-    </EditForm>
-</div>
+                    @if (_isBusy)
+                    {
+                        <FluentButton Class="composer-action composer-action--cancel" Appearance="Appearance.Neutral" @onclick="CancelRequest">取消</FluentButton>
+                    }
+                    else
+                    {
+                        <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent" Type="ButtonType.Submit">发送</FluentButton>
+                    }
+                </div>
+            </section>
+        </EditForm>
+    </div>
 }

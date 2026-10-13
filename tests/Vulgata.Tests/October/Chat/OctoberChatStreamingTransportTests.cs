@@ -77,7 +77,7 @@ public sealed class OctoberChatStreamingTransportTests
 
         Assert.Equal(OctoberChatProviderStatus.Completed, (await run).Status);
         Assert.Equal("先到😀。查阅后😀。", visible.ToString());
-        Assert.Equal(visible.ToString(), (await run).AnswerText);
+        Assert.Equal("查阅后😀。", (await run).AnswerText);
         Assert.Equal(2, wiki.Budget.ProviderRounds);
         Assert.Equal(2, wiki.Budget.ToolCalls);
         Assert.Equal(first.TotalBytes + second.TotalBytes, wiki.Budget.SseBytes);
@@ -373,7 +373,7 @@ public sealed class OctoberChatStreamingTransportTests
         try
         {
             Assert.Same(body.GateEntered.Task, await Task.WhenAny(body.GateEntered.Task, run).WaitAsync(TimeSpan.FromSeconds(5)));
-            if (deadline) clock.Advance(TimeSpan.FromSeconds(180));
+            if (deadline) clock.Advance(new OctoberChatLimits().Duration);
             else cancellation.Cancel();
             await Assert.ThrowsAnyAsync<Exception>(async () => await run.WaitAsync(TimeSpan.FromSeconds(5)));
             Assert.True(run.IsCompleted); // A WaitAsync timeout is not bounded-consumer evidence.

@@ -161,15 +161,18 @@ public sealed class KnowledgeGraphAuthorizationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task LoadGraphAsync_FinalOwnerIgnoresCancellation_StillHonorsWholeTenSecondDeadlineAsync()
+    public async Task LoadGraphAsync_FinalOwnerIgnoresCancellation_HasNoOverallDeadlineButHonorsUserCancellationAsync()
     {
         var fixture = new ControlledGraphFixture { PendingFinal = new(TaskCreationOptions.RunContinuationsAsynchronously) };
         using var service = fixture.Service();
-        var loading = ((IExploreGraphService)service).LoadGraphAsync();
+        using var cancellation = new CancellationTokenSource();
+        var loading = ((IExploreGraphService)service).LoadGraphAsync(cancellation.Token);
         Assert.Contains("final", fixture.Calls);
         fixture.Clock.Advance(TimeSpan.FromSeconds(9));
         Assert.False(loading.IsCompleted);
-        fixture.Clock.Advance(TimeSpan.FromSeconds(1));
+        fixture.Clock.Advance(TimeSpan.FromHours(1));
+        Assert.False(loading.IsCompleted);
+        cancellation.Cancel();
         var result = await loading.WaitAsync(TimeSpan.FromSeconds(2));
         Assert.NotEqual(KnowledgeReadStatus.Success, result.Status);
         Assert.Null(result.Graph);

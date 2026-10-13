@@ -15,6 +15,42 @@ namespace Vulgata.Tests.October.Chat;
 public sealed class OctoberChatPresentationTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Delivery_TinyDeltasWithSameDependenciesCoalesceWithoutDroppingTextAsync()
+    {
+        await using Fixture f = await Fixture.OpenAsync();
+        var entered = Signal();
+        var release = Signal();
+        var textSeen = Signal();
+        var delivered = new List<OctoberChatEvent>();
+        await using OctoberChatTurnPresentation attachment = f.Attach(async (item, _) =>
+        {
+            delivered.Add(item);
+            if (item.Kind == OctoberChatEventKind.TurnStarted)
+            {
+                entered.TrySetResult();
+                await release.Task;
+            }
+
+            if (item.Kind == OctoberChatEventKind.AnswerDelta) textSeen.TrySetResult();
+        }, capacity: 2);
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            for (int i = 0; i < 100; i++) Assert.True(attachment.TryPublishText("界", f.Owner.Root));
+            Assert.False(attachment.Overflowed);
+            release.TrySetResult();
+            await textSeen.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(new string('界', 100), string.Concat(delivered.Where(x => x.Kind == OctoberChatEventKind.AnswerDelta).Select(x => x.Text)));
+        }
+        finally
+        {
+            release.TrySetResult();
+            attachment.Detach();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(KnowledgeDependencyStatus.Denied)]
     [InlineData(KnowledgeDependencyStatus.AuthorityUnavailable)]
@@ -28,7 +64,11 @@ public sealed class OctoberChatPresentationTests
         await using OctoberChatTurnPresentation attachment = f.Attach(async (item, _) =>
         {
             delivered.Add(item);
-            if (item.Kind == OctoberChatEventKind.TurnStarted) { started.TrySetResult(); await release.Task; }
+            if (item.Kind == OctoberChatEventKind.TurnStarted)
+            {
+                started.TrySetResult();
+                await release.Task;
+            }
         });
         try
         {
@@ -42,7 +82,11 @@ public sealed class OctoberChatPresentationTests
             Assert.Contains(f.Dependencies.Checks, caps => caps.Length == 1 && caps[0] == union);
             Assert.False(attachment.TryPublishText("不得重新附加", union));
         }
-        finally { release.TrySetResult(); attachment.Detach(); }
+        finally
+        {
+            release.TrySetResult();
+            attachment.Detach();
+        }
     }
 
     [Trait("Suite", "SelfContained")]
@@ -59,7 +103,11 @@ public sealed class OctoberChatPresentationTests
             return await f.Owner.Dependencies.ReauthorizeAsync(selection, caps, CancellationToken.None);
         };
         var delivered = new List<OctoberChatEvent>();
-        await using OctoberChatTurnPresentation attachment = f.Attach((item, _) => { delivered.Add(item); return ValueTask.CompletedTask; });
+        await using OctoberChatTurnPresentation attachment = f.Attach((item, _) =>
+        {
+            delivered.Add(item);
+            return ValueTask.CompletedTask;
+        });
         try
         {
             await authorizing.Task.WaitAsync(TimeSpan.FromSeconds(10));
@@ -69,7 +117,11 @@ public sealed class OctoberChatPresentationTests
             Assert.True(attachment.IsDetached);
             Assert.Empty(delivered);
         }
-        finally { release.TrySetResult(); attachment.Detach(); }
+        finally
+        {
+            release.TrySetResult();
+            attachment.Detach();
+        }
     }
 
     [Trait("Suite", "SelfContained")]
@@ -121,17 +173,27 @@ public sealed class OctoberChatPresentationTests
                 Assert.True(attachment.IsDetached);
                 Assert.Equal(f.Binding.TurnId, (await f.Owner.OpenAsync()).Conversation!.ActiveTurnId);
 
-                Assert.False(model.Apply(suppressed with { Kind = OctoberChatEventKind.AnswerDelta,
-                    Sequence = suppressed.Sequence + 1, Text = "迟到旧正文" }));
+                Assert.False(model.Apply(suppressed with
+                {
+                    Kind = OctoberChatEventKind.AnswerDelta,
+                    Sequence = suppressed.Sequence + 1, Text = "迟到旧正文"
+                }));
                 var document = f.Owner.Document;
                 var reference = new OctoberChatReference(new(document.BatchId, f.Binding.Request.Publication.PublicationId,
                     document.LogicalDocumentId, document.DocumentVersionId), true, 1, 100);
-                Assert.False(model.Apply(suppressed with { Kind = OctoberChatEventKind.ReferencesUpdated,
-                    Sequence = suppressed.Sequence + 2, References = [reference] }));
+                Assert.False(model.Apply(suppressed with
+                {
+                    Kind = OctoberChatEventKind.ReferencesUpdated,
+                    Sequence = suppressed.Sequence + 2, References = [reference]
+                }));
                 Assert.Equal(string.Empty, model.AnswerText);
                 Assert.Empty(model.References);
             }
-            finally { release.TrySetResult(); attachment.Detach(); }
+            finally
+            {
+                release.TrySetResult();
+                attachment.Detach();
+            }
         }
     }
 
@@ -152,14 +214,21 @@ public sealed class OctoberChatPresentationTests
         try
         {
             await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
-            for (int i = 0; i < 4 && !attachment.Overflowed; i++) attachment.TryPublishText("有限队列", f.Owner.Root);
+            // Different proofs must never be coalesced or silently lose lineage.
+            for (int i = 0; i < 4 && !attachment.Overflowed; i++)
+                attachment.TryPublishText("有限队列", f.Owner.Dependencies.Extend(f.Owner.Root, $"distinct-{i}"));
             Assert.True(attachment.Overflowed);
             Assert.True(attachment.IsDetached);
             Assert.False(attachment.Completion.IsCompleted);
             Assert.False(attachment.TryPublishText("不再接收", f.Owner.Root));
             Assert.Equal(1, delivered);
         }
-        finally { release.TrySetResult(); attachment.Detach(); }
+        finally
+        {
+            release.TrySetResult();
+            attachment.Detach();
+        }
+
         await attachment.Completion.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.Equal(1, delivered);
         Assert.Equal(0, attachment.RetainedBytes);
@@ -195,7 +264,12 @@ public sealed class OctoberChatPresentationTests
             Assert.Equal(activeBytes, attachment.RetainedBytes);
             Assert.Equal(1, delivered);
         }
-        finally { release.TrySetResult(); attachment.Detach(); }
+        finally
+        {
+            release.TrySetResult();
+            attachment.Detach();
+        }
+
         await attachment.Completion.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.Equal(0, attachment.RetainedBytes);
         Assert.Equal(1, delivered);
@@ -288,21 +362,32 @@ public sealed class OctoberChatPresentationTests
             Binding = new(owner.Identity.ConversationId, owner.Identity.ContextId, running.TurnId, Context.Current!, new("controlled-presentation-selection"));
             Dependencies = new(owner.Dependencies);
         }
+
         public DialoguePersistenceFixture Owner { get; }
         public DialogueBeginResult Begin { get; }
         public OctoberChatTurnBinding Binding { get; }
         public MutableContext Context { get; }
         public ObservedDependencies Dependencies { get; }
         public Guid SaveId { get; } = Guid.NewGuid();
+
         public static async Task<Fixture> OpenAsync()
         {
             DialoguePersistenceFixture owner = await DialoguePersistenceFixture.CreateAsync();
-            try { return new(owner, await owner.AdmitAsync()); }
-            catch { await owner.DisposeAsync(); throw; }
+            try
+            {
+                return new(owner, await owner.AdmitAsync());
+            }
+            catch
+            {
+                await owner.DisposeAsync();
+                throw;
+            }
         }
+
         public OctoberChatTurnPresentation Attach(Func<OctoberChatEvent, CancellationToken, ValueTask> deliver, int capacity = 64,
             long maximumRetainedBytes = OctoberChatTurnPresentation.DefaultMaximumRetainedBytes) =>
             new(Binding, Begin.Admission!, SaveId, Context, Dependencies, deliver, Owner.Clock, capacity, maximumRetainedBytes);
+
         public async Task<DialogueTerminalResult> SaveAsync(bool sanitized = false)
         {
             DialogueAdmission admission = Begin.Admission!;
@@ -312,11 +397,16 @@ public sealed class OctoberChatPresentationTests
                     Binding.ContextId, Binding.TurnId, admission.Request.Execution, admission.Fence), DialogueTurnState.Running, DialogueTurnState.Saving), Owner.Subject);
                 Assert.Equal(DialogueStatus.Succeeded, saving.Status);
             }
+
             var codec = new OctoberDialoguePayloadCodec();
             DialogueTerminalSaveRequest request = Owner.TerminalRequest(admission) with { SaveOperationId = SaveId };
-            if (sanitized) request = request with { TerminalState = DialogueTerminalState.Failed,
-                Reason = DialogueTerminalReason.AuthorizationDenied, AnswerText = string.Empty,
-                References = [], ConsumedReads = [], InferenceDependencies = null };
+            if (sanitized)
+                request = request with
+                {
+                    TerminalState = DialogueTerminalState.Failed,
+                    Reason = DialogueTerminalReason.AuthorizationDenied, AnswerText = string.Empty,
+                    References = [], ConsumedReads = [], InferenceDependencies = null
+                };
             request = request with { OutcomeDigest = codec.ComputeOutcomeDigest(request) };
             DialogueTerminalResult result = await Owner.Store.SaveTerminalAsync(request, Owner.Subject);
             Assert.Equal(DialogueStatus.Succeeded, result.Status);
@@ -324,13 +414,20 @@ public sealed class OctoberChatPresentationTests
             if (!sanitized) Assert.NotNull(result.Projection);
             return result;
         }
+
         public ValueTask DisposeAsync() => Owner.DisposeAsync();
     }
 
     private sealed class MutableContext(ReadSelectionRequest current) : IOctoberChatContextProvider
     {
         public ReadSelectionRequest? Current { get; set; } = current;
-        public event Action? ContextChanged { add { } remove { } }
+
+        public event Action? ContextChanged
+        {
+            add { }
+            remove { }
+        }
+
         public Task<ReadSelectionRequest?> GetCurrentAsync(CancellationToken cancellationToken = default) => Task.FromResult(Current);
     }
 
@@ -339,11 +436,24 @@ public sealed class OctoberChatPresentationTests
     {
         public List<ImmutableArray<KnowledgeDependencyHandle>> Checks { get; } = [];
         public Func<ReadSelectionRequest, ImmutableArray<KnowledgeDependencyHandle>, CancellationToken, Task<KnowledgeDependencyStatus>>? Check { get; set; }
-        public Task<KnowledgeDependencyResult> CreateNoKnowledgeRootAsync(ReadSelectionRequest selection, string digest, CancellationToken token = default) => inner.CreateNoKnowledgeRootAsync(selection, digest, token);
-        public Task<KnowledgeDependencyResult> MergeAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> handles, CancellationToken token = default) => inner.MergeAsync(selection, handles, token);
-        public Task<KnowledgeDependencyStatus> ReauthorizeAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> handles, CancellationToken token = default)
-        { Checks.Add(handles); return Check?.Invoke(selection, handles, token) ?? inner.ReauthorizeAsync(selection, handles, token); }
-        public Task<KnowledgeConsumedContentResult> BuildConsumedContentAsync(ReadSelectionRequest selection, DocumentHandle document, ImmutableArray<KnowledgeDependencyHandle> pages, CancellationToken token = default) => inner.BuildConsumedContentAsync(selection, document, pages, token);
-        public Task<KnowledgeConsumedContentResult> VerifyConsumedContentAsync(ReadSelectionRequest selection, KnowledgeConsumedContentHandle proof, KnowledgeDependencyHandle inference, CancellationToken token = default) => inner.VerifyConsumedContentAsync(selection, proof, inference, token);
+
+        public Task<KnowledgeDependencyResult> CreateNoKnowledgeRootAsync(ReadSelectionRequest selection, string digest, CancellationToken token = default) =>
+            inner.CreateNoKnowledgeRootAsync(selection, digest, token);
+
+        public Task<KnowledgeDependencyResult> MergeAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> handles, CancellationToken token = default) =>
+            inner.MergeAsync(selection, handles, token);
+
+        public Task<KnowledgeDependencyStatus> ReauthorizeAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> handles,
+            CancellationToken token = default)
+        {
+            Checks.Add(handles);
+            return Check?.Invoke(selection, handles, token) ?? inner.ReauthorizeAsync(selection, handles, token);
+        }
+
+        public Task<KnowledgeConsumedContentResult> BuildConsumedContentAsync(ReadSelectionRequest selection, DocumentHandle document,
+            ImmutableArray<KnowledgeDependencyHandle> pages, CancellationToken token = default) => inner.BuildConsumedContentAsync(selection, document, pages, token);
+
+        public Task<KnowledgeConsumedContentResult> VerifyConsumedContentAsync(ReadSelectionRequest selection, KnowledgeConsumedContentHandle proof,
+            KnowledgeDependencyHandle inference, CancellationToken token = default) => inner.VerifyConsumedContentAsync(selection, proof, inference, token);
     }
 }

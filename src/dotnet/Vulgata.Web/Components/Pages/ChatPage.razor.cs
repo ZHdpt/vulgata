@@ -175,35 +175,55 @@ public partial class ChatPage : IAsyncDisposable
         await BindOctoberApplicationAsync();
     }
 
-    private async Task RequestOctoberModeAsync(KnowledgeMode mode)
+    private bool _showOctoberConfirmation;
+
+    private Task RequestOctoberModeAsync(KnowledgeMode mode)
     {
-        if (OctoberEntry?.Conversation is not { } conversation || OctoberTransitionDisabled)
+        if (OctoberEntry?.Conversation is not { } conversation || OctoberTransitionDisabled ||
+            conversation.Request.Mode == mode)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        // Only the mode changes here; subject, purpose and exact binding remain host-issued.
         _pendingOctoberSelection = conversation.Request with { Mode = mode };
         _newOctoberConversationRequested = false;
-        await OctoberEntry.RequestContextChangeAsync(_pendingOctoberSelection, confirmed: false);
+        _showOctoberConfirmation = true;
+        return Task.CompletedTask;
     }
 
-    private async Task RequestNewOctoberConversationAsync()
+    private Task RequestNewOctoberConversationAsync()
     {
-        if (OctoberEntry is not null)
+        if (OctoberEntry is not null && !OctoberTransitionDisabled)
         {
             _newOctoberConversationRequested = true;
-            await OctoberEntry.StartNewConversationAsync(confirmed: false);
+            _showOctoberConfirmation = true;
+        }
+        return Task.CompletedTask;
+    }
+
+    private void CancelOctoberConfirmation()
+    {
+        _showOctoberConfirmation = false;
+        _pendingOctoberSelection = null;
+        _newOctoberConversationRequested = false;
+    }
+
+    private void OctoberConfirmationHiddenChanged(bool hidden)
+    {
+        if (hidden)
+        {
+            CancelOctoberConfirmation();
         }
     }
 
     private async Task ConfirmOctoberContextAsync()
     {
-        if (OctoberEntry is null || !OctoberEntry.RequiresConfirmation)
+        if (OctoberEntry is null || !_showOctoberConfirmation || OctoberTransitionDisabled)
         {
             return;
         }
 
+        _showOctoberConfirmation = false;
         if (OctoberApplication is not null)
         {
             ClearOctoberLocator();
@@ -220,7 +240,6 @@ public partial class ChatPage : IAsyncDisposable
         }
         await BindOctoberApplicationAsync();
     }
-
     private void ToggleRepositoryPicker()
     {
         _isRepositoryPickerOpen = !_isRepositoryPickerOpen;

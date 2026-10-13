@@ -1,5 +1,56 @@
 # Project state for agent resumption
 
+October 13 Explorer UI: document and graph pages use light styling independently
+of Knowledge mode. Reader continuation controls appear only when more content is
+available. Graph details appear on node selection, with colored ellipse nodes and
+in-canvas controls. Graph acquisition follows all document/relationship pages,
+without the old 40-node/80-edge cap or ten-second aggregate deadline. Per-request
+Knowledge bounds and authorization remain; final proof checks split large batches.
+Controlled Explorer tests cover pagination, cancellation and disclosure. This change
+has not yet been qualified against the running retained host.
+Explorer follow-up: empty coverage disclosures are hidden; node selection preserves
+the viewport and the mouse wheel controls zoom. The full-height document list has
+title search across authorized pages, a page indicator and previous/next controls.
+Previous pages are re-read because continuation sessions are single-use. The reader
+body heading sits outside its content card. Browser requalification is requested
+from the user-designated Qualify Explorer and IT Chat task.
+
+
+October 13 Chat composer: one bottom-right action transitions from disabled
+“正在准备对话” to “取消生成”, then back to “发送” after completion or cancellation.
+Preparation/generation has a pulsing border with a static reduced-motion fallback;
+save-uncertainty recovery remains separate. This UI change uses controlled component
+verification; the existing running Web host was not restarted or live-qualified.
+
+October 12 Chat reference visibility: existing saved references were present below
+long answers. Each document-backed answer now has a visible source-count shortcut
+to its own styled reference list, preserving conversation/context query parameters.
+Focused tests pass 88/88. Browser verification found all nine saved references and
+opened one exact cited Document version successfully. The task-owned Web service
+was stopped afterward at the user's request; port 15075 was confirmed closed.
+
+October 12 Chat streaming repair: batch already-buffered provider text before
+live disclosure checks; check contributor unions once per Document kind; coalesce
+queued UI text without losing proofs. Citation registration preserves the answer,
+tool schemas expose the enforced page-size maximum, and prompts explain actual
+search semantics. Provider I/O breaks retain interrupted text. Limits remain
+30 rounds / 64 tool calls / 540 seconds. Affected SelfContained tests pass
+625/625. The ordinary-user IT replay of “手机银行登录是怎么做的” with the pinned two
+repositories completed and saved 9,638 characters with nine citations in 61.41
+seconds; reload verified the full answer. This is one scoped live qualification,
+not universal provider reliability. See the
+[Chat repair evidence](../bmad/planning-artifacts/october-chat-stream-repair-2026-10-12.md).
+
+October 12 Knowledge-read repair: repeated per-Document authorization was the
+measured latency bottleneck. Contributor-union checks retain live authorization,
+denied-member fallback and final rechecks; exact/related reads limit authorization
+to relevant immutable versions. Final affected controlled checks pass 1,387/1,387.
+On the pinned 163-CL publication, ordinary-user warm list/Document reads are below
+0.6 seconds and the bounded graph loads in 1.43 seconds (20 nodes, zero accepted
+edges, explicit incomplete notice). First-process load remains slower. No provider,
+schema, permission or retained-publication changes. See the
+[repair evidence](../bmad/planning-artifacts/october-knowledge-read-performance-repair-2026-10-12.md).
+
 October 11 login correction: ChatPage now renders a loading state while asynchronous
 October host context resolution is pending, preventing the uninitialized legacy
 EditForm from crashing the post-login route. Two controlled regression cases reproduced

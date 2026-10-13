@@ -4,14 +4,14 @@
 @using System.Collections.Immutable
 @using Vulgata.Core.DomainServices.OctoberDialogue
 
-<footer class="october-chat-reference-footer">
+<footer class="october-chat-reference-footer" aria-label="参考文档">
     @if (_unavailable)
     {
         <p role="status">参考文档暂不可用。</p>
     }
     else if (!_rows.IsEmpty)
     {
-        <span>参考文档：</span>
+        <strong>参考文档（@_rows.Length）</strong>
         <ul>
             @foreach (var row in _rows)
             {

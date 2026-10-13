@@ -18,6 +18,9 @@ public sealed class DocumentBrowseViewModel : IDisposable
         _service.ContextChanged += Clear;
     }
 
+    public int PageNumber { get; private set; } = 1;
+    public string TitleQuery { get; private set; } = "";
+    public bool CanPrevious => !_disposed && _pending is null && PageNumber > 1;
     public SearchPage? Page { get; private set; }
     public ExploreBrowseSession? Session { get; private set; }
     public LoadState LoadState { get; private set; }
@@ -29,17 +32,31 @@ public sealed class DocumentBrowseViewModel : IDisposable
 
     public Task LoadAsync()
     {
-        lock (_gate) { return _disposed ? Task.CompletedTask : ReadAsync(null); }
+        lock (_gate) { return _disposed ? Task.CompletedTask : ReadAsync(null, 1); }
     }
 
     public Task NextAsync()
     {
-        lock (_gate) { return CanContinue ? ReadAsync(Session) : Task.CompletedTask; }
+        lock (_gate) { return CanContinue ? ReadAsync(Session, PageNumber + 1) : Task.CompletedTask; }
     }
 
     public Task RetryAsync() => LoadAsync();
 
-    private async Task ReadAsync(ExploreBrowseSession? session)
+    public Task SearchAsync(string query)
+    {
+        lock (_gate)
+        {
+            TitleQuery = query.Trim();
+            return _disposed ? Task.CompletedTask : ReadAsync(null, 1);
+        }
+    }
+
+    public Task PreviousAsync()
+    {
+        lock (_gate) { return CanPrevious ? ReadAsync(null, PageNumber - 1) : Task.CompletedTask; }
+    }
+
+    private async Task ReadAsync(ExploreBrowseSession? session, int targetPage)
     {
         CancelPending();
         var generation = ++_generation;
@@ -51,12 +68,19 @@ public sealed class DocumentBrowseViewModel : IDisposable
         Changed?.Invoke();
         try
         {
-            var result = await _service.BrowseAsync(session, pending.Token);
+            var result = await _service.BrowseAsync(session, pending.Token, TitleQuery);
+            // Continuations are single-use. Re-read earlier pages with fresh authorization.
+            if (session is null)
+            {
+                for (var number = 1; number < targetPage && result.Session is not null; number++)
+                    result = await _service.BrowseAsync(result.Session, pending.Token, TitleQuery);
+            }
             lock (_gate)
             {
                 if (_disposed || generation != _generation || pending.IsCancellationRequested) { return; }
                 if (result.Page.Status == KnowledgeReadStatus.Success)
                 {
+                    PageNumber = targetPage;
                     Page = result.Page;
                     Session = result.Session;
                     Mode = result.Mode;

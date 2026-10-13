@@ -10,6 +10,7 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
     private const string ConsumedDomain = "october.knowledge.consumed-content.v1";
     private readonly IOctoberKnowledgeDisclosurePolicy _policy;
     private readonly IOctoberKnowledgeDisclosureProtector _protector;
+
     public OctoberKnowledgeDependencyAuthority(IOctoberKnowledgeDisclosurePolicy policy, IOctoberKnowledgeDisclosureProtector protector)
     {
         _policy = policy ?? throw new ArgumentNullException(nameof(policy));
@@ -46,7 +47,8 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
         CancellationToken cancellationToken = default) => RunAsync(async token =>
     {
         var dependencies = OpenAll(selection, admittedContentPages, token);
-        if (dependencies.Origins.Any(origin => origin.Kind != "content" || origin.Content?.Document != document)) throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
+        if (dependencies.Origins.Any(origin => origin.Kind != "content" || origin.Content?.Document != document))
+            throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
         var consumed = NormalizeConsumed(new(dependencies.Binding, document, dependencies.Origins
             .Select(origin => new ConsumedSlice(origin.Content!, origin.Groups)).ToImmutableArray()));
         await CheckAsync(selection, dependencies, token);
@@ -74,8 +76,10 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
 
     internal KnowledgeDependencyHandle Issue(ReadSelectionRequest selection, string kind, string pageDigest, string outputProfile,
         string outputDigest, IEnumerable<DisclosureRequest> authorizedDisclosures, DisclosureContent? content) =>
-        Seal(new(OctoberKnowledgeDisclosureCodec.Binding(selection), [new(kind, "", pageDigest, outputProfile, outputDigest,
-            OctoberKnowledgeDisclosureCodec.Groups(authorizedDisclosures), content)]));
+        Seal(new(OctoberKnowledgeDisclosureCodec.Binding(selection), [
+            new(kind, "", pageDigest, outputProfile, outputDigest,
+                OctoberKnowledgeDisclosureCodec.Groups(authorizedDisclosures), content)
+        ]));
 
     private DisclosureSet OpenAll(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> handles, CancellationToken token)
     {
@@ -95,6 +99,7 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
             RequireBinding(selection, set.Binding);
             origins.AddRange(set.Origins);
         }
+
         var result = OctoberKnowledgeDisclosureCodec.Normalize(new(binding, origins.ToImmutable()));
         OctoberKnowledgeDisclosureCodec.LimitText(OctoberKnowledgeDisclosureCodec.Canonical(result), OctoberKnowledgeDisclosureLimits.MaximumCanonicalPayloadUtf8Bytes);
         return result;
@@ -107,6 +112,7 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
         Guid id = Guid.NewGuid();
         return new(id, digest, Protect(new DisclosureSeal<DisclosureSet>(1, "dependencies", id, digest, set), _protector.ProtectDependency));
     }
+
     private string Protect<T>(DisclosureSeal<T> value, Func<string, string> protect)
     {
         string plaintext = OctoberKnowledgeDisclosureCodec.Canonical(value);
@@ -115,9 +121,11 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
         OctoberKnowledgeDisclosureCodec.LimitText(protectedPayload, OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes);
         return protectedPayload;
     }
+
     private static T Open<T>(Guid id, string digest, string protectedPayload, string kind, string domain, Func<string, string> unprotect)
     {
-        if (id == Guid.Empty || !OctoberKnowledgeDisclosureCodec.IsDigest(digest) || string.IsNullOrWhiteSpace(protectedPayload)) throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
+        if (id == Guid.Empty || !OctoberKnowledgeDisclosureCodec.IsDigest(digest) || string.IsNullOrWhiteSpace(protectedPayload))
+            throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
         OctoberKnowledgeDisclosureCodec.LimitText(protectedPayload, OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes);
         try
         {
@@ -129,34 +137,48 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
                 OctoberKnowledgeDisclosureCodec.Digest(domain, seal.Value) != digest) throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
             return seal.Value;
         }
-        catch (DisclosureFailure) { throw; }
-        catch (Exception) { throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof); }
+        catch (DisclosureFailure)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
+        }
     }
+
     private static void RequireBinding(ReadSelectionRequest selection, DisclosureBinding binding)
     {
         if (OctoberKnowledgeDisclosureCodec.Canonical(OctoberKnowledgeDisclosureCodec.Binding(selection)) != OctoberKnowledgeDisclosureCodec.Canonical(binding))
             throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
     }
+
     private async Task CheckAsync(ReadSelectionRequest selection, DisclosureSet set, CancellationToken token)
     {
         RequireBinding(selection, set.Binding);
         await CheckPolicyAsync(new(selection, [], null), token);
-        foreach (var group in set.Origins.SelectMany(origin => origin.Groups).DistinctBy(OctoberKnowledgeDisclosureCodec.Canonical))
-            await CheckPolicyAsync(new(selection, group.Contributors, group.Kind), token);
+        // Every contributor must be allowed, so overlapping origins can share one
+        // live check per kind. Keep the sealed origins intact for exact provenance.
+        foreach (var group in set.Origins.SelectMany(origin => origin.Groups).GroupBy(group => group.Kind))
+            await CheckPolicyAsync(new(selection,
+                group.SelectMany(value => value.Contributors).Distinct().ToImmutableArray(), group.Key), token);
         // Recheck subject eligibility at the actual return boundary, after all contributor lookups.
         await CheckPolicyAsync(new(selection, [], null), token);
     }
+
     private async Task CheckPolicyAsync(DisclosureRequest request, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
         var status = await _policy.CheckAsync(request, token).WaitAsync(token);
         token.ThrowIfCancellationRequested();
-        if (status != DisclosureStatus.Allowed) throw new DisclosureFailure(status == DisclosureStatus.Denied ? KnowledgeDependencyStatus.Denied : KnowledgeDependencyStatus.AuthorityUnavailable);
+        if (status != DisclosureStatus.Allowed)
+            throw new DisclosureFailure(status == DisclosureStatus.Denied ? KnowledgeDependencyStatus.Denied : KnowledgeDependencyStatus.AuthorityUnavailable);
     }
 
     private static ConsumedSet NormalizeConsumed(ConsumedSet value)
     {
-        if (value.Slices.IsDefaultOrEmpty || value.Slices.Length > OctoberKnowledgeDisclosureLimits.MaximumOriginGroups) throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
+        if (value.Slices.IsDefaultOrEmpty || value.Slices.Length > OctoberKnowledgeDisclosureLimits.MaximumOriginGroups)
+            throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
         var ordered = value.Slices.OrderBy(slice => slice.Content.Start).ThenBy(slice => slice.Content.End).ToArray();
         var first = ordered[0].Content;
         var slices = ImmutableArray.CreateBuilder<ConsumedSlice>();
@@ -169,13 +191,17 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
                 !OctoberKnowledgeDisclosureCodec.IsDigest(content.ChunkDigest)) throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
             if (slices.Count != 0 && content.Start < slices[^1].Content.End)
             {
-                if (OctoberKnowledgeDisclosureCodec.Canonical(slice) != OctoberKnowledgeDisclosureCodec.Canonical(slices[^1])) throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
+                if (OctoberKnowledgeDisclosureCodec.Canonical(slice) != OctoberKnowledgeDisclosureCodec.Canonical(slices[^1]))
+                    throw new DisclosureFailure(KnowledgeDependencyStatus.InvalidProof);
                 continue;
             }
+
             slices.Add(slice);
         }
+
         return value with { Slices = slices.ToImmutable() };
     }
+
     private KnowledgeConsumedContentReceipt Receipt(ConsumedSet consumed, DisclosureSet dependencies, KnowledgeConsumedContentHandle? existingProof = null)
     {
         string digest = OctoberKnowledgeDisclosureCodec.Digest(ConsumedDomain, consumed);
@@ -191,16 +217,30 @@ public sealed class OctoberKnowledgeDependencyAuthority : IOctoberKnowledgeDepen
             position = slice.Content.End;
             bytes = checked(bytes + slice.Content.ContentBytes);
         }
+
         partial |= position != consumed.Slices[0].Content.TotalLength;
         return new(proof, consumed.Document, partial, consumed.Slices.Length, bytes, consumed.Slices[0].Content.Coverage, Seal(dependencies));
     }
+
     private static async Task<T> RunAsync<T>(Func<CancellationToken, Task<T>> execute, Func<KnowledgeDependencyStatus, T> failure, CancellationToken caller)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(caller);
         deadline.CancelAfter(TimeSpan.FromSeconds(10));
-        try { return await execute(deadline.Token).WaitAsync(deadline.Token); }
-        catch (OperationCanceledException) { return failure(caller.IsCancellationRequested ? KnowledgeDependencyStatus.Cancelled : KnowledgeDependencyStatus.AuthorityUnavailable); }
-        catch (DisclosureFailure exception) { return failure(exception.Status); }
-        catch (Exception) { return failure(KnowledgeDependencyStatus.AuthorityUnavailable); }
+        try
+        {
+            return await execute(deadline.Token).WaitAsync(deadline.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return failure(caller.IsCancellationRequested ? KnowledgeDependencyStatus.Cancelled : KnowledgeDependencyStatus.AuthorityUnavailable);
+        }
+        catch (DisclosureFailure exception)
+        {
+            return failure(exception.Status);
+        }
+        catch (Exception)
+        {
+            return failure(KnowledgeDependencyStatus.AuthorityUnavailable);
+        }
     }
 }

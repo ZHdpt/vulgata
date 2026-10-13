@@ -83,13 +83,70 @@ public sealed class OctoberChatApplication
     }
 
     public event Action? StateChanged;
-    public bool IsReady { get { lock (_gate) return _attached && _ready && !_uncertain && _owned is null && _operation == 0; } }
-    public bool IsBusy { get { lock (_gate) return _operation != 0 || _owned is not null; } }
-    public bool IsSaveUncertain { get { lock (_gate) return _uncertain; } }
-    public string? StatusMessage { get { lock (_gate) return _status; } }
-    public OctoberChatConversation? Conversation { get { lock (_gate) return _attached ? _conversation : null; } }
-    public IReadOnlyList<OctoberChatApplicationTurn> Turns { get { lock (_gate) return _attached ? _turns.ToArray() : []; } }
-    public ImmutableArray<DialogueTerminalProjection> Transcript { get { lock (_gate) return _attached ? _transcript : []; } }
+
+    public bool IsReady
+    {
+        get
+        {
+            lock (_gate) return _attached && _ready && !_uncertain && _owned is null && _operation == 0;
+        }
+    }
+
+    public bool IsBusy
+    {
+        get
+        {
+            lock (_gate) return _operation != 0 || _owned is not null;
+        }
+    }
+
+    public bool IsPreparing
+    {
+        get
+        {
+            lock (_gate) return !_uncertain && (_operation != 0 || _owned is not null) && _owned?.Presentation is null;
+        }
+    }
+
+    public bool IsSaveUncertain
+    {
+        get
+        {
+            lock (_gate) return _uncertain;
+        }
+    }
+
+    public string? StatusMessage
+    {
+        get
+        {
+            lock (_gate) return _status;
+        }
+    }
+
+    public OctoberChatConversation? Conversation
+    {
+        get
+        {
+            lock (_gate) return _attached ? _conversation : null;
+        }
+    }
+
+    public IReadOnlyList<OctoberChatApplicationTurn> Turns
+    {
+        get
+        {
+            lock (_gate) return _attached ? _turns.ToArray() : [];
+        }
+    }
+
+    public ImmutableArray<DialogueTerminalProjection> Transcript
+    {
+        get
+        {
+            lock (_gate) return _attached ? _transcript : [];
+        }
+    }
 
     /// <summary>The page dispatches the supplied guarded application callback onto its renderer.</summary>
     public void Attach(Func<Func<ValueTask>, Task> dispatch)
@@ -103,6 +160,7 @@ public sealed class OctoberChatApplication
             _attached = true;
             _ready = false;
         }
+
         if (_attachmentContext is not null) _attachmentContext.ContextChanged += Detach;
         Notify();
     }
@@ -126,6 +184,7 @@ public sealed class OctoberChatApplication
                 _conversation = hostConversation;
                 _status = "正在准备对话…";
             }
+
             Notify();
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(OctoberDialogueLimits.MaximumPersistenceAttempt);
@@ -139,11 +198,17 @@ public sealed class OctoberChatApplication
                 _ready = _attached;
                 _status = _attached ? null : "对话已断开。";
             }
+
             return IsAttached();
         }
         catch (Exception)
         {
-            lock (_gate) { _ready = false; _status = "对话服务暂不可用。"; }
+            lock (_gate)
+            {
+                _ready = false;
+                _status = "对话服务暂不可用。";
+            }
+
             return false;
         }
         finally
@@ -173,6 +238,7 @@ public sealed class OctoberChatApplication
                 conversation = _conversation;
                 attachment = _attachment;
             }
+
             explicitCancellation = new();
             lock (_gate) _preparingCancellation = explicitCancellation;
             var budget = new OctoberChatBudget(_limits, cancellationToken: explicitCancellation.Token);
@@ -202,6 +268,7 @@ public sealed class OctoberChatApplication
                     throw new InvalidOperationException("Dialogue history authority is unavailable.");
                 initial = merged;
             }
+
             var request = new DialogueBeginRequest(conversation.ConversationId, conversation.ContextId,
                 Guid.NewGuid(), question, string.Empty, owned.Provider!.ProviderId.ToString("D"), owned.Provider.Revision,
                 digests.PromptDigest, history.TurnIds, history.ProjectionDigest!, initial, budget.Limits, owned.Registration.Execution);
@@ -219,8 +286,14 @@ public sealed class OctoberChatApplication
                 {
                     _registry.ObserveGeneration(owned.Registration, generation);
                     owned.Generation = generation;
-                    try { CreatePresentation(owned, attachment, saveId); }
-                    catch (Exception) { owned.Presentation?.Detach(); } // UI failure does not invent generation failure.
+                    try
+                    {
+                        CreatePresentation(owned, attachment, saveId);
+                    }
+                    catch (Exception)
+                    {
+                        owned.Presentation?.Detach();
+                    } // UI failure does not invent generation failure.
                 });
             Notify();
             OctoberChatCoordinationResult result = await owned.Coordinator.ExecuteAsync(request, budget,
@@ -246,6 +319,7 @@ public sealed class OctoberChatApplication
                 _uncertain = owned?.Coordinator is not null;
                 _status = _uncertain ? "对话状态待确认。" : "对话服务暂不可用。";
             }
+
             if (owned?.Coordinator is null && owned is not null) _ = CleanupObservedAsync(owned);
             return null;
         }
@@ -262,14 +336,21 @@ public sealed class OctoberChatApplication
     {
         OwnedOperation? owned;
         CancellationTokenSource? cancellation;
-        lock (_gate) { owned = _owned; cancellation = owned?.ExecutionCancellation ?? _preparingCancellation; }
+        lock (_gate)
+        {
+            owned = _owned;
+            cancellation = owned?.ExecutionCancellation ?? _preparingCancellation;
+        }
+
         if (cancellation is null) return;
         try
         {
             if (owned is not null) _registry.StartTrackedAsync(owned.Registration, cancellation.CancelAsync);
             else _ = cancellation.CancelAsync();
         }
-        catch (Exception) { } // Never infer that opaque physical work has stopped.
+        catch (Exception)
+        {
+        } // Never infer that opaque physical work has stopped.
     }
 
     public void Detach()
@@ -286,6 +367,7 @@ public sealed class OctoberChatApplication
             _transcript = [];
             presentation = _owned?.Presentation;
         }
+
         if (_attachmentContext is not null) _attachmentContext.ContextChanged -= Detach;
         presentation?.Detach();
         Notify();
@@ -303,7 +385,11 @@ public sealed class OctoberChatApplication
             await AcceptResultAsync(owned, result);
             return result;
         }
-        finally { Interlocked.Exchange(ref _operation, 0); Notify(); }
+        finally
+        {
+            Interlocked.Exchange(ref _operation, 0);
+            Notify();
+        }
     }
 
     private async Task<OwnedOperation?> PrepareAsync(OctoberChatConversation conversation, bool create, CancellationToken token)
@@ -317,7 +403,12 @@ public sealed class OctoberChatApplication
                 : Task.FromResult(CommitEligibilityStatus.AuthorityUnavailable));
         if (registration is null) return null;
         owned = new(conversation, registration);
-        lock (_gate) { _owned = owned; _status = "正在准备对话…"; }
+        lock (_gate)
+        {
+            _owned = owned;
+            _status = "正在准备对话…";
+        }
+
         Notify();
         try
         {
@@ -334,8 +425,9 @@ public sealed class OctoberChatApplication
                 ReadSelectionRequest? attachmentSelection = await scope.StartAsync(() => _attachmentContext.GetCurrentAsync(token)).WaitAsync(token);
                 if (!Matches(conversation.Request, attachmentSelection)) throw new InvalidOperationException("Chat attachment changed.");
             }
+
             owned.Provider = await scope.StartAsync(() => scope.Providers.FreezeAsync(token)).WaitAsync(token)
-                ?? throw new InvalidOperationException("Chat provider is unavailable.");
+                             ?? throw new InvalidOperationException("Chat provider is unavailable.");
             ReadSelectionResult selection = await scope.Reader.OpenReadSelectionAsync(current!, token).WaitAsync(token);
             if (selection is not { Status: KnowledgeReadStatus.Success, Selection: { } selected })
                 throw new InvalidOperationException("Chat selection is unavailable.");
@@ -364,8 +456,16 @@ public sealed class OctoberChatApplication
             operationId, id => id == operationId && !owned.Settled, scope.Context, scope.Store, scope.Codec, scope.Dependencies);
         await projection.PrepareHistoryAsync(token);
         OctoberChatHistorySnapshot? history = null;
-        await projection.HandoffHistoryAsync((snapshot, _) => { history = snapshot; return ValueTask.CompletedTask; },
-            _ => { ClearDisplay(); return ValueTask.CompletedTask; }, token);
+        await projection.HandoffHistoryAsync((snapshot, _) =>
+            {
+                history = snapshot;
+                return ValueTask.CompletedTask;
+            },
+            _ =>
+            {
+                ClearDisplay();
+                return ValueTask.CompletedTask;
+            }, token);
         return history;
     }
 
@@ -380,12 +480,20 @@ public sealed class OctoberChatApplication
         owned.Presentation = new(binding, admission, saveId, owned.Scope!.Context, owned.Scope.Dependencies,
             async (item, token) =>
             {
-                if (item.Kind == OctoberChatEventKind.DisclosureSuppressed) { ClearDisplay(); return; }
+                if (item.Kind == OctoberChatEventKind.DisclosureSuppressed)
+                {
+                    ClearDisplay();
+                    return;
+                }
+
                 bool contentFree = item.Kind == OctoberChatEventKind.TurnSaved && item.Text == string.Empty &&
-                    item.References.IsEmpty && item.SavedOutcome == OctoberChatDisplayOutcome.Failed &&
-                    owned.Terminal is { Receipt.TerminalState: DialogueTerminalState.Failed,
-                        Receipt.Reason: DialogueTerminalReason.AuthorizationDenied or DialogueTerminalReason.AuthorityUnavailable,
-                        Projection: null };
+                                   item.References.IsEmpty && item.SavedOutcome == OctoberChatDisplayOutcome.Failed &&
+                                   owned.Terminal is
+                                   {
+                                       Receipt.TerminalState: DialogueTerminalState.Failed,
+                                       Receipt.Reason: DialogueTerminalReason.AuthorizationDenied or DialogueTerminalReason.AuthorityUnavailable,
+                                       Projection: null
+                                   };
                 await ApplyAsync(owned, attachment, contentFree ? [] : Capsules(owned.DisplayDependencies), () =>
                 {
                     if (contentFree) display.Question = string.Empty;
@@ -394,13 +502,14 @@ public sealed class OctoberChatApplication
                 }, token, contentFree);
                 if (item.Kind == OctoberChatEventKind.TurnSaveUncertain) owned.UncertainHandoff.TrySetResult();
             });
+        Notify();
     }
 
     private async Task AcceptResultAsync(OwnedOperation owned, OctoberChatCoordinationResult result)
     {
         owned.AdmissionWasIndeterminate |= result.Begin.Status == DialogueStatus.Indeterminate;
         bool terminal = result.Terminal is { Status: DialogueStatus.Succeeded or DialogueStatus.Existing, Receipt: not null } &&
-            result.State is DialogueTurnState.Completed or DialogueTurnState.Interrupted or DialogueTurnState.Failed && result.PendingSave is null;
+                        result.State is DialogueTurnState.Completed or DialogueTurnState.Interrupted or DialogueTurnState.Failed && result.PendingSave is null;
         if (result.Terminal?.Projection?.InferenceDependencies is { } dependencies) owned.DisplayDependencies = dependencies;
         owned.Terminal = result.Terminal;
         owned.Presentation?.TryPublishResult(result);
@@ -408,9 +517,10 @@ public sealed class OctoberChatApplication
         {
             _uncertain = !terminal && (result.Begin.MayDispatch || owned.AdmissionWasIndeterminate);
             _ready = false;
-            _status = _uncertain ? result.PendingSave is not null ? "保存状态待确认。" : "对话状态待确认。"
-                : terminal ? null : "对话暂不可用。";
+            _status = _uncertain ? result.PendingSave is not null ? "保存状态待确认。" : "对话状态待确认。" :
+                terminal ? null : "对话暂不可用。";
         }
+
         Notify();
         if (!terminal)
         {
@@ -423,15 +533,19 @@ public sealed class OctoberChatApplication
                     await Task.WhenAny(owned.UncertainHandoff.Task, uncertainPresentation.Completion)
                         .WaitAsync(OctoberDialogueLimits.MaximumPersistenceAttempt);
                 }
-                catch (TimeoutException) { }
+                catch (TimeoutException)
+                {
+                }
             }
+
             // Existing/lookup admissions cannot dispatch. No locally owned Begin
             // means this preparation scope can close without claiming orphan death.
             if (!owned.AdmissionWasIndeterminate && (result.Begin.Status == DialogueStatus.Existing ||
-                result.Begin.Admission is null && result.Begin.Status != DialogueStatus.Indeterminate))
+                                                     result.Begin.Admission is null && result.Begin.Status != DialogueStatus.Indeterminate))
                 await CleanupAsync(owned);
             return;
         }
+
         if (owned.Presentation is { } presentation) await presentation.Completion;
         bool displayReady = false;
         if (IsAttached())
@@ -439,6 +553,7 @@ public sealed class OctoberChatApplication
             using var displayLifetime = new CancellationTokenSource(OctoberDialogueLimits.MaximumPersistenceAttempt);
             displayReady = await RefreshTranscriptAsync(owned, displayLifetime.Token);
         }
+
         await CleanupAsync(owned);
         lock (_gate)
         {
@@ -462,7 +577,12 @@ public sealed class OctoberChatApplication
         bool applied = false;
         await projection.HandoffTranscriptAsync(async (value, handoff) =>
         {
-            if (value is null) { ClearDisplay(); return; }
+            if (value is null)
+            {
+                ClearDisplay();
+                return;
+            }
+
             snapshot = value;
             var capsules = value.Result.Turns.Where(turn => turn.InferenceDependencies is not null)
                 .Select(turn => turn.InferenceDependencies!).ToImmutableArray();
@@ -477,6 +597,7 @@ public sealed class OctoberChatApplication
                     previous.Question = string.Empty;
                     previous.ViewModel.TrySuppressDisclosure(previous.ViewModel.Binding);
                 }
+
                 _turns.Clear();
                 foreach (var saved in _transcript)
                 {
@@ -485,7 +606,11 @@ public sealed class OctoberChatApplication
                     if (OctoberChatTurnViewModel.CreateSaved(binding, saved) is { } model) _turns.Add(new(saved.Question, model));
                 }
             }, handoff);
-        }, _ => { ClearDisplay(); return ValueTask.CompletedTask; }, token);
+        }, _ =>
+        {
+            ClearDisplay();
+            return ValueTask.CompletedTask;
+        }, token);
         if (snapshot is null || !applied || !IsCurrentAttachment(attachment)) return false;
         foreach (var saved in snapshot.Result.Turns)
         {
@@ -496,9 +621,14 @@ public sealed class OctoberChatApplication
                 IsCurrentAttachment, scope.Context, scope.Reader, scope.DisclosedReader, scope.Dependencies);
             await footer.PrepareAsync(token);
             await footer.HandoffAsync(async (state, handoff) =>
-                await ApplyAsync(owned, attachment, Capsules(state.Dependencies), () => display.Footer = state, handoff),
-                _ => { ClearDisplay(); return ValueTask.CompletedTask; }, token);
+                    await ApplyAsync(owned, attachment, Capsules(state.Dependencies), () => display.Footer = state, handoff),
+                _ =>
+                {
+                    ClearDisplay();
+                    return ValueTask.CompletedTask;
+                }, token);
         }
+
         return IsCurrentAttachment(attachment);
     }
 
@@ -514,27 +644,55 @@ public sealed class OctoberChatApplication
                 return;
             OctoberChatTurnScope scope = owned.Scope!;
             ReadSelectionRequest? current = await scope.Context.GetCurrentAsync(token).WaitAsync(token);
-            if (!Matches(owned.Conversation.Request, current)) { Detach(); return; }
+            if (!Matches(owned.Conversation.Request, current))
+            {
+                Detach();
+                return;
+            }
+
             if (_attachmentContext is not null)
             {
                 ReadSelectionRequest? attached = await scope.StartAsync(() => _attachmentContext.GetCurrentAsync(token)).WaitAsync(token);
-                if (!Matches(current!, attached)) { Detach(); return; }
+                if (!Matches(current!, attached))
+                {
+                    Detach();
+                    return;
+                }
             }
+
             if (!contentFree)
             {
                 if (await scope.DisclosurePolicy!.CheckAsync(new(current!, [], null), token).WaitAsync(token) != DisclosureStatus.Allowed ||
                     !capsules.IsEmpty && await scope.Dependencies.ReauthorizeAsync(current!, capsules, token).WaitAsync(token) != KnowledgeDependencyStatus.Succeeded)
-                { ClearDisplay(); return; }
+                {
+                    ClearDisplay();
+                    return;
+                }
             }
+
             ReadSelectionRequest? after = await scope.Context.GetCurrentAsync(token).WaitAsync(token);
-            if (!Matches(current!, after)) { Detach(); return; }
+            if (!Matches(current!, after))
+            {
+                Detach();
+                return;
+            }
+
             if (_attachmentContext is not null)
             {
                 ReadSelectionRequest? attachedAfter = await scope.StartAsync(() => _attachmentContext.GetCurrentAsync(token)).WaitAsync(token);
-                if (!Matches(after!, attachedAfter)) { Detach(); return; }
+                if (!Matches(after!, attachedAfter))
+                {
+                    Detach();
+                    return;
+                }
             }
+
             token.ThrowIfCancellationRequested();
-            lock (_gate) { if (IsCurrentAttachment(attachment)) apply(); }
+            lock (_gate)
+            {
+                if (IsCurrentAttachment(attachment)) apply();
+            }
+
             Notify();
         });
     }
@@ -555,9 +713,8 @@ public sealed class OctoberChatApplication
                 // This exception grants no content. The actual generation lineage
                 // (or the original input for a never-started execution) must freshly
                 // return the exact refusal recorded by the canonical empty closure.
-                KnowledgeDependencyHandle? lineage = owned.Generation is { IsCompletedSuccessfully: true } generation
-                    ? generation.Result.InferenceDependencies
-                    : owned.Generation is null ? owned.Coordinator?.Begin?.Admission?.Request.InitialDependencies : null;
+                KnowledgeDependencyHandle? lineage = owned.Generation is { IsCompletedSuccessfully: true } generation ? generation.Result.InferenceDependencies :
+                    owned.Generation is null ? owned.Coordinator?.Begin?.Admission?.Request.InitialDependencies : null;
                 if (lineage is null)
                 {
                     // A sanitized generation deliberately omits its complete union.
@@ -569,19 +726,21 @@ public sealed class OctoberChatApplication
                         !sanitized.Result.ConsumedReads.IsEmpty) return CommitEligibilityStatus.AuthorityUnavailable;
                     DisclosureStatus selectionRefusal = await scope.DisclosurePolicy!.CheckAsync(new(current, [], null), token).WaitAsync(token);
                     if (!(pending.Reason == DialogueTerminalReason.AuthorizationDenied && selectionRefusal == DisclosureStatus.Denied ||
-                        pending.Reason == DialogueTerminalReason.AuthorityUnavailable && selectionRefusal == DisclosureStatus.AuthorityUnavailable))
+                          pending.Reason == DialogueTerminalReason.AuthorityUnavailable && selectionRefusal == DisclosureStatus.AuthorityUnavailable))
                         return CommitEligibilityStatus.AuthorityUnavailable;
                     lineage = owned.Coordinator?.Begin?.Admission?.Request.InitialDependencies;
                     if (lineage is null) return CommitEligibilityStatus.AuthorityUnavailable;
                 }
+
                 var refusal = await scope.Dependencies.ReauthorizeAsync(current, [lineage], token).WaitAsync(token);
                 ReadSelectionRequest? afterClosure = await scope.Context.GetCurrentAsync(token).WaitAsync(token);
                 token.ThrowIfCancellationRequested();
                 if (!Matches(current, afterClosure)) return CommitEligibilityStatus.AuthorityUnavailable;
                 return (pending!.Reason == DialogueTerminalReason.AuthorizationDenied && refusal == KnowledgeDependencyStatus.Denied) ||
-                    (pending.Reason == DialogueTerminalReason.AuthorityUnavailable && refusal == KnowledgeDependencyStatus.AuthorityUnavailable)
+                       (pending.Reason == DialogueTerminalReason.AuthorityUnavailable && refusal == KnowledgeDependencyStatus.AuthorityUnavailable)
                     ? CommitEligibilityStatus.Eligible : CommitEligibilityStatus.AuthorityUnavailable;
             }
+
             DisclosureStatus status = await scope.DisclosurePolicy!.CheckAsync(new(current, [], null), token).WaitAsync(token);
             CommitEligibilityStatus eligibility = status == DisclosureStatus.Allowed ? CommitEligibilityStatus.Eligible :
                 status == DisclosureStatus.Denied ? CommitEligibilityStatus.Denied : CommitEligibilityStatus.AuthorityUnavailable;
@@ -591,26 +750,33 @@ public sealed class OctoberChatApplication
                 if (allowed != KnowledgeDependencyStatus.Succeeded)
                     eligibility = allowed == KnowledgeDependencyStatus.Denied ? CommitEligibilityStatus.Denied : CommitEligibilityStatus.AuthorityUnavailable;
             }
+
             ReadSelectionRequest? after = await scope.Context.GetCurrentAsync(token).WaitAsync(token);
             token.ThrowIfCancellationRequested();
             return Matches(current, after) ? eligibility : CommitEligibilityStatus.AuthorityUnavailable;
         }
-        catch (Exception) { return CommitEligibilityStatus.AuthorityUnavailable; }
+        catch (Exception)
+        {
+            return CommitEligibilityStatus.AuthorityUnavailable;
+        }
     }
 
     private static bool ExactSanitizedSave(OwnedOperation owned, DialogueCommitAttempt attempt,
         out DialogueTerminalSaveRequest? pending)
     {
         pending = owned.Coordinator?.PendingSave;
-        return pending is { TerminalState: DialogueTerminalState.Failed,
-            Reason: DialogueTerminalReason.AuthorizationDenied or DialogueTerminalReason.AuthorityUnavailable,
-            InferenceDependencies: null, AnswerText.Length: 0 } && pending.References.IsEmpty && pending.ConsumedReads.IsEmpty &&
-            attempt.Kind == DialogueMutationKind.SaveTerminal && attempt.Dependencies is null &&
-            attempt.MutationId == pending.SaveOperationId && attempt.PayloadDigest == pending.OutcomeDigest &&
-            attempt.TurnId == pending.Owner.TurnId && attempt.Execution == pending.Owner.Execution && attempt.ExpectedFence == pending.Owner.Fence &&
-            attempt.Conversation.ConversationId == pending.Owner.ConversationId && attempt.Conversation.ContextId == pending.Owner.ContextId &&
-            SameIdentity(owned.Registration.Conversation, attempt.Conversation) &&
-            owned.Scope!.Codec.ComputeOutcomeDigest(pending) == pending.OutcomeDigest;
+        return pending is
+               {
+                   TerminalState: DialogueTerminalState.Failed,
+                   Reason: DialogueTerminalReason.AuthorizationDenied or DialogueTerminalReason.AuthorityUnavailable,
+                   InferenceDependencies: null, AnswerText.Length: 0
+               } && pending.References.IsEmpty && pending.ConsumedReads.IsEmpty &&
+               attempt.Kind == DialogueMutationKind.SaveTerminal && attempt.Dependencies is null &&
+               attempt.MutationId == pending.SaveOperationId && attempt.PayloadDigest == pending.OutcomeDigest &&
+               attempt.TurnId == pending.Owner.TurnId && attempt.Execution == pending.Owner.Execution && attempt.ExpectedFence == pending.Owner.Fence &&
+               attempt.Conversation.ConversationId == pending.Owner.ConversationId && attempt.Conversation.ContextId == pending.Owner.ContextId &&
+               SameIdentity(owned.Registration.Conversation, attempt.Conversation) &&
+               owned.Scope!.Codec.ComputeOutcomeDigest(pending) == pending.OutcomeDigest;
     }
 
     private Task CleanupAsync(OwnedOperation owned)
@@ -634,20 +800,42 @@ public sealed class OctoberChatApplication
             });
             await _registry.SealAndWaitForSettlementAsync(owned.Registration);
         }
+
         owned.ExecutionCancellation?.Dispose();
         owned.Settled = true;
-        lock (_gate) if (ReferenceEquals(_owned, owned)) _owned = null;
+        lock (_gate)
+            if (ReferenceEquals(_owned, owned))
+                _owned = null;
     }
 
     private async Task CleanupObservedAsync(OwnedOperation owned)
     {
-        try { await CleanupAsync(owned); }
-        catch (Exception) { lock (_gate) { _ready = false; _status = "对话资源释放状态待确认。"; } }
+        try
+        {
+            await CleanupAsync(owned);
+        }
+        catch (Exception)
+        {
+            lock (_gate)
+            {
+                _ready = false;
+                _status = "对话资源释放状态待确认。";
+            }
+        }
+
         Notify();
     }
 
-    private bool IsAttached() { lock (_gate) return _attached; }
-    private bool IsCurrentAttachment(Guid attachment) { lock (_gate) return _attached && _attachment == attachment; }
+    private bool IsAttached()
+    {
+        lock (_gate) return _attached;
+    }
+
+    private bool IsCurrentAttachment(Guid attachment)
+    {
+        lock (_gate) return _attached && _attachment == attachment;
+    }
+
     private void ClearDisplay()
     {
         lock (_gate)
@@ -656,14 +844,31 @@ public sealed class OctoberChatApplication
             _turns.Clear();
             _transcript = [];
         }
+
         Notify();
     }
-    private void Notify() { try { StateChanged?.Invoke(); } catch (Exception) { } }
+
+    private void Notify()
+    {
+        try
+        {
+            StateChanged?.Invoke();
+        }
+        catch (Exception)
+        {
+        }
+    }
+
     private static ImmutableArray<KnowledgeDependencyHandle> Capsules(KnowledgeDependencyHandle? dependency) => dependency is null ? [] : [dependency];
+
     private static bool Matches(ReadSelectionRequest expected, ReadSelectionRequest? actual) => actual is not null &&
-        expected.Subject == actual.Subject && actual.Purpose == KnowledgePurpose.Chat && expected.Purpose == KnowledgePurpose.Chat &&
-        expected.Publication == actual.Publication && expected.Mode == actual.Mode && !expected.RepositoryScope.IsDefault &&
-        !actual.RepositoryScope.IsDefault && expected.RepositoryScope.Order().SequenceEqual(actual.RepositoryScope.Order());
+                                                                                                expected.Subject == actual.Subject && actual.Purpose == KnowledgePurpose.Chat &&
+                                                                                                expected.Purpose == KnowledgePurpose.Chat &&
+                                                                                                expected.Publication == actual.Publication && expected.Mode == actual.Mode &&
+                                                                                                !expected.RepositoryScope.IsDefault &&
+                                                                                                !actual.RepositoryScope.IsDefault && expected.RepositoryScope.Order()
+                                                                                                    .SequenceEqual(actual.RepositoryScope.Order());
+
     private static bool SameIdentity(DialogueConversationIdentity expected, DialogueConversationIdentity actual) =>
         expected.ConversationId == actual.ConversationId && expected.ContextId == actual.ContextId && expected.OwnerSubjectId == actual.OwnerSubjectId &&
         expected.Publication == actual.Publication && expected.Mode == actual.Mode && expected.RepositoryScope.Order().SequenceEqual(actual.RepositoryScope.Order());

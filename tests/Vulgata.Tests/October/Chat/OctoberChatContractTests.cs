@@ -14,8 +14,8 @@ public sealed class OctoberChatContractTests
     {
         var limits = new OctoberChatLimits();
         Assert.Equal(8000, limits.QuestionCharacters);
-        Assert.Equal(6, limits.ProviderRounds);
-        Assert.Equal(16, limits.ToolCalls);
+        Assert.Equal(30, limits.ProviderRounds);
+        Assert.Equal(64, limits.ToolCalls);
         Assert.Equal(2, limits.ConcurrentTools);
         Assert.Equal(16384, limits.ToolArgumentBytes);
         Assert.Equal(20, limits.PageSize);
@@ -24,7 +24,7 @@ public sealed class OctoberChatContractTests
         Assert.Equal(65536, limits.OutputBytes);
         Assert.Equal(12, limits.HistoryTurns);
         Assert.Equal(49152, limits.HistoryBytes);
-        Assert.Equal(TimeSpan.FromSeconds(180), limits.Duration);
+        Assert.Equal(TimeSpan.FromSeconds(540), limits.Duration);
         Assert.Equal(2097152, limits.SseRoundBytes);
         Assert.Equal(8388608, limits.SseTurnBytes);
     }
@@ -43,10 +43,10 @@ public sealed class OctoberChatContractTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public void TryStartProviderRound_SixRounds_SeventhStopsWithoutResettingCounters()
+    public void TryStartProviderRound_ThirtyRounds_ThirtyFirstStopsWithoutResettingCounters()
     {
         var budget = new OctoberChatBudget();
-        for (int index = 1; index <= 6; index++)
+        for (int index = 1; index <= 30; index++)
         {
             Assert.True(budget.TryStartProviderRound(out int round));
             Assert.Equal(index, round);
@@ -54,7 +54,7 @@ public sealed class OctoberChatContractTests
 
         Assert.False(budget.TryStartProviderRound(out _));
         Assert.True(budget.IsStopped);
-        Assert.Equal(6, budget.ProviderRounds);
+        Assert.Equal(30, budget.ProviderRounds);
         Assert.False(budget.TryAddOutput("不能继续"));
     }
 
@@ -73,13 +73,13 @@ public sealed class OctoberChatContractTests
         first.Dispose();
         Assert.Equal(1, budget.ActiveTools);
         second!.Dispose();
-        for (int index = 3; index < 16; index++)
+        for (int index = 3; index < 64; index++)
         {
             Assert.True(budget.TryStartToolCall(2, out IDisposable? lease));
             lease!.Dispose();
         }
 
-        Assert.Equal(16, budget.ToolCalls);
+        Assert.Equal(64, budget.ToolCalls);
         Assert.False(budget.TryStartToolCall(2, out _));
         Assert.True(budget.IsStopped);
         Assert.Equal(0, budget.ActiveTools);
@@ -157,7 +157,7 @@ public sealed class OctoberChatContractTests
     {
         var clock = new ControlledChatFixture.ManualClock();
         var budget = new OctoberChatBudget(timeProvider: clock);
-        clock.Advance(TimeSpan.FromSeconds(179));
+        clock.Advance(TimeSpan.FromSeconds(539));
         Assert.True(budget.TryStartProviderRound(out _));
         clock.Advance(TimeSpan.FromSeconds(1));
         Assert.True(budget.IsStopped);
@@ -245,7 +245,7 @@ public sealed class OctoberChatContractTests
         Assert.False(budget.TryStartProviderRound(out _));
         Assert.Equal(7, budget.ProviderRounds);
         Assert.False(new OctoberChatBudget(configured).TryAddToolResultBytes(65537, content: true));
-        Assert.Equal(6, new OctoberChatLimits().ProviderRounds);
+        Assert.Equal(30, new OctoberChatLimits().ProviderRounds);
     }
 
     [Trait("Suite", "SelfContained")]
