@@ -147,3 +147,43 @@ and numeric Kind without changing policy. A subsequent run reuses these seven
 outcomes and processes four remaining inquiries. Evidence: business-links-run-5.
 
 Opposition-shape prompt clarification: independent review PASS; focused executor GREEN28/28 (isolation-bbd731ccd842445094ad720edffb6ee6). Next continuation deadline14minutes plus60secondwatchdog, within the one-hour grant.
+
+### Fourth run and current stop boundary
+
+Checkpoint `7fec365e8f3771148fb6288175dea8ac0fb6d876`; RunId
+`73f1e438-8f9f-4015-bfdf-9eedc36dbbac`, PID 20648, started 05:32:00 UTC,
+exited after 188.62 seconds with exit code 4. No watchdog fired. Four requests,
+59,448 input + 34,421 output = 93,869 known tokens. All eleven inquiries now have
+owner-accepted outcomes: four Supported static References and seven Unresolved.
+An offline independent replay of all eleven exact witnesses, including complete
+contributor sets, passed against the authenticated corpus export.
+
+Supported targets are login/ifaaLoginStatusQry, register/userAcctQuery,
+login/handPwdQry and cust/saveLoginDevcieInfo. These are exact same-repository
+static resource references, not runtime execution or cross-repository completeness.
+The selected authMethods root still has three unresolved outgoing inquiries; its
+connected-group qualification must not be inferred from other corpus links.
+
+The run then returned finalizer/lookup CommitIndeterminate before any synthesis
+provider request. No new publication or finalization row was observed by read-only
+inspection; original CL and all six prior BL publications remain unchanged. The
+BeginBusinessFromCl receipt is unmatched. The owned Generator has exited. No
+receipt/marker was cleared, no recovery write was performed, and no paid retry
+followed this indeterminate outcome.
+
+Read-only canonical loading with the exact selected root, context override and
+pure flow planning subsequently succeeded with one group. This does not explain
+why live original finalization stopped. Static review found repeated v2 planning
+work, but the actual runtime timing (6.818 seconds store wait) does not establish
+that as the cause. No speculative performance or acceptance change was applied.
+The next bounded work is to expose/reproduce the original pre-synthesis finalizer
+failure, then use supported exact-run settlement/fencing before a new dispatch.
+Absence of a publication alone is not retry permission.
+
+Across this one-hour window: four paid runs, fourteen resolution requests,
+281,111 input + 142,556 output = 423,667 known tokens; no unknown usage. No new BL
+publication, synthesis-provider qualification or ordinary-user reading of a new
+publication is claimed. Paid retries stopped on the indeterminate boundary rather
+than using the remaining time for a blind repeat. Evidence is under ignored
+`TestResults/business-links-run-6/` and `business-links-postrun-6/`, including
+`independent-link-replay.json` and `indeterminate-inspection.json`.

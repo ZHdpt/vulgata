@@ -1,5 +1,18 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Current October 13 retry boundary: reviewed corrections through `7fec365e` produced
+four independently revalidated static links and seven explicit unresolved outcomes.
+The final run `73f1e438-8f9f-4015-bfdf-9eedc36dbbac` stopped before synthesis with
+CommitIndeterminate; its Begin receipt is unmatched. No new BL publication was
+observed. All seven existing publications remain unchanged. Do not retry, clear
+receipts or reuse a launch marker. Diagnose the original finalizer result and settle
+or fence that exact run through the supported owner route first. The user's retry
+extension was limited to 04:50:39–05:50:39 UTC; it is not continuing spend authority.
+See [exact correction, tests and run evidence](business-transport-correction.md).
+
+Historical checkpoints below retain their original grants and outcomes; their
+remaining-run counts and earlier zero-link statements are superseded by this boundary.
+
 Latest correction and rerun (2026-10-13): Business-only SDK deadline and resolution
 low-reasoning fixes are committed at `348f90e5`, with 423/423 focused tests and
 independent review passing. The one authorized rerun
