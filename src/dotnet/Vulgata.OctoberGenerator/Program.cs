@@ -237,7 +237,9 @@ public static class OctoberGeneratorEntryPoint
         return new OctoberGenerateRunner(dependencies with
         {
             MaximumWorkerOutputTokens = workerMaxOutputTokens,
-            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock),
+            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock) is { } business
+                ? business with { DiagnosticCapture = settings!.CaptureSemanticDiagnostics
+                    ? new OctoberBusinessDiagnosticCapture(runtime.LogDirectory, encryption).CaptureAsync : null } : null,
             ParseFailureCapture = parseFailureCapture,
             HttpObservation = httpObservation
         }, clock);

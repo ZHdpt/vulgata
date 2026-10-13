@@ -20,6 +20,95 @@ namespace Vulgata.Tests.OctoberScan;
 public sealed class OctoberScanBusinessFinalizationTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DiagnosticCaptureSink_ProtectsExactRecordWithDedicatedPurposeAndNeverOverwritesAsync()
+    {
+        using var directory = new DiagnosticCaptureDirectory();
+        var encryption = new SecretEncryptionService(new EphemeralDataProtectionProvider());
+        var sink = new OctoberBusinessDiagnosticCapture(directory.Path, encryption);
+        var record = DiagnosticRecord("controlled-private-draft-content");
+        await sink.CaptureAsync(record, default);
+        string file = Assert.Single(Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories));
+        string protectedText = await File.ReadAllTextAsync(file);
+        Assert.DoesNotContain("controlled-private-draft-content", protectedText, StringComparison.Ordinal);
+        const string purpose = "Vulgata.October.Business.SemanticDiagnostics.v1";
+        Assert.Equal(purpose, OctoberBusinessDiagnosticCapture.Purpose);
+        string recovered = await encryption.DecryptAsync(purpose, protectedText);
+        Assert.Equal(JsonSerializer.Serialize(record), recovered);
+        await Assert.ThrowsAnyAsync<Exception>(() => encryption.DecryptAsync(purpose + ".foreign", protectedText));
+        await Assert.ThrowsAsync<IOException>(() => sink.CaptureAsync(record with { Proposal = record.Proposal! with { Title = "must not overwrite" } }, default));
+        Assert.Equal(protectedText, await File.ReadAllTextAsync(file));
+        Assert.Single(Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("invalid-stage")]
+    [InlineData("oversize")]
+    [InlineData("encryption-failed")]
+    [InlineData("plaintext-returned")]
+    public async Task DiagnosticCaptureSink_InvalidOrUnprotectedRecord_CreatesNoFileAsync(string boundary)
+    {
+        using var directory = new DiagnosticCaptureDirectory();
+        var encryption = new DiagnosticCaptureEncryption { Failure = boundary == "encryption-failed", ReturnPlaintext = boundary == "plaintext-returned" };
+        var sink = new OctoberBusinessDiagnosticCapture(directory.Path, encryption);
+        var record = DiagnosticRecord("private-draft-marker");
+        if (boundary == "invalid-stage") record = record with { Stage = "../private-draft-marker" };
+        if (boundary == "oversize") record = record with { Proposal = record.Proposal! with { Title = new string('x', OctoberBusinessDiagnosticCapture.MaximumRecordBytes) } };
+        await Assert.ThrowsAnyAsync<Exception>(() => sink.CaptureAsync(record, default));
+        Assert.Empty(Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories));
+        Assert.Equal(boundary is "invalid-stage" or "oversize" ? 0 : 1, encryption.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DiagnosticCaptureSink_AggregateBudget_StopsBeforeProtectingOrWritingTheNextRecordAsync()
+    {
+        using var directory = new DiagnosticCaptureDirectory();
+        // This adapter isolates byte-budget accounting; the separate protection case uses actual Data Protection.
+        var encryption = new DiagnosticCaptureEncryption();
+        var sink = new OctoberBusinessDiagnosticCapture(directory.Path, encryption);
+        var record = DiagnosticRecord(new string('x', OctoberBusinessDiagnosticCapture.MaximumRecordBytes - 4096));
+        int bytes = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(record));
+        Assert.InRange(bytes, 3 * 1024 * 1024, OctoberBusinessDiagnosticCapture.MaximumRecordBytes);
+        int fits = (64 * 1024 * 1024) / bytes;
+        Assert.Equal(16, fits);
+        for (int index = 0; index < fits; index++) await sink.CaptureAsync(record with { GroupVersionId = Guid.NewGuid() }, default);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sink.CaptureAsync(record with { GroupVersionId = Guid.NewGuid() }, default));
+        Assert.Equal(fits, encryption.Calls);
+        Assert.Equal(fits, Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories).Length);
+    }
+
+    private static BusinessSynthesisDiagnostic DiagnosticRecord(string title)
+    {
+        var fixture = new SynthesisCase();
+        return new(fixture.Run, fixture.Operation, fixture.Group.GroupVersionId, "draft", fixture.Proposal() with { Title = title }, null,
+            BusinessSynthesisFailureReason.None, [new(10, 5, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(1), ProviderAttemptOutcome.Completed)]);
+    }
+
+    private sealed class DiagnosticCaptureDirectory : IDisposable
+    {
+        public string Path { get; } = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "october-diagnostic-capture-" + Guid.NewGuid().ToString("N"));
+        public DiagnosticCaptureDirectory() => Directory.CreateDirectory(Path);
+        public void Dispose() => Directory.Delete(Path, recursive: true);
+    }
+
+    private sealed class DiagnosticCaptureEncryption : ISecretEncryptionService
+    {
+        public bool Failure { get; init; }
+        public bool ReturnPlaintext { get; init; }
+        public int Calls { get; private set; }
+        public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested(); Calls++;
+            Assert.Equal("Vulgata.October.Business.SemanticDiagnostics.v1", purpose);
+            if (Failure) throw new IOException("Controlled encryption failure.");
+            return Task.FromResult(ReturnPlaintext ? plain : "controlled-protected-budget-record");
+        }
+        public Task<string> DecryptAsync(string purpose, string cipher, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]

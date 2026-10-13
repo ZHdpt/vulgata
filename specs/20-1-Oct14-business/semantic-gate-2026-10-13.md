@@ -129,3 +129,45 @@ preflight, exact preview/settings, owned process, terminal report and owner log)
 `TestResults/business-semantic-postrun/failed-verification.json` (read-only durable
 failure/settlement and preservation proof). The model review records themselves
 are absent; these artifacts must not be described as their transcript.
+
+## Protected diagnostic capture amendment — 2026-10-13
+
+The user authorized detailed rejection findings and drafts, focused tests and one
+independent review, then one bounded paid diagnostic trial. Capture is opt-in via
+`CaptureSemanticDiagnostics` in the existing Business settings. This does not alter
+the prompt, accepted evidence, review criteria, correction count or publication route.
+
+The injected host sink records typed draft, review, corrected draft and fresh review
+with RunId, finalization operation, group, exact proposal, quote-bound findings and
+per-stage settled usage. No hidden reasoning or credentials are captured. Invalid
+protocol responses are not retained as raw transcripts. Records are protected with
+the existing Data Protection service and a separate diagnostic purpose, under the
+owned runtime log directory; they are not accepted Knowledge or model input.
+
+Each plaintext record is limited to 4 MiB and each capture instance to 64 MiB.
+Files use create-new identities and cannot overwrite an earlier stage. Protection,
+budget or write failure stops further synthesis/publication. Complete contributor
+reauthorization, exact handoff eligibility and the existing cumulative deadline are
+checked around capture, with host cancellation linked throughout. No database schema,
+migration, reader response contract or original publication is changed.
+
+Read-only preflight reconfirmed 163 unchanged CL documents, 11 independently replayed
+resolution outcomes, 32 settled lifecycle receipts and nine prior publications.
+The same `finalize` root produces one group, two CL members and one supported edge;
+the model packet is 31,642 UTF-8 bytes. The authorized trial retains DeepSeek
+`deepseek-flash`, low reasoning, 1,200-second run / 900-second synthesis limits,
+26-request and 20-million-token ceilings. It gets a fresh launch marker and RunId.
+
+Diagnostic regression RED: with the capture invocation deliberately disabled,
+all three exact-stage-retention cases failed because their expected stage lists
+were empty (`TestResults/isolation-7e645315cb864f0aa8a68fa0aaf54dc4/results.trx`).
+The invocation was restored before GREEN. The retained test owner authored tests
+separately from production changes. Independent review found and closed capture
+entry/handoff authorization gaps and a deadline check after awaited authorization;
+static review now passes, pending completed focused execution.
+
+Focused GREEN: 339/339 passed, zero failed/skipped, including 15 capture cases;
+`TestResults/isolation-a6115e5ba05a490ba14edaf1cde569a8/results.trx`.
+The selection covers synthesis, finalizer, planner, publication and Scan Business
+composition. It qualifies controlled SelfContained behavior, not PostgreSQL/provider
+or browser behavior. Final independent scoped review accepted this boundary.

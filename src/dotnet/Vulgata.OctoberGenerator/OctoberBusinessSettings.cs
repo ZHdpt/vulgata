@@ -10,6 +10,8 @@ internal sealed record OctoberBusinessRootSetting(Guid RepositoryId, string Rela
 internal sealed record OctoberBusinessSettings(ImmutableArray<OctoberBusinessRootSetting> Roots,
     FlowPlanningLimits Limits, long MaximumAttemptTokens)
 {
+    public bool CaptureSemanticDiagnostics { get; init; }
+
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public BusinessAdvisoryContextOverride? ContextOverride { get; init; }
 

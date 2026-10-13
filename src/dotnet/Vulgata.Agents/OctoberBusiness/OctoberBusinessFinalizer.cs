@@ -21,7 +21,8 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
         IOctoberFlowPublicationStore store, IOctoberFlowPlanningInputLoader loader,
         IChatClient selectedClient, string providerProfileId,
         BusinessProviderConfigurationProjection providerConfiguration, string synthesisInstructions,
-        IOctoberResolutionDisclosureAuthority disclosure, TimeProvider? timeProvider = null)
+        IOctoberResolutionDisclosureAuthority disclosure, TimeProvider? timeProvider = null,
+        Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? diagnosticCapture = null)
     {
         _slot = originalSlot;
         _store = store ?? throw new ArgumentNullException(nameof(store));
@@ -32,7 +33,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
         _profileId = providerProfileId;
         _configurationFingerprint = OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(providerConfiguration);
         _promptDigest = OctoberKnowledgePolicy.Hash(synthesisInstructions);
-        _synthesis = new(selectedClient, synthesisInstructions, timeProvider);
+        _synthesis = new(selectedClient, synthesisInstructions, timeProvider, diagnosticCapture);
     }
 
     public async Task<BusinessFinalizationResult> FinalizeAsync(FinalizationRequest request,

@@ -13,6 +13,10 @@ public sealed record BusinessSemanticFinding([property: JsonRequired] string Tar
 public sealed record BusinessSemanticReview([property: JsonRequired] string ProposalDigest,
     [property: JsonRequired] ImmutableArray<BusinessSemanticFinding> Findings);
 
+public sealed record BusinessSynthesisDiagnostic(Guid RunId, OperationKey Operation, Guid GroupVersionId,
+    string Stage, BusinessSynthesisProposal? Proposal, BusinessSemanticReview? Review,
+    BusinessSynthesisFailureReason FailureReason, ImmutableArray<ProviderAttemptUsage> Attempts);
+
 internal static class OctoberBusinessSemanticReview
 {
     private static readonly HashSet<string> Categories = new(StringComparer.Ordinal)
@@ -77,6 +81,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         CancellationToken cancellationToken = default, FlowPlanningLimits? limits = null)
     {
         var allAttempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
+        int stageIndex = 0;
         long start = _time.GetTimestamp();
         var startUtc = _time.GetUtcNow();
         using var lifetime = new CancellationTokenSource(TimeSpan.FromSeconds(DeadlineSeconds), _time);
@@ -93,6 +98,42 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             allAttempts.AddRange(result.Attempts);
             if (allAttempts.Count > 10 || result.Attempts.Any(x => x.InputTokens is null || x.OutputTokens is null))
                 return Stop(BusinessSynthesisFailureReason.SemanticReviewInvalid, ProviderAdmissionStatus.AuthorityUnavailable);
+            if (_diagnosticCapture is not null && result.AdmissionFailure is null)
+            {
+                try
+                {
+                    if (executionScope is not IOctoberBusinessHandoffLifetime handoff)
+                        return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, ProviderAdmissionStatus.AuthorityUnavailable);
+                    using var captureToken = CancellationTokenSource.CreateLinkedTokenSource(linked.Token, handoff.HandoffCancellation);
+                    var group = OctoberFlowPlanner.Plan(input, limits).Groups.Single(x => x.GroupVersionId == groupVersionId);
+                    async Task<ProviderAdmissionStatus> CaptureEligibilityAsync()
+                    {
+                        captureToken.Token.ThrowIfCancellationRequested();
+                        if (Max(_time.GetElapsedTime(start), _time.GetUtcNow() - startUtc) >= TimeSpan.FromSeconds(DeadlineSeconds))
+                            return ProviderAdmissionStatus.DeadlineExceeded;
+                        var authority = await CheckAuthorityAsync(disclosure, input.Corpus.Handle, group.Dependencies.Contributors, captureToken.Token);
+                        if (authority != DisclosureStatus.Allowed) return AuthorityStatus(authority);
+                        if (Max(_time.GetElapsedTime(start), _time.GetUtcNow() - startUtc) >= TimeSpan.FromSeconds(DeadlineSeconds))
+                            return ProviderAdmissionStatus.DeadlineExceeded;
+                        captureToken.Token.ThrowIfCancellationRequested();
+                        return handoff.CheckHandoffEligibility(runId, operation, providerProfileId);
+                    }
+                    var before = await CaptureEligibilityAsync();
+                    if (before != ProviderAdmissionStatus.Granted) return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, before);
+                    var stage = stageIndex switch { 0 => "draft", 1 => "review", 2 => "correction", _ => "re-review" };
+                    await _diagnosticCapture(new(runId, operation, groupVersionId, stage,
+                        result.Proposal ?? candidate, result.SemanticReview, result.FailureReason, result.Attempts), captureToken.Token);
+                    var after = await CaptureEligibilityAsync();
+                    if (after != ProviderAdmissionStatus.Granted) return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, after);
+                }
+                catch (OperationCanceledException)
+                {
+                    return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable,
+                        lifetime.IsCancellationRequested ? ProviderAdmissionStatus.DeadlineExceeded : ProviderAdmissionStatus.HardStopped);
+                }
+                catch (Exception) { return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, ProviderAdmissionStatus.AuthorityUnavailable); }
+            }
+            stageIndex++;
             return result with { Attempts = allAttempts.ToImmutable() };
         }
         var draft = await Stage(null, null);

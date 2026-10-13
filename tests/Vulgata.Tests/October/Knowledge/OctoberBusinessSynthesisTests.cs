@@ -21,6 +21,195 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DiagnosticCapture_FinalAuthorityCrossesCumulativeDeadline_SuppressesApprovedContentAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var client = new SemanticReviewClient(clock, (call, messages) => call == 1 ? f.Response() : SemanticReview(f, messages));
+        var captured = new List<BusinessSynthesisDiagnostic>();
+        bool crossed = false;
+        var authority = new SynthesisDisclosure
+        {
+            Decide = _ =>
+            {
+                if (captured.Count == 2 && !crossed)
+                {
+                    // The approved review is already captured. Move elapsed time during its final
+                    // authority check; this clock intentionally does not deliver elapsed-time timers.
+                    clock.Advance(TimeSpan.FromSeconds(901));
+                    crossed = true;
+                }
+                return DisclosureStatus.Allowed;
+            }
+        };
+        Task Capture(BusinessSynthesisDiagnostic value, CancellationToken token)
+        {
+            Assert.False(crossed);
+            captured.Add(value);
+            return Task.CompletedTask;
+        }
+        var result = await ExecuteReviewed(f, client, scope, authority, clock, Capture);
+        Assert.True(crossed);
+        Assert.Equal(new[] { "draft", "review" }, captured.Select(value => value.Stage));
+        Assert.All(captured[1].Review!.Findings, finding => Assert.True(finding.Supported));
+        Assert.Equal(2, client.Calls);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(ProviderAdmissionStatus.DeadlineExceeded, result.AdmissionFailure);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DiagnosticCapture_DeniedReview_DoesNotRecapturePriorCandidateAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        bool revoked = false;
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            var review = SemanticReview(f, messages); revoked = true; return review;
+        });
+        var captured = new List<BusinessSynthesisDiagnostic>();
+        var authority = new SynthesisDisclosure { Decide = _ => revoked ? DisclosureStatus.Denied : DisclosureStatus.Allowed };
+        var result = await ExecuteReviewed(f, client, scope, authority, clock, (value, _) => { captured.Add(value); return Task.CompletedTask; });
+        Assert.Null(result.Content); Assert.Null(result.Proposal);
+        Assert.Equal(ProviderAdmissionStatus.Denied, result.AdmissionFailure);
+        Assert.Equal("draft", Assert.Single(captured).Stage);
+        Assert.Equal(2, client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DiagnosticCapture_AuthorityLossWhileCaptureHeld_PreventsNextDispatchAsync(bool hardStop)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        bool revoked = false;
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationToken captureToken = default;
+        using var client = new SemanticReviewClient(clock, (_, _) => f.Response());
+        var authority = new SynthesisDisclosure { Decide = _ => revoked ? DisclosureStatus.Denied : DisclosureStatus.Allowed };
+        async Task Capture(BusinessSynthesisDiagnostic value, CancellationToken token)
+        {
+            Assert.Equal("draft", value.Stage); captureToken = token; entered.TrySetResult();
+            await release.Task; // Controlled physical capture settles only when this test releases it.
+        }
+        var pending = ExecuteReviewed(f, client, scope, authority, clock, Capture);
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (hardStop) { scope.HardStop(); Assert.True(captureToken.IsCancellationRequested); }
+            else revoked = true;
+            Assert.Equal(1, client.Calls);
+        }
+        finally { release.TrySetResult(); }
+        var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(hardStop ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.Denied, result.AdmissionFailure);
+        Assert.Equal(1, client.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task DiagnosticCapture_RecordsEverySettledStageWithExactCandidateAndReviewAsync(bool correctOnce, bool rejectAgain)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        const string reasoning = "controlled-private-reasoning-must-never-be-captured";
+        var corrected = f.Proposal() with { Title = "纠正后的谨慎流程说明" };
+        var reviews = new List<BusinessSemanticReview>();
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            ChatResponse response;
+            if (call == 1) response = f.Response();
+            else if (call == 3)
+            {
+                _ = SemanticEnvelope(messages, "semantic-correction");
+                response = SynthesisCase.JsonResponse(JsonSerializer.Serialize(corrected));
+            }
+            else
+            {
+                response = SemanticReview(f, messages, rejected: correctOnce && (call == 2 || rejectAgain));
+                reviews.Add(JsonSerializer.Deserialize<BusinessSemanticReview>(response.Text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!);
+            }
+            response.Messages[0].Contents.Add(new TextReasoningContent(reasoning));
+            return response;
+        });
+        var captures = new List<BusinessSynthesisDiagnostic>();
+        Task Capture(BusinessSynthesisDiagnostic value, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+            Assert.Equal(captures.Count + 1, client.Calls); // Capture settles before the next dispatch.
+            captures.Add(value);
+            return Task.CompletedTask;
+        }
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock, Capture);
+        if (rejectAgain)
+        {
+            Assert.Null(result.Content); Assert.Null(result.Proposal);
+            Assert.Equal(BusinessSynthesisFailureReason.SemanticReviewRejected, result.FailureReason);
+        }
+        else Assert.NotNull(result.Content);
+        string[] stages = correctOnce ? ["draft", "review", "correction", "re-review"] : ["draft", "review"];
+        Assert.Equal(stages, captures.Select(value => value.Stage));
+        Assert.Equal(stages.Length, client.Calls); Assert.Equal(stages.Length, result.Attempts.Length);
+        Assert.All(captures, value =>
+        {
+            Assert.Equal(f.Run, value.RunId); Assert.Equal(f.Operation, value.Operation); Assert.Equal(f.Group.GroupVersionId, value.GroupVersionId);
+            var attempt = Assert.Single(value.Attempts); Assert.Equal(10, attempt.InputTokens); Assert.Equal(5, attempt.OutputTokens);
+            Assert.DoesNotContain(reasoning, JsonSerializer.Serialize(value), StringComparison.Ordinal);
+        });
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal()), OctoberKnowledgePolicy.SerializeCanonical(captures[0].Proposal));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(captures[0].Proposal), OctoberKnowledgePolicy.SerializeCanonical(captures[1].Proposal));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(reviews[0]), OctoberKnowledgePolicy.SerializeCanonical(captures[1].Review));
+        Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(captures[1].Proposal)), captures[1].Review!.ProposalDigest);
+        if (correctOnce)
+        {
+            Assert.Contains(captures[1].Review!.Findings, finding => !finding.Supported);
+            Assert.All(captures[1].Review!.Findings, finding => { Assert.NotEmpty(finding.Explanation); Assert.NotEmpty(finding.Evidence); });
+            Assert.Equal(corrected.Title, captures[2].Proposal!.Title);
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(corrected), OctoberKnowledgePolicy.SerializeCanonical(captures[3].Proposal));
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(reviews[1]), OctoberKnowledgePolicy.SerializeCanonical(captures[3].Review));
+            Assert.NotEqual(captures[1].Review!.ProposalDigest, captures[3].Review!.ProposalDigest);
+            if (rejectAgain) Assert.Contains(captures[3].Review!.Findings, finding => !finding.Supported);
+            else Assert.All(captures[3].Review!.Findings, finding => Assert.True(finding.Supported));
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("draft")]
+    [InlineData("review")]
+    public async Task DiagnosticCapture_FailureAfterSettlement_StopsBeforeAnotherProviderDispatchAsync(string failedStage)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        using var client = new SemanticReviewClient(clock, (call, messages) => call == 1 ? f.Response() : SemanticReview(f, messages, rejected: true));
+        var stages = new List<string>();
+        Task Capture(BusinessSynthesisDiagnostic value, CancellationToken token)
+        {
+            Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+            stages.Add(value.Stage);
+            if (value.Stage == failedStage) throw new IOException("Controlled protected capture failure.");
+            return Task.CompletedTask;
+        }
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock, Capture);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(BusinessSynthesisFailureReason.ExecutionUnavailable, result.FailureReason);
+        Assert.Equal(failedStage == "draft" ? 1 : 2, client.Calls);
+        Assert.Equal(client.Calls, result.Attempts.Length);
+        Assert.Equal(failedStage, stages[^1]);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("节点描述为「检查余额」；配置未声明任何余额判断。", true)]
     [InlineData("检查余额；随后调用处理节点。", false)]
@@ -211,8 +400,9 @@ public sealed class OctoberBusinessSynthesisTests
     }
 
     private static Task<BusinessSynthesisResult> ExecuteReviewed(SynthesisCase f, IChatClient client,
-        IOctoberExecutionScope scope, IOctoberResolutionDisclosureAuthority authority, SynthesisClock clock) =>
-        new OctoberBusinessSynthesisExecutor(client, "Controlled synthesis: retain source qualifications and uncertainty.", clock)
+        IOctoberExecutionScope scope, IOctoberResolutionDisclosureAuthority authority, SynthesisClock clock,
+        Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? diagnosticCapture = null) =>
+        new OctoberBusinessSynthesisExecutor(client, "Controlled synthesis: retain source qualifications and uncertainty.", clock, diagnosticCapture)
             .ExecuteReviewedAsync(f.Input, f.Group.GroupVersionId, f.Operation, f.Run, "selected-profile", 40, scope, authority, default, f.Limits);
 
     private static JsonObject SemanticEnvelope(ChatMessage[] messages, string phase)

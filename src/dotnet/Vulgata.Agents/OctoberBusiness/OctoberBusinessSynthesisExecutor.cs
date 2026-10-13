@@ -32,6 +32,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
     private readonly IChatClient _client;
     private readonly string _instructions;
     private readonly TimeProvider _time;
+    private readonly Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? _diagnosticCapture;
     private static readonly UTF8Encoding _utf8 = new(false, true);
     private static readonly JsonSerializerOptions _json = new()
     {
@@ -39,12 +40,14 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
     };
 
-    public OctoberBusinessSynthesisExecutor(IChatClient client, string synthesisInstructions, TimeProvider? timeProvider = null)
+    public OctoberBusinessSynthesisExecutor(IChatClient client, string synthesisInstructions, TimeProvider? timeProvider = null,
+        Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? diagnosticCapture = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         ArgumentException.ThrowIfNullOrWhiteSpace(synthesisInstructions);
         _instructions = synthesisInstructions;
         _time = timeProvider ?? TimeProvider.System;
+        _diagnosticCapture = diagnosticCapture;
     }
 
     public Task<BusinessSynthesisResult> ExecuteAsync(FlowPlanningInput input, Guid groupVersionId,
