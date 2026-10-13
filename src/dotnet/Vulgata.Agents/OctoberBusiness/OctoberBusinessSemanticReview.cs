@@ -59,13 +59,18 @@ internal static class OctoberBusinessSemanticReview
                 string.IsNullOrWhiteSpace(finding.Explanation) || finding.Explanation.Length > 2000 ||
                 finding.Evidence.IsDefaultOrEmpty || finding.Evidence.Length > 256) return "Invalid, duplicate, or unexpected finding target, explanation, or evidence shape.";
             var cited = new HashSet<SynthesisClaimInput>();
-            foreach (var evidence in finding.Evidence)
+            for (int index = 0; index < finding.Evidence.Length; index++)
             {
-                if (evidence is null || evidence.Input is null || !permitted.Contains(evidence.Input) ||
-                    evidence.Category is null || !Categories.Contains(evidence.Category) ||
-                    string.IsNullOrWhiteSpace(evidence.Quote) || evidence.Quote.Length > 8192 ||
-                    !source.TryGetValue(evidence.Input, out string? original) ||
-                    !original.Contains(evidence.Quote, StringComparison.Ordinal)) return $"Finding {finding.Target}: evidence input, category, or literal CL quote is invalid.";
+                var evidence = finding.Evidence[index];
+                if (evidence is null) return $"Finding {finding.Target}: evidence[{index}] is missing.";
+                if (evidence.Input is null || !permitted.Contains(evidence.Input) ||
+                    !source.TryGetValue(evidence.Input, out string? original))
+                    return $"Finding {finding.Target}: evidence[{index}].input must identify a permitted exact CL claim.";
+                if (evidence.Category is null || !Categories.Contains(evidence.Category))
+                    return $"Finding {finding.Target}: evidence[{index}].category is invalid.";
+                if (string.IsNullOrWhiteSpace(evidence.Quote) || evidence.Quote.Length > 8192 ||
+                    !original.Contains(evidence.Quote, StringComparison.Ordinal))
+                    return $"Finding {finding.Target}: evidence[{index}].quote must be a nonempty literal excerpt of that CL claim, at most 8192 characters.";
                 cited.Add(evidence.Input);
             }
             if (finding.Target.StartsWith("claim:", StringComparison.Ordinal) && !cited.SetEquals(permitted)) return $"Finding {finding.Target}: cite every input of this exact claim.";

@@ -108,3 +108,22 @@ f7c4ecf3-dd1d-464f-85d9-a057fda1df52. Exact owner API now succeeds with161groups
 including4connectedgroups. No acceptance or loader change. Next whole attempt uses the
 previously authorized4-hour/652-request/trillion-token limits. Per-root failures remain
 explicit; a partial publication is not evidence of complete BL coverage.
+
+Attempt6 (`a5c30f08-449e-4691-9110-c428002889f3`,b3a48920) ended after
+11723.27seconds with652 requests,10662487 input+2014595 output=12677082 tokens;
+usage is known. The report is CommitIndeterminate at ExactLookup, not a successful
+publication. Read-only owner inspection found the Begin receipt but no finalization,
+completion or new publication; all ten prior publications and163 CL documents still
+match their baseline. Do not retry until this run is settled or fenced through the
+existing owner mechanism. No additional migration or recording-app change occurred.
+
+Two focused BL corrections preserve acceptance: semantic repair identifies the exact
+invalid evidence input/category/quote; the per-flow16-request allowance no longer
+reports exhaustion of the global run budget. Request17 is not sent, settled usage is
+retained, and all later requests still require global owner admission. Prompt guidance
+also removes an unconditional local-execution assumption unsupported by repository
+co-location. Four regressions failed for the expected reasons before the code fixes;
+182 synthesis/finalizer tests then passed with zero skips. Independent Astra medium
+review passed. Evidence: TestResults/isolation-7e20d160a7d7422d870f390e1f01826e/results.trx
+(RED), TestResults/isolation-8c1f3b4f13124f1980853013fe6b9a14/results.trx (GREEN).
+These controlled results do not resolve attempt6's separate finalization failure.

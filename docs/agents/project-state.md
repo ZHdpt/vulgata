@@ -3,8 +3,12 @@
 October 14 Business retrieval: the original database has the purpose-only migration,
 applied after a restore-verified backup. The BL-only recovery loop fixed contained
 source identity observation and review-stage schema repair; actual provider retrieval
-now succeeds. Three additional bounded attempts settled without publication, with
-semantic findings retained for correction. All ten prior publications and163 CL
+now succeeds. Five additional bounded attempts settled without publication. A sixth,
+whole-scope attempt exhausted652 requests and ended with an indeterminate finalization;
+its Begin receipt remains without a finalization/completion or new publication.
+Diagnose and safely settle/fence that run before retrying. Focused review-feedback and
+per-flow request-cap fixes passed182 controlled tests and independent review.
+All ten prior publications and163 CL
 documents remain unchanged. No additional migration or recording-app change occurred.
 See [current recovery evidence](../../specs/20-1-Oct14-business/bl-recovery-loop.md)
 and [backup/migration evidence](../../specs/20-1-Oct14-business/retrieval-trial-2026-10-13.md).

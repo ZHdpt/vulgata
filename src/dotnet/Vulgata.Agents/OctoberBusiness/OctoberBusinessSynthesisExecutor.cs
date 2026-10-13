@@ -153,7 +153,8 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             long requested = _time.GetTimestamp();
             IList<AITool> tools = toolsEnabled ? [retrieval!.Tool] : [];
             if (retrieval is not null && ++retrieval.Requests > OctoberBusinessSourceRetrieval.MaximumRequests)
-                return Result(ProviderAdmissionStatus.BudgetExhausted);
+                // This allowance belongs to one flow; the execution scope still owns run-wide admission.
+                return Result(null, BusinessSynthesisFailureReason.ExecutionUnavailable);
             if (toolsEnabled) retrieval!.Rounds++;
             long reservedTokens;
             try { reservedTokens = checked(OctoberBusinessSynthesisRequests.EstimateInputTokens(history, tools) + maximumTokens); }

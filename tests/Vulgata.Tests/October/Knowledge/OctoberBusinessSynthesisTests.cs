@@ -22,6 +22,106 @@ public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task ReferencedSource_FlowRequestCapPreservesGlobalAdmissionAndSettledUsageAsync()
+    {
+        var f = new BusinessRetrievalCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        var reader = new BusinessRetrievalReader((source, offset, _, _) =>
+            new(BusinessSourceStatus.Complete, source, offset, null, "controlled cited source", 100));
+        var corrected = f.Proposal with { Title = "修正后的业务说明" };
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            // Six investigation requests, four draft attempts, four review attempts,
+            // and two correction attempts consume this flow's sixteen physical requests.
+            if (call <= 6) return f.ToolResponse(messages);
+            if (call is 7 or 8 or 9 or 11 or 12 or 13 or 15)
+                return SynthesisCase.JsonResponse("{");
+            if (call == 10) return SynthesisCase.JsonResponse(JsonSerializer.Serialize(f.Proposal));
+            if (call == 14) return SemanticReviewForCandidate(f.Input, f.Proposal, rejected: true);
+            Assert.Equal(16, call);
+            using var phase = JsonDocument.Parse(messages[3].Text);
+            Assert.Equal("semantic-correction", phase.RootElement.GetProperty("phase").GetString());
+            Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal)),
+                phase.RootElement.GetProperty("proposalDigest").GetString());
+            return SynthesisCase.JsonResponse(JsonSerializer.Serialize(corrected));
+        });
+
+        var result = await f.ExecuteAsync(client, scope, new SynthesisDisclosure(), clock, reader);
+
+        Assert.Equal(16, client.Calls); Assert.Equal(6, reader.Calls);
+        Assert.Equal(16, result.Attempts.Length);
+        Assert.All(result.Attempts, attempt => { Assert.Equal(10, attempt.InputTokens); Assert.Equal(5, attempt.OutputTokens); });
+        Assert.Equal(160L, result.Attempts.Sum(attempt => attempt.InputTokens.GetValueOrDefault()));
+        Assert.Equal(80L, result.Attempts.Sum(attempt => attempt.OutputTokens.GetValueOrDefault()));
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+
+        // The same real owner still has run-wide capacity. This lease is never sent.
+        var next = await scope.AcquireProviderAttemptAsync(new(f.Run, f.Operation, Guid.NewGuid(),
+            BusinessWorkKind.Synthesis, "selected-profile", TimeSpan.FromSeconds(10), 40));
+        Assert.Equal(ProviderAdmissionStatus.Granted, next.Status);
+        var lease = Assert.IsAssignableFrom<IOctoberProviderAttemptLease>(next.Lease);
+        try
+        {
+            await lease.SettleAsync(new(0, 0, null, TimeSpan.Zero, TimeSpan.Zero, ProviderAttemptOutcome.Cancelled));
+        }
+        finally { await lease.DisposeAsync(); }
+
+        Assert.Null(result.AdmissionFailure);
+        Assert.NotEqual(BusinessSynthesisFailureReason.None, result.FailureReason);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("input")]
+    [InlineData("category")]
+    [InlineData("quote")]
+    public async Task ReviewEvidenceRepair_FieldSpecificFeedbackRetainsTargetAndOriginalCandidateAsync(string field)
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        const string target = "claim:business-action";
+        string? validReview = null;
+        string? originalContext = null;
+        string? detail = null;
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            if (call == 2)
+            {
+                validReview = SemanticReview(f, messages).Text;
+                originalContext = JsonSerializer.Serialize(messages);
+                var invalid = JsonNode.Parse(validReview)!.AsObject();
+                var finding = Assert.Single(invalid["findings"]!.AsArray().Where(value => value!["target"]!.GetValue<string>() == target));
+                var evidence = finding!["evidence"]![0]!;
+                switch (field)
+                {
+                    // A real accepted input of another claim is still foreign to this finding.
+                    case "input": evidence["input"] = JsonSerializer.SerializeToNode(new SynthesisClaimInput(f.Root, "operation", "provider")); break;
+                    case "category": evidence["category"] = "RuntimeProof"; break;
+                    case "quote": evidence["quote"] = "Fabricated quotation absent from the original accepted CL claim."; break;
+                }
+                return SynthesisCase.JsonResponse(invalid.ToJsonString());
+            }
+            Assert.Equal(3, call);
+            Assert.Equal(originalContext, JsonSerializer.Serialize(messages.Take(4).ToArray()));
+            using var feedback = JsonDocument.Parse(messages[^1].Text);
+            Assert.Equal("semantic-review", feedback.RootElement.GetProperty("phase").GetString());
+            Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal())), feedback.RootElement.GetProperty("proposalDigest").GetString());
+            detail = feedback.RootElement.GetProperty("validationDetail").GetString();
+            return SynthesisCase.JsonResponse(validReview!);
+        });
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.NotNull(result.Content); Assert.NotNull(result.Proposal);
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal()), OctoberKnowledgePolicy.SerializeCanonical(result.Proposal));
+        Assert.Equal(3, client.Calls); Assert.Equal(3, result.Attempts.Length);
+        Assert.NotNull(detail);
+        Assert.Contains(target, detail, StringComparison.Ordinal);
+        Assert.Contains("evidence[0]." + field, detail, StringComparison.Ordinal);
+        Assert.InRange(detail.Length, 1, 2000);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task EmbeddedStagePrompt_HostSelectsSynthesisReviewCorrectionAndLatestDraftReviewAsync()
     {
         var f = new SynthesisCase(); var clock = new SynthesisClock();
