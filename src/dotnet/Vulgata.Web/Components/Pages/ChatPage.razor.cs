@@ -661,8 +661,19 @@ public partial class ChatPage : IAsyncDisposable
         await InvokeAsync(StateHasChanged);
     }
 
+    private ElementReference _octoberChatRoot;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_boundOctoberEntry is not null)
+        {
+            try
+            {
+                var module = await GetChatModuleAsync(CancellationToken.None);
+                await module.InvokeVoidAsync("initializeOctoberComposer", _octoberChatRoot);
+            }
+            catch (Exception exception) when (exception is JSException or InvalidOperationException) { }
+        }
         if (!_scrollConversationAfterRender)
         {
             return;
@@ -696,6 +707,7 @@ public partial class ChatPage : IAsyncDisposable
         {
             try
             {
+                await _chatModule.InvokeVoidAsync("disposeOctoberComposer", _octoberChatRoot);
                 await _chatModule.DisposeAsync();
             }
             catch (JSDisconnectedException)

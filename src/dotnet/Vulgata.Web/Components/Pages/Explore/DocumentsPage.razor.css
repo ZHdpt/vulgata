@@ -20,3 +20,6 @@ h1 { font-size: 1.65rem; margin: .4rem 0 .75rem; }
 .document-list { align-content: start; }
 .browse-actions { margin-top: auto; padding-top: 1rem; align-items: center; }
 .page-number { font-size: .85rem; color: #52677d; }
+
+.page-jump { display: flex; align-items: center; gap: .5rem; }
+.page-jump input { width: 4.5rem; padding: .45rem; border: 1px solid #ccd8e4; border-radius: .4rem; }

@@ -17,7 +17,7 @@
 }
 else if (_boundOctoberEntry is { } october)
 {
-    <div class="chat-page @(october.ThemeName == "dark" ? "chat-page--it" : "chat-page--business")"
+    <div @ref="_octoberChatRoot" class="chat-page @(october.ThemeName == "dark" ? "chat-page--it" : "chat-page--business")"
          data-theme="@october.ThemeName" data-load-state="@october.LoadState">
         @if (_showOctoberConfirmation)
         {
@@ -141,7 +141,7 @@ else if (_boundOctoberEntry is { } october)
                 else
                 {
                     <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent"
-                                  Type="ButtonType.Button" Disabled="@OctoberComposerDisabled" @onclick="SendOctoberAsync">发送
+                                  data-chat-send="true" Type="ButtonType.Button" Disabled="@OctoberComposerDisabled" @onclick="SendOctoberAsync">发送
                     </FluentButton>
                 }
             </div>

@@ -38,8 +38,20 @@
         }
         <div class="browse-actions" aria-label="列表操作">
             <FluentButton OnClick="PreviousAsync" Disabled="@(!_viewModel.CanPrevious)">上一页</FluentButton>
-            <span class="page-number" aria-live="polite">第 @_viewModel.PageNumber 页</span>
+            @foreach (var number in VisiblePages)
+            {
+                var target = number;
+                <FluentButton aria-label="@($"第 {target} 页")" aria-current="@(target == _viewModel.PageNumber ? "page" : null)"
+                              Appearance="@(target == _viewModel.PageNumber ? Appearance.Accent : Appearance.Neutral)"
+                              Disabled="@(_viewModel.LoadState == LoadState.Loading)" OnClick="() => _viewModel.GoToPageAsync(target)">@target</FluentButton>
+            }
+            <span class="page-number" aria-live="polite">第 @(_viewModel.TotalPages == 0 ? 0 : _viewModel.PageNumber) / @_viewModel.TotalPages 页 · 共 @_viewModel.TotalItems 条</span>
             <FluentButton OnClick="NextAsync" Disabled="@(!_viewModel.CanContinue)">下一页</FluentButton>
+            <form class="page-jump" @onsubmit="JumpAsync" @onsubmit:preventDefault>
+                <label for="document-page">跳至</label>
+                <input id="document-page" type="number" min="1" max="@_viewModel.TotalPages" @bind="_jumpPage" aria-label="跳转页码" />
+                <FluentButton Type="ButtonType.Submit" Disabled="@(_viewModel.TotalPages == 0 || _viewModel.LoadState == LoadState.Loading)">跳转</FluentButton>
+            </form>
             <FluentButton OnClick="ReloadAsync" Disabled="@(_viewModel.LoadState == LoadState.Loading)">重新加载</FluentButton>
             @if (_viewModel.LoadState == LoadState.Loading)
             {
@@ -53,6 +65,11 @@
     private DocumentBrowseViewModel? _viewModel;
     private bool _disposed;
     private string _query = "";
+    private int _jumpPage = 1;
+    private IEnumerable<int> VisiblePages => _viewModel is null || _viewModel.TotalPages == 0 ? [] :
+        Enumerable.Range(Math.Max(1, Math.Min(_viewModel.PageNumber - 2, _viewModel.TotalPages - 4)), Math.Min(5, _viewModel.TotalPages))
+            .Prepend(1).Append(_viewModel.TotalPages).Distinct().Order();
+    private Task JumpAsync() => _viewModel?.GoToPageAsync(_jumpPage) ?? Task.CompletedTask;
     private Task SearchAsync() => _viewModel?.SearchAsync(_query) ?? Task.CompletedTask;
     private Task PreviousAsync() => _viewModel?.PreviousAsync() ?? Task.CompletedTask;
 

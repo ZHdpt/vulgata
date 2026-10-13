@@ -75,6 +75,7 @@
 
 .chat-page--starting-conversation .chat-surface
 {
+    overflow-anchor: none;
     opacity: 0;
     transform: translateY(-8px) scale(0.992);
 }

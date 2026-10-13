@@ -18,6 +18,9 @@ from the user-designated Qualify Explorer and IT Chat task.
 
 October 13 Chat composer: one bottom-right action transitions from disabled
 “正在准备对话” to “取消生成”, then back to “发送” after completion or cancellation.
+The composer supports Enter to send and Ctrl+Enter for a newline, preserving IME
+composition. Each send follows streamed content until manual scrolling; the next
+send resets following. Browser interaction checks remain separate from controlled tests.
 Preparation/generation has a pulsing border with a static reduced-motion fallback;
 save-uncertainty recovery remains separate. This UI change uses controlled component
 verification; the existing running Web host was not restarted or live-qualified.

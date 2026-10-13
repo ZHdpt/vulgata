@@ -20,26 +20,43 @@ public sealed class ReaderComponentTests : BunitContext
     public async Task Browse_TitleSearchCrossesPages_PreviousRereads_EmptySearchRestoresAsync()
     {
         var host = new ExploreFixtureHost();
-        var first = new DocumentSummary(host.Fixture.Handle(host.Fixture.ClA), DocumentKind.CodeLogic, "登录入口", []);
-        var second = first with { Title = "账户查询" };
-        host.Reader.SearchResponse = request => new(KnowledgeReadStatus.Success,
-            request.Continuation is null ? [first] : [second], request.Continuation is null ? new("next") : null, null);
+        var documents = Enumerable.Range(0, 42).Select(index => new DocumentSummary(
+            host.Fixture.Handle(host.Fixture.ClA) with { DocumentVersionId = ControlledGraphFixture.Id(100 + index) },
+            DocumentKind.CodeLogic, (index % 2 == 0 ? "账户" : "登录") + index, [])).ToArray();
+        host.Reader.SearchResponse = request =>
+        {
+            var offset = request.Continuation is null ? 0 : int.Parse(request.Continuation.Value);
+            return new(KnowledgeReadStatus.Success, [.. documents.Skip(offset).Take(6)],
+                offset + 6 < documents.Length ? new((offset + 6).ToString()) : null, null);
+        };
         using var model = host.CreateBrowse();
         await model.LoadAsync();
-        Assert.Equal(1, model.PageNumber);
-        await model.NextAsync();
-        Assert.Equal(2, model.PageNumber);
-        Assert.Equal("账户查询", Assert.Single(model.Page!.Documents).Title);
+        Assert.Equal(42, model.TotalItems);
+        Assert.Equal(3, model.TotalPages);
+        Assert.Equal(20, model.Page!.Documents.Length);
+        await model.GoToPageAsync(3);
+        Assert.Equal(3, model.PageNumber);
+        Assert.Equal(2, model.Page!.Documents.Length);
         await model.PreviousAsync();
-        Assert.Equal(1, model.PageNumber);
-        Assert.Equal("登录入口", Assert.Single(model.Page!.Documents).Title);
+        Assert.Equal(2, model.PageNumber);
+        Assert.Equal(20, model.Page!.Documents.Length);
         await model.SearchAsync("账户");
-        Assert.Equal("账户查询", Assert.Single(model.Page!.Documents).Title);
+        Assert.Equal(21, model.TotalItems);
+        Assert.Equal(2, model.TotalPages);
+        Assert.Equal(1, model.PageNumber);
+        Assert.Equal(20, model.Page!.Documents.Length);
+        Assert.All(model.Page.Documents, document => Assert.StartsWith("账户", document.Title));
+        await model.NextAsync();
+        Assert.Single(model.Page!.Documents);
         Assert.False(model.CanContinue);
+        await model.GoToPageAsync(99);
+        Assert.Equal(2, model.PageNumber);
         await model.SearchAsync("不存在");
         Assert.Empty(model.Page!.Documents);
+        Assert.Equal(0, model.TotalPages);
         await model.SearchAsync("");
-        Assert.Equal("登录入口", Assert.Single(model.Page!.Documents).Title);
+        Assert.Equal(42, model.TotalItems);
+        Assert.Equal(20, model.Page!.Documents.Length);
     }
 
     [Trait("Suite", "SelfContained")]
