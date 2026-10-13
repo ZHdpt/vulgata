@@ -131,9 +131,11 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         TimeSpan Elapsed() => Max(_time.GetElapsedTime(started), _time.GetUtcNow() - startedUtc);
         // Reconstruct the synthesis conversation with its exact latest draft for self-review.
         // Draft text is not evidence; raw private reasoning is neither required nor replayed here.
+        string stage = candidate is null ? "synthesis" : correction is null ? "semantic-review" : "semantic-correction";
+        string stageInstructions = _instructions.Replace("{{BUSINESS_STAGE}}", stage, StringComparison.Ordinal);
         ChatMessage[] originalMessages = candidate is null
-            ? [new(ChatRole.System, _instructions), new(ChatRole.User, payload)]
-            : [new(ChatRole.System, _instructions), new(ChatRole.User, synthesisPacket),
+            ? [new(ChatRole.System, stageInstructions), new(ChatRole.User, payload)]
+            : [new(ChatRole.System, stageInstructions), new(ChatRole.User, synthesisPacket),
                 new(ChatRole.Assistant, OctoberKnowledgePolicy.SerializeCanonical(candidate)), new(ChatRole.User, payload)];
         var history = originalMessages.ToList();
         var synthesisClient = _client as IOctoberBusinessSynthesisClient;
@@ -285,7 +287,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                     ? ProviderAdmissionStatus.HardStopped : ProviderAdmissionStatus.DeadlineExceeded;
                 failureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;
             }
-            catch (JsonException)
+            catch (JsonException error)
             {
                 failure = parsingProposal ? null : ProviderAdmissionStatus.AuthorityUnavailable;
                 if (parsingProposal)
@@ -293,7 +295,8 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                     if (failureReason != BusinessSynthesisFailureReason.SemanticReviewInvalid)
                     {
                         failureReason = BusinessSynthesisFailureReason.JsonInvalid;
-                        validationDetail = "JSON syntax, duplicate property, required field, or typed field shape is invalid.";
+                        string detail = $"JSON validation failed at {error.Path ?? "$"}: {error.Message}";
+                        validationDetail = detail.Length <= 2000 ? detail : detail[..2000];
                     }
                     // Bounded model output remains protected diagnostic data, never accepted evidence.
                     rejectedResponse = response?.Text;

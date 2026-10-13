@@ -57,3 +57,18 @@ zero skips/failures (`TestResults/isolation-3f75a7132f314caaad50c72717b2a49b/res
 Whole-corpus planner preview assessed all163 roots:161 eligible groups,4 connected,
 2 roots fail existing source-backed-primary qualification. Largest model packet55453
 UTF8 bytes. Those two must remain explicit evidence gaps, not fabricated BL.
+
+Attempt 2 (`37956bae-2489-4eeb-833d-a3080fbe8c77`, a369b724) settled without
+publication after 220.82 seconds: 8 requests, 215010 input + 44391 output = 259401
+known tokens. Four actual source retrieval calls completed. Review returned a draft
+object (title/sections), instead of proposalDigest/findings, through its bounded
+structural retries. All ten prior publications and 163 CL documents remain unchanged.
+
+The correction places the host-selected stage first in the embedded system prompt
+and supplies bounded parser path/type details to structural correction feedback.
+Acceptance, canonicalization, one semantic correction and all budgets remain unchanged.
+Two new regressions initially failed (isolation-2ccd7e9db91249d5b4751dcdd9529f9a).
+The fixture now asserts $.sections, the first unknown property after production
+canonicalization, rather than the raw-response probe's $.title. Independent Astra
+medium review found no blocking issue, pending the focused GREEN gate.
+Focused synthesis/source GREEN: 136/136, zero failures/skips (TestResults/isolation-e0e84c8bb4b447bd847fcc6832d8235d/results.trx).

@@ -22,6 +22,88 @@ public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task EmbeddedStagePrompt_HostSelectsSynthesisReviewCorrectionAndLatestDraftReviewAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        string instructions = ReadEmbeddedSynthesisInstructions();
+        var systems = new List<string>();
+        var corrected = f.Proposal() with { Title = "修正后的业务流程" };
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            systems.Add(messages[0].Text);
+            return call switch
+            {
+                1 => f.Response(),
+                2 => SemanticReview(f, messages, rejected: true),
+                3 => SynthesisCase.JsonResponse(JsonSerializer.Serialize(corrected)),
+                4 => SemanticReview(f, messages),
+                _ => throw new InvalidOperationException("Only one semantic correction is permitted.")
+            };
+        });
+        var result = await new OctoberBusinessSynthesisExecutor(client, instructions, clock)
+            .ExecuteReviewedAsync(f.Input, f.Group.GroupVersionId, f.Operation, f.Run, "selected-profile", 40, scope, new SynthesisDisclosure(), default, f.Limits);
+        Assert.NotNull(result.Content); Assert.Equal(corrected.Title, result.Proposal!.Title);
+        Assert.Equal(4, client.Calls);
+        var expected = new[] { "synthesis", "semantic-review", "semantic-correction", "semantic-review" };
+        for (int index = 0; index < expected.Length; index++)
+        {
+            Assert.StartsWith("当前任务阶段：" + expected[index] + "。", systems[index]);
+            Assert.DoesNotContain("{{BUSINESS_STAGE}}", systems[index], StringComparison.Ordinal);
+            Assert.Equal(instructions.Replace("{{BUSINESS_STAGE}}", expected[index], StringComparison.Ordinal), systems[index]);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task EmbeddedStagePrompt_DraftSchemaDuringReviewIsRejectedWithExactProtectedJsonPathAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        string wrongSchema = JsonSerializer.Serialize(new { title = f.Proposal().Title, sections = f.Proposal().Sections },
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var feedbackDetails = new List<string>();
+        var diagnostics = new List<BusinessSynthesisDiagnostic>();
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            if (call > 2)
+            {
+                using var feedback = JsonDocument.Parse(messages[^1].Text);
+                Assert.Equal("semantic-review", feedback.RootElement.GetProperty("phase").GetString());
+                Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal())), feedback.RootElement.GetProperty("proposalDigest").GetString());
+                feedbackDetails.Add(feedback.RootElement.GetProperty("validationDetail").GetString()!);
+            }
+            return SynthesisCase.JsonResponse(wrongSchema);
+        });
+        var result = await new OctoberBusinessSynthesisExecutor(client, ReadEmbeddedSynthesisInstructions(), clock,
+            (value, _) => { diagnostics.Add(value); return Task.CompletedTask; })
+            .ExecuteReviewedAsync(f.Input, f.Group.GroupVersionId, f.Operation, f.Run, "selected-profile", 40, scope, new SynthesisDisclosure(), default, f.Limits);
+        Assert.Null(result.Content); Assert.Null(result.Proposal); Assert.Null(result.Dependencies);
+        Assert.Equal(5, client.Calls); Assert.Equal(3, feedbackDetails.Count);
+        Assert.All(feedbackDetails, detail =>
+        {
+            Assert.Contains("$.sections", detail, StringComparison.Ordinal);
+            Assert.Contains(nameof(BusinessSemanticReview), detail, StringComparison.Ordinal);
+            Assert.InRange(detail.Length, 1, 2000);
+        });
+        var rejected = Assert.Single(diagnostics.Where(value => value.Stage == "review"));
+        Assert.Equal(wrongSchema, rejected.RejectedResponse);
+        Assert.Contains("$.sections", rejected.ValidationDetail!, StringComparison.Ordinal);
+        Assert.DoesNotContain("RejectedResponse", JsonSerializer.Serialize(result), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("ValidationDetail", JsonSerializer.Serialize(result), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ReadEmbeddedSynthesisInstructions()
+    {
+        using var stream = typeof(OctoberBusinessSynthesisExecutor).Assembly.GetManifestResourceStream("Vulgata.Agents.Prompts.OctoberBusiness.Synthesis.md");
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReviewStructuralRepair_InvalidJsonThenBoundValidReview_PreservesDraftAndRecoversAsync()
     {
         var f = new SynthesisCase(); var clock = new SynthesisClock();
