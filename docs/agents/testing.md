@@ -156,13 +156,6 @@ feature-specific E2E gates. Excluded qualification is never reported as passed.
 - Behavioral changes need honest RED then minimal GREEN and relevant regression
   evidence. Documentation/metadata changes use proportionate checks, not fabricated
   RED or unnecessary claims of application qualification.
-- Under governed-delivery 0.7, retain the separate test and production owners per
-  coherent task group. Both assess the final affected code before group completion;
-  necessary refactoring stays GREEN and within their disjoint write boundaries.
-  Minimal GREEN is a scope constraint, not permission to leave concrete design
-  defects. Production cannot weaken tests; disputed test behavior returns through
-  root to the test owner with evidence. See the installed
-  [TDD skill](../../.agents/skills/governed-tdd/SKILL.md).
 - Prepared-source Windows tests open every ancestor with native directory handles.
   A restricted execution context may allow temporary-file creation but deny an
   ancestor open (`NtCreateFile` access denied, surfaced as `RootUnavailable`).
@@ -195,7 +188,6 @@ feature-specific E2E gates. Excluded qualification is never reported as passed.
   warnings from an actual whitespace failure; do not declare a line-ending blocker
   without a failing relevant check.
 
-Use [development guidance](development.md) for commands and the current
-[workflow state machine](../../.agents/skills/run-governed-delivery/references/state-machine.md) for required ownership,
-correction and verification gates. Recheck a pitfall against source before removing
-it; lack of a recent failure is not evidence its cause disappeared.
+Use [development guidance](development.md) for commands. Recheck a pitfall against
+source before removing it; lack of a recent failure is not evidence its cause
+disappeared.

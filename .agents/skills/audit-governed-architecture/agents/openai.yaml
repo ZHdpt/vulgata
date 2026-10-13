@@ -1,4 +1,0 @@
-interface:
-  display_name: "Audit Governed Architecture"
-  short_description: "Run a read-only governed architecture gate"
-  default_prompt: "Use $audit-governed-architecture to audit the active epic."

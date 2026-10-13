@@ -7,7 +7,7 @@ Chat. Use the [canonical glossary](docs/UBIQUITOUS_LANGUAGE.md), especially
 and exact Document Versions.
 
 The generic design is accepted; implementation is incomplete. Accepted story
-definitions and historical passing tests do not prove the replacement workflow works.
+definitions and historical passing tests do not prove the replacement product flow works.
 
 ## Start with the right authority
 
@@ -21,9 +21,7 @@ definitions and historical passing tests do not prove the replacement workflow w
   requirements. Authority follows subject and accepted disposition, not file age.
 - **Deliver a story:** use [epics](docs/bmad/epics.md) for its definition and
   [sprint status](docs/bmad/implementation-artifacts/sprint-status.yaml) for lifecycle.
-  Follow the installed [`run-governed-delivery`](.agents/skills/run-governed-delivery/SKILL.md) skill and
-  [workflow adoption](docs/agent-workflow/adoption-0.7.md); preserve its current
-  model/escalation strategy and single-owner gates. Deliberately activate one feature.
+  Verify current authority before changing scope or activating a feature.
 - **Write production code, APIs, UI or migrations:** read
   [development conventions](docs/agents/development.md) and the
   [constitution](.specify/memory/constitution.md). Packages/build configuration are
@@ -33,9 +31,6 @@ definitions and historical passing tests do not prove the replacement workflow w
   Default to `pwsh -NoProfile -File eng/test.ps1`; classify tests and helpers in the
   enforced suite inventory before adding external dependencies.
 - **Explore domain decisions:** follow [domain guidance](docs/agents/domain.md).
-  **Edit workflow customizations:** follow
-  [the customization rules](.github/instructions/governed-delivery-customizations.instructions.md).
-  Governed delivery uses the installed Codex profiles; no Copilot workflow parity is claimed.
 - **Use GitHub issues:** follow [issue-tracker guidance](docs/agents/issue-tracker.md)
   and [triage labels](docs/agents/triage-labels.md); publishing requires task authority.
 
@@ -71,74 +66,10 @@ definitions and historical passing tests do not prove the replacement workflow w
   `docs/scanning_plan_july/` describe their own historical boundaries, not current
   execution instructions. No deadline/compile-only waiver carries into new work.
 
-## Planned-change authorization
-
-After an independent `plan-review` accepts a story plan and before task generation,
-the orchestrator MUST pause for explicit user approval (or applicable approval by
-the user's specifically designated delegate under "Delegated approval" below) when
-the plan does any of the following:
-
-- adds, exposes, or materially changes a **Worker Agent** tool or other agent tool;
-- adds or materially changes a **Scan** strategy, including parsing, filtering,
-  scheduling, grouping, retry, or dispatch behavior; or
-- changes, weakens, or conflicts with a requirement in the current PRD.
-
-The approval request MUST identify the trigger, explain the proposed approach and
-its effects, state the orchestrator's implementation intent, and cite the affected
-plan and PRD material. It is approval to proceed from the accepted plan to task
-generation; it does not waive any later analysis, TDD, review, E2E, security, or
-verification gate. If none of these triggers applies, the ordinary workflow
-advances without this additional approval.
-
-## Delegated approval
-
-Human approval remains the default. For a specific story, the user may explicitly
-designate a stable Codex task/chat ID for any of these purposes:
-
-- planned-change authorization after accepted independent plan review;
-- implementation approval after accepted independent definition review;
-- finite `recovery-extension` at failure 4 or a reached approved extension limit.
-
-The designation must state story scope, conditions and permitted purposes, and be
-recorded with its actual user source in the story's existing decision evidence.
-Recovery delegation additionally requires a user-set cumulative per-episode
-`max_pause_at`; earlier two-gate grants do not include it. Each reached limit needs
-a fresh decision bound to the current recovery boundary and changed approach, within
-that ceiling. At the ceiling, return to the user. Preserve counts, diagnosis, holds,
-owner and model/escalation strategy; an extension grants allowance, not scope.
-
-The story root verifies the actual user instruction, delegate response, current
-accepted review or paused recovery boundary, artifact hashes and continued scope.
-The delegate returns its decision; the root alone writes and validates approval
-records. A title alone does not identify a delegate; substitution and subdelegation
-are not permitted. Use the installed
-[delegated-approval contract](.agents/skills/run-governed-delivery/references/review-and-correction.md#explicit-delegated-approval-optional).
-
-Delegation does not cover authority/blocker resolution,
-prior-authority conflicts, architecture changes outside the accepted plan, epic
-dispositions, retrospective choices, or separate access/spend/secret/production
-permissions. Existing gate order, recovery limits, worker ownership, and verification
-remain in force. If provenance, scope, or conditions are unclear, require the user.
-
 ## Maintaining these instructions
 
-Governed delivery 0.7.4 is installed with `.governed-delivery/config.toml` selecting
-BMad 6.12 and SpecKit 1.0.6. New stories use state 3.1; historical states/evidence stay
-unchanged. One retained definition author owns spec/plan/tasks and corrections;
-the independent reviewer retains review history. Coherent implementation groups
-retain separate test and production owners. Root owns bounded recovery, selective
-lookback, lifecycle/evidence/approvals and Git. Read the installed conditional
-references instead of reconstructing rules from historical workflow documents.
-Optional drafting questions are not approval; preserve every formal gate above.
-
-Sol/Luna profiles now use GPT-6 at their existing reasoning efforts; Astra recovery
-is unchanged. Route verification by accepted behavior and risk: RED/GREEN for
-changed production behavior, truthful coverage/refactor checks or direct verification
-otherwise. Do not invent tests or artifact-integrity requirements for ceremony;
-dispatch only needed owners. Existing consumer policies and approval gates still apply.
-
 Keep always-needed constraints here and conditional details in linked project-local
-guides. After meaningful implementation or workflow changes, recheck the dated project
+guides. After meaningful implementation changes, recheck the dated project
 state and affected pointers; correct obsolete facts instead of appending turn logs.
 Preserve a pitfall until its cause is removed. `CLAUDE.md` links to this file; Copilot
 and Trae entry points should route here rather than duplicate its rules.
@@ -146,7 +77,7 @@ and Trae entry points should route here rather than duplicate its rules.
 <!-- SPECKIT START -->
 Story 13.1 is complete in specs/015-retained-source-access. Its plan, workflow state
 and evidence record the completed boundary, not an active feature selection.
-No story is activated by workflow installation. Story 13.2 remains backlog;
-select and activate the next authorized story deliberately from the current tracker.
+Story 13.2 remains backlog; select and activate the next authorized story deliberately
+from the current tracker.
 Existing specs/001 through specs/015 retain historical scope and approval boundaries.
 <!-- SPECKIT END -->

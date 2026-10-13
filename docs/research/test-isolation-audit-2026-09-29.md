@@ -119,8 +119,8 @@ and skip behavior against that installed adapter before adopting them.
    suite and focused-test filters, executes, and propagates failures. Reject zero
    selected tests and unexpected all-skipped results. Report the suite, discovered,
    selected, passed, failed and skipped counts; distinguish excluded qualification
-   from successful execution. Point `.governed-delivery/config.toml`'s test command
-   to this runner and update the development/testing command guidance together.
+   from successful execution. Point the repository's full-test command to this
+   runner and update the development/testing command guidance together.
 3. **Repair the destructive PostgreSQL fixture first.** Replace
    KnowledgeStorePostgreSqlConcurrencyTests' deletion of the supplied target with
    the shared disposable-resource fixture. Reuse and harden the existing owned
@@ -212,33 +212,6 @@ and update `docs/agents/development.md` and the dated project state when the rep
 is implemented. A build/runner policy check provides enforcement; prose alone
 does not restrict newly generated tests. No hosted CI workflow was found in this
 checkout, so use the same checked-in runner locally and in any future CI job.
-
-### Governed delivery integration
-
-The current workflow requires the configured full-test command at final
-verification; its receipt validator compares the command to repository
-configuration. Update the consumer command, not the installed portable workflow.
-Relevant sources: [configuration](../../.governed-delivery/config.toml#L25),
-[verification gate](../../.agents/skills/run-governed-delivery/SKILL.md#L117),
-[receipt validation](../../.agents/skills/run-governed-delivery/scripts/result_proofs.py#L387),
-[customization ownership](../agent-workflow/customization-guide.md#L3).
-
-Define that command as the **complete self-contained regression suite**, and
-retain additional behavior-specific qualification through focused checks and
-the existing [E2E decision matrix](../../.agents/skills/run-governed-delivery/references/e2e-decision-matrix.md).
-This is an explicit repository policy change, not an ad hoc exclusion by each
-feature agent.
-
-Unrelated UI/domain work must not be blocked by an unselected historical
-PostgreSQL suite. Conversely, a PostgreSQL migration/concurrency change still
-cannot be declared complete without its required provider evidence. Missing
-resources block that qualification, not every unrelated story. No permission or
-E2E gate is waived.
-
-Apply the new command to future runs in each assigned checkout through normal
-integration. Active story roots must reconcile their current command and evidence;
-never rewrite completed historical receipts to match the new policy. Do not edit
-another active agent's checkout or records.
 
 ### Acceptance criteria for implementation
 

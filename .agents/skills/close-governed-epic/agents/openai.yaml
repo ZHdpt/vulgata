@@ -1,4 +1,0 @@
-interface:
-  display_name: "Close Governed Epic"
-  short_description: "Verify and close a governed epic safely"
-  default_prompt: "Use $close-governed-epic to verify and close the active epic."

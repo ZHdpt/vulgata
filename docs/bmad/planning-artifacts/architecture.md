@@ -23,7 +23,7 @@ The target was externally finalized on September 10 at source baseline `2bb83c3b
 | Generic Scan, Knowledge and Chat design | [Architecture spine](architecture/ARCHITECTURE-SPINE.md) | Module ownership, source/tool binding, accepted evidence, publication, read contexts, execution and deployment invariants. |
 | Delivery decomposition and queue | [Epics](../epics.md), [sprint status](../implementation-artifacts/sprint-status.yaml), then a deliberately activated feature | Planning is not permission to bypass story gates or start an old feature. |
 | As-built behavior and demonstrated results | Source code and explicitly scoped implementation/review/qualification records | Evidence describes its recorded boundary; old passing tests do not qualify generic replacements. |
-| Agent working rules | [AGENTS.md](../../../AGENTS.md) and current governed-delivery skills | Coding, security, testing and planned-change approval gates continue to apply. |
+| Agent working rules | [AGENTS.md](../../../AGENTS.md) and [agent guidance](../../../docs/agents/) | Coding, security, and testing conventions continue to apply. |
 
 Authority is assigned by subject and explicit accepted disposition, not by document date. Archived material and superseded companions are historical evidence, never current fallback instructions. Any conflict with an existing ADR must be surfaced rather than silently overridden.
 
