@@ -775,6 +775,21 @@ public sealed class OctoberBusinessSynthesisTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void EmbeddedSynthesisPrompt_DistinguishesMechanismFromSuccessfulValidation()
+    {
+        using var stream = typeof(OctoberBusinessSynthesisExecutor).Assembly.GetManifestResourceStream("Vulgata.Agents.Prompts.OctoberBusiness.Synthesis.md");
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream);
+        string prompt = reader.ReadToEnd();
+        Assert.Contains("通过某组件", prompt, StringComparison.Ordinal);
+        Assert.Contains("校验通过时", prompt, StringComparison.Ordinal);
+        Assert.Contains("明确的成功条件", prompt, StringComparison.Ordinal);
+        Assert.Contains("静态引用", prompt, StringComparison.Ordinal);
+        Assert.Contains("不自动证明调用顺序", prompt, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_MissingHostHandoffLifetime_FailsClosedBeforeProviderOrAdmissionAsync()
     {
         var f = new SynthesisCase();
