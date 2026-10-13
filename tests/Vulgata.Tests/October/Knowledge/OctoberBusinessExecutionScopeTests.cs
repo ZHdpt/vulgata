@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
@@ -11,6 +12,74 @@ namespace Vulgata.Tests.October.Knowledge;
 
 public sealed class OctoberBusinessExecutionScopeTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ResolutionDiagnostics_TransportRetryThenNullWitness_ReportsCurrentFailureAndRetainsBothSettlementsAsync()
+    {
+        var fixture = new ResolutionCase();
+        using var client = new ResolutionClient("controlled-profile", (attempt, _) => attempt == 1
+            ? throw new IOException("RAW_TRANSPORT_RETRY_SECRET")
+            : Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "null"))
+            {
+                FinishReason = ChatFinishReason.Stop,
+                Usage = new() { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 }
+            }));
+        var scope = new ResolutionScopeProbe();
+        var result = await ExecuteAsync(fixture, client, scope);
+        Assert.Equal(ResolutionFailureReason.WitnessShape, result.FailureReason);
+        Assert.NotEqual(ProviderAdmissionStatus.AuthorityUnavailable, result.AdmissionFailure);
+        Assert.Null(result.Outcome);
+        Assert.Null(result.Witness);
+        Assert.Equal(2, client.Calls);
+        Assert.Equal(2, result.Attempts.Length);
+        Assert.Null(result.Attempts[0].InputTokens);
+        Assert.Null(result.Attempts[0].OutputTokens);
+        Assert.Equal(10, result.Attempts[1].InputTokens);
+        Assert.Equal(5, result.Attempts[1].OutputTokens);
+        Assert.Equal(2, scope.SettleCalls);
+        Assert.Equal(2, scope.DisposeCalls);
+        Assert.DoesNotContain("RAW_TRANSPORT_RETRY_SECRET", JsonSerializer.Serialize(result), StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("invalid-json", ResolutionFailureReason.InvalidJson)]
+    [InlineData("invalid-guid", ResolutionFailureReason.WitnessShape)]
+    [InlineData("string-enum", ResolutionFailureReason.WitnessShape)]
+    [InlineData("incomplete", ResolutionFailureReason.IncompleteResponse)]
+    [InlineData("output-limit", ResolutionFailureReason.OutputLimit)]
+    public async Task ResolutionDiagnostics_ModelFailuresRemainTypedSafeAndRetainSettledUsageAsync(string shape, ResolutionFailureReason expected)
+    {
+        const string secret = "RAW_MODEL_DIAGNOSTIC_SECRET";
+        var fixture = new ResolutionCase();
+        var body = JsonNode.Parse(JsonSerializer.Serialize(fixture.Witness()))!;
+        body["ConnectionExplanation"] = secret;
+        if (shape == "invalid-guid") body["Caller"]!["Document"]!["BatchId"] = secret;
+        if (shape == "string-enum") body["SupportingAssertions"]![0]!["Kind"] = secret;
+        string payload = shape == "invalid-json" ? "{" + secret : body.ToJsonString();
+        using var client = new ResolutionClient("controlled-profile", (_, _) => Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, payload))
+        {
+            FinishReason = shape == "incomplete" ? null : shape == "output-limit" ? ChatFinishReason.Length : ChatFinishReason.Stop,
+            Usage = new() { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 }
+        }));
+        var scope = new ResolutionScopeProbe();
+        var result = await ExecuteAsync(fixture, client, scope);
+        Assert.Equal(expected, result.FailureReason);
+        Assert.NotEqual(ProviderAdmissionStatus.AuthorityUnavailable, result.AdmissionFailure);
+        Assert.Null(result.Outcome);
+        Assert.Null(result.Witness);
+        Assert.Equal(1, client.Calls);
+        var usage = Assert.Single(result.Attempts);
+        Assert.Equal(10, usage.InputTokens);
+        Assert.Equal(5, usage.OutputTokens);
+        Assert.Equal(1, scope.SettleCalls);
+        Assert.Equal(1, scope.DisposeCalls);
+        Assert.DoesNotContain(secret, JsonSerializer.Serialize(result), StringComparison.Ordinal);
+        if (result.FailureField is { } field)
+            Assert.Contains(field, new[] { "Caller", "Provider", "SupportingAssertions", "OpposingAssertions", "BindingToken", "BatchId", "Kind", "LogicalDocumentId", "DocumentVersionId",
+                "Caller.Document.BatchId", "SupportingAssertions.Kind" });
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_QualifiedInput_DisclosesOnlyAcceptedContextWithoutToolsAndAccountsOnceAsync()
@@ -74,6 +143,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         Assert.Equal(0, client.Calls);
         Assert.NotEqual(ResolutionOutcomeKind.Supported, result.Outcome?.Kind);
         Assert.Equal(status == DisclosureStatus.Denied ? ProviderAdmissionStatus.Denied : ProviderAdmissionStatus.AuthorityUnavailable, result.AdmissionFailure);
+        Assert.Equal(status == DisclosureStatus.Denied ? ResolutionFailureReason.DisclosureDenied : ResolutionFailureReason.DisclosureUnavailable, result.FailureReason);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -102,6 +172,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         Assert.True(providerReturned);
         Assert.Equal(1, authority.Failures);
         Assert.Equal(ProviderAdmissionStatus.AuthorityUnavailable, result.AdmissionFailure);
+        Assert.Equal(ResolutionFailureReason.DisclosureUnavailable, result.FailureReason);
         Assert.Null(result.Outcome);
         Assert.Equal(1, client.Calls);
         Assert.Single(scope.Requests);
@@ -300,6 +371,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         Assert.Single(scope.Requests);
         Assert.NotEqual(ResolutionOutcomeKind.Supported, result.Outcome?.Kind);
         Assert.Equal(1, scope.Inner.Releases);
+        Assert.Equal(ResolutionFailureReason.Deadline, result.FailureReason);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -317,6 +389,7 @@ public sealed class OctoberBusinessExecutionScopeTests
         Assert.Equal(2, scope.Inner.Settlements);
         Assert.Equal(2, scope.Inner.Releases);
         Assert.NotEqual(ResolutionOutcomeKind.Supported, result.Outcome?.Kind);
+        Assert.Equal(ResolutionFailureReason.TransportFailure, result.FailureReason);
     }
 
     [Trait("Suite", "SelfContained")]

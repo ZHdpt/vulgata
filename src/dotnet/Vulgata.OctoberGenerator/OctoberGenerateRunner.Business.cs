@@ -238,6 +238,12 @@ internal sealed partial class OctoberGenerateRunner
             }
             var resolved = await resolver.ExecuteAsync(acceptedCorpus, inquiry, _businessFinalizationOperation!,
                 OriginalRunId, execution.Provider.Profile.Name, business.MaximumAttemptTokens, _scope!, disclosure, cancellationToken);
+            if (resolved.FailureReason is not null)
+                _businessDiagnostics = new(null, null, null, null, OctoberBusinessDiagnosticBoundary.Resolution, false)
+                {
+                    ResolutionFailureReason = resolved.FailureReason,
+                    ResolutionFailureField = resolved.FailureField
+                };
             if (resolved.AdmissionFailure is ProviderAdmissionStatus.Denied or ProviderAdmissionStatus.AuthorityUnavailable or ProviderAdmissionStatus.HardStopped)
                 return BusinessFailure("business_resolution_ineligible", interrupted: IsCancelled, disclose: false);
             if (_existingClSnapshot is not null && resolved.Witness is null)

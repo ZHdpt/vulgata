@@ -72,3 +72,25 @@ preflight, process/terminal report, operation log and `after-run-verification.js
 The next bounded correction should expose safe resolution failure categories and
 controlled response-validation diagnostics before spending on another attempt.
 No additional paid run or diagnostic-code expansion was performed here.
+
+## One-hour diagnosed retry window (October 13)
+
+The user extended paid BL retry authority for one hour, from 04:50:39 through
+05:50:39 UTC. This supersedes the previous five-run count only within that window.
+Each attempt remains bounded, uses a fresh launch marker and RunId, and requires
+confirmed previous settlement. Stop at first verified success or the deadline;
+indeterminate execution never authorizes another launch.
+
+The correction distinguishes JSON syntax, typed witness shape, incomplete/output-
+limited responses, transport failures and live authority failures in safe host
+report fields. Only fixed enum values and allowlisted DTO labels are exposed;
+no response content, exception text or arbitrary JSON paths are logged. Parser
+failure produces no witness and no accepted relationship. The resolution prompt
+clarifies the existing exact JSON object/enum/evidence shapes. Acceptance policy,
+independent store revalidation and transport retry count remain unchanged.
+
+Independent static review passed. Focused RED: 28 selected, 14 passed/14 failed,
+from isolation-1b8a83689f0a4d20a1a5b674efd20ca8. GREEN: 157/157 passed (isolation-67a0ce501c4c44c7a037dc2d9542a64d), plus the current-attempt diagnostic retry regression 1/1 (isolation-28e9a70b8a3347f09dca16e3927c1598).
+Read-only preflight reconfirmed 163 CL versions, 11 eligible v2 inquiries,
+18 settled receipts and all seven existing publications before the next attempt.
+

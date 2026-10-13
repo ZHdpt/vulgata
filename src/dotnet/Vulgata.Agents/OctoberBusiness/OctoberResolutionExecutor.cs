@@ -8,11 +8,19 @@ using Vulgata.Core.DomainServices.OctoberScan;
 
 namespace Vulgata.Agents.OctoberBusiness;
 
+public enum ResolutionFailureReason
+{
+    InvalidJson, WitnessShape, WitnessValidationException, DisclosureDenied, DisclosureUnavailable,
+    TransportFailure, IncompleteResponse, OutputLimit, Deadline, HardStop, InputInvalid, ExecutionUnavailable
+}
+
 public sealed record ResolutionExecutionResult(ResolutionOutcome? Outcome,
     ProviderAdmissionStatus? AdmissionFailure, ImmutableArray<ProviderAttemptUsage> Attempts)
 {
     /// <summary>Original parsed proposal for store revalidation, never accepted relationship authority.</summary>
     public ResolutionWitness? Witness { get; init; }
+    public ResolutionFailureReason? FailureReason { get; init; }
+    public string? FailureField { get; init; }
 }
 
 /// <summary>Bounded accepted-document inquiry; the host owns provider admission and durable replay.</summary>
@@ -39,8 +47,21 @@ public sealed class OctoberResolutionExecutor
         ArgumentNullException.ThrowIfNull(executionScope);
         ArgumentNullException.ThrowIfNull(disclosure);
         var attempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
+        ResolutionFailureReason? reason = null;
+        string? field = null;
         ResolutionExecutionResult Result(ProviderAdmissionStatus? failure, ResolutionOutcome? outcome = null) =>
-            new(outcome, failure, attempts.ToImmutable());
+            new(outcome, failure, attempts.ToImmutable())
+            {
+                FailureReason = outcome is not null ? null : failure switch
+                {
+                    ProviderAdmissionStatus.Denied => ResolutionFailureReason.DisclosureDenied,
+                    ProviderAdmissionStatus.AuthorityUnavailable => ResolutionFailureReason.DisclosureUnavailable,
+                    ProviderAdmissionStatus.HardStopped => ResolutionFailureReason.HardStop,
+                    ProviderAdmissionStatus.DeadlineExceeded => ResolutionFailureReason.Deadline,
+                    _ => reason ?? ResolutionFailureReason.ExecutionUnavailable
+                },
+                FailureField = outcome is null && failure is null ? field : null
+            };
         if (_client is not IOctoberBusinessAttemptClient attemptClient) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
         try
         {
@@ -88,6 +109,8 @@ public sealed class OctoberResolutionExecutor
         int outputCeiling = (int)Math.Min(maximumTokens, int.MaxValue);
         for (int attemptNumber = 0; attemptNumber < 2; attemptNumber++)
         {
+            reason = null;
+            field = null;
             ChatMessage[] messages = [new(ChatRole.System, _instructions), new(ChatRole.User, input)];
             long reservation = maximumTokens;
             if (retainedEvidence)
@@ -159,6 +182,7 @@ public sealed class OctoberResolutionExecutor
                             // Only the transport boundary may request another admitted attempt.
                             // Authority, response validation and policy failures never repeat generation.
                             retry = true;
+                            reason = ResolutionFailureReason.TransportFailure;
                         }
                         finally { terminalAt = Stopwatch.GetTimestamp(); }
                         if (transportCancellation.IsCancellationRequested || Elapsed() >= TimeSpan.FromSeconds(120))
@@ -174,12 +198,30 @@ public sealed class OctoberResolutionExecutor
                             else
                             {
                                 transportCancellation.Token.ThrowIfCancellationRequested();
-                                string canonical = OctoberKnowledgePolicy.CanonicalizeJson(response.Text);
-                                parsedWitness = JsonSerializer.Deserialize<ResolutionWitness>(canonical, _json);
-                                if (parsedWitness is not null) outcome = OctoberResolutionPolicy.Validate(corpus, actual, parsedWitness);
+                                string? canonical = null;
+                                try { canonical = OctoberKnowledgePolicy.CanonicalizeJson(response.Text); }
+                                catch (JsonException) { reason = ResolutionFailureReason.InvalidJson; }
+                                if (canonical is not null)
+                                {
+                                    try { parsedWitness = JsonSerializer.Deserialize<ResolutionWitness>(canonical, _json); }
+                                    catch (JsonException error)
+                                    {
+                                        reason = ResolutionFailureReason.WitnessShape;
+                                        field = SafeWitnessField(error.Path);
+                                    }
+                                    if (parsedWitness is null) reason ??= ResolutionFailureReason.WitnessShape;
+                                    else
+                                    {
+                                        try { outcome = OctoberResolutionPolicy.Validate(corpus, actual, parsedWitness); }
+                                        catch (Exception) { reason = ResolutionFailureReason.WitnessValidationException; }
+                                    }
+                                }
                                 attemptOutcome = outcome is null ? ProviderAttemptOutcome.Failed : ProviderAttemptOutcome.Completed;
                             }
                         }
+                        else if (response is not null)
+                            reason = response.FinishReason == ChatFinishReason.Length || Encoding.UTF8.GetByteCount(response.Text) > KnowledgeContract.MaximumContentBytes
+                                ? ResolutionFailureReason.OutputLimit : ResolutionFailureReason.IncompleteResponse;
                     }
                 }
             }
@@ -260,6 +302,14 @@ public sealed class OctoberResolutionExecutor
     }
 
     private static long? Nonnegative(long? value) => value is >= 0 ? value : null;
+    // Emit only fixed DTO labels, never arbitrary provider-controlled paths or values.
+    private static string? SafeWitnessField(string? path) => path switch
+    {
+        "$.Caller.Document.BatchId" => "Caller.Document.BatchId",
+        "$.Caller" => "Caller",
+        "$.Provider" => "Provider",
+        _ => null
+    };
     private static TimeSpan Max(TimeSpan left, TimeSpan right) => left >= right ? left : right;
     private static async Task<DisclosureStatus> CheckAuthorityAsync(IOctoberResolutionDisclosureAuthority authority,
         CorpusHandle corpus, ImmutableArray<Contributor> contributors, CancellationToken token)

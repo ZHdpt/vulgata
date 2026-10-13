@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Configuration;
@@ -18,6 +19,45 @@ namespace Vulgata.Tests.OctoberScan;
 /// <summary>Internal natural-completion composition only: real owner stores/reader and real SDK factory, controlled HTTP, no CLI or live provider.</summary>
 public sealed class OctoberScanBusinessFinalizationTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ResolutionDiagnostics_ActualGeneratorReport_ExportsOnlySafeCategoryAndSettledUsageAsync(bool typedShape)
+    {
+        const string secret = "RAW_MODEL_REPORT_SECRET";
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        const string caller = """{"observationKey":"local-call","ownerSelector":"file","role":"caller","mechanism":"call","operation":"Run","logicalNamespace":null,"literalsOrExpressions":["Run()"],"qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}]}""";
+        host.Client.TerminalTextOverride = OctoberScanGenerateRunnerTests.Harness.Model.ValidProposalJson.Replace(
+            "\"observations\":[]", "\"observations\":[" + caller + "]", StringComparison.Ordinal);
+        var original = await host.Runner.ExecuteAsync(host.Execution);
+        Assert.Equal(0, original.Report!.ExitCode);
+        var execution = ExistingClExecution(host.Execution, original.Report.Publication!);
+        using var transport = new NaturalTransport
+        {
+            IncludeCallerObservation = true,
+            ResolutionTextOverride = typedShape ? "{\"Caller\":{\"Document\":{\"BatchId\":\"" + secret + "\"}}}" : "{" + secret
+        };
+        await using var runner = new OctoberGenerateRunner(ExistingClDependencies(host, execution, transport));
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.NotEqual(0, report.ExitCode);
+        var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+        Assert.Equal(OctoberBusinessDiagnosticBoundary.Resolution, diagnostic.Boundary);
+        Assert.Equal(typedShape ? ResolutionFailureReason.WitnessShape : ResolutionFailureReason.InvalidJson, diagnostic.ResolutionFailureReason);
+        Assert.Equal(1, transport.ResolutionRequests);
+        Assert.Equal(1, transport.BusinessRequests);
+        Assert.Equal(0, transport.WorkerRequests);
+        Assert.Equal(30, report.Usage.InputTokens);
+        Assert.Equal(10, report.Usage.OutputTokens);
+        Assert.False(report.Usage.HasUnknownUsage);
+        Assert.DoesNotContain(secret, JsonSerializer.Serialize(report), StringComparison.Ordinal);
+        Assert.Null(report.Publication);
+        await using var context = host.Database.Factory.CreateDbContext();
+        Assert.Equal(0, await context.ResolutionItems.CountAsync());
+        Assert.Equal(0, await context.BusinessFinalizations.CountAsync());
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("configured")]
@@ -1537,6 +1577,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         internal int ExpectedWorkers = 1;
         internal int? ExpectedBusinessRequests;
         internal bool IncludeCallerObservation, ReturnUnresolved, InvalidSynthesisProposal;
+        internal string? ResolutionTextOverride;
         internal List<(string Endpoint, string? Authorization, string Model)> Requests { get; } = [];
         internal List<string> SynthesisPackets { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -1559,7 +1600,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             if (IncludeCallerObservation && Root is null)
             {
                 ResolutionRequests++; Assert.Equal(1, ResolutionRequests);
-                string resolution = "null";
+                string resolution = ResolutionTextOverride ?? "null";
                 if (ReturnUnresolved)
                 {
                     var message = body.RootElement.GetProperty("messages").EnumerateArray().Single(value => value.GetProperty("role").GetString() == "user");

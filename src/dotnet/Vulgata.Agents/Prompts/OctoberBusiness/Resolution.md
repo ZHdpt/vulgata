@@ -7,6 +7,18 @@ ProviderRole, ProviderOperation, Mechanism, NamespaceInterpretation, BindingInte
 SupportingAssertions, OpposingAssertions, Limitations, HasUnresolvedDecisiveOpposition and ClaimsDeploymentCertainty.
 AliasOrConfigurationMapping is null unless explicit accepted evidence supplies the mapping.
 
+Return the witness directly as the JSON root, with no envelope, markdown or explanation outside JSON.
+Caller and Provider are observation-reference OBJECTS, not strings: copy Caller exactly from the inquiry
+and copy Provider exactly from one supplied candidate. Each contains Document (the complete
+BatchId/LogicalDocumentId/DocumentVersionId object) and ObservationKey. Every assertion's Document
+is also that complete exact document-version object, never just a UUID or a document title.
+Evidence is the complete unchanged EvidenceReference object from the cited claim, not a citation
+string, source path, array or reconstructed summary. Preserve its nested Source/Origin when present.
+Kind must be a JSON integer 0, 1, 2, 3 or 4, never the enum name as a string. SupportingAssertions,
+OpposingAssertions and Limitations must be JSON arrays; use [] when empty. Use real JSON booleans
+for HasUnresolvedDecisiveOpposition and ClaimsDeploymentCertainty. Copy supplied identifier values;
+do not use placeholder identifiers, shorten UUIDs or invent missing values.
+
 Each assertion has Kind (CallerAction=0, ProviderRoleAndOperation=1, ConnectingBinding=2,
 AliasOrConfigurationMapping=3, Opposing=4), exact Document/SectionId/ClaimGroupId locator,
 unchanged raw Evidence, ExactAcceptedText and Interpretation. Quote the entire accepted claim exactly.
