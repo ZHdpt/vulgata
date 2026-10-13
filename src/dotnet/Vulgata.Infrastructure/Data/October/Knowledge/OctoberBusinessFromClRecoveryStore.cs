@@ -39,7 +39,7 @@ public sealed class OctoberBusinessFromClRecoveryStore(
                 return new(new KnowledgeWriteResult(KnowledgeWriteStatus.Committed, operation)
                 {
                     Abandonment = new(request.Begin.Publication, begin.PayloadDigest, request.RecoverySubjectId, request.EvidenceDigest)
-                    { BeginSubjectId = request.Begin.SubjectId }
+                    { BeginSubjectId = request.Begin.SubjectId, ResolutionPolicyVersion = request.Begin.ResolutionPolicyVersion }
                 }, []);
             }, cancellationToken, request.Begin.RunId);
         if (result.Status is not (KnowledgeWriteStatus.Committed or KnowledgeWriteStatus.AlreadyCommitted or KnowledgeWriteStatus.LogUnavailable))
@@ -73,7 +73,8 @@ public sealed class OctoberBusinessFromClRecoveryStore(
             if (begin is null || !ValidTerminal(begin, row)) return new(KnowledgeWriteStatus.CommitIndeterminate, operation);
             var result = OctoberKnowledgeOperationStore.Result(row);
             if (result.Abandonment != new BusinessFromClAbandonment(request.Begin.Publication, request.Begin.CanonicalPayloadDigest,
-                request.RecoverySubjectId, request.EvidenceDigest) { BeginSubjectId = request.Begin.SubjectId }) return new(KnowledgeWriteStatus.Conflict, operation);
+                request.RecoverySubjectId, request.EvidenceDigest)
+                { BeginSubjectId = request.Begin.SubjectId, ResolutionPolicyVersion = request.Begin.ResolutionPolicyVersion }) return new(KnowledgeWriteStatus.Conflict, operation);
             if (await authorization.CheckAsync(binding, [], deadline.Token) != DisclosureStatus.Allowed)
                 return new(KnowledgeWriteStatus.AuthorityUnavailable, operation);
             return result with { Status = KnowledgeWriteStatus.AlreadyCommitted };
@@ -108,7 +109,8 @@ public sealed class OctoberBusinessFromClRecoveryStore(
 
     private static bool ExactDigests(KnowledgeOperation begin, KnowledgeOperation abandoned, BusinessFromClAbandonment recovery)
     {
-        var request = new BusinessFromClRequest(recovery.Publication, recovery.BeginSubjectId, begin.OperationId, begin.PayloadDigest);
+        var request = new BusinessFromClRequest(recovery.Publication, recovery.BeginSubjectId, begin.OperationId, begin.PayloadDigest)
+        { ResolutionPolicyVersion = recovery.ResolutionPolicyVersion };
         var maintenance = new BusinessFromClRecoveryRequest(request, recovery.RecoverySubjectId, recovery.EvidenceDigest, abandoned.PayloadDigest);
         return !string.IsNullOrWhiteSpace(recovery.BeginSubjectId) &&
             request.CanonicalPayloadDigest == OctoberBusinessFromClPolicy.ComputeBeginDigest(request) &&

@@ -187,3 +187,45 @@ publication is claimed. Paid retries stopped on the indeterminate boundary rathe
 than using the remaining time for a blind repeat. Evidence is under ignored
 `TestResults/business-links-run-6/` and `business-links-postrun-6/`, including
 `independent-link-replay.json` and `indeterminate-inspection.json`.
+
+## Original finalizer diagnosis and exact-run recovery correction (October 13)
+
+The user explicitly requested diagnosis followed by safe settlement or fencing of
+run `73f1e438-8f9f-4015-bfdf-9eedc36dbbac`, before another paid attempt.
+
+The last launch used an 840-second run deadline (14 minutes), shortened by the
+Business agent to fit the prior one-hour window. Synthesis requests its fixed
+900-second attempt deadline. `OctoberExecutionScope.ValidRequest` requires the
+requested duration not exceed the configured total run lifetime, so it rejects
+that synthesis admission before transport. A source-free reproduction using the
+actual scope returned Denied for 840/900 and Granted for 1200/900; neither sent a
+provider request. Exact-root loader, context projection and flow planning passed;
+the resulting model packet is 24,147 UTF-8 bytes. This is a run-configuration error,
+not a malformed synthesis response. The finalizer's denied original result is
+followed by exact lookup with no durable result, reported as CommitIndeterminate.
+Future run configuration must allow at least 900 seconds total, with enough time
+for resolution, synthesis and verification. No deadline or authorization check
+was weakened and no speculative performance fix was applied.
+
+Before recovery, a separate compatibility defect was found: abandonment digest
+validation reconstructed the Begin request without its v2 resolution profile.
+The narrow correction adds a null-omitted optional ResolutionPolicyVersion to the
+abandonment receipt and preserves it during creation, expected lookup comparison
+and digest reconstruction. Null-profile legacy bytes remain unchanged. No migration,
+new publication route or changed resolution policy is involved. Older binaries
+must not be used to reconcile these v2 abandonment receipts.
+
+Focused RED: 4 selected, 1 pass/3 failures, isolation-ec513110ea864f6a923bc04b3366491e.
+Focused GREEN: 56/56, isolation-ae486d7120ce431fb0cd29e93c4f0df9. Tests cover v2
+recovery/replay, old-owner fencing, fresh-run admission, legacy byte compatibility,
+profile tampering and the 840/900 deadline mismatch. Independent static review PASS.
+These are controlled tests, not a new BL/provider qualification.
+
+Read-only physical settlement preflight passed using protected live operator
+binding, exact immutable launcher/report hashes and known usage for all four
+responses. The original process exited. PID 20648 was later reused by unrelated
+`njbank`, started at 14:12:26 Asia/Shanghai, after the original run ended; it was
+not stopped or modified. No pre-exit database backends or prepared transactions
+remained. The recovery helper uses the existing owner store and exclusive batch
+transaction fence, with an exclusive one-use marker; indeterminate recovery
+allows lookup only. Actual recovery result will be recorded after execution.

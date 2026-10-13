@@ -68,6 +68,8 @@ public sealed record BusinessFromClAbandonment(PublicationBinding Publication, s
     string RecoverySubjectId, string EvidenceDigest)
 {
     public string BeginSubjectId { get; init; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
 }
 
 public sealed record BusinessFromClRecoveryRequest(BusinessFromClRequest Begin, string RecoverySubjectId,

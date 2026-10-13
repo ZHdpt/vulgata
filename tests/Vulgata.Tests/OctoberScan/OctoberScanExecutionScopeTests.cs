@@ -12,6 +12,33 @@ public sealed class OctoberScanExecutionScopeTests
     private static readonly OperationKey Finalization = new(Guid.Parse("b1101864-a124-44df-939b-0a54c5c81880"), OperationKind.FinalizeCorpus, Guid.Parse("d1101864-a124-44df-939b-0a54c5c81880"));
 
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(840, ProviderAdmissionStatus.Denied)]
+    [InlineData(1200, ProviderAdmissionStatus.Granted)]
+    public async Task AcquireBusiness_SynthesisDurationMustFitConfiguredRunLifetime_WithoutSendingAsync(
+        int runDeadlineSeconds, ProviderAdmissionStatus expected)
+    {
+        await using var scope = Scope(Policy() with { RunDeadlineSeconds = runDeadlineSeconds });
+        var result = await scope.AcquireProviderAttemptAsync(Business(BusinessWorkKind.Synthesis) with
+        {
+            MaximumDuration = TimeSpan.FromSeconds(900)
+        });
+        try
+        {
+            Assert.Equal(expected, result.Status);
+            if (expected == ProviderAdmissionStatus.Denied) Assert.Null(result.Lease);
+            else Assert.NotNull(result.Lease);
+        }
+        finally
+        {
+            // This controlled admission never sends a request, even if a broken boundary grants it.
+            if (result.Lease is not null) await Settle(result.Lease, 0, ProviderAttemptOutcome.Cancelled);
+        }
+        Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+        Assert.Equal(0, scope.GetSnapshot().Usage.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task Acquire_WorkerAndTwoBusinessChildren_ShareOnePermitWithoutOuterPermitAsync()
     {

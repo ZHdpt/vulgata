@@ -12,6 +12,83 @@ public sealed class OctoberBusinessRecoveryTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task RecoveryV2_ExactPolicyReceipt_ReplaysFencesOldOwnerAndAdmitsFreshV2Async()
+    {
+        await using var fixture = await BusinessRecoveryFixture.CreateAsync(resolutionPolicyVersion: OctoberResolutionPolicy.RetainedPolicyVersion);
+        string before = await fixture.SemanticSnapshotAsync();
+        var result = await fixture.Recovery.RecoverAsync(fixture.Request);
+        Assert.Equal(KnowledgeWriteStatus.Committed, result.Status);
+        Assert.Equal(OctoberResolutionPolicy.RetainedPolicyVersion, result.Abandonment!.ResolutionPolicyVersion);
+        Assert.Equal(fixture.Begin.CanonicalPayloadDigest, result.Abandonment.BeginPayloadDigest);
+        Assert.Equal(before, await fixture.SemanticSnapshotAsync());
+        var replay = await fixture.Recovery.RecoverAsync(fixture.Request);
+        var lookup = await fixture.Recovery.LookupAsync(fixture.Request);
+        Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, replay.Status);
+        Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, lookup.Status);
+        Assert.Equal(result.Abandonment, replay.Abandonment);
+        Assert.Equal(result.Abandonment, lookup.Abandonment);
+        Assert.Equal(CommitEligibilityStatus.StaleOrFenced, await fixture.Store.CheckActiveAsync(fixture.Begin, fixture.Admission));
+        var completion = new BusinessFromClCompletionRequest(fixture.Begin, "");
+        completion = completion with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeCompletionDigest(completion) };
+        Assert.Equal(KnowledgeWriteStatus.StaleOrFenced, (await fixture.Store.CompleteAsync(completion, fixture.Admission)).Status);
+        Assert.Null((await fixture.NewStore().BeginAsync(fixture.Begin)).Admission);
+        var fresh = await fixture.NewStore().BeginAsync(BusinessRecoveryFixture.NewBegin(fixture.Begin.Publication,
+            fixture.Begin.SubjectId, OctoberResolutionPolicy.RetainedPolicyVersion));
+        Assert.Equal(KnowledgeWriteStatus.Committed, fresh.Status);
+        Assert.NotNull(fresh.Admission);
+        Assert.Equal(OctoberResolutionPolicy.RetainedPolicyVersion, fresh.Snapshot!.ResolutionPolicyVersion);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void RecoveryV2_AbsentPolicy_PreservesExplicitLegacyReceiptBytes()
+    {
+        var publication = new PublicationBinding(new("controlled/database", "controlled-target", Guid.NewGuid(), new string('a', 64)), Guid.NewGuid());
+        var receipt = new BusinessFromClAbandonment(publication, new string('b', 64), "recovery-owner", new string('c', 64))
+        { BeginSubjectId = "original-owner" };
+        string legacy = OctoberKnowledgePolicy.SerializeCanonical(new
+        {
+            receipt.Publication, receipt.BeginPayloadDigest, receipt.RecoverySubjectId, receipt.EvidenceDigest, receipt.BeginSubjectId
+        });
+        Assert.Equal(legacy, OctoberKnowledgePolicy.SerializeCanonical(receipt));
+        Assert.Equal(legacy, OctoberKnowledgePolicy.SerializeCanonical(receipt with { ResolutionPolicyVersion = null }));
+        Assert.DoesNotContain("resolutionPolicyVersion", legacy, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(null)]
+    [InlineData(OctoberResolutionPolicy.PolicyVersion)]
+    public async Task RecoveryV2_AlteredReceiptPolicy_CannotReplayOrReleaseAnotherRunAsync(string? changedPolicy)
+    {
+        await using var fixture = await BusinessRecoveryFixture.CreateAsync(resolutionPolicyVersion: OctoberResolutionPolicy.RetainedPolicyVersion);
+        Assert.Equal(KnowledgeWriteStatus.Committed, (await fixture.Recovery.RecoverAsync(fixture.Request)).Status);
+        await using (var context = fixture.Database.Factory.CreateDbContext())
+        {
+            var row = await context.KnowledgeOperations.AsNoTracking().SingleAsync(value => value.Kind == OperationKind.AbandonBusinessFromCl);
+            var receipt = JsonSerializer.Deserialize<KnowledgeWriteResult>(row.CommittedResultJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            string corrupt = OctoberKnowledgePolicy.SerializeCanonical(receipt with
+            { Abandonment = receipt.Abandonment! with { ResolutionPolicyVersion = changedPolicy } });
+            // Deliberate corruption of this test-owned SQLite receipt, preserving the original digest and journal identity.
+            Assert.Equal(1, await context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"KnowledgeOperations\" SET \"CommittedResultJson\"={corrupt} WHERE \"Kind\"={(int)OperationKind.AbandonBusinessFromCl}"));
+        }
+        var replay = await fixture.Recovery.RecoverAsync(fixture.Request);
+        var lookup = await fixture.Recovery.LookupAsync(fixture.Request);
+        foreach (var result in new[] { replay, lookup })
+        {
+            Assert.DoesNotContain(result.Status, new[] { KnowledgeWriteStatus.Committed, KnowledgeWriteStatus.AlreadyCommitted, KnowledgeWriteStatus.LogUnavailable });
+            Assert.Null(result.Abandonment);
+        }
+        var fresh = await fixture.NewStore().BeginAsync(BusinessRecoveryFixture.NewBegin(fixture.Begin.Publication,
+            fixture.Begin.SubjectId, OctoberResolutionPolicy.RetainedPolicyVersion));
+        Assert.NotEqual(KnowledgeWriteStatus.Committed, fresh.Status);
+        Assert.Null(fresh.Admission);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RecoverAsync_ExactAbandonment_PreservesHistoryFencesOldOwnerAndPermitsOnlyFreshRunAsync()
     {
         await using var fixture = await BusinessRecoveryFixture.CreateAsync();
@@ -242,7 +319,7 @@ internal sealed class BusinessRecoveryFixture : IAsyncDisposable
     public BusinessFromClRecoveryRequest Request { get; private set; } = null!;
     public OctoberBusinessFromClRecoveryStore Recovery => new(Database.Factory, Authority, Database.Guard, Database.Log);
     public OctoberBusinessFromClStore NewStore() => new(Database.Factory, new AllowedContinuationAuthority(), Database.Guard, Database.Guard, new SettledContinuationAuthority(), Database.Log);
-    public static async Task<BusinessRecoveryFixture> CreateAsync(OctoberKnowledgeAcceptanceFixture? supplied = null)
+    public static async Task<BusinessRecoveryFixture> CreateAsync(OctoberKnowledgeAcceptanceFixture? supplied = null, string? resolutionPolicyVersion = null)
     {
         var harness = await OctoberScanGenerateRunnerTests.Harness.CreateAsync(supplied);
         var fixture = new BusinessRecoveryFixture(harness);
@@ -250,7 +327,7 @@ internal sealed class BusinessRecoveryFixture : IAsyncDisposable
         {
             var generated = await harness.Runner.ExecuteAsync(harness.Execution);
             Assert.Equal(0, generated.Report!.ExitCode);
-            fixture.Begin = NewBegin(Assert.IsType<PublicationBinding>(generated.Report.Publication), harness.Execution.Session.SubjectId);
+            fixture.Begin = NewBegin(Assert.IsType<PublicationBinding>(generated.Report.Publication), harness.Execution.Session.SubjectId, resolutionPolicyVersion);
             fixture.Store = fixture.NewStore();
             var result = await fixture.Store.BeginAsync(fixture.Begin);
             Assert.Equal(KnowledgeWriteStatus.Committed, result.Status);
@@ -261,9 +338,9 @@ internal sealed class BusinessRecoveryFixture : IAsyncDisposable
         }
         catch { await fixture.DisposeAsync(); throw; }
     }
-    public static BusinessFromClRequest NewBegin(PublicationBinding publication, string subject)
+    public static BusinessFromClRequest NewBegin(PublicationBinding publication, string subject, string? resolutionPolicyVersion = null)
     {
-        var request = new BusinessFromClRequest(publication, subject, Guid.NewGuid(), "");
+        var request = new BusinessFromClRequest(publication, subject, Guid.NewGuid(), "") { ResolutionPolicyVersion = resolutionPolicyVersion };
         return request with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeBeginDigest(request) };
     }
     public static BusinessFromClRecoveryRequest Seal(BusinessFromClRecoveryRequest request) => request with { CanonicalPayloadDigest = OctoberBusinessFromClRecoveryPolicy.ComputeDigest(request) };
