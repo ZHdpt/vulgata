@@ -18,6 +18,8 @@ public sealed record BusinessSynthesisDiagnostic(Guid RunId, OperationKey Operat
     BusinessSynthesisFailureReason FailureReason, ImmutableArray<ProviderAttemptUsage> Attempts)
 {
     public ImmutableArray<BusinessSourceDiagnostic> SourceReads { get; init; } = [];
+    public string? RejectedResponse { get; init; }
+    public string? ValidationDetail { get; init; }
 }
 
 internal static class OctoberBusinessSemanticReview
@@ -29,10 +31,14 @@ internal static class OctoberBusinessSemanticReview
     };
 
     internal static bool Valid(BusinessSemanticReview? review, BusinessSynthesisProposal candidate,
+        FlowPlanningInput input, Guid group, FlowPlanningLimits? limits) =>
+        InvalidReason(review, candidate, input, group, limits) is null;
+
+    internal static string? InvalidReason(BusinessSemanticReview? review, BusinessSynthesisProposal candidate,
         FlowPlanningInput input, Guid group, FlowPlanningLimits? limits)
     {
         if (review is null || review.ProposalDigest != OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)) ||
-            review.Findings.IsDefault) return false;
+            review.Findings.IsDefault) return "Review missing, proposal digest mismatch, or findings missing.";
         var expected = new Dictionary<string, HashSet<SynthesisClaimInput>>(StringComparer.Ordinal);
         expected.Add("title", candidate.Sections.SelectMany(s => s.Claims).SelectMany(c => c.Inputs).ToHashSet());
         foreach (var section in candidate.Sections)
@@ -40,7 +46,7 @@ internal static class OctoberBusinessSemanticReview
             expected.Add("section:" + section.SectionId, section.Claims.SelectMany(c => c.Inputs).ToHashSet());
             foreach (var claim in section.Claims) expected.Add("claim:" + claim.ClaimGroupId, claim.Inputs.ToHashSet());
         }
-        if (review.Findings.Length != expected.Count) return false;
+        if (review.Findings.Length != expected.Count) return $"Expected exactly {expected.Count} findings; received {review.Findings.Length}.";
         var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(input, group, limits);
         var source = packet.Documents.SelectMany(d => d.Sections.SelectMany(s => s.Claims.Select(c =>
             (Key: new SynthesisClaimInput(d.Version, s.SectionId, c.ClaimGroupId), c.Text))))
@@ -51,7 +57,7 @@ internal static class OctoberBusinessSemanticReview
             if (finding is null || finding.Target is null || !seen.Add(finding.Target) ||
                 !expected.TryGetValue(finding.Target, out var permitted) ||
                 string.IsNullOrWhiteSpace(finding.Explanation) || finding.Explanation.Length > 2000 ||
-                finding.Evidence.IsDefaultOrEmpty || finding.Evidence.Length > 256) return false;
+                finding.Evidence.IsDefaultOrEmpty || finding.Evidence.Length > 256) return "Invalid, duplicate, or unexpected finding target, explanation, or evidence shape.";
             var cited = new HashSet<SynthesisClaimInput>();
             foreach (var evidence in finding.Evidence)
             {
@@ -59,12 +65,12 @@ internal static class OctoberBusinessSemanticReview
                     evidence.Category is null || !Categories.Contains(evidence.Category) ||
                     string.IsNullOrWhiteSpace(evidence.Quote) || evidence.Quote.Length > 8192 ||
                     !source.TryGetValue(evidence.Input, out string? original) ||
-                    !original.Contains(evidence.Quote, StringComparison.Ordinal)) return false;
+                    !original.Contains(evidence.Quote, StringComparison.Ordinal)) return $"Finding {finding.Target}: evidence input, category, or literal CL quote is invalid.";
                 cited.Add(evidence.Input);
             }
-            if (finding.Target.StartsWith("claim:", StringComparison.Ordinal) && !cited.SetEquals(permitted)) return false;
+            if (finding.Target.StartsWith("claim:", StringComparison.Ordinal) && !cited.SetEquals(permitted)) return $"Finding {finding.Target}: cite every input of this exact claim.";
         }
-        return true;
+        return null;
     }
 
     internal static bool SameCoverage(BusinessSynthesisProposal original, BusinessSynthesisProposal corrected) =>
@@ -102,7 +108,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             var result = await ExecuteStageAsync(input, groupVersionId, operation, runId, providerProfileId, maximumTokens,
                 executionScope, disclosure, linked.Token, limits, candidate, feedback, remaining, retrieval);
             allAttempts.AddRange(result.Attempts);
-            if (allAttempts.Count > (retrieval is null ? 10 : OctoberBusinessSourceRetrieval.MaximumRequests) || result.Attempts.Any(x => x.InputTokens is null || x.OutputTokens is null))
+            if (allAttempts.Count > OctoberBusinessSourceRetrieval.MaximumRequests || result.Attempts.Any(x => x.InputTokens is null || x.OutputTokens is null))
                 return Stop(BusinessSynthesisFailureReason.SemanticReviewInvalid, ProviderAdmissionStatus.AuthorityUnavailable);
             if (_diagnosticCapture is not null && result.AdmissionFailure is null)
             {
@@ -128,7 +134,8 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                     if (before != ProviderAdmissionStatus.Granted) return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, before);
                     var stage = stageIndex switch { 0 => "draft", 1 => "review", 2 => "correction", _ => "re-review" };
                     await _diagnosticCapture(new(runId, operation, groupVersionId, stage,
-                        result.Proposal ?? candidate, result.SemanticReview, result.FailureReason, result.Attempts) { SourceReads = retrieval?.Pages ?? [] }, captureToken.Token);
+                        result.Proposal ?? candidate, result.SemanticReview, result.FailureReason, result.Attempts)
+                    { SourceReads = retrieval?.Pages ?? [], RejectedResponse = result.RejectedResponse, ValidationDetail = result.ValidationDetail }, captureToken.Token);
                     var after = await CaptureEligibilityAsync();
                     if (after != ProviderAdmissionStatus.Granted) return Stop(BusinessSynthesisFailureReason.ExecutionUnavailable, after);
                 }

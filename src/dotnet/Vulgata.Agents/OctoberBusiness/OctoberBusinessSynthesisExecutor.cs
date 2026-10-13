@@ -21,6 +21,10 @@ public sealed record BusinessSynthesisResult(BusinessLogicContent? Content, BLDe
     public BusinessSynthesisFailureReason FailureReason { get; init; }
     [JsonIgnore]
     public BusinessSemanticReview? SemanticReview { get; init; }
+    [JsonIgnore]
+    public string? RejectedResponse { get; init; }
+    [JsonIgnore]
+    public string? ValidationDetail { get; init; }
 }
 
 /// <summary>Bounded document-first synthesis; the host retains admission and storage authority.</summary>
@@ -70,9 +74,12 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         ArgumentNullException.ThrowIfNull(executionScope);
         ArgumentNullException.ThrowIfNull(disclosure);
         var attempts = ImmutableArray.CreateBuilder<ProviderAttemptUsage>();
+        string? rejectedResponse = null;
+        string? validationDetail = null;
         BusinessSynthesisResult Result(ProviderAdmissionStatus? failure,
             BusinessSynthesisFailureReason reason = BusinessSynthesisFailureReason.ExecutionUnavailable) =>
-            new(null, null, failure, attempts.ToImmutable()) { FailureReason = reason };
+            new(null, null, failure, attempts.ToImmutable())
+            { FailureReason = reason, RejectedResponse = rejectedResponse, ValidationDetail = validationDetail };
         if (_client is not IOctoberBusinessAttemptClient attemptClient) return Result(ProviderAdmissionStatus.AuthorityUnavailable);
         try
         {
@@ -133,7 +140,7 @@ public sealed partial class OctoberBusinessSynthesisExecutor
         var lastFailureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;
         var sourceCallIds = new HashSet<string>(StringComparer.Ordinal);
         bool toolsEnabled = retrieval is not null && retrieval.Rounds < OctoberBusinessSourceRetrieval.MaximumRounds;
-        int allowedAttempts = candidate is not null && correction is null ? 1 : MaximumAttempts;
+        int allowedAttempts = MaximumAttempts;
         for (int index = 0; index < allowedAttempts; index++)
         {
             var remaining = stageBudget - Elapsed();
@@ -249,8 +256,13 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                                 if (candidate is not null && correction is null)
                                 {
                                     review = JsonSerializer.Deserialize<BusinessSemanticReview>(OctoberKnowledgePolicy.CanonicalizeJson(response.Text), _json);
-                                    if (!OctoberBusinessSemanticReview.Valid(review, candidate, input, groupVersionId, limits))
+                                    string? invalidReview = OctoberBusinessSemanticReview.InvalidReason(review, candidate, input, groupVersionId, limits);
+                                    if (invalidReview is not null)
+                                    {
+                                        validationDetail = invalidReview;
+                                        failureReason = BusinessSynthesisFailureReason.SemanticReviewInvalid;
                                         throw new JsonException("Incomplete or ungrounded semantic review.");
+                                    }
                                     // A valid negative verdict is an observed review, not accepted content.
                                     proposal = candidate;
                                 }
@@ -276,7 +288,17 @@ public sealed partial class OctoberBusinessSynthesisExecutor
             catch (JsonException)
             {
                 failure = parsingProposal ? null : ProviderAdmissionStatus.AuthorityUnavailable;
-                failureReason = parsingProposal ? BusinessSynthesisFailureReason.JsonInvalid : BusinessSynthesisFailureReason.ExecutionUnavailable;
+                if (parsingProposal)
+                {
+                    if (failureReason != BusinessSynthesisFailureReason.SemanticReviewInvalid)
+                    {
+                        failureReason = BusinessSynthesisFailureReason.JsonInvalid;
+                        validationDetail = "JSON syntax, duplicate property, required field, or typed field shape is invalid.";
+                    }
+                    // Bounded model output remains protected diagnostic data, never accepted evidence.
+                    rejectedResponse = response?.Text;
+                }
+                else failureReason = BusinessSynthesisFailureReason.ExecutionUnavailable;
             }
             catch (Exception) { failure = ProviderAdmissionStatus.AuthorityUnavailable; }
             finally
@@ -390,13 +412,15 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                 return new(validated.Content, validated.Dependencies, null, attempts.ToImmutable())
                 {
                     Proposal = proposal, SemanticReview = review, Gaps = validated.Gaps,
-                    Coverage = validated.Coverage, PlanDispositions = validated.PlanDispositions
+                    Coverage = validated.Coverage, PlanDispositions = validated.PlanDispositions,
+                    RejectedResponse = rejectedResponse, ValidationDetail = validationDetail
                 };
             }
             if (index == allowedAttempts - 1 || synthesisClient?.SupportsSynthesisCorrections != true ||
                 response?.FinishReason != ChatFinishReason.Stop || response.Usage?.InputTokenCount is not >= 0 ||
                 response.Usage.OutputTokenCount is not >= 0 ||
-                !OctoberBusinessSynthesisRequests.Correctable(failureReason)) return Result(null, failureReason);
+                !(OctoberBusinessSynthesisRequests.Correctable(failureReason) ||
+                    candidate is not null && correction is null && failureReason == BusinessSynthesisFailureReason.SemanticReviewInvalid)) return Result(null, failureReason);
             // No outer transport retry. Every replacement consumes the same original allowance.
             if (index == 2)
             {
@@ -404,7 +428,11 @@ public sealed partial class OctoberBusinessSynthesisExecutor
                 history.AddRange(originalMessages);
             }
             else history.AddRange(response.Messages.Select(message => message.Clone()));
-            history.Add(new(ChatRole.User, OctoberBusinessSynthesisRequests.Correction(failureReason, MaximumAttempts - index - 2)));
+            string repair = candidate is not null && correction is null
+                ? JsonSerializer.Serialize(new { phase = "semantic-review", proposalDigest = OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)),
+                    failure = failureReason.ToString(), remainingCorrections = MaximumAttempts - index - 2, validationDetail })
+                : OctoberBusinessSynthesisRequests.Correction(failureReason, MaximumAttempts - index - 2);
+            history.Add(new(ChatRole.User, repair));
             lastFailureReason = failureReason;
         }
         return Result(null, lastFailureReason);

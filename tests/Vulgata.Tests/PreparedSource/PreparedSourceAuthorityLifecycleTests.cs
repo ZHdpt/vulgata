@@ -4,6 +4,7 @@ using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.OctoberGenerator;
 using System.Text;
+using Vulgata.Tests.OctoberScan;
 
 using Vulgata.Tests.TestInfrastructure;
 
@@ -12,6 +13,75 @@ namespace Vulgata.Tests.PreparedSource;
 [Collection(PreparedSourceTestCollection.Name)]
 public sealed class PreparedSourceAuthorityLifecycleTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BusinessSourceFactory_MetadataOneGrantCompletesRepeatedLiveIdentityChecksAndRevocationDeniesAsync(bool revoked)
+    {
+        RequireWindowsHost();
+        await using var native = await PreparedSourceFixture.CreateAsync();
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var execution = host.Execution;
+        var selected = execution.Authority.SelectedContext!.Repositories.Single();
+        var approval = new PreparedSourceApproval(execution.Setup.BatchId, selected.RepositoryId, execution.Session.SubjectId,
+            PreparedSourcePurpose.BusinessSynthesisRead, "controlled-factory-business-grant", selected.RootBindingIdentity, selected.OperatorLabel);
+        var authority = new NativeBusinessFactoryAuthority(execution, approval) { Revoked = revoked };
+        string auxiliary = native.SiblingPath;
+        var runtime = new OctoberRuntimeConfiguration(
+            [new(execution.Setup.TargetId, execution.Setup.BatchId, selected.RepositoryId, selected.RootBindingIdentity, native.PreparedRootPath)],
+            Path.Combine(auxiliary, "unused-codegraph.exe"),
+            new(Path.Combine(auxiliary, "unused-java-state"), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(15), 2 * 1024 * 1024),
+            new([auxiliary], [auxiliary], Path.Combine(auxiliary, "unused-cmd.exe"), [auxiliary], auxiliary), Path.Combine(auxiliary, "unused-log"));
+        var anchor = new SourceAnchor(new(selected.RepositoryId, selected.RootBindingIdentity, "notes.oddlangx",
+            OctoberKnowledgePolicy.Hash("café\nsource fixture\n"), "exact-original-prepared-version"), 2, 2);
+        var reader = OctoberBusinessSourceReaderFactory.Create(runtime, authority, execution, TimeProvider.System);
+        var result = await reader.ReadAsync(anchor, 0, 32 * 1024, 16 * 1024 * 1024, default);
+        Assert.Equal(1, authority.Issues); Assert.Equal(1, authority.Revocations);
+        Assert.Equal(anchor, result.Source);
+        if (revoked)
+        {
+            Assert.Contains(result.Status, new[] { BusinessSourceStatus.Denied, BusinessSourceStatus.Unavailable });
+            Assert.Null(result.Text); Assert.Null(result.NextOffset);
+        }
+        else
+        {
+            // The actual reader checks identity before/between/after both passes and before release.
+            // Factory wiring must permit all four observations without spending the main grant's lone metadata slot repeatedly.
+            Assert.Equal(BusinessSourceStatus.Complete, result.Status);
+            Assert.Equal("source fixture\n", result.Text); Assert.Null(result.NextOffset);
+            Assert.True(authority.Verifications >= 4);
+        }
+    }
+
+    private sealed class NativeBusinessFactoryAuthority(OctoberGenerateExecution execution, PreparedSourceApproval approval) : IOctoberLocalAuthority
+    {
+        public bool Revoked { get; init; }
+        public int Issues { get; private set; }
+        public int Verifications { get; private set; }
+        public int Revocations { get; private set; }
+        public Task<OctoberAuthenticationResult> AuthenticateAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<OctoberAuthoritySelectionResult> AuthorizeSelectionAsync(IOctoberOperatorSession session, OctoberAuthoritySelectionRequest request, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<OctoberSourceApprovalResult> IssueSourceApprovalAsync(IOctoberOperatorSession session, IOctoberHistoricalBoundSetupData setup, Guid repository, CancellationToken cancellationToken) => throw new InvalidOperationException("Business factory must not request Worker authority.");
+        public Task<OctoberSourceApprovalResult> IssueBusinessSourceApprovalAsync(IOctoberOperatorSession session, IOctoberHistoricalBoundSetupData setup, Guid repository, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested(); Issues++;
+            Assert.Same(execution.Session, session); Assert.Same(execution.Setup, setup); Assert.Equal(approval.RepositoryId, repository);
+            return Task.FromResult(new OctoberSourceApprovalResult(OctoberSourceApprovalStatus.Issued, approval, DateTimeOffset.UtcNow.AddMinutes(2)));
+        }
+        public Task<PreparedSourceAuthorityResult> VerifySourceApprovalAsync(IOctoberOperatorSession session, string target, PreparedSourceApproval requested, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested(); Verifications++;
+            Assert.Same(execution.Session, session); Assert.Equal(execution.Setup.TargetId, target); Assert.Equal(approval, requested);
+            return Task.FromResult(new PreparedSourceAuthorityResult(Revoked ? PreparedSourceAuthorityStatus.Revoked : PreparedSourceAuthorityStatus.Current, Revoked ? null : approval));
+        }
+        public Task<OctoberRevocationStatus> RevokeSourceApprovalAsync(IOctoberOperatorSession session, string target, string identity, CancellationToken cancellationToken)
+        {
+            Revocations++; Assert.Equal(approval.ApprovalIdentity, identity);
+            return Task.FromResult(OctoberRevocationStatus.Revoked);
+        }
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("business")]

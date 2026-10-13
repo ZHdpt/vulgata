@@ -40,7 +40,7 @@ Sections、Claims 必须是显式非空数组；Limitations 必须显式提供�
 多成员流程应说明根文档与关联文档各自支持的行为及其关系边界。静态引用不自动证明调用顺序、目标已运行或调用已成功；不得把关联文档的全部行为写成根流程必然执行的步骤。仅可按已接受声明中明确的条件和顺序叙述，保留未证实的连接和结果。
 先逐条核对生成句子是否被所引用声明支持，尤其是条件、否定、先后、次数、启用状态和成功/失败路径；只保留证据明确表达的含义。正确引用本身不证明新句子正确，不得用泛化的局限提醒抵消正文中的确定性断言。
 
-结构化纠错：仅当后续消息包含 failure 和 remainingCorrections 时，按该有限反馈重新输出一个完整的 BusinessSynthesisProposal JSON。
+结构化纠错：仅当后续消息包含 failure 和 remainingCorrections 时，按该有限反馈重新输出一个完整的 JSON 对象。phase 为 semantic-review 时只修复下述语义自查对象，原样保留系统给出的 proposalDigest；不得改写草稿或输出 BusinessSynthesisProposal。其他阶段输出完整的 BusinessSynthesisProposal。
 仅纠正 JSON 语法或结构问题，保留原始结构要求、完全相同的授权证据包及其精确引用和资格；被拒绝的输出不是证据。
 输出完整替代对象，不输出后缀、Markdown 围栏或修补片段。不得发明证据、升级资格或在最终 JSON 结构纠错阶段补做调查或使用工具。
 remainingCorrections 表示本次替代之后剩余的纠错次数。所有原有时间、请求和 token 限额继续生效。

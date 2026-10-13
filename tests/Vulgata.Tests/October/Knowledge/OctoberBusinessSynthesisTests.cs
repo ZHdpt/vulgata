@@ -21,6 +21,39 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessSynthesisTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ReviewStructuralRepair_InvalidJsonThenBoundValidReview_PreservesDraftAndRecoversAsync()
+    {
+        var f = new SynthesisCase(); var clock = new SynthesisClock();
+        await using var scope = f.Scope(clock);
+        string? originalContext = null;
+        using var client = new SemanticReviewClient(clock, (call, messages) =>
+        {
+            if (call == 1) return f.Response();
+            if (call == 2)
+            {
+                _ = SemanticEnvelope(messages, "semantic-review");
+                originalContext = JsonSerializer.Serialize(messages);
+                return SynthesisCase.JsonResponse("{incomplete-review-json");
+            }
+            Assert.Equal(3, call);
+            Assert.Equal(originalContext, JsonSerializer.Serialize(messages.Take(4).ToArray()));
+            Assert.Equal(ChatRole.User, messages[^1].Role);
+            using var feedback = JsonDocument.Parse(messages[^1].Text);
+            Assert.Equal("semantic-review", feedback.RootElement.GetProperty("phase").GetString());
+            Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal())), feedback.RootElement.GetProperty("proposalDigest").GetString());
+            Assert.Equal("JsonInvalid", feedback.RootElement.GetProperty("failure").GetString());
+            Assert.True(feedback.RootElement.GetProperty("remainingCorrections").GetInt32() >= 0);
+            return SemanticReviewForCandidate(f.Input, f.Proposal());
+        });
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        Assert.NotNull(result.Content); Assert.NotNull(result.Proposal);
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal()), OctoberKnowledgePolicy.SerializeCanonical(result.Proposal));
+        Assert.Equal(3, client.Calls); Assert.Equal(3, result.Attempts.Length);
+        Assert.All(result.Attempts, attempt => { Assert.Equal(10, attempt.InputTokens); Assert.Equal(5, attempt.OutputTokens); });
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("legacy-primary")]
     [InlineData("foreign-origin")]
@@ -502,12 +535,28 @@ public sealed class OctoberBusinessSynthesisTests
     {
         var f = new SynthesisCase(); var clock = new SynthesisClock();
         await using var scope = f.Scope(clock);
+        string? originalReview = null;
+        string? originalContext = null;
+        string? lastRejectedResponse = null;
+        var captures = new List<BusinessSynthesisDiagnostic>();
         using var client = new SemanticReviewClient(clock, (call, messages) =>
         {
             if (call == 1) return f.Response();
-            var response = SemanticReview(f, messages);
+            if (call == 2)
+            {
+                originalReview = SemanticReview(f, messages).Text;
+                originalContext = JsonSerializer.Serialize(messages);
+            }
+            else
+            {
+                Assert.Equal(originalContext, JsonSerializer.Serialize(messages.Take(4).ToArray()));
+                using var feedback = JsonDocument.Parse(messages[^1].Text);
+                Assert.Equal("semantic-review", feedback.RootElement.GetProperty("phase").GetString());
+                Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal())), feedback.RootElement.GetProperty("proposalDigest").GetString());
+            }
+            var response = SynthesisCase.JsonResponse(originalReview!);
             if (mutation == "unknown-usage") { response.Usage = null; return response; }
-            if (mutation == "invalid-json") return SynthesisCase.JsonResponse("{untrusted-review");
+            if (mutation == "invalid-json") return SynthesisCase.JsonResponse(lastRejectedResponse = "{untrusted-review");
             var body = JsonNode.Parse(response.Text)!.AsObject();
             var findings = body["findings"]!.AsArray();
             var evidence = findings[^1]!["evidence"]!.AsArray();
@@ -521,12 +570,23 @@ public sealed class OctoberBusinessSynthesisTests
                 case "missing-claim-evidence": evidence.Clear(); break;
                 case "unknown-category": evidence[0]!["category"] = "RuntimeProof"; break;
             }
-            return SynthesisCase.JsonResponse(body.ToJsonString());
+            return SynthesisCase.JsonResponse(lastRejectedResponse = body.ToJsonString());
         });
-        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock);
+        var result = await ExecuteReviewed(f, client, scope, new SynthesisDisclosure(), clock,
+            (diagnostic, _) => { captures.Add(diagnostic); return Task.CompletedTask; });
         Assert.Null(result.Content); Assert.Null(result.Dependencies); Assert.Null(result.Proposal);
-        Assert.Equal(2, client.Calls); Assert.Equal(2, result.Attempts.Length);
+        Assert.Equal(mutation == "unknown-usage" ? 2 : 5, client.Calls);
+        Assert.Equal(client.Calls, result.Attempts.Length);
         Assert.Equal(0, scope.GetSnapshot().OutstandingAttempts);
+        if (mutation != "unknown-usage")
+        {
+            var diagnostic = Assert.Single(captures.Where(value => value.Stage == "review"));
+            Assert.Equal(lastRejectedResponse, diagnostic.RejectedResponse);
+            Assert.False(string.IsNullOrWhiteSpace(diagnostic.ValidationDetail));
+            Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(f.Proposal()), OctoberKnowledgePolicy.SerializeCanonical(diagnostic.Proposal));
+            Assert.DoesNotContain("RejectedResponse", JsonSerializer.Serialize(result), StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("ValidationDetail", JsonSerializer.Serialize(result), StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     [Trait("Suite", "SelfContained")]

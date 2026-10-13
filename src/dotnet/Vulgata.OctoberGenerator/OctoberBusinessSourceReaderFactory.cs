@@ -51,7 +51,7 @@ internal static class OctoberBusinessSourceReaderFactory
                 return current.Status == PreparedSourceAuthorityStatus.Current && current.CurrentApproval == approval
                     ? DisclosureStatus.Allowed : current.Status == PreparedSourceAuthorityStatus.Revoked
                         ? DisclosureStatus.Denied : DisclosureStatus.AuthorityUnavailable;
-            }, ct => binding.ObserveFileIdentityAsync(owned, source.Origin.RelativePath, ct), CloseAsync);
+            }, ct => ObserveIdentityAsync(binding, approval, source.Origin.RelativePath, ct), CloseAsync);
             transferred = true;
             return grant;
         }
@@ -64,4 +64,16 @@ internal static class OctoberBusinessSourceReaderFactory
             }
         }
     });
+
+    internal static async Task<string?> ObserveIdentityAsync(PreparedSourceBinding binding,
+        PreparedSourceApproval approval, string relativePath, CancellationToken token)
+    {
+        // Each identity observation consumes one metadata entry. Keep the shared cap intact
+        // and the two full content passes in their original context; this context cannot read
+        // useful content and is disposed before returning its live-authorized identity.
+        var issued = await binding.IssueAsync(approval, new(1, 1, 1, 1, TimeSpan.FromSeconds(30)), token);
+        await using var context = issued.Context;
+        return issued.Status == PreparedSourceIssueStatus.Issued && context is not null
+            ? await binding.ObserveFileIdentityAsync(context, relativePath, token) : null;
+    }
 }

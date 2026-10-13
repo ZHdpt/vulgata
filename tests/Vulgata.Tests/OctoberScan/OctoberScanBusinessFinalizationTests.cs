@@ -26,11 +26,17 @@ public sealed class OctoberScanBusinessFinalizationTests
         using var directory = new DiagnosticCaptureDirectory();
         var encryption = new SecretEncryptionService(new EphemeralDataProtectionProvider());
         var sink = new OctoberBusinessDiagnosticCapture(directory.Path, encryption);
-        var record = DiagnosticRecord("controlled-private-draft-content");
+        var record = DiagnosticRecord("controlled-private-draft-content") with
+        {
+            RejectedResponse = "controlled-private-rejected-response",
+            ValidationDetail = "controlled-review-validation-detail"
+        };
         await sink.CaptureAsync(record, default);
         string file = Assert.Single(Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories));
         string protectedText = await File.ReadAllTextAsync(file);
         Assert.DoesNotContain("controlled-private-draft-content", protectedText, StringComparison.Ordinal);
+        Assert.DoesNotContain("controlled-private-rejected-response", protectedText, StringComparison.Ordinal);
+        Assert.DoesNotContain("controlled-review-validation-detail", protectedText, StringComparison.Ordinal);
         const string purpose = "Vulgata.October.Business.SemanticDiagnostics.v1";
         Assert.Equal(purpose, OctoberBusinessDiagnosticCapture.Purpose);
         string recovered = await encryption.DecryptAsync(purpose, protectedText);
