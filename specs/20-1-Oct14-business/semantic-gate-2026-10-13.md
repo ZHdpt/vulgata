@@ -91,3 +91,41 @@ clock, and the intentionally exact diagnostic enum expectation needing the two
 new process-local reasons. Final tests retain full typed-packet equality, physical
 request counts, original authority/replay/publication checks and the explicit
 review gate. No production limit or validation was relaxed to pass these tests.
+
+## Real trial: rejected before publication, safely settled
+
+Independent final implementation review accepted the 324/324 completed boundary.
+Implementation commit: `fa60c7a48d4c95f6b1d37788cb532db995e57be2`.
+One fresh run `daa9da8f-b2c8-4f3d-bc54-8b603824ea07` started October 13 at
+17:05:33 Asia/Shanghai (owned PID 11132). It exited 1 after 343.70 seconds,
+without watchdog expiry or unknown usage. CompleteBusinessFromCl committed at
+17:11:17.220; finalization `d9ffc2b1-b780-4163-9eec-1d3869d7aa22` was durably
+Failed and separately looked up as Failed/AlreadyCommitted.
+
+The original failure diagnostic is `SemanticReviewRejected`. Four requests and
+this code path establish generation, a valid negative review, one correction,
+and a second valid negative review. No structural correction or transport retry
+was needed. Usage: 86,113 input + 65,820 output = **151,933 known tokens**.
+No new BL publication was created. Read-only owner verification confirmed matching
+Begin/Complete receipts, zero completed submissions in the failed finalization,
+no publication binding, the unchanged publication set and complete content/membership
+projections of all nine prior publications, including the original 163-CL corpus.
+No temporary reader was needed because there was no new publication to read.
+
+This demonstrates fail-closed publication behavior, not successful generation or
+proof that every rejection was semantically justified. The model review's detailed
+findings and rejected candidates were process-local and were not retained. The
+persisted disposition contains only a generic failure explanation. Consequently
+an independent claim-by-claim assessment of these rejected drafts is unavailable;
+do not invent their errors or equate the model's verdict with an independent pass.
+
+Before another paid trial, retain bounded, appropriately protected rejection
+findings and candidate binding information so model judgments can be diagnosed and
+independently checked. No further paid attempt, source retrieval, higher reasoning,
+publication rewrite, migration or wider scan occurred in this turn.
+
+Evidence: ignored `TestResults/business-semantic-run/` (authority, protected-binding
+preflight, exact preview/settings, owned process, terminal report and owner log),
+`TestResults/business-semantic-postrun/failed-verification.json` (read-only durable
+failure/settlement and preservation proof). The model review records themselves
+are absent; these artifacts must not be described as their transcript.

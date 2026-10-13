@@ -1,6 +1,17 @@
 # Existing accepted CL → Business Logic: owner handoff
 
-Latest connected qualification (October 13, 15:34–15:35 Asia/Shanghai): reviewed
+Latest October 13 boundary: `fa60c7a4` adds conservative evidence-text categories
+and mandatory pre-publication semantic review, with one correction/re-review and
+shared budgets. Independent implementation review and 324 focused tests passed.
+One real trial (`daa9da8f-b2c8-4f3d-bc54-8b603824ea07`) used four requests and
+151,933 known tokens; both model reviews rejected, so no new BL was published.
+The failed finalization and run are durably settled; all nine previous publications
+remain unchanged. Detailed model findings/drafts were not retained, limiting
+independent diagnosis. Retain bounded protected rejection diagnostics before a
+further paid trial; do not expand based on this result. See
+[semantic gate implementation and trial evidence](semantic-gate-2026-10-13.md).
+
+Previous connected qualification (October 13, 15:34–15:35 Asia/Shanghai): reviewed
 prompt correction `e969c428` passed 129 focused tests. One authorized paid run
 published `ca70a877-d7fe-4736-a031-fa48a21ec098`, combining two exact CL members
 and one accepted static edge into one BL. Ordinary User-only reading and settlement
