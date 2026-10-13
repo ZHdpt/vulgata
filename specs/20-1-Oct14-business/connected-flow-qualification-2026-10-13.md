@@ -49,3 +49,65 @@ outcomes, 28 settled/fenced lifecycle receipts and 8 preserved publications.
 Owner planning succeeded for exact group `c88dd5a3-ed4c-c4f3-9467-ec50555b59b7`:
 two pinned members, one directed edge, one resolution uncertainty. Model packet
 is 24,799 UTF-8 bytes. Runtime artifacts stay in ignored `TestResults/business-connected-*`.
+
+## Executed result
+
+Reviewed implementation commit: `e969c428ba508eed613e1e97094ecca6968a0807`.
+One run `54cdbb77-93a5-41cf-9902-46ac561176c0` started October 13 at
+15:34:00 Asia/Shanghai (owned PID 38600), exited 0 after 89.61 seconds,
+and durably completed at 15:35:29.997. No watchdog or unknown usage/settlement.
+Publication: `ca70a877-d7fe-4736-a031-fa48a21ec098`.
+BL version: `844fa7fc-70cc-dbed-21e8-bac61f71cdcf`.
+Finalization: `9ac6c316-028a-4031-a718-efb58d2d1ad0`.
+One synthesis request: 10,262 input + 15,185 output = 25,447 tokens.
+Model wait 69.99 seconds; store wait 11.42 seconds. No resolution request,
+source tool, rescan, migration, or Web startup/restart.
+
+Owner verification matched the preview's exact two CL members and directed edge;
+the group has one resolution uncertainty and two frontiers. The complete dependency
+ledger retains all 163 CL. Four accepted static edges appear at publication level;
+one belongs to this group. All eleven outcomes were independently revalidated.
+Every preflight publication's complete membership/content projection remained
+unchanged (eight prior publications), including the previous authMethods BL.
+Stored project/account/channel overrides exactly match the approved run settings.
+
+A password-authenticated temporary User-only reader opened the canonical Business
+catalog and exact BL (one page, 837 characters); Business-mode CL access was denied.
+The temporary account was removed and absence confirmed. This is canonical API
+reader qualification, not browser qualification. The new BL contains twelve model
+claims plus the owner-preserved uncertainty summary. Independent semantic review
+remains separate from these successful storage, grouping and read checks.
+
+## Independent semantic review: REVISE, expansion paused
+
+The connected grouping/publication/reader checks passed; semantic qualification
+did not. Three material overstatements remain:
+
+- `g-root-success-chain` adds “登录成功后”. CL `fi-1` supplies the declared
+  node order and success-related names, not an explicit success entry predicate.
+- `g-nested-del` promotes the node description about changing old devices to
+  non-common devices into a proven database effect. CL `c1` supplies a `dbDelOp`
+  node, SQL identifier and description, without the SQL semantics.
+  `g-nested-e1` inherits this device-status effect description from `c1`,
+  although its transition is supported.
+- `g-nested-cond` calls an `emptyOp` condition node an update step, borrowing its
+  description. CL `c2` does not establish that the node performs an update.
+
+The remaining eight claims preserve their cited static declarations, branches and
+assignments. In particular `g-root-guest` preserves “uses a nested flow” without
+inventing a success predicate. `g-boundary` retains the static-reference limitation
+in canonical claim limitations, but the ordinary reader shows only a generic
+limitation notice. Generic notices do not repair affirmative unsupported claims.
+
+No canonical text was changed, no further paid call was made, and no larger scan
+was started. This attempt establishes two-CL-to-one-BL grouping through a real
+accepted edge, not presentation readiness or universal prompt reliability. A next
+correction should address evidence stated only as names/descriptions and the
+remaining predicate inference; another generic prompt warning alone is not proven
+sufficient. Reader limitation presentation is an additional concrete limitation,
+not silently treated as verified explanatory detail.
+
+Evidence: `TestResults/business-connected-run/` (authority, preview, launch and
+terminal report), `business-connected-postrun/` (complete preservation, exact
+group/link/context checks, ordinary reading, claim/CL pairs and independent-review
+input). Review material was not fed back as generation input.

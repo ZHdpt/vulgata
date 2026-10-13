@@ -1,6 +1,16 @@
 # Existing accepted CL → Business Logic: owner handoff
 
-Latest real run (October 13, 14:42–14:45 Asia/Shanghai): the newly authorized
+Latest connected qualification (October 13, 15:34–15:35 Asia/Shanghai): reviewed
+prompt correction `e969c428` passed 129 focused tests. One authorized paid run
+published `ca70a877-d7fe-4736-a031-fa48a21ec098`, combining two exact CL members
+and one accepted static edge into one BL. Ordinary User-only reading and settlement
+passed; all eight prior publications and the selected context overrides were
+verified. One request consumed 25,447 known tokens. Independent semantic review
+requires revision for three overstatements (success entry predicate, described
+database effect, and condition-node purpose); wider generation remains paused.
+See [connected qualification and exact findings](connected-flow-qualification-2026-10-13.md).
+
+Previous real run (October 13, 14:42–14:45 Asia/Shanghai): the newly authorized
 20-minute continuation completed and settled, using one synthesis request and
 19,738 known tokens. Publication `76616690-ea70-4ac0-93d0-bff60b457cad` contains
 one new BL, with ordinary User-only reading and CL denial verified. All earlier
