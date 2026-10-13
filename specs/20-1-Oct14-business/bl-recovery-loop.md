@@ -93,3 +93,18 @@ prioritizes useful core behavior/conditions/unknowns with a soft concise structu
 omitting irrelevant binding paraphrase while preserving material conditions and limits.
 Independent Astra review passed; dependency completeness is not narrative completeness.
 Focused stage/review tests3/3passed,zero skips:TestResults/isolation-ca19140b9b2f48398f728630b7a716fb/results.trx.
+
+Attempt5 (`b049e2c7-64ba-49c0-9403-0c45502e31b4`,280e7a13) settled without
+publication after337.05seconds:12requests,377845input+72515output=450360tokens.
+Three source reads completed. Final review exhausted structural correction on malformed
+JSON. All ten prior publications/163CL documents remain unchanged. The local diagnostic
+helper now tolerates malformed rejected JSON; production validation stays strict.
+
+Whole-scope preflight: the actual owner loader rejects an all163-root selection because
+two roots lack source-backed-primary qualification. Admit161 eligible roots, retain
+all163 dependency documents, and report the two exclusions separately (do not label them
+runtime-processed). Excluded versions:cb4a3a14-7d2b-4a53-af56-7c8ae6279646 and
+f7c4ecf3-dd1d-464f-85d9-a057fda1df52. Exact owner API now succeeds with161groups,
+including4connectedgroups. No acceptance or loader change. Next whole attempt uses the
+previously authorized4-hour/652-request/trillion-token limits. Per-root failures remain
+explicit; a partial publication is not evidence of complete BL coverage.
