@@ -779,6 +779,8 @@ public static class OctoberGeneratorEntryPoint
         {
             FinalizerStatus = DefinedStatus(observed.FinalizerStatus),
             FinalizerPersistenceStatus = DefinedStatus(observed.FinalizerPersistenceStatus),
+            OriginalPublicationStatus = DefinedStatus(observed.OriginalPublicationStatus),
+            OriginalPublicationPersistenceStatus = DefinedStatus(observed.OriginalPublicationPersistenceStatus),
             LookupStatus = DefinedStatus(observed.LookupStatus),
             LookupPersistenceStatus = DefinedStatus(observed.LookupPersistenceStatus),
             OriginalSynthesisFailureReason = observed.OriginalSynthesisFailureReason == BusinessSynthesisFailureReason.None

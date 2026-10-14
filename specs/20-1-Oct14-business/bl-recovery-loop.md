@@ -127,3 +127,48 @@ co-location. Four regressions failed for the expected reasons before the code fi
 review passed. Evidence: TestResults/isolation-7e20d160a7d7422d870f390e1f01826e/results.trx
 (RED), TestResults/isolation-8c1f3b4f13124f1980853013fe6b9a14/results.trx (GREEN).
 These controlled results do not resolve attempt6's separate finalization failure.
+
+Attempt6 recovery completed through the existing canonical append-only API. Exact
+process/report hashes and known usage were verified; no pre-exit database backends
+or prepared transactions remained. RecoverAsync returned Committed and independent
+LookupAsync returned AlreadyCommitted for abandonment operation
+`a5c30f08-449e-4691-9110-c428002889f3`. All ten prior publications and163 CL documents
+remain unchanged. No migration, recording-app restart or provider call occurred.
+Recovery evidence: TestResults/business-recovery-loop-06/{evidence,result,lookup}.json.
+
+Finalization diagnosis found a concrete scale defect: controlled preparation of the
+57 structurally valid retained proposals took10,786.8723ms before SaveChanges,
+staging24,761 entities; both publication and its whole transaction allowed10seconds.
+This read-only preparation probe is not a persisted publication qualification and
+cannot establish the original masked failure with certainty. The BL-only publication
+window is now120seconds, subordinate to existing caller/run cancellation and fencing;
+other mutation/read bounds remain10seconds. Original exact-operation enum statuses
+are captured separately from final owner lookup, which remains settlement authority.
+Independent review identified and prompted serialization of late diagnostic updates.
+
+Verification records: the first combined run (isolation-680adeeafeeb47579bee1de197d106aa)
+aborted after104 passes because the newly injected test clock did not advance the
+existing request rate gate. Test-only clock advances fixed the hang. The next combined
+run (isolation-ee5939c4a72140e5bcaa1e1aa055a51d) completed185 cases:184 passed and one
+new assertion incorrectly expected AlreadyCommitted while the controlled log remained
+unavailable. Both finalizer and lookup correctly retain LogUnavailable; correcting
+that expectation preserves the existing behavior and strict diagnostic assertions.
+Independent Astra medium production review passed after the diagnostic locking fix.
+
+The corrected assertion rerun stopped before compilation: installed dotnet reported
+no SDKs (isolation-3f024bb6d6f6484b87a231d668dd65d9/build.log). Direct --list-sdks
+also returned none; SDK-version directories existed on a later check but contained
+no dotnet.dll. No machine installation/settings were changed. Final GREEN, scoped
+commit and next paid launch remain pending SDK availability. No additional paid
+attempt was consumed;6/50 used, none live. Expanded2600-request/eight-hour limits
+remain unapproved; current authority is652 requests/four hours.
+
+SDK10.0.402 restored normal build availability. Final focused SelfContained verification
+passed185/185, zero failures/skips, with no SDK workaround flags:
+TestResults/isolation-210b5e7833414233b49f2a63cff80811/results.trx.
+This includes publication deadline/caller cancellation, precommit diagnostic retention,
+late owner return/log failure, publication atomicity and unchanged reader/fence behavior.
+Independent Astra medium production review passed after the diagnostic snapshot lock
+fix. PostgreSQL/External/E2E suites were not executed; the full retained PostgreSQL
+save within120seconds and whole-BL success remain real-run qualification obligations.
+No additional paid attempt, migration or recording-app change occurred in this rerun.

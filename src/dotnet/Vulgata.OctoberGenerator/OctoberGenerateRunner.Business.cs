@@ -392,19 +392,22 @@ internal sealed partial class OctoberGenerateRunner
 
     private void ObserveBusinessOutcome(FinalizationRequest request, BusinessFinalizationResult result, bool finalizer)
     {
-        bool exact = result.Operation == request.Operation;
-        if (_existingClSnapshot is not null)
-            _existingClSemanticUncertain = _businessDiagnostics?.OperationMismatch == true || !exact || result.Status == BusinessFinalizationStatus.CommitIndeterminate ||
-                result.PersistenceStatus == KnowledgeWriteStatus.CommitIndeterminate;
-        BusinessFinalizationStatus? status = exact && Enum.IsDefined(result.Status) ? result.Status : null;
-        KnowledgeWriteStatus? persistence = exact && result.PersistenceStatus is { } observed && Enum.IsDefined(observed) ? observed : null;
-        _businessDiagnostics = finalizer
-            ? _businessDiagnostics! with { FinalizerStatus = status, FinalizerPersistenceStatus = persistence,
-                OriginalSynthesisFailureReason = exact && result.OriginalSynthesisFailureReason is { } reason &&
-                    reason != BusinessSynthesisFailureReason.None && Enum.IsDefined(reason) ? reason : null,
-                OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact }
-            : _businessDiagnostics! with { LookupStatus = status, LookupPersistenceStatus = persistence,
-                OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact };
+        lock (_sync)
+        {
+            bool exact = result.Operation == request.Operation;
+            if (_existingClSnapshot is not null)
+                _existingClSemanticUncertain = _businessDiagnostics?.OperationMismatch == true || !exact || result.Status == BusinessFinalizationStatus.CommitIndeterminate ||
+                    result.PersistenceStatus == KnowledgeWriteStatus.CommitIndeterminate;
+            BusinessFinalizationStatus? status = exact && Enum.IsDefined(result.Status) ? result.Status : null;
+            KnowledgeWriteStatus? persistence = exact && result.PersistenceStatus is { } observed && Enum.IsDefined(observed) ? observed : null;
+            _businessDiagnostics = finalizer
+                ? _businessDiagnostics! with { FinalizerStatus = status, FinalizerPersistenceStatus = persistence,
+                    OriginalSynthesisFailureReason = exact && result.OriginalSynthesisFailureReason is { } reason &&
+                        reason != BusinessSynthesisFailureReason.None && Enum.IsDefined(reason) ? reason : null,
+                    OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact }
+                : _businessDiagnostics! with { LookupStatus = status, LookupPersistenceStatus = persistence,
+                    OperationMismatch = _businessDiagnostics!.OperationMismatch || !exact };
+        }
     }
 
     private OctoberScanReport? BusinessHandoffFailure(FinalizationRequest request)
@@ -557,6 +560,21 @@ internal sealed partial class OctoberGenerateRunner
             CancellationToken cancellationToken = default) => owner.RetainBusinessOwnerCall(async () =>
         {
             var result = await store.PublishAsync(request, cancellationToken);
+            // Preserve bounded original-call metadata; the subsequent owner lookup still
+            // determines disclosure and settlement. No cached content becomes authority.
+            lock (owner._sync)
+            {
+                if (owner._businessDiagnostics is { } diagnostic)
+                {
+                    bool exact = result.Operation == request.Operation;
+                    owner._businessDiagnostics = diagnostic with
+                    {
+                        OriginalPublicationStatus = exact && Enum.IsDefined(result.Status) ? result.Status : null,
+                        OriginalPublicationPersistenceStatus = exact && result.PersistenceStatus is { } persistence &&
+                            Enum.IsDefined(persistence) ? persistence : null
+                    };
+                }
+            }
             // A later successful lookup confirms durability but cannot erase the
             // original run's observed failure to write its mandatory log.
             if (result.PersistenceStatus == KnowledgeWriteStatus.LogUnavailable)

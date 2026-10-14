@@ -769,6 +769,9 @@ public sealed class OctoberScanBusinessFinalizationTests
     [InlineData("reason-invalid-proposal")]
     [InlineData("publication-first-lookup-unknown")]
     [InlineData("publication-failed")]
+    [InlineData("publication-precommit-timeout")]
+    [InlineData("publication-precommit-invalid")]
+    [InlineData("publication-precommit-storage")]
     [InlineData("publication-committed-failed")]
     [InlineData("publication-undefined-status")]
     [InlineData("publication-foreign-operation")]
@@ -822,8 +825,9 @@ public sealed class OctoberScanBusinessFinalizationTests
         using var transport = new NaturalTransport { IncludeCallerObservation = boundary is "nonempty-b1" or "nonempty-b1-direct" or "unresolved-b1" or "budget-b1-direct" or "budget-b1-ack", ReturnUnresolved = boundary == "unresolved-b1", InvalidSynthesisProposal = boundary == "reason-invalid-proposal" };
         var state = new BoundaryState { Boundary = boundary };
         if (boundary == "freeze-log") state.BeforeFreeze = () => host.Database.Log.Succeeds = false;
-        var clock = boundary is "session-expired" or "replay-authority-held" ? new OctoberScanAcceptanceHarness.ManualClock() : null;
-        if (boundary == "replay-authority-held") transport.OnBusinessDispatch = () => clock!.Advance(TimeSpan.FromSeconds(1));
+        var clock = boundary is "session-expired" or "replay-authority-held" or "publication-held-log" or "publication-held-revoked" or "publication-held-scope-stop"
+            ? new OctoberScanAcceptanceHarness.ManualClock() : null;
+        if (clock is not null && boundary != "session-expired") transport.OnBusinessDispatch = () => clock.Advance(TimeSpan.FromSeconds(1));
         var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
         if (boundary is "operator-broker-no-response" or "operator-broker-valid") execution = execution with { Policy = execution.Policy with { RunDeadlineSeconds = 900, FileDeadlineSeconds = 480 } };
         if (boundary == "session-expired") execution = execution with { Session = new FixedSession(execution.Session.SubjectId, execution.Session.ManagementAuthorityId, clock!.GetUtcNow().AddSeconds(5)) };
@@ -844,7 +848,7 @@ public sealed class OctoberScanBusinessFinalizationTests
                 transport.Root = unit.Document;
                 if (boundary == "revoked") host.AuthorityAllowed = false;
                 if (boundary == "session-expired") clock!.Advance(TimeSpan.FromSeconds(10));
-                if (boundary == "replay-authority-held") clock!.Advance(TimeSpan.FromSeconds(1));
+                if (clock is not null && boundary != "session-expired") clock.Advance(TimeSpan.FromSeconds(1));
                 return [new FlowRootSelection(unit.UnitId, unit.Document, FlowRootKind.SelectedCodeUnit, unit.SemanticSelector)];
             }, new(execution.Provider.SourceIdentity, 0, profile.Name, "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference),
             "Controlled accepted resolution only.", "Controlled accepted synthesis only.", new(),
@@ -951,7 +955,8 @@ public sealed class OctoberScanBusinessFinalizationTests
             try
             {
                 await state.PublicationHeld.Task.WaitAsync(TimeSpan.FromSeconds(5));
-                await state.PublicationBoundExpired.Task.WaitAsync(TimeSpan.FromSeconds(12));
+                clock!.Advance(TimeSpan.FromSeconds(120));
+                await state.PublicationBoundExpired.Task.WaitAsync(TimeSpan.FromSeconds(5));
                 // The bound-token callback runs before finalizer continuations. Observe the actual
                 // post-timeout lookup/runner completion before deciding whether ownership was retained.
                 await state.PublicationLookupCompleted.Task.WaitAsync(TimeSpan.FromSeconds(3));
@@ -964,6 +969,30 @@ public sealed class OctoberScanBusinessFinalizationTests
             finally { state.ReleasePublication.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
         }
         var report = Assert.IsType<OctoberScanReport>((await pending).Report);
+        if (boundary.StartsWith("publication-precommit-", StringComparison.Ordinal))
+        {
+            var expected = boundary switch
+            {
+                "publication-precommit-timeout" => KnowledgeWriteStatus.CancelledBeforeCommit,
+                "publication-precommit-invalid" => KnowledgeWriteStatus.InvalidProposal,
+                _ => KnowledgeWriteStatus.StorageUnavailable
+            };
+            var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+            Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, diagnostic.LookupStatus);
+            Assert.Null(report.Publication); Assert.Empty(report.Documents);
+            Assert.Equal(1, state.Publications); Assert.True(state.PublicationLookups >= 2);
+            using var diagnosticJson = JsonDocument.Parse(JsonSerializer.Serialize(diagnostic));
+            Assert.True(diagnosticJson.RootElement.TryGetProperty("OriginalPublicationStatus", out var originalStatus));
+            Assert.Equal((int)BusinessFinalizationStatus.Failed, originalStatus.GetInt32());
+            Assert.Equal((int)expected, diagnosticJson.RootElement.GetProperty("OriginalPublicationPersistenceStatus").GetInt32());
+            await using var database = host.Database.Factory.CreateDbContext();
+            Assert.Equal(0, await database.KnowledgePublications.CountAsync());
+            Assert.Equal(0, await database.DocumentVersions.CountAsync(d=>d.Kind==DocumentKind.BusinessLogic));
+            int calls = transport.BusinessRequests;
+            _ = await runner.ExecuteAsync(execution);
+            Assert.Equal(1, state.Publications); Assert.Equal(calls, transport.BusinessRequests);
+            return;
+        }
         if (boundary == "reason-observer")
         {
             // Controlled consumer conformance through the existing private observer; this does not
@@ -1215,6 +1244,16 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.NotNull(report.Publication); Assert.Equal(2, report.Documents.Length);
             Assert.Contains(report.Gaps, gap => gap.Code == "operation_log_unavailable");
             Assert.Equal(1, state.Publications); Assert.Equal(2, transport.BusinessRequests);
+            if (boundary == "publication-held-log")
+            {
+                var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.OriginalPublicationStatus);
+                Assert.Equal(KnowledgeWriteStatus.LogUnavailable, diagnostic.OriginalPublicationPersistenceStatus);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.FinalizerStatus);
+                Assert.Equal(KnowledgeWriteStatus.LogUnavailable, diagnostic.FinalizerPersistenceStatus);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.LookupStatus);
+                Assert.Equal(KnowledgeWriteStatus.LogUnavailable, diagnostic.LookupPersistenceStatus);
+            }
             var repeated = await runner.ExecuteAsync(execution);
             Assert.Equal(report.Publication, repeated.Report!.Publication); Assert.Equal(1, state.Publications);
         }        else if (boundary is "publication-ack" or "publication-first-lookup-unknown" or "reason-observer")
@@ -1456,6 +1495,16 @@ public sealed class OctoberScanBusinessFinalizationTests
         public async Task<BusinessFinalizationResult> PublishAsync(FlowFinalizationPublicationRequest request, CancellationToken token = default)
         {
             state.Publications++; state.BeforePublication?.Invoke();
+            if (state.Boundary.StartsWith("publication-precommit-", StringComparison.Ordinal))
+                return new(BusinessFinalizationStatus.Failed,request.Operation,null,new(true,[]))
+                {
+                    PersistenceStatus = state.Boundary switch
+                    {
+                        "publication-precommit-timeout" => KnowledgeWriteStatus.CancelledBeforeCommit,
+                        "publication-precommit-invalid" => KnowledgeWriteStatus.InvalidProposal,
+                        _ => KnowledgeWriteStatus.StorageUnavailable
+                    }
+                };
             var result = await inner.PublishAsync(request, token);
             if (state.Boundary is "publication-held-log" or "publication-held-revoked" or "publication-held-scope-stop")
             {

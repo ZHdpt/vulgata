@@ -28,6 +28,8 @@ public sealed record OctoberBusinessDiagnosticSnapshot(
     OctoberBusinessDiagnosticBoundary Boundary,
     bool OperationMismatch)
 {
+    public BusinessFinalizationStatus? OriginalPublicationStatus { get; init; }
+    public KnowledgeWriteStatus? OriginalPublicationPersistenceStatus { get; init; }
     public BusinessSynthesisFailureReason? OriginalSynthesisFailureReason { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public ResolutionFailureReason? ResolutionFailureReason { get; init; }

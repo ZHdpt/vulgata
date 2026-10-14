@@ -5,8 +5,10 @@ applied after a restore-verified backup. The BL-only recovery loop fixed contain
 source identity observation and review-stage schema repair; actual provider retrieval
 now succeeds. Five additional bounded attempts settled without publication. A sixth,
 whole-scope attempt exhausted652 requests and ended with an indeterminate finalization;
-its Begin receipt remains without a finalization/completion or new publication.
-Diagnose and safely settle/fence that run before retrying. Focused review-feedback and
+its exact run has now been fenced through append-only abandonment, confirmed by lookup.
+No finalization or new publication was created. Publication deadline and diagnostic
+corrections passed185 focused tests and independent review; real whole-publication
+qualification remains pending. Focused review-feedback and
 per-flow request-cap fixes passed182 controlled tests and independent review.
 All ten prior publications and163 CL
 documents remain unchanged. No additional migration or recording-app change occurred.

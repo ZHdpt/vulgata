@@ -34,7 +34,9 @@ internal sealed class OctoberKnowledgePublicationCommitter
         if (operation.BatchId != binding.BatchId || operation.Kind != kind || operation.OperationId == Guid.Empty)
             return new(KnowledgeWriteStatus.InvalidProposal, operation);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        deadline.CancelAfter(TimeSpan.FromSeconds(10));
+        // BL finalization stages and atomically saves multiple flow documents and complete lineage.
+        // Other mutation kinds retain the short bound; caller cancellation and commit fencing still apply.
+        deadline.CancelAfter(TimeSpan.FromSeconds(kind == OperationKind.FinalizeCorpus ? 120 : 10));
         var ct = deadline.Token;
         var submissionGate = new object();
         bool callbackOpen = false;

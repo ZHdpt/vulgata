@@ -11,6 +11,65 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberBusinessFinalizerTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task FinalizeAsync_PublicationWindow_AllowsCompletionAfterElevenSecondsAsync()
+    {
+        using var f = new FinalizerCase();
+        var clock = new Vulgata.Tests.OctoberScan.OctoberScanAcceptanceHarness.ManualClock();
+        var entered = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Store.BeforePublish = async token => { entered.SetResult(token); await release.Task.WaitAsync(token); };
+        var pending = f.Finalizer(timeProvider: clock).FinalizeAsync(f.Request);
+        try
+        {
+            var publicationToken = await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            clock.Advance(TimeSpan.FromSeconds(11));
+            Assert.False(publicationToken.IsCancellationRequested);
+            Assert.False(pending.IsCompleted);
+            release.SetResult();
+            var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(BusinessFinalizationStatus.Published, result.Status);
+            Assert.Equal(f.Publication, result.Publication);
+            Assert.Equal(1, f.Store.Publishes); Assert.Equal(1, f.Slot.Invocations); Assert.Equal(4, f.Client.Calls);
+        }
+        finally { release.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FinalizeAsync_PublicationWindow_DeadlineOrHostStopCancelsWithoutRetryAsync(bool hardStop)
+    {
+        using var f = new FinalizerCase();
+        var clock = new Vulgata.Tests.OctoberScan.OctoberScanAcceptanceHarness.ManualClock();
+        var entered = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.Store.BeforePublish = async token => { entered.SetResult(token); await release.Task.WaitAsync(token); };
+        var finalizer = f.Finalizer(timeProvider: clock);
+        var pending = finalizer.FinalizeAsync(f.Request);
+        try
+        {
+            var publicationToken = await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            clock.Advance(TimeSpan.FromSeconds(hardStop ? 11 : 119));
+            Assert.False(publicationToken.IsCancellationRequested);
+            Assert.False(pending.IsCompleted);
+            if (hardStop) f.Scope.HardStop();
+            else clock.Advance(TimeSpan.FromSeconds(1));
+            Assert.True(publicationToken.IsCancellationRequested);
+            var result = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(hardStop ? BusinessFinalizationStatus.HardStopped : BusinessFinalizationStatus.CommitIndeterminate, result.Status);
+            Assert.Null(result.Publication); Assert.Null(f.Store.Durable);
+            int lookups = f.Store.Lookups;
+            var replay = await finalizer.FinalizeAsync(f.Request).WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(result.Status, replay.Status); Assert.Null(replay.Publication);
+            if (!hardStop) Assert.True(f.Store.Lookups > lookups);
+            Assert.Equal(1, f.Store.Publishes); Assert.Equal(1, f.Slot.Invocations); Assert.Equal(4, f.Client.Calls);
+        }
+        finally { release.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
@@ -481,8 +540,8 @@ internal sealed class FinalizerCase : IDisposable
     { FinishReason = ChatFinishReason.Stop, Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 5, TotalTokenCount = 15 } };
     public BusinessFinalizationResult Result(BusinessFinalizationStatus status) => new(status, Request.Operation,
         status is BusinessFinalizationStatus.Published or BusinessFinalizationStatus.PublishedPartial ? Publication : null, new(status == BusinessFinalizationStatus.PublishedPartial, []));
-    public OctoberBusinessFinalizer Finalizer(bool missingSlot = false, IOctoberFlowPublicationStore? store = null) =>
-        OctoberBusinessModule.CreateFinalizer(missingSlot ? null : Slot, store ?? Store, Loader, Client, ProfileId, FinalizationContractCase.Provider, Instructions, Disclosure, new SynthesisClock());
+    public OctoberBusinessFinalizer Finalizer(bool missingSlot = false, IOctoberFlowPublicationStore? store = null, TimeProvider? timeProvider = null) =>
+        OctoberBusinessModule.CreateFinalizer(missingSlot ? null : Slot, store ?? Store, Loader, Client, ProfileId, FinalizationContractCase.Provider, Instructions, Disclosure, timeProvider ?? new SynthesisClock());
     public void Dispose() { Client.Dispose(); Slot.Dispose(); }
 }
 
@@ -544,6 +603,7 @@ internal sealed class FinalizerOwnerStore(FinalizerCase fixture) : IOctoberFlowP
     public CoverageProjection? PublishCoverage { get; set; }
     public BusinessFinalizationStatus PublishStatus { get; set; } = BusinessFinalizationStatus.Published;
     public KnowledgeWriteStatus? PublishPersistenceStatus { get; set; }
+    public Func<CancellationToken, Task>? BeforePublish { get; set; }
     public int InitialReads { get; private set; }
     public int Publishes { get; private set; }
     public int Lookups { get; private set; }
@@ -557,13 +617,15 @@ internal sealed class FinalizerOwnerStore(FinalizerCase fixture) : IOctoberFlowP
         Assert.Equal(fixture.Request.Corpus, corpus); Assert.Equal(fixture.Request.Operation, operation); Assert.Equal(fixture.Request.CanonicalPayloadDigest, canonicalPayloadDigest);
         return Task.FromResult(Initial);
     }
-    public Task<BusinessFinalizationResult> PublishAsync(FlowFinalizationPublicationRequest request, CancellationToken cancellationToken = default)
+    public async Task<BusinessFinalizationResult> PublishAsync(FlowFinalizationPublicationRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested(); Publishes++; Submitted = request;
+        if (BeforePublish is not null) await BeforePublish(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         var result = fixture.Result(PublishStatus) with { PersistenceStatus = PublishPersistenceStatus };
         if (PublishCoverage is not null) result = result with { Coverage = PublishCoverage };
         if (PublishStatus != BusinessFinalizationStatus.CommitIndeterminate) Durable = result;
-        return Task.FromResult(result);
+        return result;
     }
     public Task<BusinessFinalizationResult> LookupAsync(CorpusHandle corpus, OperationKey operation, string canonicalPayloadDigest, CancellationToken cancellationToken = default)
     {

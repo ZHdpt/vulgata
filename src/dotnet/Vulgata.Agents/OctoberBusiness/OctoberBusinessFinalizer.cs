@@ -16,6 +16,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
     private readonly string _profileId;
     private readonly string _configurationFingerprint;
     private readonly string _promptDigest;
+    private readonly TimeProvider _time;
 
     public OctoberBusinessFinalizer(IOctoberOriginalBusinessFinalizationSlot? originalSlot,
         IOctoberFlowPublicationStore store, IOctoberFlowPlanningInputLoader loader,
@@ -34,6 +35,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
         _profileId = providerProfileId;
         _configurationFingerprint = OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(providerConfiguration);
         _promptDigest = OctoberKnowledgePolicy.Hash(synthesisInstructions);
+        _time = timeProvider ?? TimeProvider.System;
         _synthesis = new(selectedClient, synthesisInstructions, timeProvider, diagnosticCapture, sourceReader);
     }
 
@@ -168,7 +170,10 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             var publication = new FlowFinalizationPublicationRequest(request.Operation, request.Corpus, request.CanonicalPayloadDigest,
                 selection, completed.ToImmutable(), dispositions.ToImmutable(), "");
             publication = publication with { CanonicalOutcomeDigest = OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(publication) };
-            using var publishBound = Bound(token);
+            // Whole-flow publication includes owner revalidation and an atomic multi-document save.
+            // Keep this bounded independently of short reads and subordinate to the host/run token.
+            using var publicationDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(120), _time);
+            using var publishBound = CancellationTokenSource.CreateLinkedTokenSource(token, publicationDeadline.Token);
             var saved = await AwaitAsync(_store.PublishAsync(publication, publishBound.Token), publishBound.Token);
             return Coherent(request, saved)
                 ? Sanitize(request, saved) with { OriginalSynthesisFailureReason = firstFailureReason }
