@@ -662,9 +662,16 @@ public sealed class OctoberChatApplication
 
             if (!contentFree)
             {
-                if (await scope.DisclosurePolicy!.CheckAsync(new(current!, [], null), token).WaitAsync(token) != DisclosureStatus.Allowed ||
-                    !capsules.IsEmpty && await scope.Dependencies.ReauthorizeAsync(current!, capsules, token).WaitAsync(token) != KnowledgeDependencyStatus.Succeeded)
+                if (await scope.DisclosurePolicy!.CheckAsync(new(current!, [], null), token).WaitAsync(token) != DisclosureStatus.Allowed)
                 {
+                    ClearDisplay();
+                    return;
+                }
+
+                foreach (var capsule in capsules.Distinct())
+                {
+                    if (await scope.Dependencies.ReauthorizeAsync(current!, [capsule], token).WaitAsync(token) == KnowledgeDependencyStatus.Succeeded)
+                        continue;
                     ClearDisplay();
                     return;
                 }

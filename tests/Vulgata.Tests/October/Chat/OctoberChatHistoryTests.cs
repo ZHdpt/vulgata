@@ -14,6 +14,26 @@ public sealed class OctoberChatHistoryTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task Transcript_IndependentProofsStayVisibleWhenCombinedProofExceedsBudgetAsync()
+    {
+        await using var h = await OctoberHistoryFixture.OpenAsync();
+        await h.SeedAsync("first answer");
+        await h.SeedAsync("second answer");
+        h.Owner.Dependencies.MaximumCheckBatch = 1;
+        await using var attempt = h.Create();
+        await attempt.PrepareTranscriptAsync();
+        OctoberChatTranscriptSnapshot? applied = null;
+        await attempt.HandoffTranscriptAsync((snapshot, _) =>
+        {
+            applied = snapshot;
+            return ValueTask.CompletedTask;
+        }, _ => throw new InvalidOperationException("Authorized transcript must not be suppressed."));
+        Assert.NotNull(applied);
+        Assert.Equal(2, applied.Result.Turns.Length);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task History_PreservesOwnerTwelveTurnSelectionAndWholeByteBudgetOmissionAsync()
     {
         await using var h = await OctoberHistoryFixture.OpenAsync();

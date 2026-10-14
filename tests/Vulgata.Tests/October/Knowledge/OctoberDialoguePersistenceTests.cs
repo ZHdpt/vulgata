@@ -16,6 +16,47 @@ public sealed class OctoberDialoguePersistenceTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task ReadTranscriptAsync_IndependentValidTurnsExceedUnionBudget_RemainVisibleAsync()
+    {
+        await using var f = await DialoguePersistenceFixture.CreateAsync();
+        var first = await f.AdmitAsync();
+        await f.RequireSaveAsync(f.TerminalRequest(first));
+        var history = await f.Store.ReadHistoryAsync(f.HistoryRequest, f.Subject);
+        var second = await f.AdmitAsync(f.BeginRequest(Guid.NewGuid(), history));
+        await f.RequireSaveAsync(f.TerminalRequest(second));
+        f.Dependencies.MaximumCheckBatch = 1;
+        var transcript = await f.Store.ReadTranscriptAsync(f.HistoryRequest, f.Subject);
+        Assert.Equal(DialogueStatus.Succeeded, transcript.Status);
+        Assert.Equal(2, transcript.Turns.Length);
+        Assert.False(transcript.ContextOmitted);
+        f.Dependencies.Status = KnowledgeDependencyStatus.Denied;
+        Assert.Empty((await f.Store.ReadTranscriptAsync(f.HistoryRequest, f.Subject)).Turns);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(0)]
+    [InlineData(72484)]
+    public async Task ReadTranscriptAsync_ProofSizeDoesNotConsumeDisplayBudget_StillReauthorizesAsync(int proofPadding)
+    {
+        await using var f = await DialoguePersistenceFixture.CreateAsync();
+        var admission = await f.AdmitAsync();
+        f.Dependencies.PayloadPadding = proofPadding;
+        var dependencies = f.Dependencies.Extend(f.Root, "large-display-proof");
+        var terminal = f.TerminalRequest(admission) with { InferenceDependencies = dependencies, AnswerText = "已保存的回答" };
+        await f.RequireSaveAsync(terminal with { OutcomeDigest = DialogueTestProtocol.OutcomeDigest(terminal) });
+        var result = await f.Store.ReadTranscriptAsync(f.HistoryRequest, f.Subject);
+        var saved = Assert.Single(result.Turns);
+        Assert.Equal("已保存的回答", saved.AnswerText);
+        Assert.Equal(dependencies, saved.InferenceDependencies);
+        Assert.False(result.ContextOmitted);
+        Assert.Empty((await f.Store.ReadTranscriptAsync(f.HistoryRequest with { MaximumUtf8Bytes = 2 }, f.Subject)).Turns);
+        f.Dependencies.DeniedOrigins.Add("large-display-proof");
+        Assert.Empty((await f.Store.ReadTranscriptAsync(f.HistoryRequest, f.Subject)).Turns);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Codec_HistoryGoldenVectors_PreserveExactUnicodeAndExcludeHostCapsules()
     {
         var codec = new OctoberDialoguePayloadCodec();
@@ -615,6 +656,8 @@ internal sealed class DialogueTestDependencies : IOctoberKnowledgeDependencyAuth
     public KnowledgeDependencyStatus Status { get; set; } = KnowledgeDependencyStatus.Succeeded;
     public HashSet<string> DeniedOrigins { get; } = [];
     public int VerifyCalls { get; private set; }
+    public int PayloadPadding { get; set; }
+    public int MaximumCheckBatch { get; set; } = int.MaxValue;
     public KnowledgeDependencyHandle Create(string origin) => Register([origin]);
     public KnowledgeDependencyHandle Extend(KnowledgeDependencyHandle prior, string origin) => Register(_capsules[prior.ProtectedPayload].Origins.Add(origin));
     public KnowledgeDependencyHandle Union(ImmutableArray<KnowledgeDependencyHandle> handles) => Register(handles.SelectMany(x => _capsules[x.ProtectedPayload].Origins));
@@ -624,13 +667,14 @@ internal sealed class DialogueTestDependencies : IOctoberKnowledgeDependencyAuth
         string digest = DialogueTestProtocol.Hash(string.Join("|", origins.Order(StringComparer.Ordinal)));
         var existing = _capsules.Values.FirstOrDefault(x => x.Handle.BindingDigest == digest);
         if (existing.Handle is not null) return existing.Handle;
-        var handle = new KnowledgeDependencyHandle(Guid.NewGuid(), digest, "controlled-capsule:" + Guid.NewGuid().ToString("N"));
+        var handle = new KnowledgeDependencyHandle(Guid.NewGuid(), digest, "controlled-capsule:" + Guid.NewGuid().ToString("N") + new string('x', PayloadPadding));
         _capsules.Add(handle.ProtectedPayload, (handle, origins));
         return handle;
     }
     private KnowledgeDependencyStatus Check(ImmutableArray<KnowledgeDependencyHandle> handles)
     {
         if (Status != KnowledgeDependencyStatus.Succeeded) return Status;
+        if (handles.Length > MaximumCheckBatch) return KnowledgeDependencyStatus.BudgetExceeded;
         if (handles.IsDefaultOrEmpty || handles.Any(x => x is null || !_capsules.TryGetValue(x.ProtectedPayload, out var entry) || entry.Handle != x)) return KnowledgeDependencyStatus.InvalidProof;
         return handles.Any(x => _capsules[x.ProtectedPayload].Origins.Overlaps(DeniedOrigins)) ? KnowledgeDependencyStatus.Denied : KnowledgeDependencyStatus.Succeeded;
     }

@@ -57,6 +57,27 @@ public sealed class ReaderComponentTests : BunitContext
         await model.SearchAsync("");
         Assert.Equal(42, model.TotalItems);
         Assert.Equal(20, model.Page!.Documents.Length);
+        await model.LoadAsync(12);
+        await model.SearchAsync("账户");
+        Assert.Equal(12, model.PageSize);
+        Assert.Equal(12, model.Page!.Documents.Length);
+        Assert.Equal(2, model.TotalPages);
+        await model.NextAsync();
+        Assert.Equal(9, model.Page!.Documents.Length);
+        Assert.Equal(12, model.PageSize);
+        await model.LoadAsync(8);
+        Assert.Equal(8, model.PageSize);
+        Assert.Equal(3, model.TotalPages);
+
+        Configure(host, 2);
+        var cut = Render<DocumentsPage>();
+        cut.WaitForAssertion(() => Assert.Contains("/ 21 页", cut.Find(".page-number").TextContent));
+        Assert.Single(cut.FindAll(".pagination-ellipsis"));
+        var browse = Services.GetRequiredService<Vulgata.Web.ViewModels.Explore.DocumentBrowseViewModel>();
+        await cut.InvokeAsync(() => browse.GoToPageAsync(11));
+        cut.WaitForAssertion(() => Assert.Equal(2, cut.FindAll(".pagination-ellipsis").Count));
+        Assert.Equal(2, cut.FindAll(".document-list li").Count);
+
     }
 
     [Trait("Suite", "SelfContained")]
@@ -157,12 +178,13 @@ public sealed class ReaderComponentTests : BunitContext
         }
     }
 
-    private void Configure(ExploreFixtureHost host)
+    private void Configure(ExploreFixtureHost host, int pageSize = 20)
     {
         Services.AddFluentUIComponents();
         Services.AddSingleton<IExplorePresentationService>(host.Service);
         Services.AddSingleton(host.CreateReader());
         Services.AddSingleton(host.CreateBrowse());
         JSInterop.Mode = JSRuntimeMode.Loose;
+        JSInterop.SetupModule("./Components/Pages/Explore/DocumentsPage.razor.js").Setup<int>("measurePageSize", _ => true).SetResult(pageSize);
     }
 }

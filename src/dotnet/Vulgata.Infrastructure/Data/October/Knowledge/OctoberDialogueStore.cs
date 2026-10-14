@@ -93,7 +93,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         var auth = await AuthorizeAsync(read, identity, subject, null, ct);
         if (auth != DialogueStatus.Succeeded) return new(auth, null, false);
         if (request.ContextId != identity.ContextId || !ValidBegin(identity, request)) return new(DialogueStatus.Invalid, null, false);
-        var existing = await read.DialogueTurns.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId && x.ClientRequestKey == request.ClientRequestKey, ct);
+        var existing = await read.DialogueTurns.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId && x.ClientRequestKey == request.ClientRequestKey, ct);
         if (existing is not null) return await ProjectAdmissionAsync(read, identity, existing, request.RequestDigest, subject, false, ct);
         auth = DependencyStatus(await ReauthorizeDependenciesAsync(Selection(identity, subject), [request.InitialDependencies], ct));
         if (auth != DialogueStatus.Succeeded) return new(auth, null, false);
@@ -118,6 +119,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
                 if (union.Status != KnowledgeDependencyStatus.Succeeded) return DependencyStatus(union.Status);
                 if (union.Dependencies?.BindingDigest != request.InitialDependencies.BindingDigest) return DialogueStatus.Invalid;
             }
+
             long sequence = conversation.NextTurnSequence;
             long fence = conversation.NextFence;
             conversation.NextTurnSequence = checked(sequence + 1);
@@ -135,7 +137,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         if (status is not (DialogueStatus.Succeeded or DialogueStatus.Existing or DialogueStatus.Indeterminate)) return new(status, null, false);
         await using var finalOwner = await OpenReadContextAsync(ct);
         var final = finalOwner.Context;
-        var saved = await final.DialogueTurns.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == identity.ConversationId && x.ClientRequestKey == request.ClientRequestKey, ct);
+        var saved = await final.DialogueTurns.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.ConversationId == identity.ConversationId && x.ClientRequestKey == request.ClientRequestKey, ct);
         return saved is null ? new(DialogueStatus.Indeterminate, null, false) : await ProjectAdmissionAsync(final, identity, saved,
             request.RequestDigest, subject, status == DialogueStatus.Succeeded, ct);
     }, status => new(status, null, false), cancellationToken);
@@ -151,7 +154,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         var auth = await AuthorizeAsync(db, identity, subject, null, ct);
         if (auth != DialogueStatus.Succeeded) return new(auth, null, false);
         if (request.ContextId != identity.ContextId || !Digest(request.RequestDigest)) return new(DialogueStatus.Invalid, null, false);
-        var turn = await db.DialogueTurns.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId && x.ClientRequestKey == request.ClientRequestKey, ct);
+        var turn = await db.DialogueTurns.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.ConversationId == request.ConversationId && x.ClientRequestKey == request.ClientRequestKey, ct);
         return turn is null ? new(DialogueStatus.Indeterminate, null, false) : await ProjectAdmissionAsync(db, identity, turn, request.RequestDigest, subject, false, ct);
     }, status => new(status, null, false), cancellationToken);
 
@@ -280,27 +284,44 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         if (auth != DialogueStatus.Succeeded) return new(auth, [], false);
         if (!ValidHistory(identity, request)) return new(DialogueStatus.Invalid, [], false);
         var turns = await db.DialogueTurns.AsNoTracking().Where(x => x.ConversationId == row.ConversationId && x.State >= DialogueTurnState.Completed &&
-            (request.BeforeSequenceExclusive == null || x.Sequence < request.BeforeSequenceExclusive))
+                                                                     (request.BeforeSequenceExclusive == null || x.Sequence < request.BeforeSequenceExclusive))
             .OrderByDescending(x => x.Sequence).Take(request.MaximumTurns + 1).ToListAsync(ct);
         var result = new List<DialogueTerminalProjection>();
         bool omitted = false;
         foreach (var turn in turns)
         {
-            if (result.Count == request.MaximumTurns) { omitted = true; break; }
+            if (result.Count == request.MaximumTurns)
+            {
+                omitted = true;
+                break;
+            }
+
             var terminal = await db.DialogueTerminals.AsNoTracking().SingleAsync(x => x.ConversationId == row.ConversationId && x.TurnId == turn.TurnId, ct);
             var saved = OctoberDialoguePayloadCodec.DecodeTerminal(terminal.TerminalEnvelopeJson);
             if (saved.InferenceDependencies is not null && await AuthorizeAsync(db, identity, subject, saved.InferenceDependencies, ct) != DialogueStatus.Succeeded)
-            { omitted = true; continue; }
+            {
+                omitted = true;
+                continue;
+            }
+
             var projection = Projection(identity, turn, saved);
             if (JsonSerializer.SerializeToUtf8Bytes(result.Append(projection), OctoberDialoguePayloadCodec.Json).Length > request.MaximumUtf8Bytes)
-            { omitted = true; break; }
+            {
+                omitted = true;
+                break;
+            }
+
             result.Add(projection);
         }
+
         var capsules = result.Where(x => x.InferenceDependencies is not null).Select(x => x.InferenceDependencies!).ToImmutableArray();
         auth = await AuthorizeAsync(db, identity, subject, null, ct);
         if (auth != DialogueStatus.Succeeded) return new(auth, [], false);
-        if (!capsules.IsEmpty && await ReauthorizeDependenciesAsync(Selection(identity, subject), capsules, ct) != KnowledgeDependencyStatus.Succeeded)
-            return new(DialogueStatus.Succeeded, [], true);
+        // Display turns independently. Combining unrelated turn proofs imposes the
+        // inference-union budget on a transcript and can hide every valid saved turn.
+        foreach (var capsule in capsules.Distinct())
+            if (await ReauthorizeDependenciesAsync(Selection(identity, subject), [capsule], ct) != KnowledgeDependencyStatus.Succeeded)
+                return new(DialogueStatus.Succeeded, [], true);
         result.Reverse();
         return new(DialogueStatus.Succeeded, result.ToImmutableArray(), omitted);
     }, status => new(status, [], false), cancellationToken);
@@ -335,7 +356,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
             current.Fence = conversation.NextFence;
             conversation.NextFence = checked(conversation.NextFence + 1);
             var terminal = new DialogueTerminalSaveRequest(new(identity.ConversationId, identity.ContextId, current.TurnId,
-                request.ExpectedExecution, current.Fence), request.OrphanOperationId, "", DialogueTerminalState.Interrupted,
+                    request.ExpectedExecution, current.Fence), request.OrphanOperationId, "", DialogueTerminalState.Interrupted,
                 DialogueTerminalReason.OwnerLost, DialogueProviderFinish.Unknown, "", [], [], null,
                 OctoberDialoguePayloadCodec.DecodeBegin(current.BeginEnvelopeJson).HistoryTurnIds, _clock.GetUtcNow());
             terminal = terminal with { OutcomeDigest = _codec.ComputeOutcomeDigest(terminal) };
@@ -348,7 +369,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         var final = finalOwner.Context;
         var saved = await final.DialogueTerminals.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == row.ConversationId && x.TurnId == request.TurnId, ct);
         var turn = await final.DialogueTurns.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == row.ConversationId && x.TurnId == request.TurnId, ct);
-        return saved is null || turn is null ? new(DialogueStatus.Indeterminate, null) : new(status == DialogueStatus.Succeeded ? status : DialogueStatus.Existing, Receipt(identity, turn, saved));
+        return saved is null || turn is null ? new(DialogueStatus.Indeterminate, null)
+            : new(status == DialogueStatus.Succeeded ? status : DialogueStatus.Existing, Receipt(identity, turn, saved));
     }, status => new(status, null), cancellationToken);
 
     private async Task<DialogueStatus> MutateAsync(DialogueCommitAttempt attempt,
@@ -360,6 +382,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         object submissionGate = new();
         bool submissionClosed = false;
         TaskCompletionSource<CommitSettlement>? ownedInvocation = null;
+
         Task<CommitSettlement>? CloseSubmission()
         {
             lock (submissionGate)
@@ -368,6 +391,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
                 return ownedInvocation?.Task;
             }
         }
+
         try
         {
             db = await OpenContextAsync(ct);
@@ -377,7 +401,8 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
             transaction = await db.Database.BeginTransactionAsync(ct);
             db.Database.AutoSavepointsEnabled = false;
             if (db.Database.IsNpgsql())
-                await db.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM october.\"OctoberDialogueConversations\" WHERE \"ConversationId\" = {attempt.Conversation.ConversationId} FOR UPDATE", ct);
+                await db.Database.ExecuteSqlInterpolatedAsync(
+                    $"SELECT 1 FROM october.\"OctoberDialogueConversations\" WHERE \"ConversationId\" = {attempt.Conversation.ConversationId} FOR UPDATE", ct);
             var result = await stage(db, ct);
             if (result != DialogueStatus.Succeeded) return result;
             ct.ThrowIfCancellationRequested();
@@ -400,6 +425,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
                         owned = new(TaskCreationOptions.RunContinuationsAsynchronously);
                         ownedInvocation = owned;
                     }
+
                     try
                     {
                         ct.ThrowIfCancellationRequested();
@@ -423,14 +449,16 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
             {
                 CloseSubmission();
             }
+
             var settlement = CloseSubmission();
-            if (settlement is null) return guarded.Status switch
-            {
-                CommitSubmissionStatus.StaleOrFenced => DialogueStatus.StaleFence,
-                CommitSubmissionStatus.Denied => DialogueStatus.Denied,
-                CommitSubmissionStatus.AuthorityUnavailable => DialogueStatus.AuthorityUnavailable,
-                _ => DialogueStatus.Indeterminate
-            };
+            if (settlement is null)
+                return guarded.Status switch
+                {
+                    CommitSubmissionStatus.StaleOrFenced => DialogueStatus.StaleFence,
+                    CommitSubmissionStatus.Denied => DialogueStatus.Denied,
+                    CommitSubmissionStatus.AuthorityUnavailable => DialogueStatus.AuthorityUnavailable,
+                    _ => DialogueStatus.Indeterminate
+                };
             return await settlement.WaitAsync(ct) == CommitSettlement.Committed ? DialogueStatus.Succeeded : DialogueStatus.Indeterminate;
         }
         catch (Exception error)
@@ -457,7 +485,10 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
 
     private async Task DisposeAfterSettlementAsync(Task<CommitSettlement> settlement, IDbContextTransaction? transaction, OctoberDbContext? db)
     {
-        try { await settlement; }
+        try
+        {
+            await settlement;
+        }
         finally
         {
             await DisposeOwnedAsync(transaction, db);
@@ -466,14 +497,27 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
 
     private static async Task CompleteSettlementAsync(Task commit, TaskCompletionSource<CommitSettlement> owned)
     {
-        try { await commit; owned.TrySetResult(CommitSettlement.Committed); }
-        catch (Exception) { owned.TrySetResult(CommitSettlement.Indeterminate); }
+        try
+        {
+            await commit;
+            owned.TrySetResult(CommitSettlement.Committed);
+        }
+        catch (Exception)
+        {
+            owned.TrySetResult(CommitSettlement.Indeterminate);
+        }
     }
 
     private static async Task ObserveGuardAsync(Task guard)
     {
-        try { await guard; }
-        catch (Exception) { /* The bounded caller has already handled this acknowledgement failure. */ }
+        try
+        {
+            await guard;
+        }
+        catch (Exception)
+        {
+            /* The bounded caller has already handled this acknowledgement failure. */
+        }
     }
 
     private async Task<DialogueConversationResult> ProjectConversationAsync(OctoberDbContext db, DialogueConversationRecord row,
@@ -522,24 +566,44 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         if (auth != DialogueStatus.Succeeded) return new(auth, [], false, null, null);
         if (!ValidHistory(identity, request)) return new(DialogueStatus.Invalid, [], false, null, null);
         var rows = await db.DialogueTurns.AsNoTracking().Where(x => x.ConversationId == identity.ConversationId &&
-            (request.BeforeSequenceExclusive == null || x.Sequence < request.BeforeSequenceExclusive))
+                                                                    (request.BeforeSequenceExclusive == null || x.Sequence < request.BeforeSequenceExclusive))
             .OrderByDescending(x => x.Sequence).Take(request.MaximumTurns + 1).ToListAsync(ct);
         var turns = new List<DialogueHistoryTurn>();
         bool omitted = false;
         foreach (var row in rows)
         {
-            if (turns.Count == request.MaximumTurns || row.State != DialogueTurnState.Completed) { omitted = true; break; }
+            if (turns.Count == request.MaximumTurns || row.State != DialogueTurnState.Completed)
+            {
+                omitted = true;
+                break;
+            }
+
             var terminal = await db.DialogueTerminals.AsNoTracking().SingleOrDefaultAsync(x => x.ConversationId == row.ConversationId && x.TurnId == row.TurnId, ct);
-            if (terminal is null) { omitted = true; break; }
+            if (terminal is null)
+            {
+                omitted = true;
+                break;
+            }
+
             var saved = OctoberDialoguePayloadCodec.DecodeTerminal(terminal.TerminalEnvelopeJson);
             if (saved.InferenceDependencies is null || await AuthorizeAsync(db, identity, subject, saved.InferenceDependencies, ct) != DialogueStatus.Succeeded)
-            { omitted = true; break; }
+            {
+                omitted = true;
+                break;
+            }
+
             var begin = OctoberDialoguePayloadCodec.DecodeBegin(row.BeginEnvelopeJson);
             var turn = new DialogueHistoryTurn(row.TurnId, row.Sequence, begin.Question, saved.AnswerText, saved.References, saved.InferenceDependencies);
             var candidate = turns.Append(turn).Reverse().ToImmutableArray();
-            if (_codec.MeasureHistoryProjectionUtf8Bytes(candidate) > request.MaximumUtf8Bytes) { omitted = true; break; }
+            if (_codec.MeasureHistoryProjectionUtf8Bytes(candidate) > request.MaximumUtf8Bytes)
+            {
+                omitted = true;
+                break;
+            }
+
             turns.Add(turn);
         }
+
         turns.Reverse();
         var result = turns.ToImmutableArray();
         KnowledgeDependencyHandle? dependencies = null;
@@ -549,6 +613,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
             if (merged.Status != KnowledgeDependencyStatus.Succeeded) return new(DialogueStatus.Succeeded, [], true, _codec.ComputeHistoryProjectionDigest([]), null);
             dependencies = merged.Dependencies;
         }
+
         auth = await AuthorizeAsync(db, identity, subject, dependencies, ct);
         return auth != DialogueStatus.Succeeded ? new(auth, [], false, null, null) :
             new(DialogueStatus.Succeeded, result, omitted, _codec.ComputeHistoryProjectionDigest(result), dependencies);
@@ -574,11 +639,13 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
             if (verified.Status != KnowledgeDependencyStatus.Succeeded || verified.Receipt is not { } receipt)
                 return (DependencyStatus(verified.Status), "[]");
             var reference = consumed.Reference;
-            if (reference.Document != receipt.Document || reference.IsPartial != receipt.IsPartial || reference.SuccessfulChunks != receipt.SuccessfulChunks || reference.ContentBytes != receipt.ContentBytes)
+            if (reference.Document != receipt.Document || reference.IsPartial != receipt.IsPartial || reference.SuccessfulChunks != receipt.SuccessfulChunks ||
+                reference.ContentBytes != receipt.ContentBytes)
                 return (DialogueStatus.Invalid, "[]");
             if (!await ExactReferenceAsync(db, identity, reference, ct)) return (DialogueStatus.Invalid, "[]");
             facts.Add(new { receipt.Proof, receipt.Document, receipt.IsPartial, receipt.SuccessfulChunks, receipt.ContentBytes, receipt.OwnerCoverage });
         }
+
         if (request.References.Any(x => !request.ConsumedReads.Any(c => c.Reference == x))) return (DialogueStatus.Invalid, "[]");
         return (DialogueStatus.Succeeded, JsonSerializer.Serialize(facts, OctoberDialoguePayloadCodec.Json));
     }
@@ -627,7 +694,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
     private async Task<bool> BindingExistsAsync(OctoberDbContext db, DialogueConversationIdentity identity, CancellationToken ct) =>
         identity.Publication.Knowledge == _binding &&
         await db.Batches.AsNoTracking().AnyAsync(x => x.BatchId == _binding.BatchId && x.TargetId == _binding.TargetId &&
-            x.CanonicalDatabaseIdentity == _binding.CanonicalDatabaseIdentity && x.SelectionDigest == _binding.SelectionDigest, ct) &&
+                                                      x.CanonicalDatabaseIdentity == _binding.CanonicalDatabaseIdentity && x.SelectionDigest == _binding.SelectionDigest, ct) &&
         await db.KnowledgePublications.AsNoTracking().AnyAsync(x => x.BatchId == _binding.BatchId && x.PublicationId == identity.Publication.PublicationId, ct);
 
     private static async Task<bool> ExactReferenceAsync(OctoberDbContext db, DialogueConversationIdentity identity, OctoberChatReference reference, CancellationToken ct)
@@ -635,36 +702,51 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         var d = reference.Document;
         if (d.BatchId != identity.Publication.Knowledge.BatchId || d.PublicationId != identity.Publication.PublicationId) return false;
         if (!await db.PublicationMembers.AnyAsync(x => x.BatchId == d.BatchId && x.PublicationId == d.PublicationId &&
-            x.LogicalDocumentId == d.LogicalDocumentId && x.VersionId == d.DocumentVersionId, ct)) return false;
+                                                       x.LogicalDocumentId == d.LogicalDocumentId && x.VersionId == d.DocumentVersionId, ct)) return false;
         return d.SectionId is null || await db.DocumentSections.AnyAsync(x => x.BatchId == d.BatchId && x.VersionId == d.DocumentVersionId && x.SectionId == d.SectionId, ct);
     }
 
     private static ReadSelectionRequest Selection(DialogueConversationIdentity identity, KnowledgeSubject subject) =>
         new(identity.Publication, subject, identity.Mode, KnowledgePurpose.Chat, identity.RepositoryScope);
+
     private static DialogueConversationIdentity Identity(DialogueConversationRecord row) =>
         JsonSerializer.Deserialize<DialogueConversationIdentity>(row.IdentityJson, OctoberDialoguePayloadCodec.Json) ?? throw new JsonException("Missing dialogue identity.");
+
     private static DialogueAdmission Admission(DialogueConversationIdentity identity, DialogueTurnRecord turn) =>
         new(identity, OctoberDialoguePayloadCodec.DecodeBegin(turn.BeginEnvelopeJson), turn.TurnId, turn.Sequence, turn.Fence, turn.AdmittedAtUtc, turn.DeadlineUtc, turn.State);
+
     private static DialogueTerminalReceipt Receipt(DialogueConversationIdentity identity, DialogueTurnRecord turn, DialogueTerminalRecord terminal) =>
         new(identity.ConversationId, identity.ContextId, turn.TurnId, turn.Sequence, terminal.Fence, terminal.SaveOperationId,
             terminal.OutcomeDigest, terminal.TerminalState, terminal.Reason, terminal.CommittedAtUtc);
+
     private static DialogueTerminalProjection Projection(DialogueConversationIdentity identity, DialogueTurnRecord turn, DialogueTerminalSaveRequest request) =>
         new(identity, turn.TurnId, turn.Sequence, request.InferenceDependencies is null ? "" : OctoberDialoguePayloadCodec.DecodeBegin(turn.BeginEnvelopeJson).Question,
             request.AnswerText, request.TerminalState, request.Reason, request.References, request.InferenceDependencies);
+
     private static bool Owns(DialogueConversationIdentity identity, DialogueTurnRecord turn, DialogueTurnOwnership owner) =>
-        identity.ContextId == owner.ContextId && turn.Fence == owner.Fence && turn.OwnerGeneration == owner.Execution.OwnerGeneration && turn.AttemptId == owner.Execution.AttemptId;
+        identity.ContextId == owner.ContextId && turn.Fence == owner.Fence && turn.OwnerGeneration == owner.Execution.OwnerGeneration &&
+        turn.AttemptId == owner.Execution.AttemptId;
 
     private static bool Text(string? value, int maximum, bool nonblank = false)
     {
         if (value is null || nonblank && string.IsNullOrWhiteSpace(value)) return false;
-        try { return _utf8.GetByteCount(value) <= maximum; }
-        catch (EncoderFallbackException) { return false; }
+        try
+        {
+            return _utf8.GetByteCount(value) <= maximum;
+        }
+        catch (EncoderFallbackException)
+        {
+            return false;
+        }
     }
+
     private static bool Digest(string? value) => value is { Length: 64 } && value.All(x => x is >= '0' and <= '9' or >= 'A' and <= 'F');
+
     private static bool GuidArray(ImmutableArray<Guid> values, int maximum, bool nonempty = false) =>
         !values.IsDefault && (!nonempty || !values.IsEmpty) && values.Length <= maximum && values.All(x => x != Guid.Empty) && values.Distinct().Count() == values.Length;
+
     private static bool Capsule(KnowledgeDependencyHandle? value) => value is not null && value.SetId != Guid.Empty && Digest(value.BindingDigest) &&
-        Text(value.ProtectedPayload, OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes, true);
+                                                                     Text(value.ProtectedPayload, OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes, true);
 
     private bool ValidIdentity(DialogueConversationIdentity identity) =>
         identity.ConversationId != Guid.Empty && identity.ContextId != Guid.Empty && identity.Publication.PublicationId != Guid.Empty &&
@@ -688,7 +770,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         if (request.Question.EnumerateRunes().Count() > l.QuestionCharacters || request.HistoryTurnIds.Length > l.HistoryTurns) return false;
         _ = _clock.GetUtcNow().Add(l.Duration);
         return _codec.MeasureBeginEnvelopeUtf8Bytes(request) <= OctoberDialogueLimits.MaximumBeginEnvelopeUtf8Bytes &&
-            _codec.ComputeBeginDigest(identity, request) == request.RequestDigest;
+               _codec.ComputeBeginDigest(identity, request) == request.RequestDigest;
     }
 
     private bool ValidTerminal(DialogueTerminalSaveRequest request, DialogueAdmission admission)
@@ -705,28 +787,38 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         if (request.TerminalState != DialogueTerminalState.Completed && request.Reason == DialogueTerminalReason.None) return false;
         if (!Sanitized(request) && !Capsule(request.InferenceDependencies)) return false;
         if (request.References.Any(x => !ValidReference(x)) || request.ConsumedReads.Any(x => !ValidReference(x.Reference) || x.Proof is null ||
-                x.Proof.ReceiptId == Guid.Empty || !Digest(x.Proof.BindingDigest) || !Text(x.Proof.ProtectedPayload, OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes, true)) ||
+                                                                                              x.Proof.ReceiptId == Guid.Empty || !Digest(x.Proof.BindingDigest) ||
+                                                                                              !Text(x.Proof.ProtectedPayload,
+                                                                                                  OctoberKnowledgeDisclosureLimits.MaximumProtectedPayloadUtf8Bytes, true)) ||
             request.References.Select(x => x.Document).Distinct().Count() != request.References.Length ||
             request.ConsumedReads.Select(x => x.Reference.Document).Distinct().Count() != request.ConsumedReads.Length) return false;
         return OctoberDialoguePayloadCodec.MeasureReferences(request.References) <= OctoberDialogueLimits.MaximumReferenceArrayUtf8Bytes &&
-            OctoberDialoguePayloadCodec.MeasureConsumed(request.ConsumedReads) <= OctoberDialogueLimits.MaximumConsumedArrayUtf8Bytes &&
-            _codec.MeasureTerminalEnvelopeUtf8Bytes(request) <= OctoberDialogueLimits.MaximumTerminalEnvelopeUtf8Bytes &&
-            _codec.ComputeOutcomeDigest(request) == request.OutcomeDigest;
+               OctoberDialoguePayloadCodec.MeasureConsumed(request.ConsumedReads) <= OctoberDialogueLimits.MaximumConsumedArrayUtf8Bytes &&
+               _codec.MeasureTerminalEnvelopeUtf8Bytes(request) <= OctoberDialogueLimits.MaximumTerminalEnvelopeUtf8Bytes &&
+               _codec.ComputeOutcomeDigest(request) == request.OutcomeDigest;
     }
 
     private static bool ValidReference(OctoberChatReference reference) => reference is not null && reference.Document is { } d &&
-        d.BatchId != Guid.Empty && d.PublicationId != Guid.Empty && d.LogicalDocumentId != Guid.Empty && d.DocumentVersionId != Guid.Empty &&
-        (d.SectionId is null || Text(d.SectionId, 1024, true)) && reference.SuccessfulChunks >= 1 && reference.ContentBytes >= 0;
+                                                                          d.BatchId != Guid.Empty && d.PublicationId != Guid.Empty && d.LogicalDocumentId != Guid.Empty &&
+                                                                          d.DocumentVersionId != Guid.Empty &&
+                                                                          (d.SectionId is null || Text(d.SectionId, 1024, true)) && reference.SuccessfulChunks >= 1 &&
+                                                                          reference.ContentBytes >= 0;
+
     private static bool Sanitized(DialogueTerminalSaveRequest request) => request.TerminalState is DialogueTerminalState.Interrupted or DialogueTerminalState.Failed &&
-        request.Reason is DialogueTerminalReason.AuthorizationDenied or DialogueTerminalReason.AuthorityUnavailable &&
-        request.AnswerText == "" && !request.References.IsDefault && request.References.IsEmpty && !request.ConsumedReads.IsDefault &&
-        request.ConsumedReads.IsEmpty && request.InferenceDependencies is null;
+                                                                          request.Reason is DialogueTerminalReason.AuthorizationDenied
+                                                                              or DialogueTerminalReason.AuthorityUnavailable &&
+                                                                          request.AnswerText == "" && !request.References.IsDefault && request.References.IsEmpty &&
+                                                                          !request.ConsumedReads.IsDefault &&
+                                                                          request.ConsumedReads.IsEmpty && request.InferenceDependencies is null;
+
     private static bool ValidHistory(DialogueConversationIdentity identity, DialogueHistoryRequest request) =>
         request.ContextId == identity.ContextId && request.MaximumTurns is >= 1 and <= 12 && request.MaximumUtf8Bytes is >= 1 and <= 49152 &&
         (request.BeforeSequenceExclusive is null or > 0);
+
     private static bool ValidTransition(DialogueTurnState from, DialogueTurnState to) => (from, to) is
         (DialogueTurnState.Admitted, DialogueTurnState.Running) or (DialogueTurnState.Running, DialogueTurnState.Saving) or
         (DialogueTurnState.Saving, DialogueTurnState.SaveIndeterminate) or (DialogueTurnState.SaveIndeterminate, DialogueTurnState.Saving);
+
     private static DialogueStatus DependencyStatus(KnowledgeDependencyStatus status) => status switch
     {
         KnowledgeDependencyStatus.Succeeded => DialogueStatus.Succeeded,
@@ -735,6 +827,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         KnowledgeDependencyStatus.Cancelled => DialogueStatus.Indeterminate,
         _ => DialogueStatus.Invalid
     };
+
     private static DialogueStatus Eligibility(CommitEligibilityStatus status) => status switch
     {
         CommitEligibilityStatus.StaleOrFenced => DialogueStatus.StaleFence,
@@ -745,16 +838,24 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
 
     private Task<DialogueExecutionStatus> VerifyAdmissionAsync(DialogueBeginRequest request, CancellationToken ct) =>
         ExternalAsync(() => _execution.VerifyAdmissionAsync(request, ct), ct);
+
     private Task<DialogueExecutionStatus> VerifyExecutionTerminalAsync(DialogueAdmission admission, DialogueTerminalSaveRequest request, CancellationToken ct) =>
         ExternalAsync(() => _execution.VerifyTerminalAsync(admission, request, ct), ct);
+
     private Task<DialogueExecutionStatus> VerifyOwnerDeathAsync(DialogueExecutionIdentity execution, CancellationToken ct) =>
         ExternalAsync(() => _execution.VerifyOwnerDeathAsync(execution, ct), ct);
-    private Task<KnowledgeDependencyStatus> ReauthorizeDependenciesAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> dependencies, CancellationToken ct) =>
+
+    private Task<KnowledgeDependencyStatus> ReauthorizeDependenciesAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> dependencies,
+        CancellationToken ct) =>
         ExternalAsync(() => _dependencies.ReauthorizeAsync(selection, dependencies, ct), ct);
+
     private Task<KnowledgeDependencyResult> MergeDependenciesAsync(ReadSelectionRequest selection, ImmutableArray<KnowledgeDependencyHandle> dependencies, CancellationToken ct) =>
         ExternalAsync(() => _dependencies.MergeAsync(selection, dependencies, ct), ct);
-    private Task<KnowledgeConsumedContentResult> VerifyConsumedAsync(ReadSelectionRequest selection, KnowledgeConsumedContentHandle proof, KnowledgeDependencyHandle dependencies, CancellationToken ct) =>
+
+    private Task<KnowledgeConsumedContentResult> VerifyConsumedAsync(ReadSelectionRequest selection, KnowledgeConsumedContentHandle proof, KnowledgeDependencyHandle dependencies,
+        CancellationToken ct) =>
         ExternalAsync(() => _dependencies.VerifyConsumedContentAsync(selection, proof, dependencies, ct), ct);
+
     private Task<DisclosureStatus> CheckDisclosureAsync(DisclosureRequest request, CancellationToken ct) =>
         ExternalAsync(() => _disclosure.CheckAsync(request, ct), ct);
 
@@ -788,8 +889,15 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
     private async Task DisposeLateContextAsync(Task<OctoberDbContext> pending)
     {
         OctoberDbContext context;
-        try { context = await pending; }
-        catch (Exception) { return; } // A failed factory produced no owned context.
+        try
+        {
+            context = await pending;
+        }
+        catch (Exception)
+        {
+            return;
+        } // A failed factory produced no owned context.
+
         await DisposeOwnedAsync(null, context);
     }
 
@@ -800,6 +908,7 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
             if (_closing) return Task.FromResult(failure(DialogueStatus.Indeterminate));
             _ownedOperations++;
         }
+
         return RunBoundedAsync(action, failure, cancellationToken);
     }
 
@@ -811,10 +920,18 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
         // operation retains its contexts and may register children before retiring its ownership.
         Task<T> pending = RunOwnedAsync(() => action(deadline.Token));
         _ = ObserveGuardAsync(pending);
-        try { return await pending.WaitAsync(deadline.Token); }
+        try
+        {
+            return await pending.WaitAsync(deadline.Token);
+        }
         catch (Exception ex) when (ex is ArgumentException or JsonException or OverflowException)
-        { return failure(DialogueStatus.Invalid); }
-        catch (Exception) { return failure(DialogueStatus.Indeterminate); }
+        {
+            return failure(DialogueStatus.Invalid);
+        }
+        catch (Exception)
+        {
+            return failure(DialogueStatus.Indeterminate);
+        }
     }
 
     /// <summary>Closes new calls and awaits all admitted work and physical cleanup. Cancellation is not settlement.</summary>
@@ -848,14 +965,26 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
 
     private async Task<T> RunOwnedAsync<T>(Func<Task<T>> action)
     {
-        try { return await action(); }
-        finally { RetireOwnedOperation(); }
+        try
+        {
+            return await action();
+        }
+        finally
+        {
+            RetireOwnedOperation();
+        }
     }
 
     private async Task RunOwnedAsync(Func<Task> action)
     {
-        try { await action(); }
-        finally { RetireOwnedOperation(); }
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            RetireOwnedOperation();
+        }
     }
 
     private void RetireOwnedOperation()
@@ -885,10 +1014,24 @@ public sealed class OctoberDialogueStore : IOctoberDialogueStore, IAsyncDisposab
     private async Task DisposeOwnedAsync(IDbContextTransaction? transaction, OctoberDbContext? context)
     {
         bool failed = false;
-        try { if (transaction is not null) await transaction.DisposeAsync(); }
-        catch (Exception) { failed = true; }
-        try { if (context is not null) await context.DisposeAsync(); }
-        catch (Exception) { failed = true; }
+        try
+        {
+            if (transaction is not null) await transaction.DisposeAsync();
+        }
+        catch (Exception)
+        {
+            failed = true;
+        }
+
+        try
+        {
+            if (context is not null) await context.DisposeAsync();
+        }
+        catch (Exception)
+        {
+            failed = true;
+        }
+
         if (!failed) return;
         lock (_lifetimeGate) _cleanupFailed = true;
         throw new InvalidOperationException("october_dialogue_cleanup_unconfirmed");

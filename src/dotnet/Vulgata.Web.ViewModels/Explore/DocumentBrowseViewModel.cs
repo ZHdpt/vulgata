@@ -20,8 +20,8 @@ public sealed class DocumentBrowseViewModel : IDisposable
     }
 
     public int TotalItems { get; private set; }
-    public int TotalPages => (TotalItems + KnowledgeContract.DefaultPageSize - 1) / KnowledgeContract.DefaultPageSize;
-    public int PageSize => KnowledgeContract.DefaultPageSize;
+    public int TotalPages => (TotalItems + PageSize - 1) / PageSize;
+    public int PageSize { get; private set; } = KnowledgeContract.DefaultPageSize;
     public int PageNumber { get; private set; } = 1;
     public string TitleQuery { get; private set; } = "";
     public bool CanPrevious => !_disposed && _pending is null && PageNumber > 1;
@@ -34,9 +34,14 @@ public sealed class DocumentBrowseViewModel : IDisposable
     public bool CanContinue => !_disposed && _pending is null && PageNumber < TotalPages;
     public event Action? Changed;
 
-    public Task LoadAsync()
+    public Task LoadAsync(int? pageSize = null)
     {
-        lock (_gate) { return _disposed ? Task.CompletedTask : ReadAsync(1); }
+        lock (_gate)
+        {
+            if (_disposed) return Task.CompletedTask;
+            if (pageSize is > 0) PageSize = Math.Clamp(pageSize.Value, 1, 200);
+            return ReadAsync(1);
+        }
     }
 
     public Task NextAsync()

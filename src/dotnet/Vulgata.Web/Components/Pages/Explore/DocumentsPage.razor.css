@@ -7,7 +7,7 @@ a { color: #445e7a; }
 h1 { font-size: 1.65rem; margin: .4rem 0 .75rem; }
 ::deep .explore-status { display: inline-block; font-size: .85rem; color: #64748b; }
 
-.document-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: .65rem; padding: 0; list-style: none; }
+.document-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: .65rem; padding: 0; list-style: none; }
 .document-list li { margin: 0; padding: 1rem 1.15rem; background: #fff; border: 1px solid #e2e6ea; border-radius: .65rem; }
 .document-list a { text-decoration: none; line-height: 1.6; display: block; }
 .document-list li:hover { border-color: #8ba6c2; background: #f3f7fb; }
@@ -23,3 +23,8 @@ h1 { font-size: 1.65rem; margin: .4rem 0 .75rem; }
 
 .page-jump { display: flex; align-items: center; gap: .5rem; }
 .page-jump input { width: 4.5rem; padding: .45rem; border: 1px solid #ccd8e4; border-radius: .4rem; }
+
+.document-list li { height: 5rem; box-sizing: border-box; display: flex; align-items: center; }
+.document-list a { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.page-size-probe { visibility: hidden; }
+.pagination-ellipsis { color: #64748b; padding-inline: .25rem; }

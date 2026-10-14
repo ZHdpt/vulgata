@@ -1,7 +1,8 @@
 @page "/knowledge/documents"
 @attribute [Authorize]
 @layout MainLayout
-@implements IDisposable
+@implements IAsyncDisposable
+@inject IJSRuntime JS
 @using Vulgata.Core.DomainServices.OctoberKnowledge
 @using Vulgata.Web.Components.Explore
 @using Vulgata.Web.Explore
@@ -9,7 +10,7 @@
 @inject IServiceProvider Services
 
 <PageTitle>文档列表</PageTitle>
-<div class="explore-documents" data-theme="light">
+<div @ref="_root" class="explore-documents" data-theme="light">
     <h1>文档列表</h1>
     @if (_viewModel?.IsControlledFixture == true)
     {
@@ -27,20 +28,30 @@
             <FluentButton Type="ButtonType.Submit" Disabled="@(_viewModel.LoadState == LoadState.Loading)">搜索</FluentButton>
         </form>
         <ExploreStatus LoadState="@_viewModel.LoadState" StatusText="@_viewModel.StatusText" />
-        @if (_viewModel.Page is { } page)
-        {
-            <ul class="document-list" aria-label="可读取的文档">
+        <ul class="document-list" aria-label="可读取的文档">
+            @if (_viewModel.Page is { Documents.IsDefaultOrEmpty: false } page)
+            {
                 @foreach (var document in page.Documents)
                 {
-                    <li><a href="@ExactDocumentLinkBuilder.Build(document.Handle)">@document.Title</a></li>
+                    <li><a title="@document.Title" href="@ExactDocumentLinkBuilder.Build(document.Handle)">@document.Title</a></li>
                 }
-            </ul>
-        }
+            }
+            else
+            {
+                <li class="page-size-probe" aria-hidden="true"><a>文档标题</a></li>
+            }
+        </ul>
         <div class="browse-actions" aria-label="列表操作">
             <FluentButton OnClick="PreviousAsync" Disabled="@(!_viewModel.CanPrevious)">上一页</FluentButton>
+            @{ var previousPage = 0; }
             @foreach (var number in VisiblePages)
             {
                 var target = number;
+                @if (target > previousPage + 1)
+                {
+                    <span class="pagination-ellipsis" aria-label="省略的页码">…</span>
+                }
+                previousPage = target;
                 <FluentButton aria-label="@($"第 {target} 页")" aria-current="@(target == _viewModel.PageNumber ? "page" : null)"
                               Appearance="@(target == _viewModel.PageNumber ? Appearance.Accent : Appearance.Neutral)"
                               Disabled="@(_viewModel.LoadState == LoadState.Loading)" OnClick="() => _viewModel.GoToPageAsync(target)">@target</FluentButton>
@@ -73,31 +84,61 @@
     private Task SearchAsync() => _viewModel?.SearchAsync(_query) ?? Task.CompletedTask;
     private Task PreviousAsync() => _viewModel?.PreviousAsync() ?? Task.CompletedTask;
 
-    protected override async Task OnInitializedAsync()
+    private ElementReference _root;
+    private IJSObjectReference? _module;
+    private bool _initialSizingStarted;
+
+    protected override void OnInitialized()
     {
         _viewModel = Services.GetService<DocumentBrowseViewModel>();
-        if (_viewModel is not null)
+        if (_viewModel is not null) _viewModel.Changed += OnChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_viewModel is null || _initialSizingStarted || _disposed) return;
+        _initialSizingStarted = true;
+        await ReloadAsync();
+    }
+
+    private async Task<int> MeasurePageSizeAsync()
+    {
+        try
         {
-            _viewModel.Changed += OnChanged;
-            await _viewModel.LoadAsync();
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./Components/Pages/Explore/DocumentsPage.razor.js");
+            var count = await _module.InvokeAsync<int>("measurePageSize", _root);
+            return count > 0 ? count : KnowledgeContract.DefaultPageSize;
+        }
+        catch (Exception exception) when (exception is JSException or InvalidOperationException)
+        {
+            return _viewModel?.PageSize ?? KnowledgeContract.DefaultPageSize;
         }
     }
 
     private Task NextAsync() => _viewModel?.NextAsync() ?? Task.CompletedTask;
-    private Task ReloadAsync() => _viewModel?.LoadAsync() ?? Task.CompletedTask;
+    private async Task ReloadAsync()
+    {
+        var size = await MeasurePageSizeAsync();
+        if (!_disposed && _viewModel is not null) await _viewModel.LoadAsync(size);
+    }
     private void Cancel() => _viewModel?.Cancel();
     private void OnChanged()
     {
         if (!_disposed) { _ = InvokeAsync(() => { if (!_disposed) { StateHasChanged(); } }); }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _disposed = true;
         if (_viewModel is not null)
         {
             _viewModel.Changed -= OnChanged;
             _viewModel.Dispose();
+        }
+        if (_module is not null)
+        {
+            try { await _module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
         }
     }
 }

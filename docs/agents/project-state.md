@@ -1,5 +1,13 @@
 # Project state for agent resumption
 
+October 13 saved-Chat transcript repair: a seven-turn retained conversation returned
+an empty successful transcript because its combined disclosure proofs exceeded the
+Knowledge union budget, although every turn individually reauthorized successfully.
+Database transcript read, saved-history handoff and application display now recheck
+each turn independently. Inference-history union limits and permission failures
+remain unchanged. A read-only ordinary-user probe returned all seven saved turns
+and handed off all seven after repair; no retained data or running host was changed.
+
 October 13 Explorer UI: document and graph pages use light styling independently
 of Knowledge mode. Reader continuation controls appear only when more content is
 available. Graph details appear on node selection, with colored ellipse nodes and
@@ -10,7 +18,9 @@ Controlled Explorer tests cover pagination, cancellation and disclosure. This ch
 has not yet been qualified against the running retained host.
 Explorer follow-up: empty coverage disclosures are hidden; node selection preserves
 the viewport and the mouse wheel controls zoom. The full-height document list has
-title search across authorized pages, a page indicator and previous/next controls.
+title search across authorized pages, totals, direct page selection, gap ellipses
+and previous/next controls. Page size is measured from the initial viewport and
+card grid, shared with search, and frozen until explicit reload or page refresh.
 Previous pages are re-read because continuation sessions are single-use. The reader
 body heading sits outside its content card. Browser requalification is requested
 from the user-designated Qualify Explorer and IT Chat task.
