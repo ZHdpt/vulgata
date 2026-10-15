@@ -17,6 +17,59 @@ public sealed partial class OctoberLocalAuthorityTests
 {
     [Trait("Suite", "PostgreSql")]
     [SuiteFact("PostgreSql")]
+    public async Task BusinessSourcePurpose_IssuesExactIndependentApprovalAndRevokesWithoutChangingWorkerGrantAsync()
+    {
+        await using var fixture = await SelectionFixture.CreateAsync();
+        await using var session = await fixture.AuthenticateAsync();
+        var (committed, bound) = await CreateCommittedBoundSetupAsync(fixture, session);
+        var issued = await fixture.Authority.IssueBusinessSourceApprovalAsync(session, bound, fixture.RepositoryId, default);
+        Assert.Equal(OctoberSourceApprovalStatus.Issued, issued.Status);
+        var business = Assert.IsType<PreparedSourceApproval>(issued.Approval);
+        Assert.Equal(PreparedSourcePurpose.BusinessSynthesisRead, business.Purpose);
+        Assert.Equal(committed.BatchId, business.BatchId); Assert.Equal(fixture.RepositoryId, business.RepositoryId);
+        Assert.Equal(SubjectId, business.SubjectId); Assert.Equal("prepared-root-v3", business.RootBindingIdentity);
+        Assert.True(issued.ExpiresAtUtc > fixture.Clock.GetUtcNow()); Assert.True(issued.ExpiresAtUtc <= session.ExpiresAtUtc);
+        var workerResult = await fixture.Authority.IssueSourceApprovalAsync(session, bound, fixture.RepositoryId, default);
+        Assert.Equal(OctoberSourceApprovalStatus.Issued, workerResult.Status);
+        var worker = Assert.IsType<PreparedSourceApproval>(workerResult.Approval);
+        Assert.Equal(PreparedSourcePurpose.WorkerSourceRead, worker.Purpose);
+        Assert.NotEqual(worker.ApprovalIdentity, business.ApprovalIdentity);
+        Assert.Equal(business, (await fixture.Authority.VerifySourceApprovalAsync(session, TargetId, business, default)).CurrentApproval);
+        Assert.Equal(worker, (await fixture.Authority.VerifySourceApprovalAsync(session, TargetId, worker, default)).CurrentApproval);
+        Assert.Equal(OctoberRevocationStatus.Revoked,
+            await fixture.Authority.RevokeSourceApprovalAsync(session, TargetId, business.ApprovalIdentity, default));
+        var revoked = await fixture.Authority.VerifySourceApprovalAsync(session, TargetId, business, default);
+        Assert.Equal(PreparedSourceAuthorityStatus.Revoked, revoked.Status); Assert.Null(revoked.CurrentApproval);
+        Assert.Equal(worker, (await fixture.Authority.VerifySourceApprovalAsync(session, TargetId, worker, default)).CurrentApproval);
+        await using var verification = fixture.Provider.CreateAsyncScope();
+        var rows = await verification.ServiceProvider.GetRequiredService<OctoberDbContext>().PreparedSourceApprovals.AsNoTracking()
+            .Where(row => row.BatchId == committed.BatchId).ToListAsync();
+        Assert.True(Assert.Single(rows.Where(row => row.ApprovalIdentity == business.ApprovalIdentity)).IsRevoked);
+        Assert.False(Assert.Single(rows.Where(row => row.ApprovalIdentity == worker.ApprovalIdentity)).IsRevoked);
+    }
+
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BusinessSourcePurpose_VerificationRejectsSubstitutionOfTheOtherKnownPurposeAsync(bool issueBusiness)
+    {
+        await using var fixture = await SelectionFixture.CreateAsync();
+        await using var session = await fixture.AuthenticateAsync();
+        var bound = (await CreateCommittedBoundSetupAsync(fixture, session)).BoundSetup;
+        var issued = issueBusiness
+            ? await fixture.Authority.IssueBusinessSourceApprovalAsync(session, bound, fixture.RepositoryId, default)
+            : await fixture.Authority.IssueSourceApprovalAsync(session, bound, fixture.RepositoryId, default);
+        Assert.Equal(OctoberSourceApprovalStatus.Issued, issued.Status);
+        var original = Assert.IsType<PreparedSourceApproval>(issued.Approval);
+        var altered = original with { Purpose = issueBusiness ? PreparedSourcePurpose.WorkerSourceRead : PreparedSourcePurpose.BusinessSynthesisRead };
+        var denied = await fixture.Authority.VerifySourceApprovalAsync(session, TargetId, altered, default);
+        Assert.Equal(PreparedSourceAuthorityStatus.Revoked, denied.Status); Assert.Null(denied.CurrentApproval);
+        Assert.Equal(original, (await fixture.Authority.VerifySourceApprovalAsync(session, TargetId, original, default)).CurrentApproval);
+    }
+
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task IssueSourceApprovalAsync_DoesNotIssueWhenFreshIdentityDatabaseCannotBeConfirmed()
     {
         await using ApprovalIdentityFixture fixture = await ApprovalIdentityFixture.CreateAsync();

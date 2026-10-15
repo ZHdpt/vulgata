@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text;
+using Microsoft.Extensions.AI;
 using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using ApiType = Vulgata.Core.Entities.ApiType;
@@ -10,6 +12,292 @@ namespace Vulgata.Tests.October.Knowledge;
 
 public sealed class OctoberResolutionTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RetainedV2_OutputOnlyBudgetCannotAffordInput_DeniesBeforeAttemptOrClientSendAsync()
+    {
+        var f = new RetainedResolutionCase();
+        var inquiry = Assert.Single(OctoberResolutionPolicy.Plan(f.Corpus).Inquiries);
+        Guid run = Guid.NewGuid();
+        var operation = new OperationKey(f.Corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
+        await using var host = new OctoberExecutionScope(run, "selected-profile", new()
+        {
+            OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 100,
+            SourceRules = [new(f.Corpus.Documents[0].RepositoryId, "flows", "selected", "Controlled budget check")]
+        }, (_, _) => Task.FromResult(ProviderAdmissionStatus.Granted), operation);
+        var scope = new RetainedReservationScope(host);
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(new ChatResponse(
+            new ChatMessage(ChatRole.Assistant, JsonSerializer.Serialize(f.Witness(inquiry))))
+        { FinishReason = ChatFinishReason.Stop, Usage = new() { InputTokenCount = 10, OutputTokenCount = 5 } }));
+        var result = await new OctoberResolutionExecutor(client, "Resolve static references only; instructions also consume input budget.")
+            .ExecuteAsync(f.Corpus, inquiry, operation, run, "selected-profile", 40, scope, new ResolutionDisclosure());
+        Assert.Equal(ProviderAdmissionStatus.BudgetExhausted, result.AdmissionFailure);
+        Assert.Null(result.Outcome);
+        Assert.Empty(result.Attempts);
+        Assert.Equal(0, client.Calls);
+        Assert.True(Assert.Single(scope.Requests).MaximumTokens > 100);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void RetainedV2_OneObservationWithFortyExactTargets_RetainsThirtyTwoCapAndExplicitOmissions()
+    {
+        var f = new RetainedResolutionCase();
+        var caller = f.Corpus.Documents[0];
+        var sourceClaim = caller.Sections[0].Claims[0];
+        var paths = Enumerable.Range(0, 40).Select(index => "flows/candidate" + index.ToString("D2") + ".flw").ToImmutableArray();
+        sourceClaim = sourceClaim with { Text = string.Join(" ", paths.Select(path => "<flowEmbedOp flow=\"" + path + "\" />")) };
+        caller = caller with
+        {
+            Sections = [caller.Sections[0] with { Claims = [sourceClaim] }],
+            Observations = [caller.Observations[0] with { Operation = "declared flow references", LiteralsOrExpressions = paths }]
+        };
+        var targets = paths.Select((path, index) =>
+        {
+            var claim = f.Target.Sections[0].Claims[0];
+            var evidence = claim.Evidence[0];
+            var origin = evidence.Source!.Origin with { RelativePath = path };
+            return f.Target with
+            {
+                Version = new(f.Target.Version.BatchId, ResolutionCase.Id(7500 + index), ResolutionCase.Id(7600 + index)),
+                Sections = [f.Target.Sections[0] with { Claims = [claim with
+                { Evidence = [evidence with { Source = evidence.Source with { Origin = origin } }] }] }]
+            };
+        }).ToImmutableArray();
+        var corpus = f.Corpus with { Documents = targets.Insert(0, caller) };
+        var plan = OctoberResolutionPolicy.Plan(corpus);
+        Assert.Equal(32, plan.Inquiries.Length);
+        Assert.All(plan.Inquiries, inquiry => Assert.Equal(f.Caller, inquiry.Caller));
+        var selected = plan.Inquiries.SelectMany(inquiry => inquiry.Candidates).Select(reference => reference.Document).ToHashSet();
+        Assert.Equal(32, selected.Count);
+        var omitted = targets.Where(target => !selected.Contains(target.Version)).ToArray();
+        Assert.Equal(8, omitted.Length);
+        Assert.All(omitted, target => Assert.Contains(plan.Dispositions, disposition =>
+            disposition.Observation.Document == target.Version && disposition.Kind == ResolutionOutcomeKind.NotEvaluated && !string.IsNullOrWhiteSpace(disposition.Reason)));
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(plan), OctoberKnowledgePolicy.SerializeCanonical(
+            OctoberResolutionPolicy.Plan(corpus with { Documents = corpus.Documents.Reverse().ToImmutableArray() })));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RetainedV2_EndpointPacket_IsBoundedWithoutDroppingOwnerDependenciesAsync(bool oversizedEndpoint)
+    {
+        var f = new RetainedResolutionCase();
+        var hidden = new Contributor(ContributorKind.GlobalAdvisory, null, null, null, ResolutionCase.Id(7390), new string('d', 64));
+        var target = f.Target;
+        var claim = target.Sections[0].Claims[0];
+        var hugeClaim = claim with { Text = claim.Text + "UNRELATED_OR_OVERSIZED_MARKER" + new string('x', 2 * 1024 * 1024) };
+        var corpus = f.Corpus;
+        if (oversizedEndpoint)
+            corpus = corpus with { Documents = corpus.Documents.SetItem(1, target with { Sections = [target.Sections[0] with { Claims = [hugeClaim] }] }) };
+        else
+        {
+            var evidence = hugeClaim.Evidence[0];
+            var origin = evidence.Source!.Origin with { RelativePath = "src/unrelated.cs" };
+            var unrelated = target with
+            {
+                Version = target.Version with { LogicalDocumentId = ResolutionCase.Id(7391), DocumentVersionId = ResolutionCase.Id(7392) },
+                Sections = [target.Sections[0] with { Claims = [hugeClaim with { Evidence = [evidence with { Source = evidence.Source with { Origin = origin } }] }] }],
+                Contributors = target.Contributors.Add(hidden)
+            };
+            corpus = corpus with { Documents = corpus.Documents.Add(unrelated) };
+        }
+        var inquiry = Assert.Single(OctoberResolutionPolicy.Plan(corpus).Inquiries);
+        Guid run = Guid.NewGuid();
+        var operation = new OperationKey(corpus.Handle.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
+        int grants = 0;
+        await using var scope = new OctoberExecutionScope(run, "selected-profile", new()
+        {
+            OutputStage = "cl-and-bl", WorkerCap = 1, MaximumTotalTokens = 1_000_000,
+            SourceRules = [new(corpus.Documents[0].RepositoryId, "flows", "selected", "Controlled retained evidence")]
+        }, (_, _) => { grants++; return Task.FromResult(ProviderAdmissionStatus.Granted); }, operation);
+        var recordingScope = new RetainedReservationScope(scope);
+        using var client = new ResolutionClient("selected-profile", (_, _) => Task.FromResult(new ChatResponse(
+            new ChatMessage(ChatRole.Assistant, JsonSerializer.Serialize(f.Witness(inquiry))))
+        { FinishReason = ChatFinishReason.Stop, Usage = new() { InputTokenCount = 10, OutputTokenCount = 5 } }));
+        var authority = new PacketLedgerAuthority(corpus.Documents.SelectMany(document => document.Contributors).Distinct().ToImmutableArray());
+        var result = await new OctoberResolutionExecutor(client, "Only accepted exact static artifact evidence.")
+            .ExecuteAsync(corpus, inquiry, operation, run, "selected-profile", 40, recordingScope, authority);
+        if (oversizedEndpoint)
+        {
+            Assert.ThrowsAny<ArgumentException>(() => OctoberRetainedResolutionPolicy.CreateEvidencePacket(corpus, inquiry));
+            Assert.Equal(ProviderAdmissionStatus.BudgetExhausted, result.AdmissionFailure);
+            Assert.Equal(0, grants);
+            Assert.Equal(0, client.Calls);
+            Assert.Empty(recordingScope.Requests);
+            Assert.Null(result.Outcome);
+        }
+        else
+        {
+            Assert.Equal(ResolutionOutcomeKind.Supported, result.Outcome!.Kind);
+            Assert.Contains(hidden, result.Outcome.Contributors);
+            Assert.True(authority.Calls > 0);
+            var sent = Assert.Single(client.Requests);
+            string payload = Assert.Single(sent.Messages.Where(message => message.Role == ChatRole.User)).Text!;
+            string instructions = Assert.Single(sent.Messages.Where(message => message.Role == ChatRole.System)).Text!;
+            Assert.True(Assert.Single(recordingScope.Requests).MaximumTokens >=
+                Encoding.UTF8.GetByteCount(instructions) + Encoding.UTF8.GetByteCount(payload) + 40L);
+            Assert.Equal(40, client.LastMaximumOutputTokens);
+            Assert.True(Encoding.UTF8.GetByteCount(payload) <= 1024 * 1024);
+            Assert.DoesNotContain("UNRELATED_OR_OVERSIZED_MARKER", payload, StringComparison.Ordinal);
+            using var parsed = JsonDocument.Parse(payload);
+            Assert.Equal(2, parsed.RootElement.GetProperty("Documents").GetArrayLength());
+            Assert.False(parsed.RootElement.TryGetProperty("Contributors", out _));
+        }
+    }
+
+    private sealed class PacketLedgerAuthority(ImmutableArray<Contributor> expected) : IOctoberResolutionDisclosureAuthority
+    {
+        public int Calls { get; private set; }
+        public Task<DisclosureStatus> CheckAsync(CorpusHandle corpus, ImmutableArray<Contributor> contributors, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            Assert.True(expected.ToHashSet().SetEquals(contributors));
+            return Task.FromResult(DisclosureStatus.Allowed);
+        }
+    }
+
+    private sealed class RetainedReservationScope(OctoberExecutionScope host) : IOctoberExecutionScope, IOctoberBusinessHandoffLifetime
+    {
+        public List<ProviderAttemptRequest> Requests { get; } = [];
+        public CancellationToken HandoffCancellation => ((IOctoberBusinessHandoffLifetime)host).HandoffCancellation;
+        public ProviderAdmissionStatus CheckHandoffEligibility(Guid runId, OperationKey operation, string profile) =>
+            ((IOctoberBusinessHandoffLifetime)host).CheckHandoffEligibility(runId, operation, profile);
+        public Task<ProviderAdmission> AcquireProviderAttemptAsync(ProviderAttemptRequest request, CancellationToken cancellationToken = default)
+        {
+            Requests.Add(request);
+            return host.AcquireProviderAttemptAsync(request, cancellationToken);
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void RetainedV2_NullProfileAndBindingToken_PreserveExplicitLegacyCanonicalBytes()
+    {
+        var f = new ResolutionCase();
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(new { f.Corpus.Handle, f.Corpus.Documents }),
+            OctoberKnowledgePolicy.SerializeCanonical(f.Corpus));
+        var witness = f.Witness();
+        var legacy = new { witness.Caller, witness.Provider, witness.CallerAction, witness.ProviderRole,
+            witness.ProviderOperation, witness.Mechanism, witness.NamespaceInterpretation, witness.BindingInterpretation,
+            witness.AliasOrConfigurationMapping, witness.SupportingAssertions, witness.OpposingAssertions,
+            witness.ConnectionExplanation, witness.Limitations, witness.HasUnresolvedDecisiveOpposition, witness.ClaimsDeploymentCertainty };
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(legacy), OctoberKnowledgePolicy.SerializeCanonical(witness));
+        string digest = OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(new { f.Inquiry().Fingerprint, witness = legacy }));
+        Assert.Equal(new Guid(Convert.FromHexString(digest[..32])), OctoberResolutionPolicy.Validate(f.Corpus, f.Inquiry(), witness).Relationship!.RelationshipVersionId);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void RetainedV2_ExactSourceDeclaredFlowReference_ProjectsArtifactAndPreservesStaticLimitation()
+    {
+        var f = new RetainedResolutionCase();
+        string before = OctoberKnowledgePolicy.SerializeCanonical(f.Corpus);
+        var projected = OctoberRetainedResolutionPolicy.ProjectEndpoints(f.Corpus);
+        var target = projected.Documents.Single(document => document.Version == f.Target.Version);
+        var artifact = Assert.Single(target.Observations.Where(observation => observation.Role == OctoberRetainedResolutionPolicy.ArtifactRole));
+        Assert.StartsWith(OctoberRetainedResolutionPolicy.EndpointKeyPrefix, artifact.ObservationKey, StringComparison.Ordinal);
+        Assert.Empty(f.Target.Observations);
+        var inquiry = Assert.Single(OctoberResolutionPolicy.Plan(f.Corpus).Inquiries);
+        Assert.Equal(f.Caller, inquiry.Caller);
+        Assert.Equal(new ResolutionObservationRef(f.Target.Version, artifact.ObservationKey), Assert.Single(inquiry.Candidates));
+        var outcome = OctoberResolutionPolicy.Validate(f.Corpus, inquiry, f.Witness(inquiry));
+        Assert.Equal(ResolutionOutcomeKind.Supported, outcome.Kind);
+        Assert.Equal(RelationshipKind.References, outcome.Relationship!.Kind);
+        Assert.Equal(f.Caller.Document, outcome.Relationship.From);
+        Assert.Equal(f.Target.Version, outcome.Relationship.To);
+        Assert.Contains(OctoberRetainedResolutionPolicy.RuntimeLimitation, outcome.Uncertainty!.Limitations);
+        Assert.True(f.Corpus.Documents.SelectMany(document => document.Contributors).ToHashSet().SetEquals(outcome.Contributors));
+        Assert.Equal(before, OctoberKnowledgePolicy.SerializeCanonical(f.Corpus));
+        Assert.Empty(OctoberResolutionPolicy.Plan(f.Corpus with { ResolutionPolicyVersion = null }).Inquiries);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("advisory")]
+    [InlineData("name-only")]
+    [InlineData("expression")]
+    [InlineData("wrong-root")]
+    [InlineData("wrong-repository")]
+    [InlineData("ambiguous-artifact")]
+    [InlineData("ambiguous-multi-origin")]
+    [InlineData("role-only")]
+    public void RetainedV2_UnsupportedOrAmbiguousEvidence_DoesNotCreateEligibleReference(string mutation)
+    {
+        var f = new RetainedResolutionCase();
+        var corpus = f.Corpus;
+        var caller = corpus.Documents[0];
+        var observation = caller.Observations[0];
+        if (mutation == "advisory") caller = caller with { Observations = [observation with { Qualification = ClaimQualification.Advisory }] };
+        if (mutation == "name-only") caller = caller with { Observations = [observation with { Operation = "loginPwdCheck", LiteralsOrExpressions = ["loginPwdCheck"] }] };
+        if (mutation == "expression") caller = caller with { Observations = [observation with { Operation = "${selectedFlow}", LiteralsOrExpressions = ["${selectedFlow}"] }] };
+        if (mutation == "role-only") caller = caller with { Observations = [observation with { Role = "caller", Mechanism = "unclassified" }] };
+        corpus = corpus with { Documents = corpus.Documents.SetItem(0, caller) };
+        if (mutation is "wrong-root" or "wrong-repository")
+        {
+            var target = corpus.Documents[1];
+            var claim = target.Sections[0].Claims[0];
+            var evidence = claim.Evidence[0];
+            var origin = evidence.Source!.Origin with
+            {
+                RootBindingIdentity = mutation == "wrong-root" ? "other-root" : evidence.Source.Origin.RootBindingIdentity,
+                RepositoryId = mutation == "wrong-repository" ? Guid.NewGuid() : target.RepositoryId
+            };
+            corpus = corpus with { Documents = corpus.Documents.SetItem(1, target with
+            {
+                RepositoryId = origin.RepositoryId,
+                Sections = [target.Sections[0] with { Claims = [claim with { Evidence = [evidence with { Source = evidence.Source with { Origin = origin } }] }] }],
+                Contributors = [new(ContributorKind.Source, origin.RepositoryId, null, origin.RootBindingIdentity, null, origin.SourceDigest)]
+            }) };
+        }
+        if (mutation == "ambiguous-artifact") corpus = corpus with
+        { Documents = corpus.Documents.Add(f.Target with { Version = f.Target.Version with { LogicalDocumentId = Guid.NewGuid(), DocumentVersionId = Guid.NewGuid() } }) };
+        if (mutation == "ambiguous-multi-origin")
+        {
+            var targetClaim = f.Target.Sections[0].Claims[0];
+            var evidence = targetClaim.Evidence[0];
+            var otherOrigin = evidence.Source!.Origin with { RelativePath = "flows/another-origin.flw" };
+            var secondClaim = targetClaim with { ClaimGroupId = "other-origin",
+                Evidence = [evidence with { Source = evidence.Source with { Origin = otherOrigin } }] };
+            var competing = f.Target with
+            {
+                Version = f.Target.Version with { LogicalDocumentId = Guid.NewGuid(), DocumentVersionId = Guid.NewGuid() },
+                Sections = [f.Target.Sections[0] with { Claims = [targetClaim, secondClaim] }]
+            };
+            corpus = corpus with { Documents = corpus.Documents.Add(competing) };
+        }
+        Assert.Empty(OctoberResolutionPolicy.Plan(corpus).Inquiries);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing-token")]
+    [InlineData("foreign-token")]
+    [InlineData("reverse")]
+    [InlineData("opposition")]
+    [InlineData("runtime-certainty")]
+    public void RetainedV2_WitnessCannotUpgradeWrongBindingDirectionOrOpposition(string mutation)
+    {
+        var f = new RetainedResolutionCase();
+        var inquiry = Assert.Single(OctoberResolutionPolicy.Plan(f.Corpus).Inquiries);
+        var witness = f.Witness(inquiry);
+        witness = mutation switch
+        {
+            "missing-token" => witness with { BindingToken = null },
+            "foreign-token" => witness with { BindingToken = "flows/other.flw" },
+            "reverse" => witness with { Caller = witness.Provider, Provider = witness.Caller },
+            "opposition" => witness with { HasUnresolvedDecisiveOpposition = true },
+            "runtime-certainty" => witness with { ClaimsDeploymentCertainty = true },
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation))
+        };
+        var outcome = OctoberResolutionPolicy.Validate(f.Corpus, inquiry, witness);
+        Assert.Equal(ResolutionOutcomeKind.Unresolved, outcome.Kind);
+        Assert.Null(outcome.Relationship);
+        Assert.NotNull(outcome.Uncertainty);
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
     [InlineData("plain")]
@@ -78,7 +366,7 @@ public sealed class OctoberResolutionTests
         var observation = provider.Observations[0] with { LogicalNamespace = "different-namespace" };
         var changedEvidence = fixture.Corpus with { Documents = fixture.Corpus.Documents.SetItem(1, provider with { Observations = [observation] }) };
         Assert.NotEqual(original, Assert.Single(OctoberResolutionPolicy.Plan(changedEvidence).Inquiries).Fingerprint);
-        Assert.NotEqual(original, Assert.Single(OctoberResolutionPolicy.Plan(fixture.Corpus, "reviewed-policy-v2").Inquiries).Fingerprint);
+        Assert.Throws<ArgumentException>(() => OctoberResolutionPolicy.Plan(fixture.Corpus, "reviewed-policy-v2"));
     }
 
     [Trait("Suite", "SelfContained")]
@@ -343,4 +631,53 @@ internal sealed class ResolutionCase
             [new(ContributorKind.Source, repository, null, origin.RootBindingIdentity, null, origin.SourceDigest)]);
     }
     public static Guid Id(int id) => Guid.Parse($"00000000-0000-0000-0000-{id:000000000000}");
+}
+
+/// <summary>Controlled source-qualified CL, not actual source execution or model evidence.</summary>
+internal sealed class RetainedResolutionCase
+{
+    public const string Token = "flows/login/loginPwdCheck.flw";
+    public ResolutionCorpus Corpus { get; }
+    public ResolutionDocument Target => Corpus.Documents[1];
+    public ResolutionObservationRef Caller => new(Corpus.Documents[0].Version, "declared-flow");
+    public RetainedResolutionCase()
+    {
+        Guid repository = ResolutionCase.Id(7300);
+        ResolutionDocument Document(int id, string path, string text, bool caller)
+        {
+            var version = new DocumentVersionReference(ResolutionCase.Id(1), ResolutionCase.Id(id), ResolutionCase.Id(id + 1));
+            var origin = new PreparedOrigin(repository, "retained-controlled-root", path, new string('c', 64), "retained-v1");
+            var evidence = new EvidenceReference(null, null, new(origin, 1, 3), null, origin.SourceDigest);
+            var claim = new QualifiedClaimGroup("declared", text, ClaimQualification.SourceSupported, [evidence], []);
+            ImmutableArray<CommunicationObservation> observations = caller
+                ? [new("declared-flow", "flow-root", "嵌入子流程", "flowEmbedOp", Token, null, [Token], ClaimQualification.SourceSupported, [evidence])]
+                : [];
+            return new(version, repository, [new("flow", 0, "Declared flow", [claim])], observations,
+                [new(ContributorKind.Source, repository, null, origin.RootBindingIdentity, null, origin.SourceDigest)]);
+        }
+        Corpus = new(new(new("ControlledFixture/retained-v2", "controlled-target", ResolutionCase.Id(1), new string('a', 64)),
+            ResolutionCase.Id(2), new string('b', 64)),
+            [Document(7310, "flows/login/main.flw", "<flowEmbedOp flow=\"flows/login/loginPwdCheck.flw\" />", true),
+             Document(7320, Token, "<flow id=\"loginPwdCheck\"><node id=\"check-password\" /></flow>", false)])
+        { ResolutionPolicyVersion = OctoberResolutionPolicy.RetainedPolicyVersion };
+    }
+    public ResolutionWitness Witness(ResolutionInquiry inquiry)
+    {
+        var provider = Assert.Single(inquiry.Candidates);
+        var endpoint = OctoberResolutionPolicy.ResolveObservation(Corpus, provider)!;
+        var caller = Corpus.Documents[0].Observations[0];
+        ResolutionEvidenceAssertion Assertion(ResolutionAssertionKind kind, ResolutionDocument document)
+        {
+            var claim = document.Sections[0].Claims[0];
+            return new(kind, document.Version, "flow", claim.ClaimGroupId, claim.Evidence[0], claim.Text,
+                "Accepted declaration identifies this exact static resource reference.");
+        }
+        return new(Caller, provider, caller.Operation, endpoint.Role, endpoint.Operation, caller.Mechanism,
+            "Same retained repository/root", "The declaration names the exact retained flow artifact.", null,
+            [Assertion(ResolutionAssertionKind.CallerAction, Corpus.Documents[0]),
+             Assertion(ResolutionAssertionKind.ProviderRoleAndOperation, Target),
+             Assertion(ResolutionAssertionKind.ConnectingBinding, Corpus.Documents[0])],
+            [], "The caller declares a static reference to the retained flow artifact.", [], false, false)
+        { BindingToken = Token };
+    }
 }

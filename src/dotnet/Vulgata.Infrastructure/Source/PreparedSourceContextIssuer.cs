@@ -11,6 +11,14 @@ namespace Vulgata.Infrastructure.Source;
 /// </summary>
 public sealed class PreparedSourceContextIssuer
 {
+    // Business's bounded verifier reads a file twice before releasing any cited slice.
+    // These are private grant ceilings; per-call limits and the model-facing budgets remain separate.
+    private static readonly PreparedSourceGrantLimits _businessMaximum = new(
+        MaximumOperations: 512,
+        MaximumMetadataEntries: 1,
+        MaximumExaminedBytes: 16L * 1024 * 1024,
+        MaximumReturnedBytes: 8L * 1024 * 1024,
+        Deadline: TimeSpan.FromSeconds(30));
     private readonly IPreparedSourceCurrentAuthorityVerifier _authority;
 
     public PreparedSourceContextIssuer(IPreparedSourceCurrentAuthorityVerifier authority)
@@ -54,8 +62,8 @@ public sealed class PreparedSourceContextIssuer
         }
 
         if (request.Limits is null || request.Limits.Deadline < TimeSpan.Zero ||
-            !WithinApplicationCaps(request.Limits) ||
             !ValidApproval(request.Approval) ||
+            !WithinApplicationCaps(request.Limits, request.Approval.Purpose) ||
             string.IsNullOrWhiteSpace(request.PhysicalRootPath) ||
             !Path.IsPathFullyQualified(request.PhysicalRootPath))
         {
@@ -162,9 +170,10 @@ public sealed class PreparedSourceContextIssuer
                 ownedState));
     }
 
-    private static bool WithinApplicationCaps(PreparedSourceGrantLimits limits)
+    private static bool WithinApplicationCaps(PreparedSourceGrantLimits limits, PreparedSourcePurpose purpose)
     {
-        PreparedSourceGrantLimits maximum = PreparedSourceGrantLimits.Default;
+        PreparedSourceGrantLimits maximum = purpose == PreparedSourcePurpose.BusinessSynthesisRead
+            ? _businessMaximum : PreparedSourceGrantLimits.Default;
         return limits.MaximumOperations > 0 &&
             limits.MaximumOperations <= maximum.MaximumOperations &&
             limits.MaximumMetadataEntries > 0 &&
@@ -180,7 +189,7 @@ public sealed class PreparedSourceContextIssuer
         approval is not null &&
         approval.BatchId != Guid.Empty &&
         approval.RepositoryId != Guid.Empty &&
-        approval.Purpose == PreparedSourcePurpose.WorkerSourceRead &&
+        approval.Purpose is (PreparedSourcePurpose.WorkerSourceRead or PreparedSourcePurpose.BusinessSynthesisRead) &&
         !string.IsNullOrWhiteSpace(approval.SubjectId) &&
         !string.IsNullOrWhiteSpace(approval.ApprovalIdentity) &&
         !string.IsNullOrWhiteSpace(approval.RootBindingIdentity) &&

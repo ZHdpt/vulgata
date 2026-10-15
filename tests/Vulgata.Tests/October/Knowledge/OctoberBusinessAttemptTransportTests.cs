@@ -342,7 +342,7 @@ public sealed class OctoberBusinessAttemptTransportTests
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task ExecuteAsync_RetryGetsFreshLease_UsesRemainingOriginalBudgetAsync(bool synthesis)
+    public async Task ExecuteAsync_SentFailure_ResolutionRetryUsesFreshLeaseButSynthesisStopsAsync(bool synthesis)
     {
         var f = new AttemptCase(synthesis);
         using var scope = new AttemptScope();
@@ -352,6 +352,21 @@ public sealed class OctoberBusinessAttemptTransportTests
             return Task.FromResult(f.Response());
         });
         var result = await f.ExecuteAsync(client, scope);
+        if (synthesis)
+        {
+            Assert.False(result.HasMaterial);
+            Assert.Equal(1, client.AttemptCalls);
+            Assert.Equal(0, client.PlainCalls);
+            var lease = Assert.Single(scope.Leases);
+            Assert.Same(lease, Assert.Single(client.Leases));
+            Assert.True(Assert.Single(scope.Requests).MaximumTokens > 40);
+            Assert.Equal(new[] { "dispatch", "physical-terminal", "observation-complete", "settle", "dispose" }, lease.Events.ToArray());
+            var usage = Assert.Single(result.Attempts);
+            Assert.Null(usage.InputTokens);
+            Assert.Null(usage.OutputTokens);
+            Assert.Equal(0, scope.Active);
+            return;
+        }
         Assert.True(result.HasMaterial);
         Assert.Equal(2, client.AttemptCalls);
         Assert.Equal(0, client.PlainCalls);
@@ -375,17 +390,18 @@ public sealed class OctoberBusinessAttemptTransportTests
     [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task ExecuteAsync_RepeatedSentFailure_StopsAfterTwoAttemptsAsync(bool synthesis)
+    public async Task ExecuteAsync_RepeatedSentFailure_PreservesResolutionBoundAndNoSynthesisRetryAsync(bool synthesis)
     {
         var f = new AttemptCase(synthesis);
         using var scope = new AttemptScope();
         using var client = new AttemptClient((_, _) => throw new IOException("Controlled repeated sent failure."));
         var result = await f.ExecuteAsync(client, scope);
         Assert.False(result.HasMaterial);
-        Assert.Equal(2, client.AttemptCalls);
-        Assert.Equal(2, result.Attempts.Length);
+        Assert.Equal(synthesis ? 1 : 2, client.AttemptCalls);
+        Assert.Equal(synthesis ? 1 : 2, result.Attempts.Length);
         Assert.All(result.Attempts, usage => { Assert.Null(usage.InputTokens); Assert.Null(usage.OutputTokens); });
         Assert.All(scope.Leases, lease => { Assert.Equal(1, lease.Completions); Assert.Equal(1, lease.Disposals); });
+        Assert.Equal(0, scope.Active);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -398,7 +414,7 @@ public sealed class OctoberBusinessAttemptTransportTests
         using var scope = new AttemptScope();
         using var client = new AttemptClient((_, _) =>
         {
-            f.Clock.Advance(TimeSpan.FromSeconds(synthesis ? 181 : 121));
+            f.Clock.Advance(TimeSpan.FromSeconds(synthesis ? 901 : 121));
             throw new IOException("Controlled failure after original deadline.");
         });
         var result = await f.ExecuteAsync(client, scope);

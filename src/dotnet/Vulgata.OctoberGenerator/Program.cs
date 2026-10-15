@@ -186,6 +186,8 @@ public static class OctoberGeneratorEntryPoint
         if (policy.OutputStage == "cl-only") return null;
         if (policy.OutputStage != "cl-and-bl" || !new OctoberScanPolicyValidator().Validate(policy).IsValid ||
             settings is null || !settings.IsValid() || settings.MaximumAttemptTokens > policy.MaximumTotalTokens ||
+            settings.ContextOverride is not null && policy.ExistingClPublicationId is null ||
+            settings.ResolutionPolicyVersion is not null && policy.ExistingClPublicationId is null ||
             provider is null || provider.Precedence != "only-source" || provider.Profile.ApiType != ApiType.ChatCompletions ||
             contexts is null || log is null || bindReader is null)
             throw new InvalidOperationException("October Business composition is invalid.");
@@ -197,13 +199,14 @@ public static class OctoberGeneratorEntryPoint
             "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference);
         _ = OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(projection);
         return new(
-            (authorization, guard) => new OctoberResolutionStore(contexts, authorization, guard, log),
-            authorization => new OctoberFlowPlanningInputLoader(contexts, authorization),
+            (authorization, guard) => new OctoberResolutionStore(contexts, authorization, guard, log, settings.ResolutionPolicyVersion),
+            authorization => new OctoberFlowPlanningInputLoader(contexts, authorization, settings.ResolutionPolicyVersion),
             (authorization, guard) => new OctoberFlowPublicationStore(contexts, authorization, guard, log),
             settings.SelectRoots, projection, LoadBusinessInstructions("Resolution"), LoadBusinessInstructions("Synthesis"),
             settings.Limits, settings.MaximumAttemptTokens)
         {
-            BindReader = bindReader, OperatorSelection = operatorSelection,
+            BindReader = bindReader, OperatorSelection = operatorSelection, ContextOverride = settings.ContextOverride,
+            ResolutionPolicyVersion = settings.ResolutionPolicyVersion,
             InteractAsync = operatorSelection?.Mode == "operator"
                 ? new OctoberOperatorRootSelection(operatorSelection, timeProvider).InteractAsync : null
         };
@@ -234,7 +237,14 @@ public static class OctoberGeneratorEntryPoint
         return new OctoberGenerateRunner(dependencies with
         {
             MaximumWorkerOutputTokens = workerMaxOutputTokens,
-            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock),
+            Business = ComposeBusiness(policy, provider, settings, contexts, dependencies.OperationLog, bindReader, operatorSelection, clock) is { } business
+                ? business with
+                {
+                    DiagnosticCapture = settings!.CaptureSemanticDiagnostics || settings.EnableReferencedSourceRetrieval
+                        ? new OctoberBusinessDiagnosticCapture(runtime.LogDirectory, encryption).CaptureAsync : null,
+                    CreateSourceReader = settings.EnableReferencedSourceRetrieval
+                        ? execution => OctoberBusinessSourceReaderFactory.Create(runtime, authority, execution, clock) : null
+                } : null,
             ParseFailureCapture = parseFailureCapture,
             HttpObservation = httpObservation
         }, clock);
@@ -248,7 +258,9 @@ public static class OctoberGeneratorEntryPoint
         if (policy.OutputStage != "cl-and-bl" || !new OctoberScanPolicyValidator().Validate(policy).IsValid)
             throw new InvalidOperationException("October Business activation is invalid.");
         var settings = await ReadBusinessSettingsAsync(configuration, cancellationToken);
-        if (settings.MaximumAttemptTokens > policy.MaximumTotalTokens)
+        if (settings.MaximumAttemptTokens > policy.MaximumTotalTokens ||
+            settings.ContextOverride is not null && policy.ExistingClPublicationId is null ||
+            settings.ResolutionPolicyVersion is not null && policy.ExistingClPublicationId is null)
             throw new InvalidOperationException("October Business attempt exceeds the original Scan policy.");
         return settings;
     }
@@ -289,7 +301,7 @@ public static class OctoberGeneratorEntryPoint
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = false,
                 UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 16,
-                Converters = { new JsonStringEnumConverter<FlowRootKind>() }
+                Converters = { new JsonStringEnumConverter<FlowRootKind>(), new JsonStringEnumConverter<OctoberContextScope>() }
             });
             if (settings is null || !settings.IsValid()) throw new InvalidOperationException();
             cancellationToken.ThrowIfCancellationRequested();
@@ -761,14 +773,36 @@ public static class OctoberGeneratorEntryPoint
     {
         if (report.RequestedStage != "cl-and-bl" || report.BusinessDiagnostics is not { } observed ||
             !Enum.IsDefined(observed.Boundary)) return null;
+        var resolutionReason = observed.Boundary == OctoberBusinessDiagnosticBoundary.Resolution
+            ? DefinedStatus(observed.ResolutionFailureReason) : null;
         return new
         {
             FinalizerStatus = DefinedStatus(observed.FinalizerStatus),
             FinalizerPersistenceStatus = DefinedStatus(observed.FinalizerPersistenceStatus),
+            OriginalPublicationStatus = DefinedStatus(observed.OriginalPublicationStatus),
+            OriginalPublicationPersistenceStatus = DefinedStatus(observed.OriginalPublicationPersistenceStatus),
             LookupStatus = DefinedStatus(observed.LookupStatus),
             LookupPersistenceStatus = DefinedStatus(observed.LookupPersistenceStatus),
             OriginalSynthesisFailureReason = observed.OriginalSynthesisFailureReason == BusinessSynthesisFailureReason.None
                 ? null : DefinedStatus(observed.OriginalSynthesisFailureReason),
+            ResolutionFailureReason = resolutionReason,
+            ResolutionFailureField = resolutionReason == ResolutionFailureReason.WitnessShape
+                ? observed.ResolutionFailureField switch
+                {
+                    "Caller.Document.BatchId" => "Caller.Document.BatchId",
+                    "Caller" => "Caller",
+                    "Provider" => "Provider",
+                    "SupportingAssertions.Kind" => "SupportingAssertions.Kind",
+                    "CallerAction" => "CallerAction", "ProviderRole" => "ProviderRole",
+                    "ProviderOperation" => "ProviderOperation", "Mechanism" => "Mechanism",
+                    "NamespaceInterpretation" => "NamespaceInterpretation", "BindingInterpretation" => "BindingInterpretation",
+                    "AliasOrConfigurationMapping" => "AliasOrConfigurationMapping",
+                    "SupportingAssertions" => "SupportingAssertions", "OpposingAssertions" => "OpposingAssertions",
+                    "ConnectionExplanation" => "ConnectionExplanation", "Limitations" => "Limitations",
+                    "HasUnresolvedDecisiveOpposition" => "HasUnresolvedDecisiveOpposition",
+                    "ClaimsDeploymentCertainty" => "ClaimsDeploymentCertainty", "BindingToken" => "BindingToken",
+                    _ => null
+                } : null,
             observed.Boundary,
             observed.OperationMismatch
         };

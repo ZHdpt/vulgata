@@ -19,7 +19,8 @@ internal sealed partial class OctoberGenerateRunner
     {
         var execution = _execution!;
         var request = new BusinessFromClRequest(new(_binding!, execution.Policy.ExistingClPublicationId!.Value),
-            execution.Session.SubjectId, runId, "");
+            execution.Session.SubjectId, runId, "")
+        { ResolutionPolicyVersion = _dependencies.Business!.ResolutionPolicyVersion };
         _existingClRequest = request with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeBeginDigest(request) };
         _existingClStore = _dependencies.CreateBusinessFromClStore!(this, this, new ExistingClCompletionGuard(this), this);
         BusinessFromClResult admitted;
@@ -36,6 +37,7 @@ internal sealed partial class OctoberGenerateRunner
             !KnownCommitted(admitted.Status) || admitted.Admission is null || admitted.Snapshot is not { } snapshot ||
             !_beginSubmitted || _beginCommit is not { IsCompleted: true } ||
             snapshot.Publication != request.Publication || snapshot.Corpus.Binding != _binding ||
+            snapshot.ResolutionPolicyVersion != request.ResolutionPolicyVersion ||
             snapshot.AcceptedFiles.IsDefaultOrEmpty || snapshot.Coverage.IsDefaultOrEmpty || snapshot.Contributors.IsDefault ||
             snapshot.ExistingResolutions.IsDefault)
             return BusinessFailure("business_existing_cl_admission_unavailable",
@@ -65,6 +67,8 @@ internal sealed partial class OctoberGenerateRunner
         if (_existingClRequest is { } existing)
             return _existingClAdmission is not null && _existingClSnapshot is { } snapshot && snapshot.Corpus == _confirmedBusinessCorpus &&
                 existing.Publication == snapshot.Publication && existing.Publication.Knowledge == _binding &&
+                existing.ResolutionPolicyVersion == snapshot.ResolutionPolicyVersion &&
+                existing.ResolutionPolicyVersion == _dependencies.Business!.ResolutionPolicyVersion &&
                 existing.SubjectId == _execution!.Session.SubjectId &&
                 existing.CanonicalPayloadDigest == OctoberBusinessFromClPolicy.ComputeBeginDigest(existing);
         return _beginRequest is { } begin && begin.Binding == _binding && begin.SubjectId == _execution!.Session.SubjectId &&

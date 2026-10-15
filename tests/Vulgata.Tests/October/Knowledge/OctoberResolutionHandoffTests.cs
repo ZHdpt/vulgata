@@ -111,12 +111,18 @@ public sealed class OctoberResolutionHandoffTests
         Assert.Single(result.Attempts);
         Assert.Null(result.Outcome);
         Assert.Null(result.Witness);
-        Assert.Equal(failure switch
+        Assert.Equal<ProviderAdmissionStatus?>(failure switch
         {
             "final-denial" => ProviderAdmissionStatus.Denied,
             "hard-stop" => ProviderAdmissionStatus.HardStopped,
-            _ => ProviderAdmissionStatus.AuthorityUnavailable
+            _ => null
         }, result.AdmissionFailure);
+        Assert.Equal(failure switch
+        {
+            "final-denial" => ResolutionFailureReason.DisclosureDenied,
+            "hard-stop" => ResolutionFailureReason.HardStop,
+            _ => ResolutionFailureReason.InvalidJson
+        }, result.FailureReason);
     }
 
     [Trait("Suite", "SelfContained")]

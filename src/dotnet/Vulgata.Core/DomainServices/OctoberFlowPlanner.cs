@@ -30,6 +30,15 @@ public sealed record FlowPlanningInput(ResolutionCorpus Corpus, ImmutableArray<F
 
     /// <summary>Accepted file unknowns retain their original composite identity, including zero-unit files.</summary>
     public ImmutableArray<FlowFileUncertainty> FileUncertainties { get; init; } = [];
+
+    /// <summary>Fixed batch advisory context already covered by the complete contributor ledger.</summary>
+    public ImmutableArray<BusinessSynthesisAdvisoryContext> AdvisoryContext { get; init; } = [];
+
+    /// <summary>Owner-derived advisory versions added by this run; the frozen corpus ledger stays unchanged.</summary>
+    public ImmutableArray<Contributor> AdditionalAdvisoryContributors { get; init; } = [];
+
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
 }
 
 /// <summary>Configured limits may only reduce the hard ceilings.</summary>
@@ -67,6 +76,8 @@ public static class OctoberFlowPlanner
         if (input is null || input.Corpus is null || input.Corpus.Handle is null ||
             input.Corpus.Documents.IsDefault || input.Units.IsDefault || input.Resolutions.IsDefault ||
             input.Roots.IsDefault || input.PlanDispositions.IsDefault || input.Coverage.IsDefault || input.Contributors.IsDefault || input.FileUncertainties.IsDefault ||
+            !OctoberResolutionPolicy.IsSupportedSelection(input.ResolutionPolicyVersion) ||
+            input.ResolutionPolicyVersion != input.Corpus.ResolutionPolicyVersion ||
             limits.MaxNodes is < 1 or > MaximumNodes || limits.MaxEdges is < 0 or > MaximumEdges ||
             limits.MaxDepth is < 0 or > MaximumDepth)
             return Invalid();
@@ -114,7 +125,11 @@ public static class OctoberFlowPlanner
         foreach (var item in input.Resolutions)
         {
             if (!inquiries.TryGetValue(item.Outcome.Fingerprint, out var inquiry) ||
-                !ValidOutcome(item, inquiry, byVersion, allContributors))
+                !ValidOutcome(item, inquiry, byVersion, allContributors) ||
+                input.ResolutionPolicyVersion == OctoberResolutionPolicy.RetainedPolicyVersion &&
+                    item.Outcome.Kind == ResolutionOutcomeKind.Supported &&
+                    (item.Outcome.Uncertainty is not { } qualification ||
+                        !qualification.Limitations.Contains(OctoberRetainedResolutionPolicy.RuntimeLimitation)))
                 return Invalid();
         }
         if (input.Resolutions.Where(x => x.Outcome.Relationship is not null)
@@ -132,10 +147,13 @@ public static class OctoberFlowPlanner
             OctoberKnowledgePolicy.SerializeCanonical(suppliedDispositions))
             return Invalid(FlowPlanningStatus.IncompleteResolution);
 
+        ImmutableArray<Contributor> effectiveContributors;
+        try { effectiveContributors = OctoberBusinessContextOverridePolicy.EffectiveContributors(input); }
+        catch (ArgumentException) { return Invalid(); }
         var dependencies = new BLDependency(Canonical(documents.Select(x => x.Version)),
             Canonical(input.Resolutions.Where(x => x.Outcome.Relationship is not null).Select(x => x.Outcome.Relationship!)),
             Canonical(input.Resolutions.Where(x => x.Outcome.Uncertainty is not null)
-                .Select(x => new FlowUncertainty(x.UncertaintyVersionId!.Value, x.Outcome.Uncertainty!))), allContributors)
+                .Select(x => new FlowUncertainty(x.UncertaintyVersionId!.Value, x.Outcome.Uncertainty!))), effectiveContributors)
         {
             FileUncertainties = Canonical(input.FileUncertainties)
         };
@@ -263,9 +281,14 @@ public static class OctoberFlowPlanner
         var orderedEdges = Canonical(edges);
         var orderedUnknowns = Canonical(unknowns);
         var orderedFrontiers = Canonical(frontiers.Distinct());
-        var groupId = Identity(new { domain = "october/flow-group/1", flow, input.Corpus.Handle,
+        object identity = input.ResolutionPolicyVersion is null ? new { domain = "october/flow-group/1", flow, input.Corpus.Handle,
             rootVersion = root.Document, members = orderedMembers, relationships = orderedEdges,
-            uncertainties = orderedUnknowns, frontiers = orderedFrontiers, limits, dependencies, planDispositions, coverage });
+            uncertainties = orderedUnknowns, frontiers = orderedFrontiers, limits, dependencies, planDispositions, coverage } :
+            new { domain = "october/flow-group/1", flow, input.Corpus.Handle,
+                rootVersion = root.Document, members = orderedMembers, relationships = orderedEdges,
+                uncertainties = orderedUnknowns, frontiers = orderedFrontiers, limits, dependencies, planDispositions, coverage,
+                input.ResolutionPolicyVersion };
+        var groupId = Identity(identity);
         return new(groupId, flow, input.Corpus.Handle, root.Document, orderedMembers,
             orderedEdges, orderedUnknowns, orderedFrontiers, limits, dependencies);
     }

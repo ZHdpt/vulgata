@@ -19,6 +19,25 @@ public sealed class OctoberKnowledgeAuthorizationTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task ContextOverride_ExplicitPublicationAdvisoryVersions_RequireExactTupleAndDigestAsync()
+    {
+        await using var fixture = await B0bIdentityFixture.CreateAsync();
+        var revised = fixture.Advisory with { ContentDigest = B0bIdentityFixture.Digest("Run-scoped revised interpretation.") };
+        fixture.Selection.Snapshot = fixture.Selection.Snapshot! with
+        {
+            Advisory = fixture.Selection.Snapshot!.Advisory.Add(new(fixture.RepositoryId, revised.Kind,
+                revised.AdvisoryRecordId!.Value, revised.ContentDigest))
+        };
+        var request = fixture.Request() with { AllContributors = [fixture.Source, fixture.Advisory, revised] };
+        Assert.Equal(DisclosureStatus.Allowed, await fixture.Policy.CheckAsync(request));
+        Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(request with
+        { AllContributors = request.AllContributors.Add(revised with { ContentDigest = B0bIdentityFixture.Digest("Not selected") }) }));
+        Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(request with
+        { AllContributors = [fixture.Source, revised with { AdvisoryRecordId = Guid.NewGuid() }] }));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CheckAsync_OrdinaryUserWithoutManagementAssignment_AllowsExactReadAndNonemptyEditedAdvisoryAsync()
     {
         await using var fixture = await B0bIdentityFixture.CreateAsync();

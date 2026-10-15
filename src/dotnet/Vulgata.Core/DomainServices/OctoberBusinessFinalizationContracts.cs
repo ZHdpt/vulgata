@@ -8,7 +8,14 @@ namespace Vulgata.Core.DomainServices.OctoberKnowledge;
 /// </summary>
 public sealed record BusinessFinalizationSelection(ImmutableArray<FlowRootSelection> Roots,
     FlowPlanningLimits Limits, Guid RunId, string ProviderProfileId,
-    string ProviderConfigurationFingerprint, string PromptDigest, long MaximumTokens);
+    string ProviderConfigurationFingerprint, string PromptDigest, long MaximumTokens)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public BusinessAdvisoryContextOverride? ContextOverride { get; init; }
+
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
+}
 
 /// <summary>
 /// The single nonsecret provider configuration projection used by Business and its Scan caller.

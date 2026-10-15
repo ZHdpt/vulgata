@@ -14,12 +14,72 @@ using Vulgata.Infrastructure.Configuration;
 using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.OctoberGenerator;
 using Vulgata.Agents.WorkerExecution;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.OctoberScan;
 
 public sealed class OctoberScanEntryPointTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("observed")]
+    [InlineData("alias-field")]
+    [InlineData("assertion-kind-field")]
+    [InlineData("arbitrary-field")]
+    [InlineData("undefined-reason")]
+    [InlineData("missing-reason")]
+    [InlineData("wrong-boundary")]
+    public async Task ResolutionDiagnostics_CliProjection_PreservesOnlyDefinedReasonAndWhitelistedFieldAsync(string condition)
+    {
+        var diagnostic = new OctoberBusinessDiagnosticSnapshot(null, null, null, null,
+            condition == "wrong-boundary" ? OctoberBusinessDiagnosticBoundary.ExactLookup : OctoberBusinessDiagnosticBoundary.Resolution, false)
+        {
+            ResolutionFailureReason = condition == "undefined-reason" ? (ResolutionFailureReason)99999
+                : condition == "missing-reason" ? null : ResolutionFailureReason.WitnessShape,
+            ResolutionFailureField = condition switch
+            {
+                "arbitrary-field" => "RAW_PRIVATE_MODEL_FIELD.Path[99999]",
+                "alias-field" => "AliasOrConfigurationMapping",
+                "assertion-kind-field" => "SupportingAssertions.Kind",
+                _ => "Caller.Document.BatchId"
+            }
+        };
+        Guid batch = Guid.NewGuid();
+        var report = new OctoberScanReport("cl-and-bl", null, OctoberCoverageStatus.Partial, OctoberExecutionStatus.Failed,
+            OctoberPublicationStatus.Failed, null, [], [], [], new(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero),
+            new(1, 30, 10, false), [new("business_resolution_failed")]) { BusinessDiagnostics = diagnostic };
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        int exit = await OctoberGeneratorEntryPoint.ExecuteConfiguredAsync(
+            new(OctoberGeneratorMode.Generate, "exact-target", batch, null, new() { OutputStage = "cl-and-bl" }),
+            new Module(new(OctoberGeneratorExecutionStatus.GenerateFinished, Report: report)), output, error);
+        Assert.Equal(1, exit);
+        using var json = JsonDocument.Parse(output.ToString());
+        var projected = json.RootElement.GetProperty("businessDiagnostics");
+        var reason = projected.GetProperty("resolutionFailureReason");
+        var field = projected.GetProperty("resolutionFailureField");
+        if (condition is "undefined-reason" or "missing-reason" or "wrong-boundary")
+        {
+            Assert.Equal(JsonValueKind.Null, reason.ValueKind);
+            Assert.Equal(JsonValueKind.Null, field.ValueKind);
+        }
+        else
+        {
+            Assert.Equal("WitnessShape", reason.GetString());
+            if (condition == "arbitrary-field") Assert.Equal(JsonValueKind.Null, field.ValueKind);
+            else Assert.Equal(condition switch
+            {
+                "alias-field" => "AliasOrConfigurationMapping",
+                "assertion-kind-field" => "SupportingAssertions.Kind",
+                _ => "Caller.Document.BatchId"
+            }, field.GetString());
+        }
+        Assert.DoesNotContain("RAW_PRIVATE", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("99999", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("RAW_PRIVATE", error.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("99999", error.ToString(), StringComparison.Ordinal);
+    }
 
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
@@ -401,7 +461,11 @@ public sealed class OctoberScanEntryPointTests
         bool present = json.RootElement.TryGetProperty("businessDiagnostics", out var diagnostic) && diagnostic.ValueKind != JsonValueKind.Null;
         if (condition is "cl-only" or "foreign-publication" or "undefined-boundary") { Assert.False(present); return; }
         Assert.True(present);
-        Assert.Equal(new[] { "boundary", "finalizerPersistenceStatus", "finalizerStatus", "lookupPersistenceStatus", "lookupStatus", "operationMismatch", "originalSynthesisFailureReason" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(new[] { "boundary", "finalizerPersistenceStatus", "finalizerStatus", "lookupPersistenceStatus", "lookupStatus", "operationMismatch", "originalPublicationPersistenceStatus", "originalPublicationStatus", "originalSynthesisFailureReason", "resolutionFailureField", "resolutionFailureReason" }, diagnostic.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("originalPublicationStatus").ValueKind);
+        Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("originalPublicationPersistenceStatus").ValueKind);
+        Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("resolutionFailureReason").ValueKind);
+        Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("resolutionFailureField").ValueKind);
         Assert.Equal("ExactLookup", diagnostic.GetProperty("boundary").GetString());
         Assert.False(diagnostic.GetProperty("operationMismatch").GetBoolean());
         if (condition is "reason-none" or "reason-null" or "reason-undefined") Assert.Equal(JsonValueKind.Null, diagnostic.GetProperty("originalSynthesisFailureReason").ValueKind);

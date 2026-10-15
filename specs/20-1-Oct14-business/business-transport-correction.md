@@ -1,0 +1,264 @@
+# Business transport correction and one bounded link rerun
+
+User authorization (2026-10-13): fix the timeout, apply low reasoning to
+resolution, run focused tests and independent review, then rerun one bounded
+scan while preserving existing publications. Starting checkpoint is `5f3956d7`.
+
+The accepted narrow plan changes only the nonstreaming Business client in
+`OctoberWorkerClientFactory.cs`. Set SDK NetworkTimeout to infinite, matching the
+existing HttpClient setting, so linked owner/lease cancellation remains
+authoritative (resolution 120 seconds; synthesis 900 seconds). Keep SDK retries
+disabled and await transport cleanup. Apply configured low reasoning to resolution
+through cloned request options; preserve synthesis thinking-disabled strategies
+and the separate output limit. CL streaming and acceptance semantics are unchanged.
+
+Focused tests use the actual installed SDK pipeline and controlled HTTP transport:
+effective network timeout, resolution wire reasoning, unchanged caller options,
+owner/lease cancellation, synthesis strategies and legacy transport behavior.
+Independent plan review accepted this boundary; final implementation review and
+passing tests are required before the single paid rerun.
+
+Verification complete: focused RED selected three tests, with two expected failures
+(SDK message timeout 100 seconds instead of infinite; resolution wire high instead
+of configured low) and one cancellation pass. Evidence:
+`TestResults/isolation-7835fb1ffdb64f79be6ffc18d093edb5/results.trx`.
+After correction, all 423 selected SelfContained tests passed with zero skips,
+covering the file Worker, resolution, Business transports and synthesis wire
+strategies: `TestResults/isolation-26c8c90ed7ef488d87cd7742b3f95350/results.trx`.
+Independent implementation review passed without remaining findings. These are
+controlled SDK/transport tests, not a claim of real link-generation success.
+
+The rerun reuses exact original CL publication
+`fff8ddfc-d8ae-480c-aadd-286f03c8f4d9`, selects only `authMethods`, and uses the
+retained-evidence v2 profile with its 11 corpus candidate inquiries. Limits remain
+26 provider requests, 45 minutes, 20 million total tokens, DeepSeek/deepseek-flash,
+393,216 output tokens and configured low reasoning. Use a fresh RunId and exclusive
+launch marker. Reconfirm prior settlement and all seven immutable publications;
+never delete receipts or retry an indeterminate provider operation. No migration,
+CL regeneration, other-lane changes, Web restart, merge or push is authorized here.
+
+## Authorized rerun outcome
+
+Implementation checkpoint: `348f90e5a55252e54e65bba74190c62dfa33f194`.
+Run `64a9cb86-d08d-4758-862a-4d193fbb501f`, PID 54132, started at
+2026-10-13 04:40:49 UTC. BeginBusinessFromCl committed at 04:40:53 UTC and
+CompleteBusinessFromCl at 04:42:02 UTC. Process exit 1 after 73.47 seconds;
+no watchdog expiry and no automatic retry. This is invocation four of the five-run
+grant; one remains unused.
+
+One provider response returned with known usage: 15,472 input plus 13,864 output
+= 29,336 tokens; model wait 68.0154458 seconds. Resolution then returned
+`business_resolution_ineligible`; matching and Business are Unavailable,
+publication NotRequested. **Zero accepted v2 outcomes/edges; zero new BL.**
+The requested transport/configuration corrections are implemented and controlled-
+tested, but successful real link generation is still unqualified.
+
+This differs from the earlier 100-second no-response failure: a response and usage
+were obtained. The current executor maps several post-response failures (including
+parsing/validation exceptions and authorization failures) into a coarse admission
+status, and the host does not preserve a specific resolution diagnostic or raw
+witness on that exit. Therefore malformed JSON, invalid field shape, or a particular
+authorization cause cannot be established from this run's retained evidence.
+Do not weaken acceptance or guess an accepted edge from a failed response.
+
+Post-run authenticated read-only verification confirmed the matching completion
+receipt and unchanged exact membership/content projections of all seven previous
+publications. The 163 original CL versions remain readable. No new ordinary-user
+BL reading was possible and no temporary reader was created. No retained outcome,
+receipt, launch marker or publication was deleted or replaced.
+
+Evidence: ignored `TestResults/business-links-run-2/` contains authorization,
+preflight, process/terminal report, operation log and `after-run-verification.json`.
+The next bounded correction should expose safe resolution failure categories and
+controlled response-validation diagnostics before spending on another attempt.
+No additional paid run or diagnostic-code expansion was performed here.
+
+## One-hour diagnosed retry window (October 13)
+
+The user extended paid BL retry authority for one hour, from 04:50:39 through
+05:50:39 UTC. This supersedes the previous five-run count only within that window.
+Each attempt remains bounded, uses a fresh launch marker and RunId, and requires
+confirmed previous settlement. Stop at first verified success or the deadline;
+indeterminate execution never authorizes another launch.
+
+The correction distinguishes JSON syntax, typed witness shape, incomplete/output-
+limited responses, transport failures and live authority failures in safe host
+report fields. Only fixed enum values and allowlisted DTO labels are exposed;
+no response content, exception text or arbitrary JSON paths are logged. Parser
+failure produces no witness and no accepted relationship. The resolution prompt
+clarifies the existing exact JSON object/enum/evidence shapes. Acceptance policy,
+independent store revalidation and transport retry count remain unchanged.
+
+Independent static review passed. Focused RED: 28 selected, 14 passed/14 failed,
+from isolation-1b8a83689f0a4d20a1a5b674efd20ca8. GREEN: 157/157 passed (isolation-67a0ce501c4c44c7a037dc2d9542a64d), plus the current-attempt diagnostic retry regression 1/1 (isolation-28e9a70b8a3347f09dca16e3927c1598).
+Read-only preflight reconfirmed 163 CL versions, 11 eligible v2 inquiries,
+18 settled receipts and all seven existing publications before the next attempt.
+
+
+### First run in the one-hour window
+
+Checkpoint `bb1152f18aedd66d50b585c1338d45909bdbcbfb`; RunId
+`e62bf7b3-1c9c-46e1-8081-524a0bd31744`, 05:05:42–05:10:37 UTC.
+Five requests, 109,113 input + 58,527 output = 167,640 known tokens; exit 1,
+no watchdog timeout. Four outcomes were durably Unresolved; the fifth produced
+no witness, preventing synthesis/publication. All seven prior publications remain
+unchanged, completion is confirmed, and all four stored outcomes independently
+revalidate (complete contributor sets compared in canonical order).
+
+Actual CLI output exposed a projection omission: internal resolution diagnostics
+were created, but Program's manual JSON projection dropped the two new fields.
+Correct the projection with defined enums and literal field allowlisting. The real
+CLI regression RED selected 15: 3 passed/12 failed, isolation-996293fdf9f34976bdbdde5325c94182.
+Prompt wording additionally clarifies exact copied observation fields, required
+v2 BindingToken, and source-qualified opposition versus advisory/runtime caveats.
+No accepted result is changed. A subsequent canonical continuation must reuse the
+four retained Unresolved results and evaluate only the seven remaining inquiries.
+No successful link or BL claim is made for this run. Evidence: ignored
+`TestResults/business-links-run-3/`.
+
+CLI projection GREEN: 148/148, isolation-0a08b92c2a3044c4a7a7e2c2978fb604; independent static review PASS. Next run limited to 25 minutes plus 60-second owned watchdog, within the same one-hour authority.
+
+### Second run in the one-hour window
+
+Checkpoint `ed8e90ec4873f0d6e80fa5e2cf41034874928201`; RunId
+`0e5d5aeb-dcfb-449a-996c-7f13861f2e1d`, 05:17:31–05:19:19 UTC.
+Two requests: 56,454 input + 19,814 output = 76,268 known tokens. One more
+Unresolved outcome committed; the next response failed typed deserialization
+(`WitnessShape`). Exit 1; no timeout, no new publication. All five stored outcomes
+independently revalidate and all seven original publications remain unchanged.
+The witness on the newly unresolved password reference used a wrong SectionId,
+so exact claim lookup properly failed. These records are preserved, not repaired
+by hand. Add safe fixed diagnostic labels for remaining witness fields, including
+case-insensitive matching of known JSON property names, to diagnose the unprocessed
+response shape without exposing raw values or paths. No schema/policy change.
+
+Field-category RED: 13 selected, 9 passed/4 failed (isolation-3a19adc7d1c64d4e996795257a92345b). GREEN: 26/26 (isolation-35513d71a77e4906b4d0e36df898c1f5). Independent review PASS. Third window attempt is bounded to20minutes plus60secondwatchdog; preserves/reuses5existingUnresolved outcomes,6inquiriesremain.
+
+### Third run in the one-hour window
+
+Checkpoint `dc1def6fdfe6cee8f2d913d677984aecb7282f45`; RunId
+`6f6c4893-6807-421f-9415-419b57dbf996`, started05:25:16UTC, exited after158.08seconds.
+Three requests:56,096input+29,794output=85,890known tokens. Two source-backed
+static References were accepted by the owner store; five prior Unresolved outcomes
+were reused. The next response failed WitnessShape in OpposingAssertions. No BL
+publication; completion confirmed, all seven original publications unchanged, all
+seven outcomes independently replay-validated. Clarify the opposing assertion array
+and numeric Kind without changing policy. A subsequent run reuses these seven
+outcomes and processes four remaining inquiries. Evidence: business-links-run-5.
+
+Opposition-shape prompt clarification: independent review PASS; focused executor GREEN28/28 (isolation-bbd731ccd842445094ad720edffb6ee6). Next continuation deadline14minutes plus60secondwatchdog, within the one-hour grant.
+
+### Fourth run and current stop boundary
+
+Checkpoint `7fec365e8f3771148fb6288175dea8ac0fb6d876`; RunId
+`73f1e438-8f9f-4015-bfdf-9eedc36dbbac`, PID 20648, started 05:32:00 UTC,
+exited after 188.62 seconds with exit code 4. No watchdog fired. Four requests,
+59,448 input + 34,421 output = 93,869 known tokens. All eleven inquiries now have
+owner-accepted outcomes: four Supported static References and seven Unresolved.
+An offline independent replay of all eleven exact witnesses, including complete
+contributor sets, passed against the authenticated corpus export.
+
+Supported targets are login/ifaaLoginStatusQry, register/userAcctQuery,
+login/handPwdQry and cust/saveLoginDevcieInfo. These are exact same-repository
+static resource references, not runtime execution or cross-repository completeness.
+The selected authMethods root still has three unresolved outgoing inquiries; its
+connected-group qualification must not be inferred from other corpus links.
+
+The run then returned finalizer/lookup CommitIndeterminate before any synthesis
+provider request. No new publication or finalization row was observed by read-only
+inspection; original CL and all six prior BL publications remain unchanged. The
+BeginBusinessFromCl receipt is unmatched. The owned Generator has exited. No
+receipt/marker was cleared, no recovery write was performed, and no paid retry
+followed this indeterminate outcome.
+
+Read-only canonical loading with the exact selected root, context override and
+pure flow planning subsequently succeeded with one group. This does not explain
+why live original finalization stopped. Static review found repeated v2 planning
+work, but the actual runtime timing (6.818 seconds store wait) does not establish
+that as the cause. No speculative performance or acceptance change was applied.
+The next bounded work is to expose/reproduce the original pre-synthesis finalizer
+failure, then use supported exact-run settlement/fencing before a new dispatch.
+Absence of a publication alone is not retry permission.
+
+Across this one-hour window: four paid runs, fourteen resolution requests,
+281,111 input + 142,556 output = 423,667 known tokens; no unknown usage. No new BL
+publication, synthesis-provider qualification or ordinary-user reading of a new
+publication is claimed. Paid retries stopped on the indeterminate boundary rather
+than using the remaining time for a blind repeat. Evidence is under ignored
+`TestResults/business-links-run-6/` and `business-links-postrun-6/`, including
+`independent-link-replay.json` and `indeterminate-inspection.json`.
+
+## Original finalizer diagnosis and exact-run recovery correction (October 13)
+
+The user explicitly requested diagnosis followed by safe settlement or fencing of
+run `73f1e438-8f9f-4015-bfdf-9eedc36dbbac`, before another paid attempt.
+
+The last launch used an 840-second run deadline (14 minutes), shortened by the
+Business agent to fit the prior one-hour window. Synthesis requests its fixed
+900-second attempt deadline. `OctoberExecutionScope.ValidRequest` requires the
+requested duration not exceed the configured total run lifetime, so it rejects
+that synthesis admission before transport. A source-free reproduction using the
+actual scope returned Denied for 840/900 and Granted for 1200/900; neither sent a
+provider request. Exact-root loader, context projection and flow planning passed;
+the resulting model packet is 24,147 UTF-8 bytes. This confirms a run-configuration
+admission defect, not a malformed synthesis response. Source inspection explains
+how that denial can lead to CommitIndeterminate through subsequent exact lookup;
+the original finalizer result was not retained for direct confirmation of that path.
+Future run configuration must allow at least 900 seconds total, with enough time
+for resolution, synthesis and verification. No deadline or authorization check
+was weakened and no speculative performance fix was applied.
+
+Before recovery, a separate compatibility defect was found: abandonment digest
+validation reconstructed the Begin request without its v2 resolution profile.
+The narrow correction adds a null-omitted optional ResolutionPolicyVersion to the
+abandonment receipt and preserves it during creation, expected lookup comparison
+and digest reconstruction. Null-profile legacy bytes remain unchanged. No migration,
+new publication route or changed resolution policy is involved. Older binaries
+must not be used to reconcile these v2 abandonment receipts.
+
+Focused RED: 4 selected, 1 pass/3 failures, isolation-ec513110ea864f6a923bc04b3366491e.
+Focused GREEN: 56/56, isolation-ae486d7120ce431fb0cd29e93c4f0df9. Tests cover v2
+recovery/replay, old-owner fencing, fresh-run admission, legacy byte compatibility,
+profile tampering and the 840/900 deadline mismatch. Independent static review PASS.
+These are controlled tests, not a new BL/provider qualification.
+
+Read-only physical settlement preflight passed using protected live operator
+binding, exact immutable launcher/report hashes and known usage for all four
+responses. The original process exited. PID 20648 was later reused by unrelated
+`njbank`, started at 14:12:26 Asia/Shanghai, after the original run ended; it was
+not stopped or modified. No pre-exit database backends or prepared transactions
+remained. The recovery helper uses the existing owner store and exclusive batch
+transaction fence, with an exclusive one-use marker; indeterminate recovery
+allows lookup only. The executed recovery result is recorded below.
+
+### Exact recovery executed and verified
+
+Implementation checkpoint: `760223508be7b30644d3301afbf859526c5a9bf8`.
+The user-authorized owner call appended AbandonBusinessFromCl for exact RunId
+`73f1e438-8f9f-4015-bfdf-9eedc36dbbac`, committed at
+2026-10-13 14:34:37.525963 Asia/Shanghai. It returned Committed; a separate fresh
+process performed lookup only and received AlreadyCommitted with the exact v2
+profile, Begin digest, subject and evidence digest. The original Begin and consumed
+launch marker remain intact. No normal Complete receipt was fabricated.
+
+Before/after authenticated verification confirmed all seven prior publications,
+six finalizations, ninety BL versions and eleven resolution outcomes unchanged.
+All thirty-one captured lifecycle/finalization receipts are unchanged; exactly one
+new captured row is the expected abandonment receipt. No provider calls, new
+publication, source scan, migration, Web restart or unrelated-process change occurred.
+The original PID's later reuse was distinguished by process start time. Physical
+settlement checks remained valid through recovery submission.
+
+Ignored evidence: `TestResults/business-recovery-links-6/evidence.json`, request,
+result and lookup JSON, plus `verification/before.json`, `after.json` and
+`preservation-result.json`. A local helper build initially included the nested
+verification project's sources; that build failed before recovery execution. The
+compile-only exclusion was corrected before the single successful recovery call.
+No indeterminate write was retried.
+
+This is a verified administrative fence, not successful BL generation. A later
+separately authorized paid run must use a fresh RunId/marker and a compatible total
+run deadline (for example 1,200 seconds). It can reuse all eleven durable resolution
+outcomes. Use the corrected recovery-aware binaries; older binaries cannot validate
+v2 abandonment receipts. Ordinary-reader verification of a new BL remains pending
+until a new publication exists.

@@ -9,6 +9,52 @@ public sealed class OctoberFlowPlannerTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void RetainedV2_DirectedDiamondCycle_ConnectsReachableArtifactsWithoutImportingIncomingCaller()
+    {
+        var f = new RetainedFlowCase();
+        var input = f.Input();
+        var planned = OctoberFlowPlanner.Plan(input);
+        Assert.Equal(FlowPlanningStatus.Succeeded, planned.Status);
+        var group = Assert.Single(planned.Groups);
+        AssertMembers(group, f.Version(0), f.Version(1), f.Version(2), f.Version(3));
+        Assert.Equal(5, group.Relationships.Length);
+        Assert.DoesNotContain(group.Relationships, relationship => relationship.From == f.Version(4));
+        Assert.Equal(4, group.Members.Distinct().Count());
+        Assert.True(input.Contributors.ToHashSet().SetEquals(group.Dependencies.Contributors));
+        Assert.Equal(5, group.Dependencies.Documents.Length);
+        var reordered = input with { Corpus = input.Corpus with { Documents = input.Corpus.Documents.Reverse().ToImmutableArray() },
+            Units = input.Units.Reverse().ToImmutableArray(), Resolutions = input.Resolutions.Reverse().ToImmutableArray() };
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(planned), OctoberKnowledgePolicy.SerializeCanonical(OctoberFlowPlanner.Plan(reordered)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void RetainedV2_NodeLimit_KeepsFrontierAndCompleteLedgerWhileModelPacketContainsOnlyMembers()
+    {
+        var f = new RetainedFlowCase();
+        var input = f.Input();
+        var limits = new FlowPlanningLimits(2, 512, 16);
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input, limits).Groups);
+        Assert.Equal(2, group.Members.Length);
+        Assert.Contains(group.Frontiers, frontier => frontier.Kind == FlowFrontierKind.NodeLimit);
+        var packet = OctoberBusinessSynthesisPolicy.CreateModelPacket(input, group.GroupVersionId, limits);
+        Assert.Equal(2, packet.Documents.Length);
+        Assert.True(group.Members.ToHashSet().SetEquals(packet.Documents.Select(document => document.Version)));
+        Assert.Equal(5, group.Dependencies.Documents.Length);
+        Assert.True(input.Contributors.ToHashSet().SetEquals(group.Dependencies.Contributors));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void RetainedV2_PolicyMismatch_CannotReuseDifferentProfileGroupInputs()
+    {
+        var input = new RetainedFlowCase().Input();
+        Assert.Equal(FlowPlanningStatus.InvalidInput, OctoberFlowPlanner.Plan(input with { ResolutionPolicyVersion = null }).Status);
+        Assert.Throws<ArgumentException>(() => OctoberResolutionPolicy.Plan(input.Corpus, OctoberResolutionPolicy.PolicyVersion));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Plan_TwoExplicitRootsShareHelper_PreservesDistinctRootIdentity()
     {
         var fixture = new FlowPlannerCase(3, [(0, 2), (1, 2)], [0, 1]);
@@ -444,4 +490,83 @@ internal sealed class FlowPlannerCase
     }
 
     private static Guid Id(int value) => ResolutionCase.Id(value);
+}
+
+/// <summary>Controlled five-file retained artifact graph; all edges are accepted by the actual v2 policy.</summary>
+internal sealed class RetainedFlowCase
+{
+    private static readonly (int From, int To)[] _edges = [(0, 1), (0, 2), (1, 3), (2, 3), (3, 0), (4, 0)];
+    private readonly ResolutionCorpus _corpus;
+    private readonly ImmutableArray<FlowPlanningUnit> _units;
+    private readonly ImmutableArray<FileCoverage> _coverage;
+    public DocumentVersionReference Version(int index) => _corpus.Documents[index].Version;
+    public RetainedFlowCase()
+    {
+        var documents = ImmutableArray.CreateBuilder<ResolutionDocument>();
+        var units = ImmutableArray.CreateBuilder<FlowPlanningUnit>();
+        var coverage = ImmutableArray.CreateBuilder<FileCoverage>();
+        for (int index = 0; index < 5; index++)
+        {
+            var version = new DocumentVersionReference(ResolutionCase.Id(1), ResolutionCase.Id(8100 + index), ResolutionCase.Id(8200 + index));
+            var origin = new PreparedOrigin(ResolutionCase.Id(8000), "controlled-v2-root", "flows/node" + index + ".flw",
+                new string((char)('a' + index), 64), "controlled-v2-source");
+            EvidenceReference Evidence(int line) => new(null, null, new(origin, line, line), null, origin.SourceDigest);
+            var claims = ImmutableArray.CreateBuilder<QualifiedClaimGroup>();
+            var observations = ImmutableArray.CreateBuilder<CommunicationObservation>();
+            claims.Add(new("artifact", "<flow id=\"node" + index + "\" />", ClaimQualification.SourceSupported, [Evidence(1)], []));
+            int ordinal = 0;
+            foreach (var edge in _edges.Where(edge => edge.From == index))
+            {
+                string path = "flows/node" + edge.To + ".flw";
+                string key = "ref-" + edge.To;
+                var evidence = Evidence(10 + ordinal++);
+                claims.Add(new(key, "<flowEmbedOp flow=\"" + path + "\" />", ClaimQualification.SourceSupported, [evidence], []));
+                observations.Add(new(key, "file-" + index, "静态子流程引用", "flowEmbedOp", path, null, [path],
+                    ClaimQualification.SourceSupported, [evidence]));
+            }
+            documents.Add(new(version, origin.RepositoryId, [new("flow", 0, "Flow declaration", claims.ToImmutable())],
+                observations.ToImmutable(), [new(ContributorKind.Source, origin.RepositoryId, null, origin.RootBindingIdentity, null, origin.SourceDigest)]));
+            units.Add(new(ResolutionCase.Id(8300 + index), version, "file-" + index, origin, [new(origin, 1, 100)]));
+            coverage.Add(new(ResolutionCase.Id(8400 + index), origin, CoverageDisposition.Accepted, null));
+        }
+        _corpus = new(new(new("ControlledFixture/retained-graph", "controlled-target", ResolutionCase.Id(1), new string('a', 64)),
+            ResolutionCase.Id(2), new string('b', 64)), documents.ToImmutable())
+        { ResolutionPolicyVersion = OctoberResolutionPolicy.RetainedPolicyVersion };
+        _units = units.ToImmutable();
+        _coverage = coverage.ToImmutable();
+    }
+    public FlowPlanningInput Input()
+    {
+        var plan = OctoberResolutionPolicy.Plan(_corpus);
+        Assert.Equal(_edges.Length, plan.Inquiries.Length);
+        var accepted = plan.Inquiries.Select((inquiry, index) =>
+        {
+            var caller = _corpus.Documents.Single(document => document.Version == inquiry.Caller.Document);
+            var providerRef = Assert.Single(inquiry.Candidates);
+            var provider = _corpus.Documents.Single(document => document.Version == providerRef.Document);
+            var observation = caller.Observations.Single(value => value.ObservationKey == inquiry.Caller.ObservationKey);
+            var endpoint = OctoberResolutionPolicy.ResolveObservation(_corpus, providerRef)!;
+            ResolutionEvidenceAssertion Assertion(ResolutionAssertionKind kind, ResolutionDocument document, string key)
+            {
+                var claim = document.Sections[0].Claims.Single(value => value.ClaimGroupId == key);
+                return new(kind, document.Version, "flow", key, claim.Evidence[0], claim.Text, "Exact static artifact evidence.");
+            }
+            var witness = new ResolutionWitness(inquiry.Caller, providerRef, observation.Operation, endpoint.Role, endpoint.Operation,
+                observation.Mechanism, "Same repository/root", "Exact declared artifact reference.", null,
+                [Assertion(ResolutionAssertionKind.CallerAction, caller, observation.ObservationKey),
+                 Assertion(ResolutionAssertionKind.ConnectingBinding, caller, observation.ObservationKey),
+                 Assertion(ResolutionAssertionKind.ProviderRoleAndOperation, provider, "artifact")],
+                [], "Declared reference, without runtime dispatch certainty.", [], false, false)
+            { BindingToken = observation.Operation };
+            var outcome = OctoberResolutionPolicy.Validate(_corpus, inquiry, witness);
+            Assert.Equal(ResolutionOutcomeKind.Supported, outcome.Kind);
+            return new FlowAcceptedResolution(ResolutionCase.Id(8500 + index), outcome, ResolutionCase.Id(8600 + index));
+        }).ToImmutableArray();
+        return new(_corpus, _units, accepted, [new(_units[0].UnitId, Version(0), FlowRootKind.SelectedCodeUnit, _units[0].SemanticSelector)],
+            plan.Dispositions, _coverage)
+        {
+            Contributors = _corpus.Documents.SelectMany(document => document.Contributors).Distinct().ToImmutableArray(),
+            ResolutionPolicyVersion = OctoberResolutionPolicy.RetainedPolicyVersion
+        };
+    }
 }

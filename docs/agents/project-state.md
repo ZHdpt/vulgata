@@ -1,5 +1,19 @@
 # Project state for agent resumption
 
+October 15 Business integration: `oct14/business` checkpoint `45e3e817` is merged
+onto main's committed reader repair `df5c15db`. Main's lightweight publication
+index, saved-history and UI repairs are preserved. Exact-publication advisory
+ledger loading is combined with Business's retained override validation; live
+authorization is unchanged. This imports the Business source-read-purpose migration
+but does not apply migrations or touch retained data/hosts. Historical Business
+run failures below precede its later reported 108-BL publication. See the
+[integration record](../bmad/planning-artifacts/october-business-integration-2026-10-15.md)
+for combined verification and runtime follow-up; prior browser timings do not
+qualify the newly combined authorization path.
+Affected run: 3,125/3,134; eight outdated diagnostic assertions were corrected,
+then the conflict-sensitive focused run passed 254/254. The historical strict
+one-file report-parser mismatch remains; full-suite GREEN is not claimed.
+
 October 14 publication-read repair: the retained publication
 `1396428a-7661-4761-b421-869e1fbc01eb` contains 163 CL and 108 BL Documents.
 Readers now load a lightweight exact-publication index and fetch canonical content
@@ -22,6 +36,21 @@ Database transcript read, saved-history handoff and application display now rech
 each turn independently. Inference-history union limits and permission failures
 remain unchanged. A read-only ordinary-user probe returned all seven saved turns
 and handed off all seven after repair; no retained data or running host was changed.
+Earlier October 14 Business retrieval checkpoint (before the later 108-BL
+publication recorded above): the original database has the purpose-only migration,
+applied after a restore-verified backup. The BL-only recovery loop fixed contained
+source identity observation and review-stage schema repair; actual provider retrieval
+now succeeds. Five additional bounded attempts settled without publication. A sixth,
+whole-scope attempt exhausted652 requests and ended with an indeterminate finalization;
+its exact run has now been fenced through append-only abandonment, confirmed by lookup.
+No finalization or new publication was created. Publication deadline and diagnostic
+corrections passed185 focused tests and independent review; real whole-publication
+qualification remains pending. Focused review-feedback and
+per-flow request-cap fixes passed182 controlled tests and independent review.
+All ten prior publications and163 CL
+documents remain unchanged. No additional migration or recording-app change occurred.
+See [current recovery evidence](../../specs/20-1-Oct14-business/bl-recovery-loop.md)
+and [backup/migration evidence](../../specs/20-1-Oct14-business/retrieval-trial-2026-10-13.md).
 
 October 13 Explorer UI: document and graph pages use light styling independently
 of Knowledge mode. Reader continuation controls appear only when more content is
@@ -95,8 +124,13 @@ failure. The latter passed its unchanged focused replay 1/1 after process-local
 PATH correction; full-suite GREEN is not claimed. Scan reports 77 files/163 CL
 Documents retained; no new BL/provider/database/browser qualification occurred
 here. Business synchronized and reconciled its handoff at `158e8bb9`; that
-documentation-only checkpoint is integrated. Runtime readiness remains pending. The user
-retains management ownership. See the
+documentation-only checkpoint is integrated. Runtime readiness was pending at that
+integration checkpoint. Business branch qualification has since advanced to a
+published connected-flow trial with protected diagnostics and ordinary-reader proof;
+independent semantics still require a narrow revision. See the
+[current Business handoff](../../specs/20-1-Oct14-business/existing-cl-handoff.md).
+This is branch-local evidence, not a claim that its changes are integrated into main.
+The user retains management ownership. See the
 [Scan-to-Business checkpoint](../bmad/planning-artifacts/october-scan-business-integration-2026-10-11.md).
 
 Earlier same-day integration: user-authorized step 1 selectively imported

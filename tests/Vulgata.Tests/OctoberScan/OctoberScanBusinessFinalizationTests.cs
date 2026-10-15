@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Configuration;
@@ -18,6 +19,364 @@ namespace Vulgata.Tests.OctoberScan;
 /// <summary>Internal natural-completion composition only: real owner stores/reader and real SDK factory, controlled HTTP, no CLI or live provider.</summary>
 public sealed class OctoberScanBusinessFinalizationTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DiagnosticCaptureSink_ProtectsExactRecordWithDedicatedPurposeAndNeverOverwritesAsync()
+    {
+        using var directory = new DiagnosticCaptureDirectory();
+        var encryption = new SecretEncryptionService(new EphemeralDataProtectionProvider());
+        var sink = new OctoberBusinessDiagnosticCapture(directory.Path, encryption);
+        var record = DiagnosticRecord("controlled-private-draft-content") with
+        {
+            RejectedResponse = "controlled-private-rejected-response",
+            ValidationDetail = "controlled-review-validation-detail"
+        };
+        await sink.CaptureAsync(record, default);
+        string file = Assert.Single(Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories));
+        string protectedText = await File.ReadAllTextAsync(file);
+        Assert.DoesNotContain("controlled-private-draft-content", protectedText, StringComparison.Ordinal);
+        Assert.DoesNotContain("controlled-private-rejected-response", protectedText, StringComparison.Ordinal);
+        Assert.DoesNotContain("controlled-review-validation-detail", protectedText, StringComparison.Ordinal);
+        const string purpose = "Vulgata.October.Business.SemanticDiagnostics.v1";
+        Assert.Equal(purpose, OctoberBusinessDiagnosticCapture.Purpose);
+        string recovered = await encryption.DecryptAsync(purpose, protectedText);
+        Assert.Equal(JsonSerializer.Serialize(record), recovered);
+        await Assert.ThrowsAnyAsync<Exception>(() => encryption.DecryptAsync(purpose + ".foreign", protectedText));
+        await Assert.ThrowsAsync<IOException>(() => sink.CaptureAsync(record with { Proposal = record.Proposal! with { Title = "must not overwrite" } }, default));
+        Assert.Equal(protectedText, await File.ReadAllTextAsync(file));
+        Assert.Single(Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("invalid-stage")]
+    [InlineData("oversize")]
+    [InlineData("encryption-failed")]
+    [InlineData("plaintext-returned")]
+    public async Task DiagnosticCaptureSink_InvalidOrUnprotectedRecord_CreatesNoFileAsync(string boundary)
+    {
+        using var directory = new DiagnosticCaptureDirectory();
+        var encryption = new DiagnosticCaptureEncryption { Failure = boundary == "encryption-failed", ReturnPlaintext = boundary == "plaintext-returned" };
+        var sink = new OctoberBusinessDiagnosticCapture(directory.Path, encryption);
+        var record = DiagnosticRecord("private-draft-marker");
+        if (boundary == "invalid-stage") record = record with { Stage = "../private-draft-marker" };
+        if (boundary == "oversize") record = record with { Proposal = record.Proposal! with { Title = new string('x', OctoberBusinessDiagnosticCapture.MaximumRecordBytes) } };
+        await Assert.ThrowsAnyAsync<Exception>(() => sink.CaptureAsync(record, default));
+        Assert.Empty(Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories));
+        Assert.Equal(boundary is "invalid-stage" or "oversize" ? 0 : 1, encryption.Calls);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DiagnosticCaptureSink_AggregateBudget_StopsBeforeProtectingOrWritingTheNextRecordAsync()
+    {
+        using var directory = new DiagnosticCaptureDirectory();
+        // This adapter isolates byte-budget accounting; the separate protection case uses actual Data Protection.
+        var encryption = new DiagnosticCaptureEncryption();
+        var sink = new OctoberBusinessDiagnosticCapture(directory.Path, encryption);
+        var record = DiagnosticRecord(new string('x', OctoberBusinessDiagnosticCapture.MaximumRecordBytes - 4096));
+        int bytes = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(record));
+        Assert.InRange(bytes, 3 * 1024 * 1024, OctoberBusinessDiagnosticCapture.MaximumRecordBytes);
+        int fits = (64 * 1024 * 1024) / bytes;
+        Assert.Equal(16, fits);
+        for (int index = 0; index < fits; index++) await sink.CaptureAsync(record with { GroupVersionId = Guid.NewGuid() }, default);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sink.CaptureAsync(record with { GroupVersionId = Guid.NewGuid() }, default));
+        Assert.Equal(fits, encryption.Calls);
+        Assert.Equal(fits, Directory.GetFiles(directory.Path, "*", SearchOption.AllDirectories).Length);
+    }
+
+    private static BusinessSynthesisDiagnostic DiagnosticRecord(string title)
+    {
+        var fixture = new SynthesisCase();
+        return new(fixture.Run, fixture.Operation, fixture.Group.GroupVersionId, "draft", fixture.Proposal() with { Title = title }, null,
+            BusinessSynthesisFailureReason.None, [new(10, 5, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(1), ProviderAttemptOutcome.Completed)]);
+    }
+
+    private sealed class DiagnosticCaptureDirectory : IDisposable
+    {
+        public string Path { get; } = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "october-diagnostic-capture-" + Guid.NewGuid().ToString("N"));
+        public DiagnosticCaptureDirectory() => Directory.CreateDirectory(Path);
+        public void Dispose() => Directory.Delete(Path, recursive: true);
+    }
+
+    private sealed class DiagnosticCaptureEncryption : ISecretEncryptionService
+    {
+        public bool Failure { get; init; }
+        public bool ReturnPlaintext { get; init; }
+        public int Calls { get; private set; }
+        public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested(); Calls++;
+            Assert.Equal("Vulgata.October.Business.SemanticDiagnostics.v1", purpose);
+            if (Failure) throw new IOException("Controlled encryption failure.");
+            return Task.FromResult(ReturnPlaintext ? plain : "controlled-protected-budget-record");
+        }
+        public Task<string> DecryptAsync(string purpose, string cipher, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ResolutionDiagnostics_ActualGeneratorReport_ExportsOnlySafeCategoryAndSettledUsageAsync(bool typedShape)
+    {
+        const string secret = "RAW_MODEL_REPORT_SECRET";
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        const string caller = """{"observationKey":"local-call","ownerSelector":"file","role":"caller","mechanism":"call","operation":"Run","logicalNamespace":null,"literalsOrExpressions":["Run()"],"qualification":"SourceSupported","evidence":[{"startLine":1,"endLine":1}]}""";
+        host.Client.TerminalTextOverride = OctoberScanGenerateRunnerTests.Harness.Model.ValidProposalJson.Replace(
+            "\"observations\":[]", "\"observations\":[" + caller + "]", StringComparison.Ordinal);
+        var original = await host.Runner.ExecuteAsync(host.Execution);
+        Assert.Equal(0, original.Report!.ExitCode);
+        var execution = ExistingClExecution(host.Execution, original.Report.Publication!);
+        using var transport = new NaturalTransport
+        {
+            IncludeCallerObservation = true,
+            ResolutionTextOverride = typedShape ? "{\"Caller\":{\"Document\":{\"BatchId\":\"" + secret + "\"}}}" : "{" + secret
+        };
+        await using var runner = new OctoberGenerateRunner(ExistingClDependencies(host, execution, transport));
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.NotEqual(0, report.ExitCode);
+        var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+        Assert.Equal(OctoberBusinessDiagnosticBoundary.Resolution, diagnostic.Boundary);
+        Assert.Equal(typedShape ? ResolutionFailureReason.WitnessShape : ResolutionFailureReason.InvalidJson, diagnostic.ResolutionFailureReason);
+        Assert.Equal(1, transport.ResolutionRequests);
+        Assert.Equal(1, transport.BusinessRequests);
+        Assert.Equal(0, transport.WorkerRequests);
+        Assert.Equal(30, report.Usage.InputTokens);
+        Assert.Equal(10, report.Usage.OutputTokens);
+        Assert.False(report.Usage.HasUnknownUsage);
+        Assert.DoesNotContain(secret, JsonSerializer.Serialize(report), StringComparison.Ordinal);
+        Assert.Null(report.Publication);
+        await using var context = host.Database.Factory.CreateDbContext();
+        Assert.Equal(0, await context.ResolutionItems.CountAsync());
+        Assert.Equal(0, await context.BusinessFinalizations.CountAsync());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("configured")]
+    [InlineData("mismatched-loader")]
+    [InlineData("unknown")]
+    [InlineData("fresh")]
+    public async Task RetainedV2_GeneratorBindsExactProfile_AndRejectsMismatchedOrUnsupportedRoutesAsync(string scenario)
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        PublicationBinding? original = null;
+        if (scenario != "fresh") original = (await host.Runner.ExecuteAsync(host.Execution)).Report!.Publication;
+        var execution = original is not null ? ExistingClExecution(host.Execution, original)
+            : host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
+        string profile = scenario == "unknown" ? "unknown-retained-policy" : OctoberResolutionPolicy.RetainedPolicyVersion;
+        using var transport = new NaturalTransport();
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        dependencies = dependencies with { Business = dependencies.Business! with
+        {
+            ResolutionPolicyVersion = profile,
+            CreateResolutionStore = (authority, guard) => new OctoberResolutionStore(host.Database.Factory, authority, guard, host.Database.Log,
+                scenario == "unknown" ? null : profile),
+            CreatePlanningInputLoader = authority => new OctoberFlowPlanningInputLoader(host.Database.Factory, authority,
+                scenario is "mismatched-loader" or "unknown" ? null : profile)
+        } };
+        int begins = host.BeginCalls;
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(begins, host.BeginCalls);
+        Assert.Equal(0, transport.WorkerRequests);
+        if (scenario != "configured")
+        {
+            Assert.NotEqual(0, report.ExitCode);
+            Assert.Equal(0, transport.BusinessRequests);
+            return;
+        }
+        Assert.Equal(0, report.ExitCode);
+        Assert.Equal(2, transport.BusinessRequests);
+        await using var context = host.Database.Factory.CreateDbContext();
+        var finalization = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
+        var retained = JsonSerializer.Deserialize<FlowFinalizationPublicationRequest>(finalization.RequestJson,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        Assert.Equal(profile, retained.Selection.ResolutionPolicyVersion);
+        var begin = await context.KnowledgeOperations.AsNoTracking().SingleAsync(value => value.Kind == OperationKind.BeginBusinessFromCl);
+        var expectedBegin = new BusinessFromClRequest(original!, execution.Session.SubjectId, begin.OperationId, "") { ResolutionPolicyVersion = profile };
+        Assert.Equal(OctoberBusinessFromClPolicy.ComputeBeginDigest(expectedBegin), begin.PayloadDigest);
+        Assert.True(await context.KnowledgePublications.AnyAsync(value => value.PublicationId == original!.PublicationId));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ContextOverride_ExistingClRoute_CapturesEffectivePacketAndRetainsCanonicalSelectionAsync(bool useOverride)
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var cl = await host.Runner.ExecuteAsync(host.Execution);
+        var original = Assert.IsType<PublicationBinding>(cl.Report!.Publication);
+        var execution = ExistingClExecution(host.Execution, original);
+        using var transport = new NaturalTransport();
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        const string text = "Run-specific vocabulary supplied by the authorized host.";
+        BusinessAdvisoryContextOverride? supplied = useOverride
+            ? new([new(host.Database.Origin.RepositoryId, OctoberContextScope.Repository, text)]) : null;
+        dependencies = dependencies with { Business = dependencies.Business! with { ContextOverride = supplied } };
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.Equal(0, report.ExitCode);
+        Assert.Equal(0, transport.WorkerRequests);
+        Assert.Equal(2, transport.BusinessRequests);
+        using var packet = JsonDocument.Parse(Assert.Single(transport.SynthesisPackets));
+        var advisory = Assert.Single(packet.RootElement.GetProperty("AdvisoryContext").EnumerateArray());
+        Assert.Equal(useOverride ? text : OctoberKnowledgeAcceptanceFixture.AdvisorySnapshot, advisory.GetProperty("Text").GetString());
+        await using var context = host.Database.Factory.CreateDbContext();
+        var retained = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
+        var request = JsonSerializer.Deserialize<FlowFinalizationPublicationRequest>(retained.RequestJson,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(supplied), OctoberKnowledgePolicy.SerializeCanonical(request.Selection.ContextOverride));
+        if (!useOverride) Assert.DoesNotContain("ContextOverride", retained.RequestJson, StringComparison.OrdinalIgnoreCase);
+        Assert.True(await context.KnowledgePublications.AnyAsync(value => value.PublicationId == original.PublicationId));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ContextOverride_FreshScanRoute_RejectsBeforeAdmissionOrClientCreationAsync()
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        using var transport = new NaturalTransport();
+        var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        dependencies = dependencies with { Business = dependencies.Business! with
+        { ContextOverride = new([new(host.Database.Origin.RepositoryId, OctoberContextScope.Repository, "Existing CL route only")]) } };
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        Assert.NotEqual(0, Assert.IsType<OctoberScanReport>(result.Report).ExitCode);
+        Assert.Equal(0, host.BeginCalls);
+        Assert.Empty(transport.Requests);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public void ContextOverride_GeneratorSettings_RejectMalformedOverride()
+    {
+        var settings = new OctoberBusinessSettings([], new(), 40);
+        Assert.True(settings.IsValid());
+        Assert.False((settings with { ContextOverride = new([new(Guid.NewGuid(), OctoberContextScope.Global, "Forbidden global scope")]) }).IsValid());
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("initial-overflow")]
+    [InlineData("later-overflow")]
+    [InlineData("minimum-overflow")]
+    [InlineData("denied")]
+    [InlineData("aggregate-limit")]
+    public async Task ExistingClContinuation_PublicationCatalogBudget_RestartsOnlyBoundedReadsAsync(string scenario)
+    {
+        await using var host = await OctoberScanGenerateRunnerTests.Harness.CreateAsync();
+        var cl = await host.Runner.ExecuteAsync(host.Execution);
+        var original = Assert.IsType<PublicationBinding>(cl.Report!.Publication);
+        var execution = ExistingClExecution(host.Execution, original);
+        using var transport = new NaturalTransport();
+        var dependencies = ExistingClDependencies(host, execution, transport);
+        CatalogBudgetReader? observed = null;
+        dependencies = dependencies with { Business = dependencies.Business! with
+        {
+            BindReader = (session, publication, _) =>
+            {
+                var bound = ControlledBinding(host, publication, session, null);
+                observed = new CatalogBudgetReader(bound.Reader, scenario);
+                return Task.FromResult<OctoberVerifiedReaderBinding?>(bound with { Reader = observed });
+            }
+        } };
+        await using var runner = new OctoberGenerateRunner(dependencies);
+        var result = await runner.ExecuteAsync(execution);
+        var report = Assert.IsType<OctoberScanReport>(result.Report);
+        Assert.NotNull(observed);
+        Assert.Equal(2, transport.BusinessRequests);
+        Assert.Equal(0, transport.WorkerRequests);
+        Assert.Equal(100, observed.Requests[0].PageSize);
+        if (scenario is "initial-overflow" or "later-overflow")
+        {
+            Assert.Equal(0, report.ExitCode);
+            Assert.NotEmpty(report.Documents);
+            Assert.Equal(report.Documents.Length, report.Documents.Distinct().Count());
+            Assert.True(observed.Documents.Select(document => document.Handle).ToHashSet().SetEquals(report.Documents));
+            int restart = scenario == "initial-overflow" ? 1 : 2;
+            Assert.Equal(50, observed.Requests[restart].PageSize);
+            Assert.Null(observed.Requests[restart].Continuation);
+            Assert.Equal(scenario == "initial-overflow" ? 2 : 4, observed.Requests.Count);
+            if (scenario == "later-overflow")
+            {
+                Assert.Equal(100, observed.Requests[1].PageSize);
+                Assert.NotNull(observed.Requests[1].Continuation);
+                Assert.Equal(50, observed.Requests[3].PageSize);
+                Assert.NotNull(observed.Requests[3].Continuation);
+            }
+        }
+        else
+        {
+            Assert.NotEqual(0, report.ExitCode);
+            Assert.Empty(report.Documents);
+            if (scenario == "aggregate-limit")
+            {
+                Assert.Equal(256, observed.Requests.Count);
+                Assert.Equal(131, observed.Requests.Count(request => request.PageSize == 100));
+                Assert.Equal(125, observed.Requests.Count(request => request.PageSize == 50));
+                Assert.Null(observed.Requests[131].Continuation);
+            }
+            else
+            {
+                Assert.Equal(scenario == "denied" ? new[] { 100 } : new[] { 100, 50, 25, 12, 6, 3, 1 },
+                    observed.Requests.Select(request => request.PageSize).ToArray());
+                Assert.All(observed.Requests, request => Assert.Null(request.Continuation));
+            }
+        }
+        await using var context = host.Database.Factory.CreateDbContext();
+        Assert.Equal(2, await context.KnowledgePublications.CountAsync());
+        Assert.True(await context.KnowledgePublications.AnyAsync(publication => publication.PublicationId == original.PublicationId));
+    }
+
+    private sealed class CatalogBudgetReader(IOctoberKnowledgeReader inner, string scenario) : IOctoberKnowledgeReader
+    {
+        public List<KnowledgeSearchRequest> Requests { get; } = [];
+        public ImmutableArray<DocumentSummary> Documents { get; private set; } = [];
+        public Task<ReadSelectionResult> OpenReadSelectionAsync(ReadSelectionRequest request, CancellationToken token = default) => inner.OpenReadSelectionAsync(request, token);
+        public async Task<SearchPage> SearchAsync(KnowledgeSearchRequest request, CancellationToken token = default)
+        {
+            Requests.Add(request);
+            if (scenario == "denied") return new(KnowledgeReadStatus.Unavailable, [], null, null);
+            if (scenario == "aggregate-limit" && Requests.Count == 131)
+                return new(KnowledgeReadStatus.ReadBudgetExceeded, [], null, null);
+            if (scenario == "minimum-overflow" || scenario == "initial-overflow" && request.PageSize == 100 ||
+                scenario == "later-overflow" && request.PageSize == 100 && request.Continuation is not null)
+                return new(KnowledgeReadStatus.ReadBudgetExceeded, [], null, null);
+            if (Documents.IsEmpty)
+            {
+                var actual = await inner.SearchAsync(request with { Continuation = null }, token);
+                Assert.Equal(KnowledgeReadStatus.Success, actual.Status);
+                Assert.Null(actual.Next);
+                Documents = actual.Documents;
+                Assert.True(Documents.Length >= 2);
+            }
+            if (scenario == "aggregate-limit")
+            {
+                // Controlled endless catalog envelopes use distinct validly bound identities.
+                // They never claim these synthetic handles were persisted or readable.
+                var document = Documents[0] with { Handle = Documents[0].Handle with { DocumentVersionId = Guid.NewGuid() } };
+                return new(KnowledgeReadStatus.Success, [document], new("controlled-next-" + Requests.Count), null);
+            }
+            if (scenario == "later-overflow")
+            {
+                if (request.Continuation is null)
+                    return new(KnowledgeReadStatus.Success, [Documents[0]], new("controlled-page-size-" + request.PageSize), null);
+                Assert.Equal("controlled-page-size-" + request.PageSize, request.Continuation.Value);
+                return new(KnowledgeReadStatus.Success, Documents.RemoveAt(0), null, null);
+            }
+            return new(KnowledgeReadStatus.Success, Documents, null, null);
+        }
+        public Task<ContentPage> ReadExactAsync(ExactReadRequest request, CancellationToken token = default) => inner.ReadExactAsync(request, token);
+        public Task<RelatedPage> GetRelatedAsync(RelatedReadRequest request, CancellationToken token = default) => inner.GetRelatedAsync(request, token);
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task BusinessFromClStore_BeginsOnlyAgainstAnExactPublishedClPublicationAsync()
@@ -195,7 +554,7 @@ public sealed class OctoberScanBusinessFinalizationTests
                 handle.LogicalDocumentId == originalHandle.LogicalDocumentId &&
                 handle.DocumentVersionId == originalHandle.DocumentVersionId));
             Assert.Equal(0, successfulTransport.WorkerRequests);
-            Assert.Equal(1, successfulTransport.BusinessRequests);
+            Assert.Equal(2, successfulTransport.BusinessRequests);
         }
 
         Assert.Equal(originalSourceOpens, host.SourceOpens);
@@ -218,7 +577,7 @@ public sealed class OctoberScanBusinessFinalizationTests
                 handle.LogicalDocumentId == originalHandle.LogicalDocumentId &&
                 handle.DocumentVersionId == originalHandle.DocumentVersionId));
             Assert.Equal(0, repeatedTransport.WorkerRequests);
-            Assert.Equal(1, repeatedTransport.BusinessRequests);
+            Assert.Equal(2, repeatedTransport.BusinessRequests);
         }
 
         Assert.Equal(originalSourceOpens, host.SourceOpens);
@@ -295,7 +654,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             var recovered = await runner.ExecuteAsync(execution);
             Assert.Equal(0, recovered.Report!.ExitCode);
             Assert.Equal(0, retryTransport.ResolutionRequests);
-            Assert.Equal(1, retryTransport.BusinessRequests);
+            Assert.Equal(2, retryTransport.BusinessRequests);
             Assert.IsType<PublicationBinding>(recovered.Report.Publication);
         }
 
@@ -376,8 +735,8 @@ public sealed class OctoberScanBusinessFinalizationTests
         Assert.Equal(1, clientCreations);
         Assert.Equal(1, rootSelections);
         Assert.Equal(twoRepositories ? 2 : 1, transport.WorkerRequests);
-        Assert.Equal(1, transport.BusinessRequests);
-        Assert.Equal(twoRepositories ? 3 : 2, report.Usage.Requests);
+        Assert.Equal(2, transport.BusinessRequests);
+        Assert.Equal(twoRepositories ? 4 : 3, report.Usage.Requests);
         Assert.False(report.Usage.HasUnknownUsage);
         Assert.Equal(1, host.BeginCalls);
         Assert.Equal(1, host.FreezeCalls);
@@ -410,6 +769,9 @@ public sealed class OctoberScanBusinessFinalizationTests
     [InlineData("reason-invalid-proposal")]
     [InlineData("publication-first-lookup-unknown")]
     [InlineData("publication-failed")]
+    [InlineData("publication-precommit-timeout")]
+    [InlineData("publication-precommit-invalid")]
+    [InlineData("publication-precommit-storage")]
     [InlineData("publication-committed-failed")]
     [InlineData("publication-undefined-status")]
     [InlineData("publication-foreign-operation")]
@@ -463,7 +825,9 @@ public sealed class OctoberScanBusinessFinalizationTests
         using var transport = new NaturalTransport { IncludeCallerObservation = boundary is "nonempty-b1" or "nonempty-b1-direct" or "unresolved-b1" or "budget-b1-direct" or "budget-b1-ack", ReturnUnresolved = boundary == "unresolved-b1", InvalidSynthesisProposal = boundary == "reason-invalid-proposal" };
         var state = new BoundaryState { Boundary = boundary };
         if (boundary == "freeze-log") state.BeforeFreeze = () => host.Database.Log.Succeeds = false;
-        var clock = boundary is "session-expired" or "replay-authority-held" ? new OctoberScanAcceptanceHarness.ManualClock() : null;
+        var clock = boundary is "session-expired" or "replay-authority-held" or "publication-held-log" or "publication-held-revoked" or "publication-held-scope-stop"
+            ? new OctoberScanAcceptanceHarness.ManualClock() : null;
+        if (clock is not null && boundary != "session-expired") transport.OnBusinessDispatch = () => clock.Advance(TimeSpan.FromSeconds(1));
         var execution = host.Execution with { Policy = host.Execution.Policy with { OutputStage = "cl-and-bl" } };
         if (boundary is "operator-broker-no-response" or "operator-broker-valid") execution = execution with { Policy = execution.Policy with { RunDeadlineSeconds = 900, FileDeadlineSeconds = 480 } };
         if (boundary == "session-expired") execution = execution with { Session = new FixedSession(execution.Session.SubjectId, execution.Session.ManagementAuthorityId, clock!.GetUtcNow().AddSeconds(5)) };
@@ -484,7 +848,7 @@ public sealed class OctoberScanBusinessFinalizationTests
                 transport.Root = unit.Document;
                 if (boundary == "revoked") host.AuthorityAllowed = false;
                 if (boundary == "session-expired") clock!.Advance(TimeSpan.FromSeconds(10));
-                if (boundary == "replay-authority-held") clock!.Advance(TimeSpan.FromSeconds(1));
+                if (clock is not null && boundary != "session-expired") clock.Advance(TimeSpan.FromSeconds(1));
                 return [new FlowRootSelection(unit.UnitId, unit.Document, FlowRootKind.SelectedCodeUnit, unit.SemanticSelector)];
             }, new(execution.Provider.SourceIdentity, 0, profile.Name, "chat-completions", profile.Endpoint, profile.Model, profile.CredentialReference),
             "Controlled accepted resolution only.", "Controlled accepted synthesis only.", new(),
@@ -591,7 +955,8 @@ public sealed class OctoberScanBusinessFinalizationTests
             try
             {
                 await state.PublicationHeld.Task.WaitAsync(TimeSpan.FromSeconds(5));
-                await state.PublicationBoundExpired.Task.WaitAsync(TimeSpan.FromSeconds(12));
+                clock!.Advance(TimeSpan.FromSeconds(120));
+                await state.PublicationBoundExpired.Task.WaitAsync(TimeSpan.FromSeconds(5));
                 // The bound-token callback runs before finalizer continuations. Observe the actual
                 // post-timeout lookup/runner completion before deciding whether ownership was retained.
                 await state.PublicationLookupCompleted.Task.WaitAsync(TimeSpan.FromSeconds(3));
@@ -604,6 +969,30 @@ public sealed class OctoberScanBusinessFinalizationTests
             finally { state.ReleasePublication.TrySetResult(); await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
         }
         var report = Assert.IsType<OctoberScanReport>((await pending).Report);
+        if (boundary.StartsWith("publication-precommit-", StringComparison.Ordinal))
+        {
+            var expected = boundary switch
+            {
+                "publication-precommit-timeout" => KnowledgeWriteStatus.CancelledBeforeCommit,
+                "publication-precommit-invalid" => KnowledgeWriteStatus.InvalidProposal,
+                _ => KnowledgeWriteStatus.StorageUnavailable
+            };
+            var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+            Assert.Equal(BusinessFinalizationStatus.CommitIndeterminate, diagnostic.LookupStatus);
+            Assert.Null(report.Publication); Assert.Empty(report.Documents);
+            Assert.Equal(1, state.Publications); Assert.True(state.PublicationLookups >= 2);
+            using var diagnosticJson = JsonDocument.Parse(JsonSerializer.Serialize(diagnostic));
+            Assert.True(diagnosticJson.RootElement.TryGetProperty("OriginalPublicationStatus", out var originalStatus));
+            Assert.Equal((int)BusinessFinalizationStatus.Failed, originalStatus.GetInt32());
+            Assert.Equal((int)expected, diagnosticJson.RootElement.GetProperty("OriginalPublicationPersistenceStatus").GetInt32());
+            await using var database = host.Database.Factory.CreateDbContext();
+            Assert.Equal(0, await database.KnowledgePublications.CountAsync());
+            Assert.Equal(0, await database.DocumentVersions.CountAsync(d=>d.Kind==DocumentKind.BusinessLogic));
+            int calls = transport.BusinessRequests;
+            _ = await runner.ExecuteAsync(execution);
+            Assert.Equal(1, state.Publications); Assert.Equal(calls, transport.BusinessRequests);
+            return;
+        }
         if (boundary == "reason-observer")
         {
             // Controlled consumer conformance through the existing private observer; this does not
@@ -672,7 +1061,7 @@ public sealed class OctoberScanBusinessFinalizationTests
         if (boundary.StartsWith("operator-", StringComparison.Ordinal))
         {
             Assert.Equal(boundary == "operator-scope-before" ? 0 : 1, state.Interactions); Assert.Equal(0, state.RootSelections);
-            if (boundary is "operator-valid" or "operator-broker-valid") { Assert.Equal(0, report.ExitCode); Assert.NotNull(report.Publication); Assert.Equal(1, transport.BusinessRequests); }
+            if (boundary is "operator-valid" or "operator-broker-valid") { Assert.Equal(0, report.ExitCode); Assert.NotNull(report.Publication); Assert.Equal(2, transport.BusinessRequests); }
             else if (boundary == "operator-empty") { Assert.Equal(5, report.ExitCode); Assert.Equal(0, transport.BusinessRequests); }
             else { Assert.NotEqual(0, report.ExitCode); Assert.NotEqual(5, report.ExitCode); Assert.Null(report.Publication); Assert.Equal(0, transport.BusinessRequests); }
             var replay = await runner.ExecuteAsync(execution);
@@ -758,7 +1147,7 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Empty(hidden.AcceptedFiles); Assert.Empty(hidden.TerminalCoverage);
             Assert.Null(hidden.BusinessDiagnostics);
             Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.Matching); Assert.Equal(OctoberPhaseStatus.Unavailable, hidden.BusinessLogic);
-            Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(1, state.Publications); Assert.Equal(2, transport.BusinessRequests);
             await using var context = host.Database.Factory.CreateDbContext();
             Assert.Equal(1, await context.KnowledgePublications.CountAsync());
         }
@@ -798,11 +1187,11 @@ public sealed class OctoberScanBusinessFinalizationTests
                 Assert.Empty(report.TerminalCoverage);
             }
             Assert.Equal(1, state.Publications);
-            Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(2, transport.BusinessRequests);
             var replay = await runner.ExecuteAsync(execution);
             Assert.Null(replay.Report!.Publication);
             Assert.Equal(1, state.Publications);
-            Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(2, transport.BusinessRequests);
             await using var context = host.Database.Factory.CreateDbContext();
             Assert.Equal(1, await context.KnowledgePublications.CountAsync());
         }
@@ -854,16 +1243,26 @@ public sealed class OctoberScanBusinessFinalizationTests
             Assert.Equal(OctoberPublicationStatus.Confirmed, report.PublicationStatus); Assert.Equal("cl-and-bl", report.CompletedStage);
             Assert.NotNull(report.Publication); Assert.Equal(2, report.Documents.Length);
             Assert.Contains(report.Gaps, gap => gap.Code == "operation_log_unavailable");
-            Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(1, state.Publications); Assert.Equal(2, transport.BusinessRequests);
+            if (boundary == "publication-held-log")
+            {
+                var diagnostic = Assert.IsType<OctoberBusinessDiagnosticSnapshot>(report.BusinessDiagnostics);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.OriginalPublicationStatus);
+                Assert.Equal(KnowledgeWriteStatus.LogUnavailable, diagnostic.OriginalPublicationPersistenceStatus);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.FinalizerStatus);
+                Assert.Equal(KnowledgeWriteStatus.LogUnavailable, diagnostic.FinalizerPersistenceStatus);
+                Assert.Equal(BusinessFinalizationStatus.Published, diagnostic.LookupStatus);
+                Assert.Equal(KnowledgeWriteStatus.LogUnavailable, diagnostic.LookupPersistenceStatus);
+            }
             var repeated = await runner.ExecuteAsync(execution);
             Assert.Equal(report.Publication, repeated.Report!.Publication); Assert.Equal(1, state.Publications);
         }        else if (boundary is "publication-ack" or "publication-first-lookup-unknown" or "reason-observer")
         {
             Assert.Equal(0, report.ExitCode); Assert.Equal("cl-and-bl", report.CompletedStage);
             Assert.NotNull(report.Publication); Assert.Equal(1, state.Publications); Assert.True(state.PublicationLookups > 0);
-            Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(2, transport.BusinessRequests);
             var replay = await runner.ExecuteAsync(execution);
-            Assert.Equal(report.Publication, replay.Report!.Publication); Assert.Equal(1, state.Publications); Assert.Equal(1, transport.BusinessRequests);
+            Assert.Equal(report.Publication, replay.Report!.Publication); Assert.Equal(1, state.Publications); Assert.Equal(2, transport.BusinessRequests);
         }
         else if (boundary == "reason-invalid-proposal")
         {
@@ -1096,6 +1495,16 @@ public sealed class OctoberScanBusinessFinalizationTests
         public async Task<BusinessFinalizationResult> PublishAsync(FlowFinalizationPublicationRequest request, CancellationToken token = default)
         {
             state.Publications++; state.BeforePublication?.Invoke();
+            if (state.Boundary.StartsWith("publication-precommit-", StringComparison.Ordinal))
+                return new(BusinessFinalizationStatus.Failed,request.Operation,null,new(true,[]))
+                {
+                    PersistenceStatus = state.Boundary switch
+                    {
+                        "publication-precommit-timeout" => KnowledgeWriteStatus.CancelledBeforeCommit,
+                        "publication-precommit-invalid" => KnowledgeWriteStatus.InvalidProposal,
+                        _ => KnowledgeWriteStatus.StorageUnavailable
+                    }
+                };
             var result = await inner.PublishAsync(request, token);
             if (state.Boundary is "publication-held-log" or "publication-held-revoked" or "publication-held-scope-stop")
             {
@@ -1309,11 +1718,14 @@ public sealed class OctoberScanBusinessFinalizationTests
     private sealed class NaturalTransport : HttpMessageHandler
     {
         internal DocumentVersionReference? Root;
-        internal int WorkerRequests, BusinessRequests, ResolutionRequests;
+        internal int WorkerRequests, BusinessRequests, ResolutionRequests, ReviewRequests;
         internal int ExpectedWorkers = 1;
         internal int? ExpectedBusinessRequests;
         internal bool IncludeCallerObservation, ReturnUnresolved, InvalidSynthesisProposal;
+        internal string? ResolutionTextOverride;
+        internal Action? OnBusinessDispatch;
         internal List<(string Endpoint, string? Authorization, string Model)> Requests { get; } = [];
+        internal List<string> SynthesisPackets { get; } = [];
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
@@ -1331,10 +1743,35 @@ public sealed class OctoberScanBusinessFinalizationTests
                 return new(HttpStatusCode.OK) { Content = new StringContent("data: " + chunk + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream") };
             }
             BusinessRequests++;
+            OnBusinessDispatch?.Invoke(); // Advance only the test-owned clock across successive physical requests.
+            string userText = body.RootElement.GetProperty("messages").EnumerateArray()
+                .Last(value => value.GetProperty("role").GetString() == "user").GetProperty("content").GetString()!;
+            using var user = JsonDocument.Parse(userText);
+            if (user.RootElement.TryGetProperty("phase", out var phase) && phase.GetString() == "semantic-review")
+            {
+                ReviewRequests++;
+                Assert.Equal(1, ReviewRequests);
+                Assert.Equal((ExpectedBusinessRequests ?? (IncludeCallerObservation ? 2 : 1)) + 1, BusinessRequests);
+                var messages = body.RootElement.GetProperty("messages").EnumerateArray().ToArray();
+                Assert.Equal(new[] { "system", "user", "assistant", "user" }, messages.Select(message => message.GetProperty("role").GetString()));
+                Assert.False(user.RootElement.TryGetProperty("candidate", out _));
+                Assert.False(user.RootElement.TryGetProperty("packet", out _));
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var candidate = JsonSerializer.Deserialize<BusinessSynthesisProposal>(messages[^2].GetProperty("content").GetString()!, options)!;
+                var packet = JsonSerializer.Deserialize<BusinessSynthesisPacket>(messages[1].GetProperty("content").GetString()!, options)!;
+                Assert.Equal(OctoberKnowledgePolicy.SerializeCanonical(candidate), messages[^2].GetProperty("content").GetString());
+                Assert.Equal(OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(candidate)), user.RootElement.GetProperty("proposalDigest").GetString());
+                Assert.All(candidate.Sections.SelectMany(section => section.Claims).SelectMany(claim => claim.Inputs), input => Assert.Equal(Root, input.Document));
+                var review = OctoberBusinessSynthesisTests.SemanticReviewForDocuments(packet.Documents, candidate);
+                string reviewed = JsonSerializer.Serialize(new { id = "controlled-business-review", @object = "chat.completion", created = 1, model,
+                    choices = new[] { new { index = 0, message = new { role = "assistant", content = review.Text }, finish_reason = "stop" } },
+                    usage = new { prompt_tokens = 80, completion_tokens = 25, total_tokens = 105 } });
+                return new(HttpStatusCode.OK) { Content = new StringContent(reviewed, Encoding.UTF8, "application/json") };
+            }
             if (IncludeCallerObservation && Root is null)
             {
                 ResolutionRequests++; Assert.Equal(1, ResolutionRequests);
-                string resolution = "null";
+                string resolution = ResolutionTextOverride ?? "null";
                 if (ReturnUnresolved)
                 {
                     var message = body.RootElement.GetProperty("messages").EnumerateArray().Single(value => value.GetProperty("role").GetString() == "user");
@@ -1347,6 +1784,8 @@ public sealed class OctoberScanBusinessFinalizationTests
             }
             Assert.Equal(ExpectedBusinessRequests ?? (IncludeCallerObservation ? 2 : 1), BusinessRequests);
             var root = Assert.IsType<DocumentVersionReference>(Root);
+            SynthesisPackets.Add(body.RootElement.GetProperty("messages").EnumerateArray()
+                .Single(value => value.GetProperty("role").GetString() == "user").GetProperty("content").GetString()!);
             var proposal = new BusinessSynthesisProposal("条件处理", [new("business", 0, "处理规则", [new("rule", "满足条件时执行处理。", ClaimQualification.SourceSupported, [new(root, "logic", "rule")], [])])]);
             string json = JsonSerializer.Serialize(new { id = "controlled-business", @object = "chat.completion", created = 1, model,
                 choices = new[] { new { index = 0, message = new { role = "assistant", content = JsonSerializer.Serialize(InvalidSynthesisProposal ? new BusinessSynthesisProposal("", []) : proposal) }, finish_reason = "stop" } }, usage = new { prompt_tokens = 80, completion_tokens = 25, total_tokens = 105 } });

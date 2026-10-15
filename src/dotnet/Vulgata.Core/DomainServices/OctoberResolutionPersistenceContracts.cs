@@ -7,7 +7,11 @@ namespace Vulgata.Core.DomainServices.OctoberKnowledge;
 /// </summary>
 public sealed record ResolutionAcceptanceRequest(OperationKey Operation, CorpusHandle Corpus, Guid AttemptId,
     string CanonicalPayloadDigest, string InquiryFingerprint, ResolutionWitness? Witness,
-    ResolutionOutcomeKind? ExecutionDisposition = null);
+    ResolutionOutcomeKind? ExecutionDisposition = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionPolicyVersion { get; init; }
+}
 
 public sealed record ResolutionCorpusResult(KnowledgeReadStatus Status, ResolutionCorpus? Corpus);
 public sealed record ResolutionAcceptanceResult(KnowledgeWriteStatus Status, OperationKey Operation, ResolutionOutcome? Outcome);

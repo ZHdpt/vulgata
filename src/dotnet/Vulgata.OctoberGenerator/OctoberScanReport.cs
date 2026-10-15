@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Vulgata.Agents.WorkerExecution;
+using Vulgata.Agents.OctoberBusiness;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.OctoberKnowledge;
 using Vulgata.Infrastructure.Analysis.Java;
@@ -10,7 +11,7 @@ public enum OctoberCoverageStatus { Complete, Partial, None }
 public enum OctoberExecutionStatus { Completed, Failed, Interrupted, Indeterminate }
 public enum OctoberPublicationStatus { NotRequested, Confirmed, NoContent, Failed, Indeterminate }
 public enum OctoberPhaseStatus { NotRequested, NotStarted, Completed, Partial, NoContent, Failed, Interrupted, Indeterminate, Unavailable }
-public enum OctoberBusinessDiagnosticBoundary { OriginalSlot, Finalizer, ExactLookup, ReaderBinding, ExactReader, Completed }
+public enum OctoberBusinessDiagnosticBoundary { OriginalSlot, Finalizer, ExactLookup, ReaderBinding, ExactReader, Completed, Resolution }
 public enum OctoberToolFailureBoundary { ArgumentBinding, RuntimeOpen, RuntimeInvoke, RuntimeSettlement, SourceCurrentness, ResultAdmission }
 
 public sealed record OctoberToolDiagnosticSnapshot(SourceMetadataOperation Operation, OctoberToolFailureBoundary Boundary,
@@ -27,7 +28,13 @@ public sealed record OctoberBusinessDiagnosticSnapshot(
     OctoberBusinessDiagnosticBoundary Boundary,
     bool OperationMismatch)
 {
+    public BusinessFinalizationStatus? OriginalPublicationStatus { get; init; }
+    public KnowledgeWriteStatus? OriginalPublicationPersistenceStatus { get; init; }
     public BusinessSynthesisFailureReason? OriginalSynthesisFailureReason { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public ResolutionFailureReason? ResolutionFailureReason { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ResolutionFailureField { get; init; }
 }
 
 public sealed record OctoberScanTimings(TimeSpan Elapsed, TimeSpan QueueWait,

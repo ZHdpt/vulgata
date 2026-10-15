@@ -1,9 +1,202 @@
 # Existing accepted CL → Business Logic: owner handoff
 
+Latest runtime boundary: the original database received the purpose-only migration
+after a verified backup. The first retrieval-enabled paid trial settled without BL
+publication: all ten reads returned Unavailable and review failed with JsonInvalid.
+All prior publications remain unchanged; [exact evidence and next diagnosis](retrieval-trial-2026-10-13.md).
+Earlier no-migration/no-paid-qualification statements below describe their historical checkpoints.
+
+Current implementation correction: runtime semantic checking now self-reviews the
+latest draft in reconstructed synthesis context, with explicit no-guess/no-invented-
+field-meaning instructions. 339 focused tests and independent code review passed;
+no paid qualification of this change occurred. The user subsequently approved the
+from-start CL-referenced source tool and its isolated migration qualification. The
+tool is implemented behind `EnableReferencedSourceRetrieval` (default false), reusing
+contained source reads and explicit Business-purpose grants. Retained-database
+migration and live source/provider qualification remain unperformed. See
+[scope, comparison and evidence](referenced-source-retrieval.md).
+
+Latest October 13 Business boundary: `f617e405` adds opt-in encrypted stage
+capture; 339 focused tests and independent implementation review passed. The one
+bounded trial `d836d3f4-d832-48f9-9f05-fb23086ced6c` published
+`49082889-3049-4408-ae65-1b1c3a2ddf55` after one semantic correction. Four requests
+used 160,136 known tokens. Ordinary User-only API reading, settlement and preservation
+of all nine old publications passed. Independent semantic assessment still requires
+revision: one unsupported business field label and implementation identifiers in
+Business prose. Do not treat the model's approval as semantic qualification or expand
+without correction. All four draft/review stages are protected and retained.
+See [semantic gate and diagnostic trial evidence](semantic-gate-2026-10-13.md).
+
+Earlier gate trial at `fa60c7a4` (`daa9da8f-b2c8-4f3d-bc54-8b603824ea07`) was
+safely rejected/settled without publication; its detailed drafts were not retained.
+The new trial diagnoses its own captured content, not that unavailable earlier text.
+
+Previous connected qualification (October 13, 15:34–15:35 Asia/Shanghai): reviewed
+prompt correction `e969c428` passed 129 focused tests. One authorized paid run
+published `ca70a877-d7fe-4736-a031-fa48a21ec098`, combining two exact CL members
+and one accepted static edge into one BL. Ordinary User-only reading and settlement
+passed; all eight prior publications and the selected context overrides were
+verified. One request consumed 25,447 known tokens. Independent semantic review
+requires revision for three overstatements (success entry predicate, described
+database effect, and condition-node purpose); wider generation remains paused.
+See [connected qualification and exact findings](connected-flow-qualification-2026-10-13.md).
+
+Previous real run (October 13, 14:42–14:45 Asia/Shanghai): the newly authorized
+20-minute continuation completed and settled, using one synthesis request and
+19,738 known tokens. Publication `76616690-ea70-4ac0-93d0-bff60b457cad` contains
+one new BL, with ordinary User-only reading and CL denial verified. All earlier
+publications remain unchanged; all eleven resolution outcomes were reused and
+four supported static links are included. The selected authMethods group itself
+still has one member and zero member edges.
+
+Presentation hold: independent review found an unsupported success condition in
+`out-pwd-2` (a mechanism described as “through/using” became “after validation
+succeeds”). The immutable publication is preserved; no further paid attempt or
+manual content correction occurred. See [bounded publication and review evidence](bounded-bl-publication-2026-10-13.md).
+
+The recovery boundary below remains valid history; its no-new-publication statement
+applies to the recovery action, not this subsequent successful run.
+
+Current October 13 boundary: run `73f1e438-8f9f-4015-bfdf-9eedc36dbbac` is now
+administratively abandoned and fenced through the supported owner store. Recovery
+committed at 14:34:37 Asia/Shanghai and a separate lookup returned AlreadyCommitted.
+The original Begin remains intact; no normal completion or new BL was fabricated.
+All seven publications, eleven resolution outcomes and six finalizations are unchanged.
+
+A reproduced pre-synthesis blocker is the run configuration: its 840-second
+lifetime was shorter than synthesis's 900-second requested attempt. Actual scope
+reproduction denied 840/900 and granted 1200/900 without sending. Source inspection
+explains the indeterminate-report path; the original internal finalizer result was
+not retained for direct confirmation. Use a fresh RunId
+and launch marker, the corrected v2 recovery binary (`76022350` or later), and a
+run lifetime of at least 900 seconds with adequate total headroom. Never reuse the
+abandoned RunId. The four supported links and seven unresolved outcomes are retained
+and reused; they are not regenerated or manually repaired.
+
+The narrow recovery receipt compatibility fix preserves the exact optional resolution
+profile and leaves legacy receipt bytes unchanged. Focused tests passed 56/56 and
+independent review passed. This recovery made no provider calls. The earlier one-hour
+spend extension ended at 13:50:39 Asia/Shanghai; no further paid execution is included
+in this recovery action. See [diagnosis and recovery evidence](business-transport-correction.md).
+Historical checkpoints below retain their original grants and outcomes; their
+remaining-run counts and earlier zero-link statements are superseded by this boundary.
+
+Latest correction and rerun (2026-10-13): Business-only SDK deadline and resolution
+low-reasoning fixes are committed at `348f90e5`, with 423/423 focused tests and
+independent review passing. The one authorized rerun
+`64a9cb86-d08d-4758-862a-4d193fbb501f` received a response in 68 seconds
+(29,336 known tokens), then failed with `business_resolution_ineligible` before
+accepting an edge or publishing BL. It is settled; all seven prior publications
+are unchanged. Exact underlying response/authorization failure is not exposed by
+the current diagnostics. See [transport correction and rerun evidence](business-transport-correction.md).
+Four of five invocations are consumed; one remains unused. No automatic rerun.
+
+Latest real link qualification (2026-10-13): the explicitly authorized one-root
+paid run stopped on its first resolution request after approximately 100 seconds.
+Run `86b950d4-20ea-4125-8fa4-67a12e634082` is locally settled; one request has unknown
+token usage. Zero edges were accepted and no new BL was published. All seven
+existing publications remain unchanged. Installed SDK timeout and missing
+resolution reasoning override are recorded in the
+[bounded link-run evidence](connected-links-run-2026-10-13.md). No automatic retry;
+the five-run grant has three consumed invocations and two unused.
+
+Current development scope (2026-10-13): the user authorized evidence-backed
+references and connected rooted Business groups, with a hard stop before another
+paid scan. The opt-in `october-retained-evidence-v2` continuation is documented in
+[connected retained flows](connected-retained-flows.md). It preserves existing CL,
+BL publications and legacy replay, with no migration or runtime configuration
+change. Offline inspection of the authenticated 163-CL export finds 11 candidate
+reference pairs (nine from seven of the prior 22 selected roots); these are not
+accepted edges or a new generated publication. Cross-repository SOFA linkage and
+the separate large-publication reader issue remain unqualified. This scoped
+development direction supersedes automatic escalation to a whole-corpus paid run.
+
+Latest local checkpoint (2026-10-13 Asia/Shanghai): run-local context is implemented
+at `81b135c1` (298/298 focused tests plus owned PostgreSQL qualification). The generic
+wording follow-up is `cca9d8cb` (105/105 focused synthesis tests); both passed
+independent review. Two paid 22-root runs completed and settled under the five-run
+grant. Latest publication `5c54c693-0575-4171-86f5-a0f6048c8adc` contains 22 new BL
+documents / 204 claims, all ordinary User-only reads passed. Exact new context is
+retained; original CL and all five prior BL publications are unchanged. Combined
+usage: 44 requests / 767,225 known tokens. Three paid runs remain unused.
+
+Independent review found three wording errors across two latest documents; this is
+useful generated output, not a clean semantic pass. Stop paid attempts here rather
+than repeatedly seeking a cleaner sample. Full-scope preflight also found two
+ineligible roots and a measured 32-MiB reader-cap failure for the other 161 roots.
+The management scope decision for exclusions and bounded reader correction remains
+pending. See [exact results, findings and blockers](run-context-qualification-2026-10-12.md)
+and [context amendment](run-context-override.md). No CL rescan, migration, Web restart,
+merge or push occurred. Historical stops below describe their own earlier grants.
+Latest runtime checkpoint (2026-10-12): the explicitly authorized context-aware
+22-root BL-only run on `1674979c` completed with exit 0 and settled normally.
+New publication `d2f63e4d-107a-41c8-b213-e18fccf857cb` contains 22 new BL versions;
+all passed ordinary User-only reading. Original CL and all three prior BL
+publications are unchanged. Usage: 22 requests / 356,502 known tokens.
+The prior four targeted wording issues improved, but independent review found
+five other unsupported statements; this is not a clean semantic pass. See
+[exact result and findings](context-bl-run-2026-10-12.md). The one-run grant is
+consumed; stop before further generation or scope expansion.
+
+Latest implementation (2026-10-12): the user-authorized
+[prompt and scoped-context correction](advisory-context-correction.md) adds generic
+evidence-strength instructions, named gap counts, and bounded immutable System
+(project)/Repository advisory context. It preserves canonical publication and
+complete contributor authorization. Stop before actual scanning; this correction
+does not change any existing published document or establish improved real output.
+
+Latest runtime checkpoint (2026-10-12): the explicitly approved recovery and fresh
+22-root run **completed with exit 0**, publishing
+`e572a7d6-1730-4788-961d-3793a1728744`. All 22 BL documents passed ordinary
+User-only reader verification; original CL and both prior BL publications remain
+unchanged. The recovery implementation is `07ae0573`; older continuation hosts must
+include it before using the recovered batch. No migration, merge or push occurred.
+Independent content review identified semantic overstatements in four documents
+and additional wording cautions; publication/reader success is not a clean semantic
+pass. See [exact result and findings](recovered-22-root-run-2026-10-12.md).
+This single provider-run grant is consumed. Stop; do not silently edit immutable
+content or regenerate. The following material records earlier boundaries.
+
 Reconciled: 2026-10-11. Scope: October first deliverable, login/registration presentation.
 The user retains management authority. The user explicitly authorized integration
 and Business synchronization, followed by a separate prompt to start Business work.
 This synchronization grants no provider, database, source, host or retained-data operation.
+
+The subsequent user-authorized readiness check at `f06b85bf` verified the retained
+publication and selected stored flow roots. See [retained CL readiness](retained-cl-readiness-2026-10-11.md)
+for the measured payload and observation-role blockers, controlled test evidence,
+and the execution proposal that remains blocked before paid work.
+
+The approved narrow correction is now recorded in the
+[one local-flow BL checkpoint](minimal-bl-publication-checkpoint.md): compact exact
+root evidence, complete owner lineage, corrected provider accounting/settings and
+373 passing controlled tests. That checkpoint supersedes the earlier multi-root
+execution proposal. The user subsequently authorized one invocation: one registration
+BL is now canonically published and ordinary-reader verified, with original CL intact.
+The original command reported a post-publication catalog response-budget failure.
+A subsequent authorized bounded-paging correction passed 67/67 controlled tests and
+read-only verification of all 164 exact existing publication members, without another
+provider call or database write. See the checkpoint for exact IDs and evidence.
+
+One separately authorized additional Generate subsequently **completed with exit 0**
+on `341243ff`, publishing `464743bc-93f3-4254-bda0-ec992a5ae7b8`. Its new local-flow
+BL version was verified by an ordinary User; original CL and first BL remain unchanged.
+One provider call / 23573 tokens, settled receipts, no rescan. This grant is consumed.
+Cross-repository completeness remains deferred; the milestone is now stopped.
+
+The subsequent user-authorized 22-root expansion with a two-hour/trillion-token
+budget did **not** publish: exit 4, 23 calls / 334902 known tokens, unmatched Begin
+`4a38a325-98bb-428c-beb3-32d0110ef0a4`. Read-only inspection confirmed prior data
+unchanged and no new BL. Controlled validation alone exceeded the fixed ten-second
+publication bounds. See [expanded qualification](expanded-bl-run-2026-10-11.md).
+Do not retry or clear the receipt; publication scaling and canonical recovery need
+resolution before another run. The prior successful BL remains available.
+
+The user-authorized scaling fix now shares owner planning across the publication
+validation batch while preserving per-proposal validation and atomicity. Focused
+111/111 tests and independent review passed; controlled retained-input validation
+fell from 18.286 seconds to 1.223 seconds. Full PostgreSQL publication remains
+unqualified after the fix, and the stranded admission still needs canonical recovery.
 
 ## Accepted integration and superseded assessment
 

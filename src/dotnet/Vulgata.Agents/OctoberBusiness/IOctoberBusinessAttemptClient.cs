@@ -3,6 +3,17 @@ using Vulgata.Core.DomainServices.OctoberKnowledge;
 
 namespace Vulgata.Agents.OctoberBusiness;
 
+public enum BusinessSynthesisAttemptStrategy { Configured, ThinkingDisabled, CompactedThinkingDisabled }
+
+/// <summary>Request-local synthesis finalization settings. This port never grants another attempt.</summary>
+public interface IOctoberBusinessSynthesisClient : IOctoberBusinessAttemptClient
+{
+    bool SupportsSynthesisCorrections { get; }
+    Task<ChatResponse> GetSynthesisResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions options,
+        IOctoberProviderAttemptLease lease, BusinessSynthesisAttemptStrategy strategy,
+        Action<long> onDispatched, CancellationToken cancellationToken = default);
+}
+
 /// <summary>
 /// Selected nonstreaming transport for one already-admitted Business attempt. SDK types stay in
 /// Agents. The host binds this client to the exact selected profile; unbound calls are forbidden.

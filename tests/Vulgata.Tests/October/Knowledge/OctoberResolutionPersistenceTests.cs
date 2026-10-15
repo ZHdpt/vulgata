@@ -12,6 +12,162 @@ namespace Vulgata.Tests.October.Knowledge;
 public sealed class OctoberResolutionPersistenceTests
 {
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RetainedV2_ConnectedGroupPublication_RevalidatesSelectedPolicyAndPreservesOldPublicationAsync(bool mismatchedSelection)
+    {
+        await using var fixture = await RetainedResolutionPersistenceCase.CreateAsync();
+        var source = new OctoberKnowledgePublishedSource(fixture.Acceptance.Factory);
+        string oldPublication = OctoberKnowledgePolicy.SerializeCanonical(await source.LoadAsync(fixture.Publication));
+        var legacy = await fixture.RequestAsync(null);
+        var current = await fixture.RequestAsync(OctoberResolutionPolicy.RetainedPolicyVersion);
+        Assert.Equal(KnowledgeWriteStatus.Committed, (await fixture.Store(null).AcceptOutcomeAsync(legacy)).Status);
+        var accepted = await fixture.Store(OctoberResolutionPolicy.RetainedPolicyVersion).AcceptOutcomeAsync(current);
+        Assert.Equal(KnowledgeWriteStatus.Committed, accepted.Status);
+        var root = await fixture.RootAsync(OctoberResolutionPolicy.RetainedPolicyVersion);
+        var loaded = await new OctoberFlowPlanningInputLoader(fixture.Acceptance.Factory, fixture.Acceptance.Authorization,
+            OctoberResolutionPolicy.RetainedPolicyVersion).LoadAsync(fixture.Corpus, [root]);
+        Assert.Equal(KnowledgeReadStatus.Success, loaded.Status);
+        var input = loaded.Input!;
+        var group = Assert.Single(OctoberFlowPlanner.Plan(input).Groups);
+        Assert.Equal(2, group.Members.Length);
+        var caller = input.Corpus.Documents.Single(document => document.Version == root.Document);
+        var claim = caller.Sections[0].Claims[0];
+        var proposal = new BusinessSynthesisProposal("静态流程引用说明", [new("main", 0, "流程声明",
+            [new("declared", "入口声明引用另一个流程资源；实际运行时分派仍未证实。", ClaimQualification.SourceSupported,
+                [new(root.Document, caller.Sections[0].SectionId, claim.ClaimGroupId)], [])])]);
+        var operation = new OperationKey(fixture.Corpus.Binding.BatchId, OperationKind.FinalizeCorpus, Guid.NewGuid());
+        var selection = new BusinessFinalizationSelection([root], new(), Guid.NewGuid(), "controlled-profile",
+            OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(FinalizationContractCase.Provider),
+            OctoberKnowledgePolicy.Hash("Controlled retained evidence synthesis."), 40)
+        { ResolutionPolicyVersion = mismatchedSelection ? null : OctoberResolutionPolicy.RetainedPolicyVersion };
+        var digest = OctoberBusinessFinalizationPolicy.ComputeRequestDigest(new(operation, fixture.Corpus, "", new FinalizationForbiddenScope())
+        { Selection = selection });
+        var request = new FlowFinalizationPublicationRequest(operation, fixture.Corpus, digest, selection,
+            [new(root, group.GroupVersionId, proposal)], [], "");
+        request = request with { CanonicalOutcomeDigest = OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(request) };
+        var result = await new OctoberFlowPublicationStore(fixture.Acceptance.Factory, fixture.Acceptance.Authorization,
+            fixture.Acceptance.Guard, fixture.Acceptance.Log).PublishAsync(request);
+        await using var context = fixture.Acceptance.Factory.CreateDbContext();
+        if (mismatchedSelection)
+        {
+            Assert.Equal(KnowledgeWriteStatus.InvalidProposal, result.PersistenceStatus);
+            Assert.Null(result.Publication);
+            Assert.Equal(0, await context.BusinessFinalizations.CountAsync());
+        }
+        else
+        {
+            Assert.Equal(BusinessFinalizationStatus.Published, result.Status);
+            var publication = (await source.LoadAsync(result.Publication!))!;
+            var business = Assert.Single(publication.Documents.Where(document => document.Kind == DocumentKind.BusinessLogic));
+            Assert.True(input.Contributors.ToHashSet().SetEquals(business.Contributors));
+            Assert.Contains(publication.Relationships, value => value.Relationship.RelationshipVersionId == accepted.Outcome!.Relationship!.RelationshipVersionId);
+            Assert.DoesNotContain(publication.Relationships, value => value.Relationship.From == legacy.Witness!.Caller.Document);
+            var retained = await context.BusinessFinalizations.AsNoTracking().SingleAsync();
+            Assert.Contains(OctoberResolutionPolicy.RetainedPolicyVersion, retained.RequestJson, StringComparison.Ordinal);
+            var reader = new OctoberKnowledgeReader(source, result.Publication!, new B0bReaderDisclosure(),
+                new OctoberKnowledgeCursorProtector(new OctoberKnowledgeDataProtectionTokenProtector(new EphemeralDataProtectionProvider()), new B0bReadClock()), new B0bReadLog());
+            var opened = await reader.OpenReadSelectionAsync(new(result.Publication!, new("ordinary-user", "controlled-stamp"), KnowledgeMode.Business,
+                KnowledgePurpose.Reader, input.Corpus.Documents.Select(document => document.RepositoryId).Distinct().ToImmutableArray()));
+            Assert.Equal(KnowledgeReadStatus.Success, opened.Status);
+            var read = await reader.ReadExactAsync(new(opened.Selection!, new(business.Reference.BatchId, result.Publication!.PublicationId,
+                business.Reference.LogicalDocumentId, business.Reference.DocumentVersionId)));
+            Assert.Equal(KnowledgeReadStatus.Success, read.Status);
+        }
+        Assert.Equal(oldPublication, OctoberKnowledgePolicy.SerializeCanonical(await source.LoadAsync(fixture.Publication)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RetainedV2_MixedProfileHistory_LoadReplayAndContinuationRemainSeparatedAsync()
+    {
+        await using var fixture = await RetainedResolutionPersistenceCase.CreateAsync();
+        var oldSource = new OctoberKnowledgePublishedSource(fixture.Acceptance.Factory);
+        string before = OctoberKnowledgePolicy.SerializeCanonical(await oldSource.LoadAsync(fixture.Publication));
+        var legacy = await fixture.RequestAsync(null);
+        var current = await fixture.RequestAsync(OctoberResolutionPolicy.RetainedPolicyVersion);
+        Assert.Equal(KnowledgeWriteStatus.Committed, (await fixture.Store(null).AcceptOutcomeAsync(legacy)).Status);
+        Assert.Equal(KnowledgeWriteStatus.Committed, (await fixture.Store(OctoberResolutionPolicy.RetainedPolicyVersion).AcceptOutcomeAsync(current)).Status);
+        foreach (var profile in new string?[] { null, OctoberResolutionPolicy.RetainedPolicyVersion })
+        {
+            var request = profile is null ? legacy : current;
+            var store = fixture.Store(profile);
+            var loaded = await store.LoadCorpusAsync(fixture.Corpus);
+            Assert.Equal(profile, loaded.Corpus!.ResolutionPolicyVersion);
+            var replay = await store.LookupOutcomeAsync(fixture.Corpus, request.Operation, request.CanonicalPayloadDigest);
+            Assert.Equal(KnowledgeWriteStatus.AlreadyCommitted, replay.Status);
+            Assert.Equal(request.InquiryFingerprint, replay.Outcome!.Fingerprint);
+            var root = await fixture.RootAsync(profile);
+            var input = await new OctoberFlowPlanningInputLoader(fixture.Acceptance.Factory, fixture.Acceptance.Authorization, profile)
+                .LoadAsync(fixture.Corpus, [root]);
+            Assert.Equal(KnowledgeReadStatus.Success, input.Status);
+            Assert.Equal(profile, input.Input!.ResolutionPolicyVersion);
+            Assert.Equal(request.InquiryFingerprint, Assert.Single(input.Input.Resolutions).Outcome.Fingerprint);
+            Assert.Equal(2, Assert.Single(OctoberFlowPlanner.Plan(input.Input).Groups).Members.Length);
+            var begin = new BusinessFromClRequest(fixture.Publication, "controlled-operator", Guid.NewGuid(), "") { ResolutionPolicyVersion = profile };
+            begin = begin with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeBeginDigest(begin) };
+            var continuation = fixture.Continuation();
+            var admitted = await continuation.BeginAsync(begin);
+            Assert.Equal(KnowledgeWriteStatus.Committed, admitted.Status);
+            Assert.Equal(profile, admitted.Snapshot!.ResolutionPolicyVersion);
+            Assert.Equal(request.InquiryFingerprint, Assert.Single(admitted.Snapshot.ExistingResolutions).Fingerprint);
+            var completion = new BusinessFromClCompletionRequest(begin, "");
+            completion = completion with { CanonicalPayloadDigest = OctoberBusinessFromClPolicy.ComputeCompletionDigest(completion) };
+            Assert.Equal(KnowledgeWriteStatus.Committed, (await continuation.CompleteAsync(completion, admitted.Admission!)).Status);
+        }
+        var wrongLookup = await fixture.Store(OctoberResolutionPolicy.RetainedPolicyVersion)
+            .LookupOutcomeAsync(fixture.Corpus, legacy.Operation, legacy.CanonicalPayloadDigest);
+        Assert.Null(wrongLookup.Outcome);
+        Assert.Equal(before, OctoberKnowledgePolicy.SerializeCanonical(await oldSource.LoadAsync(fixture.Publication)));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RetainedV2_AcceptanceRejectsWrongProfileBeforeSubmission_AndBindsSelectedDigestAsync()
+    {
+        await using var fixture = await RetainedResolutionPersistenceCase.CreateAsync();
+        var request = await fixture.RequestAsync(OctoberResolutionPolicy.RetainedPolicyVersion);
+        var wrong = request with { ResolutionPolicyVersion = null };
+        wrong = wrong with { CanonicalPayloadDigest = OctoberResolutionStore.ComputeAcceptanceDigest(wrong) };
+        Assert.NotEqual(request.CanonicalPayloadDigest, wrong.CanonicalPayloadDigest);
+        int submissions = fixture.Acceptance.Guard.Submissions;
+        var rejected = await fixture.Store(OctoberResolutionPolicy.RetainedPolicyVersion).AcceptOutcomeAsync(wrong);
+        Assert.Equal(KnowledgeWriteStatus.InvalidProposal, rejected.Status);
+        Assert.Null(rejected.Outcome);
+        Assert.Equal(submissions, fixture.Acceptance.Guard.Submissions);
+        var begin = new BusinessFromClRequest(fixture.Publication, "controlled-operator", Guid.NewGuid(), "");
+        string legacy = OctoberKnowledgePolicy.Hash(OctoberKnowledgePolicy.SerializeCanonical(new
+        { domain = "october/business-from-cl/begin/1", begin.Publication, begin.SubjectId, begin.RunId }));
+        Assert.Equal(legacy, OctoberBusinessFromClPolicy.ComputeBeginDigest(begin));
+        Assert.NotEqual(legacy, OctoberBusinessFromClPolicy.ComputeBeginDigest(begin with { ResolutionPolicyVersion = OctoberResolutionPolicy.RetainedPolicyVersion }));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task RetainedV2_OtherProfileOversizedHistory_DoesNotConsumeSelectedPreflightBudgetAsync()
+    {
+        await using var fixture = await RetainedResolutionPersistenceCase.CreateAsync();
+        var legacy = await fixture.RequestAsync(null);
+        var current = await fixture.RequestAsync(OctoberResolutionPolicy.RetainedPolicyVersion);
+        Assert.Equal(KnowledgeWriteStatus.Committed, (await fixture.Store(null).AcceptOutcomeAsync(legacy)).Status);
+        Assert.Equal(KnowledgeWriteStatus.Committed, (await fixture.Store(OctoberResolutionPolicy.RetainedPolicyVersion).AcceptOutcomeAsync(current)).Status);
+        await using var context = fixture.Acceptance.Factory.CreateDbContext();
+        var stored = await context.ResolutionItems.AsNoTracking().SingleAsync(value => value.OperationId == legacy.Operation.OperationId);
+        // Owned SQLite corruption: this foreign-profile row must be excluded before measuring/materializing its payload.
+        string oversized = new string(' ', 33 * 1024 * 1024) + stored.WitnessJson;
+        Assert.Equal(1, await context.ResolutionItems.Where(value => value.OperationId == legacy.Operation.OperationId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(value => value.WitnessJson, oversized)));
+        var selected = await new OctoberFlowPlanningInputLoader(fixture.Acceptance.Factory, fixture.Acceptance.Authorization, OctoberResolutionPolicy.RetainedPolicyVersion)
+            .LoadAsync(fixture.Corpus, [await fixture.RootAsync(OctoberResolutionPolicy.RetainedPolicyVersion)]);
+        Assert.Equal(KnowledgeReadStatus.Success, selected.Status);
+        Assert.Equal(current.InquiryFingerprint, Assert.Single(selected.Input!.Resolutions).Outcome.Fingerprint);
+        var blocked = await new OctoberFlowPlanningInputLoader(fixture.Acceptance.Factory, fixture.Acceptance.Authorization)
+            .LoadAsync(fixture.Corpus, [await fixture.RootAsync(null)]);
+        Assert.NotEqual(KnowledgeReadStatus.Success, blocked.Status);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task LoadCorpusAsync_RealAcceptedB0_ReconstructsExactRawEvidenceAndAllInputContributorsAsync()
     {
@@ -366,6 +522,7 @@ internal sealed class ResolutionPersistenceFixture : IAsyncDisposable
             ImmutableArray<CommunicationObservation> observations = [new("observation-" + index, "operation", role, "message", "SubmitInvoice", "tenant-a",
                 ["invoice-route", "audit-payload"], ClaimQualification.SourceSupported, [actionEvidence, bindingEvidence])];
             ImmutableArray<Contributor> contributors = [new(ContributorKind.Source, origin.RepositoryId, null, origin.RootBindingIdentity, null, origin.SourceDigest), Acceptance.UncitedContributor];
+            if (index == 0) contributors = contributors.Add(Acceptance.AdvisoryContributor);
             Guid admission = OctoberKnowledgeAcceptanceFixture.Id(9400 + index);
             var proposal = new CompletedFileProposal(Acceptance.Binding, admission, OctoberKnowledgeAcceptanceFixture.Id(9500 + index), origin, "",
                 [unit], observations, [], contributors, new(admission, origin, CoverageDisposition.Accepted, null));
@@ -457,5 +614,114 @@ internal sealed class ResolutionPersistenceAuthorization : IOctoberKnowledgeProd
         LastContributors = contributors;
         return Task.FromResult(Unavailable ? DisclosureStatus.AuthorityUnavailable :
             DeniedRepository is { } denied && contributors.Any(x => x.RepositoryId == denied) ? DisclosureStatus.Denied : DisclosureStatus.Allowed);
+    }
+}
+
+/// <summary>Real owned SQLite accepts separate v1 communication and v2 flow declarations into one immutable corpus.</summary>
+internal sealed class RetainedResolutionPersistenceCase : IAsyncDisposable
+{
+    private RetainedResolutionPersistenceCase(OctoberKnowledgeAcceptanceFixture acceptance, CorpusHandle corpus, PublicationBinding publication)
+    { Acceptance = acceptance; Corpus = corpus; Publication = publication; }
+    public OctoberKnowledgeAcceptanceFixture Acceptance { get; }
+    public CorpusHandle Corpus { get; }
+    public PublicationBinding Publication { get; }
+    public OctoberResolutionStore Store(string? profile) => new(Acceptance.Factory, Acceptance.Authorization, Acceptance.Guard, Acceptance.Log, profile);
+    public OctoberBusinessFromClStore Continuation() => new(Acceptance.Factory, new Allowed(), Acceptance.Guard, Acceptance.Guard, new Settled(), Acceptance.Log);
+    public static async Task<RetainedResolutionPersistenceCase> CreateAsync()
+    {
+        var acceptance = await OctoberKnowledgeAcceptanceFixture.CreateSqliteAsync();
+        try
+        {
+            var retained = new RetainedResolutionCase();
+            ImmutableArray<ResolutionDocument> templates = [ResolutionCase.Document(3, "caller"), ResolutionCase.Document(4, "provider"), .. retained.Corpus.Documents];
+            await using (var setup = acceptance.Factory.CreateDbContext())
+            {
+                foreach (var repository in templates.GroupBy(document => document.RepositoryId))
+                {
+                    var origin = repository.First().Sections[0].Claims[0].Evidence[0].Source!.Origin;
+                    setup.RepositorySelections.Add(new() { BatchId = acceptance.Binding.BatchId, RepositoryId = origin.RepositoryId,
+                        RootBindingIdentity = origin.RootBindingIdentity, OperatorLabel = "controlled-mixed-profile" });
+                }
+                await setup.SaveChangesAsync();
+            }
+            var files = ImmutableArray.CreateBuilder<AcceptedFile>();
+            for (int index = 0; index < templates.Length; index++)
+            {
+                var template = templates[index];
+                var origin = template.Sections[0].Claims[0].Evidence[0].Source!.Origin;
+                string selector = template.Observations.FirstOrDefault()?.OwnerSelector ?? "artifact-file";
+                var unit = OctoberKnowledgeAcceptanceFixture.Unit(selector, null, "Controlled mixed profile " + index,
+                    [new(origin, 1, 100)], template.Sections);
+                Guid admission = ResolutionCase.Id(8900 + index);
+                var proposal = new CompletedFileProposal(acceptance.Binding, admission, ResolutionCase.Id(8910 + index), origin, "",
+                    [unit], template.Observations, [], template.Contributors.Add(acceptance.UncitedContributor),
+                    new(admission, origin, CoverageDisposition.Accepted, null));
+                acceptance.Source.Result = new(origin, 100);
+                var accepted = await acceptance.Writer().AcceptCompletedFileAsync(acceptance.Seal(proposal, ResolutionCase.Id(8920 + index)));
+                Assert.Equal(KnowledgeWriteStatus.Committed, accepted.Status);
+                files.Add(accepted.AcceptedFile!);
+            }
+            var freeze = new CorpusFreezeRequest(new(acceptance.Binding.BatchId, OperationKind.FreezeCorpus, Guid.NewGuid()),
+                acceptance.Binding, "", files.ToImmutable(), files.Select(file => file.Coverage).ToImmutableArray());
+            freeze = freeze with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputeFreezeDigest(freeze) };
+            acceptance.FreezeAuthority.Approve(freeze);
+            var frozen = await acceptance.Writer().FreezeCorpusAsync(freeze);
+            Assert.Equal(KnowledgeWriteStatus.Committed, frozen.Status);
+            var publication = new PublicationRequest(new(acceptance.Binding.BatchId, OperationKind.PublishSelection, Guid.NewGuid()),
+                frozen.Corpus!, "", files.SelectMany(file => file.Documents).ToImmutableArray(), [], [], [], freeze.TerminalCoverage);
+            publication = publication with { CanonicalPayloadDigest = OctoberKnowledgePublicationPolicy.ComputePublicationDigest(publication) };
+            var published = await acceptance.Writer().PublishSelectionAsync(publication);
+            Assert.Equal(KnowledgeWriteStatus.Committed, published.Status);
+            return new(acceptance, frozen.Corpus!, published.Publication!);
+        }
+        catch { await acceptance.DisposeAsync(); throw; }
+    }
+    public async Task<ResolutionAcceptanceRequest> RequestAsync(string? profile)
+    {
+        var corpus = (await Store(profile).LoadCorpusAsync(Corpus)).Corpus!;
+        Assert.NotNull(corpus);
+        Assert.Equal(profile, corpus.ResolutionPolicyVersion);
+        var inquiry = Assert.Single(OctoberResolutionPolicy.Plan(corpus).Inquiries);
+        var caller = corpus.Documents.Single(document => document.Version == inquiry.Caller.Document);
+        var providerRef = Assert.Single(inquiry.Candidates);
+        var provider = corpus.Documents.Single(document => document.Version == providerRef.Document);
+        var observation = OctoberResolutionPolicy.ResolveObservation(corpus, inquiry.Caller)!;
+        var endpoint = OctoberResolutionPolicy.ResolveObservation(corpus, providerRef)!;
+        ResolutionEvidenceAssertion Assertion(ResolutionAssertionKind kind, ResolutionDocument document, int ordinal)
+        {
+            var section = document.Sections[0];
+            var claim = section.Claims[ordinal];
+            return new(kind, document.Version, section.SectionId, claim.ClaimGroupId, claim.Evidence[0], claim.Text, "Controlled exact accepted assertion.");
+        }
+        var witness = new ResolutionWitness(inquiry.Caller, providerRef, observation.Operation, endpoint.Role, endpoint.Operation,
+            observation.Mechanism, profile is null ? "tenant-a" : "Same retained repository/root", "Exact accepted connecting declaration.", null,
+            [Assertion(ResolutionAssertionKind.CallerAction, caller, 0),
+             Assertion(ResolutionAssertionKind.ProviderRoleAndOperation, provider, 0),
+             Assertion(ResolutionAssertionKind.ConnectingBinding, caller, profile is null ? 1 : 0)],
+            [], "Static accepted evidence links these exact retained versions.", [], false, false)
+        { BindingToken = profile is null ? null : RetainedResolutionCase.Token };
+        var request = new ResolutionAcceptanceRequest(new(Corpus.Binding.BatchId, OperationKind.AcceptResolution, Guid.NewGuid()),
+            Corpus, Guid.NewGuid(), "", inquiry.Fingerprint, witness) { ResolutionPolicyVersion = profile };
+        return request with { CanonicalPayloadDigest = OctoberResolutionStore.ComputeAcceptanceDigest(request) };
+    }
+    public async Task<FlowRootSelection> RootAsync(string? profile)
+    {
+        var corpus = (await Store(profile).LoadCorpusAsync(Corpus)).Corpus!;
+        var caller = Assert.Single(OctoberResolutionPolicy.Plan(corpus).Inquiries).Caller.Document;
+        await using var context = Acceptance.Factory.CreateDbContext();
+        var logical = await context.LogicalDocuments.SingleAsync(value => value.LogicalDocumentId == caller.LogicalDocumentId);
+        var unit = await context.CodeUnits.SingleAsync(value => value.UnitId == logical.UnitId);
+        return new(unit.UnitId, caller, FlowRootKind.SelectedCodeUnit, unit.SemanticSelector);
+    }
+    public ValueTask DisposeAsync() => Acceptance.DisposeAsync();
+    private sealed class Allowed : IOctoberBusinessFromClAuthority
+    {
+        public Task<DisclosureStatus> CheckAsync(BusinessFromClRequest request, ImmutableArray<Contributor> contributors, CancellationToken cancellationToken = default) =>
+            Task.FromResult(DisclosureStatus.Allowed);
+    }
+    private sealed class Settled : IOctoberBusinessFromClSettlementAuthority
+    {
+        public Task<BusinessFromClSettlement> VerifyAsync(BusinessFromClCompletionRequest request, BusinessFromClAdmission admission, CancellationToken cancellationToken = default) =>
+            Task.FromResult(BusinessFromClSettlement.Settled);
     }
 }

@@ -16,6 +16,7 @@ public sealed record PreparedSourceApproval(
 public enum PreparedSourcePurpose
 {
     WorkerSourceRead,
+    BusinessSynthesisRead,
 }
 
 /// <summary>

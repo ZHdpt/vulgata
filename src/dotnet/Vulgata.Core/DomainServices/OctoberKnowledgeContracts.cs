@@ -21,7 +21,7 @@ public enum ClaimQualification { SourceSupported, Advisory, Hypothesis, Uncertai
 public enum ContributorKind { Source = 0, GlobalAdvisory = 1, SystemAdvisory = 2, RepositoryAdvisory = 3, SourceMetadata = 4 }
 public enum CoverageDisposition { Accepted, CompletedZeroUnit, Failed, Cancelled, Unprocessed }
 public enum RelationshipKind { References, GeneratedFrom }
-public enum OperationKind { AcceptFile = 0, FreezeCorpus = 1, PublishSelection = 2, FinalizeCorpus = 3, AcceptResolution = 4, BeginGenerate = 5, BeginBusinessFromCl = 6, CompleteBusinessFromCl = 7 }
+public enum OperationKind { AcceptFile = 0, FreezeCorpus = 1, PublishSelection = 2, FinalizeCorpus = 3, AcceptResolution = 4, BeginGenerate = 5, BeginBusinessFromCl = 6, CompleteBusinessFromCl = 7, AbandonBusinessFromCl = 8 }
 public enum KnowledgeWriteStatus
 {
     Committed, AlreadyCommitted, Conflict, InvalidProposal, NotCompleted, StaleOrFenced,
@@ -85,7 +85,11 @@ public sealed record CompletedFileSubmission(OperationKey Operation, CompletedFi
 public sealed record AcceptedFile(Guid ManifestId, Guid AdmissionId, string ProposalDigest,
     ImmutableArray<DocumentVersionReference> Documents, FileCoverage Coverage);
 public sealed record KnowledgeWriteResult(KnowledgeWriteStatus Status, OperationKey Operation,
-    AcceptedFile? AcceptedFile = null, CorpusHandle? Corpus = null, PublicationBinding? Publication = null);
+    AcceptedFile? AcceptedFile = null, CorpusHandle? Corpus = null, PublicationBinding? Publication = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public BusinessFromClAbandonment? Abandonment { get; init; }
+}
 
 /// <summary>Mandatory server-side proof/issuer and live producer authority verification.</summary>
 public interface IOctoberFileAcceptanceAuthority

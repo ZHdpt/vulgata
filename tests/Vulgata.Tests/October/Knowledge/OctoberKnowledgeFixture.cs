@@ -239,7 +239,11 @@ internal sealed class ControlledExecutionScope : IOctoberExecutionScope, IOctobe
     private readonly CancellationTokenSource _stop = new();
     private readonly CancellationToken _stopToken;
     private bool _deadlineExpired;
-    public ControlledExecutionScope() => _stopToken = _stop.Token;
+    public ControlledExecutionScope(long initialTokens = 100)
+    {
+        _stopToken = _stop.Token;
+        RemainingTokens = initialTokens;
+    }
     public CancellationToken HandoffCancellation => _stopToken;
     // Explicit protocol model only: real Scan adapters independently bind run/operation/profile identities.
     public ProviderAdmissionStatus CheckHandoffEligibility(Guid runId, OperationKey finalizationOperation, string providerProfileId) =>
@@ -251,7 +255,7 @@ internal sealed class ControlledExecutionScope : IOctoberExecutionScope, IOctobe
         get => _deadlineExpired;
         set { if (value) { _deadlineExpired = true; _stop.Cancel(); } }
     }
-    public long RemainingTokens { get; private set; } = 100;
+    public long RemainingTokens { get; private set; }
     public int RemainingRequests { get; private set; } = 4;
     public int Grants { get; private set; }
     public int Releases { get; private set; }

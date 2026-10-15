@@ -713,10 +713,25 @@ public sealed partial class OctoberLocalAuthority : IOctoberLocalAuthority
             }, cancellationToken);
     }
 
-    public async Task<OctoberSourceApprovalResult> IssueSourceApprovalAsync(
+    public Task<OctoberSourceApprovalResult> IssueBusinessSourceApprovalAsync(
         IOctoberOperatorSession session,
         IOctoberHistoricalBoundSetupData boundSetup,
         Guid repositoryId,
+        CancellationToken cancellationToken) =>
+        IssueSourceApprovalCoreAsync(session, boundSetup, repositoryId, PreparedSourcePurpose.BusinessSynthesisRead, cancellationToken);
+
+    public Task<OctoberSourceApprovalResult> IssueSourceApprovalAsync(
+        IOctoberOperatorSession session,
+        IOctoberHistoricalBoundSetupData boundSetup,
+        Guid repositoryId,
+        CancellationToken cancellationToken) =>
+        IssueSourceApprovalCoreAsync(session, boundSetup, repositoryId, PreparedSourcePurpose.WorkerSourceRead, cancellationToken);
+
+    private async Task<OctoberSourceApprovalResult> IssueSourceApprovalCoreAsync(
+        IOctoberOperatorSession session,
+        IOctoberHistoricalBoundSetupData boundSetup,
+        Guid repositoryId,
+        PreparedSourcePurpose purpose,
         CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
@@ -724,7 +739,8 @@ public sealed partial class OctoberLocalAuthority : IOctoberLocalAuthority
             return new(OctoberSourceApprovalStatus.Cancelled, null, null);
         }
 
-        if (session is not OperatorSession current || !current.IsCurrentFor(this) ||
+        if (purpose is not (PreparedSourcePurpose.WorkerSourceRead or PreparedSourcePurpose.BusinessSynthesisRead) ||
+            session is not OperatorSession current || !current.IsCurrentFor(this) ||
             boundSetup is null || repositoryId == Guid.Empty ||
             !string.Equals(boundSetup.TargetId, _configuration.TargetId, StringComparison.Ordinal) ||
             boundSetup.BatchId != _configuration.BatchId ||
@@ -836,7 +852,7 @@ public sealed partial class OctoberLocalAuthority : IOctoberLocalAuthority
             OctoberRepositorySelection binding = bindings[0];
             PreparedSourceApproval approval = new(
                 boundSetup.BatchId, repositoryId, current.SubjectId,
-                PreparedSourcePurpose.WorkerSourceRead,
+                purpose,
                 Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32)),
                 binding.RootBindingIdentity, binding.OperatorLabel);
             october.PreparedSourceApprovals.Add(new OctoberPreparedSourceApprovalRecord
@@ -885,7 +901,7 @@ public sealed partial class OctoberLocalAuthority : IOctoberLocalAuthority
             approval is null || approval.BatchId != _configuration.BatchId ||
             approval.RepositoryId == Guid.Empty ||
             !string.Equals(approval.SubjectId, current.SubjectId, StringComparison.Ordinal) ||
-            approval.Purpose != PreparedSourcePurpose.WorkerSourceRead ||
+            approval.Purpose is not (PreparedSourcePurpose.WorkerSourceRead or PreparedSourcePurpose.BusinessSynthesisRead) ||
             string.IsNullOrWhiteSpace(approval.ApprovalIdentity) ||
             string.IsNullOrWhiteSpace(approval.RootBindingIdentity) ||
             string.IsNullOrWhiteSpace(approval.OperatorLabel) ||
@@ -943,7 +959,7 @@ public sealed partial class OctoberLocalAuthority : IOctoberLocalAuthority
             if (row is null || row.IsRevoked || row.ExpiresAtUtc <= _clock.GetUtcNow() ||
                 row.BatchId != approval.BatchId || row.RepositoryId != approval.RepositoryId ||
                 !string.Equals(row.SubjectId, approval.SubjectId, StringComparison.Ordinal) ||
-                row.Purpose != (int)PreparedSourcePurpose.WorkerSourceRead ||
+                row.Purpose != (int)approval.Purpose ||
                 !string.Equals(row.RootBindingIdentity, approval.RootBindingIdentity,
                     StringComparison.Ordinal) ||
                 !string.Equals(row.OperatorLabel, approval.OperatorLabel, StringComparison.Ordinal))
@@ -1061,7 +1077,7 @@ public sealed partial class OctoberLocalAuthority : IOctoberLocalAuthority
                     timeout.Token);
             if (row is null || row.BatchId != _configuration.BatchId ||
                 row.RepositoryId == Guid.Empty ||
-                row.Purpose != (int)PreparedSourcePurpose.WorkerSourceRead ||
+                (row.Purpose != (int)PreparedSourcePurpose.WorkerSourceRead && row.Purpose != (int)PreparedSourcePurpose.BusinessSynthesisRead) ||
                 string.IsNullOrWhiteSpace(row.SubjectId) ||
                 string.IsNullOrWhiteSpace(row.RootBindingIdentity) ||
                 string.IsNullOrWhiteSpace(row.OperatorLabel) ||

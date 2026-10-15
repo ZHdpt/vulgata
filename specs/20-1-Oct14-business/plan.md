@@ -140,3 +140,27 @@ No new project, context, service, workflow engine or generic receipt framework. 
 
 
 
+# 2026-10-11 amendment: one local-flow BL publication
+
+User approved the complete `october-minimal-bl-first-publication-2026-10-11.md`
+management handoff. This slice supersedes the broader tool-assisted proposal:
+one rich retained registration root, one compact exact member-evidence packet,
+existing canonical publication and ordinary non-management Business reader.
+Cross-repository completeness remains deferred and explicitly unconfirmed.
+
+Separate finite owner-input/gap/result bounds from model/proposal limits. Preserve
+the entire owner lineage and gaps, but expose only complete flow-member claims to
+the model; independently reject unsupplied references in the publication policy.
+Retain historic stored-result replay. Synthesis reserves measured input plus output,
+allows the CL-proven 393216 output ceiling and up to three staged structural
+corrections within one finite deadline/request budget, with no outer retry.
+
+Owned changes: Business synthesis policy/executor/prompt, focused tests and this
+amendment. User separately authorized Business-only request-local thinking and
+reasoning-replay changes in `OctoberWorkerClientFactory.cs`; its CL streaming path
+stays unchanged. No tools, resolution-policy change, rescan, schema/migration,
+alternate publication, Web/UI changes, merge or push. One focused independent
+review follows focused tests. Paid calls and retained writes still require exact
+resource and recalculated-budget authority. Four-hour checkpoint: 2026-10-11
+23:31 Asia/Shanghai (session began 19:31). Stop after first verified publication.
+

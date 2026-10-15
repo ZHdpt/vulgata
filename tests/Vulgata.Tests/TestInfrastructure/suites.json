@@ -1,4 +1,16 @@
 {
+  "October/Knowledge/OctoberBusinessRecoveryTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/Knowledge/OctoberBusinessRecoveryPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/Knowledge/OctoberBusinessSynthesisCorrectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OctoberScan/OctoberBusinessSynthesisWireTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/Integration/OctoberChatHostCompositionTests.cs": {
     "suite": "SelfContained"
   },

@@ -16,12 +16,15 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
     private readonly string _profileId;
     private readonly string _configurationFingerprint;
     private readonly string _promptDigest;
+    private readonly TimeProvider _time;
 
     public OctoberBusinessFinalizer(IOctoberOriginalBusinessFinalizationSlot? originalSlot,
         IOctoberFlowPublicationStore store, IOctoberFlowPlanningInputLoader loader,
         IChatClient selectedClient, string providerProfileId,
         BusinessProviderConfigurationProjection providerConfiguration, string synthesisInstructions,
-        IOctoberResolutionDisclosureAuthority disclosure, TimeProvider? timeProvider = null)
+        IOctoberResolutionDisclosureAuthority disclosure, TimeProvider? timeProvider = null,
+        Func<BusinessSynthesisDiagnostic, CancellationToken, Task>? diagnosticCapture = null,
+        IOctoberBusinessSourceReader? sourceReader = null)
     {
         _slot = originalSlot;
         _store = store ?? throw new ArgumentNullException(nameof(store));
@@ -32,7 +35,8 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
         _profileId = providerProfileId;
         _configurationFingerprint = OctoberBusinessFinalizationPolicy.ComputeProviderFingerprint(providerConfiguration);
         _promptDigest = OctoberKnowledgePolicy.Hash(synthesisInstructions);
-        _synthesis = new(selectedClient, synthesisInstructions, timeProvider);
+        _time = timeProvider ?? TimeProvider.System;
+        _synthesis = new(selectedClient, synthesisInstructions, timeProvider, diagnosticCapture, sourceReader);
     }
 
     public async Task<BusinessFinalizationResult> FinalizeAsync(FinalizationRequest request,
@@ -115,8 +119,11 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             using (var bounded = Bound(token))
                 loaded = await AwaitAsync(_loader.LoadAsync(request.Corpus, selection.Roots, bounded.Token), bounded.Token);
             if (loaded.Status != KnowledgeReadStatus.Success || loaded.Input is not { } input || input.Corpus.Handle != request.Corpus ||
+                input.ResolutionPolicyVersion != selection.ResolutionPolicyVersion ||
+                input.Corpus.ResolutionPolicyVersion != selection.ResolutionPolicyVersion ||
                 input.Roots.IsDefault || !input.Roots.ToHashSet().SetEquals(selection.Roots))
                 return Empty(request, BusinessFinalizationStatus.AuthorityUnavailable);
+            input = OctoberBusinessContextOverridePolicy.Apply(input, selection.ContextOverride);
             var plan = OctoberFlowPlanner.Plan(input, selection.Limits);
             if (plan.Status != FlowPlanningStatus.Succeeded) return Empty(request, BusinessFinalizationStatus.Failed);
             var completed = ImmutableArray.CreateBuilder<FlowSynthesisSubmission>();
@@ -136,7 +143,7 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
                         group is null ? "Selected root was not supported by the bounded planner." : "Original synthesis allowance did not permit further work."));
                     continue;
                 }
-                var synthesized = await _synthesis.ExecuteAsync(input, group.GroupVersionId, request.Operation, selection.RunId,
+                var synthesized = await _synthesis.ExecuteReviewedAsync(input, group.GroupVersionId, request.Operation, selection.RunId,
                     selection.ProviderProfileId, selection.MaximumTokens, request.ExecutionScope, _disclosure, token, selection.Limits);
                 if (synthesized.AdmissionFailure is ProviderAdmissionStatus.Denied or ProviderAdmissionStatus.AuthorityUnavailable or ProviderAdmissionStatus.HardStopped)
                     return Empty(request, Map(synthesized.AdmissionFailure.Value));
@@ -153,7 +160,8 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             if (Eligibility(request, lifetime) is { } fenced) return Empty(request, fenced);
             using (var bounded = Bound(token))
             {
-                var authority = await AwaitAsync(_disclosure.CheckAsync(request.Corpus, input.Contributors, bounded.Token), bounded.Token);
+                var authority = await AwaitAsync(_disclosure.CheckAsync(request.Corpus,
+                    OctoberBusinessContextOverridePolicy.EffectiveContributors(input), bounded.Token), bounded.Token);
                 if (authority != DisclosureStatus.Allowed) return Empty(request, authority == DisclosureStatus.Denied
                     ? BusinessFinalizationStatus.Denied : BusinessFinalizationStatus.AuthorityUnavailable);
             }
@@ -162,7 +170,10 @@ public sealed class OctoberBusinessFinalizer : IOctoberBusinessFinalizer
             var publication = new FlowFinalizationPublicationRequest(request.Operation, request.Corpus, request.CanonicalPayloadDigest,
                 selection, completed.ToImmutable(), dispositions.ToImmutable(), "");
             publication = publication with { CanonicalOutcomeDigest = OctoberBusinessFinalizationPolicy.ComputeOutcomeDigest(publication) };
-            using var publishBound = Bound(token);
+            // Whole-flow publication includes owner revalidation and an atomic multi-document save.
+            // Keep this bounded independently of short reads and subordinate to the host/run token.
+            using var publicationDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(120), _time);
+            using var publishBound = CancellationTokenSource.CreateLinkedTokenSource(token, publicationDeadline.Token);
             var saved = await AwaitAsync(_store.PublishAsync(publication, publishBound.Token), publishBound.Token);
             return Coherent(request, saved)
                 ? Sanitize(request, saved) with { OriginalSynthesisFailureReason = firstFailureReason }

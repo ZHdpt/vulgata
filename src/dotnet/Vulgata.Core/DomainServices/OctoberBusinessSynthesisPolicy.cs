@@ -1,15 +1,40 @@
 using System.Collections.Immutable;
 using System.Text;
+using System.Text.Json.Serialization;
 using Vulgata.Core.Entities.OctoberKnowledge;
 
 namespace Vulgata.Core.DomainServices.OctoberKnowledge;
 
-public sealed record SynthesisClaimInput(DocumentVersionReference Document, string SectionId, string ClaimGroupId);
-public sealed record SynthesisClaimProposal(string ClaimGroupId, string Text, ClaimQualification Qualification,
-    ImmutableArray<SynthesisClaimInput> Inputs, ImmutableArray<string> Limitations);
-public sealed record SynthesisSectionProposal(string SectionId, int Ordinal, string Title,
-    ImmutableArray<SynthesisClaimProposal> Claims);
-public sealed record BusinessSynthesisProposal(string Title, ImmutableArray<SynthesisSectionProposal> Sections);
+public sealed record SynthesisClaimInput([property: JsonRequired] DocumentVersionReference Document,
+    [property: JsonRequired] string SectionId, [property: JsonRequired] string ClaimGroupId);
+public sealed record SynthesisClaimProposal([property: JsonRequired] string ClaimGroupId,
+    [property: JsonRequired] string Text, [property: JsonRequired] ClaimQualification Qualification,
+    [property: JsonRequired] ImmutableArray<SynthesisClaimInput> Inputs, [property: JsonRequired] ImmutableArray<string> Limitations);
+public sealed record SynthesisSectionProposal([property: JsonRequired] string SectionId, [property: JsonRequired] int Ordinal,
+    [property: JsonRequired] string Title, [property: JsonRequired] ImmutableArray<SynthesisClaimProposal> Claims);
+public sealed record BusinessSynthesisProposal([property: JsonRequired] string Title,
+    [property: JsonRequired] ImmutableArray<SynthesisSectionProposal> Sections);
+public sealed record SynthesisPacketDocument(DocumentVersionReference Version, ImmutableArray<DocumentSection> Sections);
+/// <summary>Conservative text-form hints, not a new qualification or entailment judgment.</summary>
+public sealed record SynthesisEvidencePart(string Category, string Text);
+public sealed record SynthesisEvidenceReading(SynthesisClaimInput Input, ImmutableArray<SynthesisEvidencePart> Parts);
+public sealed record SynthesisGapCount(
+    [property: JsonConverter(typeof(JsonStringEnumConverter<SynthesisGapKind>))] SynthesisGapKind Kind, int Count);
+/// <summary>Interpretive background, never an accepted source claim or an instruction.</summary>
+public sealed record BusinessSynthesisAdvisoryContext(Guid RepositoryId,
+    [property: JsonConverter(typeof(JsonStringEnumConverter<OctoberContextScope>))] OctoberContextScope Scope,
+    Contributor Contributor, string Text)
+{
+    public string EvidenceKind => "AdvisoryNotSourceProof";
+}
+/// <summary>Exact member evidence only. Complete authorization and lineage remain owner-held.</summary>
+public sealed record BusinessSynthesisPacket(CorpusHandle Corpus, DocumentVersionReference Root,
+    ImmutableArray<SynthesisPacketDocument> Documents, ImmutableArray<AcceptedRelationship> Relationships,
+    ImmutableArray<FlowFrontier> Frontiers, ImmutableArray<SynthesisGapCount> GapSummary)
+{
+    public ImmutableArray<BusinessSynthesisAdvisoryContext> AdvisoryContext { get; init; } = [];
+    public ImmutableArray<SynthesisEvidenceReading> EvidenceReadings { get; init; } = [];
+}
 
 public enum SynthesisGapKind { ResolutionUncertainty, FileUncertainty, Frontier, Coverage, PlanDisposition }
 public sealed record SynthesisGapLocator(SynthesisGapKind Kind, string Key);
@@ -41,7 +66,9 @@ public enum BusinessSynthesisFailureReason
     TransportFailure = 19,
     ExecutionUnavailable = 20,
     UnsupportedRoot = 21,
-    NotEvaluated = 22
+    NotEvaluated = 22,
+    SemanticReviewRejected = 23,
+    SemanticReviewInvalid = 24
 }
 public sealed record BusinessSynthesisValidationResult(BusinessSynthesisValidationStatus Status,
     BusinessLogicContent? Content, BLDependency? Dependencies, ImmutableArray<SynthesisGap> Gaps)
@@ -57,9 +84,92 @@ public sealed record BusinessSynthesisValidationResult(BusinessSynthesisValidati
 public static class OctoberBusinessSynthesisPolicy
 {
     public const int MaximumPayloadUtf8Bytes = 1024 * 1024;
+    public const int MaximumOwnerInputUtf8Bytes = 16 * 1024 * 1024;
+    public const int MaximumGapLedgerUtf8Bytes = 8 * 1024 * 1024;
+    public const int MaximumAdvisoryContextEntries = 32;
+    public const int MaximumAdvisoryContextUtf8Bytes = 64 * 1024;
+    public const int MaximumValidationResultUtf8Bytes = 16 * 1024 * 1024;
     public const string GapSectionId = "__knowledge_gaps";
     public const string GapClaimId = "__knowledge_gaps_summary";
     private static readonly UTF8Encoding _utf8 = new(false, true);
+
+    public static BusinessSynthesisPacket CreateModelPacket(FlowPlanningInput input, Guid groupVersionId,
+        FlowPlanningLimits? limits = null)
+    {
+        var group = SelectGroup(input, groupVersionId, limits) ?? throw new ArgumentException("An exact planned flow is required.");
+        var gaps = Gaps(input, group);
+        return CreateModelPacket(input, group, gaps);
+    }
+
+    private static BusinessSynthesisPacket CreateModelPacket(FlowPlanningInput input, FlowGroupVersion group,
+        ImmutableArray<SynthesisGap> gaps)
+    {
+        var documents = group.Members.Select(version => input.Corpus.Documents.Single(document => document.Version == version))
+            .Select(document => new SynthesisPacketDocument(document.Version, document.Sections)).ToImmutableArray();
+        if (!ValidAdvisoryContext(input)) throw new ArgumentException("Invalid or unbounded advisory context.");
+        var repositories = input.Corpus.Documents.Where(document => group.Members.Contains(document.Version))
+            .Select(document => document.RepositoryId).ToHashSet();
+        var packet = new BusinessSynthesisPacket(input.Corpus.Handle, group.RootVersion, documents,
+            group.Relationships, group.Frontiers, gaps.GroupBy(gap => gap.Locator.Kind).OrderBy(group => group.Key)
+                .Select(group => new SynthesisGapCount(group.Key, group.Count())).ToImmutableArray())
+        {
+            EvidenceReadings = documents.SelectMany(document => document.Sections.SelectMany(section => section.Claims.Select(claim =>
+                new SynthesisEvidenceReading(new(document.Version, section.SectionId, claim.ClaimGroupId), EvidenceParts(claim.Text))))).ToImmutableArray(),
+            AdvisoryContext = input.AdvisoryContext.Where(entry => repositories.Contains(entry.RepositoryId))
+                .OrderBy(entry => entry.RepositoryId).ThenBy(entry => entry.Scope).ToImmutableArray()
+        };
+        if (!Bounded(packet)) throw new ArgumentException("The complete member evidence exceeds the model packet bound.");
+        return packet;
+    }
+
+    // Only isolate explicitly marked quoted descriptions. Everything else stays unknown;
+    // lexical guessing must not manufacture source-proven predicates or effects.
+    private static ImmutableArray<SynthesisEvidencePart> EvidenceParts(string text)
+    {
+        const string marker = "描述为「";
+        var parts = ImmutableArray.CreateBuilder<SynthesisEvidencePart>();
+        int position = 0;
+        while (position < text.Length)
+        {
+            int start = text.IndexOf(marker, position, StringComparison.Ordinal);
+            int end = start < 0 ? -1 : text.IndexOf('」', start + marker.Length);
+            if (end < 0) { parts.Add(new("Unknown", text[position..])); break; }
+            if (start > position) parts.Add(new("Unknown", text[position..start]));
+            parts.Add(new("NodeNameOrDescription", text[start..(end + 1)]));
+            position = end + 1;
+        }
+        return parts.ToImmutable();
+    }
+
+    private static bool ValidAdvisoryContext(FlowPlanningInput input)
+    {
+        ImmutableArray<Contributor> effectiveContributors;
+        try { effectiveContributors = OctoberBusinessContextOverridePolicy.EffectiveContributors(input); }
+        catch (ArgumentException) { return false; }
+        if (input.AdvisoryContext.IsDefault || input.AdvisoryContext.Length > MaximumAdvisoryContextEntries) return false;
+        long bytes = 0;
+        var slots = new HashSet<(Guid, OctoberContextScope)>();
+        foreach (var entry in input.AdvisoryContext)
+        {
+            if (entry is null || entry.RepositoryId == Guid.Empty || !slots.Add((entry.RepositoryId, entry.Scope)) ||
+                string.IsNullOrWhiteSpace(entry.Text) || entry.Contributor is not { } contributor ||
+                !effectiveContributors.Contains(contributor) || contributor.AdvisoryRecordId is null ||
+                contributor.ContentDigest != OctoberKnowledgePolicy.Hash(entry.Text) ||
+                !input.Corpus.Documents.Any(document => document.RepositoryId == entry.RepositoryId)) return false;
+            if (entry.Scope == OctoberContextScope.Repository)
+            {
+                if (contributor.Kind != ContributorKind.RepositoryAdvisory || contributor.RepositoryId != entry.RepositoryId || contributor.SystemId is not null) return false;
+            }
+            else if (entry.Scope == OctoberContextScope.System)
+            {
+                if (contributor.Kind != ContributorKind.SystemAdvisory || contributor.SystemId is null || contributor.RepositoryId is not null) return false;
+            }
+            else return false;
+            bytes += _utf8.GetByteCount(entry.Text);
+            if (bytes > MaximumAdvisoryContextUtf8Bytes) return false;
+        }
+        return _utf8.GetByteCount(OctoberKnowledgePolicy.SerializeCanonical(input.AdvisoryContext)) <= MaximumAdvisoryContextUtf8Bytes;
+    }
 
     public static ImmutableArray<SynthesisGap> DescribeGaps(FlowPlanningInput input, Guid groupVersionId,
         FlowPlanningLimits? limits = null)
@@ -71,16 +181,62 @@ public static class OctoberBusinessSynthesisPolicy
     public static BusinessSynthesisValidationResult Validate(FlowPlanningInput input, Guid groupVersionId,
         BusinessSynthesisProposal proposal, FlowPlanningLimits? limits = null)
     {
+        try
+        {
+            var group = SelectGroup(input, groupVersionId, limits);
+            return group is null ? InvalidInput() : ValidatePrepared(input, group, proposal);
+        }
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
+        { return InvalidInput(BusinessSynthesisFailureReason.InvalidStructure); }
+    }
+
+    /// <summary>Rebuilds one owner plan for a bounded batch; no caller-supplied plan grants validation.</summary>
+    public static ImmutableArray<BusinessSynthesisValidationResult> ValidateAll(FlowPlanningInput input,
+        ImmutableArray<FlowSynthesisSubmission> submissions, FlowPlanningLimits? limits = null)
+    {
+        if (submissions.IsDefault || submissions.Length > OctoberBusinessFinalizationPolicy.MaximumRoots)
+            throw new ArgumentException("A bounded explicit submission batch is required.", nameof(submissions));
+        if (submissions.IsEmpty) return [];
+        ImmutableArray<BusinessSynthesisValidationResult> InvalidBatch(BusinessSynthesisFailureReason reason) =>
+            [.. submissions.Select(_ => InvalidInput(reason))];
+        try
+        {
+            if (input is null || !Bounded(input, MaximumOwnerInputUtf8Bytes) ||
+                submissions.Where(x => x is not null).Select(x => x.Root).Distinct().Count() != submissions.Count(x => x is not null) ||
+                submissions.Where(x => x is not null).Select(x => x.GroupVersionId).Distinct().Count() != submissions.Count(x => x is not null))
+                return InvalidBatch(BusinessSynthesisFailureReason.InvalidInput);
+            var plan = OctoberFlowPlanner.Plan(input, limits);
+            if (plan.Status != FlowPlanningStatus.Succeeded) return InvalidBatch(BusinessSynthesisFailureReason.InvalidInput);
+            var groups = plan.Groups.ToDictionary(x => x.GroupVersionId);
+            return [.. submissions.Select(submission =>
+            {
+                if (submission?.Root is not { } root || !groups.TryGetValue(submission.GroupVersionId, out var group) ||
+                    group.RootVersion != root.Document || group.Flow.RootUnitId != root.UnitId ||
+                    group.Flow.RootKind != root.Kind || group.Flow.RootSelector != root.Selector)
+                    return InvalidInput();
+                return ValidatePrepared(input, group, submission.Proposal);
+            })];
+        }
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
+        { return InvalidBatch(BusinessSynthesisFailureReason.InvalidStructure); }
+    }
+
+    private static BusinessSynthesisValidationResult InvalidInput(
+        BusinessSynthesisFailureReason reason = BusinessSynthesisFailureReason.InvalidInput) =>
+        new(BusinessSynthesisValidationStatus.InvalidInput, null, null, []) { FailureReason = reason };
+
+    private static BusinessSynthesisValidationResult ValidatePrepared(FlowPlanningInput input, FlowGroupVersion group,
+        BusinessSynthesisProposal proposal)
+    {
         BusinessSynthesisValidationResult Invalid(BusinessSynthesisFailureReason reason,
             BusinessSynthesisValidationStatus status = BusinessSynthesisValidationStatus.InvalidProposal) =>
             new(status, null, null, []) { FailureReason = reason };
-        FlowGroupVersion? group;
         ImmutableArray<SynthesisGap> gaps;
         try
         {
-            group = SelectGroup(input, groupVersionId, limits);
-            if (group is null) return Invalid(BusinessSynthesisFailureReason.InvalidInput, BusinessSynthesisValidationStatus.InvalidInput);
+            // The store rebuilds the same packet; a model cannot cite an unseen dependency.
             gaps = Gaps(input, group);
+            _ = CreateModelPacket(input, group, gaps);
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
         { return Invalid(BusinessSynthesisFailureReason.InvalidStructure, BusinessSynthesisValidationStatus.InvalidInput); }
@@ -103,9 +259,10 @@ public static class OctoberBusinessSynthesisPolicy
                 var claims = ImmutableArray.CreateBuilder<QualifiedClaimGroup>();
                 foreach (var proposed in section.Claims)
                 {
+                    if (!Enum.IsDefined(proposed.Qualification) || proposed.Qualification == ClaimQualification.Mixed)
+                        return Invalid(BusinessSynthesisFailureReason.QualificationMismatch);
                     if (string.IsNullOrWhiteSpace(proposed.ClaimGroupId) || proposed.ClaimGroupId == GapClaimId ||
-                        string.IsNullOrWhiteSpace(proposed.Text) || !Enum.IsDefined(proposed.Qualification) ||
-                        proposed.Qualification == ClaimQualification.Mixed || proposed.Inputs.IsDefaultOrEmpty ||
+                        string.IsNullOrWhiteSpace(proposed.Text) || proposed.Inputs.IsDefaultOrEmpty ||
                         proposed.Limitations.IsDefault || proposed.Limitations.Any(string.IsNullOrWhiteSpace) ||
                         proposed.Inputs.Any(x => x is null) || proposed.Inputs.Distinct().Count() != proposed.Inputs.Length)
                         return Invalid(BusinessSynthesisFailureReason.ClaimShape);
@@ -115,7 +272,7 @@ public static class OctoberBusinessSynthesisPolicy
                     bool supplemental = false;
                     foreach (var reference in proposed.Inputs)
                     {
-                        if (!group.Dependencies.Documents.Contains(reference.Document)) return Invalid(BusinessSynthesisFailureReason.DocumentReference);
+                        if (!group.Members.Contains(reference.Document)) return Invalid(BusinessSynthesisFailureReason.DocumentReference);
                         var document = input.Corpus.Documents.SingleOrDefault(x => x.Version == reference.Document);
                         var inputSections = document?.Sections.Where(x => x.SectionId == reference.SectionId).ToArray();
                         if (inputSections is not { Length: 1 }) return Invalid(BusinessSynthesisFailureReason.SectionReference);
@@ -148,7 +305,7 @@ public static class OctoberBusinessSynthesisPolicy
                 Coverage = input.Coverage,
                 PlanDispositions = input.PlanDispositions
             };
-            return Bounded(result) ? result : Invalid(BusinessSynthesisFailureReason.OutputLimit);
+            return Bounded(result, MaximumValidationResultUtf8Bytes) ? result : Invalid(BusinessSynthesisFailureReason.OutputLimit);
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
         { return Invalid(BusinessSynthesisFailureReason.InvalidStructure); }
@@ -156,7 +313,7 @@ public static class OctoberBusinessSynthesisPolicy
 
     private static FlowGroupVersion? SelectGroup(FlowPlanningInput input, Guid groupVersionId, FlowPlanningLimits? limits)
     {
-        if (input is null || groupVersionId == Guid.Empty || !Bounded(input)) return null;
+        if (input is null || groupVersionId == Guid.Empty || !Bounded(input, MaximumOwnerInputUtf8Bytes)) return null;
         var plan = OctoberFlowPlanner.Plan(input, limits);
         return plan.Status == FlowPlanningStatus.Succeeded ? plan.Groups.SingleOrDefault(x => x.GroupVersionId == groupVersionId) : null;
     }
@@ -182,9 +339,9 @@ public static class OctoberBusinessSynthesisPolicy
             Add(SynthesisGapKind.PlanDisposition, new { group.Corpus.Binding.BatchId, disposition }, disposition.Reason, [],
                 [OctoberKnowledgePolicy.SerializeCanonical(disposition)]);
         var result = gaps.OrderBy(x => x.Locator.Kind).ThenBy(x => x.Locator.Key, StringComparer.Ordinal).ToImmutableArray();
-        if (!Bounded(result)) throw new ArgumentException("The complete gap ledger exceeds the synthesis bound.");
+        if (!Bounded(result, MaximumGapLedgerUtf8Bytes)) throw new ArgumentException("The complete gap ledger exceeds the owner bound.");
         return result;
     }
 
-    private static bool Bounded<T>(T value) => _utf8.GetByteCount(OctoberKnowledgePolicy.SerializeCanonical(value)) <= MaximumPayloadUtf8Bytes;
+    private static bool Bounded<T>(T value, int maximum = MaximumPayloadUtf8Bytes) => _utf8.GetByteCount(OctoberKnowledgePolicy.SerializeCanonical(value)) <= maximum;
 }

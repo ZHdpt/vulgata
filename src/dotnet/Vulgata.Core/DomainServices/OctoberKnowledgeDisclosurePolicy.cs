@@ -114,11 +114,12 @@ public sealed class OctoberKnowledgeDisclosurePolicy(
         if (!validShape) return false;
 
         var selected = advisory.Where(x => x is not null && scope.Contains(x.RepositoryId) &&
-                                           x.Kind == contributor.Kind && x.RecordId == recordId &&
-                                           (contributor.Kind != ContributorKind.RepositoryAdvisory || x.RepositoryId == contributor.RepositoryId) &&
-                                           (contributor.Kind != ContributorKind.SystemAdvisory ||
-                                            repositories.TryGetValue(x.RepositoryId, out var bound) && bound.SystemId == contributor.SystemId)).ToArray();
-        // One publication can retain several accepted revisions of the same advisory.
+            x.Kind == contributor.Kind && x.RecordId == recordId &&
+            (contributor.Kind != ContributorKind.RepositoryAdvisory || x.RepositoryId == contributor.RepositoryId) &&
+            (contributor.Kind != ContributorKind.SystemAdvisory ||
+                repositories.TryGetValue(x.RepositoryId, out var bound) && bound.SystemId == contributor.SystemId)).ToArray();
+        // A publication may explicitly retain the original and a run-specific advisory
+        // revision. Every contributor still needs an exact authorized identity and digest.
         return selected.Any(x => x.ContentDigest == contributor.ContentDigest);
     }
 }
