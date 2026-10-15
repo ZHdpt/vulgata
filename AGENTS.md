@@ -14,14 +14,11 @@ definitions and historical passing tests do not prove the replacement product fl
 - **Resume or assess reuse:** read [project state](docs/agents/project-state.md), then
   verify the assigned checkout and current files. Work in the assigned worktree;
   another task's title or old handoff is not authority to inspect/change its checkout.
-- **Plan or change Scan, Knowledge or Chat:** read the
-  [architecture gateway](docs/bmad/planning-artifacts/architecture.md), its
-  [AD-1–AD-32 spine](docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md)
-  and the affected [PRD](docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md)
-  requirements. Authority follows subject and accepted disposition, not file age.
-- **Deliver a story:** use [epics](docs/bmad/epics.md) for its definition and
-  [sprint status](docs/bmad/implementation-artifacts/sprint-status.yaml) for lifecycle.
-  Verify current authority before changing scope or activating a feature.
+- **Plan or change Scan, Knowledge or Chat:** read the architecture gateway, its
+  AD-1–AD-32 spine and the affected PRD requirements. Authority follows subject
+  and accepted disposition, not file age.
+- **Deliver a story:** use the epics for its definition and sprint status for
+  lifecycle. Verify current authority before changing scope or activating a feature.
 - **Write production code, APIs, UI or migrations:** read
   [development conventions](docs/agents/development.md) and the
   [constitution](.specify/memory/constitution.md). Packages/build configuration are
