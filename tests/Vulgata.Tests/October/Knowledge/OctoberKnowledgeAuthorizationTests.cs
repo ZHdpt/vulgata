@@ -31,8 +31,21 @@ public sealed class OctoberKnowledgeAuthorizationTests
             repository.UpdateDetails(repository.Name, repository.GitUrl, repository.Description, "Edited live context, historical selection remains exact.", DateTimeOffset.UtcNow);
             await context.SaveChangesAsync();
         }
+
         Assert.Equal(DisclosureStatus.Allowed, await fixture.Policy.CheckAsync(fixture.Request()));
         Assert.Equal(B0bIdentityFixture.Digest(B0bIdentityFixture.OriginalContext), fixture.Selection.Snapshot!.Advisory[0].ContentDigest);
+        var revised = fixture.Advisory with { ContentDigest = B0bIdentityFixture.Digest("New accepted context revision") };
+        var request = fixture.Request() with { AllContributors = [fixture.Advisory, revised] };
+        Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(request));
+        fixture.Selection.Snapshot = fixture.Selection.Snapshot with
+        {
+            Advisory = fixture.Selection.Snapshot.Advisory.Add(new(fixture.RepositoryId, revised.Kind, revised.AdvisoryRecordId!.Value, revised.ContentDigest))
+        };
+        Assert.Equal(DisclosureStatus.Allowed, await fixture.Policy.CheckAsync(request));
+        Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(request with
+        {
+            AllContributors = [revised with { ContentDigest = new string('e', 64) }]
+        }));
     }
 
     [Trait("Suite", "SelfContained")]
@@ -54,8 +67,12 @@ public sealed class OctoberKnowledgeAuthorizationTests
             if (change == "stamp") Assert.True((await users.UpdateSecurityStampAsync(user)).Succeeded);
             if (change == "lockout") Assert.True((await users.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddHours(1))).Succeeded);
             if (change == "deleted-user") Assert.True((await users.DeleteAsync(user)).Succeeded);
-            if (change == "foreign-principal") fixture.Principal = new(new ClaimsIdentity([new(ClaimTypes.NameIdentifier, "foreign-user"), new("AspNet.Identity.SecurityStamp", fixture.Subject.AuthenticationBinding)], IdentityConstants.ApplicationScheme));
+            if (change == "foreign-principal")
+                fixture.Principal =
+                    new(new ClaimsIdentity([new(ClaimTypes.NameIdentifier, "foreign-user"), new("AspNet.Identity.SecurityStamp", fixture.Subject.AuthenticationBinding)],
+                        IdentityConstants.ApplicationScheme));
         }
+
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(fixture.Request()));
     }
 
@@ -81,10 +98,12 @@ public sealed class OctoberKnowledgeAuthorizationTests
                 context.Systems.Add(replacement);
                 context.Entry(repository).Property(nameof(RepositoryEntity.SystemId)).CurrentValue = replacement.Id;
             }
+
             if (change == "cleared-repository-context") repository.UpdateDetails(repository.Name, repository.GitUrl, repository.Description, null, DateTimeOffset.UtcNow);
             if (change == "deleted-global-context") context.GlobalContexts.Remove(await context.GlobalContexts.SingleAsync());
             await context.SaveChangesAsync();
         }
+
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(request));
     }
 
@@ -100,7 +119,11 @@ public sealed class OctoberKnowledgeAuthorizationTests
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(valid with { Selection = valid.Selection with { Mode = KnowledgeMode.Business } }));
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(valid with { Selection = valid.Selection with { RepositoryScope = [] } }));
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(valid with { Selection = valid.Selection with { RepositoryScope = [Guid.NewGuid()] } }));
-        Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(valid with { AllContributors = valid.AllContributors.Add(fixture.Source with { RepositoryId = Guid.NewGuid() }), Kind = DocumentKind.BusinessLogic }));
+        Assert.Equal(DisclosureStatus.Denied,
+            await fixture.Policy.CheckAsync(valid with
+            {
+                AllContributors = valid.AllContributors.Add(fixture.Source with { RepositoryId = Guid.NewGuid() }), Kind = DocumentKind.BusinessLogic
+            }));
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(valid with { AllContributors = [fixture.Advisory with { ContentDigest = new string('f', 64) }] }));
         fixture.Selection.Snapshot = null;
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(valid));
@@ -124,6 +147,7 @@ public sealed class OctoberKnowledgeAuthorizationTests
             await using var context = await scope.ServiceProvider.GetRequiredService<IDbContextFactory<VulgataDbContext>>().CreateDbContextAsync();
             Assert.Empty(await context.SystemOwnerAssignments.ToListAsync());
         }
+
         Assert.Equal(DisclosureStatus.Allowed, await fixture.Policy.CheckAsync(fixture.Request()));
     }
 
@@ -141,6 +165,7 @@ public sealed class OctoberKnowledgeAuthorizationTests
             context.Entry(repository).Property(nameof(RepositoryEntity.SystemId)).CurrentValue = null;
             await context.SaveChangesAsync();
         }
+
         Assert.Equal(DisclosureStatus.Denied, await fixture.Policy.CheckAsync(request));
     }
 
@@ -158,6 +183,7 @@ public sealed class OctoberKnowledgeAuthorizationTests
             context.Systems.Remove(await context.Systems.SingleAsync());
             await context.SaveChangesAsync();
         }
+
         fixture.Selection.Snapshot = fixture.Selection.Snapshot! with { Repositories = [new(fixture.RepositoryId, null, "controlled-root")] };
         var request = fixture.Request() with { AllContributors = [fixture.Source with { SystemId = null }, fixture.Advisory with { SystemId = null }] };
         Assert.Equal(DisclosureStatus.Allowed, await fixture.Policy.CheckAsync(request));
@@ -169,7 +195,10 @@ public sealed class OctoberKnowledgeAuthorizationTests
     {
         await using var fixture = await B0bIdentityFixture.CreateAsync();
         var contributor = new Contributor(ContributorKind.SystemAdvisory, null, fixture.SystemId, null, fixture.SystemId, B0bIdentityFixture.Digest("System context"));
-        fixture.Selection.Snapshot = fixture.Selection.Snapshot! with { Advisory = fixture.Selection.Snapshot!.Advisory.Add(new(fixture.RepositoryId, ContributorKind.SystemAdvisory, fixture.SystemId, contributor.ContentDigest)) };
+        fixture.Selection.Snapshot = fixture.Selection.Snapshot! with
+        {
+            Advisory = fixture.Selection.Snapshot!.Advisory.Add(new(fixture.RepositoryId, ContributorKind.SystemAdvisory, fixture.SystemId, contributor.ContentDigest))
+        };
         var request = fixture.Request() with { AllContributors = [fixture.Source, contributor] };
         Assert.Equal(DisclosureStatus.Allowed, await fixture.Policy.CheckAsync(request));
         foreach (string? contextText in new[] { "Edited nonempty system context", null })
@@ -181,9 +210,11 @@ public sealed class OctoberKnowledgeAuthorizationTests
                 system.UpdateDetails(system.Name, system.Description, contextText, DateTimeOffset.UtcNow);
                 await context.SaveChangesAsync();
             }
+
             Assert.Equal(contextText is null ? DisclosureStatus.Denied : DisclosureStatus.Allowed, await fixture.Policy.CheckAsync(request));
         }
     }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task CheckAsync_AuthorityOutageOrCallerCancellation_DistinguishesFailClosedFromCancelledAsync()
@@ -202,7 +233,13 @@ public sealed class OctoberKnowledgeAuthorizationTests
 internal sealed class B0bIdentityFixture : IAsyncDisposable
 {
     private readonly string _directory;
-    private B0bIdentityFixture(string directory, ServiceProvider services) { _directory = directory; Services = services; }
+
+    private B0bIdentityFixture(string directory, ServiceProvider services)
+    {
+        _directory = directory;
+        Services = services;
+    }
+
     public const string OriginalContext = "Original repository advisory context.";
     public ServiceProvider Services { get; }
     public ClaimsPrincipal? Principal { get; set; }
@@ -218,6 +255,7 @@ internal sealed class B0bIdentityFixture : IAsyncDisposable
     public Contributor GlobalAdvisory => new(ContributorKind.GlobalAdvisory, null, null, null, GlobalId, Digest("Original global context."));
     public DisclosureRequest Request() => new(new(Publication, Subject, KnowledgeMode.IT, KnowledgePurpose.Reader, [RepositoryId]), [Source, Advisory], DocumentKind.CodeLogic);
     public static string Digest(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+
     public static async Task<B0bIdentityFixture> CreateAsync()
     {
         string directory = Path.Combine(Path.GetTempPath(), "vulgata-b0b-identity-" + Guid.NewGuid().ToString("N"));
@@ -229,14 +267,19 @@ internal sealed class B0bIdentityFixture : IAsyncDisposable
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddCookie(IdentityConstants.ApplicationScheme);
         services.AddDbContextFactory<ApplicationDbContext>(options => options.UseSqlite($"Data Source={Path.Combine(directory, "identity.db")};Pooling=False"));
         services.AddDbContextFactory<VulgataDbContext>(options => options.UseSqlite($"Data Source={Path.Combine(directory, "management.db")};Pooling=False"));
-        services.AddIdentityCore<ApplicationUser>(options => { options.SignIn.RequireConfirmedAccount = false; options.Lockout.AllowedForNewUsers = true; })
+        services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+                options.Lockout.AllowedForNewUsers = true;
+            })
             .AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddSignInManager();
         var provider = services.BuildServiceProvider();
         var fixture = new B0bIdentityFixture(directory, provider);
         try
         {
             await using var scope = provider.CreateAsyncScope();
-            await using (var identity = await scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContextAsync()) await identity.Database.EnsureCreatedAsync();
+            await using (var identity = await scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContextAsync())
+                await identity.Database.EnsureCreatedAsync();
             await using (var management = await scope.ServiceProvider.GetRequiredService<IDbContextFactory<VulgataDbContext>>().CreateDbContextAsync())
             {
                 await management.Database.EnsureCreatedAsync();
@@ -251,6 +294,7 @@ internal sealed class B0bIdentityFixture : IAsyncDisposable
                 fixture.SystemId = system.Id;
                 fixture.GlobalId = global.Id;
             }
+
             var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             Assert.True((await roles.CreateAsync(new("User"))).Succeeded);
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -259,21 +303,39 @@ internal sealed class B0bIdentityFixture : IAsyncDisposable
             Assert.True((await users.AddToRoleAsync(user, "User")).Succeeded);
             fixture.Subject = new(user.Id, (await users.GetSecurityStampAsync(user))!);
             // A cached Administrator claim must not override the actual live User role or later removal.
-            fixture.Principal = new(new ClaimsIdentity([new(ClaimTypes.NameIdentifier, user.Id), new("AspNet.Identity.SecurityStamp", fixture.Subject.AuthenticationBinding), new(ClaimTypes.Role, "Administrator")], IdentityConstants.ApplicationScheme));
+            fixture.Principal =
+                new(new ClaimsIdentity(
+                    [new(ClaimTypes.NameIdentifier, user.Id), new("AspNet.Identity.SecurityStamp", fixture.Subject.AuthenticationBinding), new(ClaimTypes.Role, "Administrator")],
+                    IdentityConstants.ApplicationScheme));
             fixture.Publication = new(new("ControlledFixture/live-authority", "reader-target", Guid.NewGuid(), new string('a', 64)), Guid.NewGuid());
-            fixture.Selection.Snapshot = new(fixture.Publication, [new(fixture.RepositoryId, fixture.SystemId, "controlled-root")], [new(fixture.RepositoryId, ContributorKind.RepositoryAdvisory, fixture.RepositoryId, Digest(OriginalContext)), new(fixture.RepositoryId, ContributorKind.GlobalAdvisory, fixture.GlobalId, Digest("Original global context."))]);
+            fixture.Selection.Snapshot = new(fixture.Publication, [new(fixture.RepositoryId, fixture.SystemId, "controlled-root")],
+            [
+                new(fixture.RepositoryId, ContributorKind.RepositoryAdvisory, fixture.RepositoryId, Digest(OriginalContext)),
+                new(fixture.RepositoryId, ContributorKind.GlobalAdvisory, fixture.GlobalId, Digest("Original global context."))
+            ]);
             var live = new OctoberKnowledgeIdentityAdapter(provider.GetRequiredService<IServiceScopeFactory>(), _ => Task.FromResult(fixture.Principal));
             fixture.Policy = new OctoberKnowledgeDisclosurePolicy(live, fixture.Selection);
             return fixture;
         }
-        catch { await fixture.DisposeAsync(); throw; }
+        catch
+        {
+            await fixture.DisposeAsync();
+            throw;
+        }
     }
-    public async ValueTask DisposeAsync() { await Services.DisposeAsync(); Directory.Delete(_directory, true); }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Services.DisposeAsync();
+        Directory.Delete(_directory, true);
+    }
 }
+
 internal sealed class B0bSelectionAuthority : IOctoberKnowledgeSelectionAuthority
 {
     public KnowledgeSelectionAuthoritySnapshot? Snapshot { get; set; }
     public bool Fail { get; set; }
+
     public Task<KnowledgeSelectionAuthoritySnapshot?> LoadAsync(PublicationBinding publication, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

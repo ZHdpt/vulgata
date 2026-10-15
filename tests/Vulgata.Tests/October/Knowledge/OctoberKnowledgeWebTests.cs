@@ -12,6 +12,7 @@ using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.Data.October.Knowledge;
 using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Web.Data;
+
 namespace Vulgata.Tests.October.Knowledge;
 
 public sealed class OctoberKnowledgeWebTests
@@ -87,8 +88,24 @@ public sealed class OctoberKnowledgeWebTests
         Assert.Contains(fixture.Acceptance.SourceContributor, loaded.Documents[0].Contributors);
         Assert.Contains(fixture.Acceptance.AdvisoryContributor, loaded.Documents[0].Contributors);
         Assert.Contains(fixture.Acceptance.UncitedContributor, loaded.Documents[0].Contributors);
-        Assert.DoesNotContain(loaded.Documents[0].Sections.SelectMany(section => section.Claims).SelectMany(claim => claim.Evidence), evidence => evidence.AdvisoryRecordId == fixture.Acceptance.UncitedContributor.AdvisoryRecordId);
+        Assert.DoesNotContain(loaded.Documents[0].Sections.SelectMany(section => section.Claims).SelectMany(claim => claim.Evidence),
+            evidence => evidence.AdvisoryRecordId == fixture.Acceptance.UncitedContributor.AdvisoryRecordId);
         Assert.Empty(loaded.Relationships);
+        var indexed = Assert.IsAssignableFrom<IOctoberPublishedKnowledgeIndexSource>(source);
+        var index = await indexed.LoadIndexAsync(publication);
+        Assert.NotNull(index);
+        Assert.Same(index, await indexed.LoadIndexAsync(publication));
+        Assert.Null(await indexed.LoadIndexAsync(publication with { PublicationId = Guid.NewGuid() }));
+        Assert.All(index.Documents, document =>
+        {
+            Assert.Empty(document.ContentJson);
+            Assert.Empty(document.Sections);
+        });
+        var exact = await indexed.LoadDocumentAsync(publication, index.Documents[0]);
+        Assert.NotNull(exact);
+        Assert.Equal(loaded.Documents[0].ContentJson, exact.ContentJson);
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(loaded.Documents[0].Contributors), System.Text.Json.JsonSerializer.Serialize(exact.Contributors));
+        Assert.Null(await indexed.LoadDocumentAsync(publication, index.Documents[0] with { Reference = index.Documents[0].Reference with { DocumentVersionId = Guid.NewGuid() } }));
         Assert.Null(await source.LoadAsync(publication with { PublicationId = Guid.NewGuid() }));
         Assert.Null(await source.LoadAsync(publication with { Knowledge = publication.Knowledge with { CanonicalDatabaseIdentity = "foreign-database" } }));
         IOctoberKnowledgeSelectionAuthority authority = new OctoberKnowledgeSelectionAuthority(fixture.Acceptance.Factory);
@@ -96,7 +113,9 @@ public sealed class OctoberKnowledgeWebTests
         Assert.NotNull(snapshot);
         Assert.Equal(publication, snapshot.Publication);
         Assert.Equal(fixture.Acceptance.Origin.RepositoryId, Assert.Single(snapshot.Repositories).RepositoryId);
-        Assert.Contains(snapshot.Advisory, advisory => advisory.RecordId == fixture.Acceptance.AdvisoryContributor.AdvisoryRecordId && advisory.ContentDigest == fixture.Acceptance.AdvisoryContributor.ContentDigest);
+        Assert.Contains(snapshot.Advisory,
+            advisory => advisory.RecordId == fixture.Acceptance.AdvisoryContributor.AdvisoryRecordId &&
+                        advisory.ContentDigest == fixture.Acceptance.AdvisoryContributor.ContentDigest);
         Assert.Null(await authority.LoadAsync(publication with { PublicationId = Guid.NewGuid() }));
         await using var context = fixture.Acceptance.Factory.CreateDbContext();
         Assert.Equal(2, await context.DocumentVersions.CountAsync());
@@ -112,7 +131,10 @@ public sealed class OctoberKnowledgeWebTests
         {
             IOctoberKnowledgeReadLog log = new OctoberKnowledgeOperationLog(directory);
             var fixture = new B0bReadFixture();
-            var publication = fixture.Publication with { Knowledge = fixture.Publication.Knowledge with { TargetId = "TARGET-SECRET\ninjected", CanonicalDatabaseIdentity = "Host=DB-SECRET;Password=SECRET" } };
+            var publication = fixture.Publication with
+            {
+                Knowledge = fixture.Publication.Knowledge with { TargetId = "TARGET-SECRET\ninjected", CanonicalDatabaseIdentity = "Host=DB-SECRET;Password=SECRET" }
+            };
             Guid correlation = Guid.NewGuid();
             Assert.True(await log.AppendAsync(new(publication, correlation, KnowledgeReadOperation.ReadExact, KnowledgeReadStatus.Success)));
             string text = await File.ReadAllTextAsync(Path.Combine(directory, "log.md"));
@@ -123,8 +145,12 @@ public sealed class OctoberKnowledgeWebTests
             Assert.DoesNotContain("injected", text, StringComparison.Ordinal);
             Assert.Single(text.Split('\n', StringSplitOptions.RemoveEmptyEntries));
         }
-        finally { Directory.Delete(directory, true); }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
     }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task EnabledReadComposition_UsesExplicitHostDependenciesAndRejectsMissingOrMismatchedPublicationAsync()
@@ -146,7 +172,8 @@ public sealed class OctoberKnowledgeWebTests
                 await using var provider = services.BuildServiceProvider();
                 await using var scope = provider.CreateAsyncScope();
                 var reader = scope.ServiceProvider.GetRequiredService<IOctoberKnowledgeReader>();
-                var request = new ReadSelectionRequest(configured, new("ordinary-user", "controlled-stamp"), KnowledgeMode.IT, KnowledgePurpose.Reader, [fixture.Acceptance.Origin.RepositoryId]);
+                var request = new ReadSelectionRequest(configured, new("ordinary-user", "controlled-stamp"), KnowledgeMode.IT, KnowledgePurpose.Reader,
+                    [fixture.Acceptance.Origin.RepositoryId]);
                 var opened = await reader.OpenReadSelectionAsync(request);
                 Assert.Equal(configured == publication ? KnowledgeReadStatus.Success : KnowledgeReadStatus.Unavailable, opened.Status);
                 if (configured == publication)
@@ -156,7 +183,11 @@ public sealed class OctoberKnowledgeWebTests
                     Assert.Equal(2, page.Documents.Length);
                 }
                 else Assert.Null(opened.Selection);
-                var mismatch = await reader.OpenReadSelectionAsync(request with { Publication = configured with { Knowledge = configured.Knowledge with { TargetId = "foreign-target" } } });
+
+                var mismatch = await reader.OpenReadSelectionAsync(request with
+                {
+                    Publication = configured with { Knowledge = configured.Knowledge with { TargetId = "foreign-target" } }
+                });
                 Assert.Equal(KnowledgeReadStatus.Unavailable, mismatch.Status);
                 Assert.Null(mismatch.Selection);
                 Assert.Null(scope.ServiceProvider.GetService<IOctoberKnowledgeWriter>());
@@ -164,7 +195,10 @@ public sealed class OctoberKnowledgeWebTests
                 Assert.Null(scope.ServiceProvider.GetService<IOctoberExecutionScope>());
             }
         }
-        finally { Directory.Delete(directory, true); }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
     }
 
     [Trait("Suite", "SelfContained")]
@@ -205,7 +239,9 @@ public sealed class OctoberKnowledgeWebTests
             Assert.True(Guid.TryParseExact(Path.GetFileName(directory), "N", out _));
             if (Directory.Exists(directory)) Directory.Delete(directory, true);
         }
+
         Assert.False(Directory.Exists(directory));
     }
+
     private sealed class OrdinaryServiceMarker;
 }

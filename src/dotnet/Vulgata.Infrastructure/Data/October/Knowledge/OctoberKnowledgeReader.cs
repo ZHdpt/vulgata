@@ -5,16 +5,31 @@ using Vulgata.Core.DomainServices.OctoberKnowledge;
 
 namespace Vulgata.Infrastructure.Data.October.Knowledge;
 
-public sealed record OctoberPublishedDocument(DocumentVersionReference Reference, DocumentKind Kind, string Title,
-    string ContentJson, ImmutableArray<DocumentSection> Sections, ImmutableArray<Contributor> Contributors);
+public sealed record OctoberPublishedDocument(
+    DocumentVersionReference Reference,
+    DocumentKind Kind,
+    string Title,
+    string ContentJson,
+    ImmutableArray<DocumentSection> Sections,
+    ImmutableArray<Contributor> Contributors);
+
 public sealed record OctoberPublishedCoverage(FileCoverage Coverage, ImmutableArray<Contributor> Contributors);
-public sealed record OctoberPublishedUncertainty(Uncertainty Value, ImmutableArray<Contributor> Contributors,
+
+public sealed record OctoberPublishedUncertainty(
+    Uncertainty Value,
+    ImmutableArray<Contributor> Contributors,
     ImmutableArray<DocumentVersionReference> Owners);
+
 public sealed record OctoberPublishedRelationship(AcceptedRelationship Relationship, ImmutableArray<Contributor> Contributors);
+
 public sealed record OctoberPublishedFinalizationCoverage(CoverageProjection Coverage, ImmutableArray<Contributor> Contributors);
-public sealed record OctoberPublishedKnowledge(PublicationBinding Publication,
-    ImmutableArray<OctoberPublishedDocument> Documents, ImmutableArray<OctoberPublishedCoverage> Coverage,
-    ImmutableArray<OctoberPublishedRelationship> Relationships, ImmutableArray<OctoberPublishedUncertainty> Uncertainties)
+
+public sealed record OctoberPublishedKnowledge(
+    PublicationBinding Publication,
+    ImmutableArray<OctoberPublishedDocument> Documents,
+    ImmutableArray<OctoberPublishedCoverage> Coverage,
+    ImmutableArray<OctoberPublishedRelationship> Relationships,
+    ImmutableArray<OctoberPublishedUncertainty> Uncertainties)
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public OctoberPublishedFinalizationCoverage? FinalizationCoverage { get; init; }
@@ -25,9 +40,18 @@ public interface IOctoberPublishedKnowledgeSource
 {
     Task<OctoberPublishedKnowledge?> LoadAsync(PublicationBinding publication, CancellationToken cancellationToken = default);
 }
+
+public interface IOctoberPublishedKnowledgeIndexSource : IOctoberPublishedKnowledgeSource
+{
+    Task<OctoberPublishedKnowledge?> LoadIndexAsync(PublicationBinding publication, CancellationToken cancellationToken = default);
+    Task<OctoberPublishedDocument?> LoadDocumentAsync(PublicationBinding publication, OctoberPublishedDocument document, CancellationToken cancellationToken = default);
+}
+
 public sealed class OctoberKnowledgeReadBudgetException : Exception
 {
-    public OctoberKnowledgeReadBudgetException() : base("The bounded Knowledge read budget was exhausted.") { }
+    public OctoberKnowledgeReadBudgetException() : base("The bounded Knowledge read budget was exhausted.")
+    {
+    }
 }
 
 /// <summary>Bounded immutable read projections. Selection and cursor tokens never replace live authorization.</summary>
@@ -117,7 +141,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
                 throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
             token.ThrowIfCancellationRequested();
             string pageDigest = OctoberKnowledgeDisclosureCodec.Hash("october.knowledge.page.v1\n" + typeof(T).Name + "\n" +
-                OctoberKnowledgeDisclosureCodec.Canonical(result.Page));
+                                                                     OctoberKnowledgeDisclosureCodec.Canonical(result.Page));
             string outputDigest = OctoberKnowledgeDisclosureCodec.Hash(result.Output.AsSpan());
             string kind = operation switch { KnowledgeReadOperation.Search => "search", KnowledgeReadOperation.ReadExact => "content", _ => "related" };
             var dependencies = _dependencyAuthority.Issue(result.Context.Ticket.Selection, kind, pageDigest,
@@ -135,20 +159,28 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
         string query = NormalizeQuery(request.Query);
         ValidatePageSize(request.PageSize);
         var visible = await VisibleAsync(context, token);
-        var matches = visible.Where(document => Matches(document, context.Ticket.Selection.Mode, query)).ToArray();
+        var matched = new List<OctoberPublishedDocument>();
+        foreach (var item in visible)
+        {
+            if (query.Length == 0 || Matches(await ContentAsync(context, item, token), context.Ticket.Selection.Mode, query)) matched.Add(item);
+        }
+
+        var matches = matched.ToArray();
         string order = OrderDigest(matches.Select(document => Key(document.Reference)));
         int offset = Position(request.Selection, context.Ticket, request.Continuation, "search", query, request.PageSize, null, order, matches.Length);
         var coverage = await CoverageAsync(context, visible.Count != 0, token);
         int take = Math.Min(request.PageSize, matches.Length - offset);
+        var selectedContent = new List<DocumentSummary>();
+        foreach (var item in matches.Skip(offset).Take(take)) selectedContent.Add(Summary(context, await ContentAsync(context, item, token), null, true));
         while (true)
         {
             token.ThrowIfCancellationRequested();
-            var documents = matches.Skip(offset).Take(take).Select(document => Summary(context, document, null, true)).ToImmutableArray();
+            var documents = selectedContent.Take(take).ToImmutableArray();
             int next = offset + documents.Length;
             var continuation = next < matches.Length ? Next(request.Selection, context.Ticket, "search", query, request.PageSize, null, order, next) : null;
             var page = new SearchPage(KnowledgeReadStatus.Success, documents, continuation, coverage);
             if (TryEncode(page, budget, token, out var output)) return new(page, context, null, output);
-            if (take <= 1 || budget is null) throw new OctoberKnowledgeReadBudgetException();
+            if (take <= 1) throw new OctoberKnowledgeReadBudgetException();
             take /= 2;
         }
     }
@@ -157,9 +189,10 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
         KnowledgeReadOutputBudget? budget, CancellationToken token)
     {
         var context = await ContextAsync(request.Selection, token);
-        var candidate = Exact(context, context.Source.Documents, request.Document);
+        var candidate = Exact(context, context.Source.Documents, request.Document with { SectionId = null });
         var visible = await VisibleAsync(context, token, [candidate]);
-        var document = Exact(context, visible, request.Document);
+        var permitted = Exact(context, visible, request.Document with { SectionId = null });
+        var document = Exact(context, [await ContentAsync(context, permitted, token)], request.Document);
         var projection = Project(document, context.Ticket.Selection.Mode, request.Document.SectionId);
         string order = OctoberKnowledgeDisclosureCodec.Hash(projection.Text);
         int offset = Position(request.Selection, context.Ticket, request.Continuation, "exact", "", 0, request.Document, order, projection.Text.Length);
@@ -187,12 +220,14 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
     {
         var context = await ContextAsync(request.Selection, token);
         ValidatePageSize(request.PageSize);
-        var candidate = Exact(context, context.Source.Documents, request.Document);
+        var candidate = Exact(context, context.Source.Documents, request.Document with { SectionId = null });
         var endpoints = context.Source.Relationships.Select(item => item.Relationship)
             .Where(edge => edge.From == candidate.Reference || edge.To == candidate.Reference)
             .SelectMany(edge => new[] { edge.From, edge.To }).Append(candidate.Reference).ToHashSet();
         var visible = await VisibleAsync(context, token, context.Source.Documents.Where(item => endpoints.Contains(item.Reference)));
-        var document = Exact(context, visible, request.Document);
+        var document = Exact(context, visible, request.Document with { SectionId = null });
+        if (request.Document.SectionId is not null)
+            document = Exact(context, [await ContentAsync(context, document, token)], request.Document);
         var references = visible.Select(item => item.Reference).ToHashSet();
         var items = new List<RelatedItem>();
         foreach (var item in context.Source.Relationships)
@@ -202,6 +237,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
             if (await PermitAsync(context, item.Contributors, document.Kind, token))
                 items.Add(new("edge/" + edge.RelationshipVersionId.ToString("D"), edge, null));
         }
+
         if (context.Ticket.Selection.Mode == KnowledgeMode.IT)
         {
             foreach (var item in context.Source.Uncertainties)
@@ -214,6 +250,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
                 }
             }
         }
+
         items.Sort((left, right) => StringComparer.Ordinal.Compare(left.Key, right.Key));
         string order = OrderDigest(items.Select(item => item.Key));
         int offset = Position(request.Selection, context.Ticket, request.Continuation, "related", "", request.PageSize, request.Document, order, items.Count);
@@ -225,15 +262,15 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
             var selected = items.Skip(offset).Take(take).ToArray();
             var relationships = selected.Where(item => item.Relationship is not null).Select(item => item.Relationship!)
                 .Select(edge => new RelatedDocument(edge.Kind, Handle(context, edge.From), Handle(context, edge.To),
-                    context.Ticket.Selection.Mode == KnowledgeMode.Business
-                        ? (edge.Kind == RelationshipKind.GeneratedFrom ? "业务逻辑来源" : "业务逻辑引用") : edge.Meaning)
+                        context.Ticket.Selection.Mode == KnowledgeMode.Business
+                            ? (edge.Kind == RelationshipKind.GeneratedFrom ? "业务逻辑来源" : "业务逻辑引用") : edge.Meaning)
                     { RelationshipVersionId = edge.RelationshipVersionId }).ToImmutableArray();
             var uncertainties = selected.Where(item => item.Uncertainty is not null).Select(item => item.Uncertainty!).ToImmutableArray();
             int next = offset + selected.Length;
             var continuation = next < items.Count ? Next(request.Selection, context.Ticket, "related", "", request.PageSize, request.Document, order, next) : null;
             var page = new RelatedPage(KnowledgeReadStatus.Success, relationships, uncertainties, continuation, coverage);
             if (TryEncode(page, budget, token, out var output)) return new(page, context, null, output);
-            if (take <= 1 || budget is null) throw new OctoberKnowledgeReadBudgetException();
+            if (take <= 1) throw new OctoberKnowledgeReadBudgetException();
             take /= 2;
         }
     }
@@ -280,17 +317,30 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
 
     private async Task<OctoberPublishedKnowledge> LoadAsync(PublicationBinding publication, CancellationToken cancellationToken)
     {
-        var source = await _source.LoadAsync(publication, cancellationToken).WaitAsync(cancellationToken);
+        var source = await (_source is IOctoberPublishedKnowledgeIndexSource index
+            ? index.LoadIndexAsync(publication, cancellationToken)
+            : _source.LoadAsync(publication, cancellationToken)).WaitAsync(cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         if (source is null || source.Publication != publication) throw new ReadFailure(KnowledgeReadStatus.Unavailable);
         if (source.Documents.IsDefault || source.Coverage.IsDefault || source.Relationships.IsDefault || source.Uncertainties.IsDefault)
             throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
         if (source.Documents.Length > MaximumDocuments || !WithinBudget(source, MaximumMaterializedBytes)) throw new OctoberKnowledgeReadBudgetException();
         if (source.Documents.Any(document => document.Reference.BatchId != publication.Knowledge.BatchId ||
-                !Enum.IsDefined(document.Kind) || document.Contributors.IsDefaultOrEmpty || document.Sections.IsDefault) ||
+                                             !Enum.IsDefined(document.Kind) || document.Contributors.IsDefaultOrEmpty || document.Sections.IsDefault) ||
             source.Documents.Select(document => document.Reference.LogicalDocumentId).Distinct().Count() != source.Documents.Length)
             throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
         return source;
+    }
+
+    private async Task<OctoberPublishedDocument> ContentAsync(ReadContext context, OctoberPublishedDocument document, CancellationToken token)
+    {
+        if (_source is not IOctoberPublishedKnowledgeIndexSource index) return document;
+        var loaded = await index.LoadDocumentAsync(context.Source.Publication, document, token).WaitAsync(token);
+        if (loaded is null || loaded.Reference != document.Reference || loaded.Kind != document.Kind || loaded.Title != document.Title ||
+            !loaded.Contributors.ToHashSet().SetEquals(document.Contributors) || loaded.Sections.IsDefault)
+            throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
+        if (!WithinBudget(loaded, MaximumMaterializedBytes)) throw new OctoberKnowledgeReadBudgetException();
+        return loaded;
     }
 
     private async Task<List<OctoberPublishedDocument>> VisibleAsync(ReadContext context, CancellationToken cancellationToken,
@@ -320,6 +370,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
                 }
             }
         }
+
         return result.OrderBy(document => document.Reference.LogicalDocumentId.ToString("D"), StringComparer.Ordinal)
             .ThenBy(document => document.Reference.DocumentVersionId.ToString("D"), StringComparer.Ordinal).ToList();
     }
@@ -348,11 +399,13 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
     {
         // Recheck after materialization, then log, then recheck again: a slow logger grants no stale disclosure.
         await RecheckAsync(context, cancellationToken);
-        if (!await _log.AppendAsync(new(context.Ticket.Selection.Publication, Guid.NewGuid(), operation, KnowledgeReadStatus.Success), cancellationToken).WaitAsync(cancellationToken))
+        if (!await _log.AppendAsync(new(context.Ticket.Selection.Publication, Guid.NewGuid(), operation, KnowledgeReadStatus.Success), cancellationToken)
+                .WaitAsync(cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
             throw new ReadFailure(KnowledgeReadStatus.UnavailableService);
         }
+
         await RecheckAsync(context, cancellationToken);
     }
 
@@ -379,6 +432,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
                 gaps.Add(context.Ticket.Selection.Mode == KnowledgeMode.Business ? "部分内容尚未完成。" :
                     $"{item.Coverage.Origin.RelativePath}: {item.Coverage.Disposition}{(string.IsNullOrWhiteSpace(item.Coverage.Reason) ? "" : ": " + item.Coverage.Reason)}");
         }
+
         // A Business projection must not encode the number of technical files as repeated placeholders.
         return new(gaps.Count != 0, context.Ticket.Selection.Mode == KnowledgeMode.Business && gaps.Count != 0 ? ["部分内容尚未完成。"] : gaps.ToImmutable());
     }
@@ -387,7 +441,8 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
     {
         if (handle is null || handle.BatchId != context.Ticket.Selection.Publication.Knowledge.BatchId ||
             handle.PublicationId != context.Ticket.Selection.Publication.PublicationId) throw new ReadFailure(KnowledgeReadStatus.Unavailable);
-        var document = visible.SingleOrDefault(item => item.Reference.LogicalDocumentId == handle.LogicalDocumentId && item.Reference.DocumentVersionId == handle.DocumentVersionId);
+        var document = visible.SingleOrDefault(item =>
+            item.Reference.LogicalDocumentId == handle.LogicalDocumentId && item.Reference.DocumentVersionId == handle.DocumentVersionId);
         if (document is null || (handle.SectionId is not null && !document.Sections.Any(section => section.SectionId == handle.SectionId)))
             throw new ReadFailure(KnowledgeReadStatus.Unavailable);
         return document;
@@ -399,7 +454,13 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
     private static DocumentSummary Summary(ReadContext context, OctoberPublishedDocument document, string? section, bool includeExcerpt)
     {
         var excerpts = includeExcerpt ? document.Sections.OrderBy(item => item.Ordinal).SelectMany(item => item.Claims).Take(2)
-            .Select(claim => ProjectClaim(claim, context.Ticket.Selection.Mode) with { Text = Prefix(claim.Text, 256) }).ToImmutableArray() : [];
+            .Select(claim => ProjectClaim(claim, context.Ticket.Selection.Mode))
+            .Select(claim => claim with
+            {
+                Text = Prefix(claim.Text, 256),
+                Evidence = claim.Evidence.Take(2).ToImmutableArray(),
+                Limitations = claim.Limitations.Take(2).Select(value => Prefix(value, 256)).ToImmutableArray()
+            }).ToImmutableArray() : [];
         return new(Handle(context, document.Reference, section), document.Kind, document.Title, excerpts);
     }
 
@@ -428,8 +489,10 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
                 foreach (string limitation in claim.Limitations) text.Append("限制：").Append(limitation).Append('\n');
             }
         }
+
         return new(text.ToString(), spans.ToImmutable());
     }
+
     private static string Label(ClaimQualification qualification) => qualification switch
     {
         ClaimQualification.SourceSupported => "来源支持", ClaimQualification.Advisory => "建议性上下文",
@@ -443,6 +506,7 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
         string text = Normalize(Project(document, mode, null).Text);
         return query.Split(' ', StringSplitOptions.RemoveEmptyEntries).All(term => text.Contains(term, StringComparison.Ordinal));
     }
+
     private static string NormalizeQuery(string? query)
     {
         if (query is null) throw new ReadFailure(KnowledgeReadStatus.Unavailable);
@@ -454,9 +518,13 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
                 throw new ReadFailure(KnowledgeReadStatus.Unavailable);
             remaining = remaining[consumed..];
         }
+
         return Normalize(query);
     }
-    private static string Normalize(string value) => string.Join(' ', value.Normalize(NormalizationForm.FormC).ToUpperInvariant().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+    private static string Normalize(string value) =>
+        string.Join(' ', value.Normalize(NormalizationForm.FormC).ToUpperInvariant().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
     private static void ValidatePageSize(int size)
     {
         if (size < 1 || size > KnowledgeContract.MaximumPageSize) throw new ReadFailure(KnowledgeReadStatus.Unavailable);
@@ -472,11 +540,14 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
             position.ExpiresAt != ticket.ExpiresAt || position.Offset >= length) throw new OctoberInvalidContinuationException();
         return position.Offset;
     }
+
     private ContinuationToken Next(ReadSelection selection, OctoberReadTicket ticket, string operation, string query, int pageSize,
         DocumentHandle? handle, string order, int offset) => _cursors.Issue(new OctoberReadPosition(OctoberKnowledgeCursorProtector.Digest(selection.Token),
-            operation, query, pageSize, handle, order, offset, ticket.ExpiresAt));
+        operation, query, pageSize, handle, order, offset, ticket.ExpiresAt));
+
     private static string Key(DocumentVersionReference reference) => $"{reference.LogicalDocumentId:D}/{reference.DocumentVersionId:D}";
     private static string OrderDigest(IEnumerable<string> values) => OctoberKnowledgeCursorProtector.Digest(string.Join('\n', values));
+
     private static string Prefix(string value, int maximumRunes)
     {
         int offset = 0;
@@ -485,8 +556,10 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
             if (maximumRunes-- == 0) break;
             offset += rune.Utf16SequenceLength;
         }
+
         return value[..offset];
     }
+
     private static int Utf8End(string value, int start, int maximumBytes)
     {
         int offset = start;
@@ -496,42 +569,85 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
             maximumBytes -= rune.Utf8SequenceLength;
             offset += rune.Utf16SequenceLength;
         }
+
         return offset;
     }
+
     private static int SafeEnd(string value, int end) => end > 0 && end < value.Length && char.IsHighSurrogate(value[end - 1]) && char.IsLowSurrogate(value[end]) ? end - 1 : end;
+
     private static void EnsureResponseBudget<T>(T value)
     {
         if (!WithinBudget(value, KnowledgeContract.MaximumContentBytes)) throw new OctoberKnowledgeReadBudgetException();
     }
+
     private static bool WithinBudget<T>(T value, int maximum)
     {
         using var counter = new BudgetStream(maximum);
-        try { JsonSerializer.Serialize(counter, value); return true; }
-        catch (OctoberKnowledgeReadBudgetException) { return false; }
+        try
+        {
+            JsonSerializer.Serialize(counter, value);
+            return true;
+        }
+        catch (OctoberKnowledgeReadBudgetException)
+        {
+            return false;
+        }
     }
+
     private static async Task<T> RunAsync<T>(Func<CancellationToken, Task<T>> execute, Func<KnowledgeReadStatus, T> failure, CancellationToken callerCancellation)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(callerCancellation);
         deadline.CancelAfter(TimeSpan.FromSeconds(30));
-        try { return await execute(deadline.Token).WaitAsync(deadline.Token); }
-        catch (OperationCanceledException) { return failure(callerCancellation.IsCancellationRequested ? KnowledgeReadStatus.Cancelled : KnowledgeReadStatus.UnavailableService); }
-        catch (OctoberInvalidContinuationException) { return failure(KnowledgeReadStatus.InvalidContinuation); }
-        catch (OctoberKnowledgeReadBudgetException) { return failure(KnowledgeReadStatus.ReadBudgetExceeded); }
-        catch (DisclosureFailure exception) { return failure(exception.Status == KnowledgeDependencyStatus.BudgetExceeded ? KnowledgeReadStatus.ReadBudgetExceeded : KnowledgeReadStatus.UnavailableService); }
-        catch (ReadFailure exception) { return failure(exception.Status); }
-        catch (Exception) { return failure(KnowledgeReadStatus.UnavailableService); }
+        try
+        {
+            return await execute(deadline.Token).WaitAsync(deadline.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return failure(callerCancellation.IsCancellationRequested ? KnowledgeReadStatus.Cancelled : KnowledgeReadStatus.UnavailableService);
+        }
+        catch (OctoberInvalidContinuationException)
+        {
+            return failure(KnowledgeReadStatus.InvalidContinuation);
+        }
+        catch (OctoberKnowledgeReadBudgetException)
+        {
+            return failure(KnowledgeReadStatus.ReadBudgetExceeded);
+        }
+        catch (DisclosureFailure exception)
+        {
+            return failure(exception.Status == KnowledgeDependencyStatus.BudgetExceeded ? KnowledgeReadStatus.ReadBudgetExceeded : KnowledgeReadStatus.UnavailableService);
+        }
+        catch (ReadFailure exception)
+        {
+            return failure(exception.Status);
+        }
+        catch (Exception)
+        {
+            return failure(KnowledgeReadStatus.UnavailableService);
+        }
     }
+
     private sealed class ReadContext(OctoberReadTicket ticket, OctoberPublishedKnowledge source)
     {
         public OctoberReadTicket Ticket { get; } = ticket;
         public OctoberPublishedKnowledge Source { get; } = source;
         public List<DisclosureRequest> Disclosures { get; } = [];
     }
-    private sealed class ReadFailure(KnowledgeReadStatus status) : Exception { public KnowledgeReadStatus Status { get; } = status; }
+
+    private sealed class ReadFailure(KnowledgeReadStatus status) : Exception
+    {
+        public KnowledgeReadStatus Status { get; } = status;
+    }
+
     private sealed record ReadMaterialization<T>(T Page, ReadContext Context, DisclosureContent? Content, ImmutableArray<byte> Output);
+
     private sealed record RelatedItem(string Key, AcceptedRelationship? Relationship, Uncertainty? Uncertainty);
+
     private sealed record ClaimSpan(int Start, int End, QualifiedClaimGroup Claim);
+
     private sealed record Projection(string Text, ImmutableArray<ClaimSpan> Spans);
+
     private sealed class BudgetStream(int maximum) : Stream
     {
         private long _length;
@@ -539,11 +655,26 @@ public sealed class OctoberKnowledgeReader : IOctoberKnowledgeReader, IOctoberKn
         public override bool CanSeek => false;
         public override bool CanWrite => true;
         public override long Length => _length;
-        public override long Position { get => _length; set => throw new NotSupportedException(); }
+
+        public override long Position
+        {
+            get => _length;
+            set => throw new NotSupportedException();
+        }
+
         public override void Write(byte[] buffer, int offset, int count) => Add(count);
         public override void Write(ReadOnlySpan<byte> buffer) => Add(buffer.Length);
-        private void Add(int count) { _length += count; if (_length > maximum) throw new OctoberKnowledgeReadBudgetException(); }
-        public override void Flush() { }
+
+        private void Add(int count)
+        {
+            _length += count;
+            if (_length > maximum) throw new OctoberKnowledgeReadBudgetException();
+        }
+
+        public override void Flush()
+        {
+        }
+
         public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
         public override void SetLength(long value) => throw new NotSupportedException();

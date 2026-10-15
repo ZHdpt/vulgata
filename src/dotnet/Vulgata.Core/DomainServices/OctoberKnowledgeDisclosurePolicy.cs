@@ -4,9 +4,13 @@ namespace Vulgata.Core.DomainServices.OctoberKnowledge;
 
 /// <summary>Trusted persisted selection facts, never supplied by a browser or model.</summary>
 public sealed record KnowledgeRepositoryBinding(Guid RepositoryId, Guid? SystemId, string RootBindingIdentity);
+
 public sealed record KnowledgeAdvisoryBinding(Guid RepositoryId, ContributorKind Kind, Guid RecordId, string ContentDigest);
-public sealed record KnowledgeSelectionAuthoritySnapshot(PublicationBinding Publication,
-    ImmutableArray<KnowledgeRepositoryBinding> Repositories, ImmutableArray<KnowledgeAdvisoryBinding> Advisory);
+
+public sealed record KnowledgeSelectionAuthoritySnapshot(
+    PublicationBinding Publication,
+    ImmutableArray<KnowledgeRepositoryBinding> Repositories,
+    ImmutableArray<KnowledgeAdvisoryBinding> Advisory);
 
 public interface IOctoberKnowledgeSelectionAuthority
 {
@@ -51,7 +55,7 @@ public sealed class OctoberKnowledgeDisclosurePolicy(
             authorityToken.ThrowIfCancellationRequested();
             if (snapshot is null || snapshot.Publication != selection.Publication || snapshot.Repositories.IsDefault ||
                 snapshot.Advisory.IsDefault || snapshot.Repositories.Any(x => x is null || x.RepositoryId == Guid.Empty ||
-                    x.SystemId == Guid.Empty || string.IsNullOrWhiteSpace(x.RootBindingIdentity)) ||
+                                                                              x.SystemId == Guid.Empty || string.IsNullOrWhiteSpace(x.RootBindingIdentity)) ||
                 snapshot.Repositories.Select(x => x.RepositoryId).Distinct().Count() != snapshot.Repositories.Length)
                 return DisclosureStatus.Denied;
 
@@ -67,8 +71,14 @@ public sealed class OctoberKnowledgeDisclosurePolicy(
             authorityToken.ThrowIfCancellationRequested();
             return Enum.IsDefined(decision) ? decision : DisclosureStatus.AuthorityUnavailable;
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-        catch (Exception) { return DisclosureStatus.AuthorityUnavailable; }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            return DisclosureStatus.AuthorityUnavailable;
+        }
     }
 
     private static bool ContributorMatches(Contributor contributor, HashSet<Guid> scope,
@@ -89,6 +99,7 @@ public sealed class OctoberKnowledgeDisclosurePolicy(
                 : OctoberKnowledgeInputPolicy.IsValidMetadataContributor(contributor);
             return shape && repository is not null && contributor.RootBindingIdentity == repository.RootBindingIdentity;
         }
+
         if (contributor.SourceOrigin is not null || contributor.MetadataOrigin is not null) return false;
 
         if (contributor.AdvisoryRecordId is not { } recordId || recordId == Guid.Empty || contributor.RootBindingIdentity is not null)
@@ -103,10 +114,11 @@ public sealed class OctoberKnowledgeDisclosurePolicy(
         if (!validShape) return false;
 
         var selected = advisory.Where(x => x is not null && scope.Contains(x.RepositoryId) &&
-            x.Kind == contributor.Kind && x.RecordId == recordId &&
-            (contributor.Kind != ContributorKind.RepositoryAdvisory || x.RepositoryId == contributor.RepositoryId) &&
-            (contributor.Kind != ContributorKind.SystemAdvisory ||
-                repositories.TryGetValue(x.RepositoryId, out var bound) && bound.SystemId == contributor.SystemId)).ToArray();
-        return selected.Length > 0 && selected.All(x => x.ContentDigest == contributor.ContentDigest);
+                                           x.Kind == contributor.Kind && x.RecordId == recordId &&
+                                           (contributor.Kind != ContributorKind.RepositoryAdvisory || x.RepositoryId == contributor.RepositoryId) &&
+                                           (contributor.Kind != ContributorKind.SystemAdvisory ||
+                                            repositories.TryGetValue(x.RepositoryId, out var bound) && bound.SystemId == contributor.SystemId)).ToArray();
+        // One publication can retain several accepted revisions of the same advisory.
+        return selected.Any(x => x.ContentDigest == contributor.ContentDigest);
     }
 }

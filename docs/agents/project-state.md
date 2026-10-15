@@ -1,5 +1,20 @@
 # Project state for agent resumption
 
+October 14 publication-read repair: the retained publication
+`1396428a-7661-4761-b421-869e1fbc01eb` contains 163 CL and 108 BL Documents.
+Readers now load a lightweight exact-publication index and fetch canonical content
+per Document, including a compact projection of flow-group provenance. Immutable
+index facts are reused within the reader instance; access decisions are not cached. Existing
+read budgets remain unchanged; search previews bound evidence and limitations and
+paginate smaller responses when necessary. Accepted advisory revisions come from
+the exact publication ledger as well as setup, preserving live authorization and
+context-removal checks after nonempty context edits. A read-only ordinary-user
+probe enumerated 108 BL in Business mode and all 271 Documents in IT mode; exact
+BL reads succeeded in both modes. The application graph service returned 271 nodes
+and four relationships in 88.5 seconds. Focused regressions passed 95/95, followed
+by 47/47 reader/authorization checks after index reuse. The local Rider launch pin
+now selects this publication. The running host has not been restarted or browser-qualified.
+
 October 13 saved-Chat transcript repair: a seven-turn retained conversation returned
 an empty successful transcript because its combined disclosure proofs exceeded the
 Knowledge union budget, although every turn individually reauthorized successfully.
@@ -24,7 +39,6 @@ card grid, shared with search, and frozen until explicit reload or page refresh.
 Previous pages are re-read because continuation sessions are single-use. The reader
 body heading sits outside its content card. Browser requalification is requested
 from the user-designated Qualify Explorer and IT Chat task.
-
 
 October 13 Chat composer: one bottom-right action transitions from disabled
 “正在准备对话” to “取消生成”, then back to “发送” after completion or cancellation.
